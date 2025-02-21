@@ -27,7 +27,7 @@ public class CodeDelegationResult {
     accessedDelegatorAddresses.add(address);
   }
 
-  public void incremenentAlreadyExistingDelegators() {
+  public void incrementAlreadyExistingDelegators() {
     alreadyExistingDelegators += 1;
   }
 

@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.messagewrappers;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -34,7 +34,8 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Round change payload message. */
 public class RoundChange extends BftMessage<RoundChangePayload> {
 
-  private final Optional<Block> proposedBlock;
+  private final Optional<QbftBlock> proposedBlock;
+  private final QbftBlockCodec blockEncoder;
   private final List<SignedData<PreparePayload>> prepares;
 
   /**
@@ -42,14 +43,17 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
    *
    * @param payload the payload
    * @param proposedBlock the proposed block
+   * @param blockEncoder the qbft block encoder
    * @param prepares the prepares
    */
   public RoundChange(
       final SignedData<RoundChangePayload> payload,
-      final Optional<Block> proposedBlock,
+      final Optional<QbftBlock> proposedBlock,
+      final QbftBlockCodec blockEncoder,
       final List<SignedData<PreparePayload>> prepares) {
     super(payload);
     this.proposedBlock = proposedBlock;
+    this.blockEncoder = blockEncoder;
     this.prepares = prepares;
   }
 
@@ -58,7 +62,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
    *
    * @return the proposed block
    */
-  public Optional<Block> getProposedBlock() {
+  public Optional<QbftBlock> getProposedBlock() {
     return proposedBlock;
   }
 
@@ -94,7 +98,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
-    proposedBlock.ifPresentOrElse(pb -> pb.writeTo(rlpOut), rlpOut::writeEmptyList);
+    proposedBlock.ifPresentOrElse(pb -> blockEncoder.writeTo(pb, rlpOut), rlpOut::writeEmptyList);
     rlpOut.writeList(prepares, SignedData::writeTo);
     rlpOut.endList();
     return rlpOut.encoded();
@@ -104,29 +108,27 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
    * Decode.
    *
    * @param data the data
-   * @param bftExtraDataCodec the bft extra data codec
+   * @param blockEncoder the qbft block encoder
    * @return the round change
    */
-  public static RoundChange decode(final Bytes data, final BftExtraDataCodec bftExtraDataCodec) {
+  public static RoundChange decode(final Bytes data, final QbftBlockCodec blockEncoder) {
 
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
     final SignedData<RoundChangePayload> payload = readPayload(rlpIn, RoundChangePayload::readFrom);
 
-    final Optional<Block> block;
+    final Optional<QbftBlock> block;
     if (rlpIn.nextIsList() && rlpIn.nextSize() == 0) {
       rlpIn.skipNext();
       block = Optional.empty();
     } else {
-      block =
-          Optional.of(
-              Block.readFrom(rlpIn, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec)));
+      block = Optional.of(blockEncoder.readFrom(rlpIn, QbftHashMode.COMMITTED_SEAL));
     }
 
     final List<SignedData<PreparePayload>> prepares =
         rlpIn.readList(r -> readPayload(r, PreparePayload::readFrom));
     rlpIn.leaveList();
 
-    return new RoundChange(payload, block, prepares);
+    return new RoundChange(payload, block, blockEncoder, prepares);
   }
 }

@@ -36,7 +36,7 @@ public enum RpcErrorType implements RpcMethodError {
       "Invalid blob count (blob transactions must have at least one blob)"),
   INVALID_BLOB_GAS_USED_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid blob gas used param (missing or invalid)"),
-  INVALID_BLOCK_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block, unable to parse RLP"),
+  INVALID_BLOCK_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block param (block not found)"),
   INVALID_BLOCK_COUNT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block count params"),
   INVALID_BLOCK_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block hash params"),
   INVALID_BLOCK_INDEX_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block index params"),
@@ -148,7 +148,7 @@ public enum RpcErrorType implements RpcMethodError {
   // Transaction validation failures
   NONCE_TOO_LOW(-32001, "Nonce too low"),
   INVALID_TRANSACTION_SIGNATURE(-32002, "Invalid signature"),
-  INVALID_TRANSACTION_TYPE(-32602, "Invalid transaction type"),
+  INVALID_TRANSACTION_TYPE(INVALID_PARAMS_ERROR_CODE, "Invalid transaction type"),
   INTRINSIC_GAS_EXCEEDS_LIMIT(-32003, "Intrinsic gas exceeds gas limit"),
   TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE(-32004, "Upfront cost exceeds account balance"),
   EXCEEDS_BLOCK_GAS_LIMIT(-32005, "Transaction gas limit exceeds block gas limit"),

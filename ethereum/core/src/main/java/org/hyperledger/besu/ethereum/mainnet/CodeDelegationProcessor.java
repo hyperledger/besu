@@ -105,11 +105,6 @@ public class CodeDelegationProcessor {
       return;
     }
 
-    if (codeDelegation.signature().getRecId() != 0 && codeDelegation.signature().getRecId() != 1) {
-      LOG.trace("Invalid signature for code delegation. RecId must be 0 or 1.");
-      return;
-    }
-
     final Optional<Address> authorizer = codeDelegation.authorizer();
     if (authorizer.isEmpty()) {
       LOG.trace("Invalid signature for code delegation");
@@ -126,6 +121,10 @@ public class CodeDelegationProcessor {
     MutableAccount authority;
     boolean authorityDoesAlreadyExist = false;
     if (maybeAuthorityAccount.isEmpty()) {
+      // only create an account if nonce is valid
+      if (codeDelegation.nonce() != 0) {
+        return;
+      }
       authority = evmWorldUpdater.createAccount(authorizer.get());
     } else {
       authority = maybeAuthorityAccount.get();
@@ -146,7 +145,7 @@ public class CodeDelegationProcessor {
     }
 
     if (authorityDoesAlreadyExist) {
-      result.incremenentAlreadyExistingDelegators();
+      result.incrementAlreadyExistingDelegators();
     }
 
     evmWorldUpdater

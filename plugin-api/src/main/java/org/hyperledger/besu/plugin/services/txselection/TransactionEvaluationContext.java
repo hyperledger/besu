@@ -23,10 +23,8 @@ import com.google.common.base.Stopwatch;
 /**
  * This interface defines the context for evaluating a transaction. It provides methods to get the
  * pending transaction, the evaluation timer, and the transaction gas price.
- *
- * @param <PT> the type of the pending transaction
  */
-public interface TransactionEvaluationContext<PT extends PendingTransaction> {
+public interface TransactionEvaluationContext {
 
   /**
    * Gets the pending block header
@@ -40,7 +38,7 @@ public interface TransactionEvaluationContext<PT extends PendingTransaction> {
    *
    * @return the pending transaction
    */
-  PT getPendingTransaction();
+  PendingTransaction getPendingTransaction();
 
   /**
    * Gets the stopwatch used for timing the evaluation.

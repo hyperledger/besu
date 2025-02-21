@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Address;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
@@ -75,7 +76,7 @@ public class RoundChangeManager {
      *
      * @return the boolean
      */
-    public boolean roundChangeReady() {
+    public boolean roundChangeQuorumReceived() {
       return receivedMessages.size() >= quorum && !actioned;
     }
 
@@ -85,7 +86,7 @@ public class RoundChangeManager {
      * @return the collection
      */
     public Collection<RoundChange> createRoundChangeCertificate() {
-      if (roundChangeReady()) {
+      if (roundChangeQuorumReceived()) {
         actioned = true;
         return receivedMessages.values();
       } else {
@@ -104,6 +105,7 @@ public class RoundChangeManager {
   private final Map<Address, ConsensusRoundIdentifier> roundSummary = Maps.newHashMap();
 
   private final long quorum;
+  private long rcQuorum;
   private final RoundChangeMessageValidator roundChangeMessageValidator;
   private final Address localAddress;
 
@@ -124,12 +126,33 @@ public class RoundChangeManager {
   }
 
   /**
+   * Instantiates a new Round change manager.
+   *
+   * @param quorum the quorum
+   * @param rcQuorum quorum for round change messages
+   * @param roundChangeMessageValidator the round change message validator
+   * @param localAddress this node's address
+   */
+  public RoundChangeManager(
+      final long quorum,
+      final long rcQuorum,
+      final RoundChangeMessageValidator roundChangeMessageValidator,
+      final Address localAddress) {
+    this(quorum, roundChangeMessageValidator, localAddress);
+    this.rcQuorum = rcQuorum;
+  }
+
+  /**
    * Store the latest round for a node, and if chain is stalled log a summary of which round each
    * address is on
    *
    * @param message the round-change message that has just been received
    */
   public void storeAndLogRoundChangeSummary(final RoundChange message) {
+    if (!isMessageValid(message)) {
+      LOG.info("RoundChange message is invalid .");
+      return;
+    }
     roundSummary.put(message.getAuthor(), message.getRoundIdentifier());
     if (roundChangeCache.keySet().stream()
             .findFirst()
@@ -148,6 +171,39 @@ public class RoundChangeManager {
   }
 
   /**
+   * Checks if a quorum of round change messages has been received for a round higher than the
+   * current round
+   *
+   * @param currentRoundIdentifier the current round identifier
+   * @return the next higher round number if quorum is reached, otherwise empty Optional
+   */
+  public Optional<Integer> futureRCQuorumReceived(
+      final ConsensusRoundIdentifier currentRoundIdentifier) {
+    // Iterate through elements of round summary, identify ones with round number higher than
+    // current,
+    // tracking minimum of those and return the next higher round number if quorum is reached
+
+    // Filter out entries with round number greater than current round
+    // and collect their round numbers
+    Map<Address, Integer> higherRounds =
+        roundSummary.entrySet().stream()
+            .filter(entry -> isAFutureRound(entry.getValue(), currentRoundIdentifier))
+            .collect(
+                Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getRoundNumber()));
+
+    LOG.debug("Higher rounds size ={} rcquorum = {}", higherRounds.size(), rcQuorum);
+
+    // Check if we have at least f + 1 validators at higher rounds
+    if (higherRounds.size() >= rcQuorum) {
+      // Find the minimum round that is greater than the current round
+      return Optional.of(higherRounds.values().stream().min(Integer::compareTo).orElseThrow());
+    }
+
+    // If quorum is not reached, return empty Optional
+    return Optional.empty();
+  }
+
+  /**
    * Adds the round message to this manager and return a certificate if it passes the threshold
    *
    * @param msg The signed round change message to add
@@ -163,7 +219,7 @@ public class RoundChangeManager {
 
     final RoundChangeStatus roundChangeStatus = storeRoundChangeMessage(msg);
 
-    if (roundChangeStatus.roundChangeReady()) {
+    if (roundChangeStatus.roundChangeQuorumReceived()) {
       return Optional.of(roundChangeStatus.createRoundChangeCertificate());
     }
 
@@ -197,5 +253,10 @@ public class RoundChangeManager {
   private boolean isAnEarlierRound(
       final ConsensusRoundIdentifier left, final ConsensusRoundIdentifier right) {
     return left.getRoundNumber() < right.getRoundNumber();
+  }
+
+  private boolean isAFutureRound(
+      final ConsensusRoundIdentifier left, final ConsensusRoundIdentifier right) {
+    return left.getRoundNumber() > right.getRoundNumber();
   }
 }

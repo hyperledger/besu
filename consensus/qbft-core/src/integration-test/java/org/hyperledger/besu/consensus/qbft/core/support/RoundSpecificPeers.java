@@ -18,7 +18,6 @@ import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
@@ -32,9 +31,10 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.Arrays;
@@ -52,17 +52,17 @@ public class RoundSpecificPeers {
   private final ValidatorPeer proposer;
   private final Collection<ValidatorPeer> peers;
   private final List<ValidatorPeer> nonProposingPeers;
-  private final BftExtraDataCodec bftExtraDataCodec;
+  private final QbftBlockCodec qbftBlockCodec;
 
   public RoundSpecificPeers(
       final ValidatorPeer proposer,
       final Collection<ValidatorPeer> peers,
       final List<ValidatorPeer> nonProposingPeers,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final QbftBlockCodec qbftBlockCodec) {
     this.proposer = proposer;
     this.peers = peers;
     this.nonProposingPeers = nonProposingPeers;
-    this.bftExtraDataCodec = bftExtraDataCodec;
+    this.qbftBlockCodec = qbftBlockCodec;
   }
 
   public ValidatorPeer getProposer() {
@@ -70,7 +70,7 @@ public class RoundSpecificPeers {
   }
 
   public ValidatorPeer getFirstNonProposer() {
-    return nonProposingPeers.get(0);
+    return nonProposingPeers.getFirst();
   }
 
   public void clearReceivedMessages() {
@@ -92,7 +92,7 @@ public class RoundSpecificPeers {
         .collect(Collectors.toList());
   }
 
-  public void commit(final ConsensusRoundIdentifier roundId, final Block block) {
+  public void commit(final ConsensusRoundIdentifier roundId, final QbftBlock block) {
     peers.forEach(peer -> peer.injectCommit(roundId, block));
   }
 
@@ -128,7 +128,7 @@ public class RoundSpecificPeers {
     nonProposingPeers.forEach(peer -> peer.injectPrepare(roundId, hash));
   }
 
-  public void commitForNonProposing(final ConsensusRoundIdentifier roundId, final Block block) {
+  public void commitForNonProposing(final ConsensusRoundIdentifier roundId, final QbftBlock block) {
     nonProposingPeers.forEach(peer -> peer.injectCommit(roundId, block));
   }
 
@@ -200,7 +200,7 @@ public class RoundSpecificPeers {
 
     switch (expectedMessage.getMessageType()) {
       case QbftV1.PROPOSAL:
-        actualSignedPayload = ProposalMessageData.fromMessageData(actual).decode(bftExtraDataCodec);
+        actualSignedPayload = ProposalMessageData.fromMessageData(actual).decode(qbftBlockCodec);
         break;
       case QbftV1.PREPARE:
         actualSignedPayload = PrepareMessageData.fromMessageData(actual).decode();
@@ -209,8 +209,7 @@ public class RoundSpecificPeers {
         actualSignedPayload = CommitMessageData.fromMessageData(actual).decode();
         break;
       case QbftV1.ROUND_CHANGE:
-        actualSignedPayload =
-            RoundChangeMessageData.fromMessageData(actual).decode(bftExtraDataCodec);
+        actualSignedPayload = RoundChangeMessageData.fromMessageData(actual).decode(qbftBlockCodec);
         break;
       default:
         fail("Illegal QBFTV1 message type.");
