@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult.BlockImportStatus;
 
@@ -57,25 +58,17 @@ public class MainnetBlockImporter implements BlockImporter {
   }
 
   @Override
-  public BlockImportResult importBlockForSyncing(
+  public BlockImportResult importSyncBlockForSyncing(
       final ProtocolContext context,
-      final Block block,
+      final SyncBlock syncBlock,
       final List<TransactionReceipt> receipts,
-      final HeaderValidationMode headerValidationMode,
-      final HeaderValidationMode ommerValidationMode,
-      final BodyValidationMode bodyValidationMode,
       final boolean importWithTxIndexing) {
 
-    if (blockValidator.validateBlockForSyncing(
-        context, block, receipts, headerValidationMode, ommerValidationMode, bodyValidationMode)) {
-      if (importWithTxIndexing) {
-        context.getBlockchain().appendBlock(block, receipts);
-      } else {
-        context.getBlockchain().appendBlockWithoutIndexingTransactions(block, receipts);
-      }
-      return new BlockImportResult(true);
+    if (importWithTxIndexing) {
+      context.getBlockchain().appendSyncBlock(syncBlock, receipts);
+    } else {
+      context.getBlockchain().appendSyncBlockWithoutIndexingTransactions(syncBlock, receipts);
     }
-
-    return new BlockImportResult(false);
+    return new BlockImportResult(true);
   }
 }
