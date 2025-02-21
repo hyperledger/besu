@@ -288,7 +288,7 @@ public class BlockHeader extends SealableBlockHeader
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
 
     final ExecutionWitness executionWitness =
-        !input.isEndOfCurrentList() ? ExecutionWitness.readFrom(input) : null;
+        !headerRlp.isEndOfCurrentList() ? ExecutionWitness.readFrom(headerRlp) : null;
 
     headerRlp.leaveList();
     return new BlockHeader(
