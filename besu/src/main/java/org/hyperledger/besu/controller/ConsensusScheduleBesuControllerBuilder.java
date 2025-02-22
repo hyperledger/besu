@@ -208,10 +208,14 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final MiningConfiguration miningConfiguration) {
-    return besuControllerBuilderSchedule
-        .get(besuControllerBuilderSchedule.keySet().stream().skip(1).findFirst().orElseThrow())
-        .createAdditionalJsonRpcMethodFactory(
-            protocolContext, protocolSchedule, miningConfiguration);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(
+            b ->
+                b.createAdditionalJsonRpcMethodFactory(
+                    protocolContext, protocolSchedule, miningConfiguration));
+    return super.createAdditionalJsonRpcMethodFactory(
+        protocolContext, protocolSchedule, miningConfiguration);
   }
 
   @Override
