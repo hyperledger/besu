@@ -17,7 +17,7 @@ assignees: ''
   - [ ] `git push upstream 24.4.0-RC1`
 - [ ] Sign-off with team; announce the tag in #besu-release in Discord
   - [ ] Targeting this tag for the burn-in: https://github.com/hyperledger/besu/releases/tag/24.4.0-RC1
-- [ ] Consensys staff start burn-in using this tag
+- [ ] Consensys staff starts burn-in using this tag
 - [ ] Seek sign off for burn-in
   - [ ] Pass? Go ahead and complete the release process
   - [ ] Fail? Put a message in #besu-release in Discord indicating the release will be aborted because it failed burn-in 
@@ -31,8 +31,8 @@ assignees: ''
   - [ ] `git checkout 24.4.0-RC1`
   - [ ] `git tag 24.4.0`
   - [ ] `git push upstream 24.4.0`
-- [ ] Manually run https://github.com/hyperledger/besu/actions/workflows/draft-release.yml using `main` branch` and the FULL RELEASE tag name, i.e. `24.4.0`. Note, this workflow should always be run from `main` branch (hotfix tags will still be released even if they were created based on another branch)
-    - publishes artefacts and version-specific docker tags but does not fully publish the GitHub release so subscribers are not yet notified
+- [ ] Manually run https://github.com/hyperledger/besu/actions/workflows/draft-release.yml using `main` branch` and the FULL RELEASE tag name, i.e. `24.4.0`. Note, this workflow should always be run from the `main` branch (hotfix tags will still be released even if they were created based on another branch)
+    - publishes artifacts and version-specific docker tags but does not fully publish the GitHub release so subscribers are not yet notified
 - [ ] Check all draft-release workflow jobs went green
 - [ ] Check binary SHAs are correct on the release page
 - [ ] Check artifacts exist in https://hyperledger.jfrog.io/ui/repos/tree/General/besu-maven
