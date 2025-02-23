@@ -875,7 +875,6 @@ public abstract class MainnetProtocolSpecs {
         .requestsValidator(new MainnetRequestsValidator())
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestProcessorCoordinator(pragueRequestsProcessors(requestContractAddresses))
-
         // change to accept EIP-7702 transactions
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->

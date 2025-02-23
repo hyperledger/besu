@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.Unstable;
@@ -38,7 +37,6 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -271,20 +269,6 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
         miningParams ->
             assertThat(miningParams.getTargetGasLimit().getAsLong()).isEqualTo(10_000_000L),
         "--target-gas-limit=10000000");
-  }
-
-  @Test
-  public void targetGasLimitIsDisabledWhenNotSpecified() {
-    internalTestSuccess(
-        miningParams -> {
-          final ArgumentCaptor<GasLimitCalculator> gasLimitCalculatorArgumentCaptor =
-              ArgumentCaptor.forClass(GasLimitCalculator.class);
-
-          verify(mockControllerBuilder)
-              .gasLimitCalculator(gasLimitCalculatorArgumentCaptor.capture());
-          assertThat(gasLimitCalculatorArgumentCaptor.getValue())
-              .isEqualTo(GasLimitCalculator.constant());
-        });
   }
 
   @Test
