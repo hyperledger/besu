@@ -539,6 +539,12 @@ public class BesuNodeFactory {
 
   public BesuNode createCliqueNodeWithValidators(final String name, final String... validators)
       throws IOException {
+    return createCliqueNodeWithValidators(name, CliqueOptions.DEFAULT, validators);
+  }
+
+  public BesuNode createCliqueNodeWithValidators(
+      final String name, final CliqueOptions cliqueOptions, final String... validators)
+      throws IOException {
 
     return create(
         new BesuNodeConfigurationBuilder()
@@ -553,7 +559,9 @@ public class BesuNodeFactory {
                     node.createGenesisConfigForValidators(
                         asList(validators),
                         nodes,
-                        GenesisConfigurationFactory::createCliqueGenesisConfig))
+                        vs ->
+                            GenesisConfigurationFactory.createCliqueGenesisConfig(
+                                vs, cliqueOptions)))
             .build());
   }
 
