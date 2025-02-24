@@ -35,7 +35,7 @@ public class DepositRequestProcessor implements RequestProcessor {
   }
 
   @Override
-  public Request process(final ProcessRequestContext context) {
+  public Request process(final RequestProcessingContext context) {
     if (depositContractAddress.isEmpty()) {
       return new Request(RequestType.DEPOSIT, Bytes.EMPTY);
     }

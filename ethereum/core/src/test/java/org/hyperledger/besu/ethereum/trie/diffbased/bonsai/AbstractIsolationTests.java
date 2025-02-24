@@ -353,7 +353,7 @@ public abstract class AbstractIsolationTests {
         protocolSchedule
             .getByBlockHeader(blockHeader(0))
             .getBlockProcessor()
-            .processBlock(blockchain, ws, block);
+            .processBlock(protocolContext, blockchain, ws, block);
     blockchain.appendBlock(block, res.getReceipts());
     return res;
   }

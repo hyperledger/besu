@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -174,7 +175,7 @@ public class TransactionSimulator {
           operationTracer,
           pendingBlockHeader,
           updater,
-          Address.ZERO);
+          pendingBlockHeader.getCoinbase());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -353,7 +354,8 @@ public class TransactionSimulator {
       final OperationTracer operationTracer,
       final BlockHeader header,
       final WorldUpdater updater,
-      final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+      final BlockHashLookup blockHashLookup) {
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(header);
 
@@ -364,7 +366,8 @@ public class TransactionSimulator {
         operationTracer,
         header,
         updater,
-        miningBeneficiary);
+        miningBeneficiary,
+        blockHashLookup);
   }
 
   @Nonnull
@@ -377,7 +380,31 @@ public class TransactionSimulator {
       final WorldUpdater updater,
       final Address miningBeneficiary) {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(processableHeader);
+    final BlockHashLookup blockHashLookup =
+        protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, processableHeader);
+    return processWithWorldUpdater(
+        callParams,
+        maybeStateOverrides,
+        transactionValidationParams,
+        operationTracer,
+        processableHeader,
+        updater,
+        miningBeneficiary,
+        blockHashLookup);
+  }
 
+  @Nonnull
+  public Optional<TransactionSimulatorResult> processWithWorldUpdater(
+      final CallParameter callParams,
+      final Optional<StateOverrideMap> maybeStateOverrides,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final ProcessableBlockHeader processableHeader,
+      final WorldUpdater updater,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup) {
+
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(processableHeader);
     final Address senderAddress =
         callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
 
@@ -448,9 +475,7 @@ public class TransactionSimulator {
             blockHeaderToProcess,
             transaction,
             miningBeneficiary,
-            protocolSpec
-                .getBlockHashProcessor()
-                .createBlockHashLookup(blockchain, blockHeaderToProcess),
+            blockHashLookup,
             false,
             transactionValidationParams,
             operationTracer,
@@ -460,13 +485,21 @@ public class TransactionSimulator {
   }
 
   @VisibleForTesting
-  protected void applyOverrides(final MutableAccount account, final StateOverride override) {
+  protected static void applyOverrides(final MutableAccount account, final StateOverride override) {
     LOG.debug("applying overrides to state for account {}", account.getAddress());
     override.getNonce().ifPresent(account::setNonce);
-    if (override.getBalance().isPresent()) {
-      account.setBalance(override.getBalance().get());
-    }
-    override.getCode().ifPresent(n -> account.setCode(Bytes.fromHexString(n)));
+    override.getBalance().ifPresent(account::setBalance);
+    override.getCode().ifPresent(code -> account.setCode(Bytes.fromHexString(code)));
+    override
+        .getState()
+        .ifPresent(
+            d -> {
+              account.clearStorage();
+              d.forEach(
+                  (key, value) ->
+                      account.setStorageValue(
+                          UInt256.fromHexString(key), UInt256.fromHexString(value)));
+            });
     override
         .getStateDiff()
         .ifPresent(

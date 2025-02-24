@@ -14,15 +14,14 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.validation;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -48,19 +47,15 @@ public class MessageValidator {
      * @param targetRound the target round
      * @param proposalBlock the proposal block
      * @param blockInterface the block interface
-     * @param bftExtraDataCodec the bft extra data codec
      */
     public SubsequentMessageValidator(
         final Collection<Address> validators,
         final ConsensusRoundIdentifier targetRound,
-        final Block proposalBlock,
-        final BftBlockInterface blockInterface,
-        final BftExtraDataCodec bftExtraDataCodec) {
-      final Block commitBlock =
+        final QbftBlock proposalBlock,
+        final QbftBlockInterface blockInterface) {
+      final QbftBlock commitBlock =
           blockInterface.replaceRoundInBlock(
-              proposalBlock,
-              targetRound.getRoundNumber(),
-              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
+              proposalBlock, targetRound.getRoundNumber(), QbftHashMode.COMMITTED_SEAL);
       prepareValidator = new PrepareValidator(validators, targetRound, proposalBlock.getHash());
       commitValidator =
           new CommitValidator(
@@ -97,7 +92,7 @@ public class MessageValidator {
      * @param proposalBlock the proposal block
      * @return the subsequent message validator
      */
-    SubsequentMessageValidator create(Block proposalBlock);
+    SubsequentMessageValidator create(QbftBlock proposalBlock);
   }
 
   private final SubsequentMessageValidatorFactory subsequentMessageValidatorFactory;
