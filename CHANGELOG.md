@@ -29,6 +29,9 @@
 - Upgrade Netty to version 4.1.118 to fix CVE-2025-24970 [#8275](https://github.com/hyperledger/besu/pull/8275)
 - Add missing RPC method `debug_accountRange` to `RpcMethod.java` and implemented its handler. [#8153](https://github.com/hyperledger/besu/issues/8153)
 
+## 25.2.1 hotfix
+- Pectra - update Holesky and Sepolia deposit contract addresses [#8346](https://github.com/hyperledger/besu/pull/8346)
+
 ## 25.2.0
 
 ### Breaking Changes
