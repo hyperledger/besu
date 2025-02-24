@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
-import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -59,7 +58,6 @@ public class MessageFrameTestFixture {
   private Optional<BlockHeader> blockHeader = Optional.empty();
   private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
   private ExecutionContextTestFixture executionContextTestFixture;
-  private BlockValues blockValues;
 
   public MessageFrameTestFixture parentFrame(final MessageFrame parentFrame) {
     this.parentFrame = parentFrame;
@@ -162,11 +160,6 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture blockValues(final BlockValues blockValues) {
-    this.blockValues = blockValues;
-    return this;
-  }
-
   public MessageFrame build() {
     final Blockchain localBlockchain = this.blockchain.orElseGet(this::createDefaultBlockchain);
     final BlockHeader localBlockHeader =
@@ -200,7 +193,6 @@ public class MessageFrameTestFixture {
                             .getBlockHashProcessor()
                             .createBlockHashLookup(localBlockchain, localBlockHeader)))
             .maxStackSize(maxStackSize)
-            .blockValues(blockValues)
             .build();
     stackItems.forEach(frame::pushStackItem);
     return frame;

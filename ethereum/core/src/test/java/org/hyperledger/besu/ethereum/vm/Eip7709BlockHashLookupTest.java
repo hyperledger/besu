@@ -38,7 +38,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
-import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.stateless.NoopAccessWitness;
@@ -93,13 +92,10 @@ class Eip7709BlockHashLookupTest {
     final BlockHeader blockHeader =
         new BlockHeaderTestFixture().number(currentBlockNumber).buildHeader();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
-    final BlockValues blockValues = mock(BlockValues.class);
-    when(blockValues.getNumber()).thenReturn(currentBlockNumber);
     return new MessageFrameTestFixture()
         .initialGas(remainingGas)
         .accessWitness(NoopAccessWitness.get())
         .blockHashLookup(lookup)
-        .blockValues(blockValues)
         .worldUpdater(worldUpdater)
         .executionContextTestFixture(ExecutionContextTestFixture.create())
         .gasPrice(Wei.of(25))
