@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.hyperledger.besu.evm.frame.MessageFrame.DEFAULT_MAX_STACK_SIZE;
 
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -39,6 +40,7 @@ public class MessageFrameTestFixture {
   private static final int maxStackSize = DEFAULT_MAX_STACK_SIZE;
 
   private MessageFrame parentFrame;
+  private AccessWitness accessWitness;
   private MessageFrame.Type type = MessageFrame.Type.MESSAGE_CALL;
   private Optional<Blockchain> blockchain = Optional.empty();
   private Optional<WorldUpdater> worldUpdater = Optional.empty();
@@ -59,6 +61,11 @@ public class MessageFrameTestFixture {
 
   public MessageFrameTestFixture parentFrame(final MessageFrame parentFrame) {
     this.parentFrame = parentFrame;
+    return this;
+  }
+
+  public MessageFrameTestFixture accessWitness(final AccessWitness accessWitness) {
+    this.accessWitness = accessWitness;
     return this;
   }
 
@@ -162,6 +169,7 @@ public class MessageFrameTestFixture {
     final MessageFrame frame =
         MessageFrame.builder()
             .parentMessageFrame(parentFrame)
+            .accessWitness(accessWitness)
             .type(type)
             .worldUpdater(worldUpdater.orElseGet(this::createDefaultWorldUpdater))
             .initialGas(initialGas)
@@ -191,7 +199,7 @@ public class MessageFrameTestFixture {
   }
 
   private WorldUpdater createDefaultWorldUpdater() {
-    return getOrCreateExecutionContextTestFixture().getStateArchive().getMutable().updater();
+    return getOrCreateExecutionContextTestFixture().getStateArchive().getWorldState().updater();
   }
 
   private Blockchain createDefaultBlockchain() {

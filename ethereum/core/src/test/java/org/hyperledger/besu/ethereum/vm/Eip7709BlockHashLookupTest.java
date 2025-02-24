@@ -31,24 +31,28 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
-import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.stateless.NoopAccessWitness;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class Eip7709BlockHashLookupTest {
+class Eip7709BlockHashLookupTest {
   private static final long BLOCKHASH_SERVE_WINDOW = 160;
   private static final Address STORAGE_ADDRESS = Address.fromHexString("0x0");
   private static final long HISTORY_SERVE_WINDOW = 200L;
@@ -63,9 +67,9 @@ public class Eip7709BlockHashLookupTest {
   void setUp() {
     headers = new ArrayList<>();
     worldUpdater = createWorldUpdater(0, CURRENT_BLOCK_NUMBER);
-    frame = createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, Long.MAX_VALUE);
     lookup =
         new Eip7709BlockHashLookup(STORAGE_ADDRESS, HISTORY_SERVE_WINDOW, BLOCKHASH_SERVE_WINDOW);
+    frame = spy(createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, Long.MAX_VALUE).build());
   }
 
   private WorldUpdater createWorldUpdater(final int fromBlockNumber, final int toBlockNumber) {
@@ -83,16 +87,20 @@ public class Eip7709BlockHashLookupTest {
     return worldUpdaterMock;
   }
 
-  private MessageFrame createMessageFrame(
+  private MessageFrameTestFixture createMessageFrame(
       final long currentBlockNumber, final WorldUpdater worldUpdater, final long remainingGas) {
-    final MessageFrame messageFrame = mock(MessageFrame.class);
-    final BlockValues blockValues = mock(BlockValues.class);
-    when(blockValues.getNumber()).thenReturn(currentBlockNumber);
-    when(messageFrame.getBlockValues()).thenReturn(blockValues);
-    when(messageFrame.getWorldUpdater()).thenReturn(worldUpdater);
-    when(messageFrame.getRemainingGas()).thenReturn(remainingGas);
-    when(messageFrame.getAccessWitness()).thenReturn(NoopAccessWitness.get());
-    return messageFrame;
+    final BlockHeader blockHeader =
+        new BlockHeaderTestFixture().number(currentBlockNumber).buildHeader();
+    final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
+    return new MessageFrameTestFixture()
+        .initialGas(remainingGas)
+        .accessWitness(NoopAccessWitness.get())
+        .blockHashLookup(lookup)
+        .worldUpdater(worldUpdater)
+        .executionContextTestFixture(ExecutionContextTestFixture.create())
+        .gasPrice(Wei.of(25))
+        .blockHeader(blockHeader)
+        .blockchain(blockchain);
   }
 
   @Test
@@ -108,8 +116,25 @@ public class Eip7709BlockHashLookupTest {
   @Test
   void shouldReturnZeroHashWhenSystemContractNotExists() {
     worldUpdater = new SimpleWorld();
-    frame = createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, Long.MAX_VALUE);
+    frame = spy(createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, Long.MAX_VALUE).build());
     assertThat(lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L)).isEqualTo(Hash.ZERO);
+  }
+
+  @Test
+  @SuppressWarnings("ReturnValueIgnored")
+  void shouldDecrementRemainingGasFromFrameWhenOOG() {
+    AccessWitness accessWitness = mock(AccessWitness.class);
+    when(accessWitness.touchAndChargeStorageLoad(any(), any())).thenReturn(Long.MAX_VALUE);
+    frame =
+        spy(
+            createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, 0)
+                .accessWitness(accessWitness)
+                .build());
+    lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L);
+    verify(frame).decrementRemainingGas(eq(Long.MAX_VALUE));
+    verify(frame).getAccessWitness();
+    verify(frame).getRemainingGas();
+    verifyNoMoreInteractions(frame);
   }
 
   @Test
@@ -117,11 +142,10 @@ public class Eip7709BlockHashLookupTest {
   void shouldDecrementRemainingGasFromFrame() {
     AccessWitness accessWitness = mock(AccessWitness.class);
     when(accessWitness.touchAndChargeStorageLoad(any(), any())).thenReturn(100L);
-    frame = createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, 200L);
+    frame = spy(createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, 200L).build());
     when(frame.getAccessWitness()).thenReturn(accessWitness);
     lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L);
     verify(frame).decrementRemainingGas(eq(100L));
-    verify(frame).getBlockValues();
     verify(frame).getAccessWitness();
     verify(frame).getRemainingGas();
     verify(frame).getWorldUpdater();
@@ -133,8 +157,11 @@ public class Eip7709BlockHashLookupTest {
     worldUpdater = new SimpleWorld();
     AccessWitness accessWitness = mock(AccessWitness.class);
     when(accessWitness.touchAndChargeStorageLoad(any(), any())).thenReturn(100L);
-    frame = createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, 1L);
-    when(frame.getAccessWitness()).thenReturn(accessWitness);
+    frame =
+        spy(
+            createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, 1L)
+                .accessWitness(accessWitness)
+                .build());
     final Hash blockHash = lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L);
     assertThat(blockHash).isNull();
   }
@@ -142,7 +169,7 @@ public class Eip7709BlockHashLookupTest {
   @Test
   void shouldReturnZeroHashWhenParentBlockNotInContract() {
     worldUpdater = createWorldUpdater(CURRENT_BLOCK_NUMBER - 10, CURRENT_BLOCK_NUMBER);
-    frame = createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, Long.MAX_VALUE);
+    frame = spy(createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, Long.MAX_VALUE).build());
     lookup =
         new Eip7709BlockHashLookup(STORAGE_ADDRESS, HISTORY_SERVE_WINDOW, BLOCKHASH_SERVE_WINDOW);
     assertHashForBlockNumber(CURRENT_BLOCK_NUMBER - 20, Hash.ZERO);
@@ -151,7 +178,7 @@ public class Eip7709BlockHashLookupTest {
   @Test
   void shouldCacheBlockHashes() {
     worldUpdater = createWorldUpdater(0, CURRENT_BLOCK_NUMBER);
-    frame = createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, Long.MAX_VALUE);
+    frame = spy(createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, Long.MAX_VALUE).build());
     final Account account = worldUpdater.get(STORAGE_ADDRESS);
     clearInvocations(account);
 
@@ -177,7 +204,7 @@ public class Eip7709BlockHashLookupTest {
   @Test
   void shouldGetHashWhenParentIsGenesis() {
     worldUpdater = createWorldUpdater(0, 1);
-    frame = createMessageFrame(1, worldUpdater, Long.MAX_VALUE);
+    frame = spy(createMessageFrame(1, worldUpdater, Long.MAX_VALUE).build());
     lookup =
         new Eip7709BlockHashLookup(STORAGE_ADDRESS, HISTORY_SERVE_WINDOW, BLOCKHASH_SERVE_WINDOW);
     assertHashForBlockNumber(0);
@@ -206,7 +233,14 @@ public class Eip7709BlockHashLookupTest {
   }
 
   private void assertHashForBlockNumber(final int blockNumber, final Hash hash) {
-    Assertions.assertThat(lookup.apply(frame, (long) blockNumber)).isEqualTo(hash);
+    BlockHashOperation op = new BlockHashOperation(new CancunGasCalculator());
+    frame.pushStackItem(Bytes.ofUnsignedInt(blockNumber));
+
+    clearInvocations(frame);
+
+    op.execute(frame, null);
+
+    verify(frame).pushStackItem(hash);
   }
 
   private BlockHeader createHeader(final long blockNumber, final BlockHeader parentHeader) {

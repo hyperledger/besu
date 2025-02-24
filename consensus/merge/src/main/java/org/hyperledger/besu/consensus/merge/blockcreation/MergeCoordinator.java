@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static java.util.stream.Collectors.joining;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
@@ -49,6 +50,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +80,16 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    */
   private static final double TRY_FILL_BLOCK = 1.0;
 
-  private static final long DEFAULT_TARGET_GAS_LIMIT = 30000000L;
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 36_000_000L;
+  // testnets might have higher gas limits than mainnet
+  private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 36_000_000L;
+
+  private static final List<BigInteger> TESTNET_CHAIN_IDS =
+      List.of(
+          BigInteger.valueOf(11155111), // Sepolia
+          BigInteger.valueOf(17000), // Holesky
+          BigInteger.valueOf(39438135) // Ephemery
+          );
 
   /** The Mining parameters. */
   protected final MiningConfiguration miningConfiguration;
@@ -133,7 +144,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       miningParams.setCoinbase(Address.ZERO);
     }
     if (miningParams.getTargetGasLimit().isEmpty()) {
-      miningParams.setTargetGasLimit(DEFAULT_TARGET_GAS_LIMIT);
+      miningParams.setTargetGasLimit(getDefaultGasLimit(protocolSchedule));
     }
     miningParams.setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
 
@@ -179,7 +190,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.backwardSyncContext = backwardSyncContext;
     if (miningParams.getTargetGasLimit().isEmpty()) {
-      miningParams.setTargetGasLimit(DEFAULT_TARGET_GAS_LIMIT);
+      miningParams.setTargetGasLimit(getDefaultGasLimit(protocolSchedule));
     }
     miningParams.setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
     this.miningConfiguration = miningParams;
@@ -678,7 +689,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     Optional<MutableWorldState> newWorldState =
         protocolContext
             .getWorldStateArchive()
-            .getMutable(newHead.getStateRoot(), newHead.getHash());
+            .getWorldState(withBlockHeaderAndUpdateNodeHead(newHead));
 
     newWorldState.ifPresentOrElse(
         mutableWorldState ->
@@ -873,6 +884,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return true;
     }
     return job.cancelled.get();
+  }
+
+  private long getDefaultGasLimit(final ProtocolSchedule protocolSchedule) {
+    if (protocolSchedule.getChainId().isPresent()
+        && TESTNET_CHAIN_IDS.contains(protocolSchedule.getChainId().get())) {
+      return DEFAULT_TARGET_GAS_LIMIT_TESTNET;
+    }
+
+    return DEFAULT_TARGET_GAS_LIMIT;
   }
 
   private static class BlockCreationTask {

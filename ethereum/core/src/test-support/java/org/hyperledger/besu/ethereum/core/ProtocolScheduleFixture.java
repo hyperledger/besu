@@ -45,12 +45,16 @@ public class ProtocolScheduleFixture {
           new NoOpMetricsSystem());
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
+    return getGenesisConfigOptions("/mainnet.json");
+  }
+
+  public static GenesisConfigOptions getGenesisConfigOptions(final String genesisConfig) {
     // this method avoids reading all the alloc accounts when all we want is the "config" section
     try (final JsonParser jsonParser =
-        new JsonFactory().createParser(GenesisConfig.class.getResource("/mainnet.json"))) {
+        new JsonFactory().createParser(GenesisConfig.class.getResource(genesisConfig))) {
 
       while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-        if ("config".equals(jsonParser.getCurrentName())) {
+        if ("config".equals(jsonParser.currentName())) {
           jsonParser.nextToken();
           return JsonGenesisConfigOptions.fromJsonObject(
               normalizeKeys(new ObjectMapper().readTree(jsonParser)));

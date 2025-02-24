@@ -220,6 +220,11 @@ public final class MockNetwork {
     }
 
     @Override
+    public boolean isStopped() {
+      return true;
+    }
+
+    @Override
     public Optional<EnodeURL> getLocalEnode() {
       return Optional.empty();
     }

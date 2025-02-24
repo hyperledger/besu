@@ -26,7 +26,6 @@ import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -170,9 +169,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** The Is revert reason enabled. */
   protected boolean isRevertReasonEnabled;
 
-  /** The Gas limit calculator. */
-  GasLimitCalculator gasLimitCalculator;
-
   /** The Storage provider. */
   protected StorageProvider storageProvider;
 
@@ -220,6 +216,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** The transaction simulator */
   protected TransactionSimulator transactionSimulator;
+
+  /** When enabled, round changes on f+1 RC messages from higher rounds */
+  protected boolean isEarlyRoundChangeEnabled = false;
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -418,17 +417,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Gas limit calculator besu controller builder.
-   *
-   * @param gasLimitCalculator the gas limit calculator
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
-    this.gasLimitCalculator = gasLimitCalculator;
-    return this;
-  }
-
-  /**
    * Required blocks besu controller builder.
    *
    * @param requiredBlocks the required blocks
@@ -556,6 +544,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * check if early round change is enabled when f+1 RC messages from higher rounds are received
+   *
+   * @param isEarlyRoundChangeEnabled whether to enable early round change
+   * @return the besu controller
+   */
+  public BesuControllerBuilder isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
+    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
+    return this;
+  }
+
+  /**
    * Build besu controller.
    *
    * @return the besu controller
@@ -574,7 +573,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(transactionPoolConfiguration, "Missing transaction pool configuration");
     checkNotNull(nodeKey, "Missing node key");
     checkNotNull(storageProvider, "Must supply a storage provider");
-    checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
     checkNotNull(evmConfiguration, "Missing evm config");
     checkNotNull(networkingConfiguration, "Missing network configuration");
     checkNotNull(apiConfiguration, "Missing API configuration");
@@ -623,7 +621,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             worldStateHealerSupplier::get);
 
     if (maybeStoredGenesisBlockHash.isEmpty()) {
-      genesisState.writeStateTo(worldStateArchive.getMutable());
+      genesisState.writeStateTo(worldStateArchive.getWorldState());
     }
 
     transactionSimulator =
@@ -719,7 +717,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             transactionPoolConfiguration,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
-            miningConfiguration);
+            miningConfiguration,
+            syncConfig.isPeerTaskSystemEnabled());
 
     final List<PeerValidator> peerValidators =
         createPeerValidators(protocolSchedule, peerTaskExecutor);

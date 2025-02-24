@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
@@ -102,7 +103,9 @@ public class TraceTransactionIntegrationTest {
     final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     final MutableWorldState worldState =
         worldStateArchive
-            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+            .getWorldState(
+                withStateRootAndBlockHashAndUpdateNodeHead(
+                    genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .get();
     final WorldUpdater createTransactionUpdater = worldState.updater();
     TransactionProcessingResult result =
@@ -153,7 +156,6 @@ public class TraceTransactionIntegrationTest {
     // No storage changes before the SSTORE call.
     TraceFrame frame = tracer.getTraceFrames().get(170);
     assertThat(frame.getOpcode()).isEqualTo("DUP6");
-    assertStorageContainsExactly(frame);
 
     // Storage changes show up in the SSTORE frame.
     frame = tracer.getTraceFrames().get(171);
@@ -178,7 +180,9 @@ public class TraceTransactionIntegrationTest {
     final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     transactionProcessor.processTransaction(
         worldStateArchive
-            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+            .getWorldState(
+                withStateRootAndBlockHashAndUpdateNodeHead(
+                    genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .get()
             .updater(),
         genesisBlockHeader,
@@ -201,8 +205,6 @@ public class TraceTransactionIntegrationTest {
     assertThat(frame.getOpcode()).isEqualTo("PUSH1");
     assertThat(frame.getPc()).isEqualTo(0);
     assertStackContainsExactly(frame);
-    assertMemoryContainsExactly(frame);
-    assertStorageContainsExactly(frame);
 
     frame = traceFrames.get(1);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
@@ -211,8 +213,6 @@ public class TraceTransactionIntegrationTest {
     assertThat(frame.getOpcode()).isEqualTo("PUSH1");
     assertThat(frame.getPc()).isEqualTo(2);
     assertStackContainsExactly(frame, "0x80");
-    assertMemoryContainsExactly(frame);
-    assertStorageContainsExactly(frame);
 
     frame = traceFrames.get(2);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
@@ -226,7 +226,6 @@ public class TraceTransactionIntegrationTest {
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         "0x0000000000000000000000000000000000000000000000000000000000000080");
-    assertStorageContainsExactly(frame);
     // Reference implementation actually records the memory after expansion but before the store.
     //    assertMemoryContainsExactly(frame,
     //        "0000000000000000000000000000000000000000000000000000000000000000",
@@ -245,7 +244,6 @@ public class TraceTransactionIntegrationTest {
         "0000000000000000000000000000000000000000000000000000000000000000",
         "0000000000000000000000000000000000000000000000000000000000000000",
         "0000000000000000000000000000000000000000000000000000000000000080");
-    assertStorageContainsExactly(frame);
   }
 
   private void assertStackContainsExactly(

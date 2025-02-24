@@ -100,7 +100,8 @@ class NewPooledTransactionHashesMessageProcessorTest {
             transactionPool,
             transactionPoolConfiguration,
             ethContext,
-            new TransactionPoolMetrics(metricsSystem));
+            new TransactionPoolMetrics(metricsSystem),
+            false);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
   }
 

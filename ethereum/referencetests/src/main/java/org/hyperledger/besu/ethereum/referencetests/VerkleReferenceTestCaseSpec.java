@@ -66,7 +66,7 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
       final BlockHeader genesis) {
     final WorldStateArchive worldStateArchive = createVerkleInMemoryWorldStateArchive(blockchain);
 
-    final MutableWorldState worldState = worldStateArchive.getMutable();
+    final MutableWorldState worldState = worldStateArchive.getWorldState();
     final WorldUpdater updater = worldState.updater();
 
     for (final Map.Entry<String, ReferenceTestWorldState.AccountMock> entry : accounts.entrySet()) {
@@ -193,8 +193,6 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
           null,
           null,
           null,
-          null,
-          null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -205,7 +203,8 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
             public ParsedExtraData parseExtraData(final BlockHeader header) {
               return null;
             }
-          });
+          },
+          null);
     }
   }
 

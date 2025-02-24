@@ -288,7 +288,7 @@ public class ProtocolSpec {
   }
 
   /**
-   * Returns the TransctionReceiptFactory used in this specification
+   * Returns the TransactionReceiptFactory used in this specification
    *
    * @return the transaction receipt factory
    */

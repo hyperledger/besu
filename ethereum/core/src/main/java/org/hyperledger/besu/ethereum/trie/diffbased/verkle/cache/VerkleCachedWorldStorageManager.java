@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache;
 
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleSnapshotWorldStateKeyValueStorage;
@@ -26,15 +26,13 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
-import java.util.function.Supplier;
-
 public class VerkleCachedWorldStorageManager extends DiffBasedCachedWorldStorageManager {
 
   public VerkleCachedWorldStorageManager(
-      final DiffBasedWorldStateProvider archive,
+      final VerkleWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Supplier<DiffBasedWorldStateConfig> defaultBonsaiWorldStateConfigSupplier) {
-    super(archive, worldStateKeyValueStorage, defaultBonsaiWorldStateConfigSupplier);
+      final WorldStateConfig worldStateConfig) {
+    super(archive, worldStateKeyValueStorage, worldStateConfig);
   }
 
   @Override
@@ -46,7 +44,7 @@ public class VerkleCachedWorldStorageManager extends DiffBasedCachedWorldStorage
         (VerkleWorldStateProvider) archive,
         (VerkleWorldStateKeyValueStorage) worldStateKeyValueStorage,
         evmConfiguration,
-        defaultBonsaiWorldStateConfigSupplier.get());
+        WorldStateConfig.newBuilder(worldStateConfig).build());
   }
 
   @Override

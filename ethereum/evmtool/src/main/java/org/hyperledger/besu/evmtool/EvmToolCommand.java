@@ -402,16 +402,20 @@ public class EvmToolCommand implements Runnable {
 
       long txGas = gas;
       if (chargeIntrinsicGas) {
-        final long intrinsicGasCost =
-            protocolSpec
-                .getGasCalculator()
-                .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
-        txGas -= intrinsicGasCost;
         final long accessListCost =
             tx.getAccessList()
                 .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
                 .orElse(0L);
-        txGas -= accessListCost;
+
+        final long delegateCodeCost =
+            protocolSpec.getGasCalculator().delegateCodeGasCost(tx.codeDelegationListSize());
+
+        final long intrinsicGasCost =
+            protocolSpec
+                .getGasCalculator()
+                .transactionIntrinsicGasCost(
+                    tx.getPayload(), tx.isContractCreation(), accessListCost + delegateCodeCost);
+        txGas -= intrinsicGasCost;
       }
 
       final EVM evm = protocolSpec.getEvm();

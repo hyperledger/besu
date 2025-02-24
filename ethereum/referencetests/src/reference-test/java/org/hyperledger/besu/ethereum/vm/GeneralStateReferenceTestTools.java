@@ -22,6 +22,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.DelegatingBytes;
+import org.apache.tuweni.units.bigints.UInt256;
+import org.assertj.core.api.SoftAssertions;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -42,8 +50,12 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.testutil.JsonTestParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GeneralStateReferenceTestTools {
+  private static final Logger LOG = LoggerFactory.getLogger(GeneralStateReferenceTestTools.class);
+
   private static final List<String> SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS =
       Arrays.asList("Frontier", "Homestead", "EIP150");
 
@@ -104,6 +116,10 @@ public class GeneralStateReferenceTestTools {
 
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");
+
+    // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
+    params.ignore("/stEIP2537/");
+
   }
 
   private GeneralStateReferenceTestTools() {
@@ -174,16 +190,26 @@ public class GeneralStateReferenceTestTools {
       worldStateUpdater.deleteAccount(coinbase.getAddress());
     }
     worldStateUpdater.commit();
-    worldState.processExtraStateStorageFormatValidation(blockHeader);
+    Collection<Exception> additionalExceptions = worldState.processExtraStateStorageFormatValidation(blockHeader);
     worldState.persist(blockHeader);
 
     // Check the world state root hash.
     final Hash expectedRootHash = spec.getExpectedRootHash();
-    assertThat(worldState.rootHash())
-        .withFailMessage(
-            "Unexpected world state root hash; expected state: %s, computed state: %s",
-            spec.getExpectedRootHash(), worldState.rootHash())
-        .isEqualTo(expectedRootHash);
+    // If the root hash doesn't match, first dump the world state for debugging.
+    if (!expectedRootHash.equals(worldState.rootHash())) {
+      logWorldState(worldState);
+    }
+    SoftAssertions.assertSoftly(
+        softly -> {
+          softly.assertThat(worldState.rootHash())
+              .withFailMessage(
+                  "Unexpected world state root hash; expected state: %s, computed state: %s",
+                  spec.getExpectedRootHash(), worldState.rootHash())
+              .isEqualTo(expectedRootHash);
+          additionalExceptions.forEach(
+              e -> softly.fail("Additional exception during state validation: " + e.getMessage()));
+
+        });
 
     // Check the logs.
     final Hash expectedLogsHash = spec.getExpectedLogsHash();
@@ -200,5 +226,34 @@ public class GeneralStateReferenceTestTools {
 
   private static boolean shouldClearEmptyAccounts(final String eip) {
     return !SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS.contains(eip);
+  }
+
+  private static void logWorldState(final ReferenceTestWorldState worldState) {
+    ObjectMapper mapper = new ObjectMapper();
+    ObjectNode worldStateJson = mapper.createObjectNode();
+    worldState.streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+        .forEach(
+            account -> {
+              ObjectNode accountJson = mapper.createObjectNode();
+              accountJson.put("nonce", Bytes.ofUnsignedLong(account.getNonce()).toShortHexString());
+              accountJson.put("balance", account.getBalance().toShortHexString());
+              accountJson.put("code", account.getCode().toHexString());
+              ObjectNode storageJson = mapper.createObjectNode();
+              var storageEntries = account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+              storageEntries.values().stream()
+                  .map(
+                      e ->
+                          Map.entry(
+                              e.getKey().orElse(UInt256.fromBytes(Bytes.EMPTY)),
+                              account.getStorageValue(UInt256.fromBytes(e.getKey().get()))))
+                  .sorted(Map.Entry.comparingByKey())
+                  .forEach(e -> storageJson.put(e.getKey().toQuantityHexString(), e.getValue().toQuantityHexString()));
+
+              if (!storageEntries.isEmpty()) {
+                accountJson.set("storage", storageJson);
+              }
+              worldStateJson.set(account.getAddress().map(DelegatingBytes::toHexString).orElse(Bytes.EMPTY.toHexString()), accountJson);
+            });
+    LOG.error("Calculated world state: \n{}", worldStateJson.toPrettyString());
   }
 }

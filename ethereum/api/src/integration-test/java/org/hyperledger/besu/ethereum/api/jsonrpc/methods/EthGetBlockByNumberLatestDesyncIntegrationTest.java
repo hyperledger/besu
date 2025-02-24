@@ -67,7 +67,7 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
     MutableBlockchain chain =
         InMemoryKeyValueStorageProvider.createInMemoryBlockchain(importer.getGenesisBlock());
     WorldStateArchive state = InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
-    importer.getGenesisState().writeStateTo(state.getMutable());
+    importer.getGenesisState().writeStateTo(state.getWorldState());
     ProtocolContext context =
         new ProtocolContext(chain, state, mock(ConsensusContext.class), new BadBlockManager());
 

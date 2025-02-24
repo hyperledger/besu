@@ -255,7 +255,7 @@ public class EVM {
               case 0x09 -> MulModOperation.staticOperation(frame);
               case 0x0a -> ExpOperation.staticOperation(frame, gasCalculator);
               case 0x0b -> SignExtendOperation.staticOperation(frame);
-              case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperation.INVALID_RESULT;
+              case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperation.invalidOperationResult(opcode);
               case 0x10 -> LtOperation.staticOperation(frame);
               case 0x11 -> GtOperation.staticOperation(frame);
               case 0x12 -> SLtOperation.staticOperation(frame);
@@ -273,7 +273,7 @@ public class EVM {
               case 0x5f ->
                   enableShanghai
                       ? Push0Operation.staticOperation(frame)
-                      : InvalidOperation.INVALID_RESULT;
+                      : InvalidOperation.invalidOperationResult(opcode);
               case 0x80, // DUP1-16
                       0x81,
                       0x82,

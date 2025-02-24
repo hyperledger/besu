@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCase;
 import org.hyperledger.besu.ethereum.referencetests.CandidateBlock;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountState;
@@ -90,8 +91,8 @@ public class BlockchainReferenceTestTools {
       // EOF tests don't have Prague stuff like deposits right now
       .ignore("/stEOF/")
 
-      // None of the Prague tests have withdrawals and deposits handling
-      .ignore("\\[Prague\\]");
+      // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
+      .ignore("/stEIP2537/");
 
     if (NETWORKS_TO_RUN.isEmpty()) {
       params.ignoreAll();
@@ -103,9 +104,8 @@ public class BlockchainReferenceTestTools {
   @SuppressWarnings("java:S5960") // this is actually test code
   public static void executeTest(final BlockchainReferenceTestCase testCase) {
     final BlockHeader genesisBlockHeader = testCase.getGenesisBlockHeader();
-    final MutableWorldState worldState =
-        testCase.getWorldStateArchive()
-            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+    final MutableWorldState worldState = testCase.getWorldStateArchive()
+            .getWorldState(WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .orElseThrow();
 
     final ProtocolSchedule schedule =

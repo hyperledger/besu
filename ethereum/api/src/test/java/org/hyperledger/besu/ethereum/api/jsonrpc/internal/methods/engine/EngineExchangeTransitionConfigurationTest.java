@@ -254,8 +254,6 @@ public class EngineExchangeTransitionConfigurationTest {
         null,
         null,
         null,
-        null,
-        null,
         new BlockHeaderFunctions() {
           @Override
           public Hash hash(final BlockHeader header) {
@@ -266,6 +264,7 @@ public class EngineExchangeTransitionConfigurationTest {
           public ParsedExtraData parseExtraData(final BlockHeader header) {
             return null;
           }
-        });
+        },
+        null);
   }
 }
