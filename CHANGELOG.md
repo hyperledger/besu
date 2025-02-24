@@ -17,6 +17,9 @@
 ### Additions and Improvements
 ### Bug fixes
 
+## 25.2.1 hotfix
+- Pectra - update Holesky and Sepolia deposit contract addresses [#8346](https://github.com/hyperledger/besu/pull/8346)
+
 ## 25.2.0
 
 ### Breaking Changes
