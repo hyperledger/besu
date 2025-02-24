@@ -125,7 +125,8 @@ class Eip7709BlockHashLookupTest {
   @SuppressWarnings("ReturnValueIgnored")
   void shouldDecrementRemainingGasFromFrameWhenOOG() {
     AccessWitness accessWitness = mock(AccessWitness.class);
-    when(accessWitness.touchAndChargeStorageLoad(any(), any(), anyLong())).thenReturn(Long.MAX_VALUE);
+    when(accessWitness.touchAndChargeStorageLoad(any(), any(), anyLong()))
+        .thenReturn(Long.MAX_VALUE);
     frame =
         spy(
             createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, 0)
