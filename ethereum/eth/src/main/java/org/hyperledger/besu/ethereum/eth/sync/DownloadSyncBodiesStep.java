@@ -36,7 +36,6 @@ public class DownloadSyncBodiesStep
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final SynchronizerConfiguration synchronizerConfiguration;
-  private final List<SyncBlock> allSyncBlocks = new ArrayList<>();
 
   public DownloadSyncBodiesStep(
       final ProtocolSchedule protocolSchedule,
@@ -64,18 +63,22 @@ public class DownloadSyncBodiesStep
 
   private CompletableFuture<List<SyncBlock>> getSyncBodiesWithPeerTaskSystem(
       final List<BlockHeader> headers) {
+    final int numSyncBlocksToGet = headers.size();
+    final List<SyncBlock> syncBlocks = new ArrayList<>(numSyncBlocksToGet);
     do {
+      final List<BlockHeader> headersForBodiesStillToGet =
+          headers.subList(syncBlocks.size(), numSyncBlocksToGet);
       GetSyncBlockBodiesFromPeerTask task =
-          new GetSyncBlockBodiesFromPeerTask(headers, protocolSchedule);
+          new GetSyncBlockBodiesFromPeerTask(headersForBodiesStillToGet, protocolSchedule);
       PeerTaskExecutorResult<List<SyncBlock>> result =
           ethContext.getPeerTaskExecutor().execute(task);
       if (result.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
           && result.result().isPresent()) {
         List<SyncBlock> taskResult = result.result().get();
-        allSyncBlocks.addAll(taskResult);
+        syncBlocks.addAll(taskResult);
       }
-      // repeat until all bodies have been downloaded
-    } while (allSyncBlocks.size() < headers.size());
-    return CompletableFuture.completedFuture(allSyncBlocks);
+      // repeat until all sync blocks have been downloaded
+    } while (syncBlocks.size() < numSyncBlocksToGet);
+    return CompletableFuture.completedFuture(syncBlocks);
   }
 }
