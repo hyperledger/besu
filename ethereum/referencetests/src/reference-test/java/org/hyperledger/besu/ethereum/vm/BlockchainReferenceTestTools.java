@@ -104,8 +104,7 @@ public class BlockchainReferenceTestTools {
   @SuppressWarnings("java:S5960") // this is actually test code
   public static void executeTest(final BlockchainReferenceTestCase testCase) {
     final BlockHeader genesisBlockHeader = testCase.getGenesisBlockHeader();
-    final MutableWorldState worldState =
-                testCase.getWorldStateArchive()
+    final MutableWorldState worldState = testCase.getWorldStateArchive()
             .getWorldState(WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .orElseThrow();
 
