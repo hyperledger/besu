@@ -199,7 +199,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
    * @return the full world state, if available
    */
   private Optional<MutableWorldState> getFullWorldStateFromHead(final Hash blockHash) {
-    // TODO begin remove before merging on main
+    // TODO begin remove rolling tests before merging on main
     Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
     if (blockHeader.isPresent()) {
       Optional<BlockHeader> parentHeader =
