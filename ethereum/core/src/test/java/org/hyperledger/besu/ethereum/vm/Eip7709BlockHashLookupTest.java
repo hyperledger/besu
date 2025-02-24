@@ -122,6 +122,23 @@ class Eip7709BlockHashLookupTest {
 
   @Test
   @SuppressWarnings("ReturnValueIgnored")
+  void shouldDecrementRemainingGasFromFrameWhenOOG() {
+    AccessWitness accessWitness = mock(AccessWitness.class);
+    when(accessWitness.touchAndChargeStorageLoad(any(), any())).thenReturn(Long.MAX_VALUE);
+    frame =
+        spy(
+            createMessageFrame(CURRENT_BLOCK_NUMBER, worldUpdater, 0)
+                .accessWitness(accessWitness)
+                .build());
+    lookup.apply(frame, CURRENT_BLOCK_NUMBER - 1L);
+    verify(frame).decrementRemainingGas(eq(Long.MAX_VALUE));
+    verify(frame).getAccessWitness();
+    verify(frame).getRemainingGas();
+    verifyNoMoreInteractions(frame);
+  }
+
+  @Test
+  @SuppressWarnings("ReturnValueIgnored")
   void shouldDecrementRemainingGasFromFrame() {
     AccessWitness accessWitness = mock(AccessWitness.class);
     when(accessWitness.touchAndChargeStorageLoad(any(), any())).thenReturn(100L);
