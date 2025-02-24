@@ -120,10 +120,14 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
-      return composedWorldStateStorage
-          .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(accountHash, location).toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+      return getFlatDbStrategy()
+          .getFlatStorageTrieNode(
+              this::getWorldStateRootHash,
+              this::getAccountStateTrieNode,
+              accountHash,
+              location,
+              nodeHash,
+              composedWorldStateStorage);
     }
   }
 
@@ -285,10 +289,8 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
         // Don't save empty nodes
         return this;
       }
-      composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE,
-          Bytes.concatenate(accountHash, location).toArrayUnsafe(),
-          node.toArrayUnsafe());
+      flatDbStrategy.putFlatStorageTrieNode(
+          worldStorage, composedWorldStateTransaction, accountHash, location, nodeHash, node);
       return this;
     }
 
@@ -301,6 +303,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
 
     public synchronized void removeStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash) {
+      System.out.println("MRW TODO - storage removal");
       flatDbStrategy.removeFlatAccountStorageValueByStorageSlotHash(
           worldStorage, composedWorldStateTransaction, accountHash, slotHash);
     }

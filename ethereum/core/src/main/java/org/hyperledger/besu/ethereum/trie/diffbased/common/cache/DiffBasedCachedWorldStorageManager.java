@@ -148,6 +148,10 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
 
   public Optional<DiffBasedWorldState> getWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
+      LOG.atDebug()
+          .setMessage("found cached worldstate in cache for {}")
+          .addArgument(blockHash.toShortHexString())
+          .log();
       // return a new worldstate using worldstate storage and an isolated copy of the updater
       return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
           .map(
@@ -166,7 +170,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
   }
 
   public Optional<DiffBasedWorldState> getNearestWorldState(final BlockHeader blockHeader) {
-    LOG.atDebug()
+    LOG.atInfo()
         .setMessage("getting nearest worldstate for {}")
         .addArgument(blockHeader.toLogString())
         .log();
@@ -177,7 +181,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
         .or(
             () -> {
               // or else search the nearest state in the cache
-              LOG.atDebug()
+              LOG.atInfo()
                   .setMessage("searching cache for nearest worldstate for {}")
                   .addArgument(blockHeader.toLogString())
                   .log();
@@ -200,7 +204,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
   public Optional<DiffBasedWorldState> getHeadWorldState(
       final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction) {
 
-    LOG.atDebug().setMessage("getting head worldstate").log();
+    LOG.atInfo().setMessage("getting head worldstate").log();
 
     return rootWorldStateStorage
         .getWorldStateBlockHash()

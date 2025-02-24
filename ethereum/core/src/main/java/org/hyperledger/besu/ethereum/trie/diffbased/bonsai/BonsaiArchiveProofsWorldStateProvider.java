@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBa
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
+import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -41,6 +42,7 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -97,88 +99,80 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
       return getFullWorldState(queryParams);
     } else {
 
-      Optional<MutableWorldState> cachedWorldState =
-          cachedWorldStorageManager
-              .getWorldState(queryParams.getBlockHeader().getHash())
-              .or(
-                  () ->
-                      cachedWorldStorageManager.getNearestWorldState(queryParams.getBlockHeader()))
-              .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
-              .flatMap(
-                  worldState ->
-                      rollMutableArchiveStateToBlockHash(
-                          worldState, queryParams.getBlockHeader().getHash()))
-              .map(MutableWorldState::freezeStorage);
-      return cachedWorldState;
+      Optional<Hash> block =
+          BonsaiArchiveFlatDbStrategy.getCheckpointStateStartBlock(
+              blockchain, queryParams.getBlockHeader().getHash());
+
+      if (block.isPresent()) {
+        Optional<MutableWorldState> cachedWorldState =
+            cachedWorldStorageManager
+                .getWorldState(block.get())
+                .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
+                .flatMap(
+                    worldState ->
+                        rollMutableArchiveStateToBlockHash(
+                            worldState, queryParams.getBlockHeader().getHash()))
+                .map(MutableWorldState::freezeStorage);
+        return cachedWorldState;
+      }
+      return Optional.empty();
     }
   }
 
-  // Archive-specific rollback behaviour. There is no trie-log roll forward/backward, we just roll
-  // back the state root, block hash and block number
+  // Archive state-proof specific rollback behaviour. Choose a world state (it can be the current
+  // chain head if the exact block isn't in the cache). Then roll back the trie-logs to create
+  // the intermediate state trie nodes from the checkpoint state trie nodes
   protected Optional<MutableWorldState> rollMutableArchiveStateToBlockHash(
       final DiffBasedWorldState mutableState, final Hash blockHash) {
 
-    long rollBackFromBlock = blockchain.getBlockHeader(blockHash).get().getNumber();
-    long rollBackFromBlock2 =
-        (((blockchain.getBlockHeader(blockHash).get().getNumber()
-                        + BonsaiArchiveFlatDbStrategy.CHECKPOINT_INTERVAL)
-                    / BonsaiArchiveFlatDbStrategy.CHECKPOINT_INTERVAL)
-                * BonsaiArchiveFlatDbStrategy.CHECKPOINT_INTERVAL)
-            - 1;
+    Optional<Hash> block =
+        BonsaiArchiveFlatDbStrategy.getCheckpointStateStartBlock(blockchain, blockHash);
 
-    Optional<Hash> block = blockchain.getBlockHashByNumber(rollBackFromBlock2);
+    if (block.isPresent()) {
+      final Hash rollFromBlockHash = block.get();
 
-    if (block.isEmpty()) {
-      block = blockchain.getBlockHashByNumber(rollBackFromBlock);
+      try {
+        mutableState.resetWorldStateTo(
+            blockchain
+                .getBlockHeader(rollFromBlockHash)
+                .get()); // MRW TODO - check ramifications on cached layers of this
+        SegmentedKeyValueStorageTransaction tx =
+            mutableState.getWorldStateStorage().getComposedWorldStateStorage().startTransaction();
+        tx.put(
+            TRIE_BRANCH_STORAGE,
+            WORLD_BLOCK_NUMBER_KEY,
+            Bytes.ofUnsignedLong(blockchain.getBlockHeader(rollFromBlockHash).get().getNumber())
+                .toArrayUnsafe());
+        tx.put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, rollFromBlockHash.toArrayUnsafe());
+        tx.put(
+            TRIE_BRANCH_STORAGE,
+            WORLD_ROOT_HASH_KEY,
+            blockchain.getBlockHeader(rollFromBlockHash).get().getStateRoot().toArrayUnsafe());
+        tx.commit();
 
-      if (block.isEmpty()) {
-        LOG.error("Error - cannot roll state, block not available");
+        rollArchiveProofWorldStateToBlockHash(mutableState, blockHash);
+
+        LOG.debug(
+            "Archive rolling finished, {} now at {}",
+            mutableState.getWorldStateStorage().getClass().getSimpleName(),
+            blockHash);
+        return Optional.of(mutableState);
+      } catch (final MerkleTrieException re) {
+        // need to throw to trigger the heal
+        re.printStackTrace();
+        throw re;
+      } catch (final Exception e) {
+        LOG.atInfo()
+            .setMessage("State rolling failed on {} for block hash {}: {}")
+            .addArgument(mutableState.getWorldStateStorage().getClass().getSimpleName())
+            .addArgument(blockHash)
+            .addArgument(e)
+            .log();
+
         return Optional.empty();
       }
     }
-
-    final Hash rollFromBlockHash = block.get();
-
-    try {
-      mutableState.resetWorldStateTo(
-          blockchain
-              .getBlockHeader(rollFromBlockHash)
-              .get()); // MRW TODO - check ramifications on cached layers of this
-      SegmentedKeyValueStorageTransaction tx =
-          mutableState.getWorldStateStorage().getComposedWorldStateStorage().startTransaction();
-      tx.put(
-          TRIE_BRANCH_STORAGE,
-          WORLD_BLOCK_NUMBER_KEY,
-          Bytes.ofUnsignedLong(blockchain.getBlockHeader(rollFromBlockHash).get().getNumber())
-              .toArrayUnsafe());
-      tx.put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, rollFromBlockHash.toArrayUnsafe());
-      tx.put(
-          TRIE_BRANCH_STORAGE,
-          WORLD_ROOT_HASH_KEY,
-          blockchain.getBlockHeader(rollFromBlockHash).get().getStateRoot().toArrayUnsafe());
-      tx.commit();
-
-      rollArchiveProofWorldStateToBlockHash(mutableState, blockHash);
-
-      LOG.debug(
-          "Archive rolling finished, {} now at {}",
-          mutableState.getWorldStateStorage().getClass().getSimpleName(),
-          blockHash);
-      return Optional.of(mutableState);
-    } catch (final MerkleTrieException re) {
-      // need to throw to trigger the heal
-      re.printStackTrace();
-      throw re;
-    } catch (final Exception e) {
-      LOG.atInfo()
-          .setMessage("State rolling failed on {} for block hash {}: {}")
-          .addArgument(mutableState.getWorldStateStorage().getClass().getSimpleName())
-          .addArgument(blockHash)
-          .addArgument(e)
-          .log();
-
-      return Optional.empty();
-    }
+    return Optional.empty();
   }
 
   private Optional<MutableWorldState> rollArchiveProofWorldStateToBlockHash(
@@ -188,7 +182,6 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
       return Optional.of(mutableState);
     } else {
       try {
-
         final Optional<BlockHeader> maybePersistedHeader =
             blockchain.getBlockHeader(mutableState.blockHash()).map(BlockHeader.class::cast);
 
@@ -203,6 +196,20 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
           Hash persistedBlockHash = persistedHeader.getBlockHash();
           while (persistedHeader.getNumber() > targetHeader.getNumber()) {
             LOG.info("Rollback {}", persistedBlockHash);
+            for (Map.Entry<Address, TrieLog.LogTuple<AccountValue>> s :
+                trieLogManager
+                    .getTrieLogLayer(persistedBlockHash)
+                    .get()
+                    .getAccountChanges()
+                    .entrySet()) {
+              LOG.debug(
+                  "Account change: account: {}, prior nonce: {}, updated nonce: {}",
+                  s.getKey(),
+                  s.getValue().getPrior() != null
+                      ? s.getValue().getPrior().getNonce()
+                      : "<no prior state>",
+                  s.getValue().getUpdated().getNonce());
+            }
             rollBacks.add(trieLogManager.getTrieLogLayer(persistedBlockHash).get());
             persistedHeader = blockchain.getBlockHeader(persistedHeader.getParentHash()).get();
             persistedBlockHash = persistedHeader.getBlockHash();
@@ -214,12 +221,12 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
             (DiffBasedWorldStateUpdateAccumulator<?>) mutableState.updater();
         try {
           for (final TrieLog rollBack : rollBacks) {
-            LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
+            LOG.info("Attempting Rollback of {}", rollBack.getBlockHash());
             diffBasedUpdater.rollBack(rollBack);
           }
           diffBasedUpdater.commit();
 
-          LOG.debug(
+          LOG.info(
               "Forcing archive state trie context to {}",
               blockchain.getBlockHeader(blockHash).get().getNumber());
           SegmentedKeyValueStorageTransaction tx =
@@ -234,18 +241,20 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
           mutableState.persist(blockchain.getBlockHeader(blockHash).get());
 
           LOG.debug(
-              "Archive rolling finished, {} now at {}",
+              "Archive rolling finished, have persisted the new world state, {} now at {}",
               mutableState.getWorldStateStorage().getClass().getSimpleName(),
               blockHash);
 
           return Optional.of(mutableState);
         } catch (final MerkleTrieException re) {
+          re.printStackTrace();
           // need to throw to trigger the heal
           throw re;
         } catch (final Exception e) {
           // if we fail we must clean up the updater
+          e.printStackTrace();
           diffBasedUpdater.reset();
-          LOG.atDebug()
+          LOG.atInfo()
               .setMessage("State rolling failed on {} for block hash {}")
               .addArgument(mutableState.getWorldStateStorage().getClass().getSimpleName())
               .addArgument(blockHash)

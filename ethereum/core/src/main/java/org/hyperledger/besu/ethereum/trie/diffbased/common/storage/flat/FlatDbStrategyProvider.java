@@ -105,9 +105,12 @@ public abstract class FlatDbStrategyProvider {
                 .getDiffBasedSubStorageConfiguration()
                 .getUnstable()
                 .getFullFlatDbEnabled()
-            ? (dataStorageConfiguration
-                    .getDataStorageFormat()
-                    .equals(DataStorageFormat.X_BONSAI_ARCHIVE)
+            ? ((dataStorageConfiguration
+                        .getDataStorageFormat()
+                        .equals(DataStorageFormat.X_BONSAI_ARCHIVE)
+                    || dataStorageConfiguration
+                        .getDataStorageFormat()
+                        .equals(DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS))
                 ? FlatDbMode.ARCHIVE
                 : FlatDbMode.FULL)
             : FlatDbMode.PARTIAL;

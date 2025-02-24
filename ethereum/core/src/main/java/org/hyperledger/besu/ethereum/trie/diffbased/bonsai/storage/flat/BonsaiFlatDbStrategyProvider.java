@@ -55,6 +55,11 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
       LOG.info("setting FlatDbStrategy to ARCHIVE");
       transaction.put(
           TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.ARCHIVE.getVersion().toArrayUnsafe());
+    } else if (dataStorageConfiguration.getDataStorageFormat()
+        == DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS) {
+      LOG.info("setting FlatDbStrategy to ARCHIVE");
+      transaction.put(
+          TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.ARCHIVE.getVersion().toArrayUnsafe());
     }
     transaction.commit();
     loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy

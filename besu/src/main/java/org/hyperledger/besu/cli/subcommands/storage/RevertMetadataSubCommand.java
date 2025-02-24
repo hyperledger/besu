@@ -124,6 +124,7 @@ public class RevertMetadataSubCommand implements Runnable {
               case FOREST -> 1;
               case BONSAI -> 2;
               case X_BONSAI_ARCHIVE -> 3;
+              case X_BONSAI_ARCHIVE_PROOFS -> 4;
             };
 
         @JsonSerialize

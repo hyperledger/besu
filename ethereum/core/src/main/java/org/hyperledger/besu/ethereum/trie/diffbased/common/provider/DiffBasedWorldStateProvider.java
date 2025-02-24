@@ -300,7 +300,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
 
           mutableState.persist(blockchain.getBlockHeader(blockHash).get());
 
-          LOG.info(
+          LOG.debug(
               "Archive rolling finished, {} now at {}",
               mutableState.getWorldStateStorage().getClass().getSimpleName(),
               blockHash);
@@ -365,15 +365,12 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     try (DiffBasedWorldState ws =
         (DiffBasedWorldState)
             getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)).orElse(null)) {
-      if (ws != null) {
+      if (ws != null && !ws.isTrieDisabled()) {
         final WorldStateProofProvider worldStateProofProvider =
             new WorldStateProofProvider(
                 new WorldStateStorageCoordinator(ws.getWorldStateStorage()));
         return mapper.apply(
             worldStateProofProvider.getAccountProof(
-                // ws.getWorldStateRootHash(), accountAddress, accountStorageKeys)); // MRW TODO -
-                // do we need to store world state root has every N blocks as well, or can we
-                // reference the block header like FOREST does?
                 blockHeader.getStateRoot(), accountAddress, accountStorageKeys));
       }
     } catch (Exception ex) {

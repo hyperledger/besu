@@ -278,6 +278,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
             storageTrie.put(slotHash, encodeTrieValue(updatedStorage));
           }
         } catch (MerkleTrieException e) {
+          e.printStackTrace();
           // need to throw to trigger the heal
           throw new MerkleTrieException(
               e.getMessage(),

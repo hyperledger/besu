@@ -322,6 +322,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
         return accountFunction.apply(diffBasedValue);
       }
     } catch (MerkleTrieException e) {
+      e.printStackTrace();
       // need to throw to trigger the heal
       throw new MerkleTrieException(
           e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
@@ -710,6 +711,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
         return defaultValue;
       }
     } catch (MerkleTrieException e) {
+      e.printStackTrace();
       // need to throw to trigger the heal
       throw new MerkleTrieException(
           e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());

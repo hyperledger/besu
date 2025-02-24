@@ -1942,8 +1942,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(commandLine, String.format("%s %s", "Bonsai", errorSuffix));
       }
       if (getDataStorageConfiguration()
-          .getDataStorageFormat()
-          .equals(DataStorageFormat.X_BONSAI_ARCHIVE)) {
+              .getDataStorageFormat()
+              .equals(DataStorageFormat.X_BONSAI_ARCHIVE)
+          || getDataStorageConfiguration()
+              .getDataStorageFormat()
+              .equals(DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS)) {
         throw new ParameterException(
             commandLine, String.format("%s %s", "Bonsai archive", errorSuffix));
       }

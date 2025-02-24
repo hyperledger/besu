@@ -174,6 +174,11 @@ public abstract class DiffBasedWorldState
   }
 
   @Override
+  public boolean isTrieDisabled() {
+    return this.worldStateConfig.isTrieDisabled();
+  }
+
+  @Override
   public void persist(final BlockHeader blockHeader) {
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
     LOG.atDebug()
@@ -198,12 +203,16 @@ public abstract class DiffBasedWorldState
         calculatedRootHash =
             calculateRootHash(
                 isStorageFrozen ? Optional.empty() : Optional.of(stateUpdater), accumulator);
+        LOG.atDebug()
+            .setMessage("Safe state root verification for block header {}")
+            .addArgument(maybeBlockHeader)
+            .log();
       } else {
         // if the trie is disabled, we cannot calculate the state root, so we directly use the root
         // of the block. It's important to understand that in all networks,
         // the state root must be validated independently and the block should not be trusted
-        // implicitly. This mode
-        // can be used in cases where Besu would just be a follower of another trusted client.
+        // implicitly. This mode can be used in cases where Besu would just be a follower of another
+        // trusted client.
         LOG.atDebug()
             .setMessage("Unsafe state root verification for block header {}")
             .addArgument(maybeBlockHeader)
@@ -232,7 +241,6 @@ public abstract class DiffBasedWorldState
         stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
         worldStateBlockHash = null;
       }
-
       stateUpdater
           .getWorldStateTransaction()
           .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, calculatedRootHash.toArrayUnsafe());

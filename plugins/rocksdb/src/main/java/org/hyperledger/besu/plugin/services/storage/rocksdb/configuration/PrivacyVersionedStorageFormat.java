@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_ARCHIVE_PROOFS_WITH_RECEIPT_COMPACTION;
+
 import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -73,6 +75,7 @@ public enum PrivacyVersionedStorageFormat implements VersionedStorageFormat {
       case FOREST -> FOREST_WITH_RECEIPT_COMPACTION;
       case BONSAI -> BONSAI_WITH_RECEIPT_COMPACTION;
       case X_BONSAI_ARCHIVE -> BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION;
+      case X_BONSAI_ARCHIVE_PROOFS -> BONSAI_ARCHIVE_PROOFS_WITH_RECEIPT_COMPACTION;
     };
   }
 
