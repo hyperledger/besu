@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -95,6 +96,7 @@ public class BesuNodeConfigurationBuilder {
   private Optional<KeyPair> keyPair = Optional.empty();
   private Boolean strictTxReplayProtectionEnabled = false;
   private Map<String, String> environment = new HashMap<>();
+  private SynchronizerConfiguration synchronizerConfiguration;
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -459,7 +461,31 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder synchronizerConfiguration(final SynchronizerConfiguration config) {
+    this.synchronizerConfiguration = config;
+    return this;
+  }
+
+/*  private InProcessRpcConfiguration defaultInProcessRpc() {
+    return ImmutableInProcessRpcConfiguration.builder()
+        .isEnabled(false)
+        .inProcessRpcApis(new ArrayList<>())
+        .build();
+  }
+
+  private ApiConfiguration defaultApiConfiguration() {
+    return ImmutableApiConfiguration.builder().gasCap(0L).build();
+  }
+
+  private GenesisConfigurationProvider defaultGenesisConfigProvider() {
+    return nodes -> Optional.empty();
+  }*/
+
   public BesuNodeConfiguration build() {
+    if (name == null) {
+      throw new IllegalStateException("Name is required");
+    }
+
     return new BesuNodeConfiguration(
         name,
         dataPath,
@@ -495,6 +521,7 @@ public class BesuNodeConfigurationBuilder {
         runCommand,
         keyPair,
         strictTxReplayProtectionEnabled,
-        environment);
+        environment,
+        synchronizerConfiguration);
   }
 }

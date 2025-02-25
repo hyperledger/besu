@@ -49,6 +49,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestF
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolRequestFactory;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -133,6 +134,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<Integer> exitCode = Optional.empty();
   private final boolean isStrictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
+  private SynchronizerConfiguration synchronizerConfiguration;
 
   public BesuNode(
       final String name,
@@ -230,6 +232,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.isDnsEnabled = isDnsEnabled;
     privacyParameters.ifPresent(this::setPrivacyParameters);
     this.environment = environment;
+    this.synchronizerConfiguration = SynchronizerConfiguration.builder().build(); // Default config
     LOG.info("Created BesuNode {}", this);
   }
 
@@ -835,5 +838,14 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public ApiConfiguration getApiConfiguration() {
     return apiConfiguration;
+  }
+
+  public SynchronizerConfiguration getSynchronizerConfiguration() {
+    return synchronizerConfiguration;
+  }
+
+  public BesuNode setSynchronizerConfiguration(final SynchronizerConfiguration config) {
+    this.synchronizerConfiguration = config;
+    return this;
   }
 }
