@@ -53,7 +53,7 @@ import com.google.common.annotations.VisibleForTesting;
 public class ParallelizedConcurrentTransactionProcessor {
 
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
-  private static final Executor executor = Executors.newFixedThreadPool(NCPU);
+  private final Executor executor;
 
   private final MainnetTransactionProcessor transactionProcessor;
 
@@ -74,6 +74,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final MainnetTransactionProcessor transactionProcessor) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = new TransactionCollisionDetector();
+    this.executor = Executors.newFixedThreadPool(NCPU);
   }
 
   @VisibleForTesting
@@ -82,6 +83,15 @@ public class ParallelizedConcurrentTransactionProcessor {
       final TransactionCollisionDetector transactionCollisionDetector) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = transactionCollisionDetector;
+    this.executor = Executors.newFixedThreadPool(NCPU);
+  }
+
+  @VisibleForTesting
+  public ParallelizedConcurrentTransactionProcessor(
+      final MainnetTransactionProcessor transactionProcessor, final Executor executor) {
+    this.transactionProcessor = transactionProcessor;
+    this.transactionCollisionDetector = new TransactionCollisionDetector();
+    this.executor = executor;
   }
 
   /**
@@ -261,9 +271,10 @@ public class ParallelizedConcurrentTransactionProcessor {
           transactionCollisionDetector.hasCollision(
               transaction, miningBeneficiary, parallelizedTransactionContext, blockAccumulator);
       if (transactionProcessingResult.isSuccessful() && !hasCollision) {
-        blockAccumulator
-            .getOrCreate(miningBeneficiary)
-            .incrementBalance(parallelizedTransactionContext.miningBeneficiaryReward());
+        Wei reward = parallelizedTransactionContext.miningBeneficiaryReward();
+        if (!reward.isZero()) {
+          blockAccumulator.getOrCreate(miningBeneficiary).incrementBalance(reward);
+        }
 
         blockAccumulator.importStateChangesFromSource(transactionAccumulator);
 
