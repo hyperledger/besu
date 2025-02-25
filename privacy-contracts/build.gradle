@@ -15,9 +15,9 @@
 
 jar { enabled = true }
 dependencies {
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-io'
-  implementation 'io.tmio:tuweni-toml'
+  implementation 'io.consensys.protocols:tuweni-bytes'
+  implementation 'io.consensys.protocols:tuweni-io'
+  implementation 'io.consensys.protocols:tuweni-toml'
   implementation 'org.web3j:abi'
   implementation 'org.web3j:besu'
 }

@@ -25,6 +25,9 @@
 - Update `eth_getLogs` to return a `Block not found` error when the requested block is not found. [#8290](https://github.com/hyperledger/besu/pull/8290)
 - Improve Conflict Detection in Parallelization by Considering Slots to Reduce False Positives. [#7923](https://github.com/hyperledger/besu/pull/7923)
 - Change "Invalid block, unable to parse RLP" RPC error message to "Invalid block param (block not found)" [#8328](https://github.com/hyperledger/besu/pull/8328)
+- Replace tuweni libs with https://github.com/Consensys/tuweni
+- Performance: Consensys/tuweni 2.6.0 reduces boxing/unboxing overhead on some EVM opcodes, like PushX and Caller
+
 ### Bug fixes
 - Upgrade Netty to version 4.1.118 to fix CVE-2025-24970 [#8275](https://github.com/hyperledger/besu/pull/8275)
 - Add missing RPC method `debug_accountRange` to `RpcMethod.java` and implemented its handler. [#8153](https://github.com/hyperledger/besu/issues/8153)
