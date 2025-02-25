@@ -94,8 +94,10 @@ public class SyncBlockBody {
     input.enterList();
     while (!input.isEndOfCurrentList()) {
       if (input.nextIsList()) {
+        // This is for Transactions before Berlin fork
         transactionBytes.add(input.currentListAsBytesNoCopy(true));
       } else {
+        // This is for Transactions after Berlin fork (typed transactions, EIP-2718)
         transactionBytes.add(input.readBytes());
       }
     }
