@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +27,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -39,9 +43,9 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCache
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -62,7 +66,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ParallelizedConcurrentTransactionProcessorTest {
 
   @Mock private MainnetTransactionProcessor transactionProcessor;
+  @Mock private BlockHeader chainHeadBlockHeader;
   @Mock private BlockHeader blockHeader;
+  @Mock ProtocolContext protocolContext;
   @Mock private Transaction transaction;
   @Mock private PrivateMetadataUpdater privateMetadataUpdater;
   @Mock private TransactionCollisionDetector transactionCollisionDetector;
@@ -88,7 +94,20 @@ class ParallelizedConcurrentTransactionProcessorTest {
             new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
             new NoOpTrieLogManager(),
             EvmConfiguration.DEFAULT,
-            new DiffBasedWorldStateConfig());
+            createStatefulConfigWithTrie());
+
+    when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
+    when(chainHeadBlockHeader.getStateRoot()).thenReturn(Hash.EMPTY_TRIE_HASH);
+    when(blockHeader.getParentHash()).thenReturn(Hash.ZERO);
+
+    when(transaction.detachedCopy()).thenReturn(transaction);
+
+    final MutableBlockchain blockchain = mock(MutableBlockchain.class);
+    when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getChainHeadHeader()).thenReturn(chainHeadBlockHeader);
+    final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
+    when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
+    when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(worldState));
     when(transactionCollisionDetector.hasCollision(any(), any(), any(), any())).thenReturn(false);
   }
 
@@ -105,7 +124,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     processor.runTransaction(
-        worldState,
+        protocolContext,
         blockHeader,
         0,
         transaction,
@@ -151,7 +170,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 Optional.of(Bytes.EMPTY)));
 
     processor.runTransaction(
-        worldState,
+        protocolContext,
         blockHeader,
         0,
         transaction,
@@ -180,7 +199,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     processor.runTransaction(
-        worldState,
+        protocolContext,
         blockHeader,
         0,
         transaction,

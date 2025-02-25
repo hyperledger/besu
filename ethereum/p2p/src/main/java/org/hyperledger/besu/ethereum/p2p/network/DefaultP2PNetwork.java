@@ -464,7 +464,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public boolean isDiscoveryEnabled() {
-    return peerDiscoveryAgent.isActive();
+    return peerDiscoveryAgent.isEnabled();
+  }
+
+  @Override
+  public boolean isStopped() {
+    return peerDiscoveryAgent.isStopped();
   }
 
   @Override
@@ -580,7 +585,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final ForkIdManager forkIdManager =
           new ForkIdManager(blockchain, blockNumberForks, timestampForks, this.legacyForkIdEnabled);
 
-      return new VertxPeerDiscoveryAgent(
+      return VertxPeerDiscoveryAgent.create(
           vertx,
           nodeKey,
           config.getDiscovery(),

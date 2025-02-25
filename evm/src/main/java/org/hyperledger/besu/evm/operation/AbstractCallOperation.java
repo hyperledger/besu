@@ -191,7 +191,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Account contract = frame.getWorldUpdater().get(to);
 
-    if (contract != null && contract.hasCodeDelegation()) {
+    if (contract != null && contract.hasDelegatedCode()) {
       if (contract.getCodeDelegationTargetCode().isEmpty()) {
         throw new RuntimeException("A delegated code account must have delegated code");
       }
@@ -357,7 +357,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return CodeV0.EMPTY_CODE;
     }
 
-    if (account.hasCodeDelegation()) {
+    if (account.hasDelegatedCode()) {
       return evm.getCode(
           account.getCodeDelegationTargetHash().get(), account.getCodeDelegationTargetCode().get());
     }

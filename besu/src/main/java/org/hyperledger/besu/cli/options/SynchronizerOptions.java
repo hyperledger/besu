@@ -72,6 +72,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsnapsync-synchronizer-bytecode-count-per-request";
   private static final String SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-trienode-count-per-request";
+  private static final String SNAP_TRANSACTION_INDEXING_ENABLED_FLAG =
+      "--Xsnapsync-synchronizer-transaction-indexing-enabled";
 
   private static final String SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-flat-account-healed-count-per-request";
@@ -322,6 +324,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
           "Temporary feature toggle to enable using the new peertask system (default: ${DEFAULT-VALUE})")
   private final Boolean isPeerTaskSystemEnabled = false;
 
+  @CommandLine.Option(
+      names = SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
+      hidden = true,
+      paramLabel = "<Boolean>",
+      arity = "0..1",
+      description = "Enable transaction indexing during snap sync. (default: ${DEFAULT-VALUE})")
+  private Boolean snapTransactionIndexingEnabled =
+      SnapSyncConfiguration.DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
+
   private SynchronizerOptions() {}
 
   /**
@@ -401,6 +412,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
     options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
+    options.snapTransactionIndexingEnabled =
+        config.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled();
     return options;
   }
 
@@ -433,6 +446,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
             .isSnapServerEnabled(snapsyncServerEnabled)
+            .isSnapSyncTransactionIndexingEnabled(snapTransactionIndexingEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
@@ -489,8 +503,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
             SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
             OptionParser.format(snapsyncFlatStorageHealedCountPerRequest),
-            SNAP_SERVER_ENABLED_FLAG,
-            OptionParser.format(snapsyncServerEnabled));
+            SNAP_SERVER_ENABLED_FLAG, ,
+            OptionParser.format(snapsyncBftEnabled),
+            SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
+            OptionParser.format(snapTransactionIndexingEnabled));
     return value;
   }
 }

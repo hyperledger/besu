@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
@@ -135,6 +136,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final boolean isStrictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
   private SynchronizerConfiguration synchronizerConfiguration;
+  private final Optional<KeyValueStorageFactory> storageFactory;
 
   public BesuNode(
       final String name,
@@ -171,7 +173,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
       final boolean isStrictTxReplayProtectionEnabled,
-      final Map<String, String> environment)
+      final Map<String, String> environment,
+      final Optional<KeyValueStorageFactory> maybeStorageFactory)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     this.isStrictTxReplayProtectionEnabled = isStrictTxReplayProtectionEnabled;
@@ -213,6 +216,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.secp256k1Native = secp256k1Native;
     this.altbn128Native = altbn128Native;
     this.runCommand = runCommand;
+    this.storageFactory = maybeStorageFactory;
     plugins.forEach(
         pluginName -> {
           try {
@@ -789,6 +793,20 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       nodeRequests.shutdown();
       nodeRequests = null;
     }
+    deleteRuntimeFiles();
+  }
+
+  private void deleteRuntimeFiles() {
+    try {
+      Files.deleteIfExists(homeDirectory.resolve("besu.networks"));
+    } catch (IOException e) {
+      LOG.error("Failed to clean up besu.networks file in {}", homeDirectory, e);
+    }
+    try {
+      Files.deleteIfExists(homeDirectory.resolve("besu.ports"));
+    } catch (IOException e) {
+      LOG.error("Failed to clean up besu.ports file in {}", homeDirectory, e);
+    }
   }
 
   @Override
@@ -847,5 +865,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   public BesuNode setSynchronizerConfiguration(final SynchronizerConfiguration config) {
     this.synchronizerConfiguration = config;
     return this;
+  }
+
+  public Optional<KeyValueStorageFactory> getStorageFactory() {
+    return storageFactory;
   }
 }

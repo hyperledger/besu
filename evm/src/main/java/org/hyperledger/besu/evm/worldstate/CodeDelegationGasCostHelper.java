@@ -43,7 +43,7 @@ public class CodeDelegationGasCostHelper {
    */
   public static long codeDelegationGasCost(
       final MessageFrame frame, final GasCalculator gasCalculator, final Account account) {
-    if (!account.hasCodeDelegation()) {
+    if (!account.hasDelegatedCode()) {
       return 0;
     }
 

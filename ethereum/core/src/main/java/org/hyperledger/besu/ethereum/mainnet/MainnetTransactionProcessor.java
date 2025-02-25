@@ -427,7 +427,7 @@ public class MainnetTransactionProcessor {
         final Address to = transaction.getTo().get();
         final Optional<Account> maybeContract = Optional.ofNullable(evmWorldUpdater.get(to));
 
-        if (maybeContract.isPresent() && maybeContract.get().hasCodeDelegation()) {
+        if (maybeContract.isPresent() && maybeContract.get().hasDelegatedCode()) {
           warmAddressList.add(maybeContract.get().codeDelegationAddress().get());
         }
 
@@ -441,7 +441,7 @@ public class MainnetTransactionProcessor {
                     maybeContract
                         .map(
                             c -> {
-                              if (c.hasCodeDelegation()) {
+                              if (c.hasDelegatedCode()) {
                                 return messageCallProcessor.getCodeFromEVM(
                                     c.getCodeDelegationTargetHash().get(),
                                     c.getCodeDelegationTargetCode().get());
@@ -477,10 +477,11 @@ public class MainnetTransactionProcessor {
           validationResult =
               ValidationResult.invalid(
                   TransactionInvalidReason.EXECUTION_HALTED,
-                  initialFrame.getExceptionalHaltReason().get().toString());
+                  initialFrame.getExceptionalHaltReason().get().getDescription());
         }
       }
 
+      // TODO SLD are the log correct following EIP-7623?
       if (LOG.isTraceEnabled()) {
         LOG.trace(
             "Gas used by transaction: {}, by message call/contract creation: {}",

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.UNKNOWN_BLOCK;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -29,7 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
 
 import java.util.Optional;
 
@@ -137,14 +138,14 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
             interimHead.ifPresent(
                 it -> {
                   blockchain.rewindToBlock(it.getBlockHash());
-                  archive.getMutable(it.getStateRoot(), it.getBlockHash());
+                  archive.getWorldState(withBlockHeaderAndUpdateNodeHead(it));
                   LOG.info("incrementally rolled worldstate to {}", it.toLogString());
                 });
             currentHead = interimHead;
 
           } else {
             blockchain.rewindToBlock(target.getBlockHash());
-            archive.getMutable(target.getStateRoot(), target.getBlockHash());
+            archive.getWorldState(withBlockHeaderAndUpdateNodeHead(target));
             currentHead = Optional.of(target);
             LOG.info("finished rolling worldstate to {}", target.toLogString());
           }

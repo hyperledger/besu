@@ -125,7 +125,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     Address to = Words.toAddress(toBytes);
     final Account contract = frame.getWorldUpdater().get(to);
 
-    if (contract != null && contract.hasCodeDelegation()) {
+    if (contract != null && contract.hasDelegatedCode()) {
       if (contract.getCodeDelegationTargetCode().isEmpty()) {
         throw new RuntimeException("A delegated code account must have delegated code");
       }

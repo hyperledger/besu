@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.DelegatingBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.SoftAssertions;
 import org.hyperledger.besu.datatypes.Address;
@@ -116,8 +117,7 @@ public class GeneralStateReferenceTestTools {
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");
 
-    // TODO: remove once updated EIP-2537 gas cost artifacts exist
-    params.ignore("/eip2537_bls_12_381_precompiles/");
+    // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
     params.ignore("/stEIP2537/");
 
   }
@@ -252,7 +252,7 @@ public class GeneralStateReferenceTestTools {
               if (!storageEntries.isEmpty()) {
                 accountJson.set("storage", storageJson);
               }
-              worldStateJson.set(account.getAddress().orElse(Address.wrap(Bytes.EMPTY)).toHexString(), accountJson);
+              worldStateJson.set(account.getAddress().map(DelegatingBytes::toHexString).orElse(Bytes.EMPTY.toHexString()), accountJson);
             });
     LOG.error("Calculated world state: \n{}", worldStateJson.toPrettyString());
   }
