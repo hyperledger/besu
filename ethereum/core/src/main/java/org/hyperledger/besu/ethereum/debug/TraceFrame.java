@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.debug;
 
+import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.LeafAccessKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -56,7 +56,7 @@ public class TraceFrame {
   private final Optional<Code> maybeCode;
   private final int stackItemsProduced;
   private final Optional<Bytes[]> stackPostExecution;
-  private final Optional<List<LeafAccessKey>> statelessWitness;
+  private final Optional<List<AccessEvent<?>>> statelessWitness;
 
   private long gasRemainingPostExecution;
   private final boolean virtualOperation;
@@ -80,7 +80,7 @@ public class TraceFrame {
       final Optional<Bytes[]> stack,
       final Optional<Bytes[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
-      final Optional<List<LeafAccessKey>> statelessWitness,
+      final Optional<List<AccessEvent<?>>> statelessWitness,
       final WorldUpdater worldUpdater,
       final Optional<Bytes> revertReason,
       final Optional<Map<Address, Wei>> maybeRefunds,
@@ -182,7 +182,7 @@ public class TraceFrame {
     return storage;
   }
 
-  public Optional<List<LeafAccessKey>> getStatelessWitness() {
+  public Optional<List<AccessEvent<?>>> getStatelessWitness() {
     return statelessWitness;
   }
 

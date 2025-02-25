@@ -18,9 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.datatypes.AccessWitness;
-import org.hyperledger.besu.datatypes.BranchAccessKey;
-import org.hyperledger.besu.datatypes.LeafAccessKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -34,7 +33,9 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.stateless.BranchAccessEvent;
 import org.hyperledger.besu.evm.gascalculator.stateless.Eip4762AccessWitness;
+import org.hyperledger.besu.evm.gascalculator.stateless.LeafAccessEvent;
 import org.hyperledger.besu.evm.operation.AbstractOperation;
 import org.hyperledger.besu.evm.operation.CallOperation;
 import org.hyperledger.besu.evm.operation.Operation;
@@ -175,10 +176,10 @@ class DebugOperationTracerTest {
   void shouldRecordStatelessWitnessWhenEnabled() {
     AccessWitness accessWitness = new Eip4762AccessWitness();
     final MessageFrame frame = validMessageFrame(accessWitness);
-    accessWitness.touchAddressAndChargeRead(frame.getSenderAddress(), UInt256.ZERO);
-    LeafAccessKey expectedLeafKey =
-        new LeafAccessKey(
-            new BranchAccessKey(frame.getSenderAddress(), UInt256.ZERO), UInt256.ZERO);
+    accessWitness.touchAddressAndChargeRead(frame.getSenderAddress(), UInt256.ZERO, Long.MAX_VALUE);
+    AccessEvent<?> expectedLeafKey =
+        new LeafAccessEvent(
+            new BranchAccessEvent(frame.getSenderAddress(), UInt256.ZERO), UInt256.ZERO);
     final TraceFrame traceFrame =
         traceFrame(frame, new TraceOptions(false, false, false, true), false);
     assertThat(traceFrame.getStatelessWitness()).hasValue(List.of(expectedLeafKey));
@@ -188,7 +189,7 @@ class DebugOperationTracerTest {
   void shouldNotRecordStatelessWitnessWhenDisabled() {
     AccessWitness accessWitness = new Eip4762AccessWitness();
     final MessageFrame frame = validMessageFrame(accessWitness);
-    accessWitness.touchAddressAndChargeRead(frame.getSenderAddress(), UInt256.ZERO);
+    accessWitness.touchAddressAndChargeRead(frame.getSenderAddress(), UInt256.ZERO, Long.MAX_VALUE);
     final TraceFrame traceFrame =
         traceFrame(validMessageFrame(), new TraceOptions(false, false, false, false), false);
     assertThat(traceFrame.getStatelessWitness()).isEmpty();

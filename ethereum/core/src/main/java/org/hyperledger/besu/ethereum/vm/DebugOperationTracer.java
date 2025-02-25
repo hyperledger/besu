@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.LeafAccessKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
@@ -90,7 +90,7 @@ public class DebugOperationTracer implements OperationTracer {
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = captureMemory(frame);
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
-    final Optional<List<LeafAccessKey>> statelessWitness = captureStatelessWitness(frame);
+    final Optional<List<AccessEvent<?>>> statelessWitness = captureStatelessWitness(frame);
 
     if (lastFrame != null) {
       lastFrame.setGasRemainingPostExecution(gasRemaining);
@@ -258,12 +258,13 @@ public class DebugOperationTracer implements OperationTracer {
     return Optional.of(stackContents);
   }
 
-  private Optional<List<LeafAccessKey>> captureStatelessWitness(final MessageFrame frame) {
-    if (!options.traceStatelessWitness()) {
+  private Optional<List<AccessEvent<?>>> captureStatelessWitness(final MessageFrame frame) {
+    List<AccessEvent<?>> leafAccesses = frame.getAccessWitness().getLeafAccesses();
+    if (!options.traceStatelessWitness() || leafAccesses.isEmpty()) {
       return Optional.empty();
     }
 
-    return Optional.of(frame.getAccessWitness().getLeafAccesses());
+    return Optional.of(leafAccesses);
   }
 
   public List<TraceFrame> getTraceFrames() {

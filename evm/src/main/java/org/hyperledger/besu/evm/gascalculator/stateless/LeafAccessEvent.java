@@ -19,7 +19,16 @@ import org.hyperledger.besu.datatypes.Address;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-final class LeafAccessEvent extends AccessEvent<AccessEvent<Address>> {
+/** The access event key corresponding to a leaf access in the stateless trie. */
+public final class LeafAccessEvent extends AccessEvent<AccessEvent<Address>> {
+
+  /**
+   * The constructor.
+   *
+   * @param branchEvent branchEvent to be used as key to the stateless trie of the leaf being
+   *     accessed.
+   * @param subIndex stateless trie index of the leaf being accessed.
+   */
   public LeafAccessEvent(final BranchAccessEvent branchEvent, final UInt256 subIndex) {
     super(branchEvent, subIndex);
   }
@@ -27,11 +36,6 @@ final class LeafAccessEvent extends AccessEvent<AccessEvent<Address>> {
   @Override
   public AccessEvent<?> getBranchEvent() {
     return key;
-  }
-
-  @Override
-  public String toShortString() {
-    return String.format("{%s,subIndex=%s}", key.toShortString(), getIndex().toShortHexString());
   }
 
   @Override
@@ -52,5 +56,14 @@ final class LeafAccessEvent extends AccessEvent<AccessEvent<Address>> {
       message += "\n\tCHUNK_FILL_COST " + getLeafSetCost();
     }
     return message;
+  }
+
+  @Override
+  public String toJsonObject() {
+    return String.format(
+        "{\"addr\": \"%s\",\"treeIndex\": \"%s\",\"subIndex\": \"%s\"}",
+        getBranchEvent().getKey(),
+        getBranchEvent().getIndex().toShortHexString(),
+        getIndex().toShortHexString());
   }
 }

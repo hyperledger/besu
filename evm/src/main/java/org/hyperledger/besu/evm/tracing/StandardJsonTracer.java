@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
-import org.hyperledger.besu.datatypes.LeafAccessKey;
+import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.evm.code.OpcodeInfo;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -238,7 +238,7 @@ public class StandardJsonTracer implements OperationTracer {
       sb.append(",\"witness\": ")
           .append(
               messageFrame.getAccessWitness().getLeafAccesses().stream()
-                  .map(LeafAccessKey::toJsonObject)
+                  .map(AccessEvent::toJsonObject)
                   .toList());
     }
 

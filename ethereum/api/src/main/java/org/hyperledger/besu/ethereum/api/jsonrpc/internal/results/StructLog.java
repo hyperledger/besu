@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.datatypes.LeafAccessKey;
+import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
 import java.util.Arrays;
@@ -67,7 +67,7 @@ public class StructLog {
     statelessWitness =
         traceFrame
             .getStatelessWitness()
-            .map(list -> list.stream().map(LeafAccessKey::toJsonObject).toArray(String[]::new))
+            .map(list -> list.stream().map(AccessEvent::toJsonObject).toArray(String[]::new))
             .orElse(null);
     op = traceFrame.getOpcode();
     pc = traceFrame.getPc();
@@ -134,6 +134,7 @@ public class StructLog {
   }
 
   @JsonGetter("statelessWitness")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   public String[] statelessWitness() {
     return statelessWitness;
   }

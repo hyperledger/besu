@@ -29,64 +29,56 @@
           "op":"PUSH1",
           "gas":16755910,
           "gasCost":3,
-          "depth":1,
-          "statelessWitness" : [ ]
+          "depth":1
         },
         {
           "pc":2,
           "op":"PUSH1",
           "gas":16755907,
           "gasCost":3,
-          "depth":1,
-          "statelessWitness" : [ ]
+          "depth":1
         },
         {
           "pc":4,
           "op":"PUSH1",
           "gas":16755904,
           "gasCost":3,
-          "depth":1,
-          "statelessWitness" : [ ]
+          "depth":1
         },
         {
           "pc":6,
           "op":"CALLDATASIZE",
           "gas":16755901,
           "gasCost":2,
-          "depth":1,
-          "statelessWitness" : [ ]
+          "depth":1
         },
         {
           "pc":7,
           "op":"SUB",
           "gas":16755899,
           "gasCost":3,
-          "depth":1,
-          "statelessWitness" : [ ]
+          "depth":1
         },
         {
           "pc":8,
           "op":"DUP1",
           "gas":16755896,
           "gasCost":3,
-          "depth":1,
-          "statelessWitness" : [ ]
+          "depth":1
         },
         {
           "pc":9,
           "op":"PUSH1",
           "gas":16755893,
           "gasCost":3,
-          "depth":1,
-          "statelessWitness" : [ ]
+          "depth":1
         },
         {
           "pc":11,
           "op":"PUSH1",
           "gas":16755890,
           "gasCost":3,
-          "depth":1,
-          "statelessWitness" : [ ]
+          "depth":1
         },
         {
           "pc":13,
@@ -96,8 +88,7 @@
           "depth":1,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":14,
@@ -107,8 +98,7 @@
           "depth":1,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":16,
@@ -118,8 +108,7 @@
           "depth":1,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":17,
@@ -129,8 +118,7 @@
           "depth":1,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":19,
@@ -140,8 +128,7 @@
           "depth":1,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":20,
@@ -151,8 +138,7 @@
           "depth":1,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":21,
@@ -162,48 +148,42 @@
           "depth":1,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":0,
           "op":"PUSH1",
           "gas":16493366,
           "gasCost":3,
-          "depth":2,
-          "statelessWitness" : [ ]
+          "depth":2
         },
         {
           "pc":2,
           "op":"CALLDATALOAD",
           "gas":16493363,
           "gasCost":3,
-          "depth":2,
-          "statelessWitness" : [ ]
+          "depth":2
         },
         {
           "pc":3,
           "op":"PUSH1",
           "gas":16493360,
           "gasCost":3,
-          "depth":2,
-          "statelessWitness" : [ ]
+          "depth":2
         },
         {
           "pc":5,
           "op":"ADD",
           "gas":16493357,
           "gasCost":3,
-          "depth":2,
-          "statelessWitness" : [ ]
+          "depth":2
         },
         {
           "pc":6,
           "op":"PUSH1",
           "gas":16493354,
           "gasCost":3,
-          "depth":2,
-          "statelessWitness" : [ ]
+          "depth":2
         },
         {
           "pc":8,
@@ -213,8 +193,7 @@
           "depth":2,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000002"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":9,
@@ -224,8 +203,7 @@
           "depth":2,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000002"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":11,
@@ -235,8 +213,7 @@
           "depth":2,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000002"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":13,
@@ -246,8 +223,7 @@
           "depth":2,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000002"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":22,
@@ -257,8 +233,7 @@
           "depth":1,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000002"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":24,
@@ -268,8 +243,7 @@
           "depth":1,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000002"
-          ],
-          "statelessWitness" : [ ]
+          ]
         },
         {
           "pc":26,
@@ -279,8 +253,7 @@
           "depth":1,
           "memory":[
             "0xf000000000000000000000000000000000000000000000000000000000000002"
-          ],
-          "statelessWitness" : [ ]
+          ]
         }
       ]
     }

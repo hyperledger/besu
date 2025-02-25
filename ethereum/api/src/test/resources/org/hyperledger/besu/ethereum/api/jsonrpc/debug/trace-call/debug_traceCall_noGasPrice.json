@@ -11,7 +11,8 @@
       {
         "disableMemory": true,
         "disableStack": true,
-        "disableStorage": true
+        "disableStorage": true,
+		"disableStatelessWitness": true
       }
     ],
     "id": 1
@@ -30,7 +31,6 @@
           "gas":17592186023252,
           "gasCost":0,
           "depth":1
-          "statelessWitness" : [ ],
         }
       ]
     }
