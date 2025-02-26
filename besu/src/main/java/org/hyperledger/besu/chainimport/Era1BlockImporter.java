@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.chainimport;
 
-import org.hyperledger.besu.chainimport.internal.Era1ReaderListener;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -30,11 +29,12 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.e2.E2BlockIndex;
-import org.hyperledger.besu.util.e2.E2ExecutionBlockBody;
-import org.hyperledger.besu.util.e2.E2ExecutionBlockHeader;
-import org.hyperledger.besu.util.e2.E2ExecutionBlockReceipts;
-import org.hyperledger.besu.util.io.E2StoreReader;
+import org.hyperledger.besu.util.era1.Era1BlockIndex;
+import org.hyperledger.besu.util.era1.Era1ExecutionBlockBody;
+import org.hyperledger.besu.util.era1.Era1ExecutionBlockHeader;
+import org.hyperledger.besu.util.era1.Era1ExecutionBlockReceipts;
+import org.hyperledger.besu.util.era1.Era1Reader;
+import org.hyperledger.besu.util.era1.Era1ReaderListener;
 import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import java.io.Closeable;
@@ -66,7 +66,7 @@ public class Era1BlockImporter implements Closeable {
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     final ProtocolContext context = controller.getProtocolContext();
 
-    E2StoreReader reader = new E2StoreReader(new SnappyFactory());
+    Era1Reader reader = new Era1Reader(new SnappyFactory());
 
     final List<Future<BlockHeader>> headersFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
     final List<Future<BlockBody>> bodiesFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
@@ -78,7 +78,7 @@ public class Era1BlockImporter implements Closeable {
 
           @Override
           public void handleExecutionBlockHeader(
-              final E2ExecutionBlockHeader executionBlockHeader) {
+              final Era1ExecutionBlockHeader executionBlockHeader) {
             headersFutures.add(
                 CompletableFuture.supplyAsync(
                     () ->
@@ -89,7 +89,7 @@ public class Era1BlockImporter implements Closeable {
           }
 
           @Override
-          public void handleExecutionBlockBody(final E2ExecutionBlockBody executionBlockBody) {
+          public void handleExecutionBlockBody(final Era1ExecutionBlockBody executionBlockBody) {
             bodiesFutures.add(
                 CompletableFuture.supplyAsync(
                     () ->
@@ -101,7 +101,7 @@ public class Era1BlockImporter implements Closeable {
 
           @Override
           public void handleExecutionBlockReceipts(
-              final E2ExecutionBlockReceipts executionBlockReceipts) {
+              final Era1ExecutionBlockReceipts executionBlockReceipts) {
             receiptsFutures.add(
                 CompletableFuture.supplyAsync(
                     () -> {
@@ -115,7 +115,7 @@ public class Era1BlockImporter implements Closeable {
           }
 
           @Override
-          public void handleBlockIndex(final E2BlockIndex blockIndex) {
+          public void handleBlockIndex(final Era1BlockIndex blockIndex) {
             // not really necessary, do nothing
           }
         });
