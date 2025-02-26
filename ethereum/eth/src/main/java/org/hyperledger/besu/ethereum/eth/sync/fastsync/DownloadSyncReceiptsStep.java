@@ -60,13 +60,6 @@ public class DownloadSyncReceiptsStep
               final List<TransactionReceipt> receipts =
                   receiptsByHeader.getOrDefault(block.getHeader(), emptyList());
               if (block.getBody().getTransactionCount() != receipts.size()) {
-                LOG.atTrace()
-                    .setMessage(
-                        "PeerTask response code was success, but incorrect number of receipts returned. Header hash: {}, Transactions: {}, receipts: {}")
-                    .addArgument(block.getHeader().getHash())
-                    .addArgument(block.getBody().getTransactionCount())
-                    .addArgument(receipts.size())
-                    .log();
                 final BytesValueRLPOutput headerRlpOutput = new BytesValueRLPOutput();
                 block.getHeader().writeTo(headerRlpOutput);
                 LOG.atTrace()
@@ -75,9 +68,9 @@ public class DownloadSyncReceiptsStep
                     .log();
                 LOG.atTrace().setMessage("Body: {}").addArgument(block.getBody().getRlp()).log();
                 throw new IllegalStateException(
-                    "PeerTask response code was success, but incorrect number of receipts returned. Header hash: "
+                    "PeerTask response code was success, but incorrect number of receipts returned. Block hash: "
                         + block.getHeader().getHash()
-                        + ", Transactions: "
+                        + ", transactions: "
                         + block.getBody().getTransactionCount()
                         + ", receipts: "
                         + receipts.size());

@@ -60,25 +60,15 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   @Override
   public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
     final long startTime = System.nanoTime();
-    long noOfTransactions = 0;
-    long noOfReceipts = 0;
     for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       if (!importBlock(blockWithReceipts)) {
         throw InvalidBlockException.fromInvalidBlock(blockWithReceipts.getHeader());
       }
-      noOfTransactions += blockWithReceipts.getBlock().getBody().getTransactionCount();
-      noOfReceipts += blockWithReceipts.getReceipts().size();
       LOG.atTrace()
           .setMessage("Imported block {}")
           .addArgument(blockWithReceipts.getBlock()::toLogString)
           .log();
     }
-    LOG.atDebug()
-        .setMessage("Imported {} blocks with {} transactions and {} receipts")
-        .addArgument(blocksWithReceipts.size())
-        .addArgument(noOfTransactions)
-        .addArgument(noOfReceipts)
-        .log();
     if (logStartBlock.isEmpty()) {
       logStartBlock = OptionalLong.of(blocksWithReceipts.get(0).getNumber());
     }

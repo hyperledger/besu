@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -57,19 +56,8 @@ public class GetBodiesFromPeerTask extends AbstractGetBodiesFromPeerTask<Block, 
 
   @Override
   boolean bodyMatchesHeader(final BlockBody body, final BlockHeader header) {
-    if ((header.getWithdrawalsRoot().isEmpty() && body.getWithdrawals().isPresent())
-        || (header.getWithdrawalsRoot().isPresent() && body.getWithdrawals().isEmpty())) {
-      return false;
-    } else if ((header.getWithdrawalsRoot().isPresent()
-        && !header
-            .getWithdrawalsRoot()
-            .get()
-            .equals(BodyValidation.withdrawalsRoot(body.getWithdrawals().get())))) {
-      return false;
-    } else {
-      return BodyValidation.transactionsRoot(body.getTransactions())
-              .equals(header.getTransactionsRoot())
-          && BodyValidation.ommersHash(body.getOmmers()).equals(header.getOmmersHash());
-    }
+    final BodyIdentifier headerBlockId = new BodyIdentifier(header);
+    final BodyIdentifier bodyBlockId = new BodyIdentifier(body);
+    return headerBlockId.equals(bodyBlockId);
   }
 }

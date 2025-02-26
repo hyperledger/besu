@@ -64,23 +64,9 @@ public abstract class AbstractGetBodiesFromPeerTask<T, B> extends AbstractPeerRe
   protected PendingPeerRequest sendRequest() {
     final List<Hash> blockHashes =
         headers.stream().map(BlockHeader::getHash).collect(Collectors.toList());
-    LOG.atTrace()
-        .setMessage("Requesting {} bodies with hashes {}.")
-        .addArgument(blockHashes.size())
-        .addArgument(blockHashes)
-        .log();
     final long minimumRequiredBlockNumber = headers.getLast().getNumber();
 
-    return sendRequestToPeer(
-        peer -> {
-          LOG.atTrace()
-              .setMessage("Requesting {} bodies from peer {}.")
-              .addArgument(blockHashes.size())
-              .addArgument(peer)
-              .log();
-          return peer.getBodies(blockHashes);
-        },
-        minimumRequiredBlockNumber);
+    return sendRequestToPeer(peer -> peer.getBodies(blockHashes), minimumRequiredBlockNumber);
   }
 
   @Override
@@ -116,13 +102,6 @@ public abstract class AbstractGetBodiesFromPeerTask<T, B> extends AbstractPeerRe
       }
       blocks.add(getBlock(blockHeader, body));
     }
-    LOG.atTrace()
-        .setMessage("Associated {} bodies with {} headers to get {} blocks with these hashes: {}")
-        .addArgument(bodies.size())
-        .addArgument(headers.size())
-        .addArgument(blocks.size())
-        .addArgument(() -> headers.stream().map(BlockHeader::toLogString).toList())
-        .log();
     return Optional.of(blocks);
   }
 }

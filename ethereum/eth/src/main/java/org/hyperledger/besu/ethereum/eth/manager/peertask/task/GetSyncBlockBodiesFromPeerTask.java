@@ -71,7 +71,10 @@ public class GetSyncBlockBodiesFromPeerTask extends AbstractGetBodiesFromPeerTas
       final SyncBlockBody blockBody = blockBodies.get(i);
       final BlockHeader blockHeader = blockHeaders.get(i);
       if (!blockBodyMatchesBlockHeader(blockBody, blockHeader)) {
-        LOG.atDebug().setMessage("Received block body does not match block header").log();
+        LOG.atDebug()
+            .setMessage("Received block body does not match block header: {}")
+            .addArgument(blockHeader.getBlockHash())
+            .log();
         throw new InvalidPeerTaskResponseException();
       }
 

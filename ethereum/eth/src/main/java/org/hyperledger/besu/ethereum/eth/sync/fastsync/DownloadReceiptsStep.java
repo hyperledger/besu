@@ -53,9 +53,9 @@ public class DownloadReceiptsStep extends AbstractDownloadReceiptsStep<Block, Bl
                   receiptsByHeader.getOrDefault(block.getHeader(), emptyList());
               if (block.getBody().getTransactions().size() != receipts.size()) {
                 throw new IllegalStateException(
-                    "PeerTask response code was success, but incorrect number of receipts returned. Header hash: "
+                    "PeerTask response code was success, but incorrect number of receipts returned. Block hash: "
                         + block.getHeader().getHash()
-                        + ", Transactions: "
+                        + ", transactions: "
                         + block.getBody().getTransactions().size()
                         + ", receipts: "
                         + receipts.size());
