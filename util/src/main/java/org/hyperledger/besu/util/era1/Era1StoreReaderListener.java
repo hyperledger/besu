@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util.e2;
+package org.hyperledger.besu.util.era1;
 
 /** A Listener interface for listening to an Era1Reader */
 public interface Era1StoreReaderListener {

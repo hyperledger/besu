@@ -12,12 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util.e2;
+package org.hyperledger.besu.util.era1;
+
+import java.util.List;
 
 /**
- * Represents an execution block header in an era1 file
+ * Represents a block index in an era1 file
  *
- * @param header The execution block header
- * @param blockIndex The blockIndex number
+ * @param startingBlockIndex The first blockIndex number indexed by this block index
+ * @param indexes The indexes of the blocks indexed by this block index
  */
-public record Era1ExecutionBlockHeader(byte[] header, int blockIndex) {}
+public record Era1BlockIndex(long startingBlockIndex, List<Long> indexes) {}
