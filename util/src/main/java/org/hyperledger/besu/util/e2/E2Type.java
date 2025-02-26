@@ -20,10 +20,6 @@ import java.util.HexFormat;
 public enum E2Type {
   /** An empty section */
   EMPTY(new byte[] {0x00, 0x00}),
-  /** A snappy compressed, SSZ encoded, signed beacon block */
-  COMPRESSED_SIGNED_BEACON_BLOCK(new byte[] {0x01, 0x00}),
-  /** A snappy compressed, SSZ encoded, beacon state */
-  COMPRESSED_BEACON_STATE(new byte[] {0x02, 0x00}),
   /** A snappy compressed execution block header */
   COMPRESSED_EXECUTION_BLOCK_HEADER(new byte[] {0x03, 0x00}),
   /** A snappy compressed execution block body */
@@ -38,8 +34,6 @@ public enum E2Type {
   VERSION(new byte[] {0x65, 0x32}),
   /** An execution block index */
   BLOCK_INDEX(new byte[] {0x66, 0x32}),
-  /** A slot index */
-  SLOT_INDEX(new byte[] {0x69, 0x32}),
   ;
   private final byte[] typeCode;
 

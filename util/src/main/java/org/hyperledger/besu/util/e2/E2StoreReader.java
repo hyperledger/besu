@@ -12,17 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util.io;
+package org.hyperledger.besu.util.e2;
 
-import org.hyperledger.besu.util.e2.E2BeaconState;
-import org.hyperledger.besu.util.e2.E2BlockIndex;
-import org.hyperledger.besu.util.e2.E2ExecutionBlockBody;
-import org.hyperledger.besu.util.e2.E2ExecutionBlockHeader;
-import org.hyperledger.besu.util.e2.E2ExecutionBlockReceipts;
-import org.hyperledger.besu.util.e2.E2SignedBeaconBlock;
-import org.hyperledger.besu.util.e2.E2SlotIndex;
-import org.hyperledger.besu.util.e2.E2StoreReaderListener;
-import org.hyperledger.besu.util.e2.E2Type;
 import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import java.io.ByteArrayInputStream;
@@ -81,44 +72,6 @@ public class E2StoreReader {
           // skip the bytes that were indicated to be empty
           // TODO read ACCUMULATOR and TOTAL_DIFFICULTY properly?
           inputStream.skipNBytes(length);
-        }
-        case SLOT_INDEX -> {
-          ByteArrayInputStream slotIndexInputStream =
-              new ByteArrayInputStream(inputStream.readNBytes(length));
-          long startingSlot =
-              convertLittleEndianBytesToLong(slotIndexInputStream.readNBytes(STARTING_SLOT_LENGTH));
-          List<Long> indexes = new ArrayList<>();
-          while (slotIndexInputStream.available() > SLOT_INDEX_COUNT_LENGTH) {
-            indexes.add(
-                convertLittleEndianBytesToLong(slotIndexInputStream.readNBytes(SLOT_INDEX_LENGTH)));
-          }
-          long indexCount =
-              convertLittleEndianBytesToLong(
-                  slotIndexInputStream.readNBytes(SLOT_INDEX_COUNT_LENGTH));
-          if (indexCount != indexes.size()) {
-            LOG.warn(
-                "index count does not match number of indexes present for InputStream: {}",
-                inputStream);
-          }
-          listener.handleSlotIndex(new E2SlotIndex(startingSlot, indexes));
-        }
-        case COMPRESSED_BEACON_STATE -> {
-          byte[] compressedBeaconStateArray = inputStream.readNBytes(length);
-          try (SnappyFramedInputStream decompressionStream =
-              snappyFactory.createFramedInputStream(compressedBeaconStateArray)) {
-            // TODO: decode with SSZ
-            listener.handleBeaconState(
-                new E2BeaconState(decompressionStream.readAllBytes(), slot++));
-          }
-        }
-        case COMPRESSED_SIGNED_BEACON_BLOCK -> {
-          byte[] compressedSignedBeaconBlockArray = inputStream.readNBytes(length);
-          try (SnappyFramedInputStream decompressionStream =
-              snappyFactory.createFramedInputStream(compressedSignedBeaconBlockArray)) {
-            // TODO: decode with SSZ
-            listener.handleSignedBeaconBlock(
-                new E2SignedBeaconBlock(decompressionStream.readAllBytes(), slot++));
-          }
         }
         case COMPRESSED_EXECUTION_BLOCK_HEADER -> {
           byte[] compressedExecutionBlockHeader = inputStream.readNBytes(length);

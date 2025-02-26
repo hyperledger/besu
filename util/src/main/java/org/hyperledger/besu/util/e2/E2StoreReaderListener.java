@@ -17,27 +17,6 @@ package org.hyperledger.besu.util.e2;
 /** A Listener interface for listening to an E2StoreReader */
 public interface E2StoreReaderListener {
   /**
-   * Handles the supplied E2BeaconState
-   *
-   * @param beaconState the E2BeaconState
-   */
-  void handleBeaconState(E2BeaconState beaconState);
-
-  /**
-   * Handles the supplied E2SlotIndex
-   *
-   * @param slotIndex the E2SlotIndex
-   */
-  void handleSlotIndex(E2SlotIndex slotIndex);
-
-  /**
-   * Handles the supplied E2SignedBeaconBlock
-   *
-   * @param signedBeaconBlock the E2SignedBeaconBlock
-   */
-  void handleSignedBeaconBlock(E2SignedBeaconBlock signedBeaconBlock);
-
-  /**
    * Handles the supplied E2ExecutionBlockHeader
    *
    * @param executionBlockHeader the E2ExecutionBlockHeader

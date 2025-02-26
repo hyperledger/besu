@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Represents a block index in an E2 file
  *
- * @param startingSlot The first slot number indexed by this block index
+ * @param startingBlockIndex The first blockIndex number indexed by this block index
  * @param indexes The indexes of the blocks indexed by this block index
  */
-public record E2BlockIndex(long startingSlot, List<Long> indexes) {}
+public record E2BlockIndex(long startingBlockIndex, List<Long> indexes) {}

@@ -18,6 +18,6 @@ package org.hyperledger.besu.util.e2;
  * Represents an execution block header in an E2 file
  *
  * @param header The execution block header
- * @param slot The slot number
+ * @param blockIndex The blockIndex number
  */
-public record E2ExecutionBlockHeader(byte[] header, int slot) {}
+public record E2ExecutionBlockHeader(byte[] header, int blockIndex) {}

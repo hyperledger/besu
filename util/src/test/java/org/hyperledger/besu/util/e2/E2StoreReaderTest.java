@@ -12,17 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util.io;
+package org.hyperledger.besu.util.e2;
 
-import org.hyperledger.besu.util.e2.E2BeaconState;
-import org.hyperledger.besu.util.e2.E2BlockIndex;
-import org.hyperledger.besu.util.e2.E2ExecutionBlockBody;
-import org.hyperledger.besu.util.e2.E2ExecutionBlockHeader;
-import org.hyperledger.besu.util.e2.E2ExecutionBlockReceipts;
-import org.hyperledger.besu.util.e2.E2SignedBeaconBlock;
-import org.hyperledger.besu.util.e2.E2SlotIndex;
-import org.hyperledger.besu.util.e2.E2StoreReaderListener;
-import org.hyperledger.besu.util.e2.E2Type;
 import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import java.io.IOException;
@@ -91,162 +82,6 @@ public class E2StoreReaderTest {
   }
 
   @Test
-  public void testReadForSlotIndexType() throws IOException {
-    InputStream inputStream = Mockito.mock(InputStream.class);
-    E2StoreReaderListener listener = Mockito.mock(E2StoreReaderListener.class);
-
-    Mockito.when(inputStream.available()).thenReturn(40, 0);
-    Mockito.when(inputStream.readNBytes(2)).thenReturn(E2Type.SLOT_INDEX.getTypeCode());
-    Mockito.when(inputStream.readNBytes(6))
-        .thenReturn(new byte[] {0x20, 0x00, 0x00, 0x00, 0x00, 0x00});
-    Mockito.when(inputStream.readNBytes(32))
-        .thenReturn(
-            new byte[] {
-              0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
-              0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
-              0x00, 0x00, 0x00, 0x00
-            });
-
-    reader.read(inputStream, listener);
-
-    Mockito.verifyNoInteractions(snappyFactory);
-    Mockito.verify(inputStream, Mockito.times(2)).available();
-    Mockito.verify(inputStream).readNBytes(2);
-    Mockito.verify(inputStream).readNBytes(6);
-    Mockito.verify(inputStream).readNBytes(32);
-    ArgumentCaptor<E2SlotIndex> slotIndexArgumentCaptor =
-        ArgumentCaptor.forClass(E2SlotIndex.class);
-    Mockito.verify(listener).handleSlotIndex(slotIndexArgumentCaptor.capture());
-    Mockito.verifyNoMoreInteractions(listener);
-
-    E2SlotIndex slotIndex = slotIndexArgumentCaptor.getValue();
-    Assertions.assertEquals(1, slotIndex.startingSlot());
-    Assertions.assertEquals(List.of(2L, 3L), slotIndex.indexes());
-  }
-
-  @Test
-  public void testReadForCompressedBeaconState() throws IOException {
-    InputStream inputStream = Mockito.mock(InputStream.class);
-    E2StoreReaderListener listener = Mockito.mock(E2StoreReaderListener.class);
-    SnappyFramedInputStream snappyFramedInputStream = Mockito.mock(SnappyFramedInputStream.class);
-
-    Mockito.when(inputStream.available()).thenReturn(15, 0);
-    Mockito.when(inputStream.readNBytes(2))
-        .thenReturn(E2Type.COMPRESSED_BEACON_STATE.getTypeCode());
-    Mockito.when(inputStream.readNBytes(6))
-        .thenReturn(new byte[] {0x07, 0x00, 0x00, 0x00, 0x00, 0x00});
-    byte[] compressedBeaconState = new byte[] {1, 2, 3, 4, 5, 6, 7};
-    Mockito.when(inputStream.readNBytes(7)).thenReturn(compressedBeaconState);
-    Mockito.when(snappyFactory.createFramedInputStream(compressedBeaconState))
-        .thenReturn(snappyFramedInputStream);
-    byte[] beaconState = new byte[] {10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
-    Mockito.when(snappyFramedInputStream.readAllBytes()).thenReturn(beaconState);
-
-    reader.read(inputStream, listener);
-
-    Mockito.verify(inputStream, Mockito.times(2)).available();
-    Mockito.verify(inputStream).readNBytes(2);
-    Mockito.verify(inputStream).readNBytes(6);
-    Mockito.verify(inputStream).readNBytes(7);
-    Mockito.verify(snappyFactory).createFramedInputStream(compressedBeaconState);
-    Mockito.verify(snappyFramedInputStream).readAllBytes();
-    ArgumentCaptor<E2BeaconState> beaconStateArgumentCaptor =
-        ArgumentCaptor.forClass(E2BeaconState.class);
-    Mockito.verify(listener).handleBeaconState(beaconStateArgumentCaptor.capture());
-    Mockito.verifyNoMoreInteractions(listener);
-
-    E2BeaconState e2BeaconState = beaconStateArgumentCaptor.getValue();
-    Assertions.assertEquals(beaconState, e2BeaconState.beaconState());
-    Assertions.assertEquals(0, e2BeaconState.slot());
-  }
-
-  @Test
-  public void testReadForCompressedBeaconStateMultipleReadsIncrementsSlot() throws IOException {
-    InputStream inputStream = Mockito.mock(InputStream.class);
-    E2StoreReaderListener listener = Mockito.mock(E2StoreReaderListener.class);
-    SnappyFramedInputStream snappyFramedInputStream1 = Mockito.mock(SnappyFramedInputStream.class);
-    SnappyFramedInputStream snappyFramedInputStream2 = Mockito.mock(SnappyFramedInputStream.class);
-
-    Mockito.when(inputStream.available()).thenReturn(30, 15, 0);
-    Mockito.when(inputStream.readNBytes(2))
-        .thenReturn(
-            E2Type.COMPRESSED_BEACON_STATE.getTypeCode(),
-            E2Type.COMPRESSED_BEACON_STATE.getTypeCode());
-    Mockito.when(inputStream.readNBytes(6))
-        .thenReturn(
-            new byte[] {0x07, 0x00, 0x00, 0x00, 0x00, 0x00},
-            new byte[] {0x07, 0x00, 0x00, 0x00, 0x00, 0x00});
-    byte[] compressedBeaconState = new byte[] {1, 2, 3, 4, 5, 6, 7};
-    Mockito.when(inputStream.readNBytes(7))
-        .thenReturn(compressedBeaconState, compressedBeaconState);
-    Mockito.when(snappyFactory.createFramedInputStream(compressedBeaconState))
-        .thenReturn(snappyFramedInputStream1, snappyFramedInputStream2);
-    byte[] beaconState = new byte[] {10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
-    Mockito.when(snappyFramedInputStream1.readAllBytes()).thenReturn(beaconState);
-    Mockito.when(snappyFramedInputStream2.readAllBytes()).thenReturn(beaconState);
-
-    reader.read(inputStream, listener);
-
-    Mockito.verify(inputStream, Mockito.times(3)).available();
-    Mockito.verify(inputStream, Mockito.times(2)).readNBytes(2);
-    Mockito.verify(inputStream, Mockito.times(2)).readNBytes(6);
-    Mockito.verify(inputStream, Mockito.times(2)).readNBytes(7);
-    Mockito.verify(snappyFactory, Mockito.times(2)).createFramedInputStream(compressedBeaconState);
-    Mockito.verify(snappyFramedInputStream1).readAllBytes();
-    Mockito.verify(snappyFramedInputStream2).readAllBytes();
-    ArgumentCaptor<E2BeaconState> beaconStateArgumentCaptor =
-        ArgumentCaptor.forClass(E2BeaconState.class);
-    Mockito.verify(listener, Mockito.times(2))
-        .handleBeaconState(beaconStateArgumentCaptor.capture());
-    Mockito.verifyNoMoreInteractions(listener);
-
-    List<E2BeaconState> e2BeaconStates = beaconStateArgumentCaptor.getAllValues();
-    Assertions.assertEquals(2, e2BeaconStates.size());
-    E2BeaconState e2BeaconState1 = e2BeaconStates.getFirst();
-    Assertions.assertEquals(beaconState, e2BeaconState1.beaconState());
-    Assertions.assertEquals(0, e2BeaconState1.slot());
-    E2BeaconState e2BeaconState2 = e2BeaconStates.getLast();
-    Assertions.assertEquals(beaconState, e2BeaconState2.beaconState());
-    Assertions.assertEquals(1, e2BeaconState2.slot());
-  }
-
-  @Test
-  public void testReadForCompressedSignedBeaconBlock() throws IOException {
-    InputStream inputStream = Mockito.mock(InputStream.class);
-    E2StoreReaderListener listener = Mockito.mock(E2StoreReaderListener.class);
-    SnappyFramedInputStream snappyFramedInputStream = Mockito.mock(SnappyFramedInputStream.class);
-
-    Mockito.when(inputStream.available()).thenReturn(15, 0);
-    Mockito.when(inputStream.readNBytes(2))
-        .thenReturn(E2Type.COMPRESSED_SIGNED_BEACON_BLOCK.getTypeCode());
-    Mockito.when(inputStream.readNBytes(6))
-        .thenReturn(new byte[] {0x07, 0x00, 0x00, 0x00, 0x00, 0x00});
-    byte[] compressedSignedBeaconBlock = new byte[] {1, 2, 3, 4, 5, 6, 7};
-    Mockito.when(inputStream.readNBytes(7)).thenReturn(compressedSignedBeaconBlock);
-    Mockito.when(snappyFactory.createFramedInputStream(compressedSignedBeaconBlock))
-        .thenReturn(snappyFramedInputStream);
-    byte[] signedBeaconBlock = new byte[] {10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
-    Mockito.when(snappyFramedInputStream.readAllBytes()).thenReturn(signedBeaconBlock);
-
-    reader.read(inputStream, listener);
-
-    Mockito.verify(inputStream, Mockito.times(2)).available();
-    Mockito.verify(inputStream).readNBytes(2);
-    Mockito.verify(inputStream).readNBytes(6);
-    Mockito.verify(inputStream).readNBytes(7);
-    Mockito.verify(snappyFactory).createFramedInputStream(compressedSignedBeaconBlock);
-    Mockito.verify(snappyFramedInputStream).readAllBytes();
-    ArgumentCaptor<E2SignedBeaconBlock> signedBeaconBlockArgumentCaptor =
-        ArgumentCaptor.forClass(E2SignedBeaconBlock.class);
-    Mockito.verify(listener).handleSignedBeaconBlock(signedBeaconBlockArgumentCaptor.capture());
-    Mockito.verifyNoMoreInteractions(listener);
-
-    E2SignedBeaconBlock e2SignedBeaconBlock = signedBeaconBlockArgumentCaptor.getValue();
-    Assertions.assertEquals(signedBeaconBlock, e2SignedBeaconBlock.signedBeaconBlock());
-    Assertions.assertEquals(0, e2SignedBeaconBlock.slot());
-  }
-
-  @Test
   public void testReadForCompressedExecutionBlockHeader() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
     E2StoreReaderListener listener = Mockito.mock(E2StoreReaderListener.class);
@@ -280,7 +115,7 @@ public class E2StoreReaderTest {
 
     E2ExecutionBlockHeader e2ExecutionBlockHeader = executionBlockHeaderArgumentCaptor.getValue();
     Assertions.assertEquals(executionBlockHeader, e2ExecutionBlockHeader.header());
-    Assertions.assertEquals(0, e2ExecutionBlockHeader.slot());
+    Assertions.assertEquals(0, e2ExecutionBlockHeader.blockIndex());
   }
 
   @Test
@@ -316,7 +151,7 @@ public class E2StoreReaderTest {
 
     E2ExecutionBlockBody e2ExecutionBlockBody = executionBlockBodyArgumentCaptor.getValue();
     Assertions.assertEquals(executionBlockBody, e2ExecutionBlockBody.block());
-    Assertions.assertEquals(0, e2ExecutionBlockBody.slot());
+    Assertions.assertEquals(0, e2ExecutionBlockBody.blockIndex());
   }
 
   @Test
@@ -354,7 +189,7 @@ public class E2StoreReaderTest {
     E2ExecutionBlockReceipts e2ExecutionBlockReceipts =
         executionBlockReceiptsArgumentCaptor.getValue();
     Assertions.assertEquals(executionBlockReceipts, e2ExecutionBlockReceipts.receipts());
-    Assertions.assertEquals(0, e2ExecutionBlockReceipts.slot());
+    Assertions.assertEquals(0, e2ExecutionBlockReceipts.blockIndex());
   }
 
   @Test
@@ -387,7 +222,7 @@ public class E2StoreReaderTest {
     Mockito.verifyNoMoreInteractions(listener);
 
     E2BlockIndex blockIndex = blockIndexArgumentCaptor.getValue();
-    Assertions.assertEquals(1, blockIndex.startingSlot());
+    Assertions.assertEquals(1, blockIndex.startingBlockIndex());
     Assertions.assertEquals(List.of(2L, 3L), blockIndex.indexes());
   }
 }

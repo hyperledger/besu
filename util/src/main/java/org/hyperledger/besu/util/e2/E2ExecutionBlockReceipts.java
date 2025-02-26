@@ -18,6 +18,6 @@ package org.hyperledger.besu.util.e2;
  * Represents an execution block's transaction receipts in an E2 file
  *
  * @param receipts The execution block's transaction receipts
- * @param slot The slot number
+ * @param blockIndex The blockIndex number
  */
-public record E2ExecutionBlockReceipts(byte[] receipts, int slot) {}
+public record E2ExecutionBlockReceipts(byte[] receipts, int blockIndex) {}
