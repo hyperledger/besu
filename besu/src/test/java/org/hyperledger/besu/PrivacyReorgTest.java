@@ -64,7 +64,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoaderModule;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiMerkleTriePreloaderModule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -492,7 +492,7 @@ public class PrivacyReorgTest {
         PrivacyTestModule.class,
         MockBesuCommandModule.class,
         NoOpMetricsSystemModule.class,
-        BonsaiCachedMerkleTrieLoaderModule.class,
+        BonsaiMerkleTriePreloaderModule.class,
         BlobCacheModule.class,
         BesuPluginContextModule.class
       })

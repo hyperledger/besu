@@ -332,7 +332,6 @@ public class MainnetTransactionProcessor {
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
-
         evmWorldUpdater.commit();
       }
 

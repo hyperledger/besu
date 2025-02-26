@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload;
+package org.hyperledger.besu.ethereum.trie.diffbased.common.preload;
 
 import org.hyperledger.besu.datatypes.Address;
 

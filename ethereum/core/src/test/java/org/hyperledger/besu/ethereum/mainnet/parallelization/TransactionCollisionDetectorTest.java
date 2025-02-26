@@ -23,10 +23,11 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiNoOpMerkleTriePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.preload.StorageConsumingMap;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -53,10 +54,10 @@ class TransactionCollisionDetectorTest {
     collisionDetector = new TransactionCollisionDetector();
     bonsaiUpdater =
         new BonsaiWorldStateUpdateAccumulator(
-            worldState, (__, ___) -> {}, (__, ___) -> {}, EvmConfiguration.DEFAULT);
+            worldState, new BonsaiNoOpMerkleTriePreloader(), EvmConfiguration.DEFAULT);
     trxUpdater =
         new BonsaiWorldStateUpdateAccumulator(
-            worldState, (__, ___) -> {}, (__, ___) -> {}, EvmConfiguration.DEFAULT);
+            worldState, new BonsaiNoOpMerkleTriePreloader(), EvmConfiguration.DEFAULT);
   }
 
   private Transaction createTransaction(final Address sender, final Address to) {

@@ -86,7 +86,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiMerkleTriePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
@@ -604,10 +604,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString(),
             numberOfBlocksToCache);
-    final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
+    final BonsaiMerkleTriePreloader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
-            .orElseGet(() -> new BonsaiCachedMerkleTrieLoader(metricsSystem));
+            .orElseGet(() -> new BonsaiMerkleTriePreloader(metricsSystem));
 
     final var worldStateHealerSupplier = new AtomicReference<WorldStateHealer>();
 
@@ -1128,7 +1128,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   WorldStateArchive createWorldStateArchive(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final Blockchain blockchain,
-      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
+      final BonsaiMerkleTriePreloader bonsaiCachedMerkleTrieLoader,
       final Supplier<WorldStateHealer> worldStateHealerSupplier) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {

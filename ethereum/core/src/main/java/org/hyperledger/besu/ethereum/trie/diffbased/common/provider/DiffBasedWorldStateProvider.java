@@ -313,7 +313,6 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
               .setMessage("State rolling failed on {} for block hash {}")
               .addArgument(mutableState.getWorldStateStorage().getClass().getSimpleName())
               .addArgument(blockHash)
-              .addArgument(e)
               .log();
 
           return Optional.empty();

@@ -23,9 +23,9 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateC
 import java.util.Optional;
 import java.util.function.Function;
 
-public class NoOpBonsaiCachedWorldStorageManager extends BonsaiCachedWorldStorageManager {
+public class BonsaiNoOpCachedWorldStorageManager extends BonsaiCachedWorldStorageManager {
 
-  public NoOpBonsaiCachedWorldStorageManager(
+  public BonsaiNoOpCachedWorldStorageManager(
       final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage) {
     super(null, bonsaiWorldStateKeyValueStorage, WorldStateConfig.createStatefulConfigWithTrie());
   }

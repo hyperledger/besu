@@ -67,7 +67,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiMerkleTriePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
@@ -167,7 +167,7 @@ public abstract class AbstractIsolationTests {
             (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
             blockchain,
             Optional.of(16L),
-            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            new BonsaiMerkleTriePreloader(new NoOpMetricsSystem()),
             null,
             EvmConfiguration.DEFAULT,
             throwingWorldStateHealerSupplier());

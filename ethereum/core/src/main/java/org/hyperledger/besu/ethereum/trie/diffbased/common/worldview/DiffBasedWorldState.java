@@ -254,9 +254,8 @@ public abstract class DiffBasedWorldState
 
   @Override
   public Hash rootHash() {
-    if (isStorageFrozen && accumulator.isAccumulatorStateChanged()) {
+    if (isStorageFrozen) {
       worldStateRootHash = calculateRootHash(Optional.empty(), accumulator.copy());
-      accumulator.resetAccumulatorStateChanged();
     }
     return Hash.wrap(worldStateRootHash);
   }

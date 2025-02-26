@@ -17,13 +17,12 @@ package org.hyperledger.besu.ethereum.referencetests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiMerkleTriePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.Consumer;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.preload.StorageConsumingMap;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,12 +33,11 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
   private final BonsaiPreImageProxy preImageProxy;
 
   public BonsaiReferenceTestUpdateAccumulator(
-      final DiffBasedWorldView world,
-      final Consumer<DiffBasedValue<BonsaiAccount>> accountPreloader,
-      final Consumer<StorageSlotKey> storagePreloader,
+      final DiffBasedWorldState world,
+      final BonsaiMerkleTriePreloader preloader,
       final BonsaiPreImageProxy preImageProxy,
       final EvmConfiguration evmConfiguration) {
-    super(world, accountPreloader, storagePreloader, evmConfiguration);
+    super(world, preloader, evmConfiguration);
     this.preImageProxy = preImageProxy;
   }
 
@@ -56,11 +54,7 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
   public BonsaiReferenceTestUpdateAccumulator createDetachedAccumulator() {
     final BonsaiReferenceTestUpdateAccumulator copy =
         new BonsaiReferenceTestUpdateAccumulator(
-            wrappedWorldView(),
-            accountPreloader,
-            storagePreloader,
-            preImageProxy,
-            evmConfiguration);
+            getParentWorldView(), getPreloaderManager(), preImageProxy, evmConfiguration);
     getAccountsToUpdate().forEach((k, v) -> copy.getAccountsToUpdate().put(k, v.copy()));
     getCodeToUpdate().forEach((k, v) -> copy.getCodeToUpdate().put(k, v.copy()));
     copy.getStorageToClear().addAll(getStorageToClear());
@@ -72,9 +66,6 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
               v.forEach((key, value) -> newMap.put(key, value.copy()));
               copy.getStorageToUpdate().put(k, newMap);
             });
-    copy.updatedAccounts.putAll(updatedAccounts);
-    copy.deletedAccounts.addAll(deletedAccounts);
-    copy.isAccumulatorStateChanged = true;
     return copy;
   }
 }

@@ -12,33 +12,33 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache;
+package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.preload.Consumer;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
-public class NoopBonsaiCachedMerkleTrieLoader extends BonsaiCachedMerkleTrieLoader {
+public class BonsaiNoOpMerkleTriePreloader extends BonsaiMerkleTriePreloader {
 
-  public NoopBonsaiCachedMerkleTrieLoader() {
+  public BonsaiNoOpMerkleTriePreloader() {
     super(new NoOpMetricsSystem());
   }
 
   @Override
-  public void preLoadAccount(
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Hash worldStateRootHash,
-      final Address account) {
-    // noop
+  public Consumer<DiffBasedValue<BonsaiAccount>> getAccountPreloader(
+      final DiffBasedWorldState worldState) {
+    return (address, value) -> {
+      // noop
+    };
   }
 
   @Override
-  public void preLoadStorageSlot(
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Address account,
-      final StorageSlotKey slotKey) {
-    // noop
+  public Consumer<StorageSlotKey> getStoragePreloader(final DiffBasedWorldState worldState) {
+    return (address, value) -> {
+      // noop
+    };
   }
 }

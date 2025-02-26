@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload;
+package org.hyperledger.besu.ethereum.trie.diffbased.common.preload;
 
 import org.hyperledger.besu.datatypes.Address;
 
@@ -22,28 +22,32 @@ import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
 
-public class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
+public class StorageConsumingMap<K, T> extends ForwardingMap<K, T> {
 
-  private final ConcurrentMap<Address, T> accounts;
-  private final Consumer<T> consumer;
+  private final Address address;
 
-  public AccountConsumingMap(final ConcurrentMap<Address, T> accounts, final Consumer<T> consumer) {
-    this.accounts = accounts;
+  private final ConcurrentMap<K, T> storages;
+  private final Consumer<K> consumer;
+
+  public StorageConsumingMap(
+      final Address address, final ConcurrentMap<K, T> storages, final Consumer<K> consumer) {
+    this.address = address;
+    this.storages = storages;
     this.consumer = consumer;
   }
 
   @Override
-  public T put(@Nonnull final Address address, @Nonnull final T value) {
-    consumer.process(address, value);
-    return accounts.put(address, value);
+  public T put(@Nonnull final K slotKey, @Nonnull final T value) {
+    consumer.process(address, slotKey);
+    return storages.put(slotKey, value);
   }
 
-  public Consumer<T> getConsumer() {
+  public Consumer<K> getConsumer() {
     return consumer;
   }
 
   @Override
-  protected Map<Address, T> delegate() {
-    return accounts;
+  protected Map<K, T> delegate() {
+    return storages;
   }
 }

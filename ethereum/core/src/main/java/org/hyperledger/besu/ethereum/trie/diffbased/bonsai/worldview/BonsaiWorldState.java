@@ -27,18 +27,18 @@ import org.hyperledger.besu.ethereum.trie.NoOpMerkleTrie;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiMerkleTriePreloader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiNoOpMerkleTriePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.preload.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -61,7 +61,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldState extends DiffBasedWorldState {
 
-  protected BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
+  protected BonsaiMerkleTriePreloader preloaderManager;
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
@@ -70,7 +70,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       final WorldStateConfig worldStateConfig) {
     this(
         worldStateKeyValueStorage,
-        archive.getCachedMerkleTrieLoader(),
+        archive.getMerkleTriePreloader(),
         archive.getCachedWorldStorageManager(),
         archive.getTrieLogManager(),
         evmConfiguration,
@@ -79,24 +79,16 @@ public class BonsaiWorldState extends DiffBasedWorldState {
 
   public BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
+      final BonsaiMerkleTriePreloader preloaderManager,
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration,
       final WorldStateConfig worldStateConfig) {
     super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager, worldStateConfig);
-    this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    this.preloaderManager = preloaderManager;
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.setAccumulator(
-        new BonsaiWorldStateUpdateAccumulator(
-            this,
-            (addr, value) ->
-                bonsaiCachedMerkleTrieLoader.preLoadAccount(
-                    getWorldStateStorage(), worldStateRootHash, addr),
-            (addr, value) ->
-                this.bonsaiCachedMerkleTrieLoader.preLoadStorageSlot(
-                    getWorldStateStorage(), addr, value),
-            evmConfiguration));
+        new BonsaiWorldStateUpdateAccumulator(this, preloaderManager, evmConfiguration));
   }
 
   @Override
@@ -144,8 +136,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
     final MerkleTrie<Bytes, Bytes> accountTrie =
         createTrie(
             (location, hash) ->
-                bonsaiCachedMerkleTrieLoader.getAccountStateTrieNode(
-                    getWorldStateStorage(), location, hash),
+                preloaderManager.getAccountStateTrieNode(getWorldStateStorage(), location, hash),
             worldStateRootHash);
 
     // for manicured tries and composting, collect branches here (not implemented)
@@ -249,7 +240,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       final MerkleTrie<Bytes, Bytes> storageTrie =
           createTrie(
               (location, key) ->
-                  bonsaiCachedMerkleTrieLoader.getAccountStorageTrieNode(
+                  preloaderManager.getAccountStorageTrieNode(
                       getWorldStateStorage(), updatedAddressHash, location, key),
               storageRoot);
 
@@ -440,7 +431,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
   }
 
   public void disableCacheMerkleTrieLoader() {
-    this.bonsaiCachedMerkleTrieLoader = new NoopBonsaiCachedMerkleTrieLoader();
+    this.preloaderManager = new BonsaiNoOpMerkleTriePreloader();
   }
 
   private MerkleTrie<Bytes, Bytes> createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {

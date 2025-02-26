@@ -19,8 +19,8 @@ import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.Worl
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiNoOpCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiNoOpMerkleTriePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
@@ -59,8 +59,6 @@ public class GenesisWorldStateProvider {
    * @return a mutable world state for the Genesis block
    */
   private static MutableWorldState createGenesisBonsaiWorldState() {
-    final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
-        new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
             new KeyValueStorageProvider(
@@ -71,8 +69,8 @@ public class GenesisWorldStateProvider {
             DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     return new BonsaiWorldState(
         bonsaiWorldStateKeyValueStorage,
-        bonsaiCachedMerkleTrieLoader,
-        new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
+        new BonsaiNoOpMerkleTriePreloader(),
+        new BonsaiNoOpCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
         new NoOpTrieLogManager(),
         EvmConfiguration.DEFAULT,
         createStatefulConfigWithTrie());

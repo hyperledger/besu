@@ -75,7 +75,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
    * @param account the account
    * @return the update tracking account
    */
-  protected UpdateTrackingAccount<A> track(final UpdateTrackingAccount<A> account) {
+  public UpdateTrackingAccount<A> track(final UpdateTrackingAccount<A> account) {
     final Address address = account.getAddress();
     updatedAccounts.put(address, account);
     deletedAccounts.remove(address);

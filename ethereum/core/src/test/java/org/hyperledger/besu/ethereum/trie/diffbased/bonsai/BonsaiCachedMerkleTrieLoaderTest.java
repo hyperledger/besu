@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiMerkleTriePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -46,7 +46,7 @@ import org.mockito.Mockito;
 
 class BonsaiCachedMerkleTrieLoaderTest {
 
-  private BonsaiCachedMerkleTrieLoader merkleTrieLoader;
+  private BonsaiMerkleTriePreloader merkleTrieLoader;
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
   private final BonsaiWorldStateKeyValueStorage inMemoryWorldState =
       Mockito.spy(
@@ -68,7 +68,7 @@ class BonsaiCachedMerkleTrieLoaderTest {
         TrieGenerator.generateTrie(
             worldStateStorageCoordinator,
             accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
-    merkleTrieLoader = new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
+    merkleTrieLoader = new BonsaiMerkleTriePreloader(new NoOpMetricsSystem());
   }
 
   @Test

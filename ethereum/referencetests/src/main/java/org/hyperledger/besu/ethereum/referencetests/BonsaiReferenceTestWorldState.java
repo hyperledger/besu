@@ -20,8 +20,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiNoOpCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiMerkleTriePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
@@ -64,7 +64,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
   protected BonsaiReferenceTestWorldState(
       final BonsaiReferenceTestWorldStateStorage worldStateKeyValueStorage,
-      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
+      final BonsaiMerkleTriePreloader bonsaiCachedMerkleTrieLoader,
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final BonsaiPreImageProxy preImageProxy,
@@ -81,15 +81,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     this.evmConfiguration = evmConfiguration;
     setAccumulator(
         new BonsaiReferenceTestUpdateAccumulator(
-            this,
-            (addr, value) ->
-                bonsaiCachedMerkleTrieLoader.preLoadAccount(
-                    getWorldStateStorage(), worldStateRootHash, addr),
-            (addr, value) ->
-                bonsaiCachedMerkleTrieLoader.preLoadStorageSlot(
-                    getWorldStateStorage(), addr, value),
-            preImageProxy,
-            evmConfiguration));
+            this, preloaderManager, preImageProxy, evmConfiguration));
   }
 
   @Override
@@ -97,7 +89,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     var layerCopy = new BonsaiReferenceTestWorldStateStorage(getWorldStateStorage(), preImageProxy);
     return new BonsaiReferenceTestWorldState(
         layerCopy,
-        bonsaiCachedMerkleTrieLoader,
+        preloaderManager,
         cachedWorldStorageManager,
         trieLogManager,
         preImageProxy,
@@ -223,8 +215,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       final EvmConfiguration evmConfiguration) {
     final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-    final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
-        new BonsaiCachedMerkleTrieLoader(metricsSystem);
+    final BonsaiMerkleTriePreloader bonsaiCachedMerkleTrieLoader =
+        new BonsaiMerkleTriePreloader(metricsSystem);
     final TrieLogManager trieLogManager = new ReferenceTestsInMemoryTrieLogManager();
 
     final BonsaiPreImageProxy preImageProxy =
@@ -239,8 +231,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     final BonsaiReferenceTestWorldStateStorage worldStateKeyValueStorage =
         new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage, preImageProxy);
 
-    final NoOpBonsaiCachedWorldStorageManager noOpCachedWorldStorageManager =
-        new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage);
+    final BonsaiNoOpCachedWorldStorageManager noOpCachedWorldStorageManager =
+        new BonsaiNoOpCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage);
 
     final BonsaiReferenceTestWorldState worldState =
         new BonsaiReferenceTestWorldState(

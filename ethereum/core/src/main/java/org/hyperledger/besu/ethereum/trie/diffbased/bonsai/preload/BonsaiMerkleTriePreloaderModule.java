@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache;
+package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload;
 
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -21,11 +21,10 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module
-public class BonsaiCachedMerkleTrieLoaderModule {
+public class BonsaiMerkleTriePreloaderModule {
 
   @Provides
-  BonsaiCachedMerkleTrieLoader provideCachedMerkleTrieLoaderModule(
-      final MetricsSystem metricsSystem) {
-    return new BonsaiCachedMerkleTrieLoader((ObservableMetricsSystem) metricsSystem);
+  BonsaiMerkleTriePreloader provideCachedMerkleTrieLoaderModule(final MetricsSystem metricsSystem) {
+    return new BonsaiMerkleTriePreloader((ObservableMetricsSystem) metricsSystem);
   }
 }

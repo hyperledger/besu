@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiMerkleTriePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
@@ -97,8 +97,8 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
       final Blockchain blockchain, final EvmConfiguration evmConfiguration) {
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
-    final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
-        new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
+    final BonsaiMerkleTriePreloader bonsaiCachedMerkleTrieLoader =
+        new BonsaiMerkleTriePreloader(new NoOpMetricsSystem());
     return new BonsaiWorldStateProvider(
         (BonsaiWorldStateKeyValueStorage)
             inMemoryKeyValueStorageProvider.createWorldStateStorage(

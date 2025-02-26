@@ -19,8 +19,8 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.preload.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
 
 import java.util.HashSet;
 import java.util.Objects;

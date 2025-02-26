@@ -97,6 +97,7 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
     // assert we can roll a snapshot to a specific worldstate without mutating head
     Address testAddress = Address.fromHexString("0xdeadbeef");
 
+    System.out.println("start");
     var block1 = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
     var res = executeBlock(archive.getWorldState(), block1);
 

@@ -38,8 +38,8 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiNoOpCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.preload.BonsaiNoOpMerkleTriePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
@@ -90,8 +90,8 @@ class ParallelizedConcurrentTransactionProcessorTest {
     worldState =
         new BonsaiWorldState(
             bonsaiWorldStateKeyValueStorage,
-            new NoopBonsaiCachedMerkleTrieLoader(),
-            new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
+            new BonsaiNoOpMerkleTriePreloader(),
+            new BonsaiNoOpCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
             new NoOpTrieLogManager(),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie());
