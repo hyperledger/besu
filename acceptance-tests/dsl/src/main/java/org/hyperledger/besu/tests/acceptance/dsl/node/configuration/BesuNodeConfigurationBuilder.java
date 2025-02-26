@@ -469,7 +469,8 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder synchronizerConfiguration(final SynchronizerConfiguration config) {
+  public BesuNodeConfigurationBuilder synchronizerConfiguration(
+      final SynchronizerConfiguration config) {
     this.synchronizerConfiguration = config;
     return this;
   }

@@ -503,8 +503,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
             SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
             OptionParser.format(snapsyncFlatStorageHealedCountPerRequest),
-            SNAP_SERVER_ENABLED_FLAG, ,
-            OptionParser.format(snapsyncBftEnabled),
+            SNAP_SERVER_ENABLED_FLAG,
+            OptionParser.format(snapsyncServerEnabled),
             SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
             OptionParser.format(snapTransactionIndexingEnabled));
     return value;

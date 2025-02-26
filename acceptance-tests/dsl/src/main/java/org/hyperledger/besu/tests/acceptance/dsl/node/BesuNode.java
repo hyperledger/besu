@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -50,7 +51,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestF
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolRequestFactory;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 
 import java.io.File;
 import java.io.FileInputStream;
