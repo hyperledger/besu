@@ -51,14 +51,14 @@ public class Era1Reader {
 
   /**
    * Reads the entire supplied InputStream, calling appropriate methods on the supplied
-   * Era1StoreReaderListener as different parts of the file are read
+   * Era1ReaderListener as different parts of the file are read
    *
    * @param inputStream The InputStream
-   * @param listener the Era1StoreReaderListener
+   * @param listener the Era1ReaderListener
    * @throws IOException If there are any problems reading from the InputStream, or creating and
    *     using other streams, such as a SnappyFramedInputStream
    */
-  public void read(final InputStream inputStream, final Era1StoreReaderListener listener)
+  public void read(final InputStream inputStream, final Era1ReaderListener listener)
       throws IOException {
     int slot = 0;
     while (inputStream.available() > 0) {

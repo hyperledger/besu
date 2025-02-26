@@ -45,7 +45,7 @@ public class Era1ReaderTest {
   @Test
   public void testReadForVersionType() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
+    Era1ReaderListener listener = Mockito.mock(Era1ReaderListener.class);
 
     Mockito.when(inputStream.available()).thenReturn(8, 0);
     Mockito.when(inputStream.readNBytes(2)).thenReturn(Era1Type.VERSION.getTypeCode());
@@ -64,7 +64,7 @@ public class Era1ReaderTest {
   @Test
   public void testReadForEmptyType() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
+    Era1ReaderListener listener = Mockito.mock(Era1ReaderListener.class);
 
     Mockito.when(inputStream.available()).thenReturn(16, 0);
     Mockito.when(inputStream.readNBytes(2)).thenReturn(Era1Type.EMPTY.getTypeCode());
@@ -84,7 +84,7 @@ public class Era1ReaderTest {
   @Test
   public void testReadForCompressedExecutionBlockHeader() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
+    Era1ReaderListener listener = Mockito.mock(Era1ReaderListener.class);
     SnappyFramedInputStream snappyFramedInputStream = Mockito.mock(SnappyFramedInputStream.class);
 
     Mockito.when(inputStream.available()).thenReturn(15, 0);
@@ -122,7 +122,7 @@ public class Era1ReaderTest {
   @Test
   public void testReadForCompressedExecutionBlockBody() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
+    Era1ReaderListener listener = Mockito.mock(Era1ReaderListener.class);
     SnappyFramedInputStream snappyFramedInputStream = Mockito.mock(SnappyFramedInputStream.class);
 
     Mockito.when(inputStream.available()).thenReturn(15, 0);
@@ -158,7 +158,7 @@ public class Era1ReaderTest {
   @Test
   public void testReadForCompressedExecutionBlockReceipts() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
+    Era1ReaderListener listener = Mockito.mock(Era1ReaderListener.class);
     SnappyFramedInputStream snappyFramedInputStream = Mockito.mock(SnappyFramedInputStream.class);
 
     Mockito.when(inputStream.available()).thenReturn(15, 0);
@@ -196,7 +196,7 @@ public class Era1ReaderTest {
   @Test
   public void testReadForBlockIndexType() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
+    Era1ReaderListener listener = Mockito.mock(Era1ReaderListener.class);
 
     Mockito.when(inputStream.available()).thenReturn(40, 0);
     Mockito.when(inputStream.readNBytes(2)).thenReturn(Era1Type.BLOCK_INDEX.getTypeCode());
