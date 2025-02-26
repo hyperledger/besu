@@ -62,8 +62,8 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void shouldNotMineBlocksIfNoTransactionsWhenCreateEmptyBlockIsFalse() throws IOException {
     final var cliqueOptionsNoEmptyBlocks =
-        new CliqueOptions(
-            CliqueOptions.DEFAULT.blockPeriodSeconds(), CliqueOptions.DEFAULT.epochLength(), false);
+            new CliqueOptions(
+                    CliqueOptions.DEFAULT.blockPeriodSeconds(), CliqueOptions.DEFAULT.epochLength(), false);
     final BesuNode minerNode = besu.createCliqueNode("miner1", cliqueOptionsNoEmptyBlocks);
     cluster.start(minerNode);
 
@@ -72,10 +72,10 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldMineBlocksOnlyWhenTransactionsArePresentWhenCreateEmptyBlocksIsFalse()
-      throws IOException {
+          throws IOException {
     final var cliqueOptionsNoEmptyBlocks =
-        new CliqueOptions(
-            CliqueOptions.DEFAULT.blockPeriodSeconds(), CliqueOptions.DEFAULT.epochLength(), false);
+            new CliqueOptions(
+                    CliqueOptions.DEFAULT.blockPeriodSeconds(), CliqueOptions.DEFAULT.epochLength(), false);
     final BesuNode minerNode = besu.createCliqueNode("miner1", cliqueOptionsNoEmptyBlocks);
     cluster.start(minerNode);
 
@@ -143,7 +143,7 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
   }
 
   private void startClusterAndVerifyProducingBlocks(
-      final BesuNode minerNode1, final BesuNode minerNode2, final BesuNode minerNode3) {
+          final BesuNode minerNode1, final BesuNode minerNode2, final BesuNode minerNode3) {
     cluster.start(minerNode1, minerNode2, minerNode3);
 
     // verify nodes are fully connected otherwise blocks could not be propagated
@@ -183,24 +183,24 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
 
     // setup transitions
     final Map<String, Object> decreasePeriodTo2_Transition =
-        Map.of("block", 3, "blockperiodseconds", 2);
+            Map.of("block", 3, "blockperiodseconds", 2);
     final Map<String, Object> decreasePeriodTo1_Transition =
-        Map.of("block", 4, "blockperiodseconds", 1);
+            Map.of("block", 4, "blockperiodseconds", 1);
     // ensure previous blockperiodseconds transition is carried over
     final Map<String, Object> dummy_Transition = Map.of("block", 5, "createemptyblocks", true);
     final Map<String, Object> increasePeriodTo2_Transition =
-        Map.of("block", 6, "blockperiodseconds", 2);
+            Map.of("block", 6, "blockperiodseconds", 2);
 
     final Optional<String> initialGenesis =
-        minerNode.getGenesisConfigProvider().create(List.of(minerNode));
+            minerNode.getGenesisConfigProvider().create(List.of(minerNode));
     final String genesisWithTransitions =
-        prependTransitionsToCliqueOptions(
-            initialGenesis.orElseThrow(),
-            List.of(
-                decreasePeriodTo2_Transition,
-                decreasePeriodTo1_Transition,
-                dummy_Transition,
-                increasePeriodTo2_Transition));
+            prependTransitionsToCliqueOptions(
+                    initialGenesis.orElseThrow(),
+                    List.of(
+                            decreasePeriodTo2_Transition,
+                            decreasePeriodTo1_Transition,
+                            dummy_Transition,
+                            increasePeriodTo2_Transition));
     minerNode.setGenesisConfig(genesisWithTransitions);
 
     // Mine 6 blocks
@@ -225,29 +225,29 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
   public void shouldMineBlocksAccordingToCreateEmptyBlocksTransitions() throws IOException {
 
     final var cliqueOptionsEmptyBlocks =
-        new CliqueOptions(2, CliqueOptions.DEFAULT.epochLength(), true);
+            new CliqueOptions(2, CliqueOptions.DEFAULT.epochLength(), true);
     final BesuNode minerNode = besu.createCliqueNode("miner1", cliqueOptionsEmptyBlocks);
 
     // setup transitions
     final Map<String, Object> noEmptyBlocks_Transition =
-        Map.of("block", 3, "createemptyblocks", false);
+            Map.of("block", 3, "createemptyblocks", false);
     final Map<String, Object> emptyBlocks_Transition =
-        Map.of("block", 4, "createemptyblocks", true);
+            Map.of("block", 4, "createemptyblocks", true);
     final Map<String, Object> secondNoEmptyBlocks_Transition =
-        Map.of("block", 6, "createemptyblocks", false);
+            Map.of("block", 6, "createemptyblocks", false);
     // ensure previous createemptyblocks transition is carried over
     final Map<String, Object> dummy_Transition = Map.of("block", 7, "blockperiodseconds", 1);
 
     final Optional<String> initialGenesis =
-        minerNode.getGenesisConfigProvider().create(List.of(minerNode));
+            minerNode.getGenesisConfigProvider().create(List.of(minerNode));
     final String genesisWithTransitions =
-        prependTransitionsToCliqueOptions(
-            initialGenesis.orElseThrow(),
-            List.of(
-                noEmptyBlocks_Transition,
-                emptyBlocks_Transition,
-                secondNoEmptyBlocks_Transition,
-                dummy_Transition));
+            prependTransitionsToCliqueOptions(
+                    initialGenesis.orElseThrow(),
+                    List.of(
+                            noEmptyBlocks_Transition,
+                            emptyBlocks_Transition,
+                            secondNoEmptyBlocks_Transition,
+                            dummy_Transition));
     minerNode.setGenesisConfig(genesisWithTransitions);
 
     final Account sender = accounts.createAccount("account1");
@@ -276,20 +276,20 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
 
   private long getTimestampForBlock(final BesuNode minerNode, final int blockNumber) {
     return minerNode
-        .execute(
-            ethTransactions.block(DefaultBlockParameter.valueOf(BigInteger.valueOf(blockNumber))))
-        .getTimestamp()
-        .longValue();
+            .execute(
+                    ethTransactions.block(DefaultBlockParameter.valueOf(BigInteger.valueOf(blockNumber))))
+            .getTimestamp()
+            .longValue();
   }
 
   private String prependTransitionsToCliqueOptions(
-      final String originalOptions, final List<Map<String, Object>> transitions) {
+          final String originalOptions, final List<Map<String, Object>> transitions) {
     final StringBuilder stringBuilder =
-        new StringBuilder()
-            .append(formatCliqueTransitionsOptions(transitions))
-            .append(",\n")
-            .append(quote("clique"))
-            .append(": {");
+            new StringBuilder()
+                    .append(formatCliqueTransitionsOptions(transitions))
+                    .append(",\n")
+                    .append(quote("clique"))
+                    .append(": {");
 
     return originalOptions.replace(quote("clique") + ": {", stringBuilder.toString());
   }
@@ -302,7 +302,7 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
     stringBuilder.append(quote("clique"));
     stringBuilder.append(": [");
     final String formattedTransitions =
-        transitions.stream().map(this::formatTransition).collect(joining(",\n"));
+            transitions.stream().map(this::formatTransition).collect(joining(",\n"));
     stringBuilder.append(formattedTransitions);
     stringBuilder.append("\n]");
     stringBuilder.append("}\n");
@@ -318,9 +318,9 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
     final StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append("{");
     String formattedTransition =
-        transition.keySet().stream()
-            .map(key -> formatKeyValues(key, transition.get(key)))
-            .collect(joining(","));
+            transition.keySet().stream()
+                    .map(key -> formatKeyValues(key, transition.get(key)))
+                    .collect(joining(","));
     stringBuilder.append(formattedTransition);
     stringBuilder.append("}");
     return stringBuilder.toString();
