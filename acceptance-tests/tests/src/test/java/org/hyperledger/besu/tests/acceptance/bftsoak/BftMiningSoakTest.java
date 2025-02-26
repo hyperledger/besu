@@ -30,6 +30,7 @@ import java.time.temporal.ChronoUnit;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -346,6 +347,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     Thread.sleep(TEN_SECONDS);
   }
 
+  @AfterEach
   @Override
   public void tearDownAcceptanceTestBase() {
     cluster.stop();
