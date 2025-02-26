@@ -15,7 +15,7 @@
 package org.hyperledger.besu.util.era1;
 
 /** A Listener interface for listening to an Era1Reader */
-public interface Era1StoreReaderListener {
+public interface Era1ReaderListener {
   /**
    * Handles the supplied Era1ExecutionBlockHeader
    *
