@@ -12,12 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util.e2;
+package org.hyperledger.besu.util.era1;
 
 /**
- * Represents a beacon state in an E2 file
+ * Represents an execution block body in an era1 file
  *
- * @param beaconState The beacon state
- * @param slot The slot number
+ * @param block The execution block
+ * @param blockIndex The blockIndex number
  */
-public record E2BeaconState(byte[] beaconState, int slot) {}
+public record Era1ExecutionBlockBody(byte[] block, int blockIndex) {}

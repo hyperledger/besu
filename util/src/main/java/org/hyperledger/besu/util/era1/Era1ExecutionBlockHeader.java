@@ -12,12 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util.e2;
+package org.hyperledger.besu.util.era1;
 
 /**
- * Represents an execution block's transaction receipts in an E2 file
+ * Represents an execution block header in an era1 file
  *
- * @param receipts The execution block's transaction receipts
- * @param slot The slot number
+ * @param header The execution block header
+ * @param blockIndex The blockIndex number
  */
-public record E2ExecutionBlockReceipts(byte[] receipts, int slot) {}
+public record Era1ExecutionBlockHeader(byte[] header, int blockIndex) {}
