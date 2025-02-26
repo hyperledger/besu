@@ -52,7 +52,7 @@ class QbftBlockCodecAdaptorTest {
     qbftBlockCodec.writeTo(block, rlpOutput);
 
     RLPInput rlpInput = new BytesValueRLPInput(rlpOutput.encoded(), false);
-    QbftBlock decodedBlock = qbftBlockCodec.readFrom(rlpInput, hashMode);
+    QbftBlock decodedBlock = qbftBlockCodec.readFrom(rlpInput);
     assertThat(decodedBlock).isEqualTo(block);
   }
 }
