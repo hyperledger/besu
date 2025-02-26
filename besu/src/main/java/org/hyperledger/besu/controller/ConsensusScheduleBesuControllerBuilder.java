@@ -198,9 +198,10 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
-    return besuControllerBuilderSchedule
-        .get(besuControllerBuilderSchedule.keySet().stream().skip(1).findFirst().orElseThrow())
-        .createAdditionalPluginServices(blockchain, protocolContext);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.createAdditionalPluginServices(blockchain, protocolContext));
+    return new NoopPluginServiceFactory();
   }
 
   @Override
@@ -245,20 +246,34 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
       final ForkIdManager forkIdManager) {
-    return besuControllerBuilderSchedule
-        .get(besuControllerBuilderSchedule.keySet().stream().skip(1).findFirst().orElseThrow())
-        .createEthProtocolManager(
-            protocolContext,
-            synchronizerConfiguration,
-            transactionPool,
-            ethereumWireProtocolConfiguration,
-            ethPeers,
-            ethContext,
-            ethMessages,
-            scheduler,
-            peerValidators,
-            mergePeerFilter,
-            forkIdManager);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(
+            b ->
+                b.createEthProtocolManager(
+                    protocolContext,
+                    synchronizerConfiguration,
+                    transactionPool,
+                    ethereumWireProtocolConfiguration,
+                    ethPeers,
+                    ethContext,
+                    ethMessages,
+                    scheduler,
+                    peerValidators,
+                    mergePeerFilter,
+                    forkIdManager));
+    return super.createEthProtocolManager(
+        protocolContext,
+        synchronizerConfiguration,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethContext,
+        ethMessages,
+        scheduler,
+        peerValidators,
+        mergePeerFilter,
+        forkIdManager);
   }
 
   @Override
