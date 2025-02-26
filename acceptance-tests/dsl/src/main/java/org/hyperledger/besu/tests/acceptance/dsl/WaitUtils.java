@@ -21,7 +21,7 @@ import org.awaitility.core.ThrowingRunnable;
 
 public class WaitUtils {
   public static void waitFor(final ThrowingRunnable condition) {
-    waitFor(40, condition);
+    waitFor(30, condition);
   }
 
   public static void waitFor(final int timeout, final ThrowingRunnable condition) {

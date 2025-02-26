@@ -98,7 +98,7 @@ public class GenesisConfigurationFactory {
 
   public static Optional<String> createQbftMigrationGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
-    final String template = readGenesisFile("/qbft/qbft-migration.json");
+    final String template = readGenesisFile("/qbft/migration-ibft1/qbft-migration.json");
     return updateGenesisExtraData(
         validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
   }

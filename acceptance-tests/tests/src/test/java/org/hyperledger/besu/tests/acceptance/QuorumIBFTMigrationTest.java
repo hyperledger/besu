@@ -40,7 +40,7 @@ public class QuorumIBFTMigrationTest extends AcceptanceTestBase {
 
   private static void copyKeyFile(final BesuNode node, final String keyFileName)
       throws IOException {
-    String resourceFileName = node.getName() + keyFileName;
+    String resourceFileName = "qbft/migration-ibft1/" + node.getName() + keyFileName;
     try (InputStream keyFileStream = getClassLoader().getResourceAsStream(resourceFileName)) {
       if (keyFileStream == null) {
         throw new IOException("Resource not found: " + resourceFileName);
@@ -56,14 +56,14 @@ public class QuorumIBFTMigrationTest extends AcceptanceTestBase {
         new ProcessBuilder(
             "../../build/install/besu/bin/besu",
             "--genesis-file",
-            "src/test/resources/qbft/qbft-migration.json",
+            "src/test/resources/qbft/migration-ibft1/qbft-migration.json",
             "--data-path",
             dataPath.toString(),
             "--data-storage-format",
             "FOREST",
             "blocks",
             "import",
-            "src/test/resources/ibft.blocks");
+            "src/test/resources/qbft/migration-ibft1/ibft.blocks");
 
     processBuilder.directory(new File(System.getProperty("user.dir")));
     processBuilder.inheritIO(); // This will redirect the output to the console
