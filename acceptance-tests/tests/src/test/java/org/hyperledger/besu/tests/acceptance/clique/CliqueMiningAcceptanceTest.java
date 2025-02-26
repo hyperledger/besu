@@ -14,14 +14,15 @@
  */
 package org.hyperledger.besu.tests.acceptance.clique;
 
-import static java.util.stream.Collectors.joining;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.data.Percentage.withPercentage;
-
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory.CliqueOptions;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.web3j.protocol.core.DefaultBlockParameter;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -29,10 +30,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.junit.jupiter.api.Test;
-import org.web3j.protocol.core.DefaultBlockParameter;
+import static java.util.stream.Collectors.joining;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.data.Percentage.withPercentage;
 
 public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
+
+  private static final GenesisConfigurationFactory.CliqueOptions CLIQUE_OPTIONS =
+          new GenesisConfigurationFactory.CliqueOptions(2, 30000, true);
+
+  private static final Logger LOG = LoggerFactory.getLogger(CliqueMiningAcceptanceTest.class);
 
   @Test
   public void shouldMineTransactionsOnSingleNode() throws IOException {
@@ -103,16 +110,35 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldStallMiningWhenInsufficientValidators() throws IOException {
-    final BesuNode minerNode1 = besu.createCliqueNode("miner1");
-    final BesuNode minerNode2 = besu.createCliqueNode("miner2");
-    final BesuNode minerNode3 = besu.createCliqueNode("miner3");
+    final BesuNode minerNode1 = besu.createCliqueNode("miner1", CLIQUE_OPTIONS);
+    final BesuNode minerNode2 = besu.createCliqueNode("miner2", CLIQUE_OPTIONS);
+    final BesuNode minerNode3 = besu.createCliqueNode("miner3", CLIQUE_OPTIONS);
     startClusterAndVerifyProducingBlocks(minerNode1, minerNode2, minerNode3);
 
-    cluster.stopNode(minerNode2);
-    cluster.stopNode(minerNode3);
+    LOG.info("Checking active validators before removing stopped nodes...");
+    LOG.info("Active Validators BEFORE removal: {}", minerNode1.execute(cliqueTransactions.createGetSigners("latest")));
+
+// Propose to remove validators
+    LOG.info("Proposing removal of minerNode2 and minerNode3...");
+    try {
+      minerNode1.execute(cliqueTransactions.createRemoveProposal(minerNode2));
+      minerNode1.execute(cliqueTransactions.createRemoveProposal(minerNode3));
+      LOG.info("Validator removal proposals sent successfully.");
+    } catch (Exception e) {
+      LOG.error("Error while removing validators!", e);
+    }
+
+// Wait for validator list update
+    minerNode1.verify(clique.awaitSignerSetChange(minerNode1));
+
+// Check validator set after proposal
+    LOG.info("Checking active validators AFTER removal...");
+    LOG.info("Active Validators AFTER removal: {}", minerNode1.execute(cliqueTransactions.createGetSigners("latest")));
+
+
     minerNode1.verify(net.awaitPeerCount(0));
     minerNode1.verify(clique.blockIsCreatedByProposer(minerNode1));
-
+    LOG.info("Checking if mining has stalled on minerNode1");
     minerNode1.verify(clique.noNewBlockCreated(minerNode1));
   }
 
