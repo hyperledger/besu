@@ -42,8 +42,8 @@ public class BftEventHandlerAdaptor implements BftEventHandler {
   }
 
   @Override
-  public void reset() {
-    qbftEventHandler.reset();
+  public void stop() {
+    qbftEventHandler.stop();
   }
 
   @Override

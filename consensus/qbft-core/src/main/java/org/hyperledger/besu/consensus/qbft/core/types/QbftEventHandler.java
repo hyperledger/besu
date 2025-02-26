@@ -24,8 +24,8 @@ public interface QbftEventHandler {
   /** Start. */
   void start();
 
-  /** Reset. */
-  void reset();
+  /** Stop. */
+  void stop();
 
   /**
    * Handle errorMessage event.

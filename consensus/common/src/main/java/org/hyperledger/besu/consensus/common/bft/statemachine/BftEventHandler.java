@@ -25,8 +25,8 @@ public interface BftEventHandler {
   /** Start. */
   void start();
 
-  /** Reset. */
-  void reset();
+  /** Stop. */
+  void stop();
 
   /**
    * Handle message event.

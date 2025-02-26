@@ -488,19 +488,19 @@ public class QbftControllerTest {
   }
 
   @Test
-  public void heightManagerCanOnlyBeStartedOnceWithoutReset() {
+  public void heightManagerCanOnlyBeStartedOnceIfNotStopped() {
     constructQbftController();
     qbftController.start();
     assertThatThrownBy(() -> qbftController.start())
         .isInstanceOf(IllegalStateException.class)
-        .hasMessage("Attempt to start new height manager without resetting");
+        .hasMessage("Attempt to start new height manager without stopping previous manager");
   }
 
   @Test
-  public void heightManagerCanBeRestartedIfReset() {
+  public void heightManagerCanBeRestartedIfStopped() {
     constructQbftController();
     qbftController.start();
-    qbftController.reset();
+    qbftController.stop();
     assertThatNoException().isThrownBy(() -> qbftController.start());
   }
 }

@@ -53,9 +53,9 @@ class BftEventHandlerAdaptorTest {
   }
 
   @Test
-  void resetDelegatesToQbftEventHandler() {
-    handler.reset();
-    verify(qbftEventHandler).reset();
+  void stopDelegatesToQbftEventHandler() {
+    handler.stop();
+    verify(qbftEventHandler).stop();
   }
 
   @Test

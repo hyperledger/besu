@@ -482,19 +482,19 @@ public class IbftControllerTest {
   }
 
   @Test
-  public void heightManagerCanOnlyBeStartedOnceWithoutReset() {
+  public void heightManagerCanOnlyBeStartedOnceIfNotStopped() {
     constructIbftController();
     ibftController.start();
     assertThatThrownBy(() -> ibftController.start())
         .isInstanceOf(IllegalStateException.class)
-        .hasMessage("Attempt to start new height manager without resetting");
+        .hasMessage("Attempt to start new height manager without stopping previous manager");
   }
 
   @Test
-  public void heightManagerCanBeRestartedIfReset() {
+  public void heightManagerCanBeRestartedIfStopped() {
     constructIbftController();
     ibftController.start();
-    ibftController.reset();
+    ibftController.stop();
     assertThatNoException().isThrownBy(() -> ibftController.start());
   }
 }
