@@ -113,7 +113,8 @@ public class Era1ReaderTest {
         .handleExecutionBlockHeader(executionBlockHeaderArgumentCaptor.capture());
     Mockito.verifyNoMoreInteractions(listener);
 
-    Era1ExecutionBlockHeader era1ExecutionBlockHeader = executionBlockHeaderArgumentCaptor.getValue();
+    Era1ExecutionBlockHeader era1ExecutionBlockHeader =
+        executionBlockHeaderArgumentCaptor.getValue();
     Assertions.assertEquals(executionBlockHeader, era1ExecutionBlockHeader.header());
     Assertions.assertEquals(0, era1ExecutionBlockHeader.blockIndex());
   }
