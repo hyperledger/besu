@@ -130,6 +130,15 @@ public interface Blockchain {
   Optional<BlockHeader> getBlockHeader(long blockNumber);
 
   /**
+   * Safe version of {@code getBlockHeader} (it should take any locks necessary to ensure any block
+   * updates that might be taking place have been completed first)
+   *
+   * @param blockNumber The reference block number whose header we want to retrieve.
+   * @return The block header corresponding to this block number.
+   */
+  Optional<BlockHeader> getBlockHeaderSafe(long blockNumber);
+
+  /**
    * Return true if the block corresponding the hash is present.
    *
    * @param blockHash The hash of the block to check.
@@ -192,6 +201,15 @@ public interface Blockchain {
    * @return The hash of the block at the given height.
    */
   Optional<Hash> getBlockHashByNumber(long number);
+
+  /**
+   * Safe version of {@code getBlockHashByNumber} (it should take any locks necessary to ensure any
+   * block updates that might be taking place have been completed first)
+   *
+   * @param number The height of the block whose hash should be retrieved.
+   * @return The hash of the block at the given height.
+   */
+  Optional<Hash> getBlockHashByNumberSafe(long number);
 
   /**
    * Returns the total difficulty (cumulative difficulty up to and including the target block) of

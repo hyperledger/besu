@@ -288,12 +288,12 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
             (DiffBasedWorldStateUpdateAccumulator<?>) mutableState.updater();
         try {
           for (final TrieLog rollBack : rollBacks) {
-            LOG.info("Attempting Rollback of {}", rollBack.getBlockHash());
+            LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
             diffBasedUpdater.rollBack(rollBack);
           }
           for (int i = rollForwards.size() - 1; i >= 0; i--) {
             final var forward = rollForwards.get(i);
-            LOG.info("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
+            LOG.debug("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
             diffBasedUpdater.rollForward(forward);
           }
           diffBasedUpdater.commit();

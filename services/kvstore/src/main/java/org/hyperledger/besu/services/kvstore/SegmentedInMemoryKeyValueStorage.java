@@ -164,7 +164,6 @@ public class SegmentedInMemoryKeyValueStorage
         e -> compareKeyLeftToRight(e.getKey(), key) <= 0 && e.getKey().size() == key.size(),
         e -> compareKeyLeftToRight(e.getKey(), key) < 0,
         false);
-    // return getNearestBefore(segmentIdentifier, key);
   }
 
   @Override

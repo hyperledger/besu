@@ -84,7 +84,13 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
     if (flatDbMode == FlatDbMode.FULL) {
       return new BonsaiFullFlatDbStrategy(metricsSystem, codeStorageStrategy);
     } else if (flatDbMode == FlatDbMode.ARCHIVE) {
-      return new BonsaiArchiveFlatDbStrategy(metricsSystem, codeStorageStrategy);
+      return new BonsaiArchiveFlatDbStrategy(
+          metricsSystem,
+          codeStorageStrategy,
+          dataStorageConfiguration
+              .getDiffBasedSubStorageConfiguration()
+              .getUnstable()
+              .getArchiveTrieNodeCheckpointInterval());
     } else {
       return new BonsaiPartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
     }

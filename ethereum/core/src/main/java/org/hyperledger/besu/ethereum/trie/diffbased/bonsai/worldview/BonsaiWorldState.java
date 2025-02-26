@@ -195,7 +195,6 @@ public class BonsaiWorldState extends DiffBasedWorldState {
           accountTrie.put(addressHash, accountValue);
         }
       } catch (MerkleTrieException e) {
-        e.printStackTrace();
         // need to throw to trigger the heal
         throw new MerkleTrieException(
             e.getMessage(), Optional.of(Address.wrap(accountKey)), e.getHash(), e.getLocation());
@@ -278,7 +277,6 @@ public class BonsaiWorldState extends DiffBasedWorldState {
             storageTrie.put(slotHash, encodeTrieValue(updatedStorage));
           }
         } catch (MerkleTrieException e) {
-          e.printStackTrace();
           // need to throw to trigger the heal
           throw new MerkleTrieException(
               e.getMessage(),

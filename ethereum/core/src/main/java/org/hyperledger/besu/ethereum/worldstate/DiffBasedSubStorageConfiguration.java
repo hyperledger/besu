@@ -33,6 +33,7 @@ public interface DiffBasedSubStorageConfiguration {
   boolean DEFAULT_LIMIT_TRIE_LOGS_ENABLED = true;
   long MINIMUM_TRIE_LOG_RETENTION_LIMIT = DEFAULT_MAX_LAYERS_TO_LOAD;
   int DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE = 5_000;
+  long DEFAULT_ARCHIVE_CHECKPOINT_INTERVAL = 1_000;
 
   @Value.Default
   default Long getMaxLayersToLoad() {
@@ -90,6 +91,11 @@ public interface DiffBasedSubStorageConfiguration {
     @Value.Default
     default boolean isParallelTxProcessingEnabled() {
       return DEFAULT_PARALLEL_TRX_ENABLED;
+    }
+
+    @Value.Default
+    default Long getArchiveTrieNodeCheckpointInterval() {
+      return DEFAULT_ARCHIVE_CHECKPOINT_INTERVAL;
     }
   }
 }

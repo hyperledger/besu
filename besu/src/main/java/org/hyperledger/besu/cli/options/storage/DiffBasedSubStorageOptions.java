@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.storage;
 
+import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_ARCHIVE_CHECKPOINT_INTERVAL;
 import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_LIMIT_TRIE_LOGS_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
 import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
@@ -116,6 +117,14 @@ public class DiffBasedSubStorageOptions implements CLIOptions<DiffBasedSubStorag
             "Enables parallelization of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. (default: ${DEFAULT-VALUE})")
     private Boolean isParallelTxProcessingEnabled = false;
 
+    @Option(
+        hidden = true,
+        names = {"--Xbonsai-archive-trie-node-checkpoint-interval"},
+        arity = "1",
+        description =
+            "The frequency of recording state trie nodes for Bonsai archive mode. Intermediate nodes are generated from trie logs. Larger intervals require less storage space but historic proof generation may take longer. (default: ${DEFAULT-VALUE})")
+    private Long archiveTrieNodeCheckpointInterval = DEFAULT_ARCHIVE_CHECKPOINT_INTERVAL;
+
     /** Default Constructor. */
     Unstable() {}
   }
@@ -171,6 +180,15 @@ public class DiffBasedSubStorageOptions implements CLIOptions<DiffBasedSubStorag
             "Transaction parallelization is not supported unless operating in a 'diffbased' mode, such as Bonsai.");
       }
     }
+
+    if (DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS != dataStorageFormat) {
+      if (unstableOptions.archiveTrieNodeCheckpointInterval
+          != DEFAULT_ARCHIVE_CHECKPOINT_INTERVAL) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "Checkpoint interval is only supported by the X_BONSAI_ARCHIVE_PROOFS storage format.");
+      }
+    }
   }
 
   /**
@@ -191,6 +209,8 @@ public class DiffBasedSubStorageOptions implements CLIOptions<DiffBasedSubStorag
         domainObject.getUnstable().getCodeStoredByCodeHashEnabled();
     dataStorageOptions.unstableOptions.isParallelTxProcessingEnabled =
         domainObject.getUnstable().isParallelTxProcessingEnabled();
+    dataStorageOptions.unstableOptions.archiveTrieNodeCheckpointInterval =
+        domainObject.getUnstable().getArchiveTrieNodeCheckpointInterval();
 
     return dataStorageOptions;
   }
@@ -206,6 +226,8 @@ public class DiffBasedSubStorageOptions implements CLIOptions<DiffBasedSubStorag
                 .fullFlatDbEnabled(unstableOptions.fullFlatDbEnabled)
                 .codeStoredByCodeHashEnabled(unstableOptions.codeUsingCodeHashEnabled)
                 .isParallelTxProcessingEnabled(unstableOptions.isParallelTxProcessingEnabled)
+                .archiveTrieNodeCheckpointInterval(
+                    unstableOptions.archiveTrieNodeCheckpointInterval)
                 .build())
         .build();
   }

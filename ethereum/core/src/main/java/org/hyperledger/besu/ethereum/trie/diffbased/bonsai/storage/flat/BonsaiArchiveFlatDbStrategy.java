@@ -24,7 +24,6 @@ import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBa
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
@@ -52,9 +51,12 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
 
   protected final Counter getAccountFromArchiveCounter;
   protected final Counter getStorageFromArchiveCounter;
+  private final Long trieNodeCheckpointInterval;
 
   public BonsaiArchiveFlatDbStrategy(
-      final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
+      final MetricsSystem metricsSystem,
+      final CodeStorageStrategy codeStorageStrategy,
+      final Long trieNodeCheckpointInterval) {
     super(metricsSystem, codeStorageStrategy);
 
     getAccountFromArchiveCounter =
@@ -68,6 +70,8 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
             BesuMetricCategory.BLOCKCHAIN,
             "get_storage_from_archive_counter",
             "Total number of calls to get storage that were from archived state");
+
+    this.trieNodeCheckpointInterval = trieNodeCheckpointInterval;
   }
 
   static final byte[] MAX_BLOCK_SUFFIX = Bytes.ofUnsignedLong(Long.MAX_VALUE).toArrayUnsafe();
@@ -75,25 +79,6 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   public static final byte[] DELETED_ACCOUNT_VALUE = new byte[0];
   public static final byte[] DELETED_CODE_VALUE = new byte[0];
   public static final byte[] DELETED_STORAGE_VALUE = new byte[0];
-
-  public static final int CHECKPOINT_INTERVAL = 1000;
-
-  public static Optional<Hash> getCheckpointStateStartBlock(
-      final Blockchain blockchain, final Hash targetHash) {
-    long rollBackFromBlock = blockchain.getChainHeadBlockNumber();
-    long rollBackFromBlock2 =
-        (((blockchain.getBlockHeader(targetHash).get().getNumber()
-                        + BonsaiArchiveFlatDbStrategy.CHECKPOINT_INTERVAL)
-                    / BonsaiArchiveFlatDbStrategy.CHECKPOINT_INTERVAL)
-                * BonsaiArchiveFlatDbStrategy.CHECKPOINT_INTERVAL)
-            - 1;
-
-    Optional<Hash> block =
-        blockchain
-            .getBlockHashByNumber(rollBackFromBlock2)
-            .or(() -> blockchain.getBlockHashByNumber(rollBackFromBlock));
-    return block;
-  }
 
   private Optional<BonsaiContext> getStateTrieArchiveContextForWrite(
       final SegmentedKeyValueStorage storage) {
@@ -114,8 +99,8 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
           // MRW We're not rolling to a specific block's state trie - we need to round down to the
           // nearest N
           trieContext =
-              (((Bytes.wrap(archiveContext.get()).toLong() + 1) / CHECKPOINT_INTERVAL)
-                  * CHECKPOINT_INTERVAL);
+              (((Bytes.wrap(archiveContext.get()).toLong() + 1) / trieNodeCheckpointInterval)
+                  * trieNodeCheckpointInterval);
         }
 
         // trieContext = trieContext == 0 ? 1 : trieContext;
