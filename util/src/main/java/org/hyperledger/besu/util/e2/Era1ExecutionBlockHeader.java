@@ -14,12 +14,10 @@
  */
 package org.hyperledger.besu.util.e2;
 
-import java.util.List;
-
 /**
- * Represents a block index in an E2 file
+ * Represents an execution block header in an era1 file
  *
- * @param startingBlockIndex The first blockIndex number indexed by this block index
- * @param indexes The indexes of the blocks indexed by this block index
+ * @param header The execution block header
+ * @param blockIndex The blockIndex number
  */
-public record E2BlockIndex(long startingBlockIndex, List<Long> indexes) {}
+public record Era1ExecutionBlockHeader(byte[] header, int blockIndex) {}

@@ -15,9 +15,9 @@
 package org.hyperledger.besu.util.e2;
 
 /**
- * Represents an execution block's transaction receipts in an E2 file
+ * Represents an execution block body in an era1 file
  *
- * @param receipts The execution block's transaction receipts
+ * @param block The execution block
  * @param blockIndex The blockIndex number
  */
-public record E2ExecutionBlockReceipts(byte[] receipts, int blockIndex) {}
+public record Era1ExecutionBlockBody(byte[] block, int blockIndex) {}

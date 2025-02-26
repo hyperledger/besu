@@ -31,24 +31,24 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.xerial.snappy.SnappyFramedInputStream;
 
 @ExtendWith(MockitoExtension.class)
-public class E2StoreReaderTest {
+public class Era1ReaderTest {
 
   private @Mock SnappyFactory snappyFactory;
 
-  private E2StoreReader reader;
+  private Era1Reader reader;
 
   @BeforeEach
   public void beforeTest() {
-    reader = new E2StoreReader(snappyFactory);
+    reader = new Era1Reader(snappyFactory);
   }
 
   @Test
   public void testReadForVersionType() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    E2StoreReaderListener listener = Mockito.mock(E2StoreReaderListener.class);
+    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
 
     Mockito.when(inputStream.available()).thenReturn(8, 0);
-    Mockito.when(inputStream.readNBytes(2)).thenReturn(E2Type.VERSION.getTypeCode());
+    Mockito.when(inputStream.readNBytes(2)).thenReturn(Era1Type.VERSION.getTypeCode());
     Mockito.when(inputStream.readNBytes(6))
         .thenReturn(new byte[] {0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
 
@@ -64,10 +64,10 @@ public class E2StoreReaderTest {
   @Test
   public void testReadForEmptyType() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    E2StoreReaderListener listener = Mockito.mock(E2StoreReaderListener.class);
+    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
 
     Mockito.when(inputStream.available()).thenReturn(16, 0);
-    Mockito.when(inputStream.readNBytes(2)).thenReturn(E2Type.EMPTY.getTypeCode());
+    Mockito.when(inputStream.readNBytes(2)).thenReturn(Era1Type.EMPTY.getTypeCode());
     Mockito.when(inputStream.readNBytes(6))
         .thenReturn(new byte[] {0x08, 0x00, 0x00, 0x00, 0x00, 0x00});
 
@@ -84,12 +84,12 @@ public class E2StoreReaderTest {
   @Test
   public void testReadForCompressedExecutionBlockHeader() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    E2StoreReaderListener listener = Mockito.mock(E2StoreReaderListener.class);
+    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
     SnappyFramedInputStream snappyFramedInputStream = Mockito.mock(SnappyFramedInputStream.class);
 
     Mockito.when(inputStream.available()).thenReturn(15, 0);
     Mockito.when(inputStream.readNBytes(2))
-        .thenReturn(E2Type.COMPRESSED_EXECUTION_BLOCK_HEADER.getTypeCode());
+        .thenReturn(Era1Type.COMPRESSED_EXECUTION_BLOCK_HEADER.getTypeCode());
     Mockito.when(inputStream.readNBytes(6))
         .thenReturn(new byte[] {0x07, 0x00, 0x00, 0x00, 0x00, 0x00});
     byte[] compressedExecutionBlockHeader = new byte[] {1, 2, 3, 4, 5, 6, 7};
@@ -107,26 +107,26 @@ public class E2StoreReaderTest {
     Mockito.verify(inputStream).readNBytes(7);
     Mockito.verify(snappyFactory).createFramedInputStream(compressedExecutionBlockHeader);
     Mockito.verify(snappyFramedInputStream).readAllBytes();
-    ArgumentCaptor<E2ExecutionBlockHeader> executionBlockHeaderArgumentCaptor =
-        ArgumentCaptor.forClass(E2ExecutionBlockHeader.class);
+    ArgumentCaptor<Era1ExecutionBlockHeader> executionBlockHeaderArgumentCaptor =
+        ArgumentCaptor.forClass(Era1ExecutionBlockHeader.class);
     Mockito.verify(listener)
         .handleExecutionBlockHeader(executionBlockHeaderArgumentCaptor.capture());
     Mockito.verifyNoMoreInteractions(listener);
 
-    E2ExecutionBlockHeader e2ExecutionBlockHeader = executionBlockHeaderArgumentCaptor.getValue();
-    Assertions.assertEquals(executionBlockHeader, e2ExecutionBlockHeader.header());
-    Assertions.assertEquals(0, e2ExecutionBlockHeader.blockIndex());
+    Era1ExecutionBlockHeader era1ExecutionBlockHeader = executionBlockHeaderArgumentCaptor.getValue();
+    Assertions.assertEquals(executionBlockHeader, era1ExecutionBlockHeader.header());
+    Assertions.assertEquals(0, era1ExecutionBlockHeader.blockIndex());
   }
 
   @Test
   public void testReadForCompressedExecutionBlockBody() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    E2StoreReaderListener listener = Mockito.mock(E2StoreReaderListener.class);
+    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
     SnappyFramedInputStream snappyFramedInputStream = Mockito.mock(SnappyFramedInputStream.class);
 
     Mockito.when(inputStream.available()).thenReturn(15, 0);
     Mockito.when(inputStream.readNBytes(2))
-        .thenReturn(E2Type.COMPRESSED_EXECUTION_BLOCK_BODY.getTypeCode());
+        .thenReturn(Era1Type.COMPRESSED_EXECUTION_BLOCK_BODY.getTypeCode());
     Mockito.when(inputStream.readNBytes(6))
         .thenReturn(new byte[] {0x07, 0x00, 0x00, 0x00, 0x00, 0x00});
     byte[] compressedExecutionBlockBody = new byte[] {1, 2, 3, 4, 5, 6, 7};
@@ -144,25 +144,25 @@ public class E2StoreReaderTest {
     Mockito.verify(inputStream).readNBytes(7);
     Mockito.verify(snappyFactory).createFramedInputStream(compressedExecutionBlockBody);
     Mockito.verify(snappyFramedInputStream).readAllBytes();
-    ArgumentCaptor<E2ExecutionBlockBody> executionBlockBodyArgumentCaptor =
-        ArgumentCaptor.forClass(E2ExecutionBlockBody.class);
+    ArgumentCaptor<Era1ExecutionBlockBody> executionBlockBodyArgumentCaptor =
+        ArgumentCaptor.forClass(Era1ExecutionBlockBody.class);
     Mockito.verify(listener).handleExecutionBlockBody(executionBlockBodyArgumentCaptor.capture());
     Mockito.verifyNoMoreInteractions(listener);
 
-    E2ExecutionBlockBody e2ExecutionBlockBody = executionBlockBodyArgumentCaptor.getValue();
-    Assertions.assertEquals(executionBlockBody, e2ExecutionBlockBody.block());
-    Assertions.assertEquals(0, e2ExecutionBlockBody.blockIndex());
+    Era1ExecutionBlockBody era1ExecutionBlockBody = executionBlockBodyArgumentCaptor.getValue();
+    Assertions.assertEquals(executionBlockBody, era1ExecutionBlockBody.block());
+    Assertions.assertEquals(0, era1ExecutionBlockBody.blockIndex());
   }
 
   @Test
   public void testReadForCompressedExecutionBlockReceipts() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    E2StoreReaderListener listener = Mockito.mock(E2StoreReaderListener.class);
+    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
     SnappyFramedInputStream snappyFramedInputStream = Mockito.mock(SnappyFramedInputStream.class);
 
     Mockito.when(inputStream.available()).thenReturn(15, 0);
     Mockito.when(inputStream.readNBytes(2))
-        .thenReturn(E2Type.COMPRESSED_EXECUTION_BLOCK_RECEIPTS.getTypeCode());
+        .thenReturn(Era1Type.COMPRESSED_EXECUTION_BLOCK_RECEIPTS.getTypeCode());
     Mockito.when(inputStream.readNBytes(6))
         .thenReturn(new byte[] {0x07, 0x00, 0x00, 0x00, 0x00, 0x00});
     byte[] compressedExecutionBlockReceipts = new byte[] {1, 2, 3, 4, 5, 6, 7};
@@ -180,25 +180,25 @@ public class E2StoreReaderTest {
     Mockito.verify(inputStream).readNBytes(7);
     Mockito.verify(snappyFactory).createFramedInputStream(compressedExecutionBlockReceipts);
     Mockito.verify(snappyFramedInputStream).readAllBytes();
-    ArgumentCaptor<E2ExecutionBlockReceipts> executionBlockReceiptsArgumentCaptor =
-        ArgumentCaptor.forClass(E2ExecutionBlockReceipts.class);
+    ArgumentCaptor<Era1ExecutionBlockReceipts> executionBlockReceiptsArgumentCaptor =
+        ArgumentCaptor.forClass(Era1ExecutionBlockReceipts.class);
     Mockito.verify(listener)
         .handleExecutionBlockReceipts(executionBlockReceiptsArgumentCaptor.capture());
     Mockito.verifyNoMoreInteractions(listener);
 
-    E2ExecutionBlockReceipts e2ExecutionBlockReceipts =
+    Era1ExecutionBlockReceipts era1ExecutionBlockReceipts =
         executionBlockReceiptsArgumentCaptor.getValue();
-    Assertions.assertEquals(executionBlockReceipts, e2ExecutionBlockReceipts.receipts());
-    Assertions.assertEquals(0, e2ExecutionBlockReceipts.blockIndex());
+    Assertions.assertEquals(executionBlockReceipts, era1ExecutionBlockReceipts.receipts());
+    Assertions.assertEquals(0, era1ExecutionBlockReceipts.blockIndex());
   }
 
   @Test
   public void testReadForBlockIndexType() throws IOException {
     InputStream inputStream = Mockito.mock(InputStream.class);
-    E2StoreReaderListener listener = Mockito.mock(E2StoreReaderListener.class);
+    Era1StoreReaderListener listener = Mockito.mock(Era1StoreReaderListener.class);
 
     Mockito.when(inputStream.available()).thenReturn(40, 0);
-    Mockito.when(inputStream.readNBytes(2)).thenReturn(E2Type.BLOCK_INDEX.getTypeCode());
+    Mockito.when(inputStream.readNBytes(2)).thenReturn(Era1Type.BLOCK_INDEX.getTypeCode());
     Mockito.when(inputStream.readNBytes(6))
         .thenReturn(new byte[] {0x20, 0x00, 0x00, 0x00, 0x00, 0x00});
     Mockito.when(inputStream.readNBytes(32))
@@ -216,12 +216,12 @@ public class E2StoreReaderTest {
     Mockito.verify(inputStream).readNBytes(2);
     Mockito.verify(inputStream).readNBytes(6);
     Mockito.verify(inputStream).readNBytes(32);
-    ArgumentCaptor<E2BlockIndex> blockIndexArgumentCaptor =
-        ArgumentCaptor.forClass(E2BlockIndex.class);
+    ArgumentCaptor<Era1BlockIndex> blockIndexArgumentCaptor =
+        ArgumentCaptor.forClass(Era1BlockIndex.class);
     Mockito.verify(listener).handleBlockIndex(blockIndexArgumentCaptor.capture());
     Mockito.verifyNoMoreInteractions(listener);
 
-    E2BlockIndex blockIndex = blockIndexArgumentCaptor.getValue();
+    Era1BlockIndex blockIndex = blockIndexArgumentCaptor.getValue();
     Assertions.assertEquals(1, blockIndex.startingBlockIndex());
     Assertions.assertEquals(List.of(2L, 3L), blockIndex.indexes());
   }

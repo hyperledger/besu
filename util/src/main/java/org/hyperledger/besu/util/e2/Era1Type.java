@@ -16,8 +16,8 @@ package org.hyperledger.besu.util.e2;
 
 import java.util.HexFormat;
 
-/** An enumeration of known sections of e2 store files */
-public enum E2Type {
+/** An enumeration of known sections of era1 files */
+public enum Era1Type {
   /** An empty section */
   EMPTY(new byte[] {0x00, 0x00}),
   /** A snappy compressed execution block header */
@@ -37,7 +37,7 @@ public enum E2Type {
   ;
   private final byte[] typeCode;
 
-  E2Type(final byte[] typeCode) {
+  Era1Type(final byte[] typeCode) {
     this.typeCode = typeCode;
   }
 
@@ -51,21 +51,21 @@ public enum E2Type {
   }
 
   /**
-   * Gets the E2Type corresponding to the supplied typeCode
+   * Gets the Era1Type corresponding to the supplied typeCode
    *
-   * @param typeCode the typeCode to find the corresponding E2Type for
-   * @return the E2Type corresponding to the supplied typeCode
-   * @throws IllegalArgumentException if there is no E2Type corresponding to the supplied typeCode
+   * @param typeCode the typeCode to find the corresponding Era1Type for
+   * @return the Era1Type corresponding to the supplied typeCode
+   * @throws IllegalArgumentException if there is no Era1Type corresponding to the supplied typeCode
    */
-  public static E2Type getForTypeCode(final byte[] typeCode) {
+  public static Era1Type getForTypeCode(final byte[] typeCode) {
     if (typeCode == null || typeCode.length != 2) {
       throw new IllegalArgumentException("typeCode must be 2 bytes");
     }
 
-    E2Type result = null;
-    for (E2Type e2Type : values()) {
-      if (e2Type.typeCode[0] == typeCode[0] && e2Type.typeCode[1] == typeCode[1]) {
-        result = e2Type;
+    Era1Type result = null;
+    for (Era1Type era1Type : values()) {
+      if (era1Type.typeCode[0] == typeCode[0] && era1Type.typeCode[1] == typeCode[1]) {
+        result = era1Type;
       }
     }
     if (result == null) {

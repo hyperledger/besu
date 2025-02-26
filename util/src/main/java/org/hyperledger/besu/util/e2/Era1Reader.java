@@ -29,9 +29,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xerial.snappy.SnappyFramedInputStream;
 
-/** Reads E2 store file such a .era and .era1 */
-public class E2StoreReader {
-  private static final Logger LOG = LoggerFactory.getLogger(E2StoreReader.class);
+/** Reads era1 files */
+public class Era1Reader {
+  private static final Logger LOG = LoggerFactory.getLogger(Era1Reader.class);
   private static final int TYPE_LENGTH = 2;
   private static final int LENGTH_LENGTH = 6;
   private static final int STARTING_SLOT_LENGTH = 8;
@@ -41,28 +41,28 @@ public class E2StoreReader {
   private final SnappyFactory snappyFactory;
 
   /**
-   * Creates a new E2StoreReader with the supplied SnappyFactory
+   * Creates a new Era1Reader with the supplied SnappyFactory
    *
    * @param snappyFactory A factory to provide objects for snappy decompression
    */
-  public E2StoreReader(final SnappyFactory snappyFactory) {
+  public Era1Reader(final SnappyFactory snappyFactory) {
     this.snappyFactory = snappyFactory;
   }
 
   /**
    * Reads the entire supplied InputStream, calling appropriate methods on the supplied
-   * E2StoreReaderListener as different parts of the file are read
+   * Era1StoreReaderListener as different parts of the file are read
    *
    * @param inputStream The InputStream
-   * @param listener the E2StoreReaderListener
+   * @param listener the Era1StoreReaderListener
    * @throws IOException If there are any problems reading from the InputStream, or creating and
    *     using other streams, such as a SnappyFramedInputStream
    */
-  public void read(final InputStream inputStream, final E2StoreReaderListener listener)
+  public void read(final InputStream inputStream, final Era1StoreReaderListener listener)
       throws IOException {
     int slot = 0;
     while (inputStream.available() > 0) {
-      E2Type type = E2Type.getForTypeCode(inputStream.readNBytes(TYPE_LENGTH));
+      Era1Type type = Era1Type.getForTypeCode(inputStream.readNBytes(TYPE_LENGTH));
       int length = (int) convertLittleEndianBytesToLong(inputStream.readNBytes(LENGTH_LENGTH));
       switch (type) {
         case VERSION -> {
@@ -78,7 +78,7 @@ public class E2StoreReader {
           try (SnappyFramedInputStream decompressionStream =
               snappyFactory.createFramedInputStream(compressedExecutionBlockHeader)) {
             listener.handleExecutionBlockHeader(
-                new E2ExecutionBlockHeader(decompressionStream.readAllBytes(), slot));
+                new Era1ExecutionBlockHeader(decompressionStream.readAllBytes(), slot));
           }
         }
         case COMPRESSED_EXECUTION_BLOCK_BODY -> {
@@ -86,7 +86,7 @@ public class E2StoreReader {
           try (SnappyFramedInputStream decompressionStream =
               snappyFactory.createFramedInputStream(compressedExecutionBlock)) {
             listener.handleExecutionBlockBody(
-                new E2ExecutionBlockBody(decompressionStream.readAllBytes(), slot));
+                new Era1ExecutionBlockBody(decompressionStream.readAllBytes(), slot));
           }
         }
         case COMPRESSED_EXECUTION_BLOCK_RECEIPTS -> {
@@ -94,7 +94,7 @@ public class E2StoreReader {
           try (SnappyFramedInputStream decompressionStream =
               snappyFactory.createFramedInputStream(compressedReceipts)) {
             listener.handleExecutionBlockReceipts(
-                new E2ExecutionBlockReceipts(decompressionStream.readAllBytes(), slot++));
+                new Era1ExecutionBlockReceipts(decompressionStream.readAllBytes(), slot++));
           }
         }
         case BLOCK_INDEX -> {
@@ -115,7 +115,7 @@ public class E2StoreReader {
                 "index count does not match number of indexes present for InputStream: {}",
                 inputStream);
           }
-          listener.handleBlockIndex(new E2BlockIndex(startingSlot, indexes));
+          listener.handleBlockIndex(new Era1BlockIndex(startingSlot, indexes));
         }
       }
     }
