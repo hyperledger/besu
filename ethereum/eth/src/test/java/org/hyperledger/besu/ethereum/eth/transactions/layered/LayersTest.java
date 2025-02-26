@@ -1727,6 +1727,7 @@ public class LayersTest extends BaseTransactionPoolTest {
             case BLOB -> createBlobPendingTransaction(sender, nonce);
             case DELEGATE_CODE ->
                 createEIP7702PendingTransaction(sender, nonce, authorityAndNonces);
+            case INITCODE -> createInitcodePendingTransaction(sender, nonce);
           };
       liveTxsBySender.get(sender).put(nonce, newPendingTx);
       return newPendingTx;
@@ -1756,14 +1757,14 @@ public class LayersTest extends BaseTransactionPoolTest {
     private PendingTransaction createFrontierPendingTransaction(
         final Sender sender, final long nonce) {
       return createRemotePendingTransaction(
-          createTransaction(FRONTIER, nonce, Wei.ONE, 0, List.of(), sender.key),
+          createTransaction(FRONTIER, nonce, Wei.ONE, 0, List.of(), null, sender.key),
           sender.hasPriority);
     }
 
     private PendingTransaction createAccessListPendingTransaction(
         final Sender sender, final long nonce) {
       return createRemotePendingTransaction(
-          createTransaction(ACCESS_LIST, nonce, Wei.ONE, 0, List.of(), sender.key),
+          createTransaction(ACCESS_LIST, nonce, Wei.ONE, 0, List.of(), null, sender.key),
           sender.hasPriority);
     }
 
@@ -1784,6 +1785,14 @@ public class LayersTest extends BaseTransactionPoolTest {
       return createRemotePendingTransaction(
           createEIP7702Transaction(
               nonce, sender.key, sender.gasFeeMultiplier, toCodeDelegations(authorityAndNonces)),
+          sender.hasPriority);
+    }
+
+    private PendingTransaction createInitcodePendingTransaction(
+        final Sender sender, final long nonce) {
+      return createRemotePendingTransaction(
+          createInitcodeTransaction(
+              nonce, sender.key, sender.gasFeeMultiplier, List.of(INITCODE_1)),
           sender.hasPriority);
     }
 

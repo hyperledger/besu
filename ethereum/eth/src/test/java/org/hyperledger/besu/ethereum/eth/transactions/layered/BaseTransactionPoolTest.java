@@ -65,6 +65,8 @@ public class BaseTransactionPoolTest {
       createSignedCodeDelegation(BigInteger.ONE, Address.ZERO, 0, KEYS1);
   protected static final Wei DEFAULT_MIN_GAS_PRICE = Wei.of(50);
   protected static final Wei DEFAULT_MIN_PRIORITY_FEE = Wei.ZERO;
+  protected static final Bytes INITCODE_1 = Bytes.fromHexString("0xef0001c0de");
+
   private static final Random randomizeTxType = new Random();
 
   protected final Transaction transaction0 = createTransaction(0);
@@ -99,7 +101,13 @@ public class BaseTransactionPoolTest {
   protected Transaction createEIP1559Transaction(
       final long nonce, final KeyPair keys, final int gasFeeMultiplier) {
     return createTransaction(
-        TransactionType.EIP1559, nonce, Wei.of(5000L).multiply(gasFeeMultiplier), 0, null, keys);
+        TransactionType.EIP1559,
+        nonce,
+        Wei.of(5000L).multiply(gasFeeMultiplier),
+        0,
+        null,
+        null,
+        keys);
   }
 
   protected Transaction createEIP4844Transaction(
@@ -111,6 +119,7 @@ public class BaseTransactionPoolTest {
         Wei.of(5000L).multiply(gasFeeMultiplier).divide(10),
         0,
         blobCount,
+        null,
         null,
         keys);
   }
@@ -126,6 +135,22 @@ public class BaseTransactionPoolTest {
         Wei.of(5000L).multiply(gasFeeMultiplier),
         0,
         codeDelegations,
+        null,
+        keys);
+  }
+
+  protected Transaction createInitcodeTransaction(
+      final long nonce,
+      final KeyPair keys,
+      final int gasFeeMultiplier,
+      final List<Bytes> initcode) {
+    return createTransaction(
+        TransactionType.INITCODE,
+        nonce,
+        Wei.of(5000L).multiply(gasFeeMultiplier),
+        0,
+        null,
+        initcode,
         keys);
   }
 
@@ -137,11 +162,12 @@ public class BaseTransactionPoolTest {
             randomizeTxType.nextInt(txSize < blobTransaction0.getSize() ? 3 : 4)];
 
     final Transaction baseTx =
-        createTransaction(txType, nonce, maxGasPrice, maxGasPrice.divide(10), 0, 1, null, keys);
+        createTransaction(
+            txType, nonce, maxGasPrice, maxGasPrice.divide(10), 0, 1, null, null, keys);
     final int payloadSize = txSize - baseTx.getSize();
 
     return createTransaction(
-        txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, null, keys);
+        txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, null, null, keys);
   }
 
   protected Transaction createTransaction(
@@ -151,13 +177,22 @@ public class BaseTransactionPoolTest {
 
     return switch (txType) {
       case FRONTIER, ACCESS_LIST, EIP1559 ->
-          createTransaction(txType, nonce, maxGasPrice, payloadSize, null, keys);
+          createTransaction(txType, nonce, maxGasPrice, payloadSize, null, null, keys);
       case BLOB ->
           createTransaction(
-              txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, null, keys);
+              txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, null, null, keys);
       case DELEGATE_CODE ->
           createTransaction(
-              txType, nonce, maxGasPrice, payloadSize, List.of(CODE_DELEGATION_SENDER_1), keys);
+              txType,
+              nonce,
+              maxGasPrice,
+              payloadSize,
+              List.of(CODE_DELEGATION_SENDER_1),
+              null,
+              keys);
+      case INITCODE ->
+          createTransaction(
+              txType, nonce, maxGasPrice, payloadSize, null, List.of(INITCODE_1), keys); // FIXME
     };
   }
 
@@ -167,9 +202,18 @@ public class BaseTransactionPoolTest {
       final Wei maxGasPrice,
       final int payloadSize,
       final List<CodeDelegation> codeDelegations,
+      final List<Bytes> initcode,
       final KeyPair keys) {
     return createTransaction(
-        type, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 0, codeDelegations, keys);
+        type,
+        nonce,
+        maxGasPrice,
+        maxGasPrice.divide(10),
+        payloadSize,
+        0,
+        codeDelegations,
+        initcode,
+        keys);
   }
 
   protected Transaction createTransaction(
@@ -180,9 +224,17 @@ public class BaseTransactionPoolTest {
       final int payloadSize,
       final int blobCount,
       final List<CodeDelegation> codeDelegations,
+      final List<Bytes> initcode,
       final KeyPair keys) {
     return prepareTransaction(
-            type, nonce, maxGasPrice, maxPriorityFeePerGas, payloadSize, blobCount, codeDelegations)
+            type,
+            nonce,
+            maxGasPrice,
+            maxPriorityFeePerGas,
+            payloadSize,
+            blobCount,
+            codeDelegations,
+            initcode)
         .createTransaction(keys);
   }
 
@@ -193,7 +245,8 @@ public class BaseTransactionPoolTest {
       final Wei maxPriorityFeePerGas,
       final int payloadSize,
       final int blobCount,
-      final List<CodeDelegation> codeDelegations) {
+      final List<CodeDelegation> codeDelegations,
+      final List<Bytes> initcode) {
 
     var tx =
         new TransactionTestFixture()
@@ -228,6 +281,8 @@ public class BaseTransactionPoolTest {
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
       } else if (type.supportsDelegateCode()) {
         tx.codeDelegations(codeDelegations);
+      } else if (type.supportsInitcode()) {
+        tx.initcode(initcode);
       }
     } else {
       tx.gasPrice(maxGasPrice);
@@ -245,6 +300,7 @@ public class BaseTransactionPoolTest {
         0,
         1,
         originalTransaction.getCodeDelegationList().orElse(null),
+        originalTransaction.getInitCodes().orElse(null),
         keys);
   }
 

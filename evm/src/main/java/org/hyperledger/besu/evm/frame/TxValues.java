@@ -18,14 +18,17 @@ import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
@@ -44,6 +47,9 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param messageFrameStack The message frame stack
  * @param miningBeneficiary The mining beneficiary address
  * @param versionedHashes The optional list of versioned hashes
+ * @param initcodes the initcodes associated with the executing transaction
+ * @param initcodeHashes the initcodes hashes associated with the executing transaction, filled on
+ *     demand if the list is mutable
  * @param transientStorage The transient storage
  * @param creates The set of addresses that creates
  * @param selfDestructs The set of addresses that self-destructs
@@ -61,10 +67,69 @@ public record TxValues(
     Deque<MessageFrame> messageFrameStack,
     Address miningBeneficiary,
     Optional<List<VersionedHash>> versionedHashes,
+    Optional<List<Bytes>> initcodes,
+    Optional<List<Bytes>> initcodeHashes,
     UndoTable<Address, Bytes32, Bytes32> transientStorage,
     UndoSet<Address> creates,
     UndoSet<Address> selfDestructs,
     UndoScalar<Long> gasRefunds) {
+
+  /**
+   * Preferred constructor for TX data
+   *
+   * @param blockHashLookup the function that looks up block hashes
+   * @param maxStackSize maximum stack size for the vm
+   * @param warmedUpAddresses Journaled list of warmed up addresses
+   * @param warmedUpStorage Journaled list of warmed up storage
+   * @param originator The original address that signed the transaction, the ORIGIN EOA
+   * @param gasPrice gas price to use for this transaction
+   * @param blobGasPrice blob gas price for the block
+   * @param blockValues Data from the current block header
+   * @param messageFrameStack Stack of message frames/call frames
+   * @param miningBeneficiary Address of the mining benificiary
+   * @param versionedHashes Versioned Hashes attached to this transaction
+   * @param initcodes Initcodes attached to this transaction
+   * @param transientStorage Transient storage map of maps
+   * @param creates Journaled list of addresses created in this transaction
+   * @param selfDestructs List of addresses self-destructed within the current transaction
+   * @param gasRefunds the amount of gas refund pending
+   */
+  public TxValues(
+      final BlockHashLookup blockHashLookup,
+      final int maxStackSize,
+      final UndoSet<Address> warmedUpAddresses,
+      final UndoTable<Address, Bytes32, Boolean> warmedUpStorage,
+      final Address originator,
+      final Wei gasPrice,
+      final Wei blobGasPrice,
+      final BlockValues blockValues,
+      final Deque<MessageFrame> messageFrameStack,
+      final Address miningBeneficiary,
+      final Optional<List<VersionedHash>> versionedHashes,
+      final Optional<List<Bytes>> initcodes,
+      final UndoTable<Address, Bytes32, Bytes32> transientStorage,
+      final UndoSet<Address> creates,
+      final UndoSet<Address> selfDestructs,
+      final UndoScalar<Long> gasRefunds) {
+    this(
+        blockHashLookup,
+        maxStackSize,
+        warmedUpAddresses,
+        warmedUpStorage,
+        originator,
+        gasPrice,
+        blobGasPrice,
+        blockValues,
+        messageFrameStack,
+        miningBeneficiary,
+        versionedHashes,
+        initcodes,
+        initcodes.map(l -> new ArrayList<>(l.size())),
+        transientStorage,
+        creates,
+        selfDestructs,
+        gasRefunds);
+  }
 
   /**
    * For all data stored in this record, undo the changes since the mark.
@@ -78,5 +143,35 @@ public record TxValues(
     creates.undo(mark);
     selfDestructs.undo(mark);
     gasRefunds.undo(mark);
+  }
+
+  /**
+   * Retrieves an initcode (typically from an InitcodeTransaction) by keccak hash
+   *
+   * @param targetHash the hash of the desired initcode
+   * @return The raw bytes of the initcode, if in the transaction, or null if not in the
+   *     transaction.
+   */
+  public Bytes getInitcodeByHash(final Bytes targetHash) {
+    if (initcodes.isEmpty() || initcodeHashes.isEmpty()) {
+      return null;
+    }
+
+    var codes = initcodes.get();
+    var hashes = initcodeHashes.get();
+    for (int i = 0; i < codes.size(); i++) {
+      Bytes hash;
+      if (hashes.size() <= i) {
+        hash = Hash.hash(codes.get(i));
+        hashes.add(hash);
+      } else {
+        hash = hashes.get(i);
+      }
+      if (hash.equals(targetHash)) {
+        return codes.get(i);
+      }
+    }
+
+    return null;
   }
 }

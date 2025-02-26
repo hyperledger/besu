@@ -994,6 +994,22 @@ public abstract class MainnetProtocolSpecs {
                     List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        // EIP-7873 TXCREATE and InitcodeTransaction type
+        .transactionValidatorFactoryBuilder(
+            (evm, gasLimitCalculator, feeMarket) ->
+                new TransactionValidatorFactory(
+                    evm.getGasCalculator(),
+                    gasLimitCalculator,
+                    feeMarket,
+                    true,
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559,
+                        TransactionType.BLOB,
+                        TransactionType.INITCODE),
+                    evm.getMaxInitcodeSize()))
         .blockHeaderValidatorBuilder(
             fm ->
                 MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(

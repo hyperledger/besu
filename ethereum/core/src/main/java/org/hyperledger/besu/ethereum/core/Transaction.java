@@ -125,6 +125,7 @@ public class Transaction
 
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
   private final Optional<List<CodeDelegation>> maybeCodeDelegationList;
+  private final Optional<List<Bytes>> initcodes;
 
   private final Optional<Bytes> rawRlp;
 
@@ -201,6 +202,7 @@ public class Transaction
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments,
       final Optional<List<CodeDelegation>> maybeCodeDelegationList,
+      final Optional<List<Bytes>> initcodes,
       final Optional<Bytes> rawRlp) {
 
     if (!forCopy) {
@@ -243,6 +245,17 @@ public class Transaction
             maybeCodeDelegationList.isPresent(),
             "Must specify code delegation authorizations for code delegation transaction");
       }
+
+      if (transactionType.supportsInitcode()) {
+        checkArgument(initcodes.isPresent(), "Initcode transactions must contain a initcode list");
+        int initcodeCount = initcodes.get().size();
+        checkArgument(
+            initcodeCount > 0, "Initcode transactions must contain at least one initcode");
+        for (Bytes initcode : initcodes.get()) {
+          checkArgument(
+              initcode != null && !initcode.isEmpty(), "Initcode entries cannot be zero length");
+        }
+      }
     }
 
     this.transactionType = transactionType;
@@ -262,6 +275,7 @@ public class Transaction
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
     this.maybeCodeDelegationList = maybeCodeDelegationList;
+    this.initcodes = initcodes;
     this.rawRlp = rawRlp;
   }
 
@@ -495,6 +509,7 @@ public class Transaction
               maybeAccessList,
               versionedHashes.orElse(null),
               maybeCodeDelegationList,
+              initcodes,
               chainId);
     }
     return hashNoSignature;
@@ -725,6 +740,11 @@ public class Transaction
     return maybeCodeDelegationList.map(List::size).orElse(0);
   }
 
+  @Override
+  public Optional<List<Bytes>> getInitCodes() {
+    return initcodes;
+  }
+
   /**
    * Return the list of transaction hashes extracted from the collection of Transaction passed as
    * argument
@@ -750,6 +770,7 @@ public class Transaction
       final Optional<List<AccessListEntry>> accessList,
       final List<VersionedHash> versionedHashes,
       final Optional<List<CodeDelegation>> codeDelegationList,
+      final Optional<List<Bytes>> initcodes,
       final Optional<BigInteger> chainId) {
     if (transactionType.requiresChainId()) {
       checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
@@ -862,6 +883,18 @@ public class Transaction
                       () ->
                           new IllegalStateException(
                               "Developer error: the transaction should be guaranteed to have a code delegations here")));
+          case INITCODE ->
+              initcodePreimage(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  initcodes);
         };
     return preimage;
   }
@@ -1032,6 +1065,39 @@ public class Transaction
     return Bytes.concatenate(Bytes.of(TransactionType.DELEGATE_CODE.getSerializedType()), encoded);
   }
 
+  private static Bytes initcodePreimage(
+      final long nonce,
+      final Wei maxPriorityFeePerGas,
+      final Wei maxFeePerGas,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final Optional<BigInteger> chainId,
+      final Optional<List<AccessListEntry>> accessList,
+      final Optional<List<Bytes>> initcode) {
+
+    final Bytes encoded =
+        RLP.encode(
+            rlpOutput -> {
+              rlpOutput.startList();
+              eip1559PreimageFields(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  rlpOutput);
+              rlpOutput.writeList(initcode.orElse(List.of()), (b, o) -> o.writeBytes(b));
+              rlpOutput.endList();
+            });
+    return Bytes.concatenate(Bytes.of(TransactionType.INITCODE.getSerializedType()), encoded);
+  }
+
   @Override
   public boolean equals(final Object other) {
     if (!(other instanceof Transaction that)) {
@@ -1115,6 +1181,9 @@ public class Transaction
     if (transactionType.supportsBlob() && this.blobsWithCommitments.isPresent()) {
       sb.append("numberOfBlobs=").append(blobsWithCommitments.get().getBlobs().size()).append(", ");
     }
+    if (transactionType.equals(TransactionType.INITCODE)) {
+      sb.append("initcodes=").append(initcodes).append(", ");
+    }
     sb.append("payload=").append(getPayload());
     return sb.append("}").toString();
   }
@@ -1184,6 +1253,8 @@ public class Transaction
         maybeCodeDelegationList.map(
             codeDelegations ->
                 codeDelegations.stream().map(this::codeDelegationDetachedCopy).toList());
+    final Optional<List<Bytes>> detatchedInitcodes =
+        initcodes.map(ic -> ic.stream().map(Bytes::copy).toList());
 
     final var copiedTx =
         new Transaction(
@@ -1205,6 +1276,7 @@ public class Transaction
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
             detachedCodeDelegationList,
+            detatchedInitcodes,
             Optional.empty());
 
     // copy also the computed fields, to avoid to recompute them
@@ -1283,6 +1355,7 @@ public class Transaction
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
+    private Optional<List<Bytes>> initcodes = Optional.empty();
     protected Bytes rawRlp = null;
 
     public Builder copiedFrom(final Transaction toCopy) {
@@ -1302,6 +1375,7 @@ public class Transaction
       this.chainId = toCopy.chainId;
       this.versionedHashes = toCopy.versionedHashes.orElse(null);
       this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
+      this.initcodes = toCopy.initcodes;
       this.codeDelegationAuthorizations = toCopy.maybeCodeDelegationList;
       return this;
     }
@@ -1389,13 +1463,20 @@ public class Transaction
       return this;
     }
 
+    public Builder initcodes(final List<Bytes> initcodes) {
+      this.initcodes = Optional.of(initcodes);
+      return this;
+    }
+
     public Builder rawRlp(final Bytes rawRlp) {
       this.rawRlp = rawRlp;
       return this;
     }
 
     public Builder guessType() {
-      if (codeDelegationAuthorizations.isPresent()) {
+      if (initcodes.isPresent()) {
+        transactionType = TransactionType.INITCODE;
+      } else if (codeDelegationAuthorizations.isPresent()) {
         transactionType = TransactionType.DELEGATE_CODE;
       } else if (versionedHashes != null && !versionedHashes.isEmpty()) {
         transactionType = TransactionType.BLOB;
@@ -1434,6 +1515,7 @@ public class Transaction
           Optional.ofNullable(versionedHashes),
           Optional.ofNullable(blobsWithCommitments),
           codeDelegationAuthorizations,
+          initcodes,
           Optional.ofNullable(rawRlp));
     }
 
@@ -1462,6 +1544,7 @@ public class Transaction
                   accessList,
                   versionedHashes,
                   codeDelegationAuthorizations,
+                  initcodes,
                   chainId),
               keys);
     }

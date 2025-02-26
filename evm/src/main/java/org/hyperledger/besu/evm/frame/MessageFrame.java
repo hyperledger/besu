@@ -1314,6 +1314,16 @@ public class MessageFrame {
     return txValues.versionedHashes();
   }
 
+  /**
+   * Get the initcode by hash
+   *
+   * @param hash the hash
+   * @return the correspoding initcode, or null if non-existent
+   */
+  public Bytes getInitCodeByHash(final Bytes hash) {
+    return txValues.getInitcodeByHash(hash);
+  }
+
   /** Reset. */
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
@@ -1349,6 +1359,8 @@ public class MessageFrame {
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
+
+    private Optional<List<Bytes>> initcodes = Optional.empty();
 
     /** Instantiates a new Builder. */
     public Builder() {
@@ -1631,6 +1643,17 @@ public class MessageFrame {
       return this;
     }
 
+    /**
+     * Sets initcodes for TXCREATE transaction.
+     *
+     * @param initcodes the Optional list of init codes
+     * @return the builder
+     */
+    public Builder initcodes(final Optional<List<Bytes>> initcodes) {
+      this.initcodes = initcodes;
+      return this;
+    }
+
     private void validate() {
       if (parentMessageFrame == null) {
         checkState(worldUpdater != null, "Missing message frame world updater");
@@ -1679,6 +1702,7 @@ public class MessageFrame {
                 new ArrayDeque<>(),
                 miningBeneficiary,
                 versionedHashes,
+                initcodes,
                 UndoTable.of(HashBasedTable.create()),
                 UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
                 UndoSet.of(new BytesTrieSet<>(Address.SIZE)),

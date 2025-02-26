@@ -208,6 +208,13 @@ public interface Transaction {
   Optional<BlobsWithCommitments> getBlobsWithCommitments();
 
   /**
+   * Returns the initcodes in a type 4 InitcodeTransaction
+   *
+   * @return optional list of initcodes
+   */
+  Optional<List<Bytes>> getInitCodes();
+
+  /**
    * Return the address of the contract, if the transaction creates one
    *
    * @return address of new contract or empty otherwise
