@@ -972,7 +972,9 @@ def sep = Pattern.quote(File.separator)
 
 jacocoTestReport {
   reports {
-    xml.required = true
+    xml.required = false
+    csv.required = false
+    html.required = false
   }
 }
 
