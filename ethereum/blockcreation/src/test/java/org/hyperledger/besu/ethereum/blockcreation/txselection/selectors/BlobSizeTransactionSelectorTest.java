@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOBS_FULL;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS;
@@ -172,12 +173,12 @@ class BlobSizeTransactionSelectorTest {
 
   private PendingTransaction createEIP1559PendingTransaction() {
     return PendingTransaction.newPendingTransaction(
-        createTransaction(TransactionType.EIP1559, 0), false, false);
+        createTransaction(TransactionType.EIP1559, 0), false, false, MAX_SCORE);
   }
 
   private PendingTransaction createBlobPendingTransaction(final int blobCount) {
     return PendingTransaction.newPendingTransaction(
-        createTransaction(TransactionType.BLOB, blobCount), false, false);
+        createTransaction(TransactionType.BLOB, blobCount), false, false, MAX_SCORE);
   }
 
   private Transaction createTransaction(final TransactionType type, final int blobCount) {
