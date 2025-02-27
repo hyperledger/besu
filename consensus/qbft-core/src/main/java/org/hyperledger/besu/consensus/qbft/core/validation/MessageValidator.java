@@ -20,7 +20,6 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
@@ -54,8 +53,7 @@ public class MessageValidator {
         final QbftBlock proposalBlock,
         final QbftBlockInterface blockInterface) {
       final QbftBlock commitBlock =
-          blockInterface.replaceRoundInBlock(
-              proposalBlock, targetRound.getRoundNumber(), QbftHashMode.COMMITTED_SEAL);
+          blockInterface.replaceRoundInBlock(proposalBlock, targetRound.getRoundNumber());
       prepareValidator = new PrepareValidator(validators, targetRound, proposalBlock.getHash());
       commitValidator =
           new CommitValidator(
