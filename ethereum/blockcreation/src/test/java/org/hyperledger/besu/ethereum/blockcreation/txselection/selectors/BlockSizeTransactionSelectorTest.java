@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_FULL;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
@@ -247,7 +248,7 @@ class BlockSizeTransactionSelectorTest {
 
   private PendingTransaction createPendingTransaction(final long gasLimit) {
     return PendingTransaction.newPendingTransaction(
-        createTransaction(TransactionType.EIP1559, gasLimit), false, false);
+        createTransaction(TransactionType.EIP1559, gasLimit), false, false, MAX_SCORE);
   }
 
   private Transaction createTransaction(final TransactionType type, final long gasLimit) {

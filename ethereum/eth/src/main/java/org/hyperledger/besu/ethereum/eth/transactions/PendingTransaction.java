@@ -48,7 +48,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class PendingTransaction
     implements org.hyperledger.besu.datatypes.PendingTransaction {
-  static final int NOT_INITIALIZED = -1;
+  public static final Byte MAX_SCORE = Byte.MAX_VALUE;
+  private static final int NOT_INITIALIZED = -1;
   private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
   private final Transaction transaction;
   private final long addedAt;
@@ -58,37 +59,42 @@ public abstract class PendingTransaction
   private int memorySize = NOT_INITIALIZED;
 
   private PendingTransaction(
-      final Transaction transaction, final long addedAt, final long sequence, final byte score) {
+      final Transaction transaction, final byte score, final long addedAt, final long sequence) {
     this.transaction = transaction;
     this.addedAt = addedAt;
     this.sequence = sequence;
     this.score = score;
   }
 
-  private PendingTransaction(final Transaction transaction, final long addedAt) {
-    this(transaction, addedAt, TRANSACTIONS_ADDED.getAndIncrement(), Byte.MAX_VALUE);
-  }
-
-  public static PendingTransaction newPendingTransaction(
-      final Transaction transaction, final boolean isLocal, final boolean hasPriority) {
-    return newPendingTransaction(transaction, isLocal, hasPriority, System.currentTimeMillis());
+  private PendingTransaction(final Transaction transaction, final byte score, final long addedAt) {
+    this(transaction, score, addedAt, TRANSACTIONS_ADDED.getAndIncrement());
   }
 
   public static PendingTransaction newPendingTransaction(
       final Transaction transaction,
       final boolean isLocal,
       final boolean hasPriority,
+      final byte score) {
+    return newPendingTransaction(
+        transaction, isLocal, hasPriority, score, System.currentTimeMillis());
+  }
+
+  public static PendingTransaction newPendingTransaction(
+      final Transaction transaction,
+      final boolean isLocal,
+      final boolean hasPriority,
+      final byte score,
       final long addedAt) {
     if (isLocal) {
       if (hasPriority) {
-        return new Local.Priority(transaction, addedAt);
+        return new Local.Priority(transaction, score, addedAt);
       }
-      return new Local(transaction, addedAt);
+      return new Local(transaction, score, addedAt);
     }
     if (hasPriority) {
-      return new Remote.Priority(transaction, addedAt);
+      return new Remote.Priority(transaction, score, addedAt);
     }
-    return new Remote(transaction, addedAt);
+    return new Remote(transaction, score, addedAt);
   }
 
   @Override
@@ -311,16 +317,16 @@ public abstract class PendingTransaction
 
   public static class Local extends PendingTransaction {
 
-    public Local(final Transaction transaction, final long addedAt) {
-      super(transaction, addedAt);
+    public Local(final Transaction transaction, final byte score, final long addedAt) {
+      super(transaction, score, addedAt);
     }
 
     public Local(final Transaction transaction) {
-      this(transaction, System.currentTimeMillis());
+      this(transaction, MAX_SCORE, System.currentTimeMillis());
     }
 
     private Local(final long sequence, final byte score, final Transaction transaction) {
-      super(transaction, System.currentTimeMillis(), sequence, score);
+      super(transaction, score, System.currentTimeMillis(), sequence);
     }
 
     @Override
@@ -340,11 +346,11 @@ public abstract class PendingTransaction
 
     public static class Priority extends Local {
       public Priority(final Transaction transaction) {
-        this(transaction, System.currentTimeMillis());
+        this(transaction, MAX_SCORE, System.currentTimeMillis());
       }
 
-      public Priority(final Transaction transaction, final long addedAt) {
-        super(transaction, addedAt);
+      public Priority(final Transaction transaction, final byte score, final long addedAt) {
+        super(transaction, score, addedAt);
       }
 
       public Priority(final long sequence, final byte score, final Transaction transaction) {
@@ -365,16 +371,16 @@ public abstract class PendingTransaction
 
   public static class Remote extends PendingTransaction {
 
-    public Remote(final Transaction transaction, final long addedAt) {
-      super(transaction, addedAt);
+    public Remote(final Transaction transaction, final byte score, final long addedAt) {
+      super(transaction, score, addedAt);
     }
 
     public Remote(final Transaction transaction) {
-      this(transaction, System.currentTimeMillis());
+      this(transaction, MAX_SCORE, System.currentTimeMillis());
     }
 
     private Remote(final long sequence, final byte score, final Transaction transaction) {
-      super(transaction, System.currentTimeMillis(), sequence, score);
+      super(transaction, score, System.currentTimeMillis(), sequence);
     }
 
     @Override
@@ -394,11 +400,11 @@ public abstract class PendingTransaction
 
     public static class Priority extends Remote {
       public Priority(final Transaction transaction) {
-        this(transaction, System.currentTimeMillis());
+        this(transaction, MAX_SCORE, System.currentTimeMillis());
       }
 
-      public Priority(final Transaction transaction, final long addedAt) {
-        super(transaction, addedAt);
+      public Priority(final Transaction transaction, final byte score, final long addedAt) {
+        super(transaction, score, addedAt);
       }
 
       public Priority(final long sequence, final byte score, final Transaction transaction) {
