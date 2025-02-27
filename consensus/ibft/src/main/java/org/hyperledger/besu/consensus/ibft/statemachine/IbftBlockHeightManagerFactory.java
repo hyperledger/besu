@@ -68,6 +68,12 @@ public class IbftBlockHeightManagerFactory {
     }
   }
 
+  /**
+   * Create a no-op block height manager.
+   *
+   * @param parentHeader the parent header
+   * @return the no-op height manager
+   */
   protected BaseIbftBlockHeightManager createNoOpBlockHeightManager(
       final BlockHeader parentHeader) {
     return new NoOpBlockHeightManager(parentHeader);

@@ -220,7 +220,11 @@ public abstract class BaseBftController implements BftEventHandler {
    */
   protected abstract BaseBlockHeightManager getCurrentHeightManager();
 
-  /** Replaces the current height manager with a no-op height manager. */
+  /**
+   * Stop the current height manager by creating a no-op block height manager.
+   *
+   * @param parentHeader the parent header
+   */
   protected abstract void stopCurrentHeightManager(final BlockHeader parentHeader);
 
   private void startNewHeightManager(final BlockHeader parentHeader) {
