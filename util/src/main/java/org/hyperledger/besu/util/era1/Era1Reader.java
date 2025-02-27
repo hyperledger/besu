@@ -19,12 +19,11 @@ import org.hyperledger.besu.util.snappy.SnappyFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.primitives.Bytes;
+import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.Pack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xerial.snappy.SnappyFramedInputStream;
@@ -123,8 +122,6 @@ public class Era1Reader {
 
   private long convertLittleEndianBytesToLong(final byte[] bytes) {
     int additionalBytes = Long.BYTES - bytes.length;
-    return ByteBuffer.wrap(Bytes.concat(bytes, new byte[additionalBytes]))
-        .order(ByteOrder.LITTLE_ENDIAN)
-        .getLong();
+    return Pack.littleEndianToLong(Arrays.concatenate(bytes, new byte[additionalBytes]), 0);
   }
 }
