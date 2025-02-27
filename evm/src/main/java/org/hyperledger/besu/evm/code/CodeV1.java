@@ -19,6 +19,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.io.PrintWriter;
@@ -65,8 +67,8 @@ public class CodeV1 implements Code {
   }
 
   @Override
-  public Bytes getBytes() {
-    return eofLayout.container();
+  public Bytecode getBytes() {
+    return FullBytecode.wrap(eofLayout.container());
   }
 
   @Override
@@ -111,7 +113,7 @@ public class CodeV1 implements Code {
       codeToLoad = subcontainerLayout.container();
     }
 
-    Code subContainerCode = evm.getCodeUncached(codeToLoad);
+    Code subContainerCode = evm.getCodeUncached(FullBytecode.wrap(codeToLoad));
 
     return subContainerCode.isValid() && subContainerCode.getEofVersion() > 0
         ? Optional.of(subContainerCode)

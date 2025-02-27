@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.code;
 
 import static org.hyperledger.besu.evm.code.OpcodeInfo.V1_OPCODES;
 
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
 import org.hyperledger.besu.evm.operation.ExchangeOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
@@ -50,7 +51,7 @@ import org.apache.tuweni.bytes.Bytes;
  * @param containerMode The mode of the container (runtime or initcode, if known)
  */
 public record EOFLayout(
-    Bytes container,
+    Bytecode container,
     int version,
     CodeSection[] codeSections,
     EOFLayout[] subContainers,
@@ -94,7 +95,7 @@ public record EOFLayout(
   static final int MAX_SUPPORTED_VERSION = 1;
 
   private EOFLayout(
-      final Bytes container,
+      final Bytecode container,
       final int version,
       final CodeSection[] codeSections,
       final EOFLayout[] containers,
@@ -111,7 +112,7 @@ public record EOFLayout(
         new AtomicReference<>(null));
   }
 
-  private EOFLayout(final Bytes container, final int version, final String invalidReason) {
+  private EOFLayout(final Bytecode container, final int version, final String invalidReason) {
     this(
         container,
         version,
@@ -124,7 +125,7 @@ public record EOFLayout(
   }
 
   private static EOFLayout invalidLayout(
-      final Bytes container, final int version, final String invalidReason) {
+      final Bytecode container, final int version, final String invalidReason) {
     return new EOFLayout(container, version, invalidReason);
   }
 
@@ -152,12 +153,12 @@ public record EOFLayout(
    * @param container the container
    * @return the eof layout
    */
-  public static EOFLayout parseEOF(final Bytes container) {
+  public static EOFLayout parseEOF(final Bytecode container) {
     return parseEOF(container, true);
   }
 
   private record EOFParseStep(
-      Bytes container,
+      Bytecode container,
       boolean strictSize,
       int index,
       EOFParseStep parent,
@@ -192,7 +193,7 @@ public record EOFLayout(
    * @return the eof layout
    */
   @SuppressWarnings("ReferenceEquality")
-  public static EOFLayout parseEOF(final Bytes container, final boolean strictSize) {
+  public static EOFLayout parseEOF(final Bytecode container, final boolean strictSize) {
     Queue<EOFParseStep> parseQueue = new ArrayDeque<>();
     parseQueue.add(new EOFParseStep(container, strictSize, -1, null, null));
     EOFLayout result = null;
@@ -412,7 +413,7 @@ public record EOFLayout(
       if (subcontainerSize != inputStream.skip(subcontainerSize)) {
         return invalidLayout(step.container, version, "invalid_section_bodies_size");
       }
-      Bytes subcontainer = step.container.slice(pos, subcontainerSize);
+      Bytecode subcontainer = step.container.slice(pos, subcontainerSize);
       pos += subcontainerSize;
       queue.add(new EOFParseStep(subcontainer, false, i, step, subContainers));
     }
@@ -420,7 +421,7 @@ public record EOFLayout(
     long loadedDataCount = inputStream.skip(dataSize);
     Bytes data = step.container.slice(pos, (int) loadedDataCount);
 
-    Bytes completeContainer;
+    Bytecode completeContainer;
     if (inputStream.read() != -1) {
       if (step.strictSize) {
         return invalidLayout(

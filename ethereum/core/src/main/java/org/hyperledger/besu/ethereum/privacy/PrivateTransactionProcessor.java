@@ -29,6 +29,8 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -138,7 +140,7 @@ public class PrivateTransactionProcessor {
             previousNonce,
             privacyGroupId);
 
-        final Bytes initCodeBytes = transaction.getPayload();
+        final Bytecode initCodeBytes = FullBytecode.wrap(transaction.getPayload());
         Code code = contractCreationProcessor.getCodeFromEVMForCreation(initCodeBytes);
         initialFrame =
             commonMessageFrameBuilder

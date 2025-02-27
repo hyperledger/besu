@@ -16,10 +16,12 @@ package org.hyperledger.besu.evm.code;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
+
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -400,7 +402,8 @@ public class EOFLayoutTest {
       final String description,
       final String failureReason,
       final int expectedVersion) {
-    final Bytes container = Bytes.fromHexString(containerString.replaceAll("[^a-fxA-F0-9]", ""));
+    final Bytecode container =
+        FullBytecode.fromHexString(containerString.replaceAll("[^a-fxA-F0-9]", ""));
     final EOFLayout layout = EOFLayout.parseEOF(container, true);
 
     if (failureReason != null) {

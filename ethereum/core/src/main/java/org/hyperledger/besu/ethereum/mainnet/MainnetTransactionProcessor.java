@@ -38,6 +38,8 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -411,7 +413,7 @@ public class MainnetTransactionProcessor {
         final Address contractAddress =
             Address.contractAddress(senderAddress, sender.getNonce() - 1L);
 
-        final Bytes initCodeBytes = transaction.getPayload();
+        final Bytecode initCodeBytes = FullBytecode.wrap(transaction.getPayload());
         Code code = contractCreationProcessor.getCodeFromEVMForCreation(initCodeBytes);
         initialFrame =
             commonMessageFrameBuilder
