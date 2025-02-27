@@ -139,6 +139,11 @@ public class QbftController implements QbftEventHandler {
     return currentHeightManager;
   }
 
+  /* Replace the current height manager with a no-op height manager. */
+  private void stopCurrentHeightManager(final QbftBlockHeader parentHeader) {
+    currentHeightManager = qbftBlockHeightManagerFactory.createNoOpBlockHeightManager(parentHeader);
+  }
+
   @Override
   public void start() {
     if (started.compareAndSet(false, true)) {
@@ -155,6 +160,7 @@ public class QbftController implements QbftEventHandler {
   @Override
   public void stop() {
     if (started.compareAndSet(true, false)) {
+      stopCurrentHeightManager(blockchain.getChainHeadHeader());
       LOG.debug("QBFT height manager stop");
     }
   }

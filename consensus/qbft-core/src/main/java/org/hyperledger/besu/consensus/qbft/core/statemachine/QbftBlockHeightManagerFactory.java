@@ -85,7 +85,7 @@ public class QbftBlockHeightManagerFactory {
     this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
   }
 
-  private BaseQbftBlockHeightManager createNoOpBlockHeightManager(
+  protected BaseQbftBlockHeightManager createNoOpBlockHeightManager(
       final QbftBlockHeader parentHeader) {
     return new NoOpBlockHeightManager(parentHeader);
   }

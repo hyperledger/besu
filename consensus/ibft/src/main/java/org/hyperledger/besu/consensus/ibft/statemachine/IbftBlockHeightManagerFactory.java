@@ -68,7 +68,8 @@ public class IbftBlockHeightManagerFactory {
     }
   }
 
-  private BaseIbftBlockHeightManager createNoOpBlockHeightManager(final BlockHeader parentHeader) {
+  protected BaseIbftBlockHeightManager createNoOpBlockHeightManager(
+      final BlockHeader parentHeader) {
     return new NoOpBlockHeightManager(parentHeader);
   }
 

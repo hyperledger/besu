@@ -89,6 +89,7 @@ public abstract class BaseBftController implements BftEventHandler {
   @Override
   public void stop() {
     if (started.compareAndSet(true, false)) {
+      stopCurrentHeightManager(blockchain.getChainHeadHeader());
       LOG.debug("Height manager stopped");
     }
   }
@@ -218,6 +219,9 @@ public abstract class BaseBftController implements BftEventHandler {
    * @return the current height manager
    */
   protected abstract BaseBlockHeightManager getCurrentHeightManager();
+
+  /** Replaces the current height manager with a no-op height manager. */
+  protected abstract void stopCurrentHeightManager(final BlockHeader parentHeader);
 
   private void startNewHeightManager(final BlockHeader parentHeader) {
     createNewHeightManager(parentHeader);
