@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 
@@ -33,6 +35,7 @@ import org.apache.tuweni.bytes.MutableBytes;
 public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 96;
+  private static final String PRECOMPILE_NAME = "AltBN128Mul";
 
   private static final BigInteger MAX_N =
       new BigInteger(
@@ -40,10 +43,12 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
 
   private static final Bytes POINT_AT_INFINITY = Bytes.repeat((byte) 0, 64);
   private final long gasCost;
+  private static final Cache<Integer, PrecompileInputResultTuple> bnMulCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
 
   private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
-        "AltBN128Mul",
+        PRECOMPILE_NAME,
         gasCalculator,
         LibGnarkEIP196.EIP196_MUL_OPERATION_RAW_VALUE,
         PARAMETER_LENGTH);
@@ -80,16 +85,37 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
+    PrecompileInputResultTuple res;
+    Integer cacheKey = null;
+    if (enableResultCaching) {
+      cacheKey = Arrays.hashCode(input.toArrayUnsafe());
+      res = bnMulCache.getIfPresent(cacheKey);
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
+      }
+    }
+
     if (input.size() >= 64 && input.slice(0, 64).equals(POINT_AT_INFINITY)) {
       return new PrecompileContractResult(
           POINT_AT_INFINITY, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
     }
 
     if (useNative) {
-      return computeNative(input, messageFrame);
+      res = new PrecompileInputResultTuple(input, computeNative(input, messageFrame));
     } else {
-      return computeDefault(input);
+      res = new PrecompileInputResultTuple(input, computeDefault(input));
     }
+    if (cacheKey != null) {
+      bnMulCache.put(cacheKey, res);
+    }
+    return res.cachedResult();
   }
 
   @Nonnull
