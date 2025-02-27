@@ -100,11 +100,13 @@ public class Era1Reader {
           ByteArrayInputStream blockIndexInputStream =
               new ByteArrayInputStream(inputStream.readNBytes(length));
           long startingBlockIndex =
-              convertLittleEndianBytesToLong(blockIndexInputStream.readNBytes(STARTING_BLOCK_INDEX_LENGTH));
+              convertLittleEndianBytesToLong(
+                  blockIndexInputStream.readNBytes(STARTING_BLOCK_INDEX_LENGTH));
           List<Long> indexes = new ArrayList<>();
           while (blockIndexInputStream.available() > BLOCK_INDEX_COUNT_LENGTH) {
             indexes.add(
-                convertLittleEndianBytesToLong(blockIndexInputStream.readNBytes(BLOCK_INDEX_LENGTH)));
+                convertLittleEndianBytesToLong(
+                    blockIndexInputStream.readNBytes(BLOCK_INDEX_LENGTH)));
           }
           long indexCount =
               convertLittleEndianBytesToLong(
