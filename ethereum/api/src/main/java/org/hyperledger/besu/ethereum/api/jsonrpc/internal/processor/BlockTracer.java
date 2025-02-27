@@ -72,7 +72,6 @@ public class BlockTracer {
                   .getProtocolSpec(header)
                   .getBlockHashProcessor()
                   .createBlockHashLookup(blockchain, header),
-              false,
               blobGasPrice);
       final List<TraceFrame> traceFrames = tracer.copyTraceFrames();
       tracer.reset();

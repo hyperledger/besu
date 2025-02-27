@@ -302,7 +302,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         miningBeneficiary,
         OperationTracer.NO_TRACING,
         blockHashLookup,
-        true,
         TransactionValidationParams.processingBlock(),
         blobGasPrice);
   }

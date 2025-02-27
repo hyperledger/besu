@@ -112,7 +112,6 @@ public class CliqueBlockCreatorTest {
             GenesisConfig.DEFAULT.getConfigOptions(),
             new ForksSchedule<>(List.of()),
             proposerNodeKey,
-            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,

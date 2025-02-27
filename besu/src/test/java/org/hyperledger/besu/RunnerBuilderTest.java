@@ -128,7 +128,6 @@ public final class RunnerBuilderTest {
     when(besuController.getProtocolSchedule()).thenReturn(protocolSchedule);
     when(besuController.getNodeKey()).thenReturn(nodeKey);
     when(besuController.getMiningParameters()).thenReturn(mock(MiningConfiguration.class));
-    when(besuController.getPrivacyParameters()).thenReturn(mock(PrivacyParameters.class));
     when(besuController.getTransactionPool())
         .thenReturn(mock(TransactionPool.class, RETURNS_DEEP_STUBS));
     when(besuController.getSynchronizer()).thenReturn(mock(Synchronizer.class));

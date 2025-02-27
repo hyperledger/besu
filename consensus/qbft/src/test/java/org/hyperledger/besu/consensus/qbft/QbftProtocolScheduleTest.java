@@ -133,7 +133,6 @@ public class QbftProtocolScheduleTest {
     return QbftProtocolScheduleBuilder.create(
         genesisConfig,
         new ForksSchedule<>(forks),
-        PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,

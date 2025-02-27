@@ -173,7 +173,6 @@ public class CombinedProtocolScheduleFactoryTest {
             genesisConfigOptions,
             Optional.of(BigInteger.ONE),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,

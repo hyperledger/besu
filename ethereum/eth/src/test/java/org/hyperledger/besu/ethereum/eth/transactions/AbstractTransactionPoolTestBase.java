@@ -179,7 +179,6 @@ public abstract class AbstractTransactionPoolTestBase {
                 genesisConfigFile.getConfigOptions(),
                 Optional.of(BigInteger.valueOf(1)),
                 ProtocolSpecAdapters.create(0, Function.identity()),
-                new PrivacyParameters(),
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,

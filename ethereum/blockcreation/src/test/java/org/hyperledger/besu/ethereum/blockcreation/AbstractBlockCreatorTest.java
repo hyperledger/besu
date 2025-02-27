@@ -308,7 +308,6 @@ abstract class AbstractBlockCreatorTest {
                         genesisConfig.getConfigOptions(),
                         Optional.of(BigInteger.valueOf(42)),
                         protocolSpecAdapters,
-                        PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
                         MiningConfiguration.MINING_DISABLED,

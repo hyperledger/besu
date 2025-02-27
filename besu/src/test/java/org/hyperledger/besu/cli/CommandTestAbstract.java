@@ -77,8 +77,6 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
-import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
-import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
@@ -89,7 +87,6 @@ import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -221,14 +218,12 @@ public abstract class CommandTestAbstract {
   @Mock protected SecurityModule securityModule;
   @Spy protected BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
-  @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
   @Mock protected PicoCLIOptions cliOptions;
   @Mock protected NodeKey nodeKey;
   @Mock protected BesuPluginContextImpl mockBesuPluginContext;
   @Mock protected MutableBlockchain mockMutableBlockchain;
   @Mock protected WorldStateArchive mockWorldStateArchive;
   @Mock protected TransactionPool mockTransactionPool;
-  @Mock protected PrivacyPluginServiceImpl privacyPluginService;
   @Mock protected StorageProvider storageProvider;
 
   @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
@@ -274,7 +269,6 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.metricsSystem(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.messagePermissioningProviders(any()))
         .thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.privacyParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.clock(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isRevertReasonEnabled(false)).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isParallelTxProcessingEnabled(false))
@@ -366,14 +360,8 @@ public abstract class CommandTestAbstract {
         .when(storageService.getByName(eq("rocksdb")))
         .thenReturn(Optional.of(rocksDBStorageFactory));
     lenient()
-        .when(storageService.getByName(eq("rocksdb-privacy")))
-        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
-    lenient()
         .when(securityModuleService.getByName(eq("localfile")))
         .thenReturn(Optional.of(() -> securityModule));
-    lenient()
-        .when(rocksDBSPrivacyStorageFactory.create(any(SegmentIdentifier.class), any(), any()))
-        .thenReturn(new InMemoryKeyValueStorage());
 
     lenient()
         .when(mockBesuPluginContext.getService(PicoCLIOptions.class))
@@ -478,7 +466,6 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            privacyPluginService,
             mockLogger);
       case PORT_CHECK:
         return new TestBesuCommand(
@@ -491,7 +478,6 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            privacyPluginService,
             mockLogger);
       default:
         return new TestBesuCommandWithoutPortCheck(
@@ -504,7 +490,6 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            privacyPluginService,
             mockLogger);
     }
   }
@@ -544,7 +529,6 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PrivacyPluginServiceImpl privacyPluginService,
         final Logger commandLogger) {
       super(
           mockBlockImporter,
@@ -557,7 +541,6 @@ public abstract class CommandTestAbstract {
           storageService,
           securityModuleService,
           new PermissioningServiceImpl(),
-          privacyPluginService,
           rpcEndpointServiceImpl,
           new TransactionSelectionServiceImpl(),
           new TransactionPoolValidatorServiceImpl(),
@@ -641,7 +624,6 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PrivacyPluginServiceImpl privacyPluginService,
         final Logger commandLogger) {
       super(
           mockBlockImporter,
@@ -653,7 +635,6 @@ public abstract class CommandTestAbstract {
           environment,
           storageService,
           securityModuleService,
-          privacyPluginService,
           commandLogger);
     }
 
@@ -675,7 +656,6 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PrivacyPluginServiceImpl privacyPluginService,
         final Logger commandLogger) {
       super(
           mockBlockImporter,
@@ -687,7 +667,6 @@ public abstract class CommandTestAbstract {
           environment,
           storageService,
           securityModuleService,
-          privacyPluginService,
           commandLogger);
     }
 

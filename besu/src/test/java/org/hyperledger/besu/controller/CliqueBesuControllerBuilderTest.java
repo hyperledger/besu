@@ -83,7 +83,6 @@ public class CliqueBesuControllerBuilderTest {
   @Mock private SynchronizerConfiguration synchronizerConfiguration;
   @Mock private EthProtocolConfiguration ethProtocolConfiguration;
   @Mock private CheckpointConfigOptions checkpointConfigOptions;
-  @Mock private PrivacyParameters privacyParameters;
   @Mock private Clock clock;
   @Mock private StorageProvider storageProvider;
   @Mock private WorldStatePreimageStorage worldStatePreimageStorage;
@@ -179,7 +178,6 @@ public class CliqueBesuControllerBuilderTest {
             .networkId(networkId)
             .miningParameters(miningConfiguration)
             .metricsSystem(observableMetricsSystem)
-            .privacyParameters(privacyParameters)
             .dataDirectory(tempDir)
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)

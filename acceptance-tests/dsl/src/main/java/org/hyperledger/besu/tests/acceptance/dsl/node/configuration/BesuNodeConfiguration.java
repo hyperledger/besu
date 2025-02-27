@@ -66,7 +66,6 @@ public class BesuNodeConfiguration {
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
   private final boolean isDnsEnabled;
-  private final Optional<PrivacyParameters> privacyParameters;
   private final List<String> runCommand;
   private final NetworkName network;
   private final Optional<KeyPair> keyPair;
@@ -105,7 +104,6 @@ public class BesuNodeConfiguration {
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
       final boolean isDnsEnabled,
-      final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
       final boolean strictTxReplayProtectionEnabled,
@@ -141,7 +139,6 @@ public class BesuNodeConfiguration {
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
-    this.privacyParameters = privacyParameters;
     this.runCommand = runCommand;
     this.keyPair = keyPair;
     this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
@@ -263,10 +260,6 @@ public class BesuNodeConfiguration {
 
   public boolean isDnsEnabled() {
     return isDnsEnabled;
-  }
-
-  public Optional<PrivacyParameters> getPrivacyParameters() {
-    return privacyParameters;
   }
 
   public List<String> getRunCommand() {

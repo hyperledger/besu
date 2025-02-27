@@ -95,7 +95,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         genesisConfig.getConfigOptions(),
                         Optional.of(BigInteger.valueOf(42)),
                         ProtocolSpecAdapters.create(0, Function.identity()),
-                        PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
                         MiningConfiguration.MINING_DISABLED,
@@ -159,7 +158,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                                 specBuilder.difficultyCalculator(
                                     FixedDifficultyCalculators.calculator(
                                         genesisConfig.getConfigOptions()))),
-                        PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
                         MiningConfiguration.MINING_DISABLED,
@@ -215,7 +213,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         specBuilder.difficultyCalculator(
                             FixedDifficultyCalculators.calculator(
                                 genesisConfig.getConfigOptions()))),
-                PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,
@@ -292,7 +289,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         specBuilder.difficultyCalculator(
                             FixedDifficultyCalculators.calculator(
                                 genesisConfig.getConfigOptions()))),
-                PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,

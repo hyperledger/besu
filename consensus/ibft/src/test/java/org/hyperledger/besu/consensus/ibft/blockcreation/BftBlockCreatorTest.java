@@ -116,7 +116,6 @@ public class BftBlockCreatorTest {
         bftProtocolSchedule.createProtocolSchedule(
             configOptions,
             forksSchedule,
-            PrivacyParameters.DEFAULT,
             false,
             bftExtraDataEncoder,
             EvmConfiguration.DEFAULT,

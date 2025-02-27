@@ -178,7 +178,6 @@ public class ParallelizedConcurrentTransactionProcessor {
                     }
                   },
                   blockHashLookup,
-                  true,
                   TransactionValidationParams.processingBlock(),
                   blobGasPrice);
 

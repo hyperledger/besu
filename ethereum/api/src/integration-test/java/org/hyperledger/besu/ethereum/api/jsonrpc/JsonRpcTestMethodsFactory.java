@@ -170,13 +170,11 @@ public class JsonRpcTestMethodsFactory {
         Optional.of(mock(AccountLocalConfigPermissioningController.class));
     final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController =
         Optional.of(mock(NodeLocalConfigPermissioningController.class));
-    final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
     final FilterManager filterManager =
         new FilterManagerBuilder()
             .blockchainQueries(blockchainQueries)
             .transactionPool(transactionPool)
-            .privacyParameters(privacyParameters)
             .build();
 
     final JsonRpcConfiguration jsonRpcConfiguration = mock(JsonRpcConfiguration.class);
@@ -216,7 +214,6 @@ public class JsonRpcTestMethodsFactory {
             accountWhitelistController,
             nodeWhitelistController,
             apis,
-            privacyParameters,
             jsonRpcConfiguration,
             webSocketConfiguration,
             metricsConfiguration,

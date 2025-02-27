@@ -240,7 +240,6 @@ public class BaseBftProtocolScheduleBuilderTest {
     return bftProtocolSchedule.createProtocolSchedule(
         genesisConfig,
         new ForksSchedule<>(forks),
-        PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,

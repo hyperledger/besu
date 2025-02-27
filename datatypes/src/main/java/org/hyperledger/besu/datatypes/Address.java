@@ -222,16 +222,6 @@ public class Address extends DelegatingBytes {
   }
 
   /**
-   * Privacy precompiled address.
-   *
-   * @param value the value
-   * @return the address
-   */
-  public static Address privacyPrecompiled(final int value) {
-    return precompiled(value);
-  }
-
-  /**
    * Address of the created contract.
    *
    * <p>This implement equation (86) in Section 7 of the Yellow Paper (rev. a91c29c).
@@ -248,28 +238,6 @@ public class Address extends DelegatingBytes {
                   out.startList();
                   out.writeBytes(senderAddress);
                   out.writeLongScalar(nonce);
-                  out.endList();
-                })));
-  }
-
-  /**
-   * Address of the created private contract.
-   *
-   * @param senderAddress the address of the transaction sender.
-   * @param nonce the nonce of this transaction.
-   * @param privacyGroupId hash of participants list ordered from Enclave response.
-   * @return The generated address of the created private contract.
-   */
-  public static Address privateContractAddress(
-      final Address senderAddress, final long nonce, final Bytes privacyGroupId) {
-    return Address.extract(
-        keccak256(
-            RLP.encode(
-                out -> {
-                  out.startList();
-                  out.writeBytes(senderAddress);
-                  out.writeLongScalar(nonce);
-                  out.writeBytes(privacyGroupId);
                   out.endList();
                 })));
   }

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.respons
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscription;
-import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.PrivateLogsSubscription;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -27,23 +26,15 @@ public class SubscriptionResponse {
 
   private static final String JSON_RPC_VERSION = "2.0";
   private static final String ETH_SUBSCRIPTION_METHOD = "eth_subscription";
-  private static final String PRIV_SUBSCRIPTION_METHOD = "priv_subscription";
 
   private final String methodName;
   private final SubscriptionResponseResult params;
 
   public SubscriptionResponse(final Subscription subscription, final JsonRpcResult result) {
-    if (subscription instanceof PrivateLogsSubscription) {
-      final String privacyGroupId = ((PrivateLogsSubscription) subscription).getPrivacyGroupId();
-      this.methodName = PRIV_SUBSCRIPTION_METHOD;
-      this.params =
-          new SubscriptionResponseResult(
-              Quantity.create(subscription.getSubscriptionId()), result, privacyGroupId);
-    } else {
-      this.methodName = ETH_SUBSCRIPTION_METHOD;
-      this.params =
-          new SubscriptionResponseResult(Quantity.create(subscription.getSubscriptionId()), result);
-    }
+
+    this.methodName = ETH_SUBSCRIPTION_METHOD;
+    this.params =
+        new SubscriptionResponseResult(Quantity.create(subscription.getSubscriptionId()), result);
   }
 
   @JsonGetter("jsonrpc")

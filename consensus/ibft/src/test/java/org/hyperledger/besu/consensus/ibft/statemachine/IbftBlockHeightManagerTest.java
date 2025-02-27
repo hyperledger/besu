@@ -181,7 +181,6 @@ public class IbftBlockHeightManagerTest {
             new StubGenesisConfigOptions(),
             Optional.empty(),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,

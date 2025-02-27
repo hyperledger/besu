@@ -456,7 +456,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         blockSelectionContext.miningBeneficiary(),
         operationTracer,
         blockHashLookup,
-        false,
         TransactionValidationParams.mining(),
         blockSelectionContext.blobGasPrice());
   }

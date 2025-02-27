@@ -146,7 +146,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     // nonce too low tests uses a tx with nonce=16
     when(transactionPoolMock.addTransactionViaApi(argThat(tx -> tx.getNonce() == 16)))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
-    final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
     when(miningConfiguration.getCoinbase()).thenReturn(Optional.of(Address.ZERO));
 
@@ -202,7 +201,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             Optional.empty(),
             Optional.empty(),
             JSON_RPC_APIS,
-            privacyParameters,
             config,
             mock(WebSocketConfiguration.class),
             mock(MetricsConfiguration.class),

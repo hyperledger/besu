@@ -97,7 +97,6 @@ public class MergeBesuControllerBuilderTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   MiningConfiguration miningConfiguration;
 
-  @Mock PrivacyParameters privacyParameters;
   @Mock Clock clock;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
@@ -180,7 +179,6 @@ public class MergeBesuControllerBuilderTest {
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .miningParameters(miningConfiguration)
             .metricsSystem(observableMetricsSystem)
-            .privacyParameters(privacyParameters)
             .dataDirectory(tempDir)
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)

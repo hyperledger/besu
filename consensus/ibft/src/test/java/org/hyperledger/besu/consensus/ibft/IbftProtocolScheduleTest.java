@@ -122,7 +122,6 @@ public class IbftProtocolScheduleTest {
     return IbftProtocolScheduleBuilder.create(
         genesisConfig,
         forkSched,
-        PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,

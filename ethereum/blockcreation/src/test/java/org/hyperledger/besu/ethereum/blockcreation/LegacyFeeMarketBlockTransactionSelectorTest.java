@@ -61,7 +61,6 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
             genesisConfig.getConfigOptions(),
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,

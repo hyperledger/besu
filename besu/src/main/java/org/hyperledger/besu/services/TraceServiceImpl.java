@@ -219,7 +219,6 @@ public class TraceServiceImpl implements TraceService {
                       protocolSpec
                           .getBlockHashProcessor()
                           .createBlockHashLookup(blockchain, header),
-                      false,
                       blobGasPrice);
 
               results.add(result);

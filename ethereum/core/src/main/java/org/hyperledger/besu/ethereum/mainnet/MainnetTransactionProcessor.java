@@ -49,7 +49,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -112,7 +111,6 @@ public class MainnetTransactionProcessor {
    * @param transaction The transaction to process
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams Validation parameters that will be used by the {@link
    *     MainnetTransactionValidator}
    * @return the transaction result
@@ -125,7 +123,6 @@ public class MainnetTransactionProcessor {
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
     return processTransaction(
@@ -135,45 +132,6 @@ public class MainnetTransactionProcessor {
         miningBeneficiary,
         OperationTracer.NO_TRACING,
         blockHashLookup,
-        isPersistingPrivateState,
-        transactionValidationParams,
-        blobGasPrice);
-  }
-
-  /**
-   * Applies a transaction to the current system state.
-   *
-   * @param worldState The current world state
-   * @param blockHeader The current block header
-   * @param transaction The transaction to process
-   * @param miningBeneficiary The address which is to receive the transaction fee
-   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the resulting private state will be persisted
-   * @param transactionValidationParams Validation parameters that will be used by the {@link
-   *     MainnetTransactionValidator}
-   * @param operationTracer operation tracer {@link OperationTracer}
-   * @return the transaction result
-   * @see MainnetTransactionValidator
-   * @see TransactionValidationParams
-   */
-  public TransactionProcessingResult processTransaction(
-      final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
-      final Transaction transaction,
-      final Address miningBeneficiary,
-      final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
-      final TransactionValidationParams transactionValidationParams,
-      final OperationTracer operationTracer,
-      final Wei blobGasPrice) {
-    return processTransaction(
-        worldState,
-        blockHeader,
-        transaction,
-        miningBeneficiary,
-        operationTracer,
-        blockHashLookup,
-        isPersistingPrivateState,
         transactionValidationParams,
         blobGasPrice);
   }
@@ -187,7 +145,6 @@ public class MainnetTransactionProcessor {
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param operationTracer The tracer to record results of each EVM operation
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @return the transaction result
    */
   public TransactionProcessingResult processTransaction(
@@ -197,7 +154,6 @@ public class MainnetTransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
       final Wei blobGasPrice) {
     return processTransaction(
         worldState,
@@ -206,7 +162,6 @@ public class MainnetTransactionProcessor {
         miningBeneficiary,
         operationTracer,
         blockHashLookup,
-        isPersistingPrivateState,
         ImmutableTransactionValidationParams.builder().build(),
         blobGasPrice);
   }
@@ -218,7 +173,6 @@ public class MainnetTransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
     final EVMWorldUpdater evmWorldUpdater = new EVMWorldUpdater(worldState, gasCalculator);
@@ -325,8 +279,6 @@ public class MainnetTransactionProcessor {
           intrinsicGas);
 
       final WorldUpdater worldUpdater = evmWorldUpdater.updater();
-      final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
-          ImmutableMap.<String, Object>builder();
 
       operationTracer.traceStartTransaction(worldUpdater, transaction);
 
@@ -345,7 +297,6 @@ public class MainnetTransactionProcessor {
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
-              .contextVariables(contextVariablesBuilder.build())
               .accessListWarmStorage(storageList);
 
       if (transaction.getVersionedHashes().isPresent()) {

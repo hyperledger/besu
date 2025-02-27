@@ -195,7 +195,6 @@ public class WebSocketServiceLoginTest {
                     Optional.empty(),
                     Optional.empty(),
                     JSON_RPC_APIS,
-                    mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),

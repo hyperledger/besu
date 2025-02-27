@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.blockheaders.NewBlockHeadersSubscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.LogsSubscription;
-import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.PrivateLogsSubscription;
-import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.PrivateSubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
@@ -52,17 +50,7 @@ public class SubscriptionBuilder {
 
   private Subscription logsSubscription(
       final long subscriptionId, final String connectionId, final SubscribeRequest request) {
-    if (request instanceof PrivateSubscribeRequest) {
-      final PrivateSubscribeRequest privateSubscribeRequest = (PrivateSubscribeRequest) request;
-      return new PrivateLogsSubscription(
-          subscriptionId,
-          connectionId,
-          privateSubscribeRequest.getFilterParameter(),
-          privateSubscribeRequest.getPrivacyGroupId(),
-          privateSubscribeRequest.getPrivacyUserId());
-    } else {
-      return new LogsSubscription(subscriptionId, connectionId, request.getFilterParameter());
-    }
+    return new LogsSubscription(subscriptionId, connectionId, request.getFilterParameter());
   }
 
   @SuppressWarnings("unchecked")

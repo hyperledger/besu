@@ -162,7 +162,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     builder.dataDirectory(dataDir);
     builder.nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))));
-    builder.privacyParameters(node.getPrivacyParameters());
 
     node.getGenesisConfig().map(GenesisConfig::fromConfig).ifPresent(builder::genesisConfig);
 
@@ -553,7 +552,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
       besuPluginContext.addService(BesuConfiguration.class, commonPluginConfiguration);
       besuPluginContext.addService(PermissioningService.class, permissioningService);
-      besuPluginContext.addService(PrivacyPluginService.class, new PrivacyPluginServiceImpl());
 
       besuPluginContext.initialize(
           new PluginConfiguration.Builder()
