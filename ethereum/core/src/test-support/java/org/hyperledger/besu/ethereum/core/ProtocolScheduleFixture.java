@@ -38,7 +38,6 @@ public class ProtocolScheduleFixture {
           getMainnetConfigOptions(),
           Optional.empty(),
           Optional.empty(),
-          Optional.empty(),
           MiningConfiguration.newDefault(),
           new BadBlockManager(),
           false,

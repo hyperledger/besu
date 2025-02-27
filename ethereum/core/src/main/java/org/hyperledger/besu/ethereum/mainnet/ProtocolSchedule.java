@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
+public interface ProtocolSchedule {
 
   ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader);
 

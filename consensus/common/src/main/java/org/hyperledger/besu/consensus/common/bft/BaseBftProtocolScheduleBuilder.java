@@ -20,7 +20,6 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
@@ -54,7 +53,6 @@ public abstract class BaseBftProtocolScheduleBuilder {
    *
    * @param config the config
    * @param forksSchedule the forks schedule
-   * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
@@ -68,7 +66,6 @@ public abstract class BaseBftProtocolScheduleBuilder {
   public BftProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions config,
       final ForksSchedule<? extends BftConfigOptions> forksSchedule,
-      final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
@@ -93,7 +90,6 @@ public abstract class BaseBftProtocolScheduleBuilder {
                 config,
                 Optional.of(DEFAULT_CHAIN_ID),
                 specAdapters,
-                privacyParameters,
                 isRevertReasonEnabled,
                 evmConfiguration,
                 miningConfiguration,

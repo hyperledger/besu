@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.Preprocessin
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
@@ -102,8 +101,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
-      final Optional<List<Withdrawal>> maybeWithdrawals,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
+      final Optional<List<Withdrawal>> maybeWithdrawals) {
     return processBlock(
         protocolContext,
         blockchain,
@@ -112,7 +110,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         transactions,
         ommers,
         maybeWithdrawals,
-        privateMetadataUpdater,
         new NoPreprocessing());
   }
 
@@ -124,7 +121,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final Optional<List<Withdrawal>> maybeWithdrawals,
-      final PrivateMetadataUpdater privateMetadataUpdater,
       final PreprocessingFunction preprocessingBlockFunction) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
@@ -156,7 +152,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Optional<PreprocessingContext> preProcessingContext =
         preprocessingBlockFunction.run(
             protocolContext,
-            privateMetadataUpdater,
             blockHeader,
             transactions,
             miningBeneficiary,
@@ -177,7 +172,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               preProcessingContext,
               worldState,
               blockUpdater,
-              privateMetadataUpdater,
               blockHeader,
               blobGasPrice,
               miningBeneficiary,
@@ -295,7 +289,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Optional<PreprocessingContext> preProcessingContext,
       final MutableWorldState worldState,
       final WorldUpdater blockUpdater,
-      final PrivateMetadataUpdater privateMetadataUpdater,
       final BlockHeader blockHeader,
       final Wei blobGasPrice,
       final Address miningBeneficiary,
@@ -311,7 +304,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         blockHashLookup,
         true,
         TransactionValidationParams.processingBlock(),
-        privateMetadataUpdater,
         blobGasPrice);
   }
 
@@ -347,7 +339,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   public interface PreprocessingFunction {
     Optional<PreprocessingContext> run(
         final ProtocolContext protocolContext,
-        final PrivateMetadataUpdater privateMetadataUpdater,
         final BlockHeader blockHeader,
         final List<Transaction> transactions,
         final Address miningBeneficiary,
@@ -359,7 +350,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       @Override
       public Optional<PreprocessingContext> run(
           final ProtocolContext protocolContext,
-          final PrivateMetadataUpdater privateMetadataUpdater,
           final BlockHeader blockHeader,
           final List<Transaction> transactions,
           final Address miningBeneficiary,

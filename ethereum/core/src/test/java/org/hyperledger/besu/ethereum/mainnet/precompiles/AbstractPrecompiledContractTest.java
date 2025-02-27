@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.PrecompiledContractConfiguration;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -31,9 +30,7 @@ public class AbstractPrecompiledContractTest {
       final Address precompiledAddress) {
     contract =
         registryFactory
-            .apply(
-                new PrecompiledContractConfiguration(
-                    new IstanbulGasCalculator(), PrivacyParameters.DEFAULT))
+            .apply(new PrecompiledContractConfiguration(new IstanbulGasCalculator()))
             .get(precompiledAddress);
   }
 }

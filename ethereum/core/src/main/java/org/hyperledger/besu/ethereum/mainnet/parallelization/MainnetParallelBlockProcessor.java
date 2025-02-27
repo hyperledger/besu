@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -93,7 +92,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final Optional<PreprocessingContext> preProcessingContext,
       final MutableWorldState worldState,
       final WorldUpdater blockUpdater,
-      final PrivateMetadataUpdater privateMetadataUpdater,
       final BlockHeader blockHeader,
       final Wei blobGasPrice,
       final Address miningBeneficiary,
@@ -124,7 +122,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           preProcessingContext,
           worldState,
           blockUpdater,
-          privateMetadataUpdater,
           blockHeader,
           blobGasPrice,
           miningBeneficiary,
@@ -144,8 +141,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
-      final Optional<List<Withdrawal>> maybeWithdrawals,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
+      final Optional<List<Withdrawal>> maybeWithdrawals) {
     final BlockProcessingResult blockProcessingResult =
         super.processBlock(
             protocolContext,
@@ -155,7 +151,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             transactions,
             ommers,
             maybeWithdrawals,
-            privateMetadataUpdater,
             new ParallelTransactionPreprocessing());
 
     if (blockProcessingResult.isFailed()) {
@@ -172,7 +167,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           transactions,
           ommers,
           maybeWithdrawals,
-          privateMetadataUpdater,
           new NoPreprocessing());
     }
     return blockProcessingResult;
@@ -215,7 +209,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
     @Override
     public Optional<PreprocessingContext> run(
         final ProtocolContext protocolContext,
-        final PrivateMetadataUpdater privateMetadataUpdater,
         final BlockHeader blockHeader,
         final List<Transaction> transactions,
         final Address miningBeneficiary,
@@ -232,8 +225,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             transactions,
             miningBeneficiary,
             blockHashLookup,
-            blobGasPrice,
-            privateMetadataUpdater);
+            blobGasPrice);
         return Optional.of(
             new ParallelizedPreProcessingContext(parallelizedConcurrentTransactionProcessor));
       }

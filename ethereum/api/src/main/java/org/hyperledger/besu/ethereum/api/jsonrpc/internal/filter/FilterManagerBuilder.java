@@ -15,13 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-
-import java.util.Optional;
-
-import com.google.common.annotations.VisibleForTesting;
 
 public class FilterManagerBuilder {
 
@@ -29,8 +23,6 @@ public class FilterManagerBuilder {
   private TransactionPool transactionPool;
   private FilterIdGenerator filterIdGenerator = new FilterIdGenerator();
   private FilterRepository filterRepository = new FilterRepository();
-  private Optional<PrivacyParameters> privacyParameters = Optional.empty();
-  private Optional<PrivacyQueries> privacyQueries = Optional.empty();
 
   public FilterManagerBuilder filterIdGenerator(final FilterIdGenerator filterIdGenerator) {
     this.filterIdGenerator = filterIdGenerator;
@@ -52,17 +44,6 @@ public class FilterManagerBuilder {
     return this;
   }
 
-  public FilterManagerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
-    this.privacyParameters = Optional.ofNullable(privacyParameters);
-    return this;
-  }
-
-  @VisibleForTesting
-  FilterManagerBuilder privacyQueries(final PrivacyQueries privacyQueries) {
-    this.privacyQueries = Optional.ofNullable(privacyQueries);
-    return this;
-  }
-
   public FilterManager build() {
     if (blockchainQueries == null) {
       throw new IllegalStateException("BlockchainQueries is required to build FilterManager");
@@ -72,16 +53,7 @@ public class FilterManagerBuilder {
       throw new IllegalStateException("TransactionPool is required to build FilterManager");
     }
 
-    if (privacyQueries.isEmpty()
-        && privacyParameters.isPresent()
-        && privacyParameters.get().isEnabled()) {
-      privacyQueries =
-          Optional.of(
-              new PrivacyQueries(
-                  blockchainQueries, privacyParameters.get().getPrivateWorldStateReader()));
-    }
-
     return new FilterManager(
-        blockchainQueries, transactionPool, privacyQueries, filterIdGenerator, filterRepository);
+        blockchainQueries, transactionPool, filterIdGenerator, filterRepository);
   }
 }

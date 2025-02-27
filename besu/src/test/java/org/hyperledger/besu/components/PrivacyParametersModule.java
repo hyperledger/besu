@@ -15,7 +15,6 @@
 package org.hyperledger.besu.components;
 
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 
 import java.net.URI;
