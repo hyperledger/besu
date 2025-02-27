@@ -16,10 +16,10 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -54,8 +54,8 @@ public class TxCreateOperation extends AbstractCreateOperation {
       return 0;
     } else {
       int codeSize = code.getSize();
-      final int inputOffset = clampedToInt(frame.getStackItem(2));
-      final int inputSize = clampedToInt(frame.getStackItem(3));
+      final long inputOffset = getInputOffset(frame);
+      final long inputSize = getInputSize(frame);
       return clampedAdd(
           clampedAdd(
               gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputSize),
@@ -69,7 +69,7 @@ public class TxCreateOperation extends AbstractCreateOperation {
   @Override
   public Address generateTargetContractAddress(final MessageFrame frame, final Code _code) {
     final Address sender = frame.getRecipientAddress();
-    final Bytes32 salt = Bytes32.leftPad(frame.getStackItem(1));
+    final Bytes32 salt = getSalt(frame);
     final Address address = calculateEOFAddress(sender, salt);
     frame.warmUpAddress(address);
     return address;
@@ -89,7 +89,7 @@ public class TxCreateOperation extends AbstractCreateOperation {
 
   @Override
   protected Code getInitCode(final MessageFrame frame, final EVM evm) {
-    Bytes bytes = frame.getInitCodeByHash(frame.getStackItem(4));
+    Bytes bytes = frame.getInitCodeByHash(getInitcodeHash(frame));
     if (bytes == null) {
       return null;
     }
@@ -104,13 +104,43 @@ public class TxCreateOperation extends AbstractCreateOperation {
 
   @Override
   protected Bytes getInputData(final MessageFrame frame) {
-    final long inputOffset = clampedToLong(frame.getStackItem(2));
-    final long inputSize = clampedToLong(frame.getStackItem(3));
+    final long inputOffset = getInputOffset(frame);
+    final long inputSize = getInputSize(frame);
     return frame.readMemory(inputOffset, inputSize);
   }
 
   @Override
   protected int getPcIncrement() {
     return 2;
+  }
+
+  @Override
+  protected long getInputOffset(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(2));
+  }
+
+  @Override
+  protected long getInputSize(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(3));
+  }
+
+  @Override
+  protected Wei getValue(final MessageFrame frame) {
+    return Wei.wrap(frame.getStackItem(4));
+  }
+
+  @Override
+  protected Bytes32 getSalt(final MessageFrame frame) {
+    return Bytes32.leftPad(frame.getStackItem(1));
+  }
+
+  /**
+   * The Initcode hash to create
+   *
+   * @param frame the message frame
+   * @return the hashcode of the initcode in the initcode transaction
+   */
+  protected Bytes32 getInitcodeHash(final MessageFrame frame) {
+    return Bytes32.leftPad(frame.getStackItem(0));
   }
 }

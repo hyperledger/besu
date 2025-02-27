@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
@@ -32,6 +30,7 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** The Abstract create operation. */
 public abstract class AbstractCreateOperation extends AbstractOperation {
@@ -87,7 +86,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     } else if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
-    final Wei value = Wei.wrap(frame.getStackItem(0));
+    final Wei value = Wei.wrap(getValue(frame));
 
     final Address address = frame.getRecipientAddress();
     final MutableAccount account = frame.getWorldUpdater().getAccount(address);
@@ -158,21 +157,53 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected abstract Code getInitCode(MessageFrame frame, EVM evm);
 
   /**
+   * Gets the offset in memory of the input arguments
+   *
+   * @param frame The message frame the operation executed in
+   * @return offset in memory
+   */
+  protected abstract long getInputOffset(MessageFrame frame);
+
+  /**
+   * Gets the length of the input arguments
+   *
+   * @param frame The message frame the operation executed in
+   * @return length of input
+   */
+  protected abstract long getInputSize(MessageFrame frame);
+
+  /**
+   * Gets the contract's endowment
+   *
+   * @param frame The message frame the operation executed in
+   * @return endowment as Wei.
+   */
+  protected abstract Wei getValue(MessageFrame frame);
+
+  /**
+   * Gets the salt for the create, or all zeros if not used.
+   *
+   * @param frame The message frame the operation executed in
+   * @return salt to use, or zero if not applicable
+   */
+  protected abstract Bytes32 getSalt(MessageFrame frame);
+
+  /**
    * Handles stack items when operation fails for validation reasons (noe enough ether, bad eof
    * code)
    *
    * @param frame the current execution frame
    */
   protected void fail(final MessageFrame frame) {
-    final long inputOffset = clampedToLong(frame.getStackItem(1));
-    final long inputSize = clampedToLong(frame.getStackItem(2));
+    final long inputOffset = getInputOffset(frame);
+    final long inputSize = getInputSize(frame);
     frame.readMutableMemory(inputOffset, inputSize);
     frame.popStackItems(getStackItemsConsumed());
     frame.pushStackItem(Bytes.EMPTY);
   }
 
   private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
-    final Wei value = Wei.wrap(parent.getStackItem(0));
+    final Wei value = getValue(parent);
 
     final Address contractAddress = generateTargetContractAddress(parent, code);
     final Bytes inputData = getInputData(parent);

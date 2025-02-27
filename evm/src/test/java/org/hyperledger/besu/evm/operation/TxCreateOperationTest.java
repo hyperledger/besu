@@ -198,11 +198,11 @@ class TxCreateOperationTest {
                       5f # [3] PUSH0
                       52 # [4] MSTORE
                       5f # [5] PUSH0
-                      35 # [6] CALLDATALOAD
-                    6002 # [7] PUSH1(2)
-                    601e # [9] PUSH1(30)
+                    6002 # [6] PUSH1(2)
+                    601e # [8] PUSH1(30)
+                      5f # [10] PUSH0
                       5f # [11] PUSH0
-                      5f # [12] PUSH0
+                      35 # [12] CALLDATALOAD
                       ed # [13] TXCREATE
                       00 # [14] STOP
                          # Data section (empty)

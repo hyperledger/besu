@@ -78,11 +78,11 @@ public class EOFTestConstants {
                       61c0de # [0] PUSH2(0xc0de)
                           5f # [3] PUSH0
                           52 # [4] MSTORE
-                        6002 # [5] PUSH1(2)
-                        601e # [7] PUSH1 30
-                          5f # [9] PUSH0
+                          5f # [5] PUSH0
+                        6002 # [6] PUSH1(2)
+                        601e # [8] PUSH1(30)
                           5f # [10] PUSH0
-                          ec00 # [11] EOFCREATE(0)
+                        ec00 # [11] EOFCREATE(0)
                           00 # [13] STOP
                              # Data section (empty)
                           %s # subcontainer

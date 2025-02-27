@@ -19,6 +19,7 @@ import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -48,8 +49,8 @@ public class EOFCreateOperation extends AbstractCreateOperation {
 
   @Override
   public long cost(final MessageFrame frame, final Supplier<Code> codeSupplier) {
-    final long inputOffset = clampedToLong(frame.getStackItem(2));
-    final long inputSize = clampedToLong(frame.getStackItem(3));
+    final long inputOffset = getInputOffset(frame);
+    final long inputSize = getInputSize(frame);
     return clampedAdd(
         gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputSize),
         clampedAdd(
@@ -60,7 +61,7 @@ public class EOFCreateOperation extends AbstractCreateOperation {
   @Override
   public Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
     final Address sender = frame.getRecipientAddress();
-    final Bytes32 salt = Bytes32.leftPad(frame.getStackItem(1));
+    final Bytes32 salt = getSalt(frame);
     final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt, initcode.getCodeHash()));
     return Address.extract(hash);
   }
@@ -76,8 +77,8 @@ public class EOFCreateOperation extends AbstractCreateOperation {
 
   @Override
   protected Bytes getInputData(final MessageFrame frame) {
-    final long inputOffset = clampedToLong(frame.getStackItem(2));
-    final long inputSize = clampedToLong(frame.getStackItem(3));
+    final long inputOffset = getInputOffset(frame);
+    final long inputSize = getInputSize(frame);
     return frame.readMemory(inputOffset, inputSize);
   }
 
@@ -87,11 +88,22 @@ public class EOFCreateOperation extends AbstractCreateOperation {
   }
 
   @Override
-  protected void fail(final MessageFrame frame) {
-    final long inputOffset = clampedToLong(frame.getStackItem(2));
-    final long inputSize = clampedToLong(frame.getStackItem(3));
-    frame.readMutableMemory(inputOffset, inputSize);
-    frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItem(Bytes.EMPTY);
+  protected long getInputOffset(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(1));
+  }
+
+  @Override
+  protected long getInputSize(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(2));
+  }
+
+  @Override
+  protected Wei getValue(final MessageFrame frame) {
+    return Wei.wrap(frame.getStackItem(3));
+  }
+
+  @Override
+  protected Bytes32 getSalt(final MessageFrame frame) {
+    return Bytes32.leftPad(frame.getStackItem(0));
   }
 }
