@@ -33,9 +33,9 @@ public class Era1Reader {
   private static final Logger LOG = LoggerFactory.getLogger(Era1Reader.class);
   private static final int TYPE_LENGTH = 2;
   private static final int LENGTH_LENGTH = 6;
-  private static final int STARTING_SLOT_LENGTH = 8;
-  private static final int SLOT_INDEX_LENGTH = 8;
-  private static final int SLOT_INDEX_COUNT_LENGTH = 8;
+  private static final int STARTING_BLOCK_INDEX_LENGTH = 8;
+  private static final int BLOCK_INDEX_LENGTH = 8;
+  private static final int BLOCK_INDEX_COUNT_LENGTH = 8;
 
   private final SnappyFactory snappyFactory;
 
@@ -59,7 +59,7 @@ public class Era1Reader {
    */
   public void read(final InputStream inputStream, final Era1ReaderListener listener)
       throws IOException {
-    int slot = 0;
+    int blockIndex = 0;
     while (inputStream.available() > 0) {
       Era1Type type = Era1Type.getForTypeCode(inputStream.readNBytes(TYPE_LENGTH));
       int length = (int) convertLittleEndianBytesToLong(inputStream.readNBytes(LENGTH_LENGTH));
@@ -77,7 +77,7 @@ public class Era1Reader {
           try (SnappyFramedInputStream decompressionStream =
               snappyFactory.createFramedInputStream(compressedExecutionBlockHeader)) {
             listener.handleExecutionBlockHeader(
-                new Era1ExecutionBlockHeader(decompressionStream.readAllBytes(), slot));
+                new Era1ExecutionBlockHeader(decompressionStream.readAllBytes(), blockIndex));
           }
         }
         case COMPRESSED_EXECUTION_BLOCK_BODY -> {
@@ -85,7 +85,7 @@ public class Era1Reader {
           try (SnappyFramedInputStream decompressionStream =
               snappyFactory.createFramedInputStream(compressedExecutionBlock)) {
             listener.handleExecutionBlockBody(
-                new Era1ExecutionBlockBody(decompressionStream.readAllBytes(), slot));
+                new Era1ExecutionBlockBody(decompressionStream.readAllBytes(), blockIndex));
           }
         }
         case COMPRESSED_EXECUTION_BLOCK_RECEIPTS -> {
@@ -93,28 +93,28 @@ public class Era1Reader {
           try (SnappyFramedInputStream decompressionStream =
               snappyFactory.createFramedInputStream(compressedReceipts)) {
             listener.handleExecutionBlockReceipts(
-                new Era1ExecutionBlockReceipts(decompressionStream.readAllBytes(), slot++));
+                new Era1ExecutionBlockReceipts(decompressionStream.readAllBytes(), blockIndex++));
           }
         }
         case BLOCK_INDEX -> {
-          ByteArrayInputStream slotIndexInputStream =
+          ByteArrayInputStream blockIndexInputStream =
               new ByteArrayInputStream(inputStream.readNBytes(length));
-          long startingSlot =
-              convertLittleEndianBytesToLong(slotIndexInputStream.readNBytes(STARTING_SLOT_LENGTH));
+          long startingBlockIndex =
+              convertLittleEndianBytesToLong(blockIndexInputStream.readNBytes(STARTING_BLOCK_INDEX_LENGTH));
           List<Long> indexes = new ArrayList<>();
-          while (slotIndexInputStream.available() > SLOT_INDEX_COUNT_LENGTH) {
+          while (blockIndexInputStream.available() > BLOCK_INDEX_COUNT_LENGTH) {
             indexes.add(
-                convertLittleEndianBytesToLong(slotIndexInputStream.readNBytes(SLOT_INDEX_LENGTH)));
+                convertLittleEndianBytesToLong(blockIndexInputStream.readNBytes(BLOCK_INDEX_LENGTH)));
           }
           long indexCount =
               convertLittleEndianBytesToLong(
-                  slotIndexInputStream.readNBytes(SLOT_INDEX_COUNT_LENGTH));
+                  blockIndexInputStream.readNBytes(BLOCK_INDEX_COUNT_LENGTH));
           if (indexCount != indexes.size()) {
             LOG.warn(
                 "index count does not match number of indexes present for InputStream: {}",
                 inputStream);
           }
-          listener.handleBlockIndex(new Era1BlockIndex(startingSlot, indexes));
+          listener.handleBlockIndex(new Era1BlockIndex(startingBlockIndex, indexes));
         }
       }
     }
