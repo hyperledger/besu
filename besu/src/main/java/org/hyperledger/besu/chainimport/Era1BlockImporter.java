@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -38,6 +40,7 @@ import org.hyperledger.besu.util.era1.Era1ReaderListener;
 import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -56,11 +59,25 @@ import org.slf4j.LoggerFactory;
 public class Era1BlockImporter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(Era1BlockImporter.class);
 
-  public static final int ERA1_BLOCK_COUNT_MAX = 8192;
-  public static final int IMPORT_COUNT_FOR_LOG_UPDATE = 1000;
+  private static final String FASTSYNC_DIRECTORY = "fastsync";
+  private static final String PIVOT_BLOCK_HEADER_FILE_PATH =
+      FASTSYNC_DIRECTORY + "/pivotBlockHeader.rlp";
+  private static final int ERA1_BLOCK_COUNT_MAX = 8192;
+  private static final int IMPORT_COUNT_FOR_LOG_UPDATE = 1000;
 
   public void importBlocks(final BesuController controller, final Path path)
       throws IOException, ExecutionException, InterruptedException, TimeoutException {
+    File fastSyncDir = new File("./" + FASTSYNC_DIRECTORY);
+    if (!fastSyncDir.exists()) {
+      if (!fastSyncDir.mkdir()) {
+        throw new RuntimeException("Unable to create ./" + FASTSYNC_DIRECTORY + " directory");
+      }
+      File pivotBlockHeaderFile = new File("./" + PIVOT_BLOCK_HEADER_FILE_PATH);
+      if (!pivotBlockHeaderFile.createNewFile()) {
+        throw new RuntimeException("Unable to create ./" + PIVOT_BLOCK_HEADER_FILE_PATH);
+      }
+    }
+
     final ProtocolSchedule protocolSchedule = controller.getProtocolSchedule();
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
@@ -122,11 +139,12 @@ public class Era1BlockImporter implements Closeable {
 
     LOG.info("Read {} blocks, now importing", headersFutures.size());
 
+    Block block = null;
     for (int i = 0; i < headersFutures.size(); i++) {
       BlockHeader blockHeader = headersFutures.get(i).get(10, TimeUnit.SECONDS);
       BlockImporter blockImporter =
           protocolSchedule.getByBlockHeader(blockHeader).getBlockImporter();
-      Block block = new Block(blockHeader, bodiesFutures.get(i).get(10, TimeUnit.SECONDS));
+      block = new Block(blockHeader, bodiesFutures.get(i).get(10, TimeUnit.SECONDS));
 
       BlockImportResult importResult =
           blockImporter.importBlockForSyncing(
@@ -145,6 +163,10 @@ public class Era1BlockImporter implements Closeable {
       } else if (i % IMPORT_COUNT_FOR_LOG_UPDATE == 0) {
         LOG.info("{}/{} blocks imported", i, headersFutures.size());
       }
+    }
+    if (block != null) {
+      FastSyncStateStorage fastSyncStateStorage = new FastSyncStateStorage(Path.of("fastsync"));
+      fastSyncStateStorage.storeState(new FastSyncState(block.getHeader()));
     }
     LOG.info("Done importing {} blocks", headersFutures.size());
   }
