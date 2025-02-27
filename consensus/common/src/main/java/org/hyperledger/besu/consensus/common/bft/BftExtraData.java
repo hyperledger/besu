@@ -29,6 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class BftExtraData implements ParsedExtraData {
   private final Bytes vanityData;
   private final Collection<SECPSignature> seals;
+  private final SECPSignature proposerSeal;
   private final Collection<Address> validators;
   private final Optional<Vote> vote;
   private final int round;
@@ -56,6 +57,31 @@ public class BftExtraData implements ParsedExtraData {
     this.validators = validators;
     this.vote = vote;
     this.round = round;
+    this.proposerSeal = null;
+  }
+
+  /**
+   * Instantiates a new Bft extra data.
+   *
+   * @param vanityData the vanity data
+   * @param seals the seals
+   * @param validators the validators
+   * @param proposerSeal the proposer seal
+   */
+  public BftExtraData(
+      final Bytes vanityData,
+      final Collection<SECPSignature> seals,
+      final SECPSignature proposerSeal,
+      final Collection<Address> validators) {
+    checkNotNull(vanityData);
+    checkNotNull(seals);
+    checkNotNull(validators);
+    this.vanityData = vanityData;
+    this.seals = seals;
+    this.validators = validators;
+    this.proposerSeal = proposerSeal;
+    this.vote = Optional.empty();
+    this.round = 0;
   }
 
   /**
@@ -74,6 +100,15 @@ public class BftExtraData implements ParsedExtraData {
    */
   public Collection<SECPSignature> getSeals() {
     return seals;
+  }
+
+  /**
+   * Gets proposer seal.
+   *
+   * @return the proposer seal
+   */
+  public SECPSignature getProposerSeal() {
+    return proposerSeal;
   }
 
   /**

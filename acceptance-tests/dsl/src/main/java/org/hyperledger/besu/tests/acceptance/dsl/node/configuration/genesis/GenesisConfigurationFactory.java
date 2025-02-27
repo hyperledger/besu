@@ -96,6 +96,13 @@ public class GenesisConfigurationFactory {
         validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
   }
 
+  public static Optional<String> createQbftMigrationGenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/qbft/migration-ibft1/qbft-migration.json");
+    return updateGenesisExtraData(
+        validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
+  }
+
   @SuppressWarnings("unchecked")
   public static Optional<String> createQbftValidatorContractGenesisConfig(
       final Collection<? extends RunnableNode> validators) throws UncheckedIOException {
