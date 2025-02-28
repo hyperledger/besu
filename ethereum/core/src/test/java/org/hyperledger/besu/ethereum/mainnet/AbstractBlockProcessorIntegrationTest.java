@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.Preprocessin
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelTransactionPreprocessing;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelizedConcurrentTransactionProcessor;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -258,8 +257,7 @@ class AbstractBlockProcessorIntegrationTest {
             new NoOpMetricsSystem());
 
     ParallelTransactionPreprocessing parallelPreProcessor =
-        new ParallelTransactionPreprocessing(
-            new ParallelizedConcurrentTransactionProcessor(transactionProcessor, Runnable::run));
+        new ParallelTransactionPreprocessing(transactionProcessor, Runnable::run);
 
     BlockProcessingResult parallelResult =
         blockProcessor.processBlock(

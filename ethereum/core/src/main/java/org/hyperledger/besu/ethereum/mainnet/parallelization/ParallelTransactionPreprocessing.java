@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingContext;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor.ParallelizedPreProcessingContext;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
@@ -28,15 +29,25 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class ParallelTransactionPreprocessing implements PreprocessingFunction {
 
-  private final ParallelizedConcurrentTransactionProcessor
-      parallelizedConcurrentTransactionProcessor;
+  private static final int NCPU = Runtime.getRuntime().availableProcessors();
+
+  private final Executor executor;
+  private final MainnetTransactionProcessor transactionProcessor;
+
+  public ParallelTransactionPreprocessing(final MainnetTransactionProcessor transactionProcessor) {
+    this.transactionProcessor = transactionProcessor;
+    this.executor = Executors.newFixedThreadPool(NCPU);
+  }
 
   public ParallelTransactionPreprocessing(
-      final ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor) {
-    this.parallelizedConcurrentTransactionProcessor = parallelizedConcurrentTransactionProcessor;
+      final MainnetTransactionProcessor transactionProcessor, final Executor executor) {
+    this.transactionProcessor = transactionProcessor;
+    this.executor = executor;
   }
 
   @Override
@@ -49,9 +60,10 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice) {
     if ((protocolContext.getWorldStateArchive() instanceof DiffBasedWorldStateProvider)) {
+      ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =
+          new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
       // runAsyncBlock, if activated, facilitates the non-blocking parallel execution
-      // of
-      // transactions in the background through an optimistic strategy.
+      // of transactions in the background through an optimistic strategy.
       parallelizedConcurrentTransactionProcessor.runAsyncBlock(
           protocolContext,
           blockHeader,
@@ -59,7 +71,8 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
           miningBeneficiary,
           blockHashLookup,
           blobGasPrice,
-          privateMetadataUpdater);
+          privateMetadataUpdater,
+          executor);
       return Optional.of(
           new ParallelizedPreProcessingContext(parallelizedConcurrentTransactionProcessor));
     }

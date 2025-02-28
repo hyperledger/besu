@@ -39,7 +39,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -51,9 +50,6 @@ import com.google.common.annotations.VisibleForTesting;
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class ParallelizedConcurrentTransactionProcessor {
-
-  private static final int NCPU = Runtime.getRuntime().availableProcessors();
-  private final Executor executor;
 
   private final MainnetTransactionProcessor transactionProcessor;
 
@@ -74,7 +70,6 @@ public class ParallelizedConcurrentTransactionProcessor {
       final MainnetTransactionProcessor transactionProcessor) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = new TransactionCollisionDetector();
-    this.executor = Executors.newFixedThreadPool(NCPU);
   }
 
   @VisibleForTesting
@@ -83,15 +78,6 @@ public class ParallelizedConcurrentTransactionProcessor {
       final TransactionCollisionDetector transactionCollisionDetector) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = transactionCollisionDetector;
-    this.executor = Executors.newFixedThreadPool(NCPU);
-  }
-
-  @VisibleForTesting
-  public ParallelizedConcurrentTransactionProcessor(
-      final MainnetTransactionProcessor transactionProcessor, final Executor executor) {
-    this.transactionProcessor = transactionProcessor;
-    this.transactionCollisionDetector = new TransactionCollisionDetector();
-    this.executor = executor;
   }
 
   /**
@@ -108,6 +94,7 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @param blockHashLookup Function for block hash lookup.
    * @param blobGasPrice Gas price for blob transactions.
    * @param privateMetadataUpdater Updater for private transaction metadata.
+   * @param executor The executor to use for asynchronous execution.
    */
   public void runAsyncBlock(
       final ProtocolContext protocolContext,
@@ -116,7 +103,8 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
+      final PrivateMetadataUpdater privateMetadataUpdater,
+      final Executor executor) {
 
     completableFuturesForBackgroundTransactions = new CompletableFuture[transactions.size()];
     for (int i = 0; i < transactions.size(); i++) {

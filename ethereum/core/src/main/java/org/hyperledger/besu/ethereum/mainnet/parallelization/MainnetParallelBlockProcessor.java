@@ -50,7 +50,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
 
   private final Optional<Counter> confirmedParallelizedTransactionCounter;
   private final Optional<Counter> conflictingButCachedTransactionCounter;
-  private final ParallelTransactionPreprocessing parallelTransactionPreprocessing;
 
   public MainnetParallelBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -60,27 +59,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem) {
-    this(
-        transactionProcessor,
-        transactionReceiptFactory,
-        blockReward,
-        miningBeneficiaryCalculator,
-        skipZeroBlockRewards,
-        protocolSchedule,
-        metricsSystem,
-        new ParallelTransactionPreprocessing(
-            new ParallelizedConcurrentTransactionProcessor(transactionProcessor)));
-  }
-
-  public MainnetParallelBlockProcessor(
-      final MainnetTransactionProcessor transactionProcessor,
-      final TransactionReceiptFactory transactionReceiptFactory,
-      final Wei blockReward,
-      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards,
-      final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem,
-      final ParallelTransactionPreprocessing parallelTransactionPreprocessing) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
@@ -88,7 +66,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         protocolSchedule);
-    this.parallelTransactionPreprocessing = parallelTransactionPreprocessing;
     this.confirmedParallelizedTransactionCounter =
         Optional.of(
             metricsSystem.createCounter(
@@ -172,7 +149,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             ommers,
             maybeWithdrawals,
             privateMetadataUpdater,
-            parallelTransactionPreprocessing);
+            new ParallelTransactionPreprocessing(transactionProcessor));
 
     if (blockProcessingResult.isFailed()) {
       // Fallback to non-parallel processing if there is a block processing exception .
