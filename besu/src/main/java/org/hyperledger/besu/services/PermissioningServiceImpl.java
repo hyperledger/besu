@@ -82,18 +82,11 @@ public class PermissioningServiceImpl implements PermissioningService {
   }
 
   /**
-   * Gets transaction rules.
+   * Gets transaction permissioning providers.
    *
-   * @return whether the transaction is permitted
+   * @return the transaction permissioning providers
    */
-  public boolean isTransactionPermitted(final Transaction transaction) {
-    for (TransactionPermissioningProvider provider : transactionPermissioningProviders) {
-      if (!provider.isPermitted(transaction)) {
-        LOG.debug("Transaction {} not permitted by one of the providers.", transaction.getHash());
-        return false;
-      }
-    }
-    LOG.debug("Transaction {} permitted.", transaction.getHash());
-    return true;
+  public List<TransactionPermissioningProvider> getTransactionPermissioningProviders() {
+    return transactionPermissioningProviders;
   }
 }
