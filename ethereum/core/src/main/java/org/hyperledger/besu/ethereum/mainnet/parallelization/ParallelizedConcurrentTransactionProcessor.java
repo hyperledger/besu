@@ -260,7 +260,7 @@ public class ParallelizedConcurrentTransactionProcessor {
               transaction, miningBeneficiary, parallelizedTransactionContext, blockAccumulator);
       if (transactionProcessingResult.isSuccessful() && !hasCollision) {
         Wei reward = parallelizedTransactionContext.miningBeneficiaryReward();
-        if (!reward.isZero()) {
+        if (!reward.isZero() || !transactionProcessor.getClearEmptyAccounts()) {
           blockAccumulator.getOrCreate(miningBeneficiary).incrementBalance(reward);
         }
 
