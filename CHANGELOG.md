@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+### Additions and Improvements
+- Add support for transaction permissioning rules in Plugin API [#8365](https://github.com/hyperledger/besu/pull/8365)
+
 ### Breaking Changes
 - k8s (KUBERNETES) Nat method is removed. Use docker or none instead. [#8289](https://github.com/hyperledger/besu/pull/8289)
 
@@ -147,7 +150,6 @@ This is a hotfix to address publishing besu maven artifacts.  There are no issue
   - Fast Sync
 
 ### Additions and Improvements
-- Add support for transaction permissioning rules in Plugin API [#7952](https://github.com/hyperledger/besu/pull/7952)
 - Fine tune already seen txs tracker when a tx is removed from the pool [#7755](https://github.com/hyperledger/besu/pull/7755)
 - Support for enabling and configuring TLS/mTLS in WebSocket service. [#7854](https://github.com/hyperledger/besu/pull/7854)
 - Create and publish Besu BOM (Bill of Materials) [#7615](https://github.com/hyperledger/besu/pull/7615) 
