@@ -19,12 +19,12 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
+import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,12 +81,12 @@ public class AccountPermissioningController {
 
     if (permitted) {
       for (TransactionPermissioningProvider provider : this.pluginProviders) {
-        if(!provider.isPermitted(transaction)){
+        if (!provider.isPermitted(transaction)) {
           LOG.trace(
-                  "Account permissioning - {}: Rejected transaction {} -> {}",
-                  provider.getClass().getSimpleName(),
-                  transactionHash,
-                  sender);
+              "Account permissioning - {}: Rejected transaction {} -> {}",
+              provider.getClass().getSimpleName(),
+              transactionHash,
+              sender);
           return false;
         }
       }

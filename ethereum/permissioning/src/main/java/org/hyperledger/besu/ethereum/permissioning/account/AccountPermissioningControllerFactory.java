@@ -28,12 +28,12 @@ import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningCon
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,12 +62,14 @@ public class AccountPermissioningControllerFactory {
                 permissioningConfiguration, transactionSimulator, metricsSystem);
 
     if (accountLocalConfigPermissioningController.isPresent()
-        || transactionSmartContractPermissioningController.isPresent() || pluginProviders.size() > 0) {
+        || transactionSmartContractPermissioningController.isPresent()
+        || pluginProviders.size() > 0) {
 
       final AccountPermissioningController controller =
           new AccountPermissioningController(
               accountLocalConfigPermissioningController,
-              transactionSmartContractPermissioningController, pluginProviders);
+              transactionSmartContractPermissioningController,
+              pluginProviders);
 
       return Optional.of(controller);
     } else {

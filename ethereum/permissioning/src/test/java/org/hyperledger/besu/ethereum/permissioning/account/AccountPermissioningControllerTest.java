@@ -46,7 +46,9 @@ public class AccountPermissioningControllerTest {
   public void before() {
     permissioningController =
         new AccountPermissioningController(
-            Optional.of(localConfigController), Optional.of(smartContractController), Collections.emptyList());
+            Optional.of(localConfigController),
+            Optional.of(smartContractController),
+            Collections.emptyList());
   }
 
   @Test

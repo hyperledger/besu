@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;

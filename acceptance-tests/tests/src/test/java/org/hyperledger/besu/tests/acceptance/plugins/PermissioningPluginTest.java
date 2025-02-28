@@ -112,19 +112,22 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
   public void allowFilteredByGasLimit() {
 
     final Account sender = accounts.getPrimaryBenefactor();
-    final Account recipient = accounts.createAccount("account-two" );
+    final Account recipient = accounts.createAccount("account-two");
     final BigInteger GAS_LIMIT = BigInteger.valueOf(GAS_LIMIT_THRESHOLD + 100);
     final BigInteger GAS_PRICE = BigInteger.valueOf(1000);
     final Amount amount = Amount.wei(BigInteger.valueOf(29));
 
-    final RawTransaction tx = RawTransaction.createEtherTransaction(
+    final RawTransaction tx =
+        RawTransaction.createEtherTransaction(
             sender.getNextNonce(),
             GAS_PRICE,
             GAS_LIMIT,
             recipient.getAddress(),
             Convert.toWei(amount.getValue(), amount.getUnit()).toBigIntegerExact());
 
-    final String rawSigned = Numeric.toHexString(SignUtil.signTransaction(tx, sender, new SECP256K1(), Optional.empty()));
+    final String rawSigned =
+        Numeric.toHexString(
+            SignUtil.signTransaction(tx, sender, new SECP256K1(), Optional.empty()));
     final String txHash = aliceNode.execute(ethTransactions.sendRawTransaction(rawSigned));
 
     aliceNode.verify(txPoolConditions.inTransactionPool(Hash.fromHexString(txHash)));
@@ -133,22 +136,25 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
   @Test
   public void blockedFilteredByGasLimit() {
     final Account sender = accounts.getPrimaryBenefactor();
-    final Account recipient = accounts.createAccount("account-two" );
+    final Account recipient = accounts.createAccount("account-two");
     final BigInteger GAS_LIMIT = BigInteger.valueOf(GAS_LIMIT_THRESHOLD - 100);
     final BigInteger GAS_PRICE = BigInteger.valueOf(1000);
     final Amount amount = Amount.wei(BigInteger.valueOf(29));
 
-    final RawTransaction tx = RawTransaction.createEtherTransaction(
+    final RawTransaction tx =
+        RawTransaction.createEtherTransaction(
             sender.getNextNonce(),
             GAS_PRICE,
             GAS_LIMIT,
             recipient.getAddress(),
             Convert.toWei(amount.getValue(), amount.getUnit()).toBigIntegerExact());
 
-    final String rawSigned = Numeric.toHexString(SignUtil.signTransaction(tx, sender, new SECP256K1(), Optional.empty()));
+    final String rawSigned =
+        Numeric.toHexString(
+            SignUtil.signTransaction(tx, sender, new SECP256K1(), Optional.empty()));
 
-    assertThatThrownBy(()-> aliceNode.execute(ethTransactions.sendRawTransaction(rawSigned)))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessageContaining("not authorized");
+    assertThatThrownBy(() -> aliceNode.execute(ethTransactions.sendRawTransaction(rawSigned)))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessageContaining("not authorized");
   }
 }
