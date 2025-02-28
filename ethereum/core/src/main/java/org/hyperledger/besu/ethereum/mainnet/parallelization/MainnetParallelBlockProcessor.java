@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -49,7 +48,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetParallelBlockProcessor.class);
 
-  private final Optional<MetricsSystem> metricsSystem;
   private final Optional<Counter> confirmedParallelizedTransactionCounter;
   private final Optional<Counter> conflictingButCachedTransactionCounter;
 
@@ -68,24 +66,19 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         protocolSchedule);
-    this.metricsSystem = Optional.of(metricsSystem);
     this.confirmedParallelizedTransactionCounter =
         Optional.of(
-            this.metricsSystem
-                .get()
-                .createCounter(
-                    BesuMetricCategory.BLOCK_PROCESSING,
-                    "parallelized_transactions_counter",
-                    "Counter for the number of parallelized transactions during block processing"));
+            metricsSystem.createCounter(
+                BesuMetricCategory.BLOCK_PROCESSING,
+                "parallelized_transactions_counter",
+                "Counter for the number of parallelized transactions during block processing"));
 
     this.conflictingButCachedTransactionCounter =
         Optional.of(
-            this.metricsSystem
-                .get()
-                .createCounter(
-                    BesuMetricCategory.BLOCK_PROCESSING,
-                    "conflicted_transactions_counter",
-                    "Counter for the number of conflicted transactions during block processing"));
+            metricsSystem.createCounter(
+                BesuMetricCategory.BLOCK_PROCESSING,
+                "conflicted_transactions_counter",
+                "Counter for the number of conflicted transactions during block processing"));
   }
 
   @Override
@@ -156,7 +149,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             ommers,
             maybeWithdrawals,
             privateMetadataUpdater,
-            new ParallelTransactionPreprocessing());
+            new ParallelTransactionPreprocessing(transactionProcessor));
 
     if (blockProcessingResult.isFailed()) {
       // Fallback to non-parallel processing if there is a block processing exception .
@@ -207,37 +200,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           skipZeroBlockRewards,
           protocolSchedule,
           metricsSystem);
-    }
-  }
-
-  class ParallelTransactionPreprocessing implements PreprocessingFunction {
-
-    @Override
-    public Optional<PreprocessingContext> run(
-        final ProtocolContext protocolContext,
-        final PrivateMetadataUpdater privateMetadataUpdater,
-        final BlockHeader blockHeader,
-        final List<Transaction> transactions,
-        final Address miningBeneficiary,
-        final BlockHashLookup blockHashLookup,
-        final Wei blobGasPrice) {
-      if ((protocolContext.getWorldStateArchive() instanceof DiffBasedWorldStateProvider)) {
-        ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =
-            new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
-        // runAsyncBlock, if activated, facilitates the  non-blocking parallel execution of
-        // transactions in the background through an optimistic strategy.
-        parallelizedConcurrentTransactionProcessor.runAsyncBlock(
-            protocolContext,
-            blockHeader,
-            transactions,
-            miningBeneficiary,
-            blockHashLookup,
-            blobGasPrice,
-            privateMetadataUpdater);
-        return Optional.of(
-            new ParallelizedPreProcessingContext(parallelizedConcurrentTransactionProcessor));
-      }
-      return Optional.empty();
     }
   }
 }
