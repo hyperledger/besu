@@ -326,7 +326,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final PendingTransaction pendingTransaction,
       final int distance,
       final AddReason addReason) {
-    int nextLayerDistance;
+    final int nextLayerDistance;
     if (senderTxs.isEmpty()) {
       nextLayerDistance = distance;
     } else {
