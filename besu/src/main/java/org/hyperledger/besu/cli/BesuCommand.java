@@ -721,6 +721,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    *
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
+   * @param era1BlockImporter Era1BlockImporter supplier
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
    * @param runnerBuilder instance of RunnerBuilder
    * @param controllerBuilder instance of BesuController.Builder
@@ -764,6 +765,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    *
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
+   * @param era1BlockImporter Era1BlockImporter supplier
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
    * @param runnerBuilder instance of RunnerBuilder
    * @param controllerBuilder instance of BesuController.Builder

@@ -104,6 +104,7 @@ public class BlocksSubCommand implements Runnable {
    *
    * @param rlpBlockImporter the RLP block importer
    * @param jsonBlockImporterFactory the Json block importer factory
+   * @param era1BlockImporter the era1 block importer supplier
    * @param rlpBlockExporterFactory the RLP block exporter factory
    * @param out Instance of PrintWriter where command usage will be written.
    */

@@ -56,6 +56,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Tool for importing era1-encoded block data, headers, and transaction receipts from era1 files.
+ */
 public class Era1BlockImporter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(Era1BlockImporter.class);
 
@@ -65,6 +68,19 @@ public class Era1BlockImporter implements Closeable {
   private static final int ERA1_BLOCK_COUNT_MAX = 8192;
   private static final int IMPORT_COUNT_FOR_LOG_UPDATE = 1000;
 
+  /** Default Constructor. */
+  public Era1BlockImporter() {}
+
+  /**
+   * Imports the blocks, headers, and transaction receipts from the file found at the supplied path
+   *
+   * @param controller The BesuController
+   * @param path The path
+   * @throws IOException IOException
+   * @throws ExecutionException ExecutionException
+   * @throws InterruptedException InterruptedException
+   * @throws TimeoutException TimeoutException
+   */
   public void importBlocks(final BesuController controller, final Path path)
       throws IOException, ExecutionException, InterruptedException, TimeoutException {
     File fastSyncDir = new File("./" + FASTSYNC_DIRECTORY);
