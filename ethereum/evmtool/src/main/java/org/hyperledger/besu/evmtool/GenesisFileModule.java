@@ -130,7 +130,7 @@ public class GenesisFileModule {
   private static GenesisFileModule createGenesisModule(final String genesisConfig) {
     final JsonObject genesis = new JsonObject(genesisConfig);
     final JsonObject config = genesis.getJsonObject("config");
-    if (config.containsKey("clique") || config.containsKey("qbft")) {
+    if (config.containsKey("ibft") || config.containsKey("clique") || config.containsKey("qbft")) {
       throw new RuntimeException("Only Ethash and Merge configs accepted as genesis files");
     }
     return new MainnetGenesisFileModule(genesisConfig);

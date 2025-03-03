@@ -32,6 +32,8 @@ public interface MiningCoordinator {
 
   void stop();
 
+  default void subscribe() {}
+
   void awaitStop() throws InterruptedException;
 
   /**
