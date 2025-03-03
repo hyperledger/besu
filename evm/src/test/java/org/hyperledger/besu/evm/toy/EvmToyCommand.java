@@ -127,6 +127,12 @@ public class EvmToyCommand implements Runnable {
   final Boolean showStorage = false;
 
   @CommandLine.Option(
+      names = {"--trace.statelesswitness"},
+      description = "When tracing, show accesses to the stateless witness.",
+      scope = ScopeType.INHERIT)
+  final Boolean showWitness = false;
+
+  @CommandLine.Option(
       names = {"--repeat"},
       description = "Number of times to repeat for benchmarking.")
   private final Integer repeat = 0;
@@ -169,7 +175,7 @@ public class EvmToyCommand implements Runnable {
       final OperationTracer tracer = // You should have picked Mercy.
           lastLoop && showJsonResults
               ? new StandardJsonTracer(
-                  System.out, showMemory, showStack, showReturnData, showStorage)
+                  System.out, showMemory, showStack, showReturnData, showStorage, showWitness)
               : OperationTracer.NO_TRACING;
 
       MessageFrame initialMessageFrame =
