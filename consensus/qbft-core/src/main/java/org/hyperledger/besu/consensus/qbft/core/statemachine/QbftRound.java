@@ -361,7 +361,7 @@ public class QbftRound {
     }
 
     final QbftBlockImporter blockImporter =
-        protocolSchedule.getByBlockHeader(blockToImport.getHeader()).getBlockImporter();
+        protocolSchedule.getBlockImporter(blockToImport.getHeader());
     final boolean result = blockImporter.importBlock(blockToImport);
     if (!result) {
       LOG.error(
