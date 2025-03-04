@@ -22,35 +22,24 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** A utility class for body validation tasks. */
 public final class BodyValidation {
 
   private BodyValidation() {
     // Utility Class
-  }
-
-  private static Bytes indexKey(final int i) {
-    return RLP.encodeOne(UInt256.valueOf(i).trimLeadingZeros());
-  }
-
-  private static MerkleTrie<Bytes, Bytes> trie() {
-    return new SimpleMerklePatriciaTrie<>(b -> b);
   }
 
   /**
@@ -60,17 +49,11 @@ public final class BodyValidation {
    * @return the transaction root
    */
   public static Hash transactionsRoot(final List<Transaction> transactions) {
-    final MerkleTrie<Bytes, Bytes> trie = trie();
+    final ArrayList<Bytes> bytesList = new ArrayList<>(transactions.size());
+    transactions.forEach(
+        t -> bytesList.add(TransactionEncoder.encodeOpaqueBytes(t, EncodingContext.BLOCK_BODY)));
 
-    IntStream.range(0, transactions.size())
-        .forEach(
-            i ->
-                trie.put(
-                    indexKey(i),
-                    TransactionEncoder.encodeOpaqueBytes(
-                        transactions.get(i), EncodingContext.BLOCK_BODY)));
-
-    return Hash.wrap(trie.getRootHash());
+    return Util.getRootFromListOfBytes(bytesList);
   }
 
   /**
@@ -80,13 +63,10 @@ public final class BodyValidation {
    * @return the transaction root
    */
   public static Hash withdrawalsRoot(final List<Withdrawal> withdrawals) {
-    final MerkleTrie<Bytes, Bytes> trie = trie();
+    final ArrayList<Bytes> bytesList = new ArrayList<>(withdrawals.size());
+    withdrawals.forEach(w -> bytesList.add(WithdrawalEncoder.encodeOpaqueBytes(w)));
 
-    IntStream.range(0, withdrawals.size())
-        .forEach(
-            i -> trie.put(indexKey(i), WithdrawalEncoder.encodeOpaqueBytes(withdrawals.get(i))));
-
-    return Hash.wrap(trie.getRootHash());
+    return Util.getRootFromListOfBytes(bytesList);
   }
 
   /**
@@ -115,18 +95,13 @@ public final class BodyValidation {
    * @return the receipt root
    */
   public static Hash receiptsRoot(final List<TransactionReceipt> receipts) {
-    final MerkleTrie<Bytes, Bytes> trie = trie();
+    final ArrayList<Bytes> bytesList = new ArrayList<>(receipts.size());
+    receipts.forEach(
+        r ->
+            bytesList.add(
+                RLP.encode(rlpOutput -> r.writeToForReceiptTrie(rlpOutput, false, false))));
 
-    IntStream.range(0, receipts.size())
-        .forEach(
-            i ->
-                trie.put(
-                    indexKey(i),
-                    RLP.encode(
-                        rlpOutput ->
-                            receipts.get(i).writeToForReceiptTrie(rlpOutput, false, false))));
-
-    return Hash.wrap(trie.getRootHash());
+    return Util.getRootFromListOfBytes(bytesList);
   }
 
   /**
