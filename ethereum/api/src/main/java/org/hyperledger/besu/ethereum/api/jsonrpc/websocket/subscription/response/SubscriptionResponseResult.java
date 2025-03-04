@@ -17,28 +17,17 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.respons
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"subscription", "privacyGroupId", "result"})
+@JsonPropertyOrder({"subscription", "result"})
 public class SubscriptionResponseResult {
 
   private final String subscription;
   private final JsonRpcResult result;
 
-  @JsonInclude(Include.NON_NULL)
-  private final String privacyGroupId;
-
   SubscriptionResponseResult(final String subscription, final JsonRpcResult result) {
-    this(subscription, result, null);
-  }
-
-  SubscriptionResponseResult(
-      final String subscription, final JsonRpcResult result, final String privacyGroupId) {
     this.subscription = subscription;
     this.result = result;
-    this.privacyGroupId = privacyGroupId;
   }
 
   @JsonGetter("subscription")
@@ -49,10 +38,5 @@ public class SubscriptionResponseResult {
   @JsonGetter("result")
   public JsonRpcResult getResult() {
     return result;
-  }
-
-  @JsonGetter("privacyGroupId")
-  public String getPrivacyGroupId() {
-    return privacyGroupId;
   }
 }

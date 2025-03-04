@@ -14,17 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 public class PrecompiledContractConfiguration {
   private GasCalculator gasCalculator;
-  private PrivacyParameters privacyParameters;
 
-  public PrecompiledContractConfiguration(
-      final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
+  public PrecompiledContractConfiguration(final GasCalculator gasCalculator) {
     this.gasCalculator = gasCalculator;
-    this.privacyParameters = privacyParameters;
   }
 
   public GasCalculator getGasCalculator() {
@@ -33,13 +29,5 @@ public class PrecompiledContractConfiguration {
 
   public void setGasCalculator(final GasCalculator gasCalculator) {
     this.gasCalculator = gasCalculator;
-  }
-
-  public PrivacyParameters getPrivacyParameters() {
-    return privacyParameters;
-  }
-
-  public void setPrivacyParameters(final PrivacyParameters privacyParameters) {
-    this.privacyParameters = privacyParameters;
   }
 }

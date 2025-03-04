@@ -107,7 +107,7 @@ public class MainnetBlockValidatorTest {
         .thenReturn(successfulProcessingResult);
     when(blockProcessor.processBlock(any(), any(), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
-    when(blockProcessor.processBlock(any(), any(), any(), any(), any(), any(), any(), any()))
+    when(blockProcessor.processBlock(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
 
     assertNoBadBlocks();

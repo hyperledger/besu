@@ -23,7 +23,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
@@ -58,7 +57,6 @@ public class CliqueProtocolSchedule {
    * @param config the config
    * @param forksSchedule the transitions
    * @param nodeKey the node key
-   * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param evmConfiguration the evm configuration
    * @param miningConfiguration the mining configuration
@@ -72,7 +70,6 @@ public class CliqueProtocolSchedule {
       final GenesisConfigOptions config,
       final ForksSchedule<CliqueConfigOptions> forksSchedule,
       final NodeKey nodeKey,
-      final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
@@ -110,7 +107,6 @@ public class CliqueProtocolSchedule {
             config,
             Optional.of(DEFAULT_CHAIN_ID),
             specAdapters,
-            privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
             miningConfiguration,
