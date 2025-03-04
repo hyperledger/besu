@@ -83,7 +83,7 @@ public class AccountPermissioningController {
       for (TransactionPermissioningProvider provider : this.pluginProviders) {
         if (!provider.isPermitted(transaction)) {
           LOG.trace(
-              "Account permissioning - {}: Rejected transaction {} -> {}",
+              "Account permissioning - {}: Rejected transaction {} from {}",
               provider.getClass().getSimpleName(),
               transactionHash,
               sender);
