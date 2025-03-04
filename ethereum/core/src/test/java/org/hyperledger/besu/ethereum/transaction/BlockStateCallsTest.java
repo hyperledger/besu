@@ -127,10 +127,13 @@ class BlockStateCallsTest {
 
   /**
    * Tests that an exception is thrown when a BlockStateCall with a block number less than or equal
-   * to the last processed block number is added.
+   * to the last block number is added.
    */
   @Test
   void shouldThrowExceptionForInvalidBlockNumber() {
+    // BlockHeader is at block number 1
+    // BlockStateCall block number is 1
+    // Should throw an exception because the block number is not greater than 1
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
@@ -144,7 +147,7 @@ class BlockStateCallsTest {
 
   /**
    * Tests that an exception is thrown when a BlockStateCall with a timestamp less than or equal to
-   * the last processed timestamp is added.
+   * the last timestamp is added.
    */
   @Test
   void shouldThrowExceptionForInvalidTimestamp() {
