@@ -137,6 +137,7 @@ import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -692,6 +693,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfblocksToCache = 0;
 
+  @CommandLine.Option(
+      names = {"--cache-precompiles"},
+      description = "Specifies whether to cache precompile results (default: ${DEFAULT-VALUE})")
+  private final Boolean enablePrecompileCaching = true;
+
   // Plugins Configuration Option Group
   @CommandLine.ArgGroup(validate = false)
   PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
@@ -967,6 +973,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
 
       configureNativeLibs();
+
+      if (enablePrecompileCaching
+          && getDataStorageConfiguration()
+              .getDiffBasedSubStorageConfiguration()
+              .getUnstable()
+              .isParallelTxProcessingEnabled()) {
+        // enable precompile caching if it is enabled and parallel tx processing is enabled:
+        configurePrecompileCaching();
+      }
+
       besuController = buildController();
 
       besuPluginContext.beforeExternalServices();
@@ -989,6 +1005,28 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.error("Failed to start Besu", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
+  }
+
+  private void configurePrecompileCaching() {
+    // enable precompile caching:
+    AbstractPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+
+    // set a metric logger
+    final var precompileCounter =
+        getMetricsSystem()
+            .createLabelledCounter(
+                BesuMetricCategory.BLOCK_PROCESSING,
+                "precompile_cache",
+                "precompile cache labeled counter",
+                "precompile_name",
+                "event");
+
+    // set a cache event consumer which logs a metrics event
+    AbstractPrecompiledContract.setCacheEventConsumer(
+        cacheEvent ->
+            precompileCounter
+                .labels(cacheEvent.precompile(), cacheEvent.cacheMetric().name())
+                .inc());
   }
 
   private void checkPermissionsAndPrintPaths(final String userName) {
