@@ -15,13 +15,11 @@
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
-import java.util.Optional;
 
 /**
  * Adaptor class to allow the {@link ValidatorProvider} to be used as a {@link
@@ -53,10 +51,5 @@ public class QbftValidatorProviderAdaptor implements QbftValidatorProvider {
   @Override
   public Collection<Address> getValidatorsForBlock(final QbftBlockHeader header) {
     return validatorProvider.getValidatorsForBlock(BlockUtil.toBesuBlockHeader(header));
-  }
-
-  @Override
-  public Optional<VoteProvider> getVoteProviderAtHead() {
-    return validatorProvider.getVoteProviderAtHead();
   }
 }
