@@ -28,6 +28,7 @@ import io.vertx.junit5.VertxTestContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -97,6 +98,7 @@ class DNSDaemonTest {
     vertx.deployVerticle(dnsDaemon, options);
   }
 
+  @Disabled("test is flaky see https://github.com/hyperledger/besu/issues/8373")
   @Test
   @DisplayName("Test DNS Daemon with periodic lookup to a mock DNS server")
   void testDNSDaemonPeriodic(final Vertx vertx, final VertxTestContext testContext)
