@@ -39,6 +39,10 @@ public class BlockStateCall {
     this.stateOverrideMap = stateOverrideMap;
   }
 
+  public BlockStateCall(final BlockOverrides blockOverrides) {
+    this(null, blockOverrides, null);
+  }
+
   public BlockOverrides getBlockOverrides() {
     return blockOverrides;
   }

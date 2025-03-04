@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import static org.hyperledger.besu.ethereum.transaction.BlockStateCalls.fillBlockStateCalls;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -123,7 +124,12 @@ public class BlockSimulator {
       final BlockSimulationParameter blockSimulationParameter,
       final MutableWorldState worldState) {
     List<BlockSimulationResult> simulationResults = new ArrayList<>();
-    for (BlockStateCall blockStateCall : blockSimulationParameter.getBlockStateCalls()) {
+
+    // Fill gaps between blocks
+    List<BlockStateCall> blockStateCalls =
+        fillBlockStateCalls(blockSimulationParameter.getBlockStateCalls(), header);
+
+    for (BlockStateCall blockStateCall : blockStateCalls) {
       BlockSimulationResult simulationResult =
           processBlockStateCall(
               header, blockStateCall, worldState, blockSimulationParameter.isValidation());
