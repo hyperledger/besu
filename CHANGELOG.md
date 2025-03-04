@@ -1,8 +1,6 @@
 # Changelog
 
 ## Unreleased
-### Additions and Improvements
-- Add support for transaction permissioning rules in Plugin API [#8365](https://github.com/hyperledger/besu/pull/8365)
 
 ### Breaking Changes
 - k8s (KUBERNETES) Nat method is removed. Use docker or none instead. [#8289](https://github.com/hyperledger/besu/pull/8289)
@@ -28,6 +26,7 @@
 - Update Holesky and Sepolia deposit contract addresses [#8346](https://github.com/hyperledger/besu/pull/8346)
 #### Plugins
 - Allow plugins to propose transactions during block creation [#8268](https://github.com/hyperledger/besu/pull/8268)
+- Add support for transaction permissioning rules in Plugin API [#8365](https://github.com/hyperledger/besu/pull/8365)
 #### Parallelization
 - Improve conflict detection by considering slots to reduce false positives [#7923](https://github.com/hyperledger/besu/pull/7923)
 #### Dependencies 
