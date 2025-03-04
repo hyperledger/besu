@@ -48,7 +48,6 @@ import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
@@ -120,7 +119,6 @@ public class QbftBlockHeightManagerTest {
   @Mock private QbftValidatorProvider validatorProvider;
   @Mock private QbftProtocolSpec protocolSpec;
   @Mock private QbftBlockImporter blockImporter;
-  @Mock private QbftBlockHashing blockHashing;
 
   @Captor private ArgumentCaptor<MessageData> sentMessageArgCaptor;
 
@@ -178,7 +176,6 @@ public class QbftBlockHeightManagerTest {
                   roundTimer,
                   bftExtraDataCodec,
                   qbftExtraDataProvider,
-                  blockHashing,
                   parentHeader);
             });
 
@@ -198,7 +195,6 @@ public class QbftBlockHeightManagerTest {
                   roundTimer,
                   bftExtraDataCodec,
                   qbftExtraDataProvider,
-                  blockHashing,
                   parentHeader);
             });
 
@@ -248,8 +244,7 @@ public class QbftBlockHeightManagerTest {
   public void onBlockTimerExpiryRoundTimerIsStartedAndProposalMessageIsTransmitted() {
     when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
     when(blockTimer.checkEmptyBlockExpired(any(), eq(0L))).thenReturn(true);
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(0), any()))
-        .thenReturn(createdBlock);
+    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(0))).thenReturn(createdBlock);
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
@@ -304,8 +299,7 @@ public class QbftBlockHeightManagerTest {
             messageValidatorFactory,
             messageFactory);
 
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2), any()))
-        .thenReturn(createdBlock);
+    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2))).thenReturn(createdBlock);
 
     // Force a new round to be started at new round number.
     final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
@@ -381,8 +375,7 @@ public class QbftBlockHeightManagerTest {
     when(roundChangeManager.appendRoundChangeMessage(any()))
         .thenReturn(Optional.of(singletonList(roundChange)));
     when(finalState.isLocalNodeProposerForRound(any())).thenReturn(true);
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2), any()))
-        .thenReturn(createdBlock);
+    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2))).thenReturn(createdBlock);
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
@@ -408,9 +401,7 @@ public class QbftBlockHeightManagerTest {
   @Test
   public void messagesForFutureRoundsAreBufferedAndUsedToPreloadNewRoundWhenItIsStarted() {
     when(finalState.getQuorum()).thenReturn(1);
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2), any()))
-        .thenReturn(createdBlock);
-    when(blockHashing.calculateDataHashForCommittedSeal(any(), any())).thenReturn(Hash.ZERO);
+    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2))).thenReturn(createdBlock);
     when(blockCreator.createSealedBlock(any(), any(), anyInt(), any())).thenReturn(createdBlock);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
@@ -459,9 +450,7 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getQuorum()).thenReturn(1);
     when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
     when(blockTimer.checkEmptyBlockExpired(any(), eq(0L))).thenReturn(true);
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(0), any()))
-        .thenReturn(createdBlock);
-    when(blockHashing.calculateDataHashForCommittedSeal(any(), any())).thenReturn(Hash.ZERO);
+    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(0))).thenReturn(createdBlock);
     when(blockCreator.createSealedBlock(any(), any(), anyInt(), any())).thenReturn(createdBlock);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
@@ -503,9 +492,8 @@ public class QbftBlockHeightManagerTest {
   public void preparedCertificateIncludedInRoundChangeMessageOnRoundTimeoutExpired() {
     when(finalState.isLocalNodeProposerForRound(any())).thenReturn(true);
     when(blockTimer.checkEmptyBlockExpired(any(), eq(0L))).thenReturn(true);
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(0), any()))
-        .thenReturn(createdBlock);
-    when(blockEncoder.readFrom(any(), any())).thenReturn(createdBlock);
+    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(0))).thenReturn(createdBlock);
+    when(blockEncoder.readFrom(any())).thenReturn(createdBlock);
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(

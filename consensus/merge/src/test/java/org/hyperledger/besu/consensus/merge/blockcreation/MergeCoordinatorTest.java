@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -80,16 +82,19 @@ import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
+import java.math.BigInteger;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
@@ -97,6 +102,10 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -969,6 +978,39 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     verify(blockchain, never()).rewindToBlock(any());
   }
 
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("getGasLimits")
+  public void shouldSetCorrectTargetGasLimit(final ArgumentsAccessor argumentsAccessor) {
+    final long chainId = argumentsAccessor.getLong(1);
+    final long expectedTargetGasLimit = argumentsAccessor.getLong(2);
+
+    final MiningConfiguration mockMiningConfiguration = mock(MiningConfiguration.class);
+    when(mockMiningConfiguration.getTargetGasLimit()).thenReturn(OptionalLong.empty());
+    when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.valueOf(chainId)));
+    doNothing().when(backwardSyncContext).subscribeBadChainListener(any());
+
+    MergeCoordinator testTargetGasLimitCoordinator =
+        new MergeCoordinator(
+            protocolContext,
+            protocolSchedule,
+            ethScheduler,
+            transactionPool,
+            mockMiningConfiguration,
+            backwardSyncContext,
+            Optional.empty());
+
+    assertThat(testTargetGasLimitCoordinator).isNotNull();
+    verify(mockMiningConfiguration).setTargetGasLimit(expectedTargetGasLimit);
+  }
+
+  public static Stream<Arguments> getGasLimits() {
+    return Stream.of(
+        Arguments.of("mainnet", 1L, 36_000_000L),
+        Arguments.of("holesky", 17_000L, 36_000_000L),
+        Arguments.of("sepolia", 11_155_111L, 36_000_000L),
+        Arguments.of("ephemery", 39_438_135L, 36_000_000L));
+  }
+
   private void sendNewPayloadAndForkchoiceUpdate(
       final Block block, final Optional<BlockHeader> finalizedHeader, final Hash safeHash) {
 
@@ -1039,7 +1081,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             .nonce(transactionNumber)
             .createTransaction(KEYS1),
         true,
-        true);
+        true,
+        MAX_SCORE);
   }
 
   private static BlockHeader mockBlockHeader() {
