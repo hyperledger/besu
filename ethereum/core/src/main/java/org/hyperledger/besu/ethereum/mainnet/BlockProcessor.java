@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -68,14 +69,19 @@ public interface BlockProcessor {
   /**
    * Processes the block.
    *
+   * @param protocolContext the current context of the protocol
    * @param blockchain the blockchain to append the block to
    * @param worldState the world state to apply changes to
    * @param block the block to process
    * @return the block processing result
    */
   default BlockProcessingResult processBlock(
-      final Blockchain blockchain, final MutableWorldState worldState, final Block block) {
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block) {
     return processBlock(
+        protocolContext,
         blockchain,
         worldState,
         block.getHeader(),
@@ -88,6 +94,7 @@ public interface BlockProcessor {
   /**
    * Processes the block.
    *
+   * @param protocolContext the current context of the protocol
    * @param blockchain the blockchain to append the block to
    * @param worldState the world state to apply changes to
    * @param blockHeader the block header for the block
@@ -96,18 +103,27 @@ public interface BlockProcessor {
    * @return the block processing result
    */
   default BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
     return processBlock(
-        blockchain, worldState, blockHeader, transactions, ommers, Optional.empty(), null);
+        protocolContext,
+        blockchain,
+        worldState,
+        blockHeader,
+        transactions,
+        ommers,
+        Optional.empty(),
+        null);
   }
 
   /**
    * Processes the block.
    *
+   * @param protocolContext the current context of the protocol
    * @param blockchain the blockchain to append the block to
    * @param worldState the world state to apply changes to
    * @param blockHeader the block header for the block
@@ -118,6 +134,7 @@ public interface BlockProcessor {
    * @return the block processing result
    */
   BlockProcessingResult processBlock(
+      ProtocolContext protocolContext,
       Blockchain blockchain,
       MutableWorldState worldState,
       BlockHeader blockHeader,
@@ -129,6 +146,7 @@ public interface BlockProcessor {
   /**
    * Processes the block when running Besu in GoQuorum-compatible mode
    *
+   * @param protocolContext the current context of the protocol
    * @param blockchain the blockchain to append the block to
    * @param worldState the world state to apply public transactions to
    * @param privateWorldState the private world state to apply private transaction to
@@ -136,6 +154,7 @@ public interface BlockProcessor {
    * @return the block processing result
    */
   default BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final MutableWorldState privateWorldState,

@@ -46,7 +46,7 @@ public class BlobTestFixture {
     try {
       CKZG4844JNI.loadNativeLibrary();
       CKZG4844JNI.loadTrustedSetupFromResource(
-          "/kzg-trusted-setups/mainnet.txt", BlobTestFixture.class);
+          "/kzg-trusted-setups/mainnet.txt", BlobTestFixture.class, 0);
 
     } catch (Exception e) {
       fail("Failed to compute commitment", e);

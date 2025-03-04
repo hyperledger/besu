@@ -170,11 +170,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
             .log();
         return maybeError.get();
       }
-      ValidationResult<RpcErrorType> forkValidationResult =
-          validateForkSupported(payloadAttributes.getTimestamp());
-      if (!forkValidationResult.isValid()) {
-        return new JsonRpcErrorResponse(requestId, forkValidationResult);
-      }
     }
 
     final BlockHeader newHead = maybeNewHead.get();

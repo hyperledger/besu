@@ -16,14 +16,14 @@ package org.hyperledger.besu.consensus.qbft.core.validation;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 
 /** The Future round proposal message validator. */
 public class FutureRoundProposalMessageValidator {
 
   private final MessageValidatorFactory messageValidatorFactory;
   private final long chainHeight;
-  private final BlockHeader parentHeader;
+  private final QbftBlockHeader parentHeader;
 
   /**
    * Instantiates a new Future round proposal message validator.
@@ -35,7 +35,7 @@ public class FutureRoundProposalMessageValidator {
   public FutureRoundProposalMessageValidator(
       final MessageValidatorFactory messageValidatorFactory,
       final long chainHeight,
-      final BlockHeader parentHeader) {
+      final QbftBlockHeader parentHeader) {
     this.messageValidatorFactory = messageValidatorFactory;
     this.chainHeight = chainHeight;
     this.parentHeader = parentHeader;

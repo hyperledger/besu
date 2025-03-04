@@ -67,7 +67,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
 
   private MergeCoordinator coordinator;
 
-  private final MergeContext mergeContext = PostMergeContext.get();
+  private final MergeContext mergeContext = new PostMergeContext();
   private final ProtocolSchedule mockProtocolSchedule = getMergeProtocolSchedule();
   private final GenesisState genesisState =
       GenesisState.fromConfig(getPowGenesisConfig(), mockProtocolSchedule);

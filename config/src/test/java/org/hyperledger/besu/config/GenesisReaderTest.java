@@ -41,11 +41,12 @@ public class GenesisReaderTest {
     final var configNode = mapper.createObjectNode();
     configNode.put("londonBlock", 1);
     final var allocNode = mapper.createObjectNode();
-    allocNode.put(Address.BLS12_G2MULTIEXP.toUnprefixedHexString(), generateAllocation(Wei.ONE));
+    allocNode.putIfAbsent(
+        Address.BLS12_G2MULTIEXP.toUnprefixedHexString(), generateAllocation(Wei.ONE));
     final var rootNode = mapper.createObjectNode();
     rootNode.put("chainId", 12);
-    rootNode.put(CONFIG_FIELD, configNode);
-    rootNode.put(ALLOCATION_FIELD, allocNode);
+    rootNode.putIfAbsent(CONFIG_FIELD, configNode);
+    rootNode.putIfAbsent(ALLOCATION_FIELD, allocNode);
     final var genesisReader = new GenesisReader.FromObjectNode(rootNode);
 
     assertThat(genesisReader.getRoot().get("chainid").asInt()).isEqualTo(12);
@@ -61,11 +62,12 @@ public class GenesisReaderTest {
     final var configNode = mapper.createObjectNode();
     configNode.put("londonBlock", 1);
     final var allocNode = mapper.createObjectNode();
-    allocNode.put(Address.BLS12_G2MULTIEXP.toUnprefixedHexString(), generateAllocation(Wei.ONE));
+    allocNode.putIfAbsent(
+        Address.BLS12_G2MULTIEXP.toUnprefixedHexString(), generateAllocation(Wei.ONE));
     final var rootNode = mapper.createObjectNode();
     rootNode.put("chainId", 12);
-    rootNode.put(CONFIG_FIELD, configNode);
-    rootNode.put(ALLOCATION_FIELD, allocNode);
+    rootNode.putIfAbsent(CONFIG_FIELD, configNode);
+    rootNode.putIfAbsent(ALLOCATION_FIELD, allocNode);
     var rootNodeCopy = rootNode.deepCopy();
     new GenesisReader.FromObjectNode(rootNode);
 

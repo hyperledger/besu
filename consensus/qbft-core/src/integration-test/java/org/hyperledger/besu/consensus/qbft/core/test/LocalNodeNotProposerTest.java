@@ -24,7 +24,7 @@ import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ public class LocalNodeNotProposerTest {
 
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
 
-  private final Block blockToPropose =
+  private final QbftBlock blockToPropose =
       context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
 
   private Prepare expectedTxPrepare;
@@ -58,7 +58,10 @@ public class LocalNodeNotProposerTest {
     expectedTxCommit =
         new Commit(
             createSignedCommitPayload(
-                roundId, blockToPropose, context.getLocalNodeParams().getNodeKey()));
+                roundId,
+                blockToPropose,
+                context.getLocalNodeParams().getNodeKey(),
+                context.getBlockEncoder()));
   }
 
   @Test

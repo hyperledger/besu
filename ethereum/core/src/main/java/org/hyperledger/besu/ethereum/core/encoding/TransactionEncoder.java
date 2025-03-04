@@ -58,6 +58,7 @@ public class TransactionEncoder {
       final RLPOutput rlpOutput,
       final EncodingContext encodingContext) {
     final TransactionType transactionType = getTransactionType(transaction);
+
     Bytes opaqueBytes = encodeOpaqueBytes(transaction, encodingContext);
     encodeRLP(transactionType, opaqueBytes, rlpOutput);
   }
@@ -94,8 +95,16 @@ public class TransactionEncoder {
     } else {
       final Encoder encoder = getEncoder(transactionType, encodingContext);
       final BytesValueRLPOutput out = new BytesValueRLPOutput();
-      out.writeByte(transaction.getType().getSerializedType());
-      encoder.encode(transaction, out);
+      transaction
+          .getRawRlp()
+          .ifPresentOrElse(
+              (rawRlp) ->
+                  out.writeRLPBytes(
+                      Bytes.concatenate(Bytes.of(transactionType.getSerializedType()), rawRlp)),
+              () -> {
+                out.writeByte(transaction.getType().getSerializedType());
+                encoder.encode(transaction, out);
+              });
       return out.encoded();
     }
   }

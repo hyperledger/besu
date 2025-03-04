@@ -16,7 +16,6 @@ package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
@@ -48,16 +47,6 @@ public class NatOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  public void natManagerPodNamePropertyDefaultIsBesu() {
-    parseCommand();
-
-    verify(mockRunnerBuilder).natManagerServiceName(eq(DEFAULT_BESU_SERVICE_NAME_FILTER));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void natMethodOptionIsParsedCorrectly() {
 
     parseCommand("--nat-method", "NONE");
@@ -74,52 +63,6 @@ public class NatOptionsTest extends CommandTestAbstract {
 
     parseCommand("--nat-method", "DOCKER");
     verify(mockRunnerBuilder).natMethod(eq(NatMethod.DOCKER));
-
-    parseCommand("--nat-method", "KUBERNETES");
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.KUBERNETES));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void natManagerPodNamePropertyIsCorrectlyUpdated() {
-    final String podName = "besu-updated";
-    parseCommand("--Xnat-kube-service-name", podName);
-
-    verify(mockRunnerBuilder).natManagerServiceName(eq(podName));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void natManagerPodNameCannotBeUsedWithNatDockerMethod() {
-    parseCommand("--nat-method", "DOCKER", "--Xnat-kube-service-name", "besu-updated");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
-  }
-
-  @Test
-  public void natManagerPodNameCannotBeUsedWithNatNoneMethod() {
-    parseCommand("--nat-method", "NONE", "--Xnat-kube-service-name", "besu-updated");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
-  }
-
-  @Test
-  public void natMethodFallbackEnabledPropertyIsCorrectlyUpdatedWithKubernetes() {
-
-    parseCommand("--nat-method", "KUBERNETES", "--Xnat-method-fallback-enabled", "false");
-    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(false));
-    parseCommand("--nat-method", "KUBERNETES", "--Xnat-method-fallback-enabled", "true");
-    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -167,6 +110,6 @@ public class NatOptionsTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--nat-method': expected one of [UPNP, UPNPP2PONLY, DOCKER, KUBERNETES, AUTO, NONE] (case-insensitive) but was 'invalid'");
+            "Invalid value for option '--nat-method': expected one of [UPNP, UPNPP2PONLY, DOCKER, AUTO, NONE] (case-insensitive) but was 'invalid'");
   }
 }

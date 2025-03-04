@@ -1,0 +1,55 @@
+/*
+ * Copyright contributors to Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.enrresponse;
+
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+
+import java.util.Map;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
+import org.ethereum.beacon.discovery.schema.IdentitySchemaInterpreter;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class EnrResponsePacketDataRlpWriterTest {
+  private EnrResponsePacketDataRlpWriter writer;
+
+  @BeforeEach
+  public void beforeTest() {
+    writer = new EnrResponsePacketDataRlpWriter();
+  }
+
+  @Test
+  public void testWriteTo() {
+    final Bytes requestHash = Bytes.fromHexString("0xdeadbeef");
+    final Bytes signature = Bytes.fromHexString("0xfeebdaed");
+    final NodeRecord enr =
+        NodeRecord.fromRawFields(
+            IdentitySchemaInterpreter.V4,
+            UInt64.valueOf(123),
+            signature,
+            Map.of("key", Bytes.fromHexString("0x4567")));
+    final EnrResponsePacketData enrResponsePacketData = new EnrResponsePacketData(requestHash, enr);
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+
+    writer.writeTo(enrResponsePacketData, out);
+
+    Assertions.assertEquals(
+        "0xd384deadbeefcd84feebdaed7b836b6579824567", out.encoded().toHexString());
+  }
+}

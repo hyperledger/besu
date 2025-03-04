@@ -93,6 +93,15 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
     assertThat(method.getName()).isEqualTo("engine_getPayloadV4");
   }
 
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforePragueMilestone() {
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), mockPid);
+
+    assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
+    assertThat(((JsonRpcErrorResponse) resp).getErrorType())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+  }
+
   @Override
   @Test
   public void shouldReturnBlockForKnownPayloadId() {
@@ -218,15 +227,6 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
               final EngineGetPayloadResultV4 res = (EngineGetPayloadResultV4) r.getResult();
               assertThat(res.getExecutionRequests()).isEqualTo(expectedRequests);
             });
-  }
-
-  @Test
-  public void shouldReturnUnsupportedFork() {
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), mockPid);
-
-    assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
-    assertThat(((JsonRpcErrorResponse) resp).getErrorType())
-        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
   }
 
   @Override

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 
 import org.junit.jupiter.api.Test;
@@ -111,7 +112,7 @@ public class ApiConfigurationOptionsTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(apiConfigurationCaptor.getValue())
-        .isEqualTo(ImmutableApiConfiguration.builder().maxLogsRange((rpcMaxLogsRange)).build());
+        .isEqualTo(ImmutableApiConfiguration.builder().maxLogsRange(rpcMaxLogsRange).build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -126,7 +127,37 @@ public class ApiConfigurationOptionsTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(apiConfigurationCaptor.getValue())
-        .isEqualTo(ImmutableApiConfiguration.builder().gasCap((rpcGasCap)).build());
+        .isEqualTo(ImmutableApiConfiguration.builder().gasCap(rpcGasCap).build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcGasCapDefault() {
+    parseCommand();
+
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(
+            ImmutableApiConfiguration.builder().gasCap(ApiConfiguration.DEFAULT_GAS_CAP).build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcGasCapAcceptsZero() {
+    final long rpcGasCap = 0L;
+    parseCommand("--rpc-gas-cap", Long.toString(rpcGasCap));
+
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(ImmutableApiConfiguration.builder().gasCap(rpcGasCap).build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -143,7 +174,7 @@ public class ApiConfigurationOptionsTest extends CommandTestAbstract {
     assertThat(apiConfigurationCaptor.getValue())
         .isEqualTo(
             ImmutableApiConfiguration.builder()
-                .maxTraceFilterRange((rpcMaxTraceFilterOption))
+                .maxTraceFilterRange(rpcMaxTraceFilterOption)
                 .build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();

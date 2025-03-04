@@ -29,6 +29,6 @@ public class Eip7709BlockHashProcessor extends PragueBlockHashProcessor {
   @Override
   public BlockHashLookup createBlockHashLookup(
       final Blockchain blockchain, final ProcessableBlockHeader blockHeader) {
-    return new Eip7709BlockHashLookup(historyStorageAddress, historyServeWindow);
+    return new Eip7709BlockHashLookup(historyStorageAddress);
   }
 }

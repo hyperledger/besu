@@ -585,7 +585,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final ForkIdManager forkIdManager =
           new ForkIdManager(blockchain, blockNumberForks, timestampForks, this.legacyForkIdEnabled);
 
-      return new VertxPeerDiscoveryAgent(
+      return VertxPeerDiscoveryAgent.create(
           vertx,
           nodeKey,
           config.getDiscovery(),

@@ -124,7 +124,9 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                   diffBasedValue.getUpdated() != null
                       ? copyAccount(diffBasedValue.getUpdated(), this, true)
                       : null;
-              accountsToUpdate.put(address, new DiffBasedValue<>(copyPrior, copyUpdated));
+              accountsToUpdate.put(
+                  address,
+                  new DiffBasedValue<>(copyPrior, copyUpdated, diffBasedValue.isLastStepCleared()));
             });
     source
         .getCodeToUpdate()
@@ -132,7 +134,10 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
             (address, diffBasedValue) -> {
               codeToUpdate.put(
                   address,
-                  new DiffBasedValue<>(diffBasedValue.getPrior(), diffBasedValue.getUpdated()));
+                  new DiffBasedValue<>(
+                      diffBasedValue.getPrior(),
+                      diffBasedValue.getUpdated(),
+                      diffBasedValue.isLastStepCleared()));
             });
     source
         .getStorageToUpdate()
@@ -149,10 +154,13 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                     storageConsumingMap.put(
                         storageSlotKey,
                         new DiffBasedValue<>(
-                            uInt256DiffBasedValue.getPrior(), uInt256DiffBasedValue.getUpdated()));
+                            uInt256DiffBasedValue.getPrior(),
+                            uInt256DiffBasedValue.getUpdated(),
+                            uInt256DiffBasedValue.isLastStepCleared()));
                   });
             });
     storageToClear.addAll(source.storageToClear);
+    storageKeyHashLookup.putAll(source.storageKeyHashLookup);
 
     this.isAccumulatorStateChanged = true;
   }
@@ -211,6 +219,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                             uInt256DiffBasedValue.getPrior(), uInt256DiffBasedValue.getPrior()));
                   });
             });
+    storageKeyHashLookup.putAll(source.storageKeyHashLookup);
     this.isAccumulatorStateChanged = true;
   }
 
@@ -499,8 +508,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 tracked.setStorageWasCleared(false); // storage already cleared for this transaction
               }
             });
-    getUpdatedAccounts().clear();
-    getDeletedAccounts().clear();
   }
 
   @Override
@@ -596,6 +603,21 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
           (key, value) -> results.put(key.getSlotHash(), value.getUpdated()));
     }
     return results;
+  }
+
+  /**
+   * Marks the boundary of a transaction by clearing tracking collections.
+   *
+   * <p>These tracking collections store changes made during the transaction. After committing the
+   * transaction, they become unnecessary and can be safely cleared.
+   *
+   * <p>Note: If the transaction is not committed before this method is called, any uncommitted
+   * changes will be lost.
+   */
+  @Override
+  public void markTransactionBoundary() {
+    getUpdatedAccounts().clear();
+    getDeletedAccounts().clear();
   }
 
   @Override

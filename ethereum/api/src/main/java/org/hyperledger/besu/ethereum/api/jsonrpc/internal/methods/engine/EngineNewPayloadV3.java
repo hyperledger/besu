@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -78,6 +79,10 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
           "Missing parent beacon block root field");
+    } else if (maybeRequestsParam.isPresent()) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS,
+          "Unexpected execution requests field present");
     } else {
       return ValidationResult.valid();
     }
@@ -85,6 +90,11 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    return ForkSupportHelper.validateForkSupported(CANCUN, cancunMilestone, blockTimestamp);
+    return ForkSupportHelper.validateForkSupported(
+        CANCUN,
+        cancunMilestone,
+        PRAGUE,
+        protocolSchedule.flatMap(s -> s.milestoneFor(PRAGUE)),
+        blockTimestamp);
   }
 }

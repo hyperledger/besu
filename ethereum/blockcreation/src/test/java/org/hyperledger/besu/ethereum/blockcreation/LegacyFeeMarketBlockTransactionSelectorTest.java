@@ -45,6 +45,9 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.junit.jupiter.api.Disabled;
+
+@Disabled("flaky https://github.com/hyperledger/besu/issues/8238")
 public class LegacyFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 

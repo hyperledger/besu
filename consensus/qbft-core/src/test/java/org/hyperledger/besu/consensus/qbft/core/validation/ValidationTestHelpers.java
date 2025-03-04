@@ -19,8 +19,8 @@ import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 public class ValidationTestHelpers {
 
   public static PreparedCertificate createPreparedCertificate(
-      final Block block,
+      final QbftBlock block,
       final ConsensusRoundIdentifier reportedRound,
       final QbftNode... preparedNodes) {
 

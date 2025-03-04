@@ -59,7 +59,7 @@ public class CodeDelegationService {
   }
 
   /**
-   * Returns if the provided account has either no code set or has already delegated code.
+   * Returns true if the provided account has either no code set or has already delegated code.
    *
    * @param account the account to check.
    * @return {@code true} if the account can set delegated code, {@code false} otherwise.

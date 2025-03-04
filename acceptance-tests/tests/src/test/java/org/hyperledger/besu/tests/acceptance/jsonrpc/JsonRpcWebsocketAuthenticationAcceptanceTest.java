@@ -14,43 +14,17 @@
  */
 package org.hyperledger.besu.tests.acceptance.jsonrpc;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
-import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-public class JsonRpcWebsocketAuthenticationAcceptanceTest extends AcceptanceTestBase {
-  private BesuNode nodeUsingAuthFile;
-  private BesuNode nodeUsingRsaJwtPublicKey;
-  private BesuNode nodeUsingEcdsaJwtPublicKey;
-  private BesuNode nodeUsingAuthFileWithNoAuthApi;
-  private Cluster authenticatedCluster;
-  private static final String AUTH_FILE = "authentication/auth.toml";
-
-  private static final List<String> NO_AUTH_API_METHODS = Arrays.asList("net_services");
-
-  // token with payload{"iat": 1516239022,"exp": 4729363200,"permissions": ["net:peerCount"]}
-  private static final String RSA_TOKEN_ALLOWING_NET_PEER_COUNT =
-      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6NDcyOTM2MzIwMCwicGVybWl"
-          + "zc2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.Y6mNV0nvjzOdqAgMgxknFAOUTKoeRAo4aifNgNrWtuXbJJgz6-"
-          + "H_0GvLgjlToohPiDZbBJXJJlgb4zzLLB-sRtFnGoPaMgz_d_6z958GjFD7x_Fl0HW-WrTjRNenZNfTyD86OEAf"
-          + "XHy-7N3OYY2a5yeDbppTJy6nnHTq9hY-ad22-oWL1RbK3T_hnUJII_uXCZ9bJggSfu5m-NNUrm3TeqdnQzIaIz"
-          + "DqHlL0wNZwVPB4cFGN7zKghReBpkRJ8OFlxexQ491Q5eSpuYquhef-yGCIaMfy7GVtpDSD3Y-hjOErr7gUNCUh"
-          + "1wlc3Rb7ru_0qNgCWTBPJeRK32GppYotwQ";
-
-  private static final String ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT =
-      "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6NDcyOTM2MzIwMCwicGVybWlz"
-          + "c2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.pWXniN6XQ7G8b1nawy8sviPCMxrfbcI6c7UFzeXm26CMGMUEZxiC"
-          + "JjRntB8ueuZcsxnGlEhCHt-KngpFEmx5TA";
+public class JsonRpcWebsocketAuthenticationAcceptanceTest
+    extends AbstractJsonRpcAuthenticationAcceptanceTest {
 
   @BeforeEach
   public void setUp() throws IOException, URISyntaxException {
@@ -77,122 +51,5 @@ public class JsonRpcWebsocketAuthenticationAcceptanceTest extends AcceptanceTest
     nodeUsingRsaJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
     nodeUsingEcdsaJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
     nodeUsingAuthFileWithNoAuthApi.verify(login.awaitResponse("user", "badpassword"));
-  }
-
-  @Test
-  public void shouldFailLoginWithWrongCredentials() {
-    nodeUsingAuthFile.verify(login.failure("user", "badpassword"));
-    nodeUsingAuthFileWithNoAuthApi.verify(login.failure("user", "badpassword"));
-  }
-
-  @Test
-  public void shouldSucceedLoginWithCorrectCredentials() {
-    nodeUsingAuthFile.verify(login.success("user", "pegasys"));
-    nodeUsingAuthFileWithNoAuthApi.verify(login.success("user", "pegasys"));
-  }
-
-  @Test
-  public void jsonRpcMethodShouldSucceedWithAuthenticatedUserAndPermission() {
-    String token =
-        nodeUsingAuthFile.execute(
-            permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
-    nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
-    nodeUsingAuthFile.verify(net.awaitPeerCount(3));
-
-    token =
-        nodeUsingAuthFileWithNoAuthApi.execute(
-            permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
-    nodeUsingAuthFileWithNoAuthApi.useAuthenticationTokenInHeaderForJsonRpc(token);
-    nodeUsingAuthFileWithNoAuthApi.verify(net.awaitPeerCount(3));
-  }
-
-  @Test
-  public void jsonRpcMethodShouldFailOnNonPermittedMethod() {
-    String token =
-        nodeUsingAuthFile.execute(
-            permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
-    nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
-    nodeUsingAuthFile.verify(net.netVersionUnauthorized());
-    nodeUsingAuthFile.verify(net.netServicesUnauthorized());
-
-    token =
-        nodeUsingAuthFileWithNoAuthApi.execute(
-            permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
-    nodeUsingAuthFileWithNoAuthApi.useAuthenticationTokenInHeaderForJsonRpc(token);
-    nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
-  }
-
-  @Test
-  public void jsonRpcMethodsNotIncludedInNoAuthListShouldFailWithoutToken() {
-    nodeUsingAuthFile.verify(net.netVersionUnauthorized());
-    nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
-  }
-
-  @Test
-  public void noAuthJsonRpcMethodShouldSucceedWithoutToken() {
-    nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesAllActive());
-  }
-
-  @Test
-  public void noAuthJsonRpcConfiguredNodeShouldWorkAsIntended() {
-    // No token -> all methods other than specified no auth methods should fail
-    nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
-    nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesAllActive());
-
-    // Should behave the same with valid token
-    String token =
-        nodeUsingAuthFileWithNoAuthApi.execute(
-            permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
-    nodeUsingAuthFileWithNoAuthApi.useAuthenticationTokenInHeaderForJsonRpc(token);
-    nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
-    nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesAllActive());
-    nodeUsingAuthFileWithNoAuthApi.verify(net.awaitPeerCount(3));
-  }
-
-  @Test
-  public void externalRsaJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
-    nodeUsingRsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
-        RSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingRsaJwtPublicKey.verify(net.awaitPeerCount(3));
-  }
-
-  @Test
-  public void externalRsaJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
-    nodeUsingRsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
-        RSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingRsaJwtPublicKey.verify(net.netVersionUnauthorized());
-    nodeUsingAuthFile.verify(net.netServicesUnauthorized());
-  }
-
-  @Test
-  public void externalEcdsaJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
-    nodeUsingEcdsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
-        ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingEcdsaJwtPublicKey.verify(net.awaitPeerCount(3));
-  }
-
-  @Test
-  public void externalEcdsaJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
-    nodeUsingEcdsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
-        ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingEcdsaJwtPublicKey.verify(net.netVersionUnauthorized());
-    nodeUsingEcdsaJwtPublicKey.verify(net.netServicesUnauthorized());
-  }
-
-  @Test
-  public void jsonRpcMethodShouldFailWhenThereIsNoToken() {
-    nodeUsingRsaJwtPublicKey.verify(net.netVersionUnauthorized());
-    nodeUsingRsaJwtPublicKey.verify(net.netServicesUnauthorized());
-  }
-
-  @Test
-  public void loginShouldBeDisabledWhenUsingExternalJwtPublicKey() {
-    nodeUsingRsaJwtPublicKey.verify(login.disabled());
-  }
-
-  @Override
-  public void tearDownAcceptanceTestBase() {
-    authenticatedCluster.stop();
-    super.tearDownAcceptanceTestBase();
   }
 }

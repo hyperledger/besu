@@ -47,10 +47,13 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
    *
    * @param miningCoordinator the mining coordinator
    * @param mergeCoordinator the merge coordinator
+   * @param postMergeContext the post merge context
    */
   public TransitionCoordinator(
-      final MiningCoordinator miningCoordinator, final MiningCoordinator mergeCoordinator) {
-    super(miningCoordinator, mergeCoordinator, PostMergeContext.get());
+      final MiningCoordinator miningCoordinator,
+      final MiningCoordinator mergeCoordinator,
+      final PostMergeContext postMergeContext) {
+    super(miningCoordinator, mergeCoordinator, postMergeContext);
     this.miningCoordinator = miningCoordinator;
     this.mergeCoordinator = (MergeMiningCoordinator) mergeCoordinator;
   }

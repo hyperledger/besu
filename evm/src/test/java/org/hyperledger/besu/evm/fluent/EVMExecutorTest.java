@@ -49,7 +49,7 @@ class EVMExecutorTest {
   @Test
   void currentEVM() {
     var subject = EVMExecutor.evm();
-    assertThat(subject.getEVMVersion()).isEqualTo(EvmSpecVersion.CANCUN);
+    assertThat(subject.getEVMVersion()).isEqualTo(EvmSpecVersion.PRAGUE);
   }
 
   @ParameterizedTest

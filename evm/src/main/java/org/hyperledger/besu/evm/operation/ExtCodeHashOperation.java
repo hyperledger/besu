@@ -29,7 +29,7 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code hash operation. */
-public class ExtCodeHashOperation extends AbstractExtCodeOperation {
+public class ExtCodeHashOperation extends AbstractOperation {
 
   // // 0x9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5
   static final Hash EOF_REPLACEMENT_HASH = Hash.hash(ExtCodeCopyOperation.EOF_REPLACEMENT_CODE);
@@ -85,14 +85,14 @@ public class ExtCodeHashOperation extends AbstractExtCodeOperation {
       if (account == null || account.isEmpty()) {
         frame.pushStackItem(Bytes.EMPTY);
       } else {
-        final Bytes code = getCode(account);
+        final Bytes code = account.getCode();
         if (enableEIP3540
             && code.size() >= 2
             && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
             && code.get(1) == 0) {
           frame.pushStackItem(EOF_REPLACEMENT_HASH);
         } else {
-          frame.pushStackItem(getCodeHash(account));
+          frame.pushStackItem(account.getCodeHash());
         }
       }
       return new OperationResult(cost, null);

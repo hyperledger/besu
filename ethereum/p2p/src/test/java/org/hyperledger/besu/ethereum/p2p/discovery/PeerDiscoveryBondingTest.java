@@ -17,22 +17,31 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent.IncomingPacket;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PongPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.DaggerPacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.findneighbors.FindNeighborsPacketData;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.pong.PongPacketData;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class PeerDiscoveryBondingTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
+  private PacketPackage packetPackage;
+
+  @BeforeEach
+  public void beforeTest() {
+    packetPackage = DaggerPacketPackage.create();
+  }
 
   @Test
   public void pongSentUponPing() {
@@ -77,8 +86,12 @@ public class PeerDiscoveryBondingTest {
     // ignored because
     // we haven't bonded.
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
-    final FindNeighborsPacketData data = FindNeighborsPacketData.create(otherNode.getId());
-    final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, otherNode.getNodeKey());
+    final FindNeighborsPacketData data =
+        packetPackage.findNeighborsPacketDataFactory().create(otherNode.getId());
+    final Packet packet =
+        packetPackage
+            .packetFactory()
+            .create(PacketType.FIND_NEIGHBORS, data, otherNode.getNodeKey());
     helper.sendMessageBetweenAgents(otherNode, agent, packet);
 
     // No responses received

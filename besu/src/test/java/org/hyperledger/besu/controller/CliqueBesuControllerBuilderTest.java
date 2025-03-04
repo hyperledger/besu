@@ -32,7 +32,6 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -88,7 +87,6 @@ public class CliqueBesuControllerBuilderTest {
   @Mock private PrivacyParameters privacyParameters;
   @Mock private Clock clock;
   @Mock private StorageProvider storageProvider;
-  @Mock private GasLimitCalculator gasLimitCalculator;
   @Mock private WorldStatePreimageStorage worldStatePreimageStorage;
   private static final BigInteger networkId = BigInteger.ONE;
   private static final NodeKey nodeKey = NodeKeyUtils.generate();
@@ -189,7 +187,6 @@ public class CliqueBesuControllerBuilderTest {
             .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
-            .gasLimitCalculator(gasLimitCalculator)
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .besuComponent(mock(BesuComponent.class))
             .networkConfiguration(NetworkingConfiguration.create())

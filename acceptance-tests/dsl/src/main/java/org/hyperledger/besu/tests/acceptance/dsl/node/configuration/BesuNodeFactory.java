@@ -83,7 +83,8 @@ public class BesuNodeFactory {
         config.getRunCommand(),
         config.getKeyPair(),
         config.isStrictTxReplayProtectionEnabled(),
-        config.getEnvironment());
+        config.getEnvironment(),
+        config.storageImplementation());
   }
 
   public BesuNode createMinerNode(
@@ -532,10 +533,17 @@ public class BesuNodeFactory {
             .jsonRpcTxPool()
             .engineRpcEnabled(true)
             .jsonRpcDebug()
+            .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
             .build());
   }
 
   public BesuNode createCliqueNodeWithValidators(final String name, final String... validators)
+      throws IOException {
+    return createCliqueNodeWithValidators(name, CliqueOptions.DEFAULT, validators);
+  }
+
+  public BesuNode createCliqueNodeWithValidators(
+      final String name, final CliqueOptions cliqueOptions, final String... validators)
       throws IOException {
 
     return create(
@@ -551,7 +559,9 @@ public class BesuNodeFactory {
                     node.createGenesisConfigForValidators(
                         asList(validators),
                         nodes,
-                        GenesisConfigurationFactory::createCliqueGenesisConfig))
+                        vs ->
+                            GenesisConfigurationFactory.createCliqueGenesisConfig(
+                                vs, cliqueOptions)))
             .build());
   }
 

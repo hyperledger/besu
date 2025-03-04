@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -90,10 +90,10 @@ public class DebugTraceBlockByHashTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
 
-    DebugTraceTransactionResult result1 = mock(DebugTraceTransactionResult.class);
-    DebugTraceTransactionResult result2 = mock(DebugTraceTransactionResult.class);
+    DebugTraceTransactionDetails result1 = mock(DebugTraceTransactionDetails.class);
+    DebugTraceTransactionDetails result2 = mock(DebugTraceTransactionDetails.class);
 
-    List<DebugTraceTransactionResult> resultList = Arrays.asList(result1, result2);
+    List<DebugTraceTransactionDetails> resultList = Arrays.asList(result1, result2);
 
     try (MockedStatic<Tracer> mockedTracer = mockStatic(Tracer.class)) {
       mockedTracer
@@ -109,7 +109,7 @@ public class DebugTraceBlockByHashTest {
       assertThat(jsonRpcResponse).isInstanceOf(JsonRpcSuccessResponse.class);
       JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) jsonRpcResponse;
 
-      final Collection<DebugTraceTransactionResult> traceResult = getResult(response);
+      final Collection<DebugTraceTransactionDetails> traceResult = getResult(response);
       assertThat(traceResult).isNotEmpty();
       assertThat(traceResult).isInstanceOf(Collection.class).hasSize(2);
       assertThat(traceResult).containsExactly(result1, result2);
@@ -117,8 +117,9 @@ public class DebugTraceBlockByHashTest {
   }
 
   @SuppressWarnings("unchecked")
-  private Collection<DebugTraceTransactionResult> getResult(final JsonRpcSuccessResponse response) {
-    return (Collection<DebugTraceTransactionResult>) response.getResult();
+  private Collection<DebugTraceTransactionDetails> getResult(
+      final JsonRpcSuccessResponse response) {
+    return (Collection<DebugTraceTransactionDetails>) response.getResult();
   }
 
   @Test

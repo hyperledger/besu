@@ -23,18 +23,20 @@ import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
-import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.core.support.ValidatorPeer;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Instant;
@@ -66,7 +68,8 @@ public class ValidatorContractTest {
 
   private TestClock clock;
 
-  private final QbftExtraDataCodec extraDataCodec = new QbftExtraDataCodec();
+  private final QbftExtraDataProvider extraDataProvider =
+      new QbftExtraDataProviderAdaptor(new QbftExtraDataCodec());
 
   @BeforeEach
   public void setup() {
@@ -87,9 +90,9 @@ public class ValidatorContractTest {
 
     createNewBlockAsProposer(context, 1);
 
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    final QbftValidatorProvider validatorProvider = context.getValidatorProvider();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader block1 = context.getBlockHeader(1);
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).containsExactly(NODE_ADDRESS);
     assertThat(validatorProvider.getValidatorsForBlock(block1)).containsExactly(NODE_ADDRESS);
   }
@@ -109,9 +112,9 @@ public class ValidatorContractTest {
 
     createNewBlockAsProposer(context, 1);
 
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    final QbftValidatorProvider validatorProvider = context.getValidatorProvider();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader block1 = context.getBlockHeader(1);
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).containsExactly(NODE_ADDRESS);
     assertThat(validatorProvider.getValidatorsForBlock(block1)).containsExactly(NODE_ADDRESS);
   }
@@ -133,9 +136,9 @@ public class ValidatorContractTest {
 
     createNewBlockAsProposer(context, 1);
 
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    final QbftValidatorProvider validatorProvider = context.getValidatorProvider();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader block1 = context.getBlockHeader(1);
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).containsExactly(NODE_ADDRESS);
     assertThat(validatorProvider.getValidatorsForBlock(block1)).containsExactly(NODE_ADDRESS);
   }
@@ -160,9 +163,9 @@ public class ValidatorContractTest {
         context, 1,
         266L); // 10s ahead of genesis timestamp in genesis_validator_contract_shanghai.json
 
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    final QbftValidatorProvider validatorProvider = context.getValidatorProvider();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader block1 = context.getBlockHeader(1);
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).containsExactly(NODE_ADDRESS);
     assertThat(validatorProvider.getValidatorsForBlock(block1)).containsExactly(NODE_ADDRESS);
   }
@@ -184,9 +187,9 @@ public class ValidatorContractTest {
 
     createNewBlockAsProposer(context, 1);
 
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    final QbftValidatorProvider validatorProvider = context.getValidatorProvider();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader block1 = context.getBlockHeader(1);
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).containsExactly(NODE_ADDRESS);
     assertThat(validatorProvider.getValidatorsForBlock(block1)).containsExactly(NODE_ADDRESS);
   }
@@ -211,9 +214,9 @@ public class ValidatorContractTest {
         context, 1,
         266L); // 10s ahead of genesis timestamp in genesis_validator_contract_shanghai.json
 
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    final QbftValidatorProvider validatorProvider = context.getValidatorProvider();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader block1 = context.getBlockHeader(1);
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).containsExactly(NODE_ADDRESS);
     assertThat(validatorProvider.getValidatorsForBlock(block1)).containsExactly(NODE_ADDRESS);
   }
@@ -244,17 +247,18 @@ public class ValidatorContractTest {
 
     remotePeerProposesNewBlock(context, 1L);
 
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    final QbftValidatorProvider validatorProvider = context.getValidatorProvider();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader block1 = context.getBlockHeader(1);
 
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
-    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).containsExactly(NODE_ADDRESS);
+    assertThat(extraDataProvider.getExtraData(genesisBlock).getValidators())
+        .containsExactly(NODE_ADDRESS);
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
-    assertThat(extraDataCodec.decode(block1).getValidators()).isEmpty();
-    assertThat(extraDataCodec.decode(block1).getVote()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(block1).getValidators()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(block1).getVote()).isEmpty();
   }
 
   @Test
@@ -282,19 +286,19 @@ public class ValidatorContractTest {
 
     remotePeerProposesNewBlock(context, 1L);
 
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    final QbftValidatorProvider validatorProvider = context.getValidatorProvider();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader block1 = context.getBlockHeader(1);
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
-    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).isEmpty();
-    assertThat(extraDataCodec.decode(genesisBlock).getVote()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(genesisBlock).getValidators()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(genesisBlock).getVote()).isEmpty();
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
-    assertThat(extraDataCodec.decode(block1).getValidators()).isEmpty();
-    assertThat(extraDataCodec.decode(block1).getVote()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(block1).getValidators()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(block1).getVote()).isEmpty();
   }
 
   @Test
@@ -325,24 +329,24 @@ public class ValidatorContractTest {
     clock.step(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS);
     remotePeerProposesNewBlock(context, 2L);
 
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
-    final BlockHeader block2 = context.getBlockchain().getBlockHeader(2).get();
+    final QbftValidatorProvider validatorProvider = context.getValidatorProvider();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader block1 = context.getBlockHeader(1);
+    final QbftBlockHeader block2 = context.getBlockHeader(2);
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
-    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).isEmpty();
-    assertThat(extraDataCodec.decode(genesisBlock).getVote()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(genesisBlock).getValidators()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(genesisBlock).getVote()).isEmpty();
 
     // uses overridden validators
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
-    assertThat(extraDataCodec.decode(block1).getValidators())
+    assertThat(extraDataProvider.getExtraData(block1).getValidators())
         .containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
 
     // uses cached validators
     assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block1Addresses);
-    assertThat(extraDataCodec.decode(block2).getValidators())
+    assertThat(extraDataProvider.getExtraData(block2).getValidators())
         .containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
   }
 
@@ -381,28 +385,29 @@ public class ValidatorContractTest {
     clock.step(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS);
     remotePeerProposesNewBlock(context, 3L);
 
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
-    final BlockHeader block2 = context.getBlockchain().getBlockHeader(2).get();
-    final BlockHeader block3 = context.getBlockchain().getBlockHeader(3).get();
+    final QbftValidatorProvider validatorProvider = context.getValidatorProvider();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader block1 = context.getBlockHeader(1);
+    final QbftBlockHeader block2 = context.getBlockHeader(2);
+    final QbftBlockHeader block3 = context.getBlockHeader(3);
 
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
-    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).containsExactly(NODE_ADDRESS);
+    assertThat(extraDataProvider.getExtraData(genesisBlock).getValidators())
+        .containsExactly(NODE_ADDRESS);
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
-    assertThat(extraDataCodec.decode(block1).getValidators()).isEmpty();
-    assertThat(extraDataCodec.decode(block1).getVote()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(block1).getValidators()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(block1).getVote()).isEmpty();
 
     // uses overridden validators
     assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block1Addresses);
-    assertThat(extraDataCodec.decode(block2).getValidators())
+    assertThat(extraDataProvider.getExtraData(block2).getValidators())
         .containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
 
     // uses cached validators
     assertThat(validatorProvider.getValidatorsForBlock(block3)).isEqualTo(block1Addresses);
-    assertThat(extraDataCodec.decode(block3).getValidators())
+    assertThat(extraDataProvider.getExtraData(block3).getValidators())
         .containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
   }
 
@@ -438,23 +443,24 @@ public class ValidatorContractTest {
     clock.step(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS);
     remotePeerProposesNewBlock(context, 2L);
 
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
-    final BlockHeader block2 = context.getBlockchain().getBlockHeader(2).get();
+    final QbftValidatorProvider validatorProvider = context.getValidatorProvider();
+    final QbftBlockHeader genesisBlock = context.getBlockHeader(0);
+    final QbftBlockHeader block1 = context.getBlockHeader(1);
+    final QbftBlockHeader block2 = context.getBlockHeader(2);
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
-    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).isEmpty();
-    assertThat(extraDataCodec.decode(genesisBlock).getVote()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(genesisBlock).getValidators()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(genesisBlock).getVote()).isEmpty();
 
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
-    assertThat(extraDataCodec.decode(block1).getValidators()).containsExactly(NODE_2_ADDRESS);
+    assertThat(extraDataProvider.getExtraData(block1).getValidators())
+        .containsExactly(NODE_2_ADDRESS);
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block2Addresses);
-    assertThat(extraDataCodec.decode(block2).getValidators()).isEmpty();
-    assertThat(extraDataCodec.decode(block2).getVote()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(block2).getValidators()).isEmpty();
+    assertThat(extraDataProvider.getExtraData(block2).getVote()).isEmpty();
   }
 
   private void createNewBlockAsProposer(final TestContext context, final long blockNumber) {
@@ -464,7 +470,7 @@ public class ValidatorContractTest {
     context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
 
     // peers commit proposed block
-    Block proposedBlock =
+    QbftBlock proposedBlock =
         context.createBlockForProposalFromChainHead(clock.instant().getEpochSecond());
     RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
     peers.commitForNonProposing(roundId, proposedBlock);
@@ -472,7 +478,7 @@ public class ValidatorContractTest {
     assertThat(context.getCurrentChainHeight()).isEqualTo(blockNumber);
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(context.getBlockchain().getChainHeadHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(context.getBlockchain().getChainHeadHeader()));
   }
 
   private void createNewBlockAsProposerFixedTime(
@@ -483,14 +489,14 @@ public class ValidatorContractTest {
     context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
 
     // peers commit proposed block
-    Block proposedBlock = context.createBlockForProposalFromChainHead(timestamp);
+    QbftBlock proposedBlock = context.createBlockForProposalFromChainHead(timestamp);
     RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
     peers.commitForNonProposing(roundId, proposedBlock);
 
     assertThat(context.getCurrentChainHeight()).isEqualTo(blockNumber);
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(context.getBlockchain().getChainHeadHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(context.getBlockchain().getChainHeadHeader()));
   }
 
   private void remotePeerProposesNewBlock(final TestContext context, final long blockNumber) {
@@ -498,7 +504,7 @@ public class ValidatorContractTest {
 
     RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
     ValidatorPeer remoteProposer = peers.getProposer();
-    final Block blockToPropose =
+    final QbftBlock blockToPropose =
         context.createBlockForProposalFromChainHead(
             clock.instant().getEpochSecond(), remoteProposer.getNodeAddress());
     remoteProposer.injectProposal(roundId, blockToPropose);
@@ -507,7 +513,7 @@ public class ValidatorContractTest {
 
     context
         .getController()
-        .handleNewBlockEvent(new NewChainHead(context.getBlockchain().getChainHeadHeader()));
+        .handleNewBlockEvent(new QbftNewChainHead(context.getBlockchain().getChainHeadHeader()));
   }
 
   private QbftFork createContractFork(final long block, final Address contractAddress) {

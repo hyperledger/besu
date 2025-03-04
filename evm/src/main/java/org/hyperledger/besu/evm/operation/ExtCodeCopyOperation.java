@@ -29,7 +29,7 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code copy operation. */
-public class ExtCodeCopyOperation extends AbstractExtCodeOperation {
+public class ExtCodeCopyOperation extends AbstractOperation {
 
   /** This is the "code" legacy contracts see when copying code from an EOF contract. */
   public static final Bytes EOF_REPLACEMENT_CODE = Bytes.fromHexString("0xef00");
@@ -93,8 +93,7 @@ public class ExtCodeCopyOperation extends AbstractExtCodeOperation {
     }
 
     final Account account = frame.getWorldUpdater().get(address);
-
-    final Bytes code = getCode(account);
+    final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
     if (enableEIP3540
         && code.size() >= 2

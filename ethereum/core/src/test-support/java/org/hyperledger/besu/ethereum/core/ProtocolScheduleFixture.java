@@ -54,7 +54,7 @@ public class ProtocolScheduleFixture {
         new JsonFactory().createParser(GenesisConfig.class.getResource(genesisConfig))) {
 
       while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-        if ("config".equals(jsonParser.getCurrentName())) {
+        if ("config".equals(jsonParser.currentName())) {
           jsonParser.nextToken();
           return JsonGenesisConfigOptions.fromJsonObject(
               normalizeKeys(new ObjectMapper().readTree(jsonParser)));

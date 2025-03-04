@@ -22,10 +22,11 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,14 +36,17 @@ import java.util.Optional;
 public class MessageFactory {
 
   private final NodeKey nodeKey;
+  private final QbftBlockCodec blockEncoder;
 
   /**
    * Instantiates a new Message factory.
    *
    * @param nodeKey the node key
+   * @param blockEncoder the block encoder
    */
-  public MessageFactory(final NodeKey nodeKey) {
+  public MessageFactory(final NodeKey nodeKey, final QbftBlockCodec blockEncoder) {
     this.nodeKey = nodeKey;
+    this.blockEncoder = blockEncoder;
   }
 
   /**
@@ -56,11 +60,11 @@ public class MessageFactory {
    */
   public Proposal createProposal(
       final ConsensusRoundIdentifier roundIdentifier,
-      final Block block,
+      final QbftBlock block,
       final List<SignedData<RoundChangePayload>> roundChanges,
       final List<SignedData<PreparePayload>> prepares) {
 
-    final ProposalPayload payload = new ProposalPayload(roundIdentifier, block);
+    final ProposalPayload payload = new ProposalPayload(roundIdentifier, block, blockEncoder);
 
     return new Proposal(createSignedMessage(payload), roundChanges, prepares);
   }
@@ -107,7 +111,7 @@ public class MessageFactory {
     final RoundChangePayload payload;
     if (preparedRoundData.isPresent()) {
 
-      final Block preparedBlock = preparedRoundData.get().getBlock();
+      final QbftBlock preparedBlock = preparedRoundData.get().getBlock();
       payload =
           new RoundChangePayload(
               roundIdentifier,
@@ -118,12 +122,13 @@ public class MessageFactory {
       return new RoundChange(
           createSignedMessage(payload),
           Optional.of(preparedBlock),
+          blockEncoder,
           preparedRoundData.get().getPrepares());
 
     } else {
       payload = new RoundChangePayload(roundIdentifier, Optional.empty());
       return new RoundChange(
-          createSignedMessage(payload), Optional.empty(), Collections.emptyList());
+          createSignedMessage(payload), Optional.empty(), blockEncoder, Collections.emptyList());
     }
   }
 

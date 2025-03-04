@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 public class Eip7709BlockHashLookup implements BlockHashLookup {
   private static final Logger LOG = LoggerFactory.getLogger(Eip7709BlockHashLookup.class);
   private static final long BLOCKHASH_SERVE_WINDOW = 256L;
+  private static final long HISTORY_SERVE_WINDOW = 8191;
 
   private final Address contractAddress;
   private final long historyServeWindow;
@@ -47,10 +48,9 @@ public class Eip7709BlockHashLookup implements BlockHashLookup {
    * Constructs a Eip7709BlockHashLookup.
    *
    * @param contractAddress the address of the contract storing the history.
-   * @param historyServeWindow the number of blocks for which history should be saved.
    */
-  public Eip7709BlockHashLookup(final Address contractAddress, final long historyServeWindow) {
-    this(contractAddress, historyServeWindow, BLOCKHASH_SERVE_WINDOW);
+  public Eip7709BlockHashLookup(final Address contractAddress) {
+    this(contractAddress, HISTORY_SERVE_WINDOW, BLOCKHASH_SERVE_WINDOW);
   }
 
   /**

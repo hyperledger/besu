@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
@@ -762,15 +763,15 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   private PendingTransaction createRemotePendingTransaction(
       final Transaction transaction, final long addedAt) {
-    return PendingTransaction.newPendingTransaction(transaction, false, false, addedAt);
+    return PendingTransaction.newPendingTransaction(transaction, false, false, MAX_SCORE, addedAt);
   }
 
   private PendingTransaction createRemotePendingTransaction(final Transaction transaction) {
-    return PendingTransaction.newPendingTransaction(transaction, false, false);
+    return PendingTransaction.newPendingTransaction(transaction, false, false, MAX_SCORE);
   }
 
   private PendingTransaction createLocalPendingTransaction(final Transaction transaction) {
-    return PendingTransaction.newPendingTransaction(transaction, true, true);
+    return PendingTransaction.newPendingTransaction(transaction, true, true, MAX_SCORE);
   }
 
   @Test

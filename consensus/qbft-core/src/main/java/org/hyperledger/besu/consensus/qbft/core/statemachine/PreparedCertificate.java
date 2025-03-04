@@ -16,14 +16,14 @@ package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 
 import java.util.List;
 
 /** The Prepared certificate. */
 public class PreparedCertificate {
 
-  private final Block block;
+  private final QbftBlock block;
   private final List<SignedData<PreparePayload>> prepares;
   private final int round;
 
@@ -35,7 +35,7 @@ public class PreparedCertificate {
    * @param round the round
    */
   public PreparedCertificate(
-      final Block block, final List<SignedData<PreparePayload>> prepares, final int round) {
+      final QbftBlock block, final List<SignedData<PreparePayload>> prepares, final int round) {
     this.block = block;
     this.prepares = prepares;
     this.round = round;
@@ -55,7 +55,7 @@ public class PreparedCertificate {
    *
    * @return the block
    */
-  public Block getBlock() {
+  public QbftBlock getBlock() {
     return block;
   }
 

@@ -29,16 +29,12 @@ jar {
 }
 
 dependencies {
-  implementation project(':config')
   implementation project(':consensus:common')
   implementation project(':crypto:services')
-  implementation project(':datatypes')
-  implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
-  implementation project(':ethereum:eth')
+  implementation project(':util')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
-  implementation project(':evm')
 
   implementation 'com.google.guava:guava'
   implementation 'io.tmio:tuweni-bytes'
@@ -66,7 +62,9 @@ dependencies {
   integrationTestImplementation project(':crypto:algorithms')
   integrationTestImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(':config')
   integrationTestImplementation project(':consensus:qbft')
+  integrationTestImplementation project(':ethereum:eth')
   integrationTestImplementation project(':evm')
   integrationTestImplementation project(':metrics:core')
   integrationTestImplementation project(':testutil')
