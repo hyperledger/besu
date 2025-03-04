@@ -306,12 +306,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean checkpointPostMergeSyncEnabled =
       SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
+  // TODO --Xsnapsync-bft-enabled is deprecated,
+  // remove in a future release
   @CommandLine.Option(
-      names = SNAP_SYNC_BFT_ENABLED_FLAG,
+      names = SNAP_SYNC_BFT_ENABLED_FLAG, // deprecated
       hidden = true,
       paramLabel = "<Boolean>",
       arity = "0..1",
-      description = "Snap sync enabled for BFT chains (default: ${DEFAULT-VALUE})")
+      description =
+          "This option is now deprecated and ignored, and will be removed in future release. Snap sync for BFT is supported by default.")
   private Boolean snapsyncBftEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED;
 
   @CommandLine.Option(
@@ -409,7 +412,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
     options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
-    options.snapsyncBftEnabled = config.getSnapSyncConfiguration().isSnapSyncBftEnabled();
     options.snapTransactionIndexingEnabled =
         config.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled();
     return options;
@@ -444,7 +446,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
             .isSnapServerEnabled(snapsyncServerEnabled)
-            .isSnapSyncBftEnabled(snapsyncBftEnabled)
             .isSnapSyncTransactionIndexingEnabled(snapTransactionIndexingEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
@@ -504,8 +505,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(snapsyncFlatStorageHealedCountPerRequest),
             SNAP_SERVER_ENABLED_FLAG,
             OptionParser.format(snapsyncServerEnabled),
-            SNAP_SYNC_BFT_ENABLED_FLAG,
-            OptionParser.format(snapsyncBftEnabled),
             SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
             OptionParser.format(snapTransactionIndexingEnabled));
     return value;
