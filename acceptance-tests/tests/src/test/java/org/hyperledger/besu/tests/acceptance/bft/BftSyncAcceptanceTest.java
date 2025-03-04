@@ -73,6 +73,9 @@ public class BftSyncAcceptanceTest extends ParameterizedBftTestBase {
     // Add validator4 to cluster and start
     cluster.addNode(validator4);
 
+    // wait for sync
+    sleep(20000);
+
     // Verify validator4 syncs and reaches target height
     chainHeight = validator4.execute(ethTransactions.blockNumber());
     assertThat(chainHeight.compareTo(BigInteger.valueOf(TARGET_BLOCK_HEIGHT)))
