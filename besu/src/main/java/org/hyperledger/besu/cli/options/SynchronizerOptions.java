@@ -314,7 +314,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       paramLabel = "<Boolean>",
       arity = "0..1",
       description =
-          "This option is now deprecated, will be removed in future release. Snap sync for BFT is supported by default.")
+          "This option is now deprecated and ignored, and will be removed in future release. Snap sync for BFT is supported by default.")
   private Boolean snapsyncBftEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED;
 
   @CommandLine.Option(
