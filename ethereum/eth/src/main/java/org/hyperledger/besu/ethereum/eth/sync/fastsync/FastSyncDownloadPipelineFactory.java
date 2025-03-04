@@ -150,7 +150,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             attachedValidationPolicy,
             ommerValidationPolicy,
             ethContext,
-            fastSyncState.getPivotBlockHeader().get());
+            fastSyncState.getPivotBlockHeader().get(),
+            syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",

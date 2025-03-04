@@ -71,6 +71,8 @@ public interface BlockImporter {
    * @param receipts The receipts associated with this block.
    * @param headerValidationMode Determines the validation to perform on this header.
    * @param ommerValidationMode Determines the validation to perform on ommer headers.
+   * @param bodyValidationMode Determines the validation to perform on the block's body.
+   * @param importWithTxIndexing Whether to import the block with transaction indexing.
    * @return {@code BlockImportResult}
    * @see BlockImportResult
    */
@@ -80,5 +82,6 @@ public interface BlockImporter {
       List<TransactionReceipt> receipts,
       HeaderValidationMode headerValidationMode,
       HeaderValidationMode ommerValidationMode,
-      BodyValidationMode bodyValidationMode);
+      BodyValidationMode bodyValidationMode,
+      boolean importWithTxIndexing);
 }
