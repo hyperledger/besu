@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Pack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +122,6 @@ public class Era1Reader {
   }
 
   private long convertLittleEndianBytesToLong(final byte[] bytes) {
-    int additionalBytes = Long.BYTES - bytes.length;
-    return Pack.littleEndianToLong(Arrays.concatenate(bytes, new byte[additionalBytes]), 0);
+    return Pack.littleEndianToLong(bytes, 0, bytes.length);
   }
 }
