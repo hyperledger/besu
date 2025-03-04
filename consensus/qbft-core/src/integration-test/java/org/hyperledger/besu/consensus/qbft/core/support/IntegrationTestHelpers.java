@@ -25,7 +25,6 @@ import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 
@@ -63,7 +62,6 @@ public class IntegrationTestHelpers {
     final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
     final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
     final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
-    return qbftBlockInterface.replaceRoundInBlock(
-        proposalBlock, round, QbftHashMode.COMMITTED_SEAL);
+    return qbftBlockInterface.replaceRoundInBlock(proposalBlock, round);
   }
 }
