@@ -35,7 +35,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.crypto.SECPSignature;
@@ -168,9 +167,7 @@ public class QbftRound {
           protocolContext.getConsensusContext(QbftContext.class).blockInterface();
       blockToPublish =
           bftBlockInterface.replaceRoundInBlock(
-              preparedBlock,
-              roundState.getRoundIdentifier().getRoundNumber(),
-              QbftHashMode.COMMITTED_SEAL);
+              preparedBlock, roundState.getRoundIdentifier().getRoundNumber());
     }
 
     LOG.debug(" proposal - new/prepared block hash : {}", blockToPublish.getHash());
@@ -397,8 +394,7 @@ public class QbftRound {
   private QbftBlock createCommitBlock(final QbftBlock block) {
     final QbftBlockInterface bftBlockInterface =
         protocolContext.getConsensusContext(QbftContext.class).blockInterface();
-    return bftBlockInterface.replaceRoundInBlock(
-        block, getRoundIdentifier().getRoundNumber(), QbftHashMode.COMMITTED_SEAL);
+    return bftBlockInterface.replaceRoundInBlock(block, getRoundIdentifier().getRoundNumber());
   }
 
   private void notifyNewBlockListeners(final QbftBlock block) {
