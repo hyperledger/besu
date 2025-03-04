@@ -386,6 +386,18 @@ public abstract class AbstractTransactionPoolTestBase {
         .thenReturn(valid());
   }
 
+  protected void givenAllTransactionsAreValid() {
+    when(transactionValidatorFactory
+            .get()
+            .validate(any(), any(Optional.class), any(Optional.class), any()))
+        .thenReturn(valid());
+    when(transactionValidatorFactory
+            .get()
+            .validateForSender(
+                any(), nullable(Account.class), any(TransactionValidationParams.class)))
+        .thenReturn(valid());
+  }
+
   protected abstract Block appendBlock(
       final Difficulty difficulty,
       final BlockHeader parentBlock,
