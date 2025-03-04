@@ -86,7 +86,7 @@ class BlockStateCallsTest {
   void shouldUpdateTimestampIfNotPresent() {
     // BlockHeader is at block number 1 and timestamp 1000
     // BlockStateCall does not have a timestamp set
-    // Should set timestamp to 1012
+    // Should set timestamp to 1024
 
     long blockNumber = 3L;
     long expectedTimestamp = headerTimestamp + (blockNumber - 1L) * 12;
