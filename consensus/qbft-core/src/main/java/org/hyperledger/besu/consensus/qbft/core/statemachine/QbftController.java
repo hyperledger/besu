@@ -139,10 +139,29 @@ public class QbftController implements QbftEventHandler {
     return currentHeightManager;
   }
 
+  /* Replace the current height manager with a no-op height manager. */
+  private void stopCurrentHeightManager(final QbftBlockHeader parentHeader) {
+    currentHeightManager = qbftBlockHeightManagerFactory.createNoOpBlockHeightManager(parentHeader);
+  }
+
   @Override
   public void start() {
     if (started.compareAndSet(false, true)) {
       startNewHeightManager(blockchain.getChainHeadHeader());
+    } else {
+      // In normal circumstances the height manager should only be started once. If the caller
+      // has stopped the height manager (e.g. while sync completes) they must call stop() before
+      // starting the height manager again.
+      throw new IllegalStateException(
+          "Attempt to start new height manager without stopping previous manager");
+    }
+  }
+
+  @Override
+  public void stop() {
+    if (started.compareAndSet(true, false)) {
+      stopCurrentHeightManager(blockchain.getChainHeadHeader());
+      LOG.debug("QBFT height manager stop");
     }
   }
 
