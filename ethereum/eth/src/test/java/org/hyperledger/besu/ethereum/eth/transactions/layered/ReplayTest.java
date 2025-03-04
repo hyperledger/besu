@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.INVALIDATED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -307,7 +308,7 @@ public class ReplayTest {
     }
     assertThat(
             pendingTransactions.addTransaction(
-                PendingTransaction.newPendingTransaction(tx, false, false),
+                PendingTransaction.newPendingTransaction(tx, false, false, MAX_SCORE),
                 Optional.of(mockAccount)))
         .isNotEqualTo(TransactionAddedResult.INTERNAL_ERROR);
     if (tx.getSender().equals(senderToLog)) {
