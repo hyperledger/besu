@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
+import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
@@ -51,6 +52,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -92,6 +94,7 @@ public class BlocksSubCommand implements Runnable {
 
   private final Supplier<RlpBlockImporter> rlpBlockImporter;
   private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
+  private final Supplier<Era1BlockImporter> era1BlockImporter;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
 
   private final PrintWriter out;
@@ -101,17 +104,20 @@ public class BlocksSubCommand implements Runnable {
    *
    * @param rlpBlockImporter the RLP block importer
    * @param jsonBlockImporterFactory the Json block importer factory
+   * @param era1BlockImporter the era1 block importer supplier
    * @param rlpBlockExporterFactory the RLP block exporter factory
    * @param out Instance of PrintWriter where command usage will be written.
    */
   public BlocksSubCommand(
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
+      final Supplier<Era1BlockImporter> era1BlockImporter,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final PrintWriter out) {
     this.rlpBlockImporter = rlpBlockImporter;
-    this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
+    this.era1BlockImporter = era1BlockImporter;
+    this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.out = out;
   }
 
@@ -198,6 +204,7 @@ public class BlocksSubCommand implements Runnable {
       checkCommand(parentCommand);
       checkNotNull(parentCommand.rlpBlockImporter);
       checkNotNull(parentCommand.jsonBlockImporterFactory);
+      checkNotNull(parentCommand.era1BlockImporter);
       if (blockImportFiles.isEmpty()) {
         throw new ParameterException(spec.commandLine(), "No files specified to import.");
       }
@@ -214,12 +221,9 @@ public class BlocksSubCommand implements Runnable {
           try {
             LOG.info("Importing from {}", path);
             switch (format) {
-              case RLP:
-                importRlpBlocks(controller, path);
-                break;
-              case JSON:
-                importJsonBlocks(controller, path);
-                break;
+              case RLP -> importRlpBlocks(controller, path);
+              case JSON -> importJsonBlocks(controller, path);
+              case ERA1 -> importEra1Blocks(controller, path);
             }
           } catch (final FileNotFoundException e) {
             if (blockImportFiles.size() == 1) {
@@ -296,6 +300,14 @@ public class BlocksSubCommand implements Runnable {
           .rlpBlockImporter
           .get()
           .importBlockchain(path, controller, skipPow, startBlock, endBlock);
+    }
+
+    private void importEra1Blocks(final BesuController controller, final Path path)
+        throws IOException,
+            java.util.concurrent.ExecutionException,
+            InterruptedException,
+            TimeoutException {
+      parentCommand.era1BlockImporter.get().importBlocks(controller, path);
     }
   }
 

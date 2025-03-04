@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,14 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.subcommands.blocks;
+package org.hyperledger.besu.util.era1;
 
-/** The enum Block import format. */
-public enum BlockImportFormat {
-  /** RLP block import format. */
-  RLP,
-  /** Json block import format. */
-  JSON,
-  /** Era1 block import format. */
-  ERA1,
-}
+/**
+ * Represents an execution block's transaction receipts in an era1 file
+ *
+ * @param receipts The execution block's transaction receipts
+ * @param blockIndex The blockIndex number
+ */
+public record Era1ExecutionBlockReceipts(byte[] receipts, int blockIndex) {}

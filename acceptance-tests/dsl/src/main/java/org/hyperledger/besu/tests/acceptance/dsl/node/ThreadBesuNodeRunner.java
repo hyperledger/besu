@@ -19,6 +19,7 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
+import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
@@ -632,6 +633,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           new BesuCommand(
               RlpBlockImporter::new,
               JsonBlockImporter::new,
+              Era1BlockImporter::new,
               RlpBlockExporter::new,
               new RunnerBuilder(),
               new BesuController.Builder(),
