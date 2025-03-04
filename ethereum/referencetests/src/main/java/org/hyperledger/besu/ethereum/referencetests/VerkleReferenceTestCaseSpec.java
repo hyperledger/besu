@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createStateTransitionInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createVerkleInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -30,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -63,8 +66,17 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
   private static WorldStateArchive buildWorldStateArchive(
       final Map<String, ReferenceTestWorldState.AccountMock> accounts,
       final MutableBlockchain blockchain,
-      final BlockHeader genesis) {
-    final WorldStateArchive worldStateArchive = createVerkleInMemoryWorldStateArchive(blockchain);
+      final BlockHeader genesis,
+      final ProtocolSchedule protocolSchedule) {
+    final Long verkleMilestone =
+        protocolSchedule.milestoneFor(HardforkId.MainnetHardforkId.VERKLE).get();
+    final WorldStateArchive worldStateArchive;
+    if (verkleMilestone == 0) {
+      worldStateArchive = createVerkleInMemoryWorldStateArchive(blockchain);
+    } else {
+      worldStateArchive =
+          createStateTransitionInMemoryWorldStateArchive(blockchain, verkleMilestone);
+    }
 
     final MutableWorldState worldState = worldStateArchive.getWorldState();
     final WorldUpdater updater = worldState.updater();
@@ -99,7 +111,11 @@ public class VerkleReferenceTestCaseSpec implements BlockchainReferenceTestCase 
     this.genesisBlockHeader = genesisBlockHeader;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
     this.blockchain = buildBlockchain(genesisBlockHeader);
-    this.worldStateArchive = buildWorldStateArchive(accounts, this.blockchain, genesisBlockHeader);
+    final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
+        ReferenceTestProtocolSchedules.getInstance();
+    final ProtocolSchedule schedule = referenceTestProtocolSchedules.getByName(this.network);
+    this.worldStateArchive =
+        buildWorldStateArchive(accounts, this.blockchain, genesisBlockHeader, schedule);
     this.sealEngine = sealEngine;
     this.protocolContext =
         new ProtocolContext(this.blockchain, this.worldStateArchive, null, new BadBlockManager());

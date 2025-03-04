@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.WorldStateHealerHelper.throwingWorldStateHealerSupplier;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.MERKLE_TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
@@ -97,13 +97,13 @@ class BonsaiWorldStateProviderTest {
   void testGetMutableReturnPersistedStateWhenNeeded() {
     final BlockHeader chainHead = blockBuilder.number(0).buildHeader();
 
-    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY))
+    when(segmentedKeyValueStorage.get(MERKLE_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getStateRoot().toArrayUnsafe()));
-    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY))
+    when(segmentedKeyValueStorage.get(MERKLE_TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
-    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY))
+    when(segmentedKeyValueStorage.get(MERKLE_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getStateRoot().toArrayUnsafe()));
-    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY))
+    when(segmentedKeyValueStorage.get(MERKLE_TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(

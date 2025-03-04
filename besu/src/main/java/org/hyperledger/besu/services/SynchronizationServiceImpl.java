@@ -155,7 +155,7 @@ public class SynchronizationServiceImpl implements SynchronizationService {
             worldStateStorage.clearTrie();
             // keep root and block hash in the trie branch
             final DiffBasedWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
-            updater.saveWorldState(
+            updater.saveWorldStateAndRootNode(
                 worldStateBlockHash.get(), Bytes32.wrap(worldStateRootHash.get()), Bytes.EMPTY);
             updater.commit();
 

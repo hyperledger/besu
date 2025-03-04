@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.MERKLE_TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
@@ -25,6 +26,8 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +63,7 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
         composedWorldStateStorage.startTransaction();
     LOG.info("setting FlatDbStrategy to FULL");
     transaction.put(
-        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
+        MERKLE_TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
     transaction.commit();
     loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
   }
@@ -71,9 +74,45 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
         composedWorldStateStorage.startTransaction();
     LOG.info("setting FlatDbStrategy to PARTIAL");
     transaction.put(
-        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
+        MERKLE_TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
     transaction.commit();
     loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
+  }
+
+  @VisibleForTesting
+  @Override
+  protected FlatDbMode deriveFlatDbStrategy(
+      final SegmentedKeyValueStorage composedWorldStateStorage) {
+    final FlatDbMode requestedFlatDbMode = getRequestedFlatDbMode(dataStorageConfiguration);
+
+    final var existingTrieData =
+        composedWorldStateStorage.get(MERKLE_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).isPresent();
+
+    var flatDbMode =
+        FlatDbMode.fromVersion(
+            composedWorldStateStorage
+                .get(MERKLE_TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
+                .map(Bytes::wrap)
+                .orElseGet(
+                    () -> {
+                      // if we do not have a db-supplied config for flatdb, derive it:
+                      // default to partial if trie data exists, but the flat config does not,
+                      // and default to the storage config otherwise
+                      var flatDbModeVal =
+                          existingTrieData
+                              ? alternativeFlatDbModeForExistingDatabase().getVersion()
+                              : requestedFlatDbMode.getVersion();
+                      // persist this config in the db
+                      var setDbModeTx = composedWorldStateStorage.startTransaction();
+                      setDbModeTx.put(
+                          MERKLE_TRIE_BRANCH_STORAGE, FLAT_DB_MODE, flatDbModeVal.toArrayUnsafe());
+                      setDbModeTx.commit();
+
+                      return flatDbModeVal;
+                    }));
+    LOG.info("Flat db mode found {}", flatDbMode);
+
+    return flatDbMode;
   }
 
   @Override

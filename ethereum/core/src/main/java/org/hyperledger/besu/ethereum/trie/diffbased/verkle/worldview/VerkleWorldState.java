@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VERKLE_TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.StemP
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.preloader.VerklePreloader;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.VerkleStemFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyFactory;
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 import org.hyperledger.besu.ethereum.trie.verkle.hasher.StemHasher;
@@ -99,6 +98,15 @@ public class VerkleWorldState extends DiffBasedWorldState {
             evmConfiguration));
   }
 
+  public VerkleWorldState(
+      final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
+      final TrieLogManager trieLogManager,
+      final WorldStateConfig worldStateConfig) {
+    super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager, worldStateConfig);
+    this.verklePreloader = new VerklePreloader(worldStateKeyValueStorage.getStemPreloader());
+  }
+
   @Override
   public VerkleWorldStateKeyValueStorage getWorldStateStorage() {
     return (VerkleWorldStateKeyValueStorage) worldStateKeyValueStorage;
@@ -118,7 +126,9 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final VerkleWorldStateUpdateAccumulator worldStateUpdater) {
 
     final VerkleTrie stateTrie =
-        createTrie((location, hash) -> worldStateKeyValueStorage.getStateTrieNode(location));
+        createTrie(
+            (location, hash) -> worldStateKeyValueStorage.getStateTrieNode(location),
+            worldStateRootHash);
 
     final StemPreloader stemPreloader = verklePreloader.stemPreloader();
 
@@ -203,7 +213,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
             stateTrie.commit(
                 (location, hash, value) -> {
                   writeTrieNode(
-                      TRIE_BRANCH_STORAGE,
+                      VERKLE_TRIE_BRANCH_STORAGE,
                       verkleUpdater.getWorldStateTransaction(),
                       location,
                       value);
@@ -436,7 +446,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
     return Collections.emptyMap();
   }
 
-  private VerkleTrie createTrie(final NodeLoader nodeLoader) {
+  private VerkleTrie createTrie(final NodeLoader nodeLoader, final Hash worldStateRootHash) {
     return new VerkleTrie(nodeLoader);
   }
 
@@ -458,14 +468,21 @@ public class VerkleWorldState extends DiffBasedWorldState {
     return calculateRootHash(
         Optional.of(
             new VerkleWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx,
-                noOpTx,
-                (VerkleStemFlatDbStrategy) worldStateKeyValueStorage.getFlatDbStrategy())),
+                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
         accumulator.copy());
   }
 
   @Override
   protected Hash getEmptyTrieHash() {
     return Hash.wrap(Bytes32.ZERO);
+  }
+
+  public VerklePreloader getVerklePreloader() {
+    return verklePreloader;
+  }
+
+  @Override
+  public VerkleWorldStateUpdateAccumulator getAccumulator() {
+    return (VerkleWorldStateUpdateAccumulator) super.getAccumulator();
   }
 }

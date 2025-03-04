@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.trielogs;
 
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 /** Interface for serializing and deserializing {@link TrieLog} objects. */
 public interface TrieLogFactory {
@@ -23,10 +24,12 @@ public interface TrieLogFactory {
    * Creates a new TrieLog object.
    *
    * @param accumulator the accumulator
+   * @param dataStorageFormat data storage format used for this block
    * @param blockHeader the block header
    * @return a new TrieLog object
    */
-  TrieLog create(TrieLogAccumulator accumulator, BlockHeader blockHeader);
+  TrieLog create(
+      TrieLogAccumulator accumulator, DataStorageFormat dataStorageFormat, BlockHeader blockHeader);
 
   /**
    * Deserializes a TrieLog object.

@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogAddedEvent;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -280,9 +280,10 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
         final Hash forWorldStateRootHash,
         final BlockHeader forBlockHeader,
-        final DiffBasedWorldState forWorldState) {
+        final DiffBasedWorldView forWorldState) {
       // notify trie log added observers, synchronously
-      TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
+      TrieLog trieLog =
+          trieLogFactory.create(localUpdater, DataStorageFormat.BONSAI, forBlockHeader);
       trieLogCache.put(forBlockHeader.getHash(), trieLogFactory.serialize(trieLog));
       trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
     }

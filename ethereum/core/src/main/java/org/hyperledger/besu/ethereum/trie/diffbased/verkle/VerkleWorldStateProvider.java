@@ -50,12 +50,12 @@ public class VerkleWorldStateProvider extends DiffBasedWorldStateProvider {
 
   @VisibleForTesting
   VerkleWorldStateProvider(
-      final VerkleCachedWorldStorageManager cachedWorldStorageManager,
-      final TrieLogManager trieLogManager,
       final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
-      final EvmConfiguration evmConfiguration) {
-    super(worldStateKeyValueStorage, blockchain, trieLogManager);
+      final TrieLogManager trieLogManager,
+      final EvmConfiguration evmConfiguration,
+      final VerkleCachedWorldStorageManager cachedWorldStorageManager) {
+    super(DataStorageFormat.VERKLE, worldStateKeyValueStorage, blockchain, trieLogManager);
     provideCachedWorldStorageManager(cachedWorldStorageManager);
     loadHeadWorldState(
         new VerkleWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));

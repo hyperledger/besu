@@ -78,7 +78,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final EvmConfiguration evmConfiguration,
       final Supplier<WorldStateHealer> worldStateHealerSupplier) {
-    super(worldStateKeyValueStorage, blockchain, trieLogManager);
+    super(DataStorageFormat.BONSAI, worldStateKeyValueStorage, blockchain, trieLogManager);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);

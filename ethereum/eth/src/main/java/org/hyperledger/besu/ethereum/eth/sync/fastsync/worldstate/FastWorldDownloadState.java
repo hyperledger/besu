@@ -62,7 +62,8 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
       applyForStrategy(
           updater,
           onBonsai -> {
-            onBonsai.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
+            onBonsai.saveWorldStateAndRootNode(
+                header.getHash(), header.getStateRoot(), rootNodeData);
           },
           onForest -> {
             onForest.saveWorldState(header.getStateRoot(), rootNodeData);

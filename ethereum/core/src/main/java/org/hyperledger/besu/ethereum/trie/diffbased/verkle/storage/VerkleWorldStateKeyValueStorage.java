@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VERKLE_TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -38,6 +38,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
@@ -62,7 +63,7 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       final DataStorageConfiguration dataStorageConfiguration,
       final MetricsSystem metricsSystem) {
     super(
-        provider.getStorageBySegmentIdentifiers(List.of(CODE_STORAGE, TRIE_BRANCH_STORAGE)),
+        provider.getStorageBySegmentIdentifiers(List.of(CODE_STORAGE, VERKLE_TRIE_BRANCH_STORAGE)),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
     this.stemPreloader = stemPreloader;
     this.metricsSystem = metricsSystem;
@@ -150,6 +151,11 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   }
 
   @Override
+  public SegmentIdentifier getTrieBranchSegmentIdentifier() {
+    return VERKLE_TRIE_BRANCH_STORAGE;
+  }
+
+  @Override
   public Updater updater() {
     return new Updater(
         composedWorldStateStorage.startTransaction(),
@@ -220,13 +226,20 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     }
 
     @Override
-    public Updater saveWorldState(final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
+    public Updater saveWorldStateAndRootNode(
+        final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
+          VERKLE_TRIE_BRANCH_STORAGE, Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
+      saveWorldState(blockHash, nodeHash);
+      return this;
+    }
+
+    @Override
+    public Updater saveWorldState(final Bytes blockHash, final Bytes32 nodeHash) {
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
+          VERKLE_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
+          VERKLE_TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
       return this;
     }
 

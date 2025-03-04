@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.AbstractFlatDbStrategyProviderTest;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -23,6 +24,10 @@ import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +50,26 @@ class VerkleFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
         createFlatDbStrategyProvider(DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG);
     assertThat(strategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.STEM);
     assertThat(strategyProvider.getFlatDbStrategy()).isInstanceOf(VerkleStemFlatDbStrategy.class);
+  }
+
+  @Override
+  protected void updateFlatDbMode(
+      final FlatDbMode flatDbMode, final SegmentedKeyValueStorage segmentedKeyValueStorage) {
+    final SegmentedKeyValueStorageTransaction transaction =
+        segmentedKeyValueStorage.startTransaction();
+    transaction.put(
+        KeyValueSegmentIdentifier.VERKLE_TRIE_BRANCH_STORAGE,
+        FlatDbStrategyProvider.FLAT_DB_MODE,
+        flatDbMode.getVersion().toArrayUnsafe());
+    transaction.commit();
+  }
+
+  @Override
+  protected SegmentedKeyValueStorage createSegmentedKeyValueStorage() {
+    return new SegmentedInMemoryKeyValueStorage(
+        List.of(
+            KeyValueSegmentIdentifier.VERKLE_TRIE_BRANCH_STORAGE,
+            KeyValueSegmentIdentifier.CODE_STORAGE));
   }
 
   @Override

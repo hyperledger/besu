@@ -26,7 +26,9 @@ import org.hyperledger.besu.ethereum.trie.common.VerkleStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.trie.diffbased.transition.InvalidTrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.Map;
@@ -56,7 +58,10 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
     addresses.addAll(layer.getStorageChanges().keySet());
 
     output.startList();
+
     output.writeBytes(layer.getBlockHash());
+
+    output.writeInt(layer.getDataStorageFormat().getValue());
 
     for (final Address address : addresses) {
       output.startList();
@@ -112,6 +117,18 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
 
       output.endList();
     }
+
+    if (!layer.getExtraFields().isEmpty()) {
+      output.startList();
+      for (Map.Entry<Bytes, Bytes> entry : layer.getExtraFields().entrySet()) {
+        output.startList();
+        output.writeBytes(entry.getKey());
+        output.writeBytes(entry.getValue());
+        output.endList();
+      }
+      output.endList();
+    }
+
     output.endList();
   }
 
@@ -124,7 +141,15 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
     final TrieLogLayer newLayer = new TrieLogLayer();
 
     input.enterList();
-    newLayer.setBlockHash(Hash.wrap(input.readBytes32()));
+    final Hash blockHash = Hash.wrap(input.readBytes32());
+    newLayer.setBlockHash(blockHash);
+
+    DataStorageFormat dataStorageFormat = DataStorageFormat.fromValue(input.readInt());
+    if (dataStorageFormat.equals(DataStorageFormat.VERKLE)) {
+      newLayer.setDataStorageFormat(dataStorageFormat);
+    } else {
+      return new InvalidTrieLogLayer(blockHash, dataStorageFormat);
+    }
 
     while (!input.isEndOfCurrentList()) {
       input.enterList();
@@ -181,6 +206,18 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
         }
         input.leaveList();
         newLayer.getStorageChanges().put(address, storageChanges);
+      }
+
+      if (input.nextIsList()) {
+        input.enterList();
+        while (!input.isEndOfCurrentList()) {
+          input.enterList();
+          final Bytes key = input.readBytes();
+          final Bytes value = input.readBytes();
+          newLayer.addExtraField(key, value);
+          input.leaveList();
+        }
+        input.leaveList();
       }
 
       // lenient leave list for forward compatible additions.

@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.trielog;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -34,9 +34,9 @@ public class NoOpTrieLogManager extends TrieLogManager {
       final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
-      final DiffBasedWorldState forWorldState) {
+      final DiffBasedWorldView forWorldState) {
     // notify trie log added observers, synchronously
-    TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
+    TrieLog trieLog = trieLogFactory.create(localUpdater, DataStorageFormat.BONSAI, forBlockHeader);
     trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
   }
 

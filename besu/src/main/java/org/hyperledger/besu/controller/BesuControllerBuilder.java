@@ -24,6 +24,7 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
 import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -90,6 +91,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMer
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.trie.diffbased.transition.StateTransitionWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
@@ -617,6 +619,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createWorldStateArchive(
             worldStateStorageCoordinator,
             blockchain,
+            protocolSchedule,
             bonsaiCachedMerkleTrieLoader,
             worldStateHealerSupplier::get);
 
@@ -1130,6 +1133,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   WorldStateArchive createWorldStateArchive(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final Blockchain blockchain,
+      final ProtocolSchedule protocolSchedule,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final Supplier<WorldStateHealer> worldStateHealerSupplier) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
@@ -1150,17 +1154,56 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             worldStateHealerSupplier);
       }
       case VERKLE -> {
-        final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage =
-            worldStateStorageCoordinator.getStrategy(VerkleWorldStateKeyValueStorage.class);
-        yield new VerkleWorldStateProvider(
-            worldStateKeyValueStorage,
-            blockchain,
-            Optional.of(
-                dataStorageConfiguration
-                    .getDiffBasedSubStorageConfiguration()
-                    .getMaxLayersToLoad()),
-            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
-            evmConfiguration);
+        final Long verkleMilestone =
+            protocolSchedule.milestoneFor(HardforkId.MainnetHardforkId.VERKLE).get();
+        if (verkleMilestone == 0) {
+          final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
+              worldStateStorageCoordinator.getStrategy(VerkleWorldStateKeyValueStorage.class);
+          yield new VerkleWorldStateProvider(
+              verkleWorldStateKeyValueStorage,
+              blockchain,
+              Optional.of(
+                  dataStorageConfiguration
+                      .getDiffBasedSubStorageConfiguration()
+                      .getMaxLayersToLoad()),
+              besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+              evmConfiguration);
+        } else {
+          final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
+              storageProvider
+                  .createWorldStateStorageCoordinator(
+                      DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+                  .getStrategy(BonsaiWorldStateKeyValueStorage.class);
+
+          final BonsaiWorldStateProvider bonsaiWorldStateProvider =
+              new BonsaiWorldStateProvider(
+                  bonsaiWorldStateKeyValueStorage,
+                  blockchain,
+                  Optional.of(
+                      dataStorageConfiguration
+                          .getDiffBasedSubStorageConfiguration()
+                          .getMaxLayersToLoad()),
+                  bonsaiCachedMerkleTrieLoader,
+                  besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+                  evmConfiguration,
+                  worldStateHealerSupplier);
+
+          final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
+              worldStateStorageCoordinator.getStrategy(VerkleWorldStateKeyValueStorage.class);
+
+          final VerkleWorldStateProvider verkleWorldStateProvider =
+              new VerkleWorldStateProvider(
+                  verkleWorldStateKeyValueStorage,
+                  blockchain,
+                  Optional.of(
+                      dataStorageConfiguration
+                          .getDiffBasedSubStorageConfiguration()
+                          .getMaxLayersToLoad()),
+                  besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+                  evmConfiguration);
+          yield new StateTransitionWorldStateProvider(
+              bonsaiWorldStateProvider, verkleWorldStateProvider, verkleMilestone, blockchain);
+        }
       }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =

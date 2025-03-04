@@ -32,4 +32,8 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
     // no op
     throw new UnsupportedOperationException("cannot freeze");
   }
+
+  default void announceBlockToImport(final BlockHeader blockToImport) {
+    // no op by default
+  }
 }

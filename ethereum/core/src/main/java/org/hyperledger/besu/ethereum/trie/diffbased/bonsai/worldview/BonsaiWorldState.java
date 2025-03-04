@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.MERKLE_TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView.encodeTrieValue;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -158,11 +158,12 @@ public class BonsaiWorldState extends DiffBasedWorldState {
             accountTrie.commit(
                 (location, hash, value) ->
                     writeTrieNode(
-                        TRIE_BRANCH_STORAGE,
+                        MERKLE_TRIE_BRANCH_STORAGE,
                         bonsaiUpdater.getWorldStateTransaction(),
                         location,
                         value)));
     final Bytes32 rootHash = accountTrie.getRootHash();
+    System.out.println("bonsai root " + rootHash);
     return Hash.wrap(rootHash);
   }
 
@@ -460,5 +461,10 @@ public class BonsaiWorldState extends DiffBasedWorldState {
   @Override
   protected Hash getEmptyTrieHash() {
     return Hash.EMPTY_TRIE_HASH;
+  }
+
+  @Override
+  public BonsaiWorldStateUpdateAccumulator getAccumulator() {
+    return (BonsaiWorldStateUpdateAccumulator) accumulator;
   }
 }

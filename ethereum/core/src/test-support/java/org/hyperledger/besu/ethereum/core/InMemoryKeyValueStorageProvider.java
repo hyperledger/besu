@@ -29,7 +29,9 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.transition.StateTransitionWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
@@ -130,6 +132,34 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         Optional.empty(),
         null,
         evmConfiguration);
+  }
+
+  public static StateTransitionWorldStateProvider createStateTransitionInMemoryWorldStateArchive(
+      final Blockchain blockchain, final long verkleMilestone) {
+    final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
+        new InMemoryKeyValueStorageProvider();
+    BonsaiWorldStateProvider bonsaiWorldStateProvider =
+        new BonsaiWorldStateProvider(
+            (BonsaiWorldStateKeyValueStorage)
+                inMemoryKeyValueStorageProvider.createWorldStateStorage(
+                    DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
+            blockchain,
+            Optional.empty(),
+            new NoopBonsaiCachedMerkleTrieLoader(),
+            null,
+            EvmConfiguration.DEFAULT,
+            throwingWorldStateHealerSupplier());
+    VerkleWorldStateProvider verkleWorldStateProvider =
+        new VerkleWorldStateProvider(
+            (VerkleWorldStateKeyValueStorage)
+                inMemoryKeyValueStorageProvider.createWorldStateStorage(
+                    DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG),
+            blockchain,
+            Optional.of(0L),
+            null,
+            EvmConfiguration.DEFAULT);
+    return new StateTransitionWorldStateProvider(
+        bonsaiWorldStateProvider, verkleWorldStateProvider, verkleMilestone, blockchain);
   }
 
   public static MutableWorldState createInMemoryWorldState() {

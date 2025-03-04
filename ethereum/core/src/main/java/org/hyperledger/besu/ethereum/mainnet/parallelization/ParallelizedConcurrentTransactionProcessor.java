@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -244,9 +243,8 @@ public class ParallelizedConcurrentTransactionProcessor {
       final int transactionLocation,
       final Optional<Counter> confirmedParallelizedTransactionCounter,
       final Optional<Counter> conflictingButCachedTransactionCounter) {
-    final DiffBasedWorldState diffBasedWorldState = (DiffBasedWorldState) worldState;
     final DiffBasedWorldStateUpdateAccumulator blockAccumulator =
-        (DiffBasedWorldStateUpdateAccumulator) diffBasedWorldState.updater();
+        (DiffBasedWorldStateUpdateAccumulator) worldState.updater();
     final ParallelizedTransactionContext parallelizedTransactionContext =
         parallelizedTransactionContextByLocation.remove(transactionLocation);
     /*

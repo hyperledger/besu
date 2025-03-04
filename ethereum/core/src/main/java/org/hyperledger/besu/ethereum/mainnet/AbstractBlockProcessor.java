@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -126,6 +126,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final PrivateMetadataUpdater privateMetadataUpdater,
       final PreprocessingFunction preprocessingBlockFunction) {
+
+    worldState.announceBlockToImport(blockHeader);
+
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     long currentBlobGasUsed = 0;
@@ -192,7 +195,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 blockHeader.getHash().toHexString(),
                 transaction.getHash().toHexString());
         LOG.info(errorMessage);
-        if (worldState instanceof DiffBasedWorldState) {
+        if (worldState instanceof DiffBasedWorldView) {
           ((DiffBasedWorldStateUpdateAccumulator<?>) blockUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
@@ -267,7 +270,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
-      if (worldState instanceof DiffBasedWorldState) {
+      if (worldState instanceof DiffBasedWorldView) {
         ((DiffBasedWorldStateUpdateAccumulator<?>) worldState.updater()).reset();
       }
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
@@ -277,7 +280,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       worldState.persist(blockHeader);
     } catch (MerkleTrieException e) {
       LOG.trace("Merkle trie exception during Transaction processing ", e);
-      if (worldState instanceof DiffBasedWorldState) {
+      if (worldState instanceof DiffBasedWorldView) {
         ((DiffBasedWorldStateUpdateAccumulator<?>) worldState.updater()).reset();
       }
       throw e;

@@ -193,7 +193,8 @@ class LogRollingTests {
     storageStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
     trieBranchStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
+        provider.getStorageBySegmentIdentifier(
+            KeyValueSegmentIdentifier.VERKLE_TRIE_BRANCH_STORAGE);
     trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
 
@@ -208,7 +209,8 @@ class LogRollingTests {
         secondProvider.getStorageBySegmentIdentifier(
             KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
     secondTrieBranchStorage =
-        secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
+        secondProvider.getStorageBySegmentIdentifier(
+            KeyValueSegmentIdentifier.VERKLE_TRIE_BRANCH_STORAGE);
     secondTrieLogStorage =
         secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
   }

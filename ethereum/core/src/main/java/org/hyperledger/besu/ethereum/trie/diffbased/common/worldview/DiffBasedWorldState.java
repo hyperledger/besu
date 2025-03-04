@@ -14,10 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.common.worldview;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -210,20 +206,14 @@ public abstract class DiffBasedWorldState
                 cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
               }
             };
-
-        stateUpdater
-            .getWorldStateTransaction()
-            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
+        stateUpdater.saveWorldState(blockHeader.getHash(), calculatedRootHash);
         worldStateBlockHash = blockHeader.getHash();
+        worldStateRootHash = calculatedRootHash;
       } else {
-        stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
-        worldStateBlockHash = null;
+        stateUpdater.saveWorldState(Hash.ZERO, calculatedRootHash);
+        worldStateBlockHash = Hash.ZERO;
+        worldStateRootHash = calculatedRootHash;
       }
-
-      stateUpdater
-          .getWorldStateTransaction()
-          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, calculatedRootHash.toArrayUnsafe());
-      worldStateRootHash = calculatedRootHash;
       success = true;
     } finally {
       if (success) {

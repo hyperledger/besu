@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VERKLE_TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -132,7 +132,7 @@ public class VerkleStemFlatDbStrategy extends FlatDbStrategy {
   }
 
   private Optional<Bytes> getStem(final Bytes stem, final SegmentedKeyValueStorage storage) {
-    return storage.get(TRIE_BRANCH_STORAGE, stem.toArrayUnsafe()).map(Bytes::wrap);
+    return storage.get(VERKLE_TRIE_BRANCH_STORAGE, stem.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   @Override

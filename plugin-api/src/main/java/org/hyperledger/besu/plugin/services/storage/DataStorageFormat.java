@@ -17,9 +17,28 @@ package org.hyperledger.besu.plugin.services.storage;
 /** Supported database storage format */
 public enum DataStorageFormat {
   /** Original format. Store all tries */
-  FOREST,
+  FOREST(0),
   /** New format. Store one trie, and trie logs to roll forward and backward */
-  BONSAI,
+  BONSAI(1),
   /** Storage format for stateless clients */
-  VERKLE;
+  VERKLE(2);
+
+  int value;
+
+  DataStorageFormat(final int value) {
+    this.value = value;
+  }
+
+  public int getValue() {
+    return value;
+  }
+
+  public static DataStorageFormat fromValue(final int value) {
+    for (DataStorageFormat type : values()) {
+      if (type.value == value) {
+        return type;
+      }
+    }
+    return BONSAI;
+  }
 }

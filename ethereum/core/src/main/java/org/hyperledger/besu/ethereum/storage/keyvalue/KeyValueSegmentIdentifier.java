@@ -34,7 +34,7 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   ACCOUNT_INFO_STATE(new byte[] {6}, EnumSet.of(BONSAI, VERKLE), false, true, false),
   CODE_STORAGE(new byte[] {7}, EnumSet.of(BONSAI, VERKLE)),
   ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI, VERKLE), false, true, false),
-  TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI, VERKLE), false, true, false),
+  MERKLE_TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI, VERKLE), false, true, false),
   TRIE_LOG_STORAGE(new byte[] {10}, EnumSet.of(BONSAI, VERKLE), true, false, true),
   VARIABLES(new byte[] {11}), // formerly GOQUORUM_PRIVATE_WORLD_STATE
 
@@ -47,7 +47,9 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   BACKWARD_SYNC_CHAIN(new byte[] {15}),
   SNAPSYNC_MISSING_ACCOUNT_RANGE(new byte[] {16}),
   SNAPSYNC_ACCOUNT_TO_FIX(new byte[] {17}),
-  CHAIN_PRUNER_STATE(new byte[] {18});
+  CHAIN_PRUNER_STATE(new byte[] {18}),
+
+  VERKLE_TRIE_BRANCH_STORAGE(new byte[] {19}, EnumSet.of(VERKLE), false, true, false);
 
   private final byte[] id;
   private final EnumSet<DataStorageFormat> formats;

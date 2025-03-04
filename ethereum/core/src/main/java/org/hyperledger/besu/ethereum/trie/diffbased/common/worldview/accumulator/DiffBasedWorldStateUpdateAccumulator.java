@@ -35,11 +35,13 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -58,7 +60,7 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("unchecked")
 public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffBasedAccount>
     extends AbstractWorldUpdater<DiffBasedWorldView, ACCOUNT>
-    implements DiffBasedWorldView, TrieLogAccumulator {
+    implements WorldUpdater, DiffBasedWorldView, TrieLogAccumulator {
   private static final Logger LOG =
       LoggerFactory.getLogger(DiffBasedWorldStateUpdateAccumulator.class);
   protected final Consumer<DiffBasedValue<ACCOUNT>> accountPreloader;
@@ -76,7 +78,10 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   private final Map<Address, StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>>>
       storageToUpdate = new ConcurrentHashMap<>();
 
+  private final Map<Bytes, Bytes> extraFields = new HashMap<>();
+
   private final Map<UInt256, Hash> storageKeyHashLookup = new ConcurrentHashMap<>();
+
   protected boolean isAccumulatorStateChanged;
 
   public DiffBasedWorldStateUpdateAccumulator(
@@ -95,7 +100,15 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     this.evmConfiguration = evmConfiguration;
   }
 
-  public void cloneFromUpdater(final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+  public DiffBasedWorldStateUpdateAccumulator(
+      final DiffBasedWorldView worldView,
+      final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+    this(
+        worldView,
+        source.accountPreloader,
+        source.storagePreloader,
+        source.codePreloader,
+        source.evmConfiguration);
     accountsToUpdate.putAll(source.getAccountsToUpdate());
     codeToUpdate.putAll(source.codeToUpdate);
     storageToClear.addAll(source.storageToClear);
@@ -301,11 +314,20 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   }
 
   @Override
+  public Map<Bytes, Bytes> getExtraFields() {
+    return extraFields;
+  }
+
+  public void addExtraField(final Bytes key, final Bytes value) {
+    extraFields.put(key, value);
+  }
+
+  @Override
   protected ACCOUNT getForMutation(final Address address) {
     return loadAccount(address, DiffBasedValue::getUpdated);
   }
 
-  protected ACCOUNT loadAccount(
+  public ACCOUNT loadAccount(
       final Address address, final Function<DiffBasedValue<ACCOUNT>, ACCOUNT> accountFunction) {
     try {
       final DiffBasedValue<ACCOUNT> diffBasedValue = accountsToUpdate.get(address);
@@ -416,7 +438,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       accountValue.setUpdated(null);
     }
 
-    getUpdatedAccounts().parallelStream()
+    getUpdatedAccounts()
         .forEach(
             tracked -> {
               final Address updatedAddress = tracked.getAddress();
@@ -957,9 +979,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
 
   protected abstract void assertCloseEnoughForDiffing(
       final ACCOUNT source, final AccountValue account, final String context);
-
-  protected abstract Optional<UInt256> getStorageValueByStorageSlotKey(
-      DiffBasedWorldState worldState, Address address, StorageSlotKey storageSlotKey);
 
   protected abstract boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate();
 }

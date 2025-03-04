@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.AbstractFlatDbStrategyProviderTest;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.AccountHashCodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeHashCodeStorageStrategy;
@@ -30,6 +31,9 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
+
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -113,6 +117,26 @@ class BonsaiFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
     assertThat(flatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
     assertThat(flatDbStrategyProvider.getFlatDbStrategy().getCodeStorageStrategy())
         .isInstanceOf(AccountHashCodeStorageStrategy.class);
+  }
+
+  @Override
+  protected void updateFlatDbMode(
+      final FlatDbMode flatDbMode, final SegmentedKeyValueStorage segmentedKeyValueStorage) {
+    final SegmentedKeyValueStorageTransaction transaction =
+        segmentedKeyValueStorage.startTransaction();
+    transaction.put(
+        KeyValueSegmentIdentifier.MERKLE_TRIE_BRANCH_STORAGE,
+        FlatDbStrategyProvider.FLAT_DB_MODE,
+        flatDbMode.getVersion().toArrayUnsafe());
+    transaction.commit();
+  }
+
+  @Override
+  protected SegmentedKeyValueStorage createSegmentedKeyValueStorage() {
+    return new SegmentedInMemoryKeyValueStorage(
+        List.of(
+            KeyValueSegmentIdentifier.MERKLE_TRIE_BRANCH_STORAGE,
+            KeyValueSegmentIdentifier.CODE_STORAGE));
   }
 
   @Override

@@ -20,18 +20,12 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
-
-import java.util.Optional;
-
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldStateUpdateAccumulator
     extends DiffBasedWorldStateUpdateAccumulator<BonsaiAccount> {
@@ -50,16 +44,15 @@ public class BonsaiWorldStateUpdateAccumulator
         evmConfiguration);
   }
 
+  public BonsaiWorldStateUpdateAccumulator(
+      final DiffBasedWorldView worldView,
+      final DiffBasedWorldStateUpdateAccumulator<BonsaiAccount> source) {
+    super(worldView, source);
+  }
+
   @Override
   public DiffBasedWorldStateUpdateAccumulator<BonsaiAccount> copy() {
-    final BonsaiWorldStateUpdateAccumulator copy =
-        new BonsaiWorldStateUpdateAccumulator(
-            wrappedWorldView(),
-            getAccountPreloader(),
-            getStoragePreloader(),
-            getEvmConfiguration());
-    copy.cloneFromUpdater(this);
-    return copy;
+    return new BonsaiWorldStateUpdateAccumulator(this, this);
   }
 
   @Override
@@ -104,20 +97,6 @@ public class BonsaiWorldStateUpdateAccumulator
   protected void assertCloseEnoughForDiffing(
       final BonsaiAccount source, final AccountValue account, final String context) {
     BonsaiAccount.assertCloseEnoughForDiffing(source, account, context);
-  }
-
-  @Override
-  protected Optional<UInt256> getStorageValueByStorageSlotKey(
-      final DiffBasedWorldState worldState,
-      final Address address,
-      final StorageSlotKey storageSlotKey) {
-    return ((BonsaiWorldState) worldState)
-        .getStorageValueByStorageSlotKey(
-            () ->
-                Optional.ofNullable(loadAccount(address, DiffBasedValue::getPrior))
-                    .map(DiffBasedAccount::getStorageRoot),
-            address,
-            storageSlotKey);
   }
 
   @Override

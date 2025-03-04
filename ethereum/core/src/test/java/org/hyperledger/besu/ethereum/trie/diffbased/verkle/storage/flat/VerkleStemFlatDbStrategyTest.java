@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VERKLE_TRIE_BRANCH_STORAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -104,7 +104,7 @@ class VerkleStemFlatDbStrategyTest {
   void testGetFlatAccountNotFound() {
     final Address address = Address.fromHexString("0x1");
     final Bytes stem = prepareStemForAccount(address);
-    when(storage.get(eq(TRIE_BRANCH_STORAGE), eq(stem.toArrayUnsafe())))
+    when(storage.get(eq(VERKLE_TRIE_BRANCH_STORAGE), eq(stem.toArrayUnsafe())))
         .thenReturn(Optional.empty());
 
     final Optional<VerkleAccount> result =
@@ -136,7 +136,7 @@ class VerkleStemFlatDbStrategyTest {
     final Address address = Address.fromHexString("0x1");
     final StorageSlotKey slotKey = createSlotKey();
     final Bytes stem = prepareStemForSlot(address, slotKey);
-    when(storage.get(eq(TRIE_BRANCH_STORAGE), eq(stem.toArrayUnsafe())))
+    when(storage.get(eq(VERKLE_TRIE_BRANCH_STORAGE), eq(stem.toArrayUnsafe())))
         .thenReturn(Optional.empty());
 
     final Optional<Bytes> result =
@@ -171,7 +171,7 @@ class VerkleStemFlatDbStrategyTest {
 
   private void mockStorageWithStemNode(final Bytes stem, final byte index, final Bytes children) {
     final StemNode<Object> stemNode = createStemNode(stem, index, children);
-    when(storage.get(eq(TRIE_BRANCH_STORAGE), eq(stem.toArrayUnsafe())))
+    when(storage.get(eq(VERKLE_TRIE_BRANCH_STORAGE), eq(stem.toArrayUnsafe())))
         .thenReturn(Optional.of(stemNode.getEncodedValue().toArrayUnsafe()));
   }
 

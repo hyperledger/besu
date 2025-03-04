@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.MERKLE_TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -36,6 +36,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
@@ -58,7 +59,10 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     super(
         provider.getStorageBySegmentIdentifiers(
             List.of(
-                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE)),
+                ACCOUNT_INFO_STATE,
+                CODE_STORAGE,
+                ACCOUNT_STORAGE_STORAGE,
+                MERKLE_TRIE_BRANCH_STORAGE)),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
     this.flatDbStrategyProvider =
         new BonsaiFlatDbStrategyProvider(
@@ -104,10 +108,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
-      return composedWorldStateStorage
-          .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+      return getStateTrieNode(location.toArrayUnsafe()).filter(b -> Hash.hash(b).equals(nodeHash));
     }
   }
 
@@ -116,15 +117,13 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
-      return composedWorldStateStorage
-          .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(accountHash, location).toArrayUnsafe())
-          .map(Bytes::wrap)
+      return getStateTrieNode(Bytes.concatenate(accountHash, location).toArrayUnsafe())
           .filter(b -> Hash.hash(b).equals(nodeHash));
     }
   }
 
   public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
-    return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
+    return getStateTrieNode(key.toArrayUnsafe());
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(
@@ -173,6 +172,11 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     super.clear();
     flatDbStrategyProvider.loadFlatDbStrategy(
         composedWorldStateStorage); // force reload of flat db reader strategy
+  }
+
+  @Override
+  public SegmentIdentifier getTrieBranchSegmentIdentifier() {
+    return MERKLE_TRIE_BRANCH_STORAGE;
   }
 
   @Override
@@ -239,13 +243,20 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     }
 
     @Override
-    public Updater saveWorldState(final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
+    public Updater saveWorldStateAndRootNode(
+        final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
+          MERKLE_TRIE_BRANCH_STORAGE, Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
+      saveWorldState(blockHash, nodeHash);
+      return this;
+    }
+
+    @Override
+    public Updater saveWorldState(final Bytes blockHash, final Bytes32 nodeHash) {
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
+          MERKLE_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
+          MERKLE_TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
       return this;
     }
 
@@ -256,12 +267,12 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
         return this;
       }
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
+          MERKLE_TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
 
     public Updater removeAccountStateTrieNode(final Bytes location) {
-      composedWorldStateTransaction.remove(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
+      composedWorldStateTransaction.remove(MERKLE_TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
       return this;
     }
 
@@ -272,7 +283,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
         return this;
       }
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE,
+          MERKLE_TRIE_BRANCH_STORAGE,
           Bytes.concatenate(accountHash, location).toArrayUnsafe(),
           node.toArrayUnsafe());
       return this;

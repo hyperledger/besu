@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
@@ -26,9 +25,6 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConf
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
-import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
-
-import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -106,22 +102,10 @@ public abstract class AbstractFlatDbStrategyProviderTest {
         .isInstanceOf(CodeHashCodeStorageStrategy.class);
   }
 
-  protected void updateFlatDbMode(
-      final FlatDbMode flatDbMode, final SegmentedKeyValueStorage segmentedKeyValueStorage) {
-    final SegmentedKeyValueStorageTransaction transaction =
-        segmentedKeyValueStorage.startTransaction();
-    transaction.put(
-        KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE,
-        FlatDbStrategyProvider.FLAT_DB_MODE,
-        flatDbMode.getVersion().toArrayUnsafe());
-    transaction.commit();
-  }
+  protected abstract void updateFlatDbMode(
+      final FlatDbMode flatDbMode, final SegmentedKeyValueStorage segmentedKeyValueStorage);
 
-  protected SegmentedKeyValueStorage createSegmentedKeyValueStorage() {
-    return new SegmentedInMemoryKeyValueStorage(
-        List.of(
-            KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE, KeyValueSegmentIdentifier.CODE_STORAGE));
-  }
+  protected abstract SegmentedKeyValueStorage createSegmentedKeyValueStorage();
 
   protected abstract DataStorageFormat getDataStorageFormat();
 

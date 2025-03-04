@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.MERKLE_TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
 import static org.mockito.ArgumentMatchers.any;
@@ -229,7 +229,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
-        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .put(MERKLE_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database
@@ -259,7 +259,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
-        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .put(MERKLE_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database
@@ -288,7 +288,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
-        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .put(MERKLE_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     Mockito.reset(storage);
@@ -336,7 +336,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
-        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .put(MERKLE_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database
@@ -367,7 +367,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
-        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .put(MERKLE_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database
@@ -435,7 +435,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final Bytes rootHashKey = Bytes32.fromHexString("0x01");
     updater
         .getWorldStateTransaction()
-        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, rootHashKey.toArrayUnsafe());
+        .put(MERKLE_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, rootHashKey.toArrayUnsafe());
     updater.commit();
     assertThat(storage.isWorldStateAvailable(Hash.wrap(Bytes32.wrap(rootHashKey)), Hash.EMPTY))
         .isTrue();
@@ -454,7 +454,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     assertThat(storage.isWorldStateAvailable(Bytes32.wrap(nodeHashKey), Hash.EMPTY)).isFalse();
 
-    updater.saveWorldState(blockHash, nodeHashKey, nodeValue);
+    updater.saveWorldStateAndRootNode(blockHash, nodeHashKey, nodeValue);
     updater.commit();
 
     assertThat(storage.isWorldStateAvailable(Bytes32.wrap(nodeHashKey), Hash.EMPTY)).isTrue();

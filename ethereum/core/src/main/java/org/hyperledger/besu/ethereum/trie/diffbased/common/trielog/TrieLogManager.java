@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.BonsaiTrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.trielog.VerkleTrieLogFactoryImpl;
 import org.hyperledger.besu.plugin.ServiceManager;
@@ -44,6 +44,7 @@ public class TrieLogManager {
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogManager.class);
   public static final long LOG_RANGE_LIMIT = 1000; // restrict trielog range queries to 1k logs
   protected final Blockchain blockchain;
+  private final DataStorageFormat dataStorageFormat;
   protected final DiffBasedWorldStateKeyValueStorage rootWorldStateStorage;
 
   protected final long maxLayersToLoad;
@@ -58,6 +59,7 @@ public class TrieLogManager {
       final long maxLayersToLoad,
       final ServiceManager pluginContext) {
     this.blockchain = blockchain;
+    this.dataStorageFormat = dataStorageFormat;
     this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.maxLayersToLoad = maxLayersToLoad;
     this.trieLogFactory = setupTrieLogFactory(dataStorageFormat, pluginContext);
@@ -67,7 +69,7 @@ public class TrieLogManager {
       final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
-      final DiffBasedWorldState forWorldState) {
+      final DiffBasedWorldView forWorldState) {
     // do not overwrite a trielog layer that already exists in the database.
     // if it's only in memory we need to save it
     // for example, in case of reorg we don't replace a trielog layer
@@ -99,7 +101,7 @@ public class TrieLogManager {
         .setMessage("Adding layered world state for {}")
         .addArgument(blockHeader::toLogString)
         .log();
-    final TrieLog trieLog = trieLogFactory.create(localUpdater, blockHeader);
+    final TrieLog trieLog = trieLogFactory.create(localUpdater, dataStorageFormat, blockHeader);
     trieLog.freeze();
     return trieLog;
   }
@@ -136,7 +138,7 @@ public class TrieLogManager {
     trieLogObservers.unsubscribe(id);
   }
 
-  private TrieLogFactory setupTrieLogFactory(
+  protected TrieLogFactory setupTrieLogFactory(
       final DataStorageFormat dataStorageFormat, final ServiceManager pluginContext) {
     // if we have a TrieLogService from pluginContext, use it.
     var trieLogServicez =

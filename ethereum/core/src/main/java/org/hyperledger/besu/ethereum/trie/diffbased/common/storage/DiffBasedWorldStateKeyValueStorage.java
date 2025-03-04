@@ -14,14 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.common.storage;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
@@ -29,12 +22,12 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -66,15 +59,6 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   protected final SegmentedKeyValueStorage composedWorldStateStorage;
   protected final KeyValueStorage trieLogStorage;
 
-  public DiffBasedWorldStateKeyValueStorage(final StorageProvider provider) {
-    this.composedWorldStateStorage =
-        provider.getStorageBySegmentIdentifiers(
-            List.of(
-                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
-    this.trieLogStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-  }
-
   public DiffBasedWorldStateKeyValueStorage(
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
@@ -105,21 +89,20 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     return trieLogStorage.streamKeys().limit(limit);
   }
 
-  public Optional<Bytes> getStateTrieNode(final Bytes location) {
-    return composedWorldStateStorage
-        .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
-        .map(Bytes::wrap);
+  public Optional<Bytes> getStateTrieNode(final Bytes key) {
+    return getStateTrieNode(key.toArrayUnsafe());
+  }
+
+  public Optional<Bytes> getStateTrieNode(final byte[] key) {
+    return composedWorldStateStorage.get(getTrieBranchSegmentIdentifier(), key).map(Bytes::wrap);
   }
 
   public Optional<Bytes> getWorldStateRootHash() {
-    return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).map(Bytes::wrap);
+    return getStateTrieNode(WORLD_ROOT_HASH_KEY);
   }
 
   public Optional<Hash> getWorldStateBlockHash() {
-    return composedWorldStateStorage
-        .get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY)
-        .map(Bytes32::wrap)
-        .map(Hash::wrap);
+    return getStateTrieNode(WORLD_BLOCK_HASH_KEY).map(Bytes32::wrap).map(Hash::wrap);
   }
 
   public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
@@ -150,8 +133,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   }
 
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
-    return composedWorldStateStorage
-        .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
+    return getWorldStateRootHash()
         .map(Bytes32::wrap)
         .map(hash -> hash.equals(rootHash) || trieLogStorage.containsKey(blockHash.toArrayUnsafe()))
         .orElse(false);
@@ -161,7 +143,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   public void clear() {
     subscribers.forEach(StorageSubscriber::onClearStorage);
     getFlatDbStrategy().clearAll(composedWorldStateStorage);
-    composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
+    composedWorldStateStorage.clear(getTrieBranchSegmentIdentifier());
     trieLogStorage.clear();
   }
 
@@ -172,13 +154,15 @@ public abstract class DiffBasedWorldStateKeyValueStorage
 
   public void clearTrie() {
     subscribers.forEach(StorageSubscriber::onClearTrie);
-    composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
+    composedWorldStateStorage.clear(getTrieBranchSegmentIdentifier());
   }
 
   public void clearFlatDatabase() {
     subscribers.forEach(StorageSubscriber::onClearFlatDatabaseStorage);
     getFlatDbStrategy().resetOnResync(composedWorldStateStorage);
   }
+
+  public abstract SegmentIdentifier getTrieBranchSegmentIdentifier();
 
   @Override
   public abstract Updater updater();
@@ -240,8 +224,11 @@ public abstract class DiffBasedWorldStateKeyValueStorage
 
   public interface Updater extends WorldStateKeyValueStorage.Updater {
 
-    DiffBasedWorldStateKeyValueStorage.Updater saveWorldState(
+    DiffBasedWorldStateKeyValueStorage.Updater saveWorldStateAndRootNode(
         final Bytes blockHash, final Bytes32 nodeHash, final Bytes node);
+
+    DiffBasedWorldStateKeyValueStorage.Updater saveWorldState(
+        final Bytes blockHash, final Bytes32 nodeHash);
 
     SegmentedKeyValueStorageTransaction getWorldStateTransaction();
 
