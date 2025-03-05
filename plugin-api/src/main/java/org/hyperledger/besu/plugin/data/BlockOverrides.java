@@ -31,7 +31,6 @@ public class BlockOverrides {
   private Optional<Long> timestamp;
   private Optional<Long> blockNumber;
   private final Optional<Hash> blockHash;
-  private final Optional<Bytes32> prevRandao;
   private final Optional<Long> gasLimit;
   private final Optional<Address> feeRecipient;
   private final Optional<Wei> baseFeePerGas;
@@ -39,7 +38,7 @@ public class BlockOverrides {
   private final Optional<Hash> stateRoot;
   private final Optional<BigInteger> difficulty;
   private final Optional<Bytes> extraData;
-  private final Optional<Hash> mixHash;
+  private final Optional<Bytes32> mixHashOrPrevRandao;
   private final Optional<Function<Long, Hash>> blockHashLookup;
 
   /**
@@ -48,7 +47,6 @@ public class BlockOverrides {
    * @param timestamp the optional timestamp
    * @param blockNumber the optional block number
    * @param blockHash the optional block hash
-   * @param prevRandao the optional previous Randao
    * @param gasLimit the optional gas limit
    * @param feeRecipient the optional fee recipient
    * @param baseFeePerGas the optional base fee per gas
@@ -56,13 +54,12 @@ public class BlockOverrides {
    * @param stateRoot the optional state root
    * @param difficulty the optional difficulty
    * @param extraData the optional extra data
-   * @param mixHash the optional mix hash or previous Randao
+   * @param mixHashOrPrevRandao the optional mix hash or previous Randao
    */
   public BlockOverrides(
       final Optional<UnsignedLongParameter> timestamp,
       final Optional<UnsignedLongParameter> blockNumber,
       final Optional<Hash> blockHash,
-      final Optional<String> prevRandao,
       final Optional<UnsignedLongParameter> gasLimit,
       final Optional<Address> feeRecipient,
       final Optional<Wei> baseFeePerGas,
@@ -70,11 +67,10 @@ public class BlockOverrides {
       final Optional<Hash> stateRoot,
       final Optional<BigInteger> difficulty,
       final Optional<Bytes> extraData,
-      final Optional<Hash> mixHash) {
+      final Optional<Bytes32> mixHashOrPrevRandao) {
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
     this.blockNumber = blockNumber.map(UnsignedLongParameter::getValue);
     this.blockHash = blockHash;
-    this.prevRandao = prevRandao.map(Bytes32::fromHexString);
     this.gasLimit = gasLimit.map(UnsignedLongParameter::getValue);
     this.feeRecipient = feeRecipient;
     this.baseFeePerGas = baseFeePerGas;
@@ -82,7 +78,7 @@ public class BlockOverrides {
     this.stateRoot = stateRoot;
     this.difficulty = difficulty;
     this.extraData = extraData;
-    this.mixHash = mixHash;
+    this.mixHashOrPrevRandao = mixHashOrPrevRandao;
     this.blockHashLookup = Optional.empty();
   }
 
@@ -94,7 +90,6 @@ public class BlockOverrides {
   private BlockOverrides(final Builder builder) {
     this.blockNumber = Optional.ofNullable(builder.blockNumber);
     this.blockHash = Optional.ofNullable(builder.blockHash);
-    this.prevRandao = Optional.ofNullable(builder.prevRandao);
     this.timestamp = Optional.ofNullable(builder.timestamp);
     this.gasLimit = Optional.ofNullable(builder.gasLimit);
     this.feeRecipient = Optional.ofNullable(builder.feeRecipient);
@@ -103,7 +98,7 @@ public class BlockOverrides {
     this.stateRoot = Optional.ofNullable(builder.stateRoot);
     this.difficulty = Optional.ofNullable(builder.difficulty);
     this.extraData = Optional.ofNullable(builder.extraData);
-    this.mixHash = Optional.ofNullable(builder.mixHash);
+    this.mixHashOrPrevRandao = Optional.ofNullable(builder.mixHashOrPrevRandao);
     this.blockHashLookup = Optional.ofNullable(builder.blockHashLookup);
   }
 
@@ -123,15 +118,6 @@ public class BlockOverrides {
    */
   public Optional<Hash> getBlockHash() {
     return blockHash;
-  }
-
-  /**
-   * Gets the previous Randao.
-   *
-   * @return the optional previous Randao
-   */
-  public Optional<Bytes32> getPrevRandao() {
-    return prevRandao;
   }
 
   /**
@@ -229,8 +215,8 @@ public class BlockOverrides {
    *
    * @return the optional mix hash or previous Randao
    */
-  public Optional<Hash> getMixHash() {
-    return mixHash;
+  public Optional<Bytes32> getMixHashOrPrevRandao() {
+    return mixHashOrPrevRandao;
   }
 
   /**
@@ -256,7 +242,6 @@ public class BlockOverrides {
     private Long timestamp;
     private Long blockNumber;
     private Hash blockHash;
-    private Bytes32 prevRandao;
     private Long gasLimit;
     private Address feeRecipient;
     private Wei baseFeePerGas;
@@ -264,7 +249,7 @@ public class BlockOverrides {
     private Hash stateRoot;
     private BigInteger difficulty;
     private Bytes extraData;
-    private Hash mixHash;
+    private Hash mixHashOrPrevRandao;
     private Function<Long, Hash> blockHashLookup;
 
     /** Constructs a new Builder instance. */
@@ -300,17 +285,6 @@ public class BlockOverrides {
      */
     public Builder blockHash(final Hash blockHash) {
       this.blockHash = blockHash;
-      return this;
-    }
-
-    /**
-     * Sets the previous Randao.
-     *
-     * @param prevRandao the previous Randao to set
-     * @return the builder instance
-     */
-    public Builder prevRandao(final Bytes32 prevRandao) {
-      this.prevRandao = prevRandao;
       return this;
     }
 
@@ -397,8 +371,8 @@ public class BlockOverrides {
      * @param mixHash the mix hash
      * @return the builder instance
      */
-    public Builder mixHash(final Hash mixHash) {
-      this.mixHash = mixHash;
+    public Builder mixHashOrPrevRandao(final Hash mixHash) {
+      this.mixHashOrPrevRandao = mixHash;
       return this;
     }
 

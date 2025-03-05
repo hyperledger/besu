@@ -353,10 +353,7 @@ public class BlockSimulator {
                                 : Wei.ZERO))
             .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
             .parentBeaconBlockRoot(Bytes32.ZERO)
-            .prevRandao(Bytes32.ZERO);
-
-    blockOverrides.getPrevRandao().ifPresent(builder::prevRandao);
-    blockOverrides.getMixHash().ifPresent(builder::mixHash);
+            .prevRandao(blockOverrides.getMixHashOrPrevRandao().orElse(Bytes32.ZERO));
 
     return builder
         .blockHeaderFunctions(new BlockStateCallBlockHeaderFunctions(blockOverrides))

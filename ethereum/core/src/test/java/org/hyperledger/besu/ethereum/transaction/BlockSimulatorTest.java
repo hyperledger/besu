@@ -227,8 +227,7 @@ public class BlockSimulatorTest {
             .baseFeePerGas(expectedBaseFeePerGas)
             .gasLimit(expectedGasLimit)
             .difficulty(expectedDifficulty)
-            .mixHash(expectedMixHashOrPrevRandao)
-            .prevRandao(expectedPrevRandao)
+            .mixHashOrPrevRandao(expectedMixHashOrPrevRandao)
             .extraData(expectedExtraData)
             .build();
 
