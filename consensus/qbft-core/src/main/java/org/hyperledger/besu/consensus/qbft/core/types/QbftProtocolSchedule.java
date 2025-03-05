@@ -23,7 +23,7 @@ public interface QbftProtocolSchedule {
   /**
    * Returns the appropriate block importer for the supplied block header.
    *
-   * @param header
+   * @param header the block header
    * @return the block importer
    */
   QbftBlockImporter getBlockImporter(QbftBlockHeader header);
@@ -31,7 +31,7 @@ public interface QbftProtocolSchedule {
   /**
    * Returns the appropriate block validator for the supplied block header.
    *
-   * @param header
+   * @param header the block header
    * @return the block validator
    */
   QbftBlockValidator getBlockValidator(QbftBlockHeader header);
