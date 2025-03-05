@@ -43,7 +43,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -85,7 +84,6 @@ public class QbftRoundIntegrationTest {
   private ProtocolContext protocolContext;
 
   @Mock private QbftProtocolSchedule protocolSchedule;
-  @Mock private QbftProtocolSpec protocolSpec;
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
   @Mock private QbftBlockImporter blockImporter;
@@ -130,8 +128,7 @@ public class QbftRoundIntegrationTest {
     final Block block = new Block(header, new BlockBody(emptyList(), emptyList()));
     proposedBlock = new QbftBlockAdaptor(block);
 
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
+    when(protocolSchedule.getBlockImporter(any())).thenReturn(blockImporter);
 
     when(blockImporter.importBlock(any())).thenReturn(true);
 
