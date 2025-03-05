@@ -103,6 +103,7 @@ public class BesuController implements java.io.Closeable {
    * @param storageProvider the storage provider
    * @param dataStorageConfiguration the data storage configuration
    * @param transactionSimulator the transaction simulator
+   * @param dataDirectory the data directory
    */
   BesuController(
       final ProtocolSchedule protocolSchedule,
@@ -324,6 +325,11 @@ public class BesuController implements java.io.Closeable {
     return transactionSimulator;
   }
 
+  /**
+   * Gets the data directory
+   *
+   * @return the data directory
+   */
   public Path getDataDirectory() {
     return dataDirectory;
   }
