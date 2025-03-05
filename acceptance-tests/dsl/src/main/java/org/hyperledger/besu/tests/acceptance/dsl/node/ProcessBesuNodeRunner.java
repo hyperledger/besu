@@ -48,6 +48,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -529,8 +530,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       return;
     }
 
-    process
-        .descendants()
+    Stream.concat(process.descendants(), Stream.of(process.toHandle()))
         .peek(
             processHandle ->
                 LOG.info("Killing {} process, pid {}", processHandle.info(), processHandle.pid()))

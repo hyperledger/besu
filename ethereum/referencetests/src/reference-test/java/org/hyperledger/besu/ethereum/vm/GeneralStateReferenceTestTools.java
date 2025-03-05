@@ -117,8 +117,7 @@ public class GeneralStateReferenceTestTools {
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");
 
-    // TODO: remove once updated EIP-2537 gas cost artifacts exist
-    params.ignore("/eip2537_bls_12_381_precompiles/");
+    // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
     params.ignore("/stEIP2537/");
 
   }

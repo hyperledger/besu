@@ -14,23 +14,17 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.support;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHashingAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.core.payload.CommitPayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHashing;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 
@@ -42,18 +36,9 @@ public class IntegrationTestHelpers {
       final NodeKey nodeKey,
       final QbftBlockCodec blockEncoder) {
 
-    final QbftExtraDataCodec qbftExtraDataEncoder = new QbftExtraDataCodec();
-
     final QbftBlock commitBlock =
         createCommitBlockFromProposalBlock(block, roundId.getRoundNumber());
-    final QbftBlockHashing blockHashing =
-        new QbftBlockHashingAdaptor(new BftBlockHashing(qbftExtraDataEncoder));
-    final QbftExtraDataProvider extraDataProvider =
-        new QbftExtraDataProviderAdaptor(qbftExtraDataEncoder);
-    final SECPSignature commitSeal =
-        nodeKey.sign(
-            blockHashing.calculateDataHashForCommittedSeal(
-                commitBlock.getHeader(), extraDataProvider.getExtraData(commitBlock.getHeader())));
+    final SECPSignature commitSeal = nodeKey.sign(commitBlock.getHash());
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
 
@@ -77,7 +62,6 @@ public class IntegrationTestHelpers {
     final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
     final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
     final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
-    return qbftBlockInterface.replaceRoundInBlock(
-        proposalBlock, round, QbftHashMode.COMMITTED_SEAL);
+    return qbftBlockInterface.replaceRoundInBlock(proposalBlock, round);
   }
 }

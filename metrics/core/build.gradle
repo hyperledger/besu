@@ -54,6 +54,7 @@ dependencies {
   implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
   implementation 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure'
   implementation 'io.opentelemetry.semconv:opentelemetry-semconv'
+  implementation 'io.opentelemetry.semconv:opentelemetry-semconv-incubating'
 
   implementation 'io.prometheus:prometheus-metrics-core'
   implementation 'io.prometheus:prometheus-metrics-instrumentation-guava'
