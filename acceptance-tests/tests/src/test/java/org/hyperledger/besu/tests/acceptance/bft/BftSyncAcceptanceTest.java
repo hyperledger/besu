@@ -14,14 +14,10 @@
  */
 package org.hyperledger.besu.tests.acceptance.bft;
 
-import static java.lang.Thread.sleep;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import java.math.BigInteger;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
@@ -64,21 +60,10 @@ public class BftSyncAcceptanceTest extends ParameterizedBftTestBase {
     // Start first three validators
     cluster.start(validator1, validator2, validator3);
 
-    // Wait for blocks to be mined
-    sleep(TARGET_BLOCK_HEIGHT * 1000);
-    BigInteger chainHeight = validator1.execute(ethTransactions.blockNumber());
-    assertThat(chainHeight.compareTo(BigInteger.valueOf(TARGET_BLOCK_HEIGHT)))
-        .isGreaterThanOrEqualTo(1);
-
+    validator1.verify(blockchain.minimumHeight(TARGET_BLOCK_HEIGHT, TARGET_BLOCK_HEIGHT));
     // Add validator4 to cluster and start
     cluster.addNode(validator4);
 
-    // wait for sync
-    sleep(20000);
-
-    // Verify validator4 syncs and reaches target height
-    chainHeight = validator4.execute(ethTransactions.blockNumber());
-    assertThat(chainHeight.compareTo(BigInteger.valueOf(TARGET_BLOCK_HEIGHT)))
-        .isGreaterThanOrEqualTo(1);
+    validator4.verify(blockchain.minimumHeight(TARGET_BLOCK_HEIGHT, 60));
   }
 }
