@@ -27,9 +27,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The Genesis config file. */
 public class GenesisConfig {
+
+  private static final Logger LOG = LoggerFactory.getLogger(GenesisConfig.class);
 
   /** The constant DEFAULT. */
   public static final GenesisConfig DEFAULT =
@@ -128,10 +132,17 @@ public class GenesisConfig {
       overridesRef.put("baseFeePerGas", optBaseFee.get().toShortHexString());
     }
 
-    final long optGasLimit = getGasLimit();
-    if (optGasLimit > 0) {
-      overridesRef = overridesRef.isEmpty() ? new HashMap<>() : overridesRef;
-      overridesRef.put("gasLimit", Long.toString(optGasLimit));
+    try {
+      final long optGasLimit = getGasLimit();
+      if (optGasLimit > 0) {
+        overridesRef = overridesRef.isEmpty() ? new HashMap<>() : overridesRef;
+        overridesRef.put("gasLimit", Long.toString(optGasLimit));
+      }
+    } catch (final IllegalArgumentException illegalArgumentException) {
+      LOG.atDebug()
+          .setMessage("GasLimit or gasTarget not present in genesis config options")
+          .setCause(illegalArgumentException)
+          .log();
     }
 
     return JsonGenesisConfigOptions.fromJsonObjectWithOverrides(config, overridesRef);
