@@ -16,13 +16,25 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.ethereum.core.DepositContract;
 import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.tx.Contract;
 
 public class DepositLogDecoder {
 
+  private static final LogTopic DEPOSIT_EVENT_TOPIC =
+      LogTopic.wrap(
+          Bytes.fromHexString(
+              "0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5"));
+
   public static Bytes decodeFromLog(final Log log) {
+    // The deposit contract on Sepolia emits two events: Deposit and Transfer. We only are
+    // interested in the Deposit event.
+    if (log.getTopics().isEmpty() || !log.getTopics().getFirst().equals(DEPOSIT_EVENT_TOPIC)) {
+      return Bytes.EMPTY;
+    }
+
     Contract.EventValuesWithLog eventValues = DepositContract.staticExtractDepositEventWithLog(log);
     final Bytes rawPublicKey =
         Bytes.wrap((byte[]) eventValues.getNonIndexedValues().get(0).getValue());
