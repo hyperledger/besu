@@ -205,7 +205,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .buildProcessableBlockHeader();
 
       final Address miningBeneficiary =
-          miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
+          miningBeneficiaryCalculator.getMiningBeneficiary(
+              processableBlockHeader.getNumber(), timestamp, parentHeader);
 
       throwIfStopped();
 
@@ -495,6 +496,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   @FunctionalInterface
   protected interface MiningBeneficiaryCalculator {
-    Address getMiningBeneficiary(long blockNumber);
+    Address getMiningBeneficiary(long blockNumber, long blockTimestamp, BlockHeader parentHeader);
   }
 }
