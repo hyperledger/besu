@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.transaction;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 import static org.hyperledger.besu.ethereum.transaction.BlockStateCalls.fillBlockStateCalls;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
@@ -48,14 +47,9 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
@@ -413,15 +407,13 @@ public class BlockSimulator {
         .orElse(null);
   }
 
-  private BlockStateCallWorldState getWorldState(final BlockHeader blockHeader) {
-    final MutableWorldState ws =
-        worldStateArchive
-            .getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader))
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Public world state not available for block " + blockHeader.toLogString()));
-    return new BlockStateCallWorldState((BonsaiWorldState) ws);
+  private MutableWorldState getWorldState(final BlockHeader blockHeader) {
+    return worldStateArchive
+        .getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader))
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "Public world state not available for block " + blockHeader.toLogString()));
   }
 
   private static class BlockStateCallBlockHeaderFunctions implements BlockHeaderFunctions {
@@ -442,17 +434,6 @@ public class BlockSimulator {
     @Override
     public ParsedExtraData parseExtraData(final BlockHeader header) {
       return blockHeaderFunctions.parseExtraData(header);
-    }
-  }
-
-  private static class BlockStateCallWorldState extends BonsaiWorldState {
-    private BlockStateCallWorldState(final BonsaiWorldState mutableWorldState) {
-      super(mutableWorldState, new NoopBonsaiCachedMerkleTrieLoader());
-    }
-
-    @Override
-    public Hash rootHash() {
-      return calculateRootHash(Optional.empty(), getAccumulator().copy());
     }
   }
 

@@ -59,18 +59,18 @@ public class BlockOverrides {
    * @param mixHash the optional mix hash or previous Randao
    */
   public BlockOverrides(
-    final Optional<UnsignedLongParameter> timestamp,
-    final Optional<UnsignedLongParameter> blockNumber,
-    final Optional<Hash> blockHash,
-    final Optional<String> prevRandao,
-    final Optional<UnsignedLongParameter> gasLimit,
-    final Optional<Address> feeRecipient,
-    final Optional<Wei> baseFeePerGas,
-    final Optional<Wei> blobBaseFee,
-    final Optional<Hash> stateRoot,
-    final Optional<BigInteger> difficulty,
-    final Optional<Bytes> extraData,
-    final Optional<Hash> mixHash) {
+      final Optional<UnsignedLongParameter> timestamp,
+      final Optional<UnsignedLongParameter> blockNumber,
+      final Optional<Hash> blockHash,
+      final Optional<String> prevRandao,
+      final Optional<UnsignedLongParameter> gasLimit,
+      final Optional<Address> feeRecipient,
+      final Optional<Wei> baseFeePerGas,
+      final Optional<Wei> blobBaseFee,
+      final Optional<Hash> stateRoot,
+      final Optional<BigInteger> difficulty,
+      final Optional<Bytes> extraData,
+      final Optional<Hash> mixHash) {
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
     this.blockNumber = blockNumber.map(UnsignedLongParameter::getValue);
     this.blockHash = blockHash;
