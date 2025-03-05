@@ -285,6 +285,13 @@ public interface GenesisConfigOptions {
   Optional<Wei> getBaseFeePerGas();
 
   /**
+   * Gets target gas limit.
+   *
+   * @return the target gas limit
+   */
+  OptionalLong getGasLimit();
+
+  /**
    * Gets terminal total difficulty.
    *
    * @return the terminal total difficulty

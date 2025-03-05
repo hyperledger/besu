@@ -128,6 +128,12 @@ public class GenesisConfig {
       overridesRef.put("baseFeePerGas", optBaseFee.get().toShortHexString());
     }
 
+    final long optGasLimit = getGasLimit();
+    if (optGasLimit > 0) {
+      overridesRef = overridesRef.isEmpty() ? new HashMap<>() : overridesRef;
+      overridesRef.put("gasLimit", Long.toString(optGasLimit));
+    }
+
     return JsonGenesisConfigOptions.fromJsonObjectWithOverrides(config, overridesRef);
   }
 

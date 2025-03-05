@@ -335,6 +335,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getGasLimit() {
+    return getOptionalLong("gaslimit");
+  }
+
+  @Override
   public Optional<UInt256> getTerminalTotalDifficulty() {
     return getOptionalBigInteger("terminaltotaldifficulty").map(UInt256::valueOf);
   }

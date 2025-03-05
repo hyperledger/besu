@@ -58,6 +58,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
 
   private Optional<Wei> baseFeePerGas = Optional.empty();
+  private OptionalLong gasLimit = OptionalLong.empty();
   private OptionalLong classicForkBlock = OptionalLong.empty();
   private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
   private OptionalLong diehardBlockNumber = OptionalLong.empty();
@@ -269,6 +270,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public Optional<Wei> getBaseFeePerGas() {
     return baseFeePerGas;
+  }
+
+  @Override
+  public OptionalLong getGasLimit() {
+    return gasLimit;
   }
 
   @Override
@@ -750,6 +756,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions baseFeePerGas(final long baseFeeOverride) {
     baseFeePerGas = Optional.of(Wei.of(baseFeeOverride));
+    return this;
+  }
+
+  /**
+   * gas limit stub genesis config options.
+   *
+   * @param gasLimit the target gas limit
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions gasLimit(final long gasLimit) {
+    this.gasLimit = OptionalLong.of(gasLimit);
     return this;
   }
 
