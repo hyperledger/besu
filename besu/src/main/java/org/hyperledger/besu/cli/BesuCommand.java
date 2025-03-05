@@ -693,7 +693,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.Option(
       names = {"--cache-last-blocks"},
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
-  private final Integer numberOfblocksToCache = 0;
+  private final Integer numberOfBlocksToCache = 0;
 
   // Plugins Configuration Option Group
   @CommandLine.ArgGroup(validate = false)
@@ -1812,7 +1812,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
             .randomPeerPriority(p2PDiscoveryOptions.randomPeerPriority)
             .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
-            .cacheLastBlocks(numberOfblocksToCache)
+            .cacheLastBlocks(numberOfBlocksToCache)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
             .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
