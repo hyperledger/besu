@@ -38,13 +38,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -78,7 +77,6 @@ public class BlockSimulatorTest {
   @Mock private Blockchain blockchain;
 
   private BlockHeader blockHeader;
-
   private BlockSimulator blockSimulator;
 
   @BeforeEach
@@ -112,6 +110,7 @@ public class BlockSimulatorTest {
 
     List<BlockSimulationResult> results =
         blockSimulator.process(blockHeader, BlockSimulationParameter.EMPTY);
+
     assertNotNull(results);
     verify(worldStateArchive).getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader));
   }
@@ -143,19 +142,12 @@ public class BlockSimulatorTest {
         .thenReturn(Optional.of("Invalid Transaction"));
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(MiningBeneficiaryCalculator.class),
-            any()))
+            any(), any(), any(), any(), any(), any(), any(), 0, any(), any(), any()))
         .thenReturn(Optional.of(transactionSimulatorResult));
 
-    BlockSimulationException exception =
+    BlockStateCallException exception =
         assertThrows(
-            BlockSimulationException.class,
+            BlockStateCallException.class,
             () ->
                 blockSimulator.process(
                     blockHeader, new BlockSimulationParameter(blockStateCall), mutableWorldState));
@@ -171,19 +163,12 @@ public class BlockSimulatorTest {
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(MiningBeneficiaryCalculator.class),
-            any()))
+            any(), any(), any(), any(), any(), any(), any(), 0, any(), any(), any()))
         .thenReturn(Optional.empty());
 
-    BlockSimulationException exception =
+    BlockStateCallException exception =
         assertThrows(
-            BlockSimulationException.class,
+            BlockStateCallException.class,
             () ->
                 blockSimulator.process(
                     blockHeader, new BlockSimulationParameter(blockStateCall), mutableWorldState));
@@ -221,7 +206,7 @@ public class BlockSimulatorTest {
   }
 
   @Test
-  public void shouldApplyBlockHeaderOverridesCorrectly() {
+  public void shouldOverrideBlockHeaderCorrectly() {
     ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
 
     var expectedTimestamp = 1L;
@@ -231,6 +216,7 @@ public class BlockSimulatorTest {
     var expectedGasLimit = 5L;
     var expectedDifficulty = BigInteger.ONE;
     var expectedMixHashOrPrevRandao = Hash.hash(Bytes.fromHexString("0x01"));
+    var expectedPrevRandao = Hash.hash(Bytes.fromHexString("0x01"));
     var expectedExtraData = Bytes.fromHexString("0x02");
 
     BlockOverrides blockOverrides =
@@ -241,12 +227,13 @@ public class BlockSimulatorTest {
             .baseFeePerGas(expectedBaseFeePerGas)
             .gasLimit(expectedGasLimit)
             .difficulty(expectedDifficulty)
-            .mixHashOrPrevRandao(expectedMixHashOrPrevRandao)
+            .mixHash(expectedMixHashOrPrevRandao)
+            .prevRandao(expectedPrevRandao)
             .extraData(expectedExtraData)
             .build();
 
     BlockHeader result =
-        blockSimulator.applyBlockHeaderOverrides(blockHeader, protocolSpec, blockOverrides);
+        blockSimulator.overrideBlockHeader(blockHeader, protocolSpec, blockOverrides, true);
 
     assertNotNull(result);
     assertEquals(expectedTimestamp, result.getTimestamp());
@@ -256,22 +243,7 @@ public class BlockSimulatorTest {
     assertEquals(expectedGasLimit, result.getGasLimit());
     assertThat(result.getDifficulty()).isEqualTo(Difficulty.of(expectedDifficulty));
     assertEquals(expectedMixHashOrPrevRandao, result.getMixHash());
+    assertEquals(expectedPrevRandao, result.getPrevRandao().get());
     assertEquals(expectedExtraData, result.getExtraData());
-  }
-
-  @Test
-  public void testBuildTransactionValidationParams() {
-    var configWhenValidate =
-        ImmutableTransactionValidationParams.builder()
-            .from(TransactionValidationParams.processingBlock())
-            .build();
-
-    ImmutableTransactionValidationParams params =
-        blockSimulator.buildTransactionValidationParams(true);
-    assertThat(params).isEqualTo(configWhenValidate);
-    assertThat(params.isAllowExceedingBalance()).isFalse();
-
-    params = blockSimulator.buildTransactionValidationParams(false);
-    assertThat(params.isAllowExceedingBalance()).isTrue();
   }
 }
