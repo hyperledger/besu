@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -78,6 +79,7 @@ public class BesuController implements java.io.Closeable {
   private final StorageProvider storageProvider;
   private final DataStorageConfiguration dataStorageConfiguration;
   private final TransactionSimulator transactionSimulator;
+  private final Path dataDirectory;
 
   /**
    * Instantiates a new Besu controller.
@@ -121,7 +123,8 @@ public class BesuController implements java.io.Closeable {
       final EthPeers ethPeers,
       final StorageProvider storageProvider,
       final DataStorageConfiguration dataStorageConfiguration,
-      final TransactionSimulator transactionSimulator) {
+      final TransactionSimulator transactionSimulator,
+      final Path dataDirectory) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -141,6 +144,7 @@ public class BesuController implements java.io.Closeable {
     this.storageProvider = storageProvider;
     this.dataStorageConfiguration = dataStorageConfiguration;
     this.transactionSimulator = transactionSimulator;
+    this.dataDirectory = dataDirectory;
   }
 
   /**
@@ -318,6 +322,10 @@ public class BesuController implements java.io.Closeable {
    */
   public TransactionSimulator getTransactionSimulator() {
     return transactionSimulator;
+  }
+
+  public Path getDataDirectory() {
+    return dataDirectory;
   }
 
   /** The type Builder. */

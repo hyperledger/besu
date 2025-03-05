@@ -63,8 +63,7 @@ public class Era1BlockImporter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(Era1BlockImporter.class);
 
   private static final String FASTSYNC_DIRECTORY = "fastsync";
-  private static final String PIVOT_BLOCK_HEADER_FILE_PATH =
-      FASTSYNC_DIRECTORY + "/pivotBlockHeader.rlp";
+  private static final String PIVOT_BLOCK_HEADER_FILE_NAME = "pivotBlockHeader.rlp";
   private static final int ERA1_BLOCK_COUNT_MAX = 8192;
   private static final int IMPORT_COUNT_FOR_LOG_UPDATE = 1000;
 
@@ -83,14 +82,17 @@ public class Era1BlockImporter implements Closeable {
    */
   public void importBlocks(final BesuController controller, final Path path)
       throws IOException, ExecutionException, InterruptedException, TimeoutException {
-    File fastSyncDir = new File("./" + FASTSYNC_DIRECTORY);
+    File fastSyncDir = controller.getDataDirectory().resolve(FASTSYNC_DIRECTORY).toFile();
     if (!fastSyncDir.exists()) {
+      LOG.info("Creating " + fastSyncDir);
       if (!fastSyncDir.mkdir()) {
-        throw new RuntimeException("Unable to create ./" + FASTSYNC_DIRECTORY + " directory");
+        throw new RuntimeException("Unable to create " + fastSyncDir + " directory");
       }
-      File pivotBlockHeaderFile = new File("./" + PIVOT_BLOCK_HEADER_FILE_PATH);
+      File pivotBlockHeaderFile =
+          fastSyncDir.toPath().resolve(PIVOT_BLOCK_HEADER_FILE_NAME).toFile();
+      LOG.info("Creating " + pivotBlockHeaderFile);
       if (!pivotBlockHeaderFile.createNewFile()) {
-        throw new RuntimeException("Unable to create ./" + PIVOT_BLOCK_HEADER_FILE_PATH);
+        throw new RuntimeException("Unable to create " + pivotBlockHeaderFile);
       }
     }
 
@@ -181,7 +183,7 @@ public class Era1BlockImporter implements Closeable {
       }
     }
     if (block != null) {
-      FastSyncStateStorage fastSyncStateStorage = new FastSyncStateStorage(Path.of("fastsync"));
+      FastSyncStateStorage fastSyncStateStorage = new FastSyncStateStorage(fastSyncDir.toPath());
       fastSyncStateStorage.storeState(new FastSyncState(block.getHeader()));
     }
     LOG.info("Done importing {} blocks", headersFutures.size());

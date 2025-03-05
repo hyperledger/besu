@@ -825,7 +825,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         ethPeers,
         storageProvider,
         dataStorageConfiguration,
-        transactionSimulator);
+        transactionSimulator,
+        dataDirectory);
   }
 
   private GenesisState getGenesisState(
