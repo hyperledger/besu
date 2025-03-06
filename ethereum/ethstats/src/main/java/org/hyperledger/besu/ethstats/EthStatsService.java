@@ -72,10 +72,9 @@ import java.util.stream.LongStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.WebSocket;
+import io.vertx.core.http.WebSocketClient;
 import io.vertx.core.http.WebSocketConnectOptions;
-import io.vertx.core.net.PemTrustOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +102,6 @@ public class EthStatsService {
   private final P2PNetwork p2PNetwork;
   private final BlockchainQueries blockchainQueries;
   private final BlockResultFactory blockResultFactory;
-  private final HttpClientOptions httpClientOptions;
   private final WebSocketConnectOptions webSocketConnectOptions;
 
   private ScheduledFuture<?> reportScheduler;
@@ -147,19 +145,7 @@ public class EthStatsService {
     this.genesisConfigOptions = genesisConfigOptions;
     this.p2PNetwork = p2PNetwork;
     this.blockResultFactory = new BlockResultFactory();
-    this.httpClientOptions = buildHttpClientOptions(ethStatsConnectOptions);
     this.webSocketConnectOptions = buildWebSocketConnectOptions(ethStatsConnectOptions);
-  }
-
-  private static HttpClientOptions buildHttpClientOptions(
-      final EthStatsConnectOptions ethStatsConnectOptions) {
-    final HttpClientOptions options = new HttpClientOptions();
-
-    if (ethStatsConnectOptions.getCaCert() != null) {
-      options.setPemTrustOptions(
-          new PemTrustOptions().addCertPath(ethStatsConnectOptions.getCaCert().toString()));
-    }
-    return options;
   }
 
   private static WebSocketConnectOptions buildWebSocketConnectOptions(
@@ -189,29 +175,24 @@ public class EthStatsService {
     LOG.debug("Connecting to EthStats: {}", getEthStatsURI());
     try {
       enodeURL = p2PNetwork.getLocalEnode().orElseThrow();
-      vertx
-          .createHttpClient(httpClientOptions)
-          .webSocket(
-              webSocketConnectOptions,
+      WebSocketClient wsClient = vertx.createWebSocketClient();
+      wsClient
+          .connect(webSocketConnectOptions)
+          .onComplete(
               event -> {
                 if (event.succeeded()) {
                   webSocket = event.result();
 
-                  // reconnect if we lose the connection or if an error occurs
                   webSocket.exceptionHandler(ex -> retryConnect());
                   webSocket.closeHandler(handler -> retryConnect());
 
-                  // listen to the messages from the ethstats server in order to validate the
-                  // connection
                   webSocket.textMessageHandler(
                       ack -> {
                         EthStatsRequest ethStatsRequest = EthStatsRequest.fromResponse(ack);
                         if (ethStatsRequest.getType().equals(READY)) {
                           LOG.info("Connected to ethstats server");
 
-                          // listen to messages from the ethstats server
                           startListeningEthstatsServer();
-                          // send a full report after the connection
                           sendFullReport();
                         } else {
                           LOG.error("Failed to login to ethstats server {}", ack);
@@ -219,7 +200,6 @@ public class EthStatsService {
                       });
 
                   retryInProgress.set(false);
-                  // sending a hello to initiate the connection using the secret
                   sendHello();
                 } else {
                   LOG.error(
@@ -228,7 +208,6 @@ public class EthStatsService {
                   retryConnect();
                 }
               });
-
     } catch (Exception e) {
       retryConnect();
     }
