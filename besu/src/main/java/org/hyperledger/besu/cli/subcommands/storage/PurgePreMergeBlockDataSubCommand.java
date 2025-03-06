@@ -39,8 +39,7 @@ public class PurgePreMergeBlockDataSubCommand implements Runnable {
 
   private static final long MERGE_BLOCK_NUMBER = 15_537_393;
 
-  @CommandLine.ParentCommand
-  private StorageSubCommand storageSubCommand;
+  @CommandLine.ParentCommand private StorageSubCommand storageSubCommand;
 
   @SuppressWarnings("unused")
   @CommandLine.Spec
@@ -82,7 +81,7 @@ public class PurgePreMergeBlockDataSubCommand implements Runnable {
       LOG.info("Done removing block data, committing removal changes");
       updater.commit();
       LOG.info("Done committing removal changes");
-    } catch(Exception e) {
+    } catch (Exception e) {
       LOG.error("Unexpected exception", e);
     }
   }
