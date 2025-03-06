@@ -296,7 +296,7 @@ public abstract class AbstractIsolationTests {
 
       return new TestBlockCreator(
           miningConfiguration,
-          (__, ___, ____) -> Address.ZERO,
+          (__, ___) -> Address.ZERO,
           __ -> Bytes.fromHexString("deadbeef"),
           transactionPool,
           protocolContext,

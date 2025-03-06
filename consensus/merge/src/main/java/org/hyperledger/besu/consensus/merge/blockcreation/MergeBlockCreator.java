@@ -56,7 +56,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final EthScheduler ethScheduler) {
     super(
         miningConfiguration,
-        (__, ___, ____) -> miningConfiguration.getCoinbase().orElseThrow(),
+        (__, ___) -> miningConfiguration.getCoinbase().orElseThrow(),
         extraDataCalculator,
         transactionPool,
         protocolContext,

@@ -92,12 +92,16 @@ public class BftBlockCreator extends AbstractBlockCreator {
 
   private static MiningBeneficiaryCalculator miningBeneficiaryCalculator(
       final Address localAddress, final ProtocolSchedule protocolSchedule) {
-    return (blockNum, blockTimestamp, parentHeader) -> {
+    return (blockTimestamp, pendingHeader) -> {
+      BlockHeader newBlockHeader =
+          BlockHeaderBuilder.createDefault()
+              .coinbase(pendingHeader.getCoinbase())
+              .buildBlockHeader();
       ProtocolSpec protocolSpec =
           ((BftProtocolSchedule) protocolSchedule)
-              .getByBlockNumberOrTimestamp(parentHeader.getNumber() + 1, blockTimestamp);
+              .getByBlockNumberOrTimestamp(pendingHeader.getNumber(), blockTimestamp);
       Address beneficiaryAddress =
-          protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(parentHeader);
+          protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(newBlockHeader);
       return !beneficiaryAddress.isZero() ? beneficiaryAddress : localAddress;
     };
   }

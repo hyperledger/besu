@@ -68,7 +68,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       final EthScheduler ethScheduler) {
     super(
         miningConfiguration,
-        (__, ___, ____) -> Util.publicKeyToAddress(nodeKey.getPublicKey()),
+        (__, ___) -> Util.publicKeyToAddress(nodeKey.getPublicKey()),
         extraDataCalculator,
         transactionPool,
         protocolContext,
