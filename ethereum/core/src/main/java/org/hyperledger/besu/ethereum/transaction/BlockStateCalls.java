@@ -89,13 +89,14 @@ public class BlockStateCalls {
     if (blockNumber <= currentBlockNumber) {
       throw new IllegalArgumentException(
           String.format(
-              "Block number %d is invalid. It must be greater than %d.",
+              "Block number is invalid. Trying to add a call at block number %s, while current block number is %s.",
               blockNumber, currentBlockNumber));
     }
     if (timestamp <= currentTimestamp) {
       throw new IllegalArgumentException(
           String.format(
-              "Timestamp %d is invalid. It must be greater than %d.", timestamp, currentTimestamp));
+              "Timestamp is invalid. Trying to add a call at timestamp %s, while current timestamp is %s.",
+              timestamp, currentTimestamp));
     }
     blockStateCalls.add(blockStateCall);
   }

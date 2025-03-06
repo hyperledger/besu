@@ -141,7 +141,9 @@ class BlockStateCallsTest {
                 BlockStateCalls.fillBlockStateCalls(
                     List.of(createBlockStateCall(1L, 1012L)), mockBlockHeader));
     String expectedMessage =
-        String.format("Block number %d is invalid. It must be greater than %d.", 1L, 1L);
+        String.format(
+            "Block number is invalid. Trying to add a call at block number %s, while current block number is %s.",
+            1L, 1L);
     assertEquals(expectedMessage, exception.getMessage());
   }
 
@@ -162,7 +164,7 @@ class BlockStateCallsTest {
                     List.of(createBlockStateCall(2L, headerTimestamp)), mockBlockHeader));
     String expectedMessage =
         String.format(
-            "Timestamp %d is invalid. It must be greater than %d.",
+            "Timestamp is invalid. Trying to add a call at timestamp %s, while current timestamp is %s.",
             headerTimestamp, headerTimestamp); // next timestamp
     assertEquals(expectedMessage, exception.getMessage());
   }
@@ -183,7 +185,8 @@ class BlockStateCallsTest {
                 BlockStateCalls.fillBlockStateCalls(
                     List.of(createBlockStateCall(3L, 1012L)), mockBlockHeader));
     assertEquals(
-        "Timestamp 1012 is invalid. It must be greater than 1012.", exception.getMessage());
+        "Timestamp is invalid. Trying to add a call at timestamp 1012, while current timestamp is 1012.",
+        exception.getMessage());
   }
 
   /** Tests that an exception is thrown when the maximum number of BlockStateCalls is exceeded. */
