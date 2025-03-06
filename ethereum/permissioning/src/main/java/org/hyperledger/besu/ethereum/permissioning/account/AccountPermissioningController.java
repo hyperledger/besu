@@ -19,7 +19,9 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
+import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -34,15 +36,18 @@ public class AccountPermissioningController {
       accountLocalConfigPermissioningController;
   private final Optional<TransactionSmartContractPermissioningController>
       transactionSmartContractPermissioningController;
+  private final List<TransactionPermissioningProvider> pluginProviders;
 
   public AccountPermissioningController(
       final Optional<AccountLocalConfigPermissioningController>
           accountLocalConfigPermissioningController,
       final Optional<TransactionSmartContractPermissioningController>
-          transactionSmartContractPermissioningController) {
+          transactionSmartContractPermissioningController,
+      final List<TransactionPermissioningProvider> pluginProviders) {
     this.accountLocalConfigPermissioningController = accountLocalConfigPermissioningController;
     this.transactionSmartContractPermissioningController =
         transactionSmartContractPermissioningController;
+    this.pluginProviders = pluginProviders;
   }
 
   public boolean isPermitted(
@@ -75,6 +80,16 @@ public class AccountPermissioningController {
     final boolean permitted = permittedLocal && permittedOnchain;
 
     if (permitted) {
+      for (TransactionPermissioningProvider provider : this.pluginProviders) {
+        if (!provider.isPermitted(transaction)) {
+          LOG.trace(
+              "Account permissioning - {}: Rejected transaction {} from {}",
+              provider.getClass().getSimpleName(),
+              transactionHash,
+              sender);
+          return false;
+        }
+      }
       LOG.trace("Account permissioning: Permitted transaction {} from {}", transactionHash, sender);
     } else {
       LOG.trace("Account permissioning: Rejected transaction {} from {}", transactionHash, sender);

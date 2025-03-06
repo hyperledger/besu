@@ -1177,10 +1177,17 @@ public class RunnerBuilder {
       final BesuController besuController,
       final TransactionSimulator transactionSimulator) {
 
-    if (permissioningConfiguration.isPresent()) {
+    if (permissioningConfiguration.isPresent()
+        || permissioningService.getTransactionPermissioningProviders().size() > 0) {
+      final PermissioningConfiguration configuration =
+          permissioningConfiguration.orElse(
+              new PermissioningConfiguration(Optional.empty(), Optional.empty()));
       final Optional<AccountPermissioningController> accountPermissioningController =
           AccountPermissioningControllerFactory.create(
-              permissioningConfiguration.get(), transactionSimulator, metricsSystem);
+              configuration,
+              transactionSimulator,
+              metricsSystem,
+              permissioningService.getTransactionPermissioningProviders());
 
       accountPermissioningController.ifPresent(
           permissioningController ->

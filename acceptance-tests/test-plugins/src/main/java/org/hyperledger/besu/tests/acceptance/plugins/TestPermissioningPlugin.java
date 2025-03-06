@@ -75,6 +75,20 @@ public class TestPermissioningPlugin implements BesuPlugin {
             }
             return true;
           });
+
+      service.registerTransactionPermissioningProvider(
+          transaction -> {
+            long configuredGasLimitThreshold = 22000L;
+            long gasLimit = transaction.getGasLimit();
+            LOG.info(
+                "Transaction gas limit: {} | Configured threshold: {} ",
+                gasLimit,
+                configuredGasLimitThreshold);
+            // Sample logic to testing. If the gas limit is exactly 21000 (intrinsic gas limit)
+            // we let the transaction pass. This is helpful for not making additional configuration
+            // options in PermssioningPluginTest
+            return gasLimit > configuredGasLimitThreshold || gasLimit == 21000;
+          });
     }
   }
 
