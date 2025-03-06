@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -153,8 +152,7 @@ public class BlockSimulatorTest {
                 blockSimulator.process(
                     blockHeader, new BlockSimulationParameter(blockStateCall), mutableWorldState));
 
-    assertEquals(
-        "Transaction simulator result is invalid", exception.getMessage());
+    assertEquals("Transaction simulator result is invalid", exception.getMessage());
   }
 
   @Test
