@@ -110,7 +110,6 @@ public class BlockSimulatorTest {
 
     List<BlockSimulationResult> results =
         blockSimulator.process(blockHeader, BlockSimulationParameter.EMPTY);
-
     assertNotNull(results);
     verify(worldStateArchive).getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader));
   }
