@@ -31,6 +31,8 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.bytecode.Bytecode;
+import org.hyperledger.besu.evm.code.bytecode.FullBytecode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
@@ -64,7 +66,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   protected final Consumer<StorageSlotKey> storagePreloader;
 
   private final AccountConsumingMap<DiffBasedValue<ACCOUNT>> accountsToUpdate;
-  private final Map<Address, DiffBasedValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
+  private final Map<Address, DiffBasedValue<Bytecode>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
   protected final EvmConfiguration evmConfiguration;
 
@@ -285,7 +287,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   }
 
   @Override
-  public Map<Address, DiffBasedValue<Bytes>> getCodeToUpdate() {
+  public Map<Address, DiffBasedValue<Bytecode>> getCodeToUpdate() {
     return codeToUpdate;
   }
 
@@ -357,7 +359,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
               deletedAddress,
               __ -> loadAccountFromParent(deletedAddress, new DiffBasedValue<>(null, null, true)));
       storageToClear.add(deletedAddress);
-      final DiffBasedValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
+      final DiffBasedValue<Bytecode> codeValue = codeToUpdate.get(deletedAddress);
       if (codeValue != null) {
         codeValue.setUpdated(null).setCleared();
       } else {
@@ -453,7 +455,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
               }
 
               if (tracked.codeWasUpdated()) {
-                final DiffBasedValue<Bytes> pendingCode =
+                final DiffBasedValue<Bytecode> pendingCode =
                     codeToUpdate.computeIfAbsent(
                         updatedAddress,
                         addr ->
@@ -511,10 +513,10 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   }
 
   @Override
-  public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
-    final DiffBasedValue<Bytes> localCode = codeToUpdate.get(address);
+  public Optional<Bytecode> getCode(final Address address, final Hash codeHash) {
+    final DiffBasedValue<Bytecode> localCode = codeToUpdate.get(address);
     if (localCode == null) {
-      final Optional<Bytes> code = wrappedWorldView().getCode(address, codeHash);
+      final Optional<Bytecode> code = wrappedWorldView().getCode(address, codeHash);
       if (code.isEmpty() && !codeHash.equals(Hash.EMPTY)) {
         throw new MerkleTrieException(
             "invalid account code", Optional.of(address), codeHash, Bytes.EMPTY);
@@ -739,18 +741,18 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   }
 
   private void rollCodeChange(
-      final Address address, final Bytes expectedCode, final Bytes replacementCode) {
+      final Address address, final Bytecode expectedCode, final Bytecode replacementCode) {
     if (Objects.equals(expectedCode, replacementCode)) {
       // non-change, a cached read.
       return;
     }
-    DiffBasedValue<Bytes> codeValue = codeToUpdate.get(address);
+    DiffBasedValue<Bytecode> codeValue = codeToUpdate.get(address);
     if (codeValue == null) {
-      final Bytes storedCode =
+      final Bytecode storedCode =
           wrappedWorldView()
               .getCode(
                   address, Optional.ofNullable(expectedCode).map(Hash::hash).orElse(Hash.EMPTY))
-              .orElse(Bytes.EMPTY);
+              .orElse(FullBytecode.EMPTY);
       if (!storedCode.isEmpty()) {
         codeValue = new DiffBasedValue<>(storedCode, storedCode);
         codeToUpdate.put(address, codeValue);
