@@ -46,7 +46,7 @@ public class PurgePreMergeBlockDataSubCommand implements Runnable {
   private CommandLine.Model.CommandSpec spec;
 
   /** Default constructor */
-  public PurgePreMergeBlockDataSubCommand(){}
+  public PurgePreMergeBlockDataSubCommand() {}
 
   @Override
   public void run() {
