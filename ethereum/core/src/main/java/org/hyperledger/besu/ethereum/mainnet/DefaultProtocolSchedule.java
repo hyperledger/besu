@@ -18,11 +18,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.TimestampProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -131,27 +129,5 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   @Override
   public Optional<Long> milestoneFor(final HardforkId hardforkId) {
     return Optional.ofNullable(milestones.get(hardforkId));
-  }
-
-  @Override
-  public void setPermissionTransactionFilter(
-      final PermissionTransactionFilter permissionTransactionFilter) {
-    protocolSpecs.forEach(
-        spec ->
-            spec.spec()
-                .getTransactionValidatorFactory()
-                .setPermissionTransactionFilter(permissionTransactionFilter));
-  }
-
-  @Override
-  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
-      final WorldStateArchive publicWorldStateArchive) {
-    protocolSpecs.forEach(
-        spec -> {
-          final BlockProcessor blockProcessor = spec.spec().getBlockProcessor();
-          if (PrivacyBlockProcessor.class.isAssignableFrom(blockProcessor.getClass()))
-            ((PrivacyBlockProcessor) blockProcessor)
-                .setPublicWorldStateArchive(publicWorldStateArchive);
-        });
   }
 }

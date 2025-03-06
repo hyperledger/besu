@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyCalculators;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -96,7 +95,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         genesisConfig.getConfigOptions(),
                         Optional.of(BigInteger.valueOf(42)),
                         ProtocolSpecAdapters.create(0, Function.identity()),
-                        PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
                         MiningConfiguration.MINING_DISABLED,
@@ -160,7 +158,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                                 specBuilder.difficultyCalculator(
                                     FixedDifficultyCalculators.calculator(
                                         genesisConfig.getConfigOptions()))),
-                        PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
                         MiningConfiguration.MINING_DISABLED,
@@ -216,7 +213,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         specBuilder.difficultyCalculator(
                             FixedDifficultyCalculators.calculator(
                                 genesisConfig.getConfigOptions()))),
-                PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,
@@ -293,7 +289,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         specBuilder.difficultyCalculator(
                             FixedDifficultyCalculators.calculator(
                                 genesisConfig.getConfigOptions()))),
-                PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,

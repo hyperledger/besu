@@ -17,8 +17,6 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
-import java.util.OptionalInt;
-
 /** Base versioned data storage format */
 public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
   /** Original Forest version, not used since replace by FOREST_WITH_VARIABLES */
@@ -76,11 +74,6 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
   @Override
   public int getVersion() {
     return version;
-  }
-
-  @Override
-  public OptionalInt getPrivacyVersion() {
-    return OptionalInt.empty();
   }
 
   @Override
