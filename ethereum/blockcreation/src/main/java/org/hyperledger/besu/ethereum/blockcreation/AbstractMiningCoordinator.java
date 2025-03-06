@@ -172,8 +172,7 @@ public abstract class AbstractMiningCoordinator<
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     synchronized (this) {
-      if (event.isNewCanonicalHead()
-          && newChainHeadInvalidatesMiningOperation(event.getBlock().getHeader())) {
+      if (event.isNewCanonicalHead() && newChainHeadInvalidatesMiningOperation(event.getHeader())) {
         haltCurrentMiningOperation();
         startMiningIfPossible();
       }
