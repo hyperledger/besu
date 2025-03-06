@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -79,7 +78,6 @@ public class BesuController implements java.io.Closeable {
   private final StorageProvider storageProvider;
   private final DataStorageConfiguration dataStorageConfiguration;
   private final TransactionSimulator transactionSimulator;
-  private final Path dataDirectory;
 
   /**
    * Instantiates a new Besu controller.
@@ -103,7 +101,6 @@ public class BesuController implements java.io.Closeable {
    * @param storageProvider the storage provider
    * @param dataStorageConfiguration the data storage configuration
    * @param transactionSimulator the transaction simulator
-   * @param dataDirectory the data directory
    */
   BesuController(
       final ProtocolSchedule protocolSchedule,
@@ -124,8 +121,7 @@ public class BesuController implements java.io.Closeable {
       final EthPeers ethPeers,
       final StorageProvider storageProvider,
       final DataStorageConfiguration dataStorageConfiguration,
-      final TransactionSimulator transactionSimulator,
-      final Path dataDirectory) {
+      final TransactionSimulator transactionSimulator) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -145,7 +141,6 @@ public class BesuController implements java.io.Closeable {
     this.storageProvider = storageProvider;
     this.dataStorageConfiguration = dataStorageConfiguration;
     this.transactionSimulator = transactionSimulator;
-    this.dataDirectory = dataDirectory;
   }
 
   /**
@@ -323,15 +318,6 @@ public class BesuController implements java.io.Closeable {
    */
   public TransactionSimulator getTransactionSimulator() {
     return transactionSimulator;
-  }
-
-  /**
-   * Gets the data directory
-   *
-   * @return the data directory
-   */
-  public Path getDataDirectory() {
-    return dataDirectory;
   }
 
   /** The type Builder. */
