@@ -77,6 +77,20 @@ public abstract class BaseBftController implements BftEventHandler {
   public void start() {
     if (started.compareAndSet(false, true)) {
       startNewHeightManager(blockchain.getChainHeadHeader());
+    } else {
+      // In normal circumstances the height manager should only be started once. If the caller
+      // has stopped the height manager (e.g. while sync completes) they must call stop() before
+      // starting the height manager again.
+      throw new IllegalStateException(
+          "Attempt to start new height manager without stopping previous manager");
+    }
+  }
+
+  @Override
+  public void stop() {
+    if (started.compareAndSet(true, false)) {
+      stopCurrentHeightManager(blockchain.getChainHeadHeader());
+      LOG.debug("Height manager stopped");
     }
   }
 
@@ -205,6 +219,13 @@ public abstract class BaseBftController implements BftEventHandler {
    * @return the current height manager
    */
   protected abstract BaseBlockHeightManager getCurrentHeightManager();
+
+  /**
+   * Stop the current height manager by creating a no-op block height manager.
+   *
+   * @param parentHeader the parent header
+   */
+  protected abstract void stopCurrentHeightManager(final BlockHeader parentHeader);
 
   private void startNewHeightManager(final BlockHeader parentHeader) {
     createNewHeightManager(parentHeader);
