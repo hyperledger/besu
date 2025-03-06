@@ -229,24 +229,6 @@ public class BlockOverrides {
   }
 
   /**
-   * Sets the timestamp.
-   *
-   * @param timestamp the timestamp to set
-   */
-  public void setTimestamp(final Long timestamp) {
-    this.timestamp = Optional.ofNullable(timestamp);
-  }
-
-  /**
-   * Sets the block number.
-   *
-   * @param blockNumber the block number to set
-   */
-  public void setBlockNumber(final Long blockNumber) {
-    this.blockNumber = Optional.ofNullable(blockNumber);
-  }
-
-  /**
    * Creates a new Builder instance.
    *
    * @return a new Builder
