@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -93,6 +94,7 @@ public class BlockSimulatorTest {
     when(miningConfiguration.getCoinbase())
         .thenReturn(Optional.ofNullable(Address.fromHexString("0x1")));
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getMiningBeneficiaryCalculator())
         .thenReturn(mock(MiningBeneficiaryCalculator.class));
     GasLimitCalculator gasLimitCalculator = mock(GasLimitCalculator.class);
@@ -141,7 +143,7 @@ public class BlockSimulatorTest {
         .thenReturn(Optional.of("Invalid Transaction"));
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(), any(), any(), any(), any(), any(), any(), 0, any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(), any()))
         .thenReturn(Optional.of(transactionSimulatorResult));
 
     BlockStateCallException exception =
@@ -152,7 +154,7 @@ public class BlockSimulatorTest {
                     blockHeader, new BlockSimulationParameter(blockStateCall), mutableWorldState));
 
     assertEquals(
-        "Transaction simulator result is invalid: Invalid Transaction", exception.getMessage());
+        "Transaction simulator result is invalid", exception.getMessage());
   }
 
   @Test
@@ -162,7 +164,7 @@ public class BlockSimulatorTest {
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(), any(), any(), any(), any(), any(), any(), 0, any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(), any()))
         .thenReturn(Optional.empty());
 
     BlockStateCallException exception =
