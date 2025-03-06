@@ -30,19 +30,11 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class ParallelTransactionPreprocessing implements PreprocessingFunction {
 
-  private static final int NCPU = Runtime.getRuntime().availableProcessors();
-
-  private final Executor executor;
   private final MainnetTransactionProcessor transactionProcessor;
-
-  public ParallelTransactionPreprocessing(final MainnetTransactionProcessor transactionProcessor) {
-    this.transactionProcessor = transactionProcessor;
-    this.executor = Executors.newFixedThreadPool(NCPU);
-  }
+  private final Executor executor;
 
   public ParallelTransactionPreprocessing(
       final MainnetTransactionProcessor transactionProcessor, final Executor executor) {

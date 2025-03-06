@@ -40,6 +40,8 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +53,9 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
   private final Optional<Counter> confirmedParallelizedTransactionCounter;
   private final Optional<Counter> conflictingButCachedTransactionCounter;
 
+  private static final int NCPU = Runtime.getRuntime().availableProcessors();
+  private final Executor executor;
+
   public MainnetParallelBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
@@ -59,6 +64,26 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem) {
+    this(
+        transactionProcessor,
+        transactionReceiptFactory,
+        blockReward,
+        miningBeneficiaryCalculator,
+        skipZeroBlockRewards,
+        protocolSchedule,
+        metricsSystem,
+        Executors.newFixedThreadPool(NCPU));
+  }
+
+  public MainnetParallelBlockProcessor(
+      final MainnetTransactionProcessor transactionProcessor,
+      final TransactionReceiptFactory transactionReceiptFactory,
+      final Wei blockReward,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+      final boolean skipZeroBlockRewards,
+      final ProtocolSchedule protocolSchedule,
+      final MetricsSystem metricsSystem,
+      final Executor executor) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
@@ -66,6 +91,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         protocolSchedule);
+    this.executor = executor;
     this.confirmedParallelizedTransactionCounter =
         Optional.of(
             metricsSystem.createCounter(
@@ -149,7 +175,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             ommers,
             maybeWithdrawals,
             privateMetadataUpdater,
-            new ParallelTransactionPreprocessing(transactionProcessor));
+            new ParallelTransactionPreprocessing(transactionProcessor, executor));
 
     if (blockProcessingResult.isFailed()) {
       // Fallback to non-parallel processing if there is a block processing exception .

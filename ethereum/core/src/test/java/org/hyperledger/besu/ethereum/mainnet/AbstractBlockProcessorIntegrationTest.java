@@ -246,18 +246,14 @@ class AbstractBlockProcessorIntegrationTest {
     TransactionReceiptFactory receiptFactory =
         protocolSchedule.getByBlockHeader(block.getHeader()).getTransactionReceiptFactory();
 
-    MainnetParallelBlockProcessor blockProcessor =
-        new MainnetParallelBlockProcessor(
+    MainnetBlockProcessor blockProcessor =
+        new MainnetBlockProcessor(
             transactionProcessor,
             receiptFactory,
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            protocolSchedule,
-            new NoOpMetricsSystem());
-
-    ParallelTransactionPreprocessing parallelPreProcessor =
-        new ParallelTransactionPreprocessing(transactionProcessor, Runnable::run);
+            protocolSchedule);
 
     BlockProcessingResult parallelResult =
         blockProcessor.processBlock(
@@ -269,7 +265,7 @@ class AbstractBlockProcessorIntegrationTest {
             block.getBody().getOmmers(),
             block.getBody().getWithdrawals(),
             null,
-            parallelPreProcessor);
+            new ParallelTransactionPreprocessing(transactionProcessor, Runnable::run));
 
     BlockProcessingResult sequentialResult =
         blockProcessor.processBlock(
