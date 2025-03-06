@@ -33,15 +33,11 @@ public interface QbftBlockCreator {
   /**
    * Create sealed block.
    *
-   * @param qbftExtraDataProvider the extra data provider
    * @param block the block
    * @param roundNumber the round number
    * @param commitSeals the commit seals
    * @return the block
    */
   QbftBlock createSealedBlock(
-      final QbftExtraDataProvider qbftExtraDataProvider,
-      final QbftBlock block,
-      final int roundNumber,
-      final Collection<SECPSignature> commitSeals);
+      final QbftBlock block, final int roundNumber, final Collection<SECPSignature> commitSeals);
 }

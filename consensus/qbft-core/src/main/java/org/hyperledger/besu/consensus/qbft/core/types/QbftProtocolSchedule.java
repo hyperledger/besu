@@ -21,10 +21,18 @@ package org.hyperledger.besu.consensus.qbft.core.types;
 public interface QbftProtocolSchedule {
 
   /**
-   * Returns the QbftProtocolSpec for the supplied block header.
+   * Returns the appropriate block importer for the supplied block header.
    *
-   * @param header The block header to select the appropriate QbftProtocolSpec for
-   * @return The QbftProtocolSpec for the supplied block header
+   * @param header the block header
+   * @return the block importer
    */
-  QbftProtocolSpec getByBlockHeader(QbftBlockHeader header);
+  QbftBlockImporter getBlockImporter(QbftBlockHeader header);
+
+  /**
+   * Returns the appropriate block validator for the supplied block header.
+   *
+   * @param header the block header
+   * @return the block validator
+   */
+  QbftBlockValidator getBlockValidator(QbftBlockHeader header);
 }
