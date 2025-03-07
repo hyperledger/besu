@@ -38,6 +38,7 @@
 - Add TLS/mTLS options and configure the GraphQL HTTP service[#7910](https://github.com/hyperledger/besu/pull/7910)
 - Update `eth_getLogs` to return a `Block not found` error when the requested block is not found. [#8290](https://github.com/hyperledger/besu/pull/8290)
 - Change `Invalid block, unable to parse RLP` RPC error message to `Invalid block param (block not found)` [#8328](https://github.com/hyperledger/besu/pull/8328)
+- Add IBFT1 to QBFT migration capability [#8262](https://github.com/hyperledger/besu/pull/8262)
 - Support pending transaction score when saving and restoring txpool [#8363](https://github.com/hyperledger/besu/pull/8363)
 
 ### Bug fixes

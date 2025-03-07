@@ -236,7 +236,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       if (!(validatorsForHeight.containsAll(previousValidators))
           || !(previousValidators.containsAll(validatorsForHeight))) {
         LOG.info(
-            "Validator list change. Previous chain height {}: {}. Current chain height {}: {}.",
+            "QBFT Validator list change. Previous chain height {}: {}. Current chain height {}: {}.",
             parentHeader.getNumber(),
             previousValidators,
             parentHeader.getNumber() + 1,

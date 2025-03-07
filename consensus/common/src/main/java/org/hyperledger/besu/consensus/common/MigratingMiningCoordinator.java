@@ -54,7 +54,7 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
     this.miningCoordinatorSchedule = miningCoordinatorSchedule;
     this.blockchain = blockchain;
     this.activeMiningCoordinator =
-        this.miningCoordinatorSchedule.getFork(blockchain.getChainHeadBlockNumber()).getValue();
+        this.miningCoordinatorSchedule.getFork(blockchain.getChainHeadBlockNumber() + 1).getValue();
   }
 
   @Override
