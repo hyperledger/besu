@@ -34,6 +34,8 @@ public class RoundTimer {
   private final BftEventQueue queue;
   private final Duration baseExpiryPeriod;
 
+  private Optional<ScheduledFuture<?>> frequentRCMulticastTask = Optional.empty();
+
   /**
    * Construct a RoundTimer with primed executor service ready to start timers
    *
@@ -53,6 +55,8 @@ public class RoundTimer {
   public synchronized void cancelTimer() {
     currentTimerTask.ifPresent(t -> t.cancel(false));
     currentTimerTask = Optional.empty();
+
+    cancelRCMulticastTask();
   }
 
   /**
@@ -83,12 +87,22 @@ public class RoundTimer {
     // Once we are up to round 2 start logging round expiries
     if (round.getRoundNumber() >= 2) {
       LOG.info(
-          "BFT round {} expired. Moved to round {} which will expire in {} seconds",
-          round.getRoundNumber() - 1,
+          "Moved to round {} which will expire in {} seconds",
           round.getRoundNumber(),
           (expiryTime / 1000));
     }
 
     currentTimerTask = Optional.of(newTimerTask);
+  }
+
+  public synchronized void setRCMulticastTask(final ScheduledFuture<?> rcMulticastTask) {
+    // Cancel any existing multicast task before setting a new one
+    cancelRCMulticastTask();
+    frequentRCMulticastTask = Optional.of(rcMulticastTask);
+  }
+
+  private synchronized void cancelRCMulticastTask() {
+    frequentRCMulticastTask.ifPresent(t -> t.cancel(false));
+    frequentRCMulticastTask = Optional.empty();
   }
 }
