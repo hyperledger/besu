@@ -980,7 +980,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     tx.put(
         TRIE_BRANCH_STORAGE,
         WORLD_BLOCK_NUMBER_KEY,
-        Long.toHexString(blockNumber).getBytes(StandardCharsets.UTF_8));
+        Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
     tx.commit();
   }
 }
