@@ -59,10 +59,10 @@ public class DepositLogDecoder {
   private static final int SIGNATURE_LENGTH = 96;
   private static final int INDEX_LENGTH = 8;
 
+  // PublicKey is the first element.
   private static final int PUB_KEY_OFFSET = 0;
-  // PublicKey is the first element. ABI encoding pads values to 32 bytes, so
-  // despite BLS public keys being length 48, the value length here is 64. Then
-  // skip over the next length value.
+  // ABI encoding pads values to 32 bytes, so despite BLS public keys being length 48, the value
+  // length here is 64. Then skip over the next length value.
   private static final int WITHDRAWAL_CRED_OFFSET =
       PUB_KEY_OFFSET + PUB_KEY_LENGTH + 16 + LENGTH_FIELD_SIZE;
   // WithdrawalCredentials is 32 bytes. Read that value then skip over next length.
@@ -92,13 +92,12 @@ public class DepositLogDecoder {
               + " bytes");
     }
 
-    final Bytes depositData = data.slice(DATA_START_POSITION);
-
-    final Bytes pubKey = depositData.slice(PUB_KEY_OFFSET, PUB_KEY_LENGTH);
-    final Bytes withdrawalCred = depositData.slice(WITHDRAWAL_CRED_OFFSET, WITHDRAWAL_CRED_LENGTH);
-    final Bytes amount = depositData.slice(AMOUNT_OFFSET, AMOUNT_LENGTH);
-    final Bytes signature = depositData.slice(SIGNATURE_OFFSET, SIGNATURE_LENGTH);
-    final Bytes index = depositData.slice(INDEX_OFFSET, INDEX_LENGTH);
+    final Bytes pubKey = data.slice(DATA_START_POSITION + PUB_KEY_OFFSET, PUB_KEY_LENGTH);
+    final Bytes withdrawalCred =
+        data.slice(DATA_START_POSITION + WITHDRAWAL_CRED_OFFSET, WITHDRAWAL_CRED_LENGTH);
+    final Bytes amount = data.slice(DATA_START_POSITION + AMOUNT_OFFSET, AMOUNT_LENGTH);
+    final Bytes signature = data.slice(DATA_START_POSITION + SIGNATURE_OFFSET, SIGNATURE_LENGTH);
+    final Bytes index = data.slice(DATA_START_POSITION + INDEX_OFFSET, INDEX_LENGTH);
 
     return Bytes.concatenate(pubKey, withdrawalCred, amount, signature, index);
   }
