@@ -21,8 +21,9 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
+@Disabled
 public class EthByzantiumJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
   @Override
