@@ -73,7 +73,7 @@ public class BlockchainReferenceTestCaseSpec {
       final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
-    final MutableWorldState worldState = worldStateArchive.getMutable();
+    final MutableWorldState worldState = worldStateArchive.getWorldState();
     final WorldUpdater updater = worldState.updater();
 
     for (final Map.Entry<String, ReferenceTestWorldState.AccountMock> entry : accounts.entrySet()) {
@@ -200,7 +200,6 @@ public class BlockchainReferenceTestCaseSpec {
           excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsHash != null ? Hash.fromHexString(requestsHash) : null,
-          null, // TODO SLD EIP-7742 use targetBlobCount when reference tests are updated
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {

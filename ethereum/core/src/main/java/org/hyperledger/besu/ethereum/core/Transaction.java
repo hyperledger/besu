@@ -38,7 +38,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
@@ -126,6 +126,8 @@ public class Transaction
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
   private final Optional<List<CodeDelegation>> maybeCodeDelegationList;
 
+  private final Optional<Bytes> rawRlp;
+
   public static Builder builder() {
     return new Builder();
   }
@@ -181,7 +183,8 @@ public class Transaction
       final Optional<BigInteger> chainId,
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments,
-      final Optional<List<CodeDelegation>> maybeCodeDelegationList) {
+      final Optional<List<CodeDelegation>> maybeCodeDelegationList,
+      final Optional<Bytes> rawRlp) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -242,6 +245,7 @@ public class Transaction
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
     this.maybeCodeDelegationList = maybeCodeDelegationList;
+    this.rawRlp = rawRlp;
   }
 
   /**
@@ -665,6 +669,10 @@ public class Transaction
     return getEffectivePriorityFeePerGas(baseFeePerGas).addExact(baseFeePerGas.orElse(Wei.ZERO));
   }
 
+  public Optional<Bytes> getRawRlp() {
+    return rawRlp;
+  }
+
   @Override
   public TransactionType getType() {
     return this.transactionType;
@@ -937,7 +945,8 @@ public class Transaction
                   chainId,
                   accessList,
                   rlpOutput);
-              CodeDelegationEncoder.encodeCodeDelegationInner(authorizationList, rlpOutput);
+              CodeDelegationTransactionEncoder.encodeCodeDelegationInner(
+                  authorizationList, rlpOutput);
               rlpOutput.endList();
             });
     return Bytes.concatenate(Bytes.of(TransactionType.DELEGATE_CODE.getSerializedType()), encoded);
@@ -1091,6 +1100,10 @@ public class Transaction
         blobsWithCommitments.map(
             withCommitments ->
                 blobsWithCommitmentsDetachedCopy(withCommitments, detachedVersionedHashes.get()));
+    final Optional<List<CodeDelegation>> detachedCodeDelegationList =
+        maybeCodeDelegationList.map(
+            codeDelegations ->
+                codeDelegations.stream().map(this::codeDelegationDetachedCopy).toList());
 
     final var copiedTx =
         new Transaction(
@@ -1111,7 +1124,8 @@ public class Transaction
             chainId,
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
-            maybeCodeDelegationList);
+            detachedCodeDelegationList,
+            Optional.empty());
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
@@ -1126,6 +1140,15 @@ public class Transaction
     final Address detachedAddress = Address.wrap(accessListEntry.address().copy());
     final var detachedStorage = accessListEntry.storageKeys().stream().map(Bytes32::copy).toList();
     return new AccessListEntry(detachedAddress, detachedStorage);
+  }
+
+  private CodeDelegation codeDelegationDetachedCopy(final CodeDelegation codeDelegation) {
+    final Address detachedAddress = Address.wrap(codeDelegation.address().copy());
+    return new org.hyperledger.besu.ethereum.core.CodeDelegation(
+        codeDelegation.chainId(),
+        detachedAddress,
+        codeDelegation.nonce(),
+        codeDelegation.signature());
   }
 
   private BlobsWithCommitments blobsWithCommitmentsDetachedCopy(
@@ -1180,6 +1203,7 @@ public class Transaction
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
+    protected Bytes rawRlp = null;
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1285,15 +1309,20 @@ public class Transaction
       return this;
     }
 
+    public Builder rawRlp(final Bytes rawRlp) {
+      this.rawRlp = rawRlp;
+      return this;
+    }
+
     public Builder guessType() {
-      if (versionedHashes != null && !versionedHashes.isEmpty()) {
+      if (codeDelegationAuthorizations.isPresent()) {
+        transactionType = TransactionType.DELEGATE_CODE;
+      } else if (versionedHashes != null && !versionedHashes.isEmpty()) {
         transactionType = TransactionType.BLOB;
       } else if (maxPriorityFeePerGas != null || maxFeePerGas != null) {
         transactionType = TransactionType.EIP1559;
       } else if (accessList.isPresent()) {
         transactionType = TransactionType.ACCESS_LIST;
-      } else if (codeDelegationAuthorizations.isPresent()) {
-        transactionType = TransactionType.DELEGATE_CODE;
       } else {
         transactionType = TransactionType.FRONTIER;
       }
@@ -1324,7 +1353,8 @@ public class Transaction
           chainId,
           Optional.ofNullable(versionedHashes),
           Optional.ofNullable(blobsWithCommitments),
-          codeDelegationAuthorizations);
+          codeDelegationAuthorizations,
+          Optional.ofNullable(rawRlp));
     }
 
     public Transaction signAndBuild(final KeyPair keys) {

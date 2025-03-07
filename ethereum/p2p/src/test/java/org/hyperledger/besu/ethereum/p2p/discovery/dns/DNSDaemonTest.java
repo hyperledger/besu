@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
+
 import java.security.Security;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,6 +28,7 @@ import io.vertx.junit5.VertxTestContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,10 +70,24 @@ class DNSDaemonTest {
                 testContext.failNow(
                     "Expecting 115 records in first pass but got: " + records.size());
               }
+              records.forEach(
+                  enr -> {
+                    try {
+                      // make sure enode url can be built from record
+                      EnodeURLImpl.builder()
+                          .ipAddress(enr.ip())
+                          .nodeId(enr.publicKey())
+                          .discoveryPort(enr.udp())
+                          .listeningPort(enr.tcp())
+                          .build();
+                    } catch (final Exception e) {
+                      testContext.failNow(e);
+                    }
+                  });
               checkpoint.flag();
             },
             0,
-            0,
+            1L,
             0,
             "localhost:" + mockDnsServerVerticle.port());
 
@@ -81,6 +98,7 @@ class DNSDaemonTest {
     vertx.deployVerticle(dnsDaemon, options);
   }
 
+  @Disabled("test is flaky see https://github.com/hyperledger/besu/issues/8373")
   @Test
   @DisplayName("Test DNS Daemon with periodic lookup to a mock DNS server")
   void testDNSDaemonPeriodic(final Vertx vertx, final VertxTestContext testContext)

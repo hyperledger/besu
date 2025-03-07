@@ -170,11 +170,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
             .log();
         return maybeError.get();
       }
-      ValidationResult<RpcErrorType> forkValidationResult =
-          validateForkSupported(payloadAttributes.getTimestamp());
-      if (!forkValidationResult.isValid()) {
-        return new JsonRpcErrorResponse(requestId, forkValidationResult);
-      }
     }
 
     final BlockHeader newHead = maybeNewHead.get();
@@ -389,8 +384,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
   // fcU calls are synchronous, no need to make volatile
   private long lastFcuInfoLog = System.currentTimeMillis();
-  private static final String logMessage =
-      "{} for fork-choice-update: head: {}, finalized: {}, safeBlockHash: {}";
+  private static final String logMessage = "FCU({}) | head: {} | finalized: {} | safeBlockHash: {}";
 
   private void logForkchoiceUpdatedCall(
       final EngineStatus status, final EngineForkchoiceUpdatedParameter forkChoice) {
@@ -413,9 +407,9 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     LOG.info(
         logMessage,
         status.name(),
-        forkChoice.getHeadBlockHash(),
-        forkChoice.getFinalizedBlockHash(),
-        forkChoice.getSafeBlockHash());
+        forkChoice.getHeadBlockHash().toShortLogString(),
+        forkChoice.getFinalizedBlockHash().toShortLogString(),
+        forkChoice.getSafeBlockHash().toShortLogString());
   }
 
   private void logAtDebug(

@@ -26,7 +26,6 @@ import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
@@ -60,7 +59,6 @@ import org.hyperledger.besu.cli.options.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
 import org.hyperledger.besu.cli.options.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
-import org.hyperledger.besu.cli.options.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.PermissionsOptions;
 import org.hyperledger.besu.cli.options.PluginsConfigurationOptions;
 import org.hyperledger.besu.cli.options.PrivacyPluginOptions;
@@ -70,6 +68,7 @@ import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
 import org.hyperledger.besu.cli.options.storage.DiffBasedSubStorageOptions;
+import org.hyperledger.besu.cli.options.unstable.QBFTOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
@@ -86,7 +85,7 @@ import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
@@ -102,7 +101,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
@@ -121,13 +119,11 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.FrontierTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
@@ -136,7 +132,6 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
@@ -155,6 +150,7 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.services.BlockSimulationService;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
@@ -169,6 +165,7 @@ import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.mining.MiningService;
 import org.hyperledger.besu.plugin.services.p2p.P2PService;
 import org.hyperledger.besu.plugin.services.rlp.RlpConverterService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
@@ -180,7 +177,9 @@ import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolServi
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.BlockSimulatorServiceImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.P2PServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
@@ -211,10 +210,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.net.SocketException;
 import java.net.URI;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.GroupPrincipal;
@@ -257,7 +254,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.IExecutionStrategy;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
@@ -280,7 +276,6 @@ import picocli.CommandLine.ParameterException;
       "%nMore info and other profiles at https://besu.hyperledger.org%n"
     })
 public class BesuCommand implements DefaultCommandValues, Runnable {
-
   @SuppressWarnings("PrivateStaticFinalLoggers")
   // non-static for testing
   private final Logger logger;
@@ -303,6 +298,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
+  private final QBFTOptions unstableQbftOptions = QBFTOptions.create();
 
   // stable CLI options
   final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -334,12 +330,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
-  private final Supplier<GenesisConfigFile> genesisConfigFileSupplier =
-      Suppliers.memoize(this::readGenesisConfigFile);
+  private final Supplier<GenesisConfig> genesisConfigSupplier =
+      Suppliers.memoize(this::readGenesisConfig);
   private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
   private final Supplier<MiningConfiguration> miningParametersSupplier =
       Suppliers.memoize(this::getMiningParameters);
+  private final Supplier<ApiConfiguration> apiConfigurationSupplier =
+      Suppliers.memoize(this::getApiConfiguration);
 
   private RocksDBPlugin rocksDBPlugin;
 
@@ -610,14 +608,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       defaultValue = "localhost,127.0.0.1")
   private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
 
-  @Option(
-      names = {"--host-whitelist"},
-      hidden = true,
-      paramLabel = "<hostname>[,<hostname>...]... or * or all",
-      description =
-          "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
-  private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
-
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--color-enabled"},
@@ -700,9 +690,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.Option(
       names = {"--cache-last-blocks"},
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
-  private final Integer numberOfblocksToCache = 0;
-
-  @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
+  private final Integer numberOfBlocksToCache = 0;
 
   // Plugins Configuration Option Group
   @CommandLine.ArgGroup(validate = false)
@@ -715,10 +703,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private WebSocketConfiguration webSocketConfiguration;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private InProcessRpcConfiguration inProcessRpcConfiguration;
-  private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
-  private Optional<TLSConfiguration> p2pTLSConfiguration;
   private DataStorageConfiguration dataStorageConfiguration;
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
@@ -1174,6 +1160,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
+            .put("QBFT Options", unstableQbftOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1230,7 +1217,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return synchronize(
         besuController,
         p2PDiscoveryConfig.p2pEnabled(),
-        p2pTLSConfiguration,
         p2PDiscoveryConfig.peerDiscoveryEnabled(),
         ethNetworkConfig,
         p2PDiscoveryConfig.p2pHost(),
@@ -1242,7 +1228,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         webSocketConfiguration,
         jsonRpcIpcConfiguration,
         inProcessRpcConfiguration,
-        apiConfiguration,
+        apiConfigurationSupplier.get(),
         metricsConfiguration,
         permissioningConfiguration,
         staticNodes,
@@ -1254,11 +1240,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         besuController.getProtocolContext().getBlockchain(), besuController.getProtocolSchedule());
     transactionSimulationServiceImpl.init(
         besuController.getProtocolContext().getBlockchain(),
-        new TransactionSimulator(
-            besuController.getProtocolContext().getBlockchain(),
-            besuController.getProtocolContext().getWorldStateArchive(),
-            besuController.getProtocolSchedule(),
-            apiConfiguration.getGasCap()));
+        besuController.getTransactionSimulator());
     rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
 
     besuPluginContext.addService(
@@ -1276,6 +1258,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         SynchronizationService.class,
         new SynchronizationServiceImpl(
+            besuController.getSynchronizer(),
             besuController.getProtocolContext(),
             besuController.getProtocolSchedule(),
             besuController.getSyncState(),
@@ -1300,6 +1283,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 besuController.getProtocolContext().getWorldStateArchive(),
                 miningParametersSupplier.get()),
             besuController.getProtocolSchedule()));
+
+    besuPluginContext.addService(
+        MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
+
+    besuPluginContext.addService(
+        BlockSimulationService.class,
+        new BlockSimulatorServiceImpl(
+            besuController.getProtocolContext().getWorldStateArchive(),
+            miningParametersSupplier.get(),
+            besuController.getTransactionSimulator(),
+            besuController.getProtocolSchedule(),
+            besuController.getProtocolContext().getBlockchain()));
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
@@ -1435,7 +1430,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateOptions() {
     issueOptionWarnings();
-    validateP2PInterface(p2PDiscoveryOptions.p2pInterface);
+    validateP2POptions();
     validateMiningParams();
     validateNatParams();
     validateNetStatsParams();
@@ -1448,10 +1443,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateTransactionPoolOptions();
     validateDataStorageOptions();
     validateGraphQlOptions();
-    validateApiOptions();
     validateConsensusSyncCompatibilityOptions();
     validatePluginOptions();
-    p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
   }
 
   private void validateConsensusSyncCompatibilityOptions() {
@@ -1492,20 +1485,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         commandLine, genesisConfigOptionsSupplier.get(), isMergeEnabled(), logger);
   }
 
+  private void validateP2POptions() {
+    p2PDiscoveryOptions.validate(commandLine, getNetworkInterfaceChecker());
+  }
+
   /**
-   * Validates P2P interface IP address/host name. Visible for testing.
+   * Returns a network interface checker that can be used to validate P2P options.
    *
-   * @param p2pInterface IP Address/host name
+   * @return A {@link P2PDiscoveryOptions.NetworkInterfaceChecker} that checks if a network
+   *     interface is available.
    */
-  protected void validateP2PInterface(final String p2pInterface) {
-    final String failMessage = "The provided --p2p-interface is not available: " + p2pInterface;
-    try {
-      if (!NetworkUtility.isNetworkInterfaceAvailable(p2pInterface)) {
-        throw new ParameterException(commandLine, failMessage);
-      }
-    } catch (final UnknownHostException | SocketException e) {
-      throw new ParameterException(commandLine, failMessage, e);
-    }
+  protected P2PDiscoveryOptions.NetworkInterfaceChecker getNetworkInterfaceChecker() {
+    return NetworkUtility::isNetworkInterfaceAvailable;
   }
 
   private void validateGraphQlOptions() {
@@ -1514,22 +1505,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings("ConstantConditions")
   private void validateNatParams() {
-    if (natMethod.equals(NatMethod.KUBERNETES)) {
-      logger.warn("Kubernetes NAT method is deprecated. Please use Docker or UPNP");
-    }
-    if (!unstableNatOptions.getNatManagerServiceName().equals(DEFAULT_BESU_SERVICE_NAME_FILTER)) {
-      logger.warn(
-          "`--Xnat-kube-service-name` and Kubernetes NAT method are deprecated. Please use Docker or UPNP");
-    }
-    if (!(natMethod.equals(NatMethod.AUTO) || natMethod.equals(NatMethod.KUBERNETES))
-        && !unstableNatOptions
-            .getNatManagerServiceName()
-            .equals(DEFAULT_BESU_SERVICE_NAME_FILTER)) {
-      throw new ParameterException(
-          this.commandLine,
-          "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name"
-              + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
-    }
     if (natMethod.equals(NatMethod.AUTO) && !unstableNatOptions.getNatMethodFallbackEnabled()) {
       throw new ParameterException(
           this.commandLine,
@@ -1592,31 +1567,55 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateChainDataPruningParams() {
-    if (unstableChainPruningOptions.getChainDataPruningEnabled()
-        && unstableChainPruningOptions.getChainDataPruningBlocksRetained()
-            < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
-      throw new ParameterException(
-          this.commandLine,
-          "--Xchain-pruning-blocks-retained must be >= "
-              + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
+    Long chainDataPruningBlocksRetained =
+        unstableChainPruningOptions.getChainDataPruningBlocksRetained();
+    if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
+      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+      if (chainDataPruningBlocksRetained
+          < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
+        throw new ParameterException(
+            this.commandLine,
+            "--Xchain-pruning-blocks-retained must be >= "
+                + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
+      } else if (genesisConfigOptions.isPoa()) {
+        Long epochLength = 0L;
+        String consensusMechanism = "";
+        if (genesisConfigOptions.isIbft2()) {
+          epochLength = genesisConfigOptions.getBftConfigOptions().getEpochLength();
+          consensusMechanism = "IBFT2";
+        } else if (genesisConfigOptions.isQbft()) {
+          epochLength = genesisConfigOptions.getQbftConfigOptions().getEpochLength();
+          consensusMechanism = "QBFT";
+        } else if (genesisConfigOptions.isClique()) {
+          epochLength = genesisConfigOptions.getCliqueConfigOptions().getEpochLength();
+          consensusMechanism = "Clique";
+        }
+        if (chainDataPruningBlocksRetained < epochLength) {
+          throw new ParameterException(
+              this.commandLine,
+              String.format(
+                  "--Xchain-pruning-blocks-retained(%d) must be >= epochlength(%d) for %s",
+                  chainDataPruningBlocksRetained, epochLength, consensusMechanism));
+        }
+      }
     }
   }
 
-  private GenesisConfigFile readGenesisConfigFile() {
-    GenesisConfigFile effectiveGenesisFile;
+  private GenesisConfig readGenesisConfig() {
+    GenesisConfig effectiveGenesisFile;
     effectiveGenesisFile =
         network.equals(EPHEMERY)
             ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
             : genesisFile != null
-                ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
-                : GenesisConfigFile.fromResource(
+                ? GenesisConfig.fromSource(genesisConfigSource(genesisFile))
+                : GenesisConfig.fromResource(
                     Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
   private GenesisConfigOptions readGenesisConfigOptions() {
     try {
-      return genesisConfigFileSupplier.get().getConfigOptions();
+      return genesisConfigSupplier.get().getConfigOptions();
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine, "Unable to load genesis file. " + e.getCause());
@@ -1641,6 +1640,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-interface",
             "--p2p-port",
             "--remote-connections-max-percentage"));
+
+    if (SyncMode.FAST == syncMode) {
+      logger.warn("FAST sync is deprecated. Recommend using SNAP sync instead.");
+    }
 
     if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
         && isOptionSet(commandLine, "--sync-min-peers")) {
@@ -1690,7 +1693,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration = createEngineJsonRpcConfiguration();
     }
-    p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration =
         graphQlOptions.graphQLConfiguration(
             hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
@@ -1704,17 +1706,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             unstableIpcOptions.getIpcPath(),
             unstableIpcOptions.getRpcIpcApis());
     inProcessRpcConfiguration = inProcessRpcOptions.toDomainObject();
-    apiConfiguration = apiConfigurationOptions.apiConfiguration();
     dataStorageConfiguration = getDataStorageConfiguration();
-    // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
-    if (!hostsWhitelist.isEmpty()) {
-      // if allowlist == default values, remove the default values
-      if (hostsAllowlist.size() == 2
-          && hostsAllowlist.containsAll(List.of("localhost", "127.0.0.1"))) {
-        hostsAllowlist.removeAll(List.of("localhost", "127.0.0.1"));
-      }
-      hostsAllowlist.addAll(hostsWhitelist);
-    }
 
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
@@ -1809,10 +1801,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .clock(Clock.systemUTC())
             .isRevertReasonEnabled(isRevertReasonEnabled)
             .storageProvider(storageProvider)
-            .gasLimitCalculator(
-                miningParametersSupplier.get().getTargetGasLimit().isPresent()
-                    ? new FrontierTargetingGasLimitCalculator()
-                    : GasLimitCalculator.constant())
+            .isEarlyRoundChangeEnabled(unstableQbftOptions.isEarlyRoundChangeEnabled())
             .requiredBlocks(requiredBlocks)
             .reorgLoggingThreshold(reorgLoggingThreshold)
             .evmConfiguration(unstableEvmOptions.toDomainObject())
@@ -1820,16 +1809,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
             .randomPeerPriority(p2PDiscoveryOptions.randomPeerPriority)
             .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
-            .cacheLastBlocks(numberOfblocksToCache)
+            .cacheLastBlocks(numberOfBlocksToCache)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
+            .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
       final DiffBasedSubStorageConfiguration subStorageConfiguration =
           getDataStorageConfiguration().getDiffBasedSubStorageConfiguration();
-      if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
-        besuControllerBuilder.isParallelTxProcessingEnabled(
-            subStorageConfiguration.getUnstable().isParallelTxProcessingEnabled());
-      }
+      besuControllerBuilder.isParallelTxProcessingEnabled(
+          subStorageConfiguration.getUnstable().isParallelTxProcessingEnabled());
     }
     return besuControllerBuilder;
   }
@@ -2144,7 +2132,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
         .ifPresent(miningParameters::setBlockPeriodSeconds);
     initMiningParametersMetrics(miningParameters);
+
     return miningParameters;
+  }
+
+  private ApiConfiguration getApiConfiguration() {
+    validateApiOptions();
+    return apiConfigurationOptions.apiConfiguration();
   }
 
   /**
@@ -2215,7 +2209,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Runner synchronize(
       final BesuController controller,
       final boolean p2pEnabled,
-      final Optional<TLSConfiguration> p2pTLSConfiguration,
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
       final String p2pAdvertisedHost,
@@ -2235,17 +2228,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     checkNotNull(runnerBuilder);
 
-    p2pTLSConfiguration.ifPresent(runnerBuilder::p2pTLSConfiguration);
-
     final Runner runner =
         runnerBuilder
             .vertx(vertx)
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
-            .natManagerServiceName(unstableNatOptions.getNatManagerServiceName())
             .natMethodFallbackEnabled(unstableNatOptions.getNatMethodFallbackEnabled())
-            .discovery(peerDiscoveryEnabled)
+            .discoveryEnabled(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .permissioningConfiguration(permissioningConfiguration)
             .p2pAdvertisedHost(p2pAdvertisedHost)
@@ -2356,7 +2346,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setDnsDiscoveryUrl(null);
     }
 
-    builder.setGenesisConfigFile(genesisConfigFileSupplier.get());
+    builder.setGenesisConfig(genesisConfigSupplier.get());
 
     if (networkId != null) {
       builder.setNetworkId(networkId);

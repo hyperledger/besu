@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
@@ -39,6 +39,13 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import java.util.Optional;
 
 public class DebugTraceCall extends AbstractTraceCall {
+  private static final TransactionValidationParams TRANSACTION_VALIDATION_PARAMS =
+      ImmutableTransactionValidationParams.builder()
+          .from(TransactionValidationParams.transactionSimulator())
+          .isAllowFutureNonce(true)
+          .isAllowExceedingBalance(true)
+          .allowUnderpriced(true)
+          .build();
 
   public DebugTraceCall(
       final BlockchainQueries blockchainQueries,
@@ -97,16 +104,12 @@ public class DebugTraceCall extends AbstractTraceCall {
                   new TransactionTrace(
                       result.transaction(), result.result(), tracer.getTraceFrames());
 
-              return new DebugTraceTransactionResult(transactionTrace);
+              return new DebugTraceTransactionDetails(transactionTrace);
             });
   }
 
   @Override
   protected TransactionValidationParams buildTransactionValidationParams() {
-    return ImmutableTransactionValidationParams.builder()
-        .from(TransactionValidationParams.transactionSimulator())
-        .isAllowExceedingBalance(true)
-        .allowUnderpriced(true)
-        .build();
+    return TRANSACTION_VALIDATION_PARAMS;
   }
 }

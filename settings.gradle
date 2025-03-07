@@ -17,10 +17,6 @@
 pluginManagement {
   repositories {
     gradlePluginPortal()
-    maven {
-      url 'https://artifacts.consensys.net/public/maven/maven/'
-      content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
-    }
   }
 }
 
@@ -36,6 +32,7 @@ include 'consensus:common'
 include 'consensus:ibft'
 include 'consensus:merge'
 include 'consensus:qbft'
+include 'consensus:qbft-core'
 include 'datatypes'
 include 'crypto:algorithms'
 include 'crypto:services'
@@ -60,7 +57,6 @@ include 'evm'
 include 'metrics:core'
 include 'metrics:rocksdb'
 include 'nat'
-include 'pki'
 include 'platform'
 include 'plugin-api'
 include 'plugins:rocksdb'

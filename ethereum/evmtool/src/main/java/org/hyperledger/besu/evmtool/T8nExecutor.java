@@ -27,6 +27,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -42,7 +43,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
@@ -52,8 +54,9 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.BlockchainBasedBlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -220,39 +223,44 @@ public class T8nExecutor {
                 continue;
               }
 
-              List<CodeDelegation> authorizations = new ArrayList<>(authorizationList.size());
+              List<CodeDelegation> codeDelegations = new ArrayList<>(authorizationList.size());
               for (JsonNode entryAsJson : authorizationList) {
-                final BigInteger authorizationChainId =
+                final BigInteger codeDelegationChainId =
                     Bytes.fromHexStringLenient(entryAsJson.get("chainId").textValue())
                         .toUnsignedBigInteger();
-                final Address authorizationAddress =
+                final Address codeDelegationAddress =
                     Address.fromHexString(entryAsJson.get("address").textValue());
 
-                final long authorizationNonce =
+                final long codeDelegationNonce =
                     Bytes.fromHexStringLenient(entryAsJson.get("nonce").textValue()).toLong();
 
-                final byte authorizationV =
+                final BigInteger codeDelegationV =
                     Bytes.fromHexStringLenient(entryAsJson.get("v").textValue())
-                        .toUnsignedBigInteger()
-                        .byteValueExact();
-                final BigInteger authorizationR =
+                        .toUnsignedBigInteger();
+                if (codeDelegationV.compareTo(BigInteger.valueOf(256)) >= 0) {
+                  throw new IllegalArgumentException(
+                      "Invalid codeDelegationV value. Must be less than 256");
+                }
+
+                final BigInteger codeDelegationR =
                     Bytes.fromHexStringLenient(entryAsJson.get("r").textValue())
                         .toUnsignedBigInteger();
-                final BigInteger authorizationS =
+                final BigInteger codeDelegationS =
                     Bytes.fromHexStringLenient(entryAsJson.get("s").textValue())
                         .toUnsignedBigInteger();
 
-                final SECPSignature authorizationSignature =
-                    new SECPSignature(authorizationR, authorizationS, authorizationV);
+                final SECPSignature codeDelegationSignature =
+                    new SECPSignature(
+                        codeDelegationR, codeDelegationS, codeDelegationV.byteValue());
 
-                authorizations.add(
+                codeDelegations.add(
                     new org.hyperledger.besu.ethereum.core.CodeDelegation(
-                        authorizationChainId,
-                        authorizationAddress,
-                        authorizationNonce,
-                        authorizationSignature));
+                        codeDelegationChainId,
+                        codeDelegationAddress,
+                        codeDelegationNonce,
+                        codeDelegationSignature));
               }
-              builder.codeDelegations(authorizations);
+              builder.codeDelegations(codeDelegations);
             }
 
             if (txNode.has("blobVersionedHashes")) {
@@ -342,16 +350,25 @@ public class T8nExecutor {
     Blockchain blockchain = new T8nBlockchain(referenceTestEnv, protocolSpec);
     final BlockHeader blockHeader = referenceTestEnv.parentBlockHeader(protocolSpec);
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
-    final Wei blobGasPrice =
-        protocolSpec
-            .getFeeMarket()
-            .blobGasPricePerGas(calculateExcessBlobGasForParent(protocolSpec, blockHeader));
+    final BlobGas excessBlobGas =
+        Optional.ofNullable(referenceTestEnv.getParentExcessBlobGas())
+            .map(
+                __ -> calculateExcessBlobGasForParent(protocolSpec, blockHeader)) // blockchain-test
+            .orElse(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO)); // state-test
+    final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(excessBlobGas);
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
+    BlockProcessingContext blockProcessingContext =
+        new BlockProcessingContext(
+            referenceTestEnv,
+            worldState,
+            protocolSpec,
+            protocolSpec
+                .getBlockHashProcessor()
+                .createBlockHashLookup(blockchain, referenceTestEnv),
+            OperationTracer.NO_TRACING);
 
     if (!referenceTestEnv.isStateTest()) {
-      protocolSpec
-          .getBlockHashProcessor()
-          .processBlockHashes(blockchain, worldState, referenceTestEnv);
+      protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
     }
 
     final WorldUpdater rootWorldStateUpdater = worldState.updater();
@@ -385,13 +402,23 @@ public class T8nExecutor {
         tracer = tracerManager.getManagedTracer(transactionIndex, transaction.getHash());
         tracer.tracePrepareTransaction(worldStateUpdater, transaction);
         tracer.traceStartTransaction(worldStateUpdater, transaction);
+        BlockHashLookup blockHashLookup =
+            protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader);
+        if (blockHashLookup instanceof BlockchainBasedBlockHashLookup) {
+          // basically t8n test cases for blockhash are broken and one cannot create a blockchain
+          // from them so need to
+          // add in a manual BlockHashLookup
+          blockHashLookup =
+              (__, blockNumber) ->
+                  referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO);
+        }
         result =
             processor.processTransaction(
                 worldStateUpdater,
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                number -> referenceTestEnv.getBlockhashByNumber(number).orElse(Hash.ZERO),
+                blockHashLookup,
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,
@@ -424,7 +451,7 @@ public class T8nExecutor {
       gasUsed += transactionGasUsed;
       long intrinsicGas =
           gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(), transaction.getTo().isEmpty());
+              transaction.getPayload(), transaction.getTo().isEmpty(), 0);
       TransactionReceipt receipt =
           protocolSpec
               .getTransactionReceiptFactory()
@@ -518,22 +545,22 @@ public class T8nExecutor {
     var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
     if (requestProcessorCoordinator.isPresent()) {
       var rpc = requestProcessorCoordinator.get();
-      ProcessRequestContext context =
-          new ProcessRequestContext(
-              blockHeader,
-              worldState,
-              protocolSpec,
-              receipts,
-              new CachingBlockHashLookup(blockHeader, blockchain),
-              OperationTracer.NO_TRACING);
-      Optional<List<Request>> maybeRequests = Optional.of(rpc.process(context));
+
+      RequestProcessingContext requestContext =
+          new RequestProcessingContext(blockProcessingContext, receipts);
+      Optional<List<Request>> maybeRequests = Optional.of(rpc.process(requestContext));
       Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 
       resultObject.put("requestsHash", requestsHash.toHexString());
       ArrayNode requests = resultObject.putArray("requests");
       maybeRequests
           .orElseGet(List::of)
-          .forEach(request -> requests.add(request.getData().toHexString()));
+          .forEach(
+              request -> {
+                if (!request.data().isEmpty()) {
+                  requests.add(request.getEncodedRequest().toHexString());
+                }
+              });
     }
 
     worldState.persist(blockHeader);

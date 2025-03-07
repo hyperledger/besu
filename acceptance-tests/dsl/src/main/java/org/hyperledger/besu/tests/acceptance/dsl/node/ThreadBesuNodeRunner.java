@@ -25,13 +25,12 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.cryptoservices.KeyPairSecurityModule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
@@ -74,12 +73,15 @@ import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.mining.MiningService;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
@@ -153,8 +155,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     networkConfigBuilder.setBootNodes(bootnodes);
     node.getConfiguration()
         .getGenesisConfig()
-        .map(GenesisConfigFile::fromConfig)
-        .ifPresent(networkConfigBuilder::setGenesisConfigFile);
+        .map(GenesisConfig::fromConfig)
+        .ifPresent(networkConfigBuilder::setGenesisConfig);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
     final BesuControllerBuilder builder = component.besuControllerBuilder();
     builder.isRevertReasonEnabled(node.isRevertReasonEnabled());
@@ -164,9 +166,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     builder.nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))));
     builder.privacyParameters(node.getPrivacyParameters());
 
-    node.getGenesisConfig()
-        .map(GenesisConfigFile::fromConfig)
-        .ifPresent(builder::genesisConfigFile);
+    node.getGenesisConfig().map(GenesisConfig::fromConfig).ifPresent(builder::genesisConfig);
 
     final BesuController besuController = component.besuController();
 
@@ -183,7 +183,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .vertx(Vertx.vertx())
         .besuController(besuController)
         .ethNetworkConfig(ethNetworkConfig)
-        .discovery(node.isDiscoveryEnabled())
+        .discoveryEnabled(node.isDiscoveryEnabled())
         .p2pAdvertisedHost(node.getHostName())
         .p2pListenPort(0)
         .networkingConfiguration(node.getNetworkingConfiguration())
@@ -195,7 +195,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .permissioningService(permissioningService)
         .metricsConfiguration(node.getMetricsConfiguration())
         .p2pEnabled(node.isP2pEnabled())
-        .p2pTLSConfiguration(node.getTLSConfiguration())
         .graphQLConfiguration(GraphQLConfiguration.createDefault())
         .staticNodes(node.getStaticNodes().stream().map(EnodeURLImpl::fromString).toList())
         .besuPluginContext(besuPluginContext)
@@ -220,6 +219,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(
         TransactionPoolService.class,
         new TransactionPoolServiceImpl(besuController.getTransactionPool()));
+    besuPluginContext.addService(
+        MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
 
     component.rpcEndpointService().init(runner.getInProcessRpcMethods());
 
@@ -282,6 +283,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   }
 
   @Module
+  @SuppressWarnings("CloseableProvides")
   static class BesuNodeProviderModule {
 
     private final BesuNode toProvide;
@@ -393,9 +395,14 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final Blockchain blockchain,
         final WorldStateArchive worldStateArchive,
         final ProtocolSchedule protocolSchedule,
+        final MiningConfiguration miningConfiguration,
         final ApiConfiguration apiConfiguration) {
       return new TransactionSimulator(
-          blockchain, worldStateArchive, protocolSchedule, apiConfiguration.getGasCap());
+          blockchain,
+          worldStateArchive,
+          protocolSchedule,
+          miningConfiguration,
+          apiConfiguration.getGasCap());
     }
 
     @Provides
@@ -405,6 +412,13 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       TransactionSimulationServiceImpl retval = new TransactionSimulationServiceImpl();
       retval.init(blockchain, transactionSimulator);
       return retval;
+    }
+
+    @Provides
+    KeyValueStorageFactory provideKeyValueStorageFactory() {
+      return toProvide
+          .getStorageFactory()
+          .orElse(new InMemoryStoragePlugin.InMemoryKeyValueStorageFactory("memory"));
     }
 
     @Provides
@@ -455,7 +469,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final BesuControllerBuilder builder,
         final MetricsSystem metricsSystem,
         final KeyValueStorageProvider storageProvider,
-        final MiningConfiguration miningConfiguration) {
+        final MiningConfiguration miningConfiguration,
+        final ApiConfiguration apiConfiguration) {
 
       builder
           .synchronizerConfiguration(synchronizerConfiguration)
@@ -464,12 +479,12 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
           .clock(Clock.systemUTC())
           .storageProvider(storageProvider)
-          .gasLimitCalculator(GasLimitCalculator.constant())
           .evmConfiguration(EvmConfiguration.DEFAULT)
           .maxPeers(25)
           .maxRemotelyInitiatedPeers(15)
           .miningParameters(miningConfiguration)
           .randomPeerPriority(false)
+          .apiConfiguration(apiConfiguration)
           .besuComponent(null);
       return builder.build();
     }
@@ -557,14 +572,16 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     @Provides
     public KeyValueStorageProvider provideKeyValueStorageProvider(
-        final BesuConfiguration commonPluginConfiguration, final MetricsSystem metricsSystem) {
+        final BesuConfiguration commonPluginConfiguration,
+        final MetricsSystem metricsSystem,
+        final KeyValueStorageFactory keyValueStorageFactory) {
 
       final StorageServiceImpl storageService = new StorageServiceImpl();
-      storageService.registerKeyValueStorage(
-          new InMemoryStoragePlugin.InMemoryKeyValueStorageFactory("memory"));
+      final KeyValueStorageFactory storageFactory = keyValueStorageFactory;
+      storageService.registerKeyValueStorage(storageFactory);
       final KeyValueStorageProvider storageProvider =
           new KeyValueStorageProviderBuilder()
-              .withStorageFactory(storageService.getByName("memory").get())
+              .withStorageFactory(storageFactory)
               .withCommonConfiguration(commonPluginConfiguration)
               .withMetricsSystem(metricsSystem)
               .build();

@@ -52,15 +52,9 @@ public class Hash extends DelegatingBytes32 {
   public static final Hash EMPTY = hash(Bytes.EMPTY);
 
   /**
-   * Hash of empty requests or "0x6036c41849da9c076ed79654d434017387a88fb833c2856b32e18218b3341c5f"
+   * Hash of empty requests or "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
    */
-  public static final Hash EMPTY_REQUESTS_HASH =
-      Hash.wrap(
-          sha256(
-              Bytes.concatenate(
-                  sha256(Bytes.of(RequestType.DEPOSIT.getSerializedType())),
-                  sha256(Bytes.of(RequestType.WITHDRAWAL.getSerializedType())),
-                  sha256(Bytes.of(RequestType.CONSOLIDATION.getSerializedType())))));
+  public static final Hash EMPTY_REQUESTS_HASH = Hash.wrap(sha256(Bytes.EMPTY));
 
   /**
    * Instantiates a new Hash.
@@ -117,5 +111,17 @@ public class Hash extends DelegatingBytes32 {
    */
   public static Hash fromHexStringLenient(final String str) {
     return new Hash(Bytes32.fromHexStringLenient(str));
+  }
+
+  /***
+   * For logging purposes, this method returns a shortened hex representation
+   *
+   * @return shortened string with only the beginning and the end of the hex representation
+   */
+  public String toShortLogString() {
+    final var hexRepresentation = toFastHex(false);
+    String firstPart = hexRepresentation.substring(0, 5);
+    String lastPart = hexRepresentation.substring(hexRepresentation.length() - 5);
+    return firstPart + "....." + lastPart;
   }
 }

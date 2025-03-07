@@ -22,7 +22,6 @@ import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -49,6 +48,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -365,26 +365,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       final List<String> networkConfigParams =
           NetworkingOptions.fromConfig(node.getNetworkingConfiguration()).getCLIOptions();
       params.addAll(networkConfigParams);
-      if (node.getTLSConfiguration().isPresent()) {
-        final TLSConfiguration config = node.getTLSConfiguration().get();
-        params.add("--Xp2p-tls-enabled");
-        params.add("--Xp2p-tls-keystore-type");
-        params.add(config.getKeyStoreType());
-        params.add("--Xp2p-tls-keystore-file");
-        params.add(config.getKeyStorePath().toAbsolutePath().toString());
-        params.add("--Xp2p-tls-keystore-password-file");
-        params.add(config.getKeyStorePasswordPath().toAbsolutePath().toString());
-        params.add("--Xp2p-tls-crl-file");
-        params.add(config.getCrlPath().toAbsolutePath().toString());
-        if (null != config.getTrustStoreType()) {
-          params.add("--Xp2p-tls-truststore-type");
-          params.add(config.getTrustStoreType());
-          params.add("--Xp2p-tls-truststore-file");
-          params.add(config.getTrustStorePath().toAbsolutePath().toString());
-          params.add("--Xp2p-tls-truststore-password-file");
-          params.add(config.getTrustStorePasswordPath().toAbsolutePath().toString());
-        }
-      }
     }
 
     if (node.isRevertReasonEnabled()) {
@@ -550,9 +530,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       return;
     }
 
-    LOG.info("Killing {} process, pid {}", name, process.pid());
-
-    process.destroy();
+    Stream.concat(process.descendants(), Stream.of(process.toHandle()))
+        .peek(
+            processHandle ->
+                LOG.info("Killing {} process, pid {}", processHandle.info(), processHandle.pid()))
+        .forEach(ProcessHandle::destroy);
     try {
       process.waitFor(30, TimeUnit.SECONDS);
     } catch (final InterruptedException e) {

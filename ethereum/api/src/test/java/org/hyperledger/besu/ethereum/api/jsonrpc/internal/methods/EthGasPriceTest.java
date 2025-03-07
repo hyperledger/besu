@@ -43,10 +43,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LegacyFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.HashMap;
@@ -289,11 +286,11 @@ public class EthGasPriceTest {
   }
 
   private void mockBaseFeeMarket() {
-    mockFeeMarket(new LondonFeeMarket(0));
+    mockFeeMarket(FeeMarket.london(0));
   }
 
   private void mockGasPriceMarket() {
-    mockFeeMarket(new LegacyFeeMarket());
+    mockFeeMarket(FeeMarket.legacy());
   }
 
   private void mockFeeMarket(final FeeMarket feeMarket) {
@@ -313,7 +310,7 @@ public class EthGasPriceTest {
     final var genesisBlock = createFakeBlock(0, 0, genesisBaseFee);
     blocksByNumber.put(0L, genesisBlock);
 
-    final var baseFeeMarket = new CancunFeeMarket(0, Optional.empty());
+    final var baseFeeMarket = FeeMarket.cancun(0, Optional.empty());
 
     var baseFee = genesisBaseFee;
     for (long i = 1; i <= chainHeadBlockNumber; i++) {
@@ -367,7 +364,6 @@ public class EthGasPriceTest {
             baseFee,
             Hash.EMPTY,
             0,
-            null,
             null,
             null,
             null,

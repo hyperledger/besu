@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -58,6 +59,7 @@ import org.slf4j.LoggerFactory;
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
   private static final Logger LOG = LoggerFactory.getLogger(MergeBesuControllerBuilder.class);
+  private final PostMergeContext postMergeContext = new PostMergeContext();
 
   /** Default constructor. */
   public MergeBesuControllerBuilder() {}
@@ -79,6 +81,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         new BackwardSyncContext(
             protocolContext,
             protocolSchedule,
+            syncConfig,
             metricsSystem,
             ethProtocolManager.ethContext(),
             syncState,
@@ -196,7 +199,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             && blockchain.getGenesisBlockHeader().getDifficulty().isZero();
 
     final MergeContext mergeContext =
-        PostMergeContext.get()
+        postMergeContext
             .setSyncState(syncState.get())
             .setTerminalTotalDifficulty(
                 genesisConfigOptions
@@ -235,14 +238,17 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
-    List<PeerValidator> retval = super.createPeerValidators(protocolSchedule);
+  protected List<PeerValidator> createPeerValidators(
+      final ProtocolSchedule protocolSchedule, final PeerTaskExecutor peerTaskExecutor) {
+    List<PeerValidator> retval = super.createPeerValidators(protocolSchedule, peerTaskExecutor);
     final OptionalLong powTerminalBlockNumber = genesisConfigOptions.getTerminalBlockNumber();
     final Optional<Hash> powTerminalBlockHash = genesisConfigOptions.getTerminalBlockHash();
     if (powTerminalBlockHash.isPresent() && powTerminalBlockNumber.isPresent()) {
       retval.add(
           new RequiredBlocksPeerValidator(
               protocolSchedule,
+              peerTaskExecutor,
+              syncConfig,
               metricsSystem,
               powTerminalBlockNumber.getAsLong(),
               powTerminalBlockHash.get(),
@@ -256,7 +262,16 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     final BesuController controller = super.build();
-    PostMergeContext.get().setSyncState(controller.getSyncState());
+    postMergeContext.setSyncState(syncState.get());
     return controller;
+  }
+
+  /**
+   * Gets post merge context.
+   *
+   * @return the post merge context
+   */
+  public PostMergeContext getPostMergeContext() {
+    return postMergeContext;
   }
 }

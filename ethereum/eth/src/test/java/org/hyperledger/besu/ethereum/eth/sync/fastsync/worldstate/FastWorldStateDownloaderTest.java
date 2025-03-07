@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
@@ -51,11 +52,11 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.TrieNodeDecoder;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -114,7 +115,9 @@ class FastWorldStateDownloaderTest {
               .build());
 
   final EthProtocolManager ethProtocolManager =
-      EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+      EthProtocolManagerTestBuilder.builder()
+          .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
+          .build();
 
   @AfterEach
   public void tearDown() throws Exception {
@@ -198,7 +201,7 @@ class FastWorldStateDownloaderTest {
   void downloadAlreadyAvailableWorldState() {
     // Setup existing state
     final ForestWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-    final MutableWorldState worldState = worldStateArchive.getMutable();
+    final MutableWorldState worldState = worldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     dataGen.createRandomAccounts(worldState, 20);
@@ -238,7 +241,10 @@ class FastWorldStateDownloaderTest {
   void canRecoverFromTimeouts() {
     final DeterministicEthScheduler.TimeoutPolicy timeoutPolicy =
         DeterministicEthScheduler.TimeoutPolicy.timeoutXTimes(2);
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(timeoutPolicy);
+    final EthProtocolManager ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
+            .setEthScheduler(new DeterministicEthScheduler(timeoutPolicy))
+            .build();
     final MockExecutorService serviceExecutor =
         ((DeterministicEthScheduler) ethProtocolManager.ethContext().getScheduler())
             .mockServiceExecutor();
@@ -246,7 +252,7 @@ class FastWorldStateDownloaderTest {
 
     // Setup "remote" state
     final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     final List<Account> accounts = dataGen.createRandomAccounts(remoteWorldState, 20);
@@ -303,7 +309,7 @@ class FastWorldStateDownloaderTest {
   void doesNotRequestKnownCodeFromNetwork() {
     // Setup "remote" state
     final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     final List<Account> accounts =
@@ -382,7 +388,7 @@ class FastWorldStateDownloaderTest {
 
   @SuppressWarnings("unchecked")
   private void testCancellation(final boolean shouldCancelFuture) {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     // Prevent the persistence service from running
     final MockExecutorService serviceExecutor =
         ((DeterministicEthScheduler) ethProtocolManager.ethContext().getScheduler())
@@ -391,7 +397,7 @@ class FastWorldStateDownloaderTest {
 
     // Setup "remote" state
     final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     dataGen.createRandomContractAccountsWithNonEmptyStorage(remoteWorldState, 20);
@@ -468,7 +474,7 @@ class FastWorldStateDownloaderTest {
             new WorldStateStorageCoordinator(remoteStorage),
             createPreimageStorage(),
             EvmConfiguration.DEFAULT);
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     final List<Account> accounts =
@@ -559,7 +565,7 @@ class FastWorldStateDownloaderTest {
             new WorldStateStorageCoordinator(remoteStorage),
             createPreimageStorage(),
             EvmConfiguration.DEFAULT);
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     final List<Account> accounts =
@@ -589,8 +595,8 @@ class FastWorldStateDownloaderTest {
                 Function.identity())
             .entriesFrom(Bytes32.ZERO, 5).values().stream()
                 .map(RLP::input)
-                .map(StateTrieAccountValue::readFrom)
-                .map(StateTrieAccountValue::getStorageRoot)
+                .map(PmtStateTrieAccountValue::readFrom)
+                .map(PmtStateTrieAccountValue::getStorageRoot)
                 .collect(Collectors.toList());
     final Map<Bytes32, Bytes> allTrieNodes = new HashMap<>();
     final Set<Bytes32> knownNodes = new HashSet<>();
@@ -661,7 +667,9 @@ class FastWorldStateDownloaderTest {
   @Timeout(value = 60)
   void stalledDownloader() {
     final EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+        EthProtocolManagerTestBuilder.builder()
+            .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
+            .build();
 
     // Setup "remote" state
     final ForestWorldStateKeyValueStorage remoteStorage =
@@ -671,7 +679,7 @@ class FastWorldStateDownloaderTest {
             new WorldStateStorageCoordinator(remoteStorage),
             createPreimageStorage(),
             EvmConfiguration.DEFAULT);
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     dataGen.createRandomAccounts(remoteWorldState, 10);
@@ -735,7 +743,7 @@ class FastWorldStateDownloaderTest {
             new WorldStateStorageCoordinator(remoteStorage),
             createPreimageStorage(),
             EvmConfiguration.DEFAULT);
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     List<Account> accounts = dataGen.createRandomAccounts(remoteWorldState, 10);
@@ -878,7 +886,7 @@ class FastWorldStateDownloaderTest {
             new WorldStateStorageCoordinator(remoteStorage),
             createPreimageStorage(),
             EvmConfiguration.DEFAULT);
-    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
+    final MutableWorldState remoteWorldState = remoteWorldStateArchive.getWorldState();
 
     // Generate accounts and save corresponding state root
     final List<Account> accounts = dataGen.createRandomAccounts(remoteWorldState, accountCount);

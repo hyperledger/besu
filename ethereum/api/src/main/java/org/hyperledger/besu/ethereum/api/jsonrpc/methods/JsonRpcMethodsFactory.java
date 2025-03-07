@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -85,7 +87,9 @@ public class JsonRpcMethodsFactory {
       final EthPeers ethPeers,
       final Vertx consensusEngineServer,
       final ApiConfiguration apiConfiguration,
-      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
+      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration,
+      final TransactionSimulator transactionSimulator,
+      final EthScheduler ethScheduler) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
     if (!rpcApis.isEmpty()) {
       final JsonRpcMethod modules = new RpcModules(rpcApis);
@@ -111,7 +115,8 @@ public class JsonRpcMethodsFactory {
                   transactionPool,
                   synchronizer,
                   dataDir,
-                  apiConfiguration),
+                  transactionSimulator,
+                  ethScheduler),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
@@ -122,7 +127,8 @@ public class JsonRpcMethodsFactory {
                   consensusEngineServer,
                   clientVersion,
                   commit,
-                  transactionPool),
+                  transactionPool,
+                  metricsSystem),
               new EthJsonRpcMethods(
                   blockchainQueries,
                   synchronizer,
@@ -131,7 +137,8 @@ public class JsonRpcMethodsFactory {
                   transactionPool,
                   miningCoordinator,
                   supportedCapabilities,
-                  apiConfiguration),
+                  apiConfiguration,
+                  transactionSimulator),
               new NetJsonRpcMethods(
                   p2pNetwork,
                   networkId,
@@ -155,7 +162,9 @@ public class JsonRpcMethodsFactory {
                   protocolSchedule,
                   protocolContext,
                   apiConfiguration,
-                  metricsSystem),
+                  transactionSimulator,
+                  metricsSystem,
+                  ethScheduler),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 

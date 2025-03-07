@@ -16,7 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static org.hyperledger.besu.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBER;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -26,7 +26,6 @@ import org.hyperledger.besu.consensus.common.MigratingProtocolContext;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -264,9 +263,9 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   @Override
-  public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
-    besuControllerBuilderSchedule.values().forEach(b -> b.genesisConfigFile(genesisConfig));
-    return super.genesisConfigFile(genesisConfig);
+  public BesuControllerBuilder genesisConfig(final GenesisConfig genesisConfig) {
+    besuControllerBuilderSchedule.values().forEach(b -> b.genesisConfig(genesisConfig));
+    return super.genesisConfig(genesisConfig);
   }
 
   @Override
@@ -362,12 +361,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         .values()
         .forEach(b -> b.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled));
     return super.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled);
-  }
-
-  @Override
-  public BesuControllerBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
-    besuControllerBuilderSchedule.values().forEach(b -> b.gasLimitCalculator(gasLimitCalculator));
-    return super.gasLimitCalculator(gasLimitCalculator);
   }
 
   @Override

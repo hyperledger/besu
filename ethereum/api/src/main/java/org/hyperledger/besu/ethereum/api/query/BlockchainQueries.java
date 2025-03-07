@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.query;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -632,6 +633,63 @@ public class BlockchainQueries {
   }
 
   /**
+   * Returns the transaction receipts associated with the given block hash.
+   *
+   * @param blockHash The hash of the block that corresponds to the receipts to retrieve.
+   * @return The transaction receipts associated with the referenced block.
+   */
+  public Optional<List<TransactionReceiptWithMetadata>> transactionReceiptsByBlockHash(
+      final Hash blockHash, final ProtocolSchedule protocolSchedule) {
+    final Optional<Block> block = blockchain.getBlockByHash(blockHash);
+    if (block.isEmpty()) {
+      return Optional.empty();
+    }
+    final BlockHeader header = block.get().getHeader();
+    final List<Transaction> transactions = block.get().getBody().getTransactions();
+
+    final List<TransactionReceipt> transactionReceipts =
+        blockchain.getTxReceipts(blockHash).orElseThrow();
+
+    long cumulativeGasUsedUntilTx = 0;
+    int logIndexOffset = 0;
+
+    List<TransactionReceiptWithMetadata> receiptsResult =
+        new ArrayList<TransactionReceiptWithMetadata>(transactions.size());
+
+    for (int transactionIndex = 0; transactionIndex < transactions.size(); transactionIndex++) {
+      final Transaction transaction = transactions.get(transactionIndex);
+      final TransactionReceipt transactionReceipt = transactionReceipts.get(transactionIndex);
+      final Hash transactionHash = transaction.getHash();
+
+      long gasUsed = transactionReceipt.getCumulativeGasUsed() - cumulativeGasUsedUntilTx;
+
+      Optional<Long> maybeBlobGasUsed =
+          getBlobGasUsed(transaction, protocolSchedule.getByBlockHeader(header));
+
+      Optional<Wei> maybeBlobGasPrice =
+          getBlobGasPrice(transaction, header, protocolSchedule.getByBlockHeader(header));
+
+      receiptsResult.add(
+          TransactionReceiptWithMetadata.create(
+              transactionReceipt,
+              transaction,
+              transactionHash,
+              transactionIndex,
+              gasUsed,
+              header.getBaseFee(),
+              blockHash,
+              header.getNumber(),
+              maybeBlobGasUsed,
+              maybeBlobGasPrice,
+              logIndexOffset));
+
+      cumulativeGasUsedUntilTx = transactionReceipt.getCumulativeGasUsed();
+      logIndexOffset += transactionReceipt.getLogsList().size();
+    }
+    return Optional.of(receiptsResult);
+  }
+
+  /**
    * Returns the transaction receipt associated with the given transaction hash.
    *
    * @param transactionHash The hash of the transaction that corresponds to the receipt to retrieve.
@@ -945,7 +1003,10 @@ public class BlockchainQueries {
         .getBlockHeader(blockHash)
         .flatMap(
             blockHeader -> {
-              try (var ws = worldStateArchive.getMutable(blockHeader, false).orElse(null)) {
+              try (var ws =
+                  worldStateArchive
+                      .getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader))
+                      .orElse(null)) {
                 if (ws != null) {
                   return mapper.apply(ws);
                 }

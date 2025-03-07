@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
@@ -24,7 +24,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -119,6 +118,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         new TransitionBackwardSyncContext(
             protocolContext,
             transitionProtocolSchedule,
+            syncConfig,
             metricsSystem,
             ethProtocolManager.ethContext(),
             syncState,
@@ -146,7 +146,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionMiningConfiguration,
                 syncState,
                 transitionBackwardsSyncContext,
-                ethProtocolManager.ethContext().getScheduler()));
+                ethProtocolManager.ethContext().getScheduler()),
+            mergeBesuControllerBuilder.getPostMergeContext());
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
   }
@@ -184,7 +185,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         new TransitionProtocolSchedule(
             preMergeBesuControllerBuilder.createProtocolSchedule(),
             mergeBesuControllerBuilder.createProtocolSchedule(),
-            PostMergeContext.get());
+            mergeBesuControllerBuilder.getPostMergeContext());
     return transitionProtocolSchedule;
   }
 
@@ -254,7 +255,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   private void initTransitionWatcher(
       final ProtocolContext protocolContext, final TransitionCoordinator composedCoordinator) {
 
-    PostMergeContext postMergeContext = protocolContext.getConsensusContext(PostMergeContext.class);
+    PostMergeContext postMergeContext = mergeBesuControllerBuilder.getPostMergeContext();
     postMergeContext.observeNewIsPostMergeState(
         (isPoS, priorState, difficultyStoppedAt) -> {
           if (isPoS) {
@@ -289,7 +290,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     final BesuController controller = super.build();
-    PostMergeContext.get().setSyncState(controller.getSyncState());
+    mergeBesuControllerBuilder.getPostMergeContext().setSyncState(controller.getSyncState());
     return controller;
   }
 
@@ -300,9 +301,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
-    super.genesisConfigFile(genesisConfig);
-    return propagateConfig(z -> z.genesisConfigFile(genesisConfig));
+  public BesuControllerBuilder genesisConfig(final GenesisConfig genesisConfig) {
+    super.genesisConfig(genesisConfig);
+    return propagateConfig(z -> z.genesisConfig(genesisConfig));
   }
 
   @Override
@@ -386,12 +387,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final boolean isParallelTxProcessingEnabled) {
     super.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled);
     return propagateConfig(z -> z.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled));
-  }
-
-  @Override
-  public BesuControllerBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
-    super.gasLimitCalculator(gasLimitCalculator);
-    return propagateConfig(z -> z.gasLimitCalculator(gasLimitCalculator));
   }
 
   @Override

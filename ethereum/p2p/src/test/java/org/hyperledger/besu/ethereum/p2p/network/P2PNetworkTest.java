@@ -64,7 +64,7 @@ public class P2PNetworkTest {
   private final Vertx vertx = Vertx.vertx();
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
-          .setDiscovery(DiscoveryConfiguration.create().setActive(false))
+          .setDiscovery(DiscoveryConfiguration.create().setEnabled(false))
           .setRlpx(
               RlpxConfiguration.create()
                   .setBindPort(0)

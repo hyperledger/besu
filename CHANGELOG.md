@@ -1,9 +1,162 @@
 # Changelog
 
-## [Unreleased]
+## Unreleased
+### Breaking Changes
+- k8s (KUBERNETES) Nat method is removed. Use docker or none instead. [#8289](https://github.com/hyperledger/besu/pull/8289)
+- Change `Invalid block, unable to parse RLP` RPC error message to `Invalid block param (block not found)` [#8328](https://github.com/hyperledger/besu/pull/8328)
+
+### Upcoming Breaking Changes
+- `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
+- `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated, use `--Xbonsai-full-flat-db-enabled` instead.
+- `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-log-pruning-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
+- `--tx-pool-disable-locals` has been deprecated, use `--tx-pool-no-local-priority`, instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - Tessera privacy
+    - Smart-contract-based (onchain) permissioning
+    - Proof of Work consensus
+    - Fast Sync
+- Transaction indexing will be disabled by default in a future release for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries.
+- Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that in order to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
+
+### Additions and Improvements
+#### Prague
+- Increase mainnet and Sepolia gas limit to 36M [#8249](https://github.com/hyperledger/besu/pull/8249)
+- Update Holesky and Sepolia deposit contract addresses [#8346](https://github.com/hyperledger/besu/pull/8346)
+#### Plugins
+- Allow plugins to propose transactions during block creation [#8268](https://github.com/hyperledger/besu/pull/8268)
+#### Parallelization
+- Improve conflict detection by considering slots to reduce false positives [#7923](https://github.com/hyperledger/besu/pull/7923)
+#### Dependencies 
+- Upgrade Netty to version 4.1.118 to fix CVE-2025-24970 [#8275](https://github.com/hyperledger/besu/pull/8275)
+- Update the jc-kzg-4844 dependency from 1.0.0 to 2.0.0, which is now available on Maven Central [#7849](https://github.com/hyperledger/besu/pull/7849)
+- Other dependency updates [#8293](https://github.com/hyperledger/besu/pull/8293) [#8315](https://github.com/hyperledger/besu/pull/8315) [#8350](https://github.com/hyperledger/besu/pull/8350)
+- Update to gradle 8.11 [#8294](https://github.com/hyperledger/besu/pull/8294) and update usage of some deprecated features [#8295](https://github.com/hyperledger/besu/pull/8295) [#8340](https://github.com/hyperledger/besu/pull/8340)
+- Update gradle plugins [#8296](https://github.com/hyperledger/besu/pull/8296) [#8333](https://github.com/hyperledger/besu/pull/8333) [#8334](https://github.com/hyperledger/besu/pull/8334)
+#### Other improvements
+- Add TLS/mTLS options and configure the GraphQL HTTP service[#7910](https://github.com/hyperledger/besu/pull/7910)
+- Update `eth_getLogs` to return a `Block not found` error when the requested block is not found. [#8290](https://github.com/hyperledger/besu/pull/8290)
+- Change `Invalid block, unable to parse RLP` RPC error message to `Invalid block param (block not found)` [#8328](https://github.com/hyperledger/besu/pull/8328)
+- Support pending transaction score when saving and restoring txpool [#8363](https://github.com/hyperledger/besu/pull/8363)
+
+### Bug fixes
+- Add missing RPC method `debug_accountRange` to `RpcMethod.java` so this method can be used with `--rpc-http-api-method-no-auth` [#8153](https://github.com/hyperledger/besu/issues/8153)
+
+## 25.2.2 hotfix
+- Pectra - Sepolia: Fix for deposit contract log decoding [#8383](https://github.com/hyperledger/besu/pull/8383)
+
+## 25.2.1 hotfix
+- Pectra - update Holesky and Sepolia deposit contract addresses [#8346](https://github.com/hyperledger/besu/pull/8346)
+
+## 25.2.0
+
+### Breaking Changes
+- `rpc-gas-cap` default value has changed from 0 (unlimited) to 50M. If you require `rpc-gas-cap` greater than 50M, you'll need to set that explicitly. [#8251](https://github.com/hyperledger/besu/issues/8251)
+### Upcoming Breaking Changes
+- `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release. Use docker or none instead.
+- `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated, use `--Xbonsai-full-flat-db-enabled` instead.
+- `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-log-pruning-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - Tessera privacy
+    - Smart-contract-based (onchain) permissioning
+    - Proof of Work consensus
+    - Fast Sync
+- Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that in order to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism. 
+### Additions and Improvements
+- Add a tx selector to skip txs from the same sender after the first not selected [#8216](https://github.com/hyperledger/besu/pull/8216)
+- `rpc-gas-cap` default value has changed from 0 (unlimited) to 50M [#8251](https://github.com/hyperledger/besu/issues/8251)
+
+
+#### Prague
+- Add timestamps to enable Prague hardfork on Sepolia and Holesky test networks [#8163](https://github.com/hyperledger/besu/pull/8163)
+- Update system call addresses to match [devnet-6](https://github.com/ethereum/execution-spec-tests/releases/) values [#8209](https://github.com/hyperledger/besu/issues/8209) 
+
+#### Plugins
+- Extend simulate transaction on pending block plugin API [#8174](https://github.com/hyperledger/besu/pull/8174)
+
+### Bug fixes
+- Fix the simulation of txs with a future nonce [#8215](https://github.com/hyperledger/besu/pull/8215)
+- Bump to besu-native 1.1.2 for ubuntu 20.04 native support[#8264](https://github.com/hyperledger/besu/pull/8264)
+
+## 25.1.0
+
+### Breaking Changes
+- `--host-whitelist` has been deprecated since 2020 and this option is removed. Use the equivalent `--host-allowlist` instead. 
+- Change tracer API to include the mining beneficiary in BlockAwareOperationTracer::traceStartBlock [#8096](https://github.com/hyperledger/besu/pull/8096)
+- Change the input defaults on debug_trace* calls to not trace memory by default ("disableMemory": true, "disableStack": false,  "disableStorage": false)
+- Change the output format of debug_trace* and trace_* calls to match Geth behaviour
+
+### Upcoming Breaking Changes
+- `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
+- k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release. Use docker or none instead.
+- `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated, use `--Xbonsai-full-flat-db-enabled` instead.
+- `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-log-pruning-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Tessera privacy
+  - Smart-contract-based (onchain) permissioning
+  - Proof of Work consensus
+  - Fast Sync
+
+### Additions and Improvements
+- Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)
+- Retrieve all transaction receipts for a block in one request [#6646](https://github.com/hyperledger/besu/pull/6646)
+- Implement EIP-7840: Add blob schedule to config files [#8042](https://github.com/hyperledger/besu/pull/8042)
+- Allow gasPrice (legacy) and 1559 gasPrice params to be specified simultaneously for `eth_call`, `eth_createAccessList`, and `eth_estimateGas` [#8059](https://github.com/hyperledger/besu/pull/8059)
+- Improve debug_traceBlock calls performance and reduce output size [#8103](https://github.com/hyperledger/besu/pull/8103)
+- Add support for EIP-7702 transaction in the txpool [#8018](https://github.com/hyperledger/besu/pull/8018) [#7984](https://github.com/hyperledger/besu/pull/7984)
+- Add support for `movePrecompileToAddress` in `StateOverrides` (`eth_call`)[8115](https://github.com/hyperledger/besu/pull/8115)
+- Default target-gas-limit to 36M for holesky [#8125](https://github.com/hyperledger/besu/pull/8125)
+- Add EIP-7623 - Increase calldata cost [#8093](https://github.com/hyperledger/besu/pull/8093)
+- Add nonce to transaction call object [#8139](https://github.com/hyperledger/besu/pull/8139)
+
+### Bug fixes
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8024](https://github.com/hyperledger/besu/pull/8024)
+- Revise the approach for setting level_compaction_dynamic_level_bytes RocksDB configuration option [#8037](https://github.com/hyperledger/besu/pull/8037)
+- Fix possible incomplete txpool restore from dump file [#7991](https://github.com/hyperledger/besu/pull/7991)
+
+## 24.12.2 Hotfix
+
+This is an optional hotfix to address serialization of state overrides parameter when `movePrecompileToAddress` is present. 
+
+There is no need to upgrade from 24.12.0 (or 24.12.1) to this release if you are not yet using this functionality.
+
+### Bug fixes
+- Fix serialization of state overrides when `movePrecompileToAddress` is present [#8024](https://github.com/hyperledger/besu/pull/8024)
+
+## 24.12.1 Hotfix
+
+This is a hotfix to address publishing besu maven artifacts.  There are no issues with 24.12.0 other than incomplete artifact publishing, and there is no functional difference between 24.12.0 and 24.12.1 release binaries.
+
+### Bug fixes
+- Fix BOM pom publication to Artifactory [#8021](https://github.com/hyperledger/besu/pull/8021)
+
+## 24.12.0
 
 ### Breaking Changes
 - Removed Retesteth rpc service and commands [#7833](https://github.com/hyperledger/besu/pull/7783)
+- TLS for P2P (early access feature) has been removed [#7942](https://github.com/hyperledger/besu/pull/7942)
+- In the plugin API, `BesuContext` has been renamed to `ServiceManager` to better reflect its function, plugins must be updated to work with this version
+- With the upgrade of the Prometheus Java Metrics library, there are the following changes:
+  - Gauge names are not allowed to end with `total`, therefore the metric `besu_blockchain_difficulty_total` is losing the `_total` suffix
+  - The `_created` timestamps are not returned by default, you can set the env var `BESU_OPTS="-Dio.prometheus.exporter.includeCreatedTimestamps=true"` to enable them
+  - Some JVM metrics have changed name to adhere to the OTEL standard (see the table below), [Besu Full Grafana dashboard](https://grafana.com/grafana/dashboards/16455-besu-full/) is updated to support both names
+
+    | Old Name                        | New Name                        |
+    |---------------------------------|---------------------------------|
+    | jvm_memory_bytes_committed      | jvm_memory_committed_bytes      |
+    | jvm_memory_bytes_init           | jvm_memory_init_bytes           |
+    | jvm_memory_bytes_max            | jvm_memory_max_bytes            |
+    | jvm_memory_bytes_used           | jvm_memory_used_bytes           |
+    | jvm_memory_pool_bytes_committed | jvm_memory_pool_committed_bytes |
+    | jvm_memory_pool_bytes_init      | jvm_memory_pool_init_bytes      |
+    | jvm_memory_pool_bytes_max       | jvm_memory_pool_max_bytes       |
+    | jvm_memory_pool_bytes_used      | jvm_memory_pool_used_bytes      |
 
 ### Upcoming Breaking Changes
 - Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
@@ -12,7 +165,7 @@
 - `--host-whitelist` has been deprecated in favor of `--host-allowlist` since 2020 and will be removed in a future release
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Tessera privacy
-  - Smart-contract-based permissioning
+  - Smart-contract-based (onchain) permissioning
   - Proof of Work consensus
   - Fast Sync
 
@@ -22,13 +175,22 @@
 - Create and publish Besu BOM (Bill of Materials) [#7615](https://github.com/hyperledger/besu/pull/7615) 
 - Update Java dependencies [#7786](https://github.com/hyperledger/besu/pull/7786)
 - Add a method to get all the transaction in the pool, to the `TransactionPoolService`, to easily access the transaction pool content from plugins [#7813](https://github.com/hyperledger/besu/pull/7813)
+- Upgrade RocksDB JNI library from version 8.3.2 to 9.7.3 [#7817](https://github.com/hyperledger/besu/pull/7817)
 - Add a method to check if a metric category is enabled to the plugin API [#7832](https://github.com/hyperledger/besu/pull/7832)
 - Add a new metric collector for counters which get their value from suppliers [#7894](https://github.com/hyperledger/besu/pull/7894)
 - Add account and state overrides to `eth_call` [#7801](https://github.com/hyperledger/besu/pull/7801) and `eth_estimateGas` [#7890](https://github.com/hyperledger/besu/pull/7890)
+- Add RPC WS options to specify password file for keystore and truststore [#7970](https://github.com/hyperledger/besu/pull/7970)
+- Prometheus Java Metrics library upgraded to version 1.3.3 [#7880](https://github.com/hyperledger/besu/pull/7880)
+- Add histogram to Prometheus metrics system [#7944](https://github.com/hyperledger/besu/pull/7944)
+- Improve newPayload and FCU logs [#7961](https://github.com/hyperledger/besu/pull/7961)
+- Proper support for `pending` block tag when calling `eth_estimateGas` and `eth_createAccessList` [#7951](https://github.com/hyperledger/besu/pull/7951)
 
 ### Bug fixes
 - Fix registering new metric categories from plugins [#7825](https://github.com/hyperledger/besu/pull/7825)
 - Fix CVE-2024-47535 [7878](https://github.com/hyperledger/besu/pull/7878)
+- Fix QBFT prepared block based proposal validation [#7875](https://github.com/hyperledger/besu/pull/7875)
+- Correct default parameters for frontier transactions in `eth_call` and `eth_estimateGas` [#7965](https://github.com/hyperledger/besu/pull/7965)
+- Correctly parse nonce as hex in `eth_call` account overrides [#7999](https://github.com/hyperledger/besu/pull/7999)
 
 ## 24.10.0
 
@@ -531,7 +693,7 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.10.3/besu-23.10.3
 - Implement new `miner_setMinPriorityFee` and `miner_getMinPriorityFee` RPC methods [#6080](https://github.com/hyperledger/besu/pull/6080)
 - Clique config option `createemptyblocks` to not create empty blocks [#6082](https://github.com/hyperledger/besu/pull/6082)
 - Upgrade EVM Reference Tests to v13 (Cancun) [#6114](https://github.com/hyperledger/besu/pull/6114)
-- Add `yParity` to GraphQL and JSON-RPC for relevant querise. [6119](https://github.com/hyperledger/besu/pull/6119)
+- Add `yParity` to GraphQL and JSON-RPC for relevant queries. [6119](https://github.com/hyperledger/besu/pull/6119)
 - Force tx replacement price bump to zero when zero base fee market is configured or `--min-gas-price` is set to 0. This allows for easier tx replacement in networks where there is not gas price. [#6079](https://github.com/hyperledger/besu/pull/6079)
 - Introduce the possibility to limit the time spent selecting pending transactions during block creation, using the new experimental option `Xblock-txs-selection-max-time` on PoS and PoW networks (by default set to 5000ms) or `Xpoa-block-txs-selection-max-time` on PoA networks (by default 75% of the min block time) [#6044](https://github.com/hyperledger/besu/pull/6044)
 - Remove LowestInvalidNonceCache from `legacy` transaction pool to make it more private networks friendly [#6148](https://github.com/hyperledger/besu/pull/6148)

@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOBS_FULL;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -36,12 +38,13 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
+import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -50,6 +53,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -61,103 +65,120 @@ class BlobSizeTransactionSelectorTest {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
-  private static final long BLOB_GAS_PER_BLOB = CancunGasCalculator.BLOB_GAS_PER_BLOB;
+  private static final long BLOB_GAS_PER_BLOB = new CancunGasCalculator().getBlobGasPerBlob();
   private static final int MAX_BLOBS = 6;
   private static final long MAX_BLOB_GAS = BLOB_GAS_PER_BLOB * MAX_BLOBS;
 
   @Mock(answer = RETURNS_DEEP_STUBS)
   BlockSelectionContext blockSelectionContext;
 
-  @Mock TransactionSelectionResults selectionResults;
+  @Mock TransactionProcessingResult transactionProcessingResult;
+
+  SelectorsStateManager selectorsStateManager;
+  BlobSizeTransactionSelector selector;
+
+  @BeforeEach
+  void setup() {
+    when(blockSelectionContext.gasLimitCalculator().currentBlobGasLimit()).thenReturn(MAX_BLOB_GAS);
+    when(blockSelectionContext.gasCalculator().blobGasCost(anyLong()))
+        .thenAnswer(iom -> BLOB_GAS_PER_BLOB * iom.getArgument(0, Long.class));
+
+    selectorsStateManager = new SelectorsStateManager();
+    selector = new BlobSizeTransactionSelector(blockSelectionContext, selectorsStateManager);
+  }
 
   @Test
-  void notBlobTransactionsAreSelectedWithoutAnyCheck() {
-    final var selector = new BlobSizeTransactionSelector(blockSelectionContext);
-
-    final var nonBlobTx = createEIP1559PendingTransaction();
+  void notBlobTransactionsAreAlwaysSelected() {
+    // this tx fills all the available blob space
+    final var firstBlobTx = createBlobPendingTransaction(MAX_BLOBS);
 
     final var txEvaluationContext =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), nonBlobTx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), firstBlobTx, null, null, null);
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertSelected(txEvaluationContext);
 
-    final var result =
-        selector.evaluateTransactionPreProcessing(txEvaluationContext, selectionResults);
-    assertThat(result).isEqualTo(TransactionSelectionResult.SELECTED);
-    verifyNoInteractions(selectionResults);
+    // this non blob tx is selected regardless the blob space is already filled
+    final var nonBlobTx = createEIP1559PendingTransaction();
+
+    final var nonBlobTxEvaluationContext =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), nonBlobTx, null, null, null);
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertSelected(nonBlobTxEvaluationContext);
   }
 
   @Test
   void firstBlobTransactionIsSelected() {
-    when(blockSelectionContext.gasLimitCalculator().currentBlobGasLimit()).thenReturn(MAX_BLOB_GAS);
-    when(blockSelectionContext.gasCalculator().blobGasCost(anyInt()))
-        .thenAnswer(iom -> BLOB_GAS_PER_BLOB * iom.getArgument(0, Integer.class));
-
-    final var selector = new BlobSizeTransactionSelector(blockSelectionContext);
-
     final var firstBlobTx = createBlobPendingTransaction(MAX_BLOBS);
 
     final var txEvaluationContext =
         new TransactionEvaluationContext(
             blockSelectionContext.pendingBlockHeader(), firstBlobTx, null, null, null);
-
-    when(selectionResults.getCumulativeBlobGasUsed()).thenReturn(0L);
-
-    final var result =
-        selector.evaluateTransactionPreProcessing(txEvaluationContext, selectionResults);
-    assertThat(result).isEqualTo(TransactionSelectionResult.SELECTED);
-    verify(selectionResults).getCumulativeBlobGasUsed();
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertSelected(txEvaluationContext);
   }
 
   @Test
   void returnsBlobsFullWhenMaxNumberOfBlobsAlreadyPresent() {
-    when(blockSelectionContext.gasLimitCalculator().currentBlobGasLimit()).thenReturn(MAX_BLOB_GAS);
-
-    final var selector = new BlobSizeTransactionSelector(blockSelectionContext);
-
-    final var firstBlobTx = createBlobPendingTransaction(1);
-
-    final var txEvaluationContext =
+    final var blobTx1 = createBlobPendingTransaction(MAX_BLOBS);
+    final var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), firstBlobTx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), blobTx1, null, null, null);
 
-    when(selectionResults.getCumulativeBlobGasUsed()).thenReturn(MAX_BLOB_GAS);
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertSelected(txEvaluationContext1);
 
-    final var result =
-        selector.evaluateTransactionPreProcessing(txEvaluationContext, selectionResults);
-    assertThat(result).isEqualTo(TransactionSelectionResult.BLOBS_FULL);
-    verify(selectionResults).getCumulativeBlobGasUsed();
+    final var blobTx2 = createBlobPendingTransaction(1);
+    final var txEvaluationContext2 =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), blobTx2, null, null, null);
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertNotSelected(txEvaluationContext2, BLOBS_FULL);
   }
 
   @Test
   void returnsTooLargeForRemainingBlobGas() {
-    when(blockSelectionContext.gasLimitCalculator().currentBlobGasLimit()).thenReturn(MAX_BLOB_GAS);
-    when(blockSelectionContext.gasCalculator().blobGasCost(anyInt()))
-        .thenAnswer(iom -> BLOB_GAS_PER_BLOB * iom.getArgument(0, Integer.class));
-
-    final var selector = new BlobSizeTransactionSelector(blockSelectionContext);
-
-    final var firstBlobTx = createBlobPendingTransaction(MAX_BLOBS);
-
-    final var txEvaluationContext =
+    // first tx only fill the space for one blob leaving space max MAX_BLOB_GAS-1 blobs to be added
+    // later
+    final var blobTx1 = createBlobPendingTransaction(1);
+    final var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), firstBlobTx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), blobTx1, null, null, null);
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertSelected(txEvaluationContext1);
 
-    when(selectionResults.getCumulativeBlobGasUsed()).thenReturn(MAX_BLOB_GAS - 1);
+    final var blobTx2 = createBlobPendingTransaction(MAX_BLOBS);
+    final var txEvaluationContext2 =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), blobTx2, null, null, null);
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertNotSelected(txEvaluationContext2, TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS);
+  }
 
-    final var result =
-        selector.evaluateTransactionPreProcessing(txEvaluationContext, selectionResults);
-    assertThat(result).isEqualTo(TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS);
-    verify(selectionResults).getCumulativeBlobGasUsed();
+  private void evaluateAndAssertSelected(final TransactionEvaluationContext txEvaluationContext) {
+    assertThat(selector.evaluateTransactionPreProcessing(txEvaluationContext)).isEqualTo(SELECTED);
+    assertThat(
+            selector.evaluateTransactionPostProcessing(
+                txEvaluationContext, transactionProcessingResult))
+        .isEqualTo(SELECTED);
+  }
+
+  private void evaluateAndAssertNotSelected(
+      final TransactionEvaluationContext txEvaluationContext,
+      final TransactionSelectionResult preProcessedResult) {
+    assertThat(selector.evaluateTransactionPreProcessing(txEvaluationContext))
+        .isEqualTo(preProcessedResult);
   }
 
   private PendingTransaction createEIP1559PendingTransaction() {
     return PendingTransaction.newPendingTransaction(
-        createTransaction(TransactionType.EIP1559, 0), false, false);
+        createTransaction(TransactionType.EIP1559, 0), false, false, MAX_SCORE);
   }
 
   private PendingTransaction createBlobPendingTransaction(final int blobCount) {
     return PendingTransaction.newPendingTransaction(
-        createTransaction(TransactionType.BLOB, blobCount), false, false);
+        createTransaction(TransactionType.BLOB, blobCount), false, false, MAX_SCORE);
   }
 
   private Transaction createTransaction(final TransactionType type, final int blobCount) {

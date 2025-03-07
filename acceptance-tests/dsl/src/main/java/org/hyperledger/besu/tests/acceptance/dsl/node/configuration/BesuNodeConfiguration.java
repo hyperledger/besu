@@ -25,10 +25,10 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.nio.file.Path;
@@ -56,7 +56,6 @@ public class BesuNodeConfiguration {
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean p2pEnabled;
   private final int p2pPort;
-  private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
@@ -74,6 +73,7 @@ public class BesuNodeConfiguration {
   private final Optional<KeyPair> keyPair;
   private final boolean strictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
+  private final Optional<KeyValueStorageFactory> storageFactory;
 
   BesuNodeConfiguration(
       final String name,
@@ -95,7 +95,6 @@ public class BesuNodeConfiguration {
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final int p2pPort,
-      final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -111,7 +110,8 @@ public class BesuNodeConfiguration {
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
       final boolean strictTxReplayProtectionEnabled,
-      final Map<String, String> environment) {
+      final Map<String, String> environment,
+      final Optional<KeyValueStorageFactory> storageFactory) {
     this.name = name;
     this.miningConfiguration = miningConfiguration;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
@@ -131,7 +131,6 @@ public class BesuNodeConfiguration {
     this.genesisConfigProvider = genesisConfigProvider;
     this.p2pEnabled = p2pEnabled;
     this.p2pPort = p2pPort;
-    this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
@@ -148,6 +147,7 @@ public class BesuNodeConfiguration {
     this.keyPair = keyPair;
     this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
     this.environment = environment;
+    this.storageFactory = storageFactory;
   }
 
   public String getName() {
@@ -226,10 +226,6 @@ public class BesuNodeConfiguration {
     return p2pPort;
   }
 
-  public Optional<TLSConfiguration> getTLSConfiguration() {
-    return tlsConfiguration;
-  }
-
   public NetworkingConfiguration getNetworkingConfiguration() {
     return networkingConfiguration;
   }
@@ -292,5 +288,9 @@ public class BesuNodeConfiguration {
 
   public Map<String, String> getEnvironment() {
     return environment;
+  }
+
+  public Optional<KeyValueStorageFactory> storageImplementation() {
+    return storageFactory;
   }
 }

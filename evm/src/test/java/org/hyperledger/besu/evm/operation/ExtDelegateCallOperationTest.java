@@ -194,8 +194,8 @@ public class ExtDelegateCallOperationTest {
             .build();
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
     when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdater.get(TestMessageFrameBuilder.DEFAUT_ADDRESS)).thenReturn(account);
-    when(worldUpdater.getAccount(TestMessageFrameBuilder.DEFAUT_ADDRESS)).thenReturn(account);
+    when(worldUpdater.get(TestMessageFrameBuilder.DEFAULT_ADDRESS)).thenReturn(account);
+    when(worldUpdater.getAccount(TestMessageFrameBuilder.DEFAULT_ADDRESS)).thenReturn(account);
 
     Code code =
         switch (name) {
