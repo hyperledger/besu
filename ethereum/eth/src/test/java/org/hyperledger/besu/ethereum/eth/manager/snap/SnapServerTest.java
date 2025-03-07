@@ -55,7 +55,6 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
