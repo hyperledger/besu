@@ -17,9 +17,9 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.IbftLegacyConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
-import org.hyperledger.besu.consensus.ibft.IbftLegacyContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
@@ -69,7 +69,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected IbftLegacyContext createConsensusContext(
+  protected BftContext createConsensusContext(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
@@ -79,7 +79,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
         BlockValidatorProvider.nonForkingValidatorProvider(
             blockchain, epochManager, blockInterface);
 
-    return new IbftLegacyContext(validatorProvider, epochManager, blockInterface);
+    return new BftContext(validatorProvider, epochManager, blockInterface);
   }
 
   @Override

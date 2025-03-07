@@ -161,10 +161,10 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
         syncStatus -> {
           if (syncState.syncTarget().isPresent()) {
             // We're syncing so stop doing other stuff
-            LOG.info("Stopping QBFT mining coordinator while we are syncing");
+            LOG.info("Stopping BFT mining coordinator while we are syncing");
             stop();
           } else {
-            LOG.info("Starting QBFT mining coordinator following sync");
+            LOG.info("Starting BFT mining coordinator following sync");
             enable();
             start();
           }
@@ -174,7 +174,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
         new BesuEvents.InitialSyncCompletionListener() {
           @Override
           public void onInitialSyncCompleted() {
-            LOG.info("Starting QBFT mining coordinator following initial sync");
+            LOG.info("Starting BFT mining coordinator following initial sync");
             enable();
             start();
           }

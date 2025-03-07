@@ -277,9 +277,9 @@ public class RlpBlockImporter implements Closeable {
                           "Block %s does not connect to the existing chain. Current chain head %s",
                           header.getNumber(), blockchain.getChainHeadBlockNumber())));
     } catch (IllegalStateException e) {
-      e.printStackTrace();
-      throw e;
+      LOG.info("Block {} does not connect to the existing chain.", header.getNumber());
     }
+    return null;
   }
 
   @Override

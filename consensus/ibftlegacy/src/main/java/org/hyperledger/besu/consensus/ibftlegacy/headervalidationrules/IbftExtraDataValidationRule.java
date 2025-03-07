@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy.headervalidationrules;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
-import org.hyperledger.besu.consensus.ibft.IbftLegacyContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftHelpers;
+import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyExtraData;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -65,10 +65,10 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
     try {
       final Collection<Address> storedValidators =
           context
-              .getConsensusContext(IbftLegacyContext.class)
+              .getConsensusContext(BftContext.class)
               .getValidatorProvider()
               .getValidatorsAfterBlock(parent);
-      final BftExtraData ibftExtraData = ibftExtraDataCodec.decode(header);
+      final IbftLegacyExtraData ibftExtraData = ibftExtraDataCodec.decode(header);
 
       final Address proposer = IbftBlockHashing.recoverProposerAddress(header, ibftExtraData);
 

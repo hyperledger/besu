@@ -22,6 +22,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
@@ -30,13 +31,14 @@ import java.util.Collection;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents encoder/decoder of the serialized data structure stored in the extraData field of the
  * BlockHeader used when operating under an IBFT consensus mechanism.
  */
 public class IbftExtraDataCodec extends BftExtraDataCodec {
-  // private static final Logger LOG = LoggerFactory.getLogger(IbftExtraDataCodec.class);
 
   /** The constant EXTRA_VANITY_LENGTH. */
   public static final int EXTRA_VANITY_LENGTH = 32;
@@ -44,8 +46,28 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
+  private static final Logger LOG = LoggerFactory.getLogger(IbftExtraDataCodec.class);
+
   /** Default constructor */
   public IbftExtraDataCodec() {}
+
+  /**
+   * Decode.
+   *
+   * @param blockHeader the block header
+   * @return the bft extra data
+   */
+  @Override
+  public IbftLegacyExtraData decode(final BlockHeader blockHeader) {
+    final Object inputExtraData = blockHeader.getParsedExtraData();
+    if (inputExtraData instanceof IbftLegacyExtraData) {
+      return (IbftLegacyExtraData) inputExtraData;
+    }
+    LOG.warn(
+        "Expected a BftExtraData instance but got {}. Reparsing required.",
+        inputExtraData != null ? inputExtraData.getClass().getName() : "null");
+    return decodeRaw(blockHeader.getExtraData());
+  }
 
   /**
    * Decode raw input and return ibft extra data.
@@ -54,7 +76,7 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
    * @return the ibft extra data
    */
   @Override
-  public BftExtraData decodeRaw(final Bytes input) {
+  public IbftLegacyExtraData decodeRaw(final Bytes input) {
     checkArgument(
         input.size() > EXTRA_VANITY_LENGTH,
         "Invalid Bytes supplied - too short to produce a valid IBFT Extra Data object.");
@@ -71,7 +93,7 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
         rlpInput.readList(rlp -> SIGNATURE_ALGORITHM.get().decodeSignature(rlp.readBytes()));
     rlpInput.leaveList();
 
-    return new BftExtraData(vanityData, seals, proposerSeal, validators);
+    return new IbftLegacyExtraData(vanityData, seals, proposerSeal, validators);
   }
 
   private static SECPSignature parseProposerSeal(final RLPInput rlpInput) {

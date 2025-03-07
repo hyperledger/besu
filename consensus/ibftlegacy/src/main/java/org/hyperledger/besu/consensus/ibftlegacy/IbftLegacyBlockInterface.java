@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.ibftlegacy;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.consensus.common.validator.VoteType;
@@ -60,7 +59,7 @@ public class IbftLegacyBlockInterface extends BftBlockInterface {
 
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
-    final BftExtraData ibftExtraData = ibftExtraDataCodec.decode(header);
+    final IbftLegacyExtraData ibftExtraData = ibftExtraDataCodec.decode(header);
     return IbftBlockHashing.recoverProposerAddress(header, ibftExtraData);
   }
 

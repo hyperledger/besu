@@ -45,9 +45,9 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * @param ceil2nBy3Block the block after which 2/3n commit seals must exist, rather than 2F+1
    * @return BlockHeaderValidator configured for assessing ibft block headers
    */
-  public static BlockHeaderValidator.Builder ibftBlockHeaderValidator(
+  public static BlockHeaderValidator.Builder ibftBlockHeaderValidatorBuilder(
       final long secondsBetweenBlocks, final long ceil2nBy3Block) {
-    return createValidator(secondsBetweenBlocks, true, ceil2nBy3Block);
+    return createBlockHeaderValidatorBuilder(secondsBetweenBlocks, true, ceil2nBy3Block);
   }
 
   /**
@@ -56,33 +56,22 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @return a builder for the IBFT block header validator
    */
-  public static BlockHeaderValidator.Builder ibftBlockHeaderValidator(
+  public static BlockHeaderValidator.Builder ibftBlockHeaderValidatorBuilder(
       final long secondsBetweenBlocks) {
-    return createValidator(secondsBetweenBlocks);
+    return createBlockHeaderValidatorBuilder(secondsBetweenBlocks);
   }
 
-  /**
-   * Produces a BlockHeaderValidator configured for assessing IBFT proposed blocks (i.e. blocks
-   * which need to be vetted by the validators, and do not contain commit seals).
-   *
-   * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
-   * @return BlockHeaderValidator configured for assessing ibft block headers
-   */
-  public static BlockHeaderValidator.Builder ibftProposedBlockValidator(
-      final long secondsBetweenBlocks) {
-    return createValidator(secondsBetweenBlocks, false, 0);
-  }
-
-  private static BlockHeaderValidator.Builder createValidator(
+  private static BlockHeaderValidator.Builder createBlockHeaderValidatorBuilder(
       final long secondsBetweenBlocks,
       final boolean validateCommitSeals,
       final long ceil2nBy3Block) {
-    BlockHeaderValidator.Builder builder = createValidator(secondsBetweenBlocks);
+    BlockHeaderValidator.Builder builder = createBlockHeaderValidatorBuilder(secondsBetweenBlocks);
     builder.addRule(new IbftExtraDataValidationRule(validateCommitSeals, ceil2nBy3Block));
     return builder;
   }
 
-  private static BlockHeaderValidator.Builder createValidator(final long secondsBetweenBlocks) {
+  private static BlockHeaderValidator.Builder createBlockHeaderValidatorBuilder(
+      final long secondsBetweenBlocks) {
     return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())

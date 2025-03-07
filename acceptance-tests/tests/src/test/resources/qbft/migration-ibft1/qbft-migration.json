@@ -41,9 +41,7 @@
         "block": 0,
         "size": 64
       }
-    ],
-    "isMPS": false
-
+    ]
   },
   "alloc": {
     "0xde8e2ae09f2ee2c6c282c054b2384f8b5f9debee": {

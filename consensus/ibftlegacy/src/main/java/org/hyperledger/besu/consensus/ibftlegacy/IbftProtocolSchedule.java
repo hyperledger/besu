@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy;
 
-import static org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator;
+import static org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidatorBuilder;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftLegacyConfigOptions;
@@ -93,8 +93,10 @@ public class IbftProtocolSchedule {
   private static ProtocolSpecBuilder applyIbftChanges(
       final long secondsBetweenBlocks, final ProtocolSpecBuilder builder) {
     return builder
-        .blockHeaderValidatorBuilder(feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks))
-        .ommerHeaderValidatorBuilder(feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks))
+        .blockHeaderValidatorBuilder(
+            feeMarket -> ibftBlockHeaderValidatorBuilder(secondsBetweenBlocks))
+        .ommerHeaderValidatorBuilder(
+            feeMarket -> ibftBlockHeaderValidatorBuilder(secondsBetweenBlocks))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
