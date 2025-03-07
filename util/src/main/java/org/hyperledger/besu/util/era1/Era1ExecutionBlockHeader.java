@@ -12,24 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.types;
+package org.hyperledger.besu.util.era1;
 
 /**
- * Provides the ability to select the appropriate QbftProtocolSpec containing the validation and
- * import for the supplied block header.
+ * Represents an execution block header in an era1 file
+ *
+ * @param header The execution block header
+ * @param blockIndex The blockIndex number
  */
-public interface QbftProtocolSpec {
-  /**
-   * Gets the block importer.
-   *
-   * @return the block importer
-   */
-  QbftBlockImporter getBlockImporter();
-
-  /**
-   * Gets the block validator.
-   *
-   * @return the block validator
-   */
-  QbftBlockValidator getBlockValidator();
-}
+public record Era1ExecutionBlockHeader(byte[] header, int blockIndex) {}

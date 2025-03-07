@@ -38,7 +38,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator.ValidationResult;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
 
@@ -57,7 +56,6 @@ public class RoundChangeMessageValidatorTest {
   @Mock private RoundChangePayloadValidator payloadValidator;
   @Mock private QbftProtocolSchedule protocolSchedule;
   @Mock private QbftBlockValidator blockValidator;
-  @Mock private QbftProtocolSpec protocolSpec;
   @Mock private QbftBlockCodec blockEncoder;
 
   private RoundChangeMessageValidator messageValidator;
@@ -73,8 +71,7 @@ public class RoundChangeMessageValidatorTest {
   public void setup() {
     validators = QbftNodeList.createNodes(VALIDATOR_COUNT, blockEncoder);
 
-    lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    lenient().when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
+    lenient().when(protocolSchedule.getBlockValidator(any())).thenReturn(blockValidator);
   }
 
   @Test

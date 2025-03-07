@@ -87,7 +87,7 @@ public class ProposalValidator {
    */
   public boolean validate(final Proposal msg) {
     final QbftBlockValidator blockValidator =
-        protocolSchedule.getByBlockHeader(msg.getBlock().getHeader()).getBlockValidator();
+        protocolSchedule.getBlockValidator(msg.getBlock().getHeader());
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
