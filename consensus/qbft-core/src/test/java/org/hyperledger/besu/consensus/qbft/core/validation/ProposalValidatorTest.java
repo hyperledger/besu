@@ -41,7 +41,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -84,7 +83,6 @@ public class ProposalValidatorTest {
   private static final int VALIDATOR_COUNT = 4;
   @Mock private QbftBlockValidator blockValidator;
   @Mock private QbftProtocolSchedule protocolSchedule;
-  @Mock private QbftProtocolSpec protocolSpec;
   @Mock private QbftBlockCodec blockEncoder;
   @Mock private QbftBlockInterface blockInterface;
   @Mock private QbftValidatorProvider validatorProvider;
@@ -103,9 +101,7 @@ public class ProposalValidatorTest {
     QbftContext qbftContext = new QbftContext(validatorProvider, blockInterface);
     lenient().when(protocolContext.getConsensusContext(QbftContext.class)).thenReturn(qbftContext);
 
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-
-    when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
+    when(protocolSchedule.getBlockValidator(any())).thenReturn(blockValidator);
 
     roundItems.put(ROUND_ID.ZERO, createRoundSpecificItems(0));
     roundItems.put(ROUND_ID.ONE, createRoundSpecificItems(1));

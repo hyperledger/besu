@@ -15,8 +15,9 @@
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -42,9 +43,18 @@ public class QbftProtocolScheduleAdaptor implements QbftProtocolSchedule {
   }
 
   @Override
-  public QbftProtocolSpec getByBlockHeader(final QbftBlockHeader header) {
-    final ProtocolSpec protocolSpec =
-        besuProtocolSchedule.getByBlockHeader(BlockUtil.toBesuBlockHeader(header));
-    return new QbftProtocolSpecAdaptor(protocolSpec, context);
+  public QbftBlockImporter getBlockImporter(final QbftBlockHeader header) {
+    return new QbftBlockImporterAdaptor(
+        getProtocolSpecByBlockHeader(header).getBlockImporter(), context);
+  }
+
+  @Override
+  public QbftBlockValidator getBlockValidator(final QbftBlockHeader header) {
+    return new QbftBlockValidatorAdaptor(
+        getProtocolSpecByBlockHeader(header).getBlockValidator(), context);
+  }
+
+  private ProtocolSpec getProtocolSpecByBlockHeader(final QbftBlockHeader header) {
+    return besuProtocolSchedule.getByBlockHeader(BlockUtil.toBesuBlockHeader(header));
   }
 }

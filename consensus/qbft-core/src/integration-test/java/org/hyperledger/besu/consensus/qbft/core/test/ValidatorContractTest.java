@@ -21,18 +21,18 @@ import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftExtraDataProviderAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
 import org.hyperledger.besu.consensus.qbft.core.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.core.support.ValidatorPeer;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -67,9 +67,7 @@ public class ValidatorContractTest {
       Address.fromHexString("0x0000000000000000000000000000000000009999");
 
   private TestClock clock;
-
-  private final QbftExtraDataProvider extraDataProvider =
-      new QbftExtraDataProviderAdaptor(new QbftExtraDataCodec());
+  private final QbftExtraDataCodec qbftExtraDataCodec = new QbftExtraDataCodec();
 
   @BeforeEach
   public void setup() {
@@ -252,13 +250,12 @@ public class ValidatorContractTest {
     final QbftBlockHeader block1 = context.getBlockHeader(1);
 
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
-    assertThat(extraDataProvider.getExtraData(genesisBlock).getValidators())
-        .containsExactly(NODE_ADDRESS);
+    assertThat(getExtraData(genesisBlock).getValidators()).containsExactly(NODE_ADDRESS);
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
-    assertThat(extraDataProvider.getExtraData(block1).getValidators()).isEmpty();
-    assertThat(extraDataProvider.getExtraData(block1).getVote()).isEmpty();
+    assertThat(getExtraData(block1).getValidators()).isEmpty();
+    assertThat(getExtraData(block1).getVote()).isEmpty();
   }
 
   @Test
@@ -292,13 +289,13 @@ public class ValidatorContractTest {
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
-    assertThat(extraDataProvider.getExtraData(genesisBlock).getValidators()).isEmpty();
-    assertThat(extraDataProvider.getExtraData(genesisBlock).getVote()).isEmpty();
+    assertThat(getExtraData(genesisBlock).getValidators()).isEmpty();
+    assertThat(getExtraData(genesisBlock).getVote()).isEmpty();
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
-    assertThat(extraDataProvider.getExtraData(block1).getValidators()).isEmpty();
-    assertThat(extraDataProvider.getExtraData(block1).getVote()).isEmpty();
+    assertThat(getExtraData(block1).getValidators()).isEmpty();
+    assertThat(getExtraData(block1).getVote()).isEmpty();
   }
 
   @Test
@@ -336,18 +333,16 @@ public class ValidatorContractTest {
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
-    assertThat(extraDataProvider.getExtraData(genesisBlock).getValidators()).isEmpty();
-    assertThat(extraDataProvider.getExtraData(genesisBlock).getVote()).isEmpty();
+    assertThat(getExtraData(genesisBlock).getValidators()).isEmpty();
+    assertThat(getExtraData(genesisBlock).getVote()).isEmpty();
 
     // uses overridden validators
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
-    assertThat(extraDataProvider.getExtraData(block1).getValidators())
-        .containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
+    assertThat(getExtraData(block1).getValidators()).containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
 
     // uses cached validators
     assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block1Addresses);
-    assertThat(extraDataProvider.getExtraData(block2).getValidators())
-        .containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
+    assertThat(getExtraData(block2).getValidators()).containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
   }
 
   @Test
@@ -392,23 +387,20 @@ public class ValidatorContractTest {
     final QbftBlockHeader block3 = context.getBlockHeader(3);
 
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
-    assertThat(extraDataProvider.getExtraData(genesisBlock).getValidators())
-        .containsExactly(NODE_ADDRESS);
+    assertThat(getExtraData(genesisBlock).getValidators()).containsExactly(NODE_ADDRESS);
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
-    assertThat(extraDataProvider.getExtraData(block1).getValidators()).isEmpty();
-    assertThat(extraDataProvider.getExtraData(block1).getVote()).isEmpty();
+    assertThat(getExtraData(block1).getValidators()).isEmpty();
+    assertThat(getExtraData(block1).getVote()).isEmpty();
 
     // uses overridden validators
     assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block1Addresses);
-    assertThat(extraDataProvider.getExtraData(block2).getValidators())
-        .containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
+    assertThat(getExtraData(block2).getValidators()).containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
 
     // uses cached validators
     assertThat(validatorProvider.getValidatorsForBlock(block3)).isEqualTo(block1Addresses);
-    assertThat(extraDataProvider.getExtraData(block3).getValidators())
-        .containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
+    assertThat(getExtraData(block3).getValidators()).containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
   }
 
   @Test
@@ -450,17 +442,16 @@ public class ValidatorContractTest {
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
-    assertThat(extraDataProvider.getExtraData(genesisBlock).getValidators()).isEmpty();
-    assertThat(extraDataProvider.getExtraData(genesisBlock).getVote()).isEmpty();
+    assertThat(getExtraData(genesisBlock).getValidators()).isEmpty();
+    assertThat(getExtraData(genesisBlock).getVote()).isEmpty();
 
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
-    assertThat(extraDataProvider.getExtraData(block1).getValidators())
-        .containsExactly(NODE_2_ADDRESS);
+    assertThat(getExtraData(block1).getValidators()).containsExactly(NODE_2_ADDRESS);
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block2Addresses);
-    assertThat(extraDataProvider.getExtraData(block2).getValidators()).isEmpty();
-    assertThat(extraDataProvider.getExtraData(block2).getVote()).isEmpty();
+    assertThat(getExtraData(block2).getValidators()).isEmpty();
+    assertThat(getExtraData(block2).getVote()).isEmpty();
   }
 
   private void createNewBlockAsProposer(final TestContext context, final long blockNumber) {
@@ -544,5 +535,9 @@ public class ValidatorContractTest {
                 VALIDATOR_SELECTION_MODE.BLOCKHEADER,
                 BftFork.VALIDATORS_KEY,
                 JsonUtil.getObjectMapper().createArrayNode().addAll(jsonValidators))));
+  }
+
+  private BftExtraData getExtraData(final QbftBlockHeader blockHeader) {
+    return qbftExtraDataCodec.decode(BlockUtil.toBesuBlockHeader(blockHeader));
   }
 }

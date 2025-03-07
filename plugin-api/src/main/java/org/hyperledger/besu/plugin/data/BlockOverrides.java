@@ -28,8 +28,8 @@ import org.apache.tuweni.bytes.Bytes32;
 
 /** BlockOverrides represents the block overrides for a block. */
 public class BlockOverrides {
-  private final Optional<Long> timestamp;
-  private final Optional<Long> blockNumber;
+  private Optional<Long> timestamp;
+  private Optional<Long> blockNumber;
   private final Optional<Hash> blockHash;
   private final Optional<Bytes32> prevRandao;
   private final Optional<Long> gasLimit;
@@ -222,6 +222,24 @@ public class BlockOverrides {
    */
   public Optional<Function<Long, Hash>> getBlockHashLookup() {
     return blockHashLookup;
+  }
+
+  /**
+   * Sets the timestamp.
+   *
+   * @param timestamp the timestamp to set
+   */
+  public void setTimestamp(final Long timestamp) {
+    this.timestamp = Optional.ofNullable(timestamp);
+  }
+
+  /**
+   * Sets the block number.
+   *
+   * @param blockNumber the block number to set
+   */
+  public void setBlockNumber(final Long blockNumber) {
+    this.blockNumber = Optional.ofNullable(blockNumber);
   }
 
   /**

@@ -20,7 +20,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -58,13 +57,11 @@ public class QbftBlockCreatorAdaptor implements QbftBlockCreator {
 
   @Override
   public QbftBlock createSealedBlock(
-      final QbftExtraDataProvider bftQbftExtraDataProvider,
-      final QbftBlock block,
-      final int roundNumber,
-      final Collection<SECPSignature> commitSeals) {
+      final QbftBlock block, final int roundNumber, final Collection<SECPSignature> commitSeals) {
     final Block besuBlock = BlockUtil.toBesuBlock(block);
     final QbftBlockHeader initialHeader = block.getHeader();
-    final BftExtraData initialExtraData = bftQbftExtraDataProvider.getExtraData(initialHeader);
+    final BftExtraData initialExtraData =
+        bftExtraDataCodec.decode(BlockUtil.toBesuBlockHeader(initialHeader));
 
     final BftExtraData sealedExtraData =
         new BftExtraData(
