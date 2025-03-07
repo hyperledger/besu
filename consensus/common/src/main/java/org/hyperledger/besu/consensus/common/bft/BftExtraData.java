@@ -27,11 +27,11 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Bft extra data. */
 public class BftExtraData implements ParsedExtraData {
-  protected final Bytes vanityData;
-  protected final Collection<SECPSignature> seals;
-  protected final Collection<Address> validators;
-  protected final Optional<Vote> vote;
-  protected final int round;
+  private final Bytes vanityData;
+  private final Collection<SECPSignature> seals;
+  private final Collection<Address> validators;
+  private final Optional<Vote> vote;
+  private final int round;
 
   /**
    * Instantiates a new Bft extra data.

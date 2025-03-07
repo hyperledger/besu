@@ -56,15 +56,6 @@ public class IbftLegacyExtraData extends BftExtraData {
 
   @Override
   public String toString() {
-    return "IbftExtraData{"
-        + "vanityData="
-        + vanityData
-        + ", seals="
-        + seals
-        + ", validators="
-        + validators
-        + ", proposerSeal="
-        + proposerSeal
-        + '}';
+    return "IbftLegacyExtraData{" + super.toString() + ", proposerSeal=" + proposerSeal + '}';
   }
 }
