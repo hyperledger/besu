@@ -53,7 +53,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
@@ -980,7 +979,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     tx.put(
         TRIE_BRANCH_STORAGE,
         WORLD_BLOCK_NUMBER_KEY,
-        Long.toHexString(blockNumber).getBytes(StandardCharsets.UTF_8));
+        Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
     tx.commit();
   }
 }

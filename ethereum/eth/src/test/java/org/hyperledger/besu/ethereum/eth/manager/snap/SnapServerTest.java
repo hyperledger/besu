@@ -55,7 +55,6 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -824,7 +823,7 @@ public class SnapServerTest {
     tx.put(
         TRIE_BRANCH_STORAGE,
         WORLD_BLOCK_NUMBER_KEY,
-        Long.toHexString(blockNumber).getBytes(StandardCharsets.UTF_8));
+        Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
     tx.commit();
   }
 
