@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
@@ -58,7 +59,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldState extends DiffBasedWorldState {
 
-  protected final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
+  protected BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
@@ -74,7 +75,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
         worldStateConfig);
   }
 
-  public BonsaiWorldState(
+  private BonsaiWorldState(
       final BonsaiWorldState worldState,
       final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader) {
     this(
@@ -84,6 +85,10 @@ public class BonsaiWorldState extends DiffBasedWorldState {
         worldState.trieLogManager,
         worldState.accumulator.getEvmConfiguration(),
         WorldStateConfig.newBuilder(worldState.worldStateConfig).build());
+  }
+
+  public BonsaiWorldState duplicateWithNoopCachedTrieLoader() {
+    return new BonsaiWorldState(this, new NoopBonsaiCachedMerkleTrieLoader());
   }
 
   public BonsaiWorldState(

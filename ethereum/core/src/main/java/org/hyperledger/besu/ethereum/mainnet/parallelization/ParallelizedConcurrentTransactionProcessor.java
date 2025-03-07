@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
@@ -137,8 +136,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Wei blobGasPrice,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     try (final DiffBasedWorldState roundWorldState =
-        new BonsaiWorldState(
-            (BonsaiWorldState) worldState, new NoopBonsaiCachedMerkleTrieLoader())) {
+        ((BonsaiWorldState) worldState).duplicateWithNoopCachedTrieLoader()) {
       roundWorldState.freezeStorage(); // make the clone frozen
       final ParallelizedTransactionContext.Builder contextBuilder =
           new ParallelizedTransactionContext.Builder();
