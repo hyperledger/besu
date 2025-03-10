@@ -42,8 +42,6 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
   private static final long ONE_MINUTE = Duration.of(1, ChronoUnit.MINUTES).toMillis();
 
-  private static final long THREE_MINUTES = Duration.of(3, ChronoUnit.MINUTES).toMillis();
-
   private static final long TEN_SECONDS = Duration.of(10, ChronoUnit.SECONDS).toMillis();
 
   static int getTestDurationMins() {
@@ -213,6 +211,8 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     upgradeToLondon(
         minerNode1, minerNode2, minerNode3, minerNode4, lastChainHeight.intValue() + 120);
 
+    cluster.verify(blockchain.reachesHeight(minerNode4, 1, 180));
+
     previousStepEndTime = Instant.now();
 
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
@@ -241,7 +241,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     upgradeToShanghai(
         minerNode1, minerNode2, minerNode3, minerNode4, Instant.now().getEpochSecond() + 120);
 
-    Thread.sleep(THREE_MINUTES);
+    cluster.verify(blockchain.reachesHeight(minerNode4, 1, 180));
 
     SimpleStorageShanghai simpleStorageContractShanghai =
         minerNode1.execute(contractTransactions.createSmartContract(SimpleStorageShanghai.class));
