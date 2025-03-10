@@ -23,6 +23,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLayeredWorldStateKeyValueStorage;
@@ -187,8 +189,8 @@ public abstract class DiffBasedWorldState
 
       if (blockHeader == null || !worldStateConfig.isTrieDisabled()) {
         calculatedRootHash =
-            calculateRootHash(
-                isStorageFrozen ? Optional.empty() : Optional.of(stateUpdater), accumulator);
+            calculateRootHash(isStorageFrozen ? Optional.empty() : Optional.of(stateUpdater),
+                accumulator);
       } else {
         // if the trie is disabled, we cannot calculate the state root, so we directly use the root
         // of the block. It's important to understand that in all networks,
@@ -202,14 +204,13 @@ public abstract class DiffBasedWorldState
       // If specified but not a direct descendant simply store the new block hash.
       if (blockHeader != null) {
         verifyWorldStateRoot(calculatedRootHash, blockHeader);
-        saveTrieLog =
-            () -> {
-              trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
-              // not save a frozen state in the cache
-              if (!isStorageFrozen) {
-                cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
-              }
-            };
+        saveTrieLog = () -> {
+          trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
+          // not save a frozen state in the cache
+          if (!isStorageFrozen) {
+            cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
+          }
+        };
 
         stateUpdater
             .getWorldStateTransaction()
@@ -239,11 +240,7 @@ public abstract class DiffBasedWorldState
 
   protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
     if (!worldStateConfig.isTrieDisabled() && !calculatedStateRoot.equals(header.getStateRoot())) {
-      throw new RuntimeException(
-          "World State Root does not match expected value, header "
-              + header.getStateRoot().toHexString()
-              + " calculated "
-              + calculatedStateRoot.toHexString());
+      throw new StateRootMismatchException(header.getStateRoot(), calculatedStateRoot);
     }
   }
 
