@@ -58,7 +58,7 @@ public class AccountPermissioningController {
     final Hash transactionHash = transaction.getHash();
     final Address sender = transaction.getSender();
 
-    LOG.trace("Account permissioning: Checking transaction {}", transactionHash);
+    LOG.trace("Transaction Rejector: Checking transaction {}", transactionHash);
 
     boolean permittedLocal = true;
     boolean permittedOnchain = true;
@@ -83,7 +83,7 @@ public class AccountPermissioningController {
       for (TransactionPermissioningProvider provider : this.pluginProviders) {
         if (!provider.isPermitted(transaction)) {
           LOG.trace(
-              "Account permissioning - {}: Rejected transaction {} from {}",
+              "Transaction Rejector - {}: Rejected transaction {} from {}",
               provider.getClass().getSimpleName(),
               transactionHash,
               sender);
