@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,18 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.types;
+package org.hyperledger.besu.util.era1;
 
-/** Utility functions for QBFT blocks */
-public interface QbftBlockInterface {
+import java.util.List;
 
-  /**
-   * Create a new block using the supplied block with round number replaced. The hash must be for
-   * the committed seal.
-   *
-   * @param proposalBlock the proposal block
-   * @param roundNumber the round number
-   * @return the new qbft block with updated round number
-   */
-  QbftBlock replaceRoundInBlock(QbftBlock proposalBlock, int roundNumber);
-}
+/**
+ * Represents a block index in an era1 file
+ *
+ * @param startingBlockIndex The first blockIndex number indexed by this block index
+ * @param indexes The indexes of the blocks indexed by this block index
+ */
+public record Era1BlockIndex(long startingBlockIndex, List<Long> indexes) {}
