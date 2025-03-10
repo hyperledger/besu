@@ -88,7 +88,6 @@ public class BlockResult implements JsonRpcResult {
   private final String blobGasUsed;
   private final String excessBlobGas;
   private final String parentBeaconBlockRoot;
-  private final List<CallProcessingResult> callProcessingResults;
 
   public BlockResult(
       final BlockHeader header,
@@ -140,7 +139,6 @@ public class BlockResult implements JsonRpcResult {
     this.timestamp = Quantity.create(header.getTimestamp());
     this.ommers = ommers;
     this.transactions = transactions;
-    this.callProcessingResults = callProcessingResults;
     this.coinbase = includeCoinbase ? header.getCoinbase().toString() : null;
     this.withdrawalsRoot = header.getWithdrawalsRoot().map(Hash::toString).orElse(null);
     this.withdrawals =
@@ -288,10 +286,5 @@ public class BlockResult implements JsonRpcResult {
   @JsonGetter(value = "parentBeaconBlockRoot")
   public String getParentBeaconBlockRoot() {
     return parentBeaconBlockRoot;
-  }
-
-  @JsonGetter(value = "calls")
-  public List<CallProcessingResult> getTransactionProcessingResults() {
-    return callProcessingResults;
   }
 }

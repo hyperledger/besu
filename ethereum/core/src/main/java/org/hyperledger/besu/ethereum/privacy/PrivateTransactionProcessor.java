@@ -182,7 +182,8 @@ public class PrivateTransactionProcessor {
             0,
             0,
             ValidationResult.invalid(TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED),
-            initialFrame.getRevertReason());
+            initialFrame.getRevertReason(),
+            initialFrame.getExceptionalHaltReason());
       }
     } catch (final RuntimeException re) {
       LOG.error("Critical Exception Processing Transaction", re);
