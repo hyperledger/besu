@@ -159,7 +159,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
     // Leave the chain stalled for 3 minutes. Check no new blocks are mined. Then
     // resume the other validators.
-    nextStepEndTime = previousStepEndTime.plus(3, ChronoUnit.MINUTES);
+    nextStepEndTime = previousStepEndTime.plus(1, ChronoUnit.MINUTES);
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
       Thread.sleep(ONE_MINUTE);
       chainHeight = minerNode1.execute(ethTransactions.blockNumber());
@@ -212,6 +212,8 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     // Upgrade the chain from berlin to london in 120 blocks time
     upgradeToLondon(
         minerNode1, minerNode2, minerNode3, minerNode4, lastChainHeight.intValue() + 120);
+
+    Thread.sleep(THREE_MINUTES);
 
     previousStepEndTime = Instant.now();
 
