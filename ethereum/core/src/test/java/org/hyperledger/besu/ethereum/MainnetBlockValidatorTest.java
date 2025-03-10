@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
@@ -40,7 +39,6 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -51,13 +49,11 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
 public class MainnetBlockValidatorTest {
 
@@ -69,8 +65,8 @@ public class MainnetBlockValidatorTest {
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
   private final MutableWorldState worldState = mock(MutableWorldState.class);
-  private final BadBlockManager badBlockManager = chainUtil.getProtocolContext()
-      .getBadBlockManager();
+  private final BadBlockManager badBlockManager =
+      chainUtil.getProtocolContext().getBadBlockManager();
   private final BlockProcessor blockProcessor = mock(BlockProcessor.class);
   private final BlockHeaderValidator blockHeaderValidator = mock(BlockHeaderValidator.class);
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
@@ -123,24 +119,23 @@ public class MainnetBlockValidatorTest {
   @Test
   public void validateAndProcessBlock_onStateRootMismatch() {
     var spyBlock = chainUtil.getBlock(4);
-    BlockHeader badStateRootHeader = BlockHeaderBuilder
-        .fromHeader(spyBlock.getHeader())
-        .stateRoot(Hash.EMPTY_TRIE_HASH)
-        .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
-        .buildBlockHeader();
+    BlockHeader badStateRootHeader =
+        BlockHeaderBuilder.fromHeader(spyBlock.getHeader())
+            .stateRoot(Hash.EMPTY_TRIE_HASH)
+            .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+            .buildBlockHeader();
 
-    Block stateRootMismatchBlock = new Block(
-        badStateRootHeader,
-        spyBlock.getBody());
+    Block stateRootMismatchBlock = new Block(badStateRootHeader, spyBlock.getBody());
 
     var spec = chainUtil.getProtocolSchedule().getByBlockHeader(badStateRootHeader);
 
     BlockProcessingResult result =
-        spec.getBlockValidator().validateAndProcessBlock(
-            chainUtil.getProtocolContext(),
-            stateRootMismatchBlock,
-            HeaderValidationMode.NONE,
-            HeaderValidationMode.NONE);
+        spec.getBlockValidator()
+            .validateAndProcessBlock(
+                chainUtil.getProtocolContext(),
+                stateRootMismatchBlock,
+                HeaderValidationMode.NONE,
+                HeaderValidationMode.NONE);
 
     assertThat(result.isSuccessful()).isFalse();
     assertThat(badBlockManager.getBadBlock(stateRootMismatchBlock.getHash())).isPresent();
