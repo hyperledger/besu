@@ -390,7 +390,8 @@ public class TransactionSimulator {
         simulationGasCap,
         transactionProcessor,
         blobGasPricePerGasSupplier,
-        blockHashLookup);
+        blockHashLookup,
+        () -> FAKE_SIGNATURE);
   }
 
   @Nonnull
@@ -405,7 +406,8 @@ public class TransactionSimulator {
       final long simulationGasCap,
       final MainnetTransactionProcessor transactionProcessor,
       final BiFunction<ProtocolSpec, Optional<BlockHeader>, Wei> blobGasPricePerGasCalculator,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final Supplier<SECPSignature> signatureSupplier) {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(processableHeader);
     final Address senderAddress =
@@ -451,7 +453,8 @@ public class TransactionSimulator {
             senderAddress,
             nonce,
             simulationGasCap,
-            blobGasPrice);
+            blobGasPrice,
+            signatureSupplier);
     if (maybeTransaction.isEmpty()) {
       return Optional.empty();
     }
@@ -536,7 +539,8 @@ public class TransactionSimulator {
       final Address senderAddress,
       final long nonce,
       final long gasLimit,
-      final Wei blobGasPrice) {
+      final Wei blobGasPrice,
+      final Supplier<SECPSignature> signatureSupplier) {
 
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
@@ -549,7 +553,7 @@ public class TransactionSimulator {
             .sender(senderAddress)
             .value(value)
             .payload(payload)
-            .signature(FAKE_SIGNATURE);
+            .signature(signatureSupplier.get());
 
     // Set access list if present
     callParams.getAccessList().ifPresent(transactionBuilder::accessList);

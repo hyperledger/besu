@@ -106,18 +106,6 @@ public class BlockResult implements JsonRpcResult {
       final int size,
       final boolean includeCoinbase,
       final Optional<List<Withdrawal>> withdrawals) {
-    this(header, transactions, ommers, null, totalDifficulty, size, includeCoinbase, withdrawals);
-  }
-
-  public BlockResult(
-      final BlockHeader header,
-      final List<TransactionResult> transactions,
-      final List<JsonNode> ommers,
-      final List<CallProcessingResult> callProcessingResults,
-      final Difficulty totalDifficulty,
-      final int size,
-      final boolean includeCoinbase,
-      final Optional<List<Withdrawal>> withdrawals) {
     this.number = Quantity.create(header.getNumber());
     this.hash = header.getHash().toString();
     this.mixHash = header.getMixHash().toString();

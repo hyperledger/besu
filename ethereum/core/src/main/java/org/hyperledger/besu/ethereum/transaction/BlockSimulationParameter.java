@@ -21,10 +21,12 @@ import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCal
 import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError.TIMESTAMPS_NOT_ASCENDING;
 import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError.TOO_MANY_BLOCK_CALLS;
 
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StateOverride;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,28 +37,13 @@ public class BlockSimulationParameter {
   private static final int MAX_BLOCK_CALL_SIZE = 256;
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
-  static final BlockSimulationParameter EMPTY =
-      new BlockSimulationParameter(List.of(), false, false, false);
+  static final BlockSimulationParameter EMPTY = new BlockSimulationParameterBuilder().build();
 
   final List<? extends BlockStateCall> blockStateCalls;
   private final boolean validation;
   private final boolean traceTransfers;
   private final boolean returnFullTransactions;
-
-  public BlockSimulationParameter(final List<? extends BlockStateCall> blockStateCalls) {
-    this.blockStateCalls = blockStateCalls;
-    this.validation = false;
-    this.traceTransfers = false;
-    this.returnFullTransactions = false;
-  }
-
-  public BlockSimulationParameter(final BlockStateCall blockStateCall) {
-    this(List.of(blockStateCall));
-  }
-
-  public BlockSimulationParameter(final BlockStateCall blockStateCall, final boolean validation) {
-    this(List.of(blockStateCall), validation, false, false);
-  }
+  private final SECPSignature fakeSignature;
 
   public BlockSimulationParameter(
       final List<? extends BlockStateCall> blockStateCalls,
@@ -68,6 +55,21 @@ public class BlockSimulationParameter {
     this.validation = validation;
     this.traceTransfers = traceTransfers;
     this.returnFullTransactions = returnFullTransactions;
+    this.fakeSignature = new SECPSignature(BigInteger.ZERO, BigInteger.ZERO, (byte) 0);
+  }
+
+  public BlockSimulationParameter(
+      final List<? extends BlockStateCall> blockStateCalls,
+      final boolean validation,
+      final boolean traceTransfers,
+      final boolean returnFullTransactions,
+      final SECPSignature fakeSignature) {
+    checkNotNull(blockStateCalls);
+    this.blockStateCalls = blockStateCalls;
+    this.validation = validation;
+    this.traceTransfers = traceTransfers;
+    this.returnFullTransactions = returnFullTransactions;
+    this.fakeSignature = fakeSignature;
   }
 
   public List<? extends BlockStateCall> getBlockStateCalls() {
@@ -84,6 +86,10 @@ public class BlockSimulationParameter {
 
   public boolean isReturnFullTransactions() {
     return returnFullTransactions;
+  }
+
+  public SECPSignature getFakeSignature() {
+    return fakeSignature;
   }
 
   public Optional<BlockStateCallError> validate(final Set<Address> validPrecompileAddresses) {
@@ -176,5 +182,46 @@ public class BlockSimulationParameter {
       }
     }
     return Optional.empty();
+  }
+
+  public static class BlockSimulationParameterBuilder {
+    private List<? extends BlockStateCall> blockStateCalls = List.of();
+    private boolean validation = false;
+    private boolean traceTransfers = false;
+    private boolean returnFullTransactions = false;
+    private SECPSignature fakeSignature =
+        new SECPSignature(BigInteger.ZERO, BigInteger.ZERO, (byte) 0);
+
+    public BlockSimulationParameterBuilder blockStateCalls(
+        final List<? extends BlockStateCall> blockStateCalls) {
+      this.blockStateCalls = blockStateCalls;
+      return this;
+    }
+
+    public BlockSimulationParameterBuilder validation(final boolean validation) {
+      this.validation = validation;
+      return this;
+    }
+
+    public BlockSimulationParameterBuilder traceTransfers(final boolean traceTransfers) {
+      this.traceTransfers = traceTransfers;
+      return this;
+    }
+
+    public BlockSimulationParameterBuilder returnFullTransactions(
+        final boolean returnFullTransactions) {
+      this.returnFullTransactions = returnFullTransactions;
+      return this;
+    }
+
+    public BlockSimulationParameterBuilder fakeSignature(final SECPSignature fakeSignature) {
+      this.fakeSignature = fakeSignature;
+      return this;
+    }
+
+    public BlockSimulationParameter build() {
+      return new BlockSimulationParameter(
+          blockStateCalls, validation, traceTransfers, returnFullTransactions, fakeSignature);
+    }
   }
 }

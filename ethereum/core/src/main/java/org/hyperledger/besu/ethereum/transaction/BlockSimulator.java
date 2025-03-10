@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalcu
 import static org.hyperledger.besu.ethereum.transaction.BlockStateCalls.fillBlockStateCalls;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -58,6 +59,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -144,7 +146,11 @@ public class BlockSimulator {
     for (BlockStateCall stateCall : blockStateCalls) {
       BlockSimulationResult result =
           processBlockStateCall(
-              currentBlockHeader, stateCall, worldState, simulationParameter.isValidation());
+              currentBlockHeader,
+              stateCall,
+              worldState,
+              simulationParameter.isValidation(),
+              simulationParameter::getFakeSignature);
       results.add(result);
       currentBlockHeader = result.getBlock().getHeader();
     }
@@ -163,7 +169,8 @@ public class BlockSimulator {
       final BlockHeader baseBlockHeader,
       final BlockStateCall blockStateCall,
       final MutableWorldState ws,
-      final boolean shouldValidate) {
+      final boolean shouldValidate,
+      final Supplier<SECPSignature> signatureSupplier) {
 
     BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
     ProtocolSpec protocolSpec =
@@ -194,7 +201,8 @@ public class BlockSimulator {
             protocolSpec,
             shouldValidate,
             transactionProcessor,
-            blockHashLookup);
+            blockHashLookup,
+            signatureSupplier);
 
     return createFinalBlock(
         overridenBaseblockHeader, blockCallSimulationResult, blockOverrides, ws);
@@ -207,7 +215,8 @@ public class BlockSimulator {
       final ProtocolSpec protocolSpec,
       final boolean shouldValidate,
       final MainnetTransactionProcessor transactionProcessor,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final Supplier<SECPSignature> signatureSupplier) {
 
     TransactionValidationParams transactionValidationParams =
         shouldValidate ? STRICT_VALIDATION_PARAMS : SIMULATION_PARAMS;
@@ -247,7 +256,8 @@ public class BlockSimulator {
               gasLimit,
               transactionProcessor,
               blobGasPricePerGasSupplier,
-              blockHashLookup);
+              blockHashLookup,
+              signatureSupplier);
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(

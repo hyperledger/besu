@@ -141,7 +141,7 @@ public class BlockSimulatorTest {
         .thenReturn(Optional.of("Invalid Transaction"));
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(), any(), any(), any(), any(), any(), any(), 0, any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), 0, any(), any(), any(), any()))
         .thenReturn(Optional.of(transactionSimulatorResult));
 
     BlockStateCallException exception =
@@ -149,7 +149,7 @@ public class BlockSimulatorTest {
             BlockStateCallException.class,
             () ->
                 blockSimulator.process(
-                    blockHeader, new BlockSimulationParameter(blockStateCall), mutableWorldState));
+                    blockHeader, createSimulationParameter(blockStateCall), mutableWorldState));
 
     assertEquals(
         "Transaction simulator result is invalid: Invalid Transaction", exception.getMessage());
@@ -162,7 +162,7 @@ public class BlockSimulatorTest {
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(), any(), any(), any(), any(), any(), any(), 0, any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), 0, any(), any(), any(), any()))
         .thenReturn(Optional.empty());
 
     BlockStateCallException exception =
@@ -170,7 +170,7 @@ public class BlockSimulatorTest {
             BlockStateCallException.class,
             () ->
                 blockSimulator.process(
-                    blockHeader, new BlockSimulationParameter(blockStateCall), mutableWorldState));
+                    blockHeader, createSimulationParameter(blockStateCall), mutableWorldState));
 
     assertEquals("Transaction simulator result is empty", exception.getMessage());
   }
@@ -243,5 +243,11 @@ public class BlockSimulatorTest {
     assertEquals(expectedMixHashOrPrevRandao, result.getMixHash());
     assertEquals(expectedPrevRandao, result.getPrevRandao().get());
     assertEquals(expectedExtraData, result.getExtraData());
+  }
+
+  private BlockSimulationParameter createSimulationParameter(final BlockStateCall blockStateCall) {
+    return new BlockSimulationParameter.BlockSimulationParameterBuilder()
+        .blockStateCalls(List.of(blockStateCall))
+        .build();
   }
 }

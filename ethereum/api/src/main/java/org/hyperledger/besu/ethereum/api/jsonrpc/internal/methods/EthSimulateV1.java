@@ -44,11 +44,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
-  private static final Logger LOG = LoggerFactory.getLogger(EthSimulateV1.class);
 
   private final BlockSimulator blockSimulator;
   private final ProtocolSchedule protocolSchedule;
@@ -99,10 +95,6 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
       final JsonRpcRequestContext request, final BlockHeader header) {
     try {
       SimulateV1Parameter simulateV1Parameter = getBlockStateCalls(request);
-      if (simulateV1Parameter.isTraceTransfers()) {
-        LOG.warn("Trace transfers is not implemented yet");
-      }
-
       Optional<BlockStateCallError> maybeValidationError =
           simulateV1Parameter.validate(getValidPrecompileAddresses(header));
       if (maybeValidationError.isPresent()) {
