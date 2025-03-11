@@ -16,7 +16,28 @@ package org.hyperledger.besu.plugin.services.permissioning;
 
 import org.hyperledger.besu.datatypes.Transaction;
 
+/**
+ * Allows you to register a provider that will decide if a transaction is permitted. <br>
+ * <br>
+ * A simple implementation can look like:
+ *
+ * <pre>{@code
+ * context
+ *    .getService(PermissioningService.class)
+ *    .get()
+ *    .registerTransactionPermissioningProvider((tx) -> {
+ *        // Your logic here
+ *        return true;
+ *    });
+ * }</pre>
+ */
 @FunctionalInterface
 public interface TransactionPermissioningProvider {
+  /**
+   * Can be used to filter transactions according to an arbitrary criteria
+   *
+   * @param transaction current transaction to be added in the mempool
+   * @return if we can add transaction to the mempool
+   */
   boolean isPermitted(final Transaction transaction);
 }
