@@ -28,7 +28,7 @@ public class EOFTestConstants {
                      0009 # Code section 0 , 9 bytes
                    030001 # Total subcontainers ( 1 )
                      0014 # Sub container 0, 20 byte
-                   040000 # Data section length(  0 )
+                    ff0000 # Data section length(  0 )
                        00 # Terminator (end of header)
                           # Code section 0 types
                        00 # 0 inputs\s
@@ -48,7 +48,7 @@ public class EOFTestConstants {
                        010004 # Types length ( 4 )
                        020001 # Total code sections ( 1 )
                          0001 # Code section 0 , 1 bytes
-                       040000 # Data section length(  0 )
+                        ff0000 # Data section length(  0 )
                            00 # Terminator (end of header)
                               # Code section 0 types
                            00 # 0 inputs
@@ -68,7 +68,7 @@ public class EOFTestConstants {
                         000e # Code section 0 , 14 bytes
                       030001 # Total subcontainers ( 1 )
                       %04x # Subcontainer 0 size ?
-                      040000 # Data section length(  0 )
+                       ff0000 # Data section length(  0 )
                           00 # Terminator (end of header)
                              # Code section 0 types
                           00 # 0 inputs\s

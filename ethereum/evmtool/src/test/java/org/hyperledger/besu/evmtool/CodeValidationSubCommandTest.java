@@ -26,12 +26,12 @@ import picocli.CommandLine;
 
 class CodeValidationSubCommandTest {
 
-  static final String CODE_STOP_ONLY = "0xef0001 010004 020001-0001 040000 00 00800000 00";
-  static final String CODE_RETURN_ONLY = "0xef0001 010004 020001-0003 040000 00 00800002 5f5ff3";
-  static final String CODE_BAD_MAGIC = "0xefffff 010004 020001-0001 040000 00 00800000 e4";
+  static final String CODE_STOP_ONLY = "0xef0001 010004 020001-0001 ff0000 00 00800000 00";
+  static final String CODE_RETURN_ONLY = "0xef0001 010004 020001-0003 ff0000 00 00800002 5f5ff3";
+  static final String CODE_BAD_MAGIC = "0xefffff 010004 020001-0001 ff0000 00 00800000 e4";
   static final String CODE_INTERIOR_COMMENTS =
       """
-                  0xef0001 010008 020002-0009-0002 040000 00
+                  0xef0001 010008 020002-0009-0002 ff0000 00
                   # 4 inputs 1 output,
                   00800004-04010000
                   59-59-59-59-e30001-50-00

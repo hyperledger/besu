@@ -93,108 +93,108 @@ public class EOFLayoutTest {
             "zero_section_size code 1",
             1
           },
-          {"EF0001 010004 0200010001 04", "No data section size", "incomplete_data_header", 1},
-          {"EF0001 010004 0200010001 0400", "Short data section size", "incomplete_data_header", 1},
+          {"EF0001 010004 0200010001 ff", "No data section size", "incomplete_data_header", 1},
+          {"EF0001 010004 0200010001 ff00", "Short data section size", "incomplete_data_header", 1},
           {
-            "EF0001 010004 0200010001 040000",
+            "EF0001 010004 0200010001 ff0000",
             "No Terminator",
             "missing_headers_terminator Improper section headers",
             1
           },
           {
-            "EF0001 010004 0200010002 040000 00",
+            "EF0001 010004 0200010002 ff0000 00",
             "No type section",
             "invalid_section_bodies_size Incomplete type section",
             1
           },
           {
-            "EF0001 010004 0200010002 040001 040001 00 DA DA",
+            "EF0001 010004 0200010002 ff0001 ff0001 00 DA DA",
             "Duplicate data sections",
-            "unexpected_header_kind expected 0 actual 4",
+            "unexpected_header_kind expected 0 actual 255",
             1
           },
           {
-            "EF0001 010004 0200010002 040000 00 00",
+            "EF0001 010004 0200010002 ff0000 00 00",
             "Incomplete type section",
             "invalid_section_bodies_size Incomplete type section",
             1
           },
           {
-            "EF0001 010008 02000200020002 040000 00 00000000FE",
+            "EF0001 010008 02000200020002 ff0000 00 00000000FE",
             "Incomplete type section",
             "invalid_section_bodies_size Incomplete type section",
             1
           },
           {
-            "EF0001 010008 0200010001 040000 00 00000000 FE ",
+            "EF0001 010008 0200010001 ff0000 00 00000000 FE ",
             "Incorrect type section size",
             "invalid_section_bodies_size Type section - 0x1 * 4 != 0x8",
             1
           },
           {
-            "EF0001 010008 02000200010001 040000 00 0100000000000000 FE FE",
+            "EF0001 010008 02000200010001 ff0000 00 0100000000000000 FE FE",
             "Incorrect section zero type input",
             "invalid_first_section_type must be zero input non-returning",
             1
           },
           {
-            "EF0001 010008 02000200010001 040000 00 0001000000000000 FE FE",
+            "EF0001 010008 02000200010001 ff0000 00 0001000000000000 FE FE",
             "Incorrect section zero type output",
             "invalid_first_section_type must be zero input non-returning",
             1
           },
           {
-            "EF0001 010004 0200010002 040000 00 00000000 ",
+            "EF0001 010004 0200010002 ff0000 00 00000000 ",
             "Incomplete code section",
             "invalid_section_bodies_size code section 0",
             1
           },
           {
-            "EF0001 010004 0200010002 040000 00 00000000 FE",
+            "EF0001 010004 0200010002 ff0000 00 00000000 FE",
             "Incomplete code section",
             "invalid_section_bodies_size code section 0",
             1
           },
           {
-            "EF0001 010008 02000200020002 040000 00 00800000 00000000 FEFE ",
+            "EF0001 010008 02000200020002 ff0000 00 00800000 00000000 FEFE ",
             "No code section multiple",
             "invalid_section_bodies_size code section 1",
             1
           },
           {
-            "EF0001 010008 02000200020002 040000 00 00800000 00000000 FEFE FE",
+            "EF0001 010008 02000200020002 ff0000 00 00800000 00000000 FEFE FE",
             "Incomplete code section multiple",
             "invalid_section_bodies_size code section 1",
             1
           },
           {
-            "EF0001 010004 0200010001 040003 00 00800000 FE DEADBEEF",
+            "EF0001 010004 0200010001 ff0003 00 00800000 FE DEADBEEF",
             "Excess data section",
             "invalid_section_bodies_size data after end of all sections",
             1
           },
           {
-            "EF0001 0200010001 040001 00 FE DA",
+            "EF0001 0200010001 ff0001 00 FE DA",
             "type section missing",
             "unexpected_header_kind expected 1 actual 2",
             1
           },
           {
-            "EF0001 010004 040001 00 00000000 DA",
+            "EF0001 010004 ff0001 00 00000000 DA",
             "code section missing",
-            "unexpected_header_kind expected 2 actual 4",
+            "unexpected_header_kind expected 2 actual 255",
             1
           },
           {
             "EF0001 010004 0200010001 00 00000000 FE",
             "data section missing",
-            "unexpected_header_kind expected 4 actual 0",
+            "unexpected_header_kind expected 255 actual 0",
             1
           },
           {
-            "EF0001 040001 00 DA",
+            "EF0001 ff0001 00 DA",
             "type and code section missing",
-            "unexpected_header_kind expected 1 actual 4",
+            "unexpected_header_kind expected 1 actual 255",
             1
           },
           {
@@ -213,7 +213,7 @@ public class EOFLayoutTest {
           {
             "EF0001 011004 020401"
                 + " 0001".repeat(1025)
-                + " 040000 00"
+                + " ff0000 00"
                 + " 00000000".repeat(1025)
                 + " FE".repeat(1025),
             "no data section, 1025 code sections",
@@ -251,13 +251,13 @@ public class EOFLayoutTest {
     return Arrays.asList(
         new Object[][] {
           {
-            "0xef0001 010004 0200010010 040000 00 00800002 e00001 f3 6001 6000 53 6001 6000 e0fff3 ",
+            "0xef0001 010004 0200010010 ff0000 00 00800002 e00001 f3 6001 6000 53 6001 6000 e0fff3 ",
             "1",
             null,
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 040000 00 00800000 01000001 00010001 02030003 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 ff0000 00 00800000 01000001 00010001 02030003 FE 5000 3000 8000",
             "non-void input and output types",
             null,
             1
@@ -265,7 +265,7 @@ public class EOFLayoutTest {
           {
             "EF0001 011000 020400"
                 + " 0001".repeat(1024)
-                + " 040000 00"
+                + " ff0000 00"
                 + " 00800000".repeat(1024)
                 + " FE".repeat(1024),
             "no data section, 1024 code sections",
@@ -279,37 +279,37 @@ public class EOFLayoutTest {
     return Arrays.asList(
         new Object[][] {
           {
-            "EF0001 010008 02000200020002 040000 00 0100000000000000",
+            "EF0001 010008 02000200020002 ff0000 00 0100000000000000",
             "Incorrect section zero type input",
             "invalid_first_section_type must be zero input non-returning",
             1
           },
           {
-            "EF0001 010008 02000200020002 040000 00 0001000000000000",
+            "EF0001 010008 02000200020002 ff0000 00 0001000000000000",
             "Incorrect section zero type output",
             "invalid_first_section_type must be zero input non-returning",
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 040000 00 00800000 F0000000 00010000 02030000 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 ff0000 00 00800000 F0000000 00010000 02030000 FE 5000 3000 8000",
             "inputs too large",
             "inputs_outputs_num_above_limit Type data input stack too large - 0xf0",
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 040000 00 00800000 01000000 00F00000 02030000 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 ff0000 00 00800000 01000000 00F00000 02030000 FE 5000 3000 8000",
             "outputs too large",
             "inputs_outputs_num_above_limit - 0xf0",
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 040000 00 00000400 01000000 00010000 02030400 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 ff0000 00 00000400 01000000 00010000 02030400 FE 5000 3000 8000",
             "stack too large",
             "max_stack_height_above_limit Type data max stack too large - 0x400",
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 040000 00 00800000 01000001 00010001 02030003 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 ff0000 00 00800000 01000001 00010001 02030003 FE 5000 3000 8000",
             "non-void input and output types",
             null,
             1
@@ -321,43 +321,43 @@ public class EOFLayoutTest {
     return Arrays.asList(
         new Object[][] {
           {
-            "EF0001 010004 0200010001 0300010014 040000 00 00800000 FE EF000101000402000100010400000000800000FE",
+            "EF0001 010004 0200010001 0300010014 ff0000 00 00800000 FE EF00010100040200010001ff00000000800000FE",
             "no data section, one code section, one subcontainer",
             null,
             1
           },
           {
-            "EF00 01 010004 0200010001 0300010014 040000 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00)",
+            "EF00 01 010004 0200010001 0300010014 ff0000 00 00800000 00 (EF0001 010004 0200010001 ff0000 00 00800000 00)",
             "evmone - one container",
             null,
             1
           },
           {
-            "EF00 01 010004 0200010001 0300010014 040003 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00) 000000",
+            "EF00 01 010004 0200010001 0300010014 ff0003 00 00800000 00 (EF0001 010004 0200010001 ff0000 00 00800000 00) 000000",
             "evmone - one container two bytes",
             null,
             1
           },
           {
-            "EF00 01 010004 0200010001 030003001400140014 040000 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00)",
+            "EF00 01 010004 0200010001 030003001400140014 ff0000 00 00800000 00 (EF0001 010004 0200010001 ff0000 00 00800000 00)(EF0001 010004 0200010001 ff0000 00 00800000 00)(EF0001 010004 0200010001 ff0000 00 00800000 00)",
             "evmone - three subContainers",
             null,
             1
           },
           {
-            "EF00 01 010004 0200010001 030003001400140014 040003 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00) ddeeff",
+            "EF00 01 010004 0200010001 030003001400140014 ff0003 00 00800000 00 (EF0001 010004 0200010001 ff0000 00 00800000 00)(EF0001 010004 0200010001 ff0000 00 00800000 00)(EF0001 010004 0200010001 ff0000 00 00800000 00) ddeeff",
             "evmone - three subContainers and data",
             null,
             1
           },
           {
-            "EF00 01 01000C 020003000100010001 030003001400140014 040003 00 008000000000000000000000 00 00 00 (EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00) ddeeff",
+            "EF00 01 01000C 020003000100010001 030003001400140014 ff0003 00 008000000000000000000000 00 00 00 (EF0001 010004 0200010001 ff0000 00 00800000 00)(EF0001 010004 0200010001 ff0000 00 00800000 00)(EF0001 010004 0200010001 ff0000 00 00800000 00) ddeeff",
             "evmone - three subContainers three code and data",
             null,
             1
           },
           {
-            "EF00 01 010004 0200010001 0300010100 040000 00 00800000 00 (EF0001 010004 02000100ED 040000 00 00800000 "
+            "EF00 01 010004 0200010001 0300010100 ff0000 00 00800000 00 (EF0001 010004 02000100ED ff0000 00 00800000 "
                 + "5d".repeat(237)
                 + ")",
             "evmone - 256 byte container",
@@ -367,20 +367,20 @@ public class EOFLayoutTest {
           {
             "EF00 01 010004 0200010001 030100"
                 + "0014".repeat(256)
-                + "040000 00 00800000 00 "
-                + "(EF0001 010004 0200010001 040000 00 00800000 00)".repeat(256),
+                + "ff0000 00 00800000 00 "
+                + "(EF0001 010004 0200010001 ff0000 00 00800000 00)".repeat(256),
             "evmone - 256 subContainers",
             null,
             1
           },
           {
-            "EF00 01 010004 0200010001 0300010015 040000 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00ff)",
+            "EF00 01 010004 0200010001 0300010015 ff0000 00 00800000 00 (EF0001 010004 0200010001 ff0000 00 00800000 00ff)",
             "dangling data in subcontainer",
             "invalid_section_bodies_size subcontainer size mismatch",
             1
           },
           {
-            "EF00 01 010004 0200010001 0300010014 040000 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00ff)",
+            "EF00 01 010004 0200010001 0300010014 ff0000 00 00800000 00 (EF0001 010004 0200010001 ff0000 00 00800000 00ff)",
             "dangling data in container",
             "invalid_section_bodies_size data after end of all sections",
             1

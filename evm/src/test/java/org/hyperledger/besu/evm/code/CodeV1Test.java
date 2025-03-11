@@ -82,7 +82,7 @@ class CodeV1Test {
   @Test
   void validCode() {
     String codeHex =
-        "0xEF0001 01000C 020003 000b 0002 0008 040000 00 00800000 02010001 01000002 60016002e30001e30002f3 01e4 60005360106000e4";
+        "0xEF0001 01000C 020003 000b 0002 0008 ff0000 00 00800000 02010001 01000002 60016002e30001e30002f3 01e4 60005360106000e4";
     final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex.replace(" ", "")));
     CodeV1Validation validator = new CodeV1Validation(0xc000);
     String validationError = validator.validateCode(layout);
@@ -93,7 +93,7 @@ class CodeV1Test {
   @Test
   void invalidCode() {
     String codeHex =
-        "0xEF0001 01000C 020003 000b 0002 0008 040000 00 00000000 02010001 01000002 60016002e30001e30002f3 01e4 60005360106000e4";
+        "0xEF0001 01000C 020003 000b 0002 0008 ff0000 00 00000000 02010001 01000002 60016002e30001e30002f3 01e4 60005360106000e4";
     final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex.replace(" ", "")));
     CodeV1Validation validator = new CodeV1Validation(0xc000);
     String validationError = validator.validateCode(layout);
@@ -384,7 +384,7 @@ class CodeV1Test {
     var testContainer =
         EOFLayout.parseEOF(
             Bytes.fromHexString(
-                "ef000101000c0200030001000100010400000000800000000000000000000000e4e4"));
+                "ef000101000c020003000100010001ff00000000800000000000000000000000e4e4"));
 
     assertValidation(
         null, Bytes.fromHexString(code), testContainer.getCodeSection(0), testContainer);
@@ -468,7 +468,7 @@ class CodeV1Test {
             + String.format("01%04x", sectionCount * 4)
             + String.format("02%04x", sectionCount)
             + codeLengths
-            + "040000"
+            + "ff0000"
             + "00"
             + typesData
             + codeData;

@@ -187,7 +187,7 @@ class TxCreateOperationTest {
                   010004 # Types length ( 4 )
                   020001 # Total code sections ( 1 )
                     000f # Code section 0 , 15 bytes
-                  040000 # Data section length(  0 )
+                   ff0000 # Data section length(  0 )
                       00 # Terminator (end of header)
                          # Code section 0 types
                       00 # 0 inputs\s

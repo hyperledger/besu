@@ -87,8 +87,11 @@ public record EOFLayout(
   /** sub-EOF subContainers for create */
   static final int SECTION_CONTAINER = 0x03;
 
+  /** formerly data, now nothing */
+  static final int SECTION_RESERVED = 0x04;
+
   /** data */
-  static final int SECTION_DATA = 0x04;
+  static final int SECTION_DATA = 0xff;
 
   /** The Max supported section. */
   static final int MAX_SUPPORTED_VERSION = 1;
@@ -704,7 +707,7 @@ public record EOFLayout(
       }
     }
     out.print(prefix);
-    out.printf("04%04x # Data section length(  %1$d )", dataLength);
+    out.printf("ff%04x # Data section length(  %1$d )", dataLength);
     if (dataLength != data.size()) {
       out.printf(" (actual size %d)", data.size());
     }
