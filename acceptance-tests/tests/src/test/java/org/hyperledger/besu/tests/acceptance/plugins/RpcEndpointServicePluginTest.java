@@ -42,7 +42,11 @@ public class RpcEndpointServicePluginTest extends AcceptanceTestBase {
 
   @BeforeEach
   public void setUp() throws Exception {
-    node = besu.createPluginsNode("node1", List.of("testPlugins"), List.of("--rpc-http-api=TESTS"));
+    node =
+        besu.createPluginsNode(
+            "node1",
+            List.of("testPlugins"),
+            b -> b.extraCLIOptions(List.of("--rpc-http-api=TESTS")));
     cluster.start(node);
     client = new OkHttpClient();
   }
