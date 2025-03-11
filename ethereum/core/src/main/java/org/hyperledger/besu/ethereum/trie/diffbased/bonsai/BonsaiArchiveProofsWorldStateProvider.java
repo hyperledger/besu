@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiArchiveWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.ServiceManager;
@@ -71,10 +72,20 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
   }
 
   @Override
-  protected DiffBasedWorldState createWorldState(
+  public DiffBasedWorldState createWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage) {
     return new BonsaiArchiveWorldState(
         this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig);
+  }
+
+  @Override
+  public DiffBasedWorldState createWorldState(
+      final BonsaiWorldStateProvider archive,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final EvmConfiguration evmConfiguration,
+      final WorldStateConfig worldStateConfig) {
+    return new BonsaiArchiveWorldState(
+        archive, worldStateKeyValueStorage, evmConfiguration, worldStateConfig);
   }
 
   private Optional<BlockHeader> getCheckpointStateStartBlock(

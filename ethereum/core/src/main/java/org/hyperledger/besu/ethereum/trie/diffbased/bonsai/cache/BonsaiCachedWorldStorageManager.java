@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvi
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
@@ -40,7 +39,7 @@ public class BonsaiCachedWorldStorageManager extends DiffBasedCachedWorldStorage
       final DiffBasedWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration) {
-    return new BonsaiWorldState(
+    return archive.createWorldState(
         (BonsaiWorldStateProvider) archive,
         (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
         evmConfiguration,

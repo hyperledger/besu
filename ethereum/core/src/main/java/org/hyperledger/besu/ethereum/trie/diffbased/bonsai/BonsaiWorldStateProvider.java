@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.ServiceManager;
@@ -81,10 +82,20 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     loadHeadWorldState(createWorldState(worldStateKeyValueStorage));
   }
 
-  protected DiffBasedWorldState createWorldState(
+  public DiffBasedWorldState createWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage) {
     return new BonsaiWorldState(
         this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig);
+  }
+
+  @Override
+  public DiffBasedWorldState createWorldState(
+      final BonsaiWorldStateProvider archive,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final EvmConfiguration evmConfiguration,
+      final WorldStateConfig worldStateConfig) {
+    return new BonsaiWorldState(
+        archive, worldStateKeyValueStorage, evmConfiguration, worldStateConfig);
   }
 
   public BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader() {

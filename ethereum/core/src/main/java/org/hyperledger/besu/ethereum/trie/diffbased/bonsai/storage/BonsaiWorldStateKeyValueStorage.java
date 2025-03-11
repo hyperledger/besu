@@ -279,7 +279,8 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     }
 
     public Updater removeAccountStateTrieNode(final Bytes location) {
-      composedWorldStateTransaction.remove(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
+      flatDbStrategy.removeFlatAccountStateTrieNode(
+          worldStorage, composedWorldStateTransaction, location);
       return this;
     }
 
@@ -303,7 +304,6 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
 
     public synchronized void removeStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash) {
-      System.out.println("MRW TODO - storage removal");
       flatDbStrategy.removeFlatAccountStorageValueByStorageSlotHash(
           worldStorage, composedWorldStateTransaction, accountHash, slotHash);
     }

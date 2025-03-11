@@ -158,6 +158,14 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
   }
 
   @Override
+  public void removeFlatAccountStateTrieNode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Bytes location) {
+    transaction.remove(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
+  }
+
+  @Override
   public void removeFlatAccountStorageValueByStorageSlotHash(
       final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,

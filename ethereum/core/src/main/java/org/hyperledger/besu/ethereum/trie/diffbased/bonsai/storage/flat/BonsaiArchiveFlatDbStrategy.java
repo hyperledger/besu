@@ -103,9 +103,6 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
                   * trieNodeCheckpointInterval);
         }
 
-        // trieContext = trieContext == 0 ? 1 : trieContext;
-        // MRW TODO - quirk of rocksdb that key searches for "0x0000000..." seem to be returned in
-        // reverse order to other keys
         return Optional.of(
             // The context for flat-DB PUTs is the block number recorded in the specified world
             // state, + 1
@@ -440,6 +437,17 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
             Bytes.concatenate(accountHash, location).toArrayUnsafe());
 
     transaction.put(TRIE_BRANCH_STORAGE, keySuffixed, node.toArrayUnsafe());
+  }
+
+  @Override
+  public void removeFlatAccountStateTrieNode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Bytes location) {
+
+    // MRW todo - archive trie node removal
+    throw new IllegalStateException(
+        "Removing Bonsai archive flat account trie node. Must reset chain head to previous checkpoint block.");
   }
 
   @Override
