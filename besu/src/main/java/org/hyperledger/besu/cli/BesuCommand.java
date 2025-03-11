@@ -33,6 +33,7 @@ import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
+import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -287,6 +288,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private final Supplier<RlpBlockImporter> rlpBlockImporter;
   private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
+  private final Supplier<Era1BlockImporter> era1BlockImporter;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
 
   // Unstable CLI options
@@ -722,6 +724,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    *
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
+   * @param era1BlockImporter Era1BlockImporter supplier
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
    * @param runnerBuilder instance of RunnerBuilder
    * @param controllerBuilder instance of BesuController.Builder
@@ -732,6 +735,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public BesuCommand(
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
+      final Supplier<Era1BlockImporter> era1BlockImporter,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilder,
@@ -741,6 +745,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this(
         rlpBlockImporter,
         jsonBlockImporterFactory,
+        era1BlockImporter,
         rlpBlockExporterFactory,
         runnerBuilder,
         controllerBuilder,
@@ -763,6 +768,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    *
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
+   * @param era1BlockImporter Era1BlockImporter supplier
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
    * @param runnerBuilder instance of RunnerBuilder
    * @param controllerBuilder instance of BesuController.Builder
@@ -783,6 +789,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   protected BesuCommand(
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
+      final Supplier<Era1BlockImporter> era1BlockImporter,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilder,
@@ -801,8 +808,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     this.logger = commandLogger;
     this.rlpBlockImporter = rlpBlockImporter;
-    this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
+    this.era1BlockImporter = era1BlockImporter;
+    this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.runnerBuilder = runnerBuilder;
     this.controllerBuilder = controllerBuilder;
     this.besuPluginContext = besuPluginContext;
@@ -1103,6 +1111,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new BlocksSubCommand(
             rlpBlockImporter,
             jsonBlockImporterFactory,
+            era1BlockImporter,
             rlpBlockExporterFactory,
             commandLine.getOut()));
     commandLine.addSubcommand(
