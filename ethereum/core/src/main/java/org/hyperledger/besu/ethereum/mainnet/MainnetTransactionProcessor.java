@@ -45,7 +45,6 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -266,7 +265,6 @@ public class MainnetTransactionProcessor {
       final TransactionValidationParams transactionValidationParams,
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Wei blobGasPrice) {
-    final EVMWorldUpdater evmWorldUpdater = new EVMWorldUpdater(worldState, gasCalculator);
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
@@ -285,7 +283,7 @@ public class MainnetTransactionProcessor {
       }
 
       final Address senderAddress = transaction.getSender();
-      final MutableAccount sender = evmWorldUpdater.getOrCreateSenderAccount(senderAddress);
+      final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
 
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -294,7 +292,7 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
-      operationTracer.tracePrepareTransaction(evmWorldUpdater, transaction);
+      operationTracer.tracePrepareTransaction(worldState, transaction);
 
       final Set<Address> warmAddressList = new BytesTrieSet<>(Address.SIZE);
 
@@ -327,13 +325,13 @@ public class MainnetTransactionProcessor {
         }
 
         final CodeDelegationResult codeDelegationResult =
-            maybeCodeDelegationProcessor.get().process(evmWorldUpdater, transaction);
+            maybeCodeDelegationProcessor.get().process(worldState, transaction);
         warmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
 
-        evmWorldUpdater.commit();
+        worldState.commit();
       }
 
       final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
@@ -369,7 +367,7 @@ public class MainnetTransactionProcessor {
           transaction.getGasLimit(),
           intrinsicGas);
 
-      final WorldUpdater worldUpdater = evmWorldUpdater.updater();
+      final WorldUpdater worldUpdater = worldState.updater();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
           ImmutableMap.<String, Object>builder()
               .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
@@ -425,7 +423,7 @@ public class MainnetTransactionProcessor {
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
-        final Optional<Account> maybeContract = Optional.ofNullable(evmWorldUpdater.get(to));
+        final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
 
         if (maybeContract.isPresent() && maybeContract.get().hasDelegatedCode()) {
           warmAddressList.add(maybeContract.get().codeDelegationAddress().get());
@@ -529,12 +527,12 @@ public class MainnetTransactionProcessor {
 
       operationTracer.traceBeforeRewardTransaction(worldUpdater, transaction, coinbaseWeiDelta);
       if (!coinbaseWeiDelta.isZero() || !clearEmptyAccounts) {
-        final var coinbase = evmWorldUpdater.getOrCreate(miningBeneficiary);
+        final var coinbase = worldState.getOrCreate(miningBeneficiary);
         coinbase.incrementBalance(coinbaseWeiDelta);
       }
 
       operationTracer.traceEndTransaction(
-          evmWorldUpdater.updater(),
+          worldState.updater(),
           transaction,
           initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS,
           initialFrame.getOutputData(),
@@ -543,10 +541,10 @@ public class MainnetTransactionProcessor {
           initialFrame.getSelfDestructs(),
           0L);
 
-      initialFrame.getSelfDestructs().forEach(evmWorldUpdater::deleteAccount);
+      initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
       if (clearEmptyAccounts) {
-        evmWorldUpdater.clearAccountsThatAreEmpty();
+        worldState.clearAccountsThatAreEmpty();
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
@@ -574,7 +572,7 @@ public class MainnetTransactionProcessor {
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(
-          evmWorldUpdater.updater(),
+          worldState.updater(),
           transaction,
           false,
           Bytes.EMPTY,
@@ -587,7 +585,7 @@ public class MainnetTransactionProcessor {
       throw re;
     } catch (final RuntimeException re) {
       operationTracer.traceEndTransaction(
-          evmWorldUpdater.updater(),
+          worldState.updater(),
           transaction,
           false,
           Bytes.EMPTY,
