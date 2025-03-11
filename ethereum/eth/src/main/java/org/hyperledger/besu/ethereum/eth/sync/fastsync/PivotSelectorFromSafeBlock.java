@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByH
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -41,6 +42,9 @@ import org.slf4j.LoggerFactory;
 public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
 
   private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromSafeBlock.class);
+  private static final long NO_FCU_RECEIVED_LOGGING_THRESHOLD = Duration.ofMinutes(1).toMillis();
+  private static final long UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL =
+      Duration.ofMinutes(7).toMillis();
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
@@ -50,8 +54,12 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   private final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier;
   private final Runnable cleanupAction;
 
-  private long lastNoFcuReceivedInfoLog = System.currentTimeMillis();
-  private static final long NO_FCU_RECEIVED_LOGGING_THRESHOLD = 60000L;
+  private volatile long lastNoFcuReceivedInfoLog = System.currentTimeMillis();
+  private volatile long lastPivotBlockChange = System.currentTimeMillis();
+  private volatile Hash lastSafeBlockHash = Hash.ZERO;
+  private volatile Hash fallbackBlockHash;
+  private volatile Hash lastFallbackBlockHash;
+  private volatile boolean inFallbackMode = false;
   private volatile Optional<BlockHeader> maybeCachedHeadBlockHeader = Optional.empty();
 
   public PivotSelectorFromSafeBlock(
@@ -76,11 +84,38 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   @Override
   public Optional<FastSyncState> selectNewPivotBlock() {
     final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
+    final var now = System.currentTimeMillis();
+
     if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidSafeBlockHash()) {
-      return Optional.of(selectLastSafeBlockAsPivot(maybeForkchoice.get().getSafeBlockHash()));
+      final var safeBlockHash = maybeForkchoice.get().getSafeBlockHash();
+
+      // if the safe has changed just return it and reset the timer and save the current head as
+      // fallback
+      if (!safeBlockHash.equals(lastSafeBlockHash)) {
+        lastSafeBlockHash = safeBlockHash;
+        lastPivotBlockChange = now;
+        inFallbackMode = false;
+        fallbackBlockHash = maybeForkchoice.get().getHeadBlockHash();
+        return Optional.of(selectLastSafeBlockAsPivot(safeBlockHash));
+      }
+
+      // otherwise verify if we need to fallback to a previous head block
+      if (lastPivotBlockChange + UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL < now) {
+        lastPivotBlockChange = now;
+        inFallbackMode = true;
+        lastFallbackBlockHash = fallbackBlockHash;
+        final var fallbackPivot = selectFallbackBlockAsPivot(fallbackBlockHash);
+        fallbackBlockHash = maybeForkchoice.get().getHeadBlockHash();
+        return Optional.of(fallbackPivot);
+      }
+
+      // if not enough time has passed the return again the previous value
+      return Optional.of(
+          selectLastSafeBlockAsPivot(inFallbackMode ? lastFallbackBlockHash : lastSafeBlockHash));
     }
-    if (lastNoFcuReceivedInfoLog + NO_FCU_RECEIVED_LOGGING_THRESHOLD < System.currentTimeMillis()) {
-      lastNoFcuReceivedInfoLog = System.currentTimeMillis();
+
+    if (lastNoFcuReceivedInfoLog + NO_FCU_RECEIVED_LOGGING_THRESHOLD < now) {
+      lastNoFcuReceivedInfoLog = now;
       LOG.info(
           "Waiting for consensus client, this may be because your consensus client is still syncing");
     }
@@ -97,6 +132,14 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   private FastSyncState selectLastSafeBlockAsPivot(final Hash safeHash) {
     LOG.debug("Returning safe block hash {} as pivot", safeHash);
     return new FastSyncState(safeHash);
+  }
+
+  private FastSyncState selectFallbackBlockAsPivot(final Hash fallbackBlockHash) {
+    LOG.debug(
+        "Safe block not changed in the last {} min, using a previous head block {} as fallback",
+        UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL / 60,
+        fallbackBlockHash);
+    return new FastSyncState(fallbackBlockHash);
   }
 
   @Override
@@ -188,7 +231,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
             LOG.debug("Error downloading block header by hash {}", hash);
           } else {
             LOG.atDebug()
-                .setMessage("Successfully downloaded pivot block header by hash {}")
+                .setMessage("Successfully downloaded block header by hash {}")
                 .addArgument(blockHeader::toLogString)
                 .log();
           }
