@@ -28,7 +28,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -88,7 +87,7 @@ public class ProposalValidator {
    */
   public boolean validate(final Proposal msg) {
     final QbftBlockValidator blockValidator =
-        protocolSchedule.getByBlockHeader(msg.getBlock().getHeader()).getBlockValidator();
+        protocolSchedule.getBlockValidator(msg.getBlock().getHeader());
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
@@ -146,8 +145,7 @@ public class ProposalValidator {
         final QbftBlockInterface bftBlockInterface =
             protocolContext.getConsensusContext(QbftContext.class).blockInterface();
         final QbftBlock currentBlockWithOldRound =
-            bftBlockInterface.replaceRoundInBlock(
-                proposal.getBlock(), metadata.getPreparedRound(), QbftHashMode.COMMITTED_SEAL);
+            bftBlockInterface.replaceRoundInBlock(proposal.getBlock(), metadata.getPreparedRound());
 
         final Hash expectedPriorBlockHash = currentBlockWithOldRound.getHash();
 
