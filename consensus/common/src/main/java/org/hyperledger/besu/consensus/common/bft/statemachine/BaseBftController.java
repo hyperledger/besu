@@ -81,6 +81,13 @@ public abstract class BaseBftController implements BftEventHandler {
   }
 
   @Override
+  public void stop() {
+    if (started.compareAndSet(true, false)) {
+      LOG.debug("Stopped current height manager");
+    }
+  }
+
+  @Override
   public void handleMessageEvent(final BftReceivedMessageEvent msg) {
     final MessageData data = msg.getMessage().getData();
     if (!duplicateMessageTracker.hasSeenMessage(data)) {
