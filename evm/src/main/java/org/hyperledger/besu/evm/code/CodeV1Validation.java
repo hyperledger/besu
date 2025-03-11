@@ -438,7 +438,7 @@ public class CodeV1Validation implements EOFValidator {
         OpcodeInfo opcodeInfo = V1_OPCODES[thisOp];
         int stackInputs;
         int stackOutputs;
-        int sectionStackUsed;
+        int sectionStackIncrease;
         int pcAdvance = opcodeInfo.pcAdvance();
         switch (thisOp) {
           case CallFOperation.OPCODE:
@@ -447,31 +447,31 @@ public class CodeV1Validation implements EOFValidator {
             CodeSection codeSection = eofLayout.getCodeSection(section);
             stackInputs = codeSection.getInputs();
             stackOutputs = codeSection.getOutputs();
-            sectionStackUsed = codeSection.getMaxStackHeight();
+            sectionStackIncrease = codeSection.getMaxStackIncrease();
             break;
           case DupNOperation.OPCODE:
             int depth = code[currentPC + 1] & 0xff;
             stackInputs = depth + 1;
             stackOutputs = depth + 2;
-            sectionStackUsed = 0;
+            sectionStackIncrease = 0;
             break;
           case SwapNOperation.OPCODE:
             int swapDepth = 2 + (code[currentPC + 1] & 0xff);
             stackInputs = swapDepth;
             stackOutputs = swapDepth;
-            sectionStackUsed = 0;
+            sectionStackIncrease = 0;
             break;
           case ExchangeOperation.OPCODE:
             int imm = code[currentPC + 1] & 0xff;
             int exchangeDepth = (imm >> 4) + (imm & 0xf) + 3;
             stackInputs = exchangeDepth;
             stackOutputs = exchangeDepth;
-            sectionStackUsed = 0;
+            sectionStackIncrease = 0;
             break;
           default:
             stackInputs = opcodeInfo.inputs();
             stackOutputs = opcodeInfo.outputs();
-            sectionStackUsed = 0;
+            sectionStackIncrease = 0;
         }
 
         int nextPC;
@@ -499,12 +499,12 @@ public class CodeV1Validation implements EOFValidator {
               thisOp, stackInputs, currentMin);
         }
 
+        if (currentMax + sectionStackIncrease > MAX_STACK_HEIGHT) {
+          return "Stack height exceeds 1024";
+        }
         int stackDelta = stackOutputs - stackInputs;
         currentMax = currentMax + stackDelta;
         currentMin = currentMin + stackDelta;
-        if (currentMax + sectionStackUsed - stackOutputs > MAX_STACK_HEIGHT) {
-          return "Stack height exceeds 1024";
-        }
 
         unusedBytes -= pcAdvance;
         maxStackHeight = max(maxStackHeight, currentMax);
@@ -610,13 +610,10 @@ public class CodeV1Validation implements EOFValidator {
             int jumpFTargetSectionNum = readBigEndianI16(currentPC + 1, code);
             workList.put(jumpFTargetSectionNum);
             CodeSection targetCs = eofLayout.getCodeSection(jumpFTargetSectionNum);
-            if (currentMax + targetCs.getMaxStackHeight() - targetCs.getInputs()
-                > MAX_STACK_HEIGHT) {
+            if (currentMax + targetCs.getMaxStackIncrease() > MAX_STACK_HEIGHT) {
               return format(
                   "JUMPF at section %d pc %d would exceed maximum stack with %d items",
-                  codeSectionToValidate,
-                  currentPC,
-                  currentMax + targetCs.getMaxStackHeight() - targetCs.getInputs());
+                  codeSectionToValidate, currentPC, currentMax + targetCs.getMaxStackIncrease());
             }
             if (targetCs.isReturning()) {
               if (currentMin != currentMax) {
@@ -673,10 +670,13 @@ public class CodeV1Validation implements EOFValidator {
         currentPC = nextPC;
       }
 
-      if (maxStackHeight != toValidate.maxStackHeight) {
+      if (maxStackHeight != toValidate.maxStackIncreae + toValidate.inputs) {
         return format(
-            "invalid_max_stack_height Calculated (%d) != reported (%d)",
-            maxStackHeight, toValidate.maxStackHeight);
+            "invalid_max_stack_height Calculated %d != reported %d (%d inputs + %d increase)",
+            maxStackHeight,
+            toValidate.maxStackIncreae + toValidate.inputs,
+            toValidate.inputs,
+            toValidate.maxStackIncreae);
       }
       if (unusedBytes != 0) {
         return format("Dead code detected in section %d", codeSectionToValidate);

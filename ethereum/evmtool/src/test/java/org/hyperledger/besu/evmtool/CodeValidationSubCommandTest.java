@@ -32,8 +32,8 @@ class CodeValidationSubCommandTest {
   static final String CODE_INTERIOR_COMMENTS =
       """
                   0xef0001 010008 020002-0009-0002 040000 00
-                  # 7 inputs 1 output,
-                  00800004-04010004
+                  # 4 inputs 1 output,
+                  00800004-04010000
                   59-59-59-59-e30001-50-00
                   # No immediate data
                   f8-e4""";

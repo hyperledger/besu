@@ -616,7 +616,7 @@ public record EOFLayout(
         } else {
           out.writeByte(0x80);
         }
-        out.writeShort(cs.maxStackHeight);
+        out.writeShort(cs.maxStackIncreae);
       }
 
       // Code sections
@@ -725,14 +725,14 @@ public record EOFLayout(
           cs.getOutputs(),
           cs.isReturning() ? "" : " (Non-returning function)");
       out.print(prefix);
-      out.printf("  %04x # max stack:  %1$d%n", cs.getMaxStackHeight());
+      out.printf("  %04x # max stack increase:  %1$d%n", cs.getMaxStackIncrease());
     }
     for (int i = 0; i < codeSections.length; i++) {
       CodeSection cs = getCodeSection(i);
       out.print(prefix);
       out.printf(
-          "       # Code section %d - in=%d out=%s height=%d%n",
-          i, cs.inputs, cs.isReturning() ? cs.outputs : "non-returning", cs.maxStackHeight);
+          "       # Code section %d - in=%d out=%s extra=%d%n",
+          i, cs.inputs, cs.isReturning() ? cs.outputs : "non-returning", cs.maxStackIncreae);
       byte[] byteCode = container.slice(cs.getEntryPoint(), cs.getLength()).toArray();
       int pc = 0;
       while (pc < byteCode.length) {

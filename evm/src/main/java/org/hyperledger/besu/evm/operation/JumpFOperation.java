@@ -51,7 +51,7 @@ public class JumpFOperation extends AbstractOperation {
     int section = code.readBigEndianU16(pc + 1);
     var info = code.getCodeSection(section);
     int operandStackSize = frame.stackSize();
-    if (operandStackSize > 1024 - info.getMaxStackHeight() + info.getInputs()) {
+    if (operandStackSize > 1024 - info.getMaxStackIncrease()) {
       return jumpfStackOverflow;
     }
     frame.setPC(info.getEntryPoint() - 1); // will be +1ed at end of operations loop

@@ -504,13 +504,13 @@ class CodeV1Test {
             "Stack empty with input",
             null,
             1,
-            List.of(List.of("00", 0, 0x80, 0), List.of("50 00", 1, 0x80, 1))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("50 00", 1, 0x80, 0))),
         // this depends on requiring stacks to be "clean" returns
         Arguments.of(
             "Stack not empty at output",
             null,
             1,
-            List.of(List.of("00", 0, 0x80, 0), List.of("00", 1, 0x80, 1))));
+            List.of(List.of("00", 0, 0x80, 0), List.of("00", 1, 0x80, 0))));
   }
 
   static Stream<Arguments> stackImmediateBytes() {
@@ -664,8 +664,8 @@ class CodeV1Test {
             1,
             List.of(
                 List.of("00", 0, 0x80, 0),
-                List.of("e30002 00", 1, 0x80, 1),
-                List.of("00", 1, 0x80, 1))),
+                List.of("e30002 00", 1, 0x80, 0),
+                List.of("00", 1, 0x80, 0))),
         Arguments.of(
             "more than 1 inputs",
             null,
@@ -701,17 +701,17 @@ class CodeV1Test {
             "recursion 2 inputs",
             null,
             1,
-            List.of(List.of("00", 0, 0x80, 0), List.of("e30000 00", 2, 0x80, 2))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("e30000 00", 2, 0x80, 0))),
         Arguments.of(
             "recursion 2 inputs 2 outputs",
             null,
             1,
-            List.of(List.of("00", 0, 0x80, 0), List.of("e30000 50 50 00", 2, 2, 2))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("e30000 50 50 00", 2, 2, 0))),
         Arguments.of(
             "recursion 2 inputs 1 output",
             null,
             1,
-            List.of(List.of("00", 0, 0x80, 0), List.of("30 30 e30001 50 50 50 00", 2, 1, 4))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("30 30 e30001 50 50 50 00", 2, 1, 2))),
         Arguments.of(
             "multiple CALLFs with different types",
             null,
@@ -783,7 +783,7 @@ class CodeV1Test {
             "Forwarding return values",
             null,
             1,
-            List.of(List.of("00", 0, 0x80, 0), List.of("e4", 1, 1, 1))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("e4", 1, 1, 0))),
         Arguments.of(
             "Forwarding of return values 2",
             null,
@@ -796,7 +796,7 @@ class CodeV1Test {
             "Multiple RETFs",
             null,
             1,
-            List.of(List.of("00", 0, 0x80, 0), List.of("e10003 44 80 e4 30 80 e4", 1, 2, 2))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("e10003 44 80 e4 30 80 e4", 1, 2, 1))),
         Arguments.of(
             "underflow 1",
             "RETF in section 1 calculated height 0 does not match configured return stack 1, min height 0, and max height 0",
