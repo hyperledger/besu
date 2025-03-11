@@ -27,9 +27,9 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Return operation. */
-public class ReturnContractOperation extends AbstractOperation {
+public class ReturnCodeOperation extends AbstractOperation {
 
-  /** Opcode of RETURNCONTRACT operation */
+  /** Opcode of RETURNCODE operation */
   public static final int OPCODE = 0xEE;
 
   /**
@@ -37,8 +37,8 @@ public class ReturnContractOperation extends AbstractOperation {
    *
    * @param gasCalculator the gas calculator
    */
-  public ReturnContractOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "RETURNCONTRACT", 2, 0, gasCalculator);
+  public ReturnCodeOperation(final GasCalculator gasCalculator) {
+    super(OPCODE, "RETURNCODE", 2, 0, gasCalculator);
   }
 
   @Override

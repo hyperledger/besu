@@ -42,7 +42,7 @@ public class EOFTestConstants {
                        a1 # [4] LOG1
                        5f # [5] PUSH0
                        5f # [6] PUSH0
-                     ee00 # [7] RETURNCONTRACT(0)
+                     ee00 # [7] RETURNCODE(0)
                               # Subcontainer 0 starts here
                        ef0001 # Magic and Version ( 1 )
                        010004 # Types length ( 4 )
@@ -58,7 +58,7 @@ public class EOFTestConstants {
                            00 # [0] STOP
                    """);
 
-  public static Bytes EOF_CREATE_CONTRACT =
+  public static final Bytes EOF_CREATE_CONTRACT =
       bytesFromPrettyPrint(
           String.format(
               """

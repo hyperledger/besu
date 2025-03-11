@@ -189,7 +189,7 @@ class CodeFactoryTest {
   }
 
   @Test
-  void validComboEOFCreateReturnContract() {
+  void validComboEOFCreateReturnCode() {
     validCode(
         """
             0x # EOF
@@ -204,7 +204,7 @@ class CodeFactoryTest {
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0004 # max stack:  4
+              0004 # max stack increase:  4
                    # Code section 0 - in=0 out=non-returning extra=4
               6000 # [0] PUSH1(0)
               6000 # [2] PUSH1(0)
@@ -227,11 +227,11 @@ class CodeFactoryTest {
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
+                  0002 # max stack increase:  2
                        # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
-                  ee00 # [4] RETURNCONTRACT(0)
+                  ee00 # [4] RETURNCODE(0)
                            # Subcontainer 0.0 starts here
                     ef0001 # Magic and Version ( 1 )
                     010004 # Types length ( 4 )
@@ -242,7 +242,7 @@ class CodeFactoryTest {
                            # Code section 0 types
                         00 # 0 inputs\s
                         80 # 0 outputs  (Non-returning function)
-                      0000 # max stack:  0
+                      0000 # max stack increase:  0
                            # Code section 0 - in=0 out=non-returning extra=0
                         00 # [0] STOP
                            # Data section (empty)
@@ -269,14 +269,14 @@ class CodeFactoryTest {
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0002 # max stack:  2
+              0002 # max stack increase:  2
                    # Code section 0 - in=0 out=non-returning extra=2
             612015 # [0] PUSH2(0x2015)
               6001 # [3] PUSH1(1)
                 55 # [5] SSTORE
               6000 # [6] PUSH1(0)
               6000 # [8] PUSH1(0)
-              ee00 # [10] RETURNCONTRACT(0)
+              ee00 # [10] RETURNCODE(0)
                        # Subcontainer 0 starts here
                 ef0001 # Magic and Version ( 1 )
                 010004 # Types length ( 4 )
@@ -287,7 +287,7 @@ class CodeFactoryTest {
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0000 # max stack:  0
+                  0000 # max stack increase:  0
                        # Code section 0 - in=0 out=non-returning extra=0
                     00 # [0] STOP
                        # Data section (empty)
@@ -312,14 +312,14 @@ class CodeFactoryTest {
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0002 # max stack:  2
+              0002 # max stack increase:  2
                    # Code section 0 - in=0 out=non-returning extra=2
             612015 # [0] PUSH2(0x2015)
               6001 # [3] PUSH1(1)
                 55 # [5] SSTORE
               6000 # [6] PUSH1(0)
               6000 # [8] PUSH1(0)
-              ee00 # [10] RETURNCONTRACT(0)
+              ee00 # [10] RETURNCODE(0)
                        # Subcontainer 0 starts here
                 ef0001 # Magic and Version ( 1 )
                 010004 # Types length ( 4 )
@@ -330,7 +330,7 @@ class CodeFactoryTest {
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
+                  0002 # max stack increase:  2
                        # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
@@ -357,7 +357,7 @@ class CodeFactoryTest {
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0004 # max stack:  4
+              0004 # max stack increase:  4
                    # Code section 0 - in=0 out=non-returning extra=4
               6000 # [0] PUSH1(0)
               6000 # [2] PUSH1(0)
@@ -378,7 +378,7 @@ class CodeFactoryTest {
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
+                  0002 # max stack increase:  2
                        # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
@@ -390,7 +390,7 @@ class CodeFactoryTest {
   }
 
   @Test
-  void validComboReturncontractRevert() {
+  void validComboReturnCodeRevert() {
     validCode(
         """
             0x # EOF
@@ -405,14 +405,14 @@ class CodeFactoryTest {
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0002 # max stack:  2
+              0002 # max stack increase:  2
                    # Code section 0 - in=0 out=non-returning extra=2
             612015 # [0] PUSH2(0x2015)
               6001 # [3] PUSH1(1)
                 55 # [5] SSTORE
               6000 # [6] PUSH1(0)
               6000 # [8] PUSH1(0)
-              ee00 # [10] RETURNCONTRACT(0)
+              ee00 # [10] RETURNCODE(0)
                        # Subcontainer 0 starts here
                 ef0001 # Magic and Version ( 1 )
                 010004 # Types length ( 4 )
@@ -423,7 +423,7 @@ class CodeFactoryTest {
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
+                  0002 # max stack increase:  2
                        # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
@@ -450,7 +450,7 @@ class CodeFactoryTest {
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0004 # max stack:  4
+              0004 # max stack increase:  4
                    # Code section 0 - in=0 out=non-returning extra=4
               6000 # [0] PUSH1(0)
               6000 # [2] PUSH1(0)
@@ -471,7 +471,7 @@ class CodeFactoryTest {
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0000 # max stack:  0
+                  0000 # max stack increase:  0
                        # Code section 0 - in=0 out=non-returning extra=0
                     00 # [0] STOP
                        # Data section (empty)
@@ -497,7 +497,7 @@ class CodeFactoryTest {
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0004 # max stack:  4
+              0004 # max stack increase:  4
                    # Code section 0 - in=0 out=non-returning extra=4
               6000 # [0] PUSH1(0)
               6000 # [2] PUSH1(0)
@@ -518,7 +518,7 @@ class CodeFactoryTest {
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
+                  0002 # max stack increase:  2
                        # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
@@ -531,7 +531,7 @@ class CodeFactoryTest {
   }
 
   @Test
-  void invalidReturncontractReturncontract() {
+  void invalidReturnCodeReturnCode() {
     invalidCode(
         """
             0x # EOF
@@ -546,14 +546,14 @@ class CodeFactoryTest {
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0002 # max stack:  2
+              0002 # max stack increase:  2
                    # Code section 0 - in=0 out=non-returning extra=2
             612015 # [0] PUSH2(0x2015)
               6001 # [3] PUSH1(1)
                 55 # [5] SSTORE
               6000 # [6] PUSH1(0)
               6000 # [8] PUSH1(0)
-              ee00 # [10] RETURNCONTRACT(0)
+              ee00 # [10] RETURNCODE(0)
                        # Subcontainer 0 starts here
                 ef0001 # Magic and Version ( 1 )
                 010004 # Types length ( 4 )
@@ -566,11 +566,11 @@ class CodeFactoryTest {
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
+                  0002 # max stack increase:  2
                        # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
-                  ee00 # [4] RETURNCONTRACT(0)
+                  ee00 # [4] RETURNCODE(0)
                            # Subcontainer 0.0 starts here
                     ef0001 # Magic and Version ( 1 )
                     010004 # Types length ( 4 )
@@ -581,7 +581,7 @@ class CodeFactoryTest {
                            # Code section 0 types
                         00 # 0 inputs\s
                         80 # 0 outputs  (Non-returning function)
-                      0000 # max stack:  0
+                      0000 # max stack increase:  0
                            # Code section 0 - in=0 out=non-returning extra=0
                         00 # [0] STOP
                            # Data section (empty)

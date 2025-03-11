@@ -108,7 +108,7 @@ import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
 import org.hyperledger.besu.evm.operation.RetFOperation;
-import org.hyperledger.besu.evm.operation.ReturnContractOperation;
+import org.hyperledger.besu.evm.operation.ReturnCodeOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataLoadOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
@@ -1136,7 +1136,7 @@ public class MainnetEVMs {
 
     // EIP-7620 EOF Create and Return Contract operation
     registry.put(new EOFCreateOperation(gasCalculator));
-    registry.put(new ReturnContractOperation(gasCalculator));
+    registry.put(new ReturnCodeOperation(gasCalculator));
 
     // EIP7873 TXCREAE Operation and Initcode Transaction
     registry.put(new TxCreateOperation(gasCalculator));

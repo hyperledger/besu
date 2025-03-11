@@ -36,7 +36,7 @@ import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
 import org.hyperledger.besu.evm.operation.RetFOperation;
-import org.hyperledger.besu.evm.operation.ReturnContractOperation;
+import org.hyperledger.besu.evm.operation.ReturnCodeOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
 import org.hyperledger.besu.evm.operation.RevertOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
@@ -316,7 +316,7 @@ public class CodeV1Validation implements EOFValidator {
           }
           pcPostInstruction += 1;
           break;
-        case ReturnContractOperation.OPCODE:
+        case ReturnCodeOperation.OPCODE:
           if (eofContainerMode == null) {
             eofContainerMode = INITCODE;
             eofLayout.containerMode().set(INITCODE);
@@ -647,7 +647,7 @@ public class CodeV1Validation implements EOFValidator {
             }
           // fall through for terminal op handling
           case StopOperation.OPCODE,
-          ReturnContractOperation.OPCODE,
+          ReturnCodeOperation.OPCODE,
           ReturnOperation.OPCODE,
           RevertOperation.OPCODE,
           InvalidOperation.OPCODE:
