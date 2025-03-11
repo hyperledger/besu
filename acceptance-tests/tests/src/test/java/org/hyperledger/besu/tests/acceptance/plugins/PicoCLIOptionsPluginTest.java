@@ -19,15 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
+import java.util.List;
 
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -44,7 +41,7 @@ public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
         besu.createPluginsNode(
             "node1",
             Collections.singletonList("testPlugins"),
-            Collections.singletonList("--Xplugin-test-option=" + MAGIC_WORDS));
+            b -> b.extraCLIOptions(List.of("--Xplugin-test-option=" + MAGIC_WORDS)));
     cluster.start(node);
   }
 
@@ -74,20 +71,5 @@ public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
   public void shouldStop() {
     cluster.stopNode(node);
     waitForFile(node.homeDirectory().resolve("plugins/pluginLifecycle.stopped"));
-  }
-
-  private void waitForFile(final Path path) {
-    final File file = path.toFile();
-    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              if (file.exists()) {
-                try (final Stream<String> s = Files.lines(path)) {
-                  return s.count() > 0;
-                }
-              } else {
-                return false;
-              }
-            });
   }
 }

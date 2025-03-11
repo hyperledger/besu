@@ -52,7 +52,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.primitives.Longs;
@@ -65,6 +67,9 @@ import org.apache.tuweni.units.bigints.UInt256s;
 public class Transaction
     implements org.hyperledger.besu.datatypes.Transaction,
         org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction {
+  // Supplier for the signature algorithm
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
@@ -1304,6 +1309,51 @@ public class Transaction
       this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
       this.codeDelegationAuthorizations = toCopy.maybeCodeDelegationList;
       return this;
+    }
+
+    public Builder copiedFrom(final org.hyperledger.besu.datatypes.Transaction toCopy) {
+      this.transactionType = toCopy.getType();
+      this.nonce = toCopy.getNonce();
+      this.gasPrice = toCopy.getGasPrice().map(Wei::fromQuantity).orElse(null);
+      this.maxPriorityFeePerGas =
+          toCopy.getMaxPriorityFeePerGas().map(Wei::fromQuantity).orElse(null);
+      this.maxFeePerGas = toCopy.getMaxFeePerGas().map(Wei::fromQuantity).orElse(null);
+      this.maxFeePerBlobGas = toCopy.getMaxFeePerBlobGas().map(Wei::fromQuantity).orElse(null);
+      this.gasLimit = toCopy.getGasLimit();
+      this.to = Optional.ofNullable(toCopy.getTo().orElse(null));
+      this.value = Wei.fromQuantity(toCopy.getValue());
+      this.payload = toCopy.getPayload();
+      this.accessList = toCopy.getAccessList();
+      this.sender = toCopy.getSender();
+      this.chainId = toCopy.getChainId();
+      this.versionedHashes = toCopy.getVersionedHashes().orElse(null);
+      this.blobsWithCommitments = toCopy.getBlobsWithCommitments().orElse(null);
+      this.codeDelegationAuthorizations = toCopy.getCodeDelegationList();
+
+      final byte recId = getRecId(toCopy);
+      this.signature =
+          SIGNATURE_ALGORITHM.get().createSignature(toCopy.getR(), toCopy.getS(), recId);
+
+      return this;
+    }
+
+    private byte getRecId(final org.hyperledger.besu.datatypes.Transaction toCopy) {
+      final byte recId;
+      if (this.transactionType.equals(TransactionType.FRONTIER)) {
+        final BigInteger v = toCopy.getV();
+        if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+          recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+        } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+          recId =
+              v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+        } else {
+          throw new RuntimeException(
+              String.format("An unsupported encoded `v` value of %s was found", v));
+        }
+      } else {
+        recId = toCopy.getYParity().byteValueExact();
+      }
+      return recId;
     }
 
     public Builder type(final TransactionType transactionType) {

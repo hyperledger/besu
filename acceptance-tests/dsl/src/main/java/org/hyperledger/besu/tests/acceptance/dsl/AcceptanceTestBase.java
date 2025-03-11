@@ -47,13 +47,19 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolTransa
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.ThreadContext;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -195,5 +201,20 @@ public class AcceptanceTestBase {
     assertThat(true)
         .withFailMessage("This test is here so gradle --dry-run executes this class")
         .isTrue();
+  }
+
+  protected void waitForFile(final Path path) {
+    final File file = path.toFile();
+    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
+        .until(
+            () -> {
+              if (file.exists()) {
+                try (final Stream<String> s = Files.lines(path)) {
+                  return s.count() > 0;
+                }
+              } else {
+                return false;
+              }
+            });
   }
 }

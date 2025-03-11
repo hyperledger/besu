@@ -46,7 +46,10 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   public void setUp() throws Exception {
     minerNode = besu.createMinerNode("minerNode");
     pluginNode =
-        besu.createPluginsNode("node1", List.of("testPlugins"), List.of("--rpc-http-api=UPDATER"));
+        besu.createPluginsNode(
+            "node1",
+            List.of("testPlugins"),
+            b -> b.extraCLIOptions(List.of("--rpc-http-api=UPDATER")));
     cluster.start(minerNode, pluginNode);
     client = new OkHttpClient();
   }
