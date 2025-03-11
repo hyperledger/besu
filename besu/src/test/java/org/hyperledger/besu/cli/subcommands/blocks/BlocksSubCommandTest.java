@@ -72,7 +72,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + "                               (exclusive).  If not specified all blocks after\n"
           + "                               the start block will be imported.\n"
           + "      --format=<format>      The type of data to be imported, possible values\n"
-          + "                               are: RLP, JSON (default: RLP).\n"
+          + "                               are: RLP, JSON, ERA1 (default: RLP).\n"
           + "      --from[=<FILE>...]     File containing blocks to import.\n"
           + "  -h, --help                 Show this help message and exit.\n"
           + "      --run                  Start besu after importing.\n"
