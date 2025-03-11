@@ -73,7 +73,8 @@ public class ImportBlocksStepTest {
             validationPolicy,
             ommerValidationPolicy,
             null,
-            pivotHeader);
+            pivotHeader,
+            true);
   }
 
   @Test
@@ -91,13 +92,23 @@ public class ImportBlocksStepTest {
               blockWithReceipts.getReceipts(),
               FULL,
               LIGHT,
-              BodyValidationMode.LIGHT))
+              BodyValidationMode.LIGHT,
+              true))
           .thenReturn(new BlockImportResult(true));
     }
     importBlocksStep.accept(blocksWithReceipts);
 
     for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       verify(protocolSchedule).getByBlockHeader(blockWithReceipts.getHeader());
+      verify(blockImporter)
+          .importBlockForSyncing(
+              protocolContext,
+              blockWithReceipts.getBlock(),
+              blockWithReceipts.getReceipts(),
+              FULL,
+              LIGHT,
+              BodyValidationMode.LIGHT,
+              true);
     }
     verify(validationPolicy, times(blocks.size())).getValidationModeForNextBlock();
   }
@@ -113,9 +124,50 @@ public class ImportBlocksStepTest {
             blockWithReceipts.getReceipts(),
             FULL,
             LIGHT,
-            BodyValidationMode.LIGHT))
+            BodyValidationMode.LIGHT,
+            true))
         .thenReturn(new BlockImportResult(false));
     assertThatThrownBy(() -> importBlocksStep.accept(singletonList(blockWithReceipts)))
         .isInstanceOf(InvalidBlockException.class);
+  }
+
+  @Test
+  public void shouldImportBlockWithoutTxIndexingWhenNotEnabled() {
+    ImportBlocksStep importBlocksStep =
+        new ImportBlocksStep(
+            protocolSchedule,
+            protocolContext,
+            validationPolicy,
+            ommerValidationPolicy,
+            null,
+            pivotHeader,
+            false);
+
+    final Block block = gen.block();
+    final BlockWithReceipts blockWithReceipts = new BlockWithReceipts(block, gen.receipts(block));
+
+    when(blockImporter.importBlockForSyncing(
+            protocolContext,
+            blockWithReceipts.getBlock(),
+            blockWithReceipts.getReceipts(),
+            FULL,
+            LIGHT,
+            BodyValidationMode.LIGHT,
+            false))
+        .thenReturn(new BlockImportResult(true));
+
+    importBlocksStep.accept(List.of(blockWithReceipts));
+
+    verify(protocolSchedule).getByBlockHeader(blockWithReceipts.getHeader());
+    verify(validationPolicy, times(1)).getValidationModeForNextBlock();
+    verify(blockImporter)
+        .importBlockForSyncing(
+            protocolContext,
+            blockWithReceipts.getBlock(),
+            blockWithReceipts.getReceipts(),
+            FULL,
+            LIGHT,
+            BodyValidationMode.LIGHT,
+            false);
   }
 }

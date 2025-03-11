@@ -28,7 +28,7 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code size operation. */
-public class ExtCodeSizeOperation extends AbstractExtCodeOperation {
+public class ExtCodeSizeOperation extends AbstractOperation {
 
   static final Bytes EOF_SIZE = Bytes.of(2);
 
@@ -83,7 +83,7 @@ public class ExtCodeSizeOperation extends AbstractExtCodeOperation {
         if (account == null) {
           codeSize = Bytes.EMPTY;
         } else {
-          final Bytes code = getCode(account);
+          final Bytes code = account.getCode();
           if (enableEIP3540
               && code.size() >= 2
               && code.get(0) == EOFLayout.EOF_PREFIX_BYTE

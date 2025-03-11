@@ -14,7 +14,13 @@
  */
 package org.hyperledger.besu.tests.acceptance.bootstrap;
 
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNodeRunner;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
@@ -23,12 +29,15 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class ClusterThreadNodeRunnerAcceptanceTest extends AcceptanceTestBase {
 
-  private Node fullNode;
+  private Node miner;
   private Cluster noDiscoveryCluster;
 
   @BeforeEach
@@ -38,16 +47,40 @@ public class ClusterThreadNodeRunnerAcceptanceTest extends AcceptanceTestBase {
     final BesuNodeRunner besuNodeRunner = new ThreadBesuNodeRunner();
     noDiscoveryCluster = new Cluster(clusterConfiguration, net, besuNodeRunner);
     final BesuNode noDiscoveryNode = besu.createNodeWithNoDiscovery("noDiscovery");
-    fullNode = besu.createArchiveNode("archive");
-    noDiscoveryCluster.start(noDiscoveryNode, fullNode);
+    miner =
+        besu.createMinerNode(
+            "miner",
+            (builder) -> {
+              KeyValueStorageFactory persistentStorageFactory =
+                  new RocksDBKeyValueStorageFactory(
+                      RocksDBCLIOptions.create()::toDomainObject,
+                      List.of(KeyValueSegmentIdentifier.values()),
+                      RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+              builder.storageImplementation(persistentStorageFactory);
+              return builder;
+            });
+    noDiscoveryCluster.start(noDiscoveryNode, miner);
   }
 
   @Test
   public void shouldVerifySomething() {
     // we don't care what verifies, just that it gets to the point something can verify
-    fullNode.verify(net.awaitPeerCount(0));
+    miner.verify(net.awaitPeerCount(0));
   }
 
+  @Test
+  void shouldMineTransactionsEvenAfterRestart() {
+    final Account recipient = accounts.createAccount("account1");
+    miner.execute(accountTransactions.createTransfer(recipient, 2));
+    miner.verify(recipient.balanceEquals(2));
+
+    noDiscoveryCluster.stop();
+    noDiscoveryCluster.start(miner);
+    // Checking that state is retained after restart
+    miner.verify(recipient.balanceEquals(2));
+  }
+
+  @AfterEach
   @Override
   public void tearDownAcceptanceTestBase() {
     noDiscoveryCluster.stop();

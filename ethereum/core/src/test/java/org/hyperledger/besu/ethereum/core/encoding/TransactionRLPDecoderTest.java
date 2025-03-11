@@ -19,8 +19,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.CodeDelegation;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -42,6 +47,37 @@ class TransactionRLPDecoderTest {
       "0xb8a902f8a686796f6c6f7632800285012a05f20082753094000000000000000000000000000000000000aaaa8080f838f794000000000000000000000000000000000000aaaae1a0000000000000000000000000000000000000000000000000000000000000000001a00c1d69648e348fe26155b45de45004f0e4195f6352d8f0935bc93e98a3e2a862a060064e5b9765c0ac74223b0cf49635c59ae0faf82044fd17bcc68a549ade6f95";
   private static final String NONCE_64_BIT_MAX_MINUS_2_TX_RLP =
       "0xf86788fffffffffffffffe0182520894095e7baea6a6c7c4c2dfeb977efac326af552d8780801ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804";
+  private static final String EIP7702_SET_CODE_TX_OPAQUE =
+      "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0d61673cd58ffa5fc605c3215aa4647fa3afbea1d1f577e08402442992526d980a0063068ca818025c7b8493d0623cb70ef3a2ba4b3e2ae0af1146d1c9b065c0aff";
+
+  @Test
+  void decodeEIP7702SetCodeTransaction() {
+    final Transaction transaction =
+        TransactionDecoder.decodeOpaqueBytes(
+            Bytes.fromHexString(EIP7702_SET_CODE_TX_OPAQUE), EncodingContext.BLOCK_BODY);
+    final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
+    TransactionEncoder.encodeRLP(transaction, rlpOut, EncodingContext.BLOCK_BODY);
+    assertThat(rlpOut.encoded())
+        .isEqualTo(
+            Bytes.fromHexString(
+                "0xb8c404f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0d61673cd58ffa5fc605c3215aa4647fa3afbea1d1f577e08402442992526d980a0063068ca818025c7b8493d0623cb70ef3a2ba4b3e2ae0af1146d1c9b065c0aff"));
+    assertThat(transaction.getType()).isEqualTo(TransactionType.DELEGATE_CODE);
+    assertThat(transaction.getCodeDelegationList()).isPresent();
+    assertThat(transaction.getCodeDelegationList().get().size()).isEqualTo(1);
+    var expectedCodeDelegation =
+        CodeDelegation.createCodeDelegation(
+            BigInteger.ZERO,
+            Address.fromHexString("0x1000"),
+            "0x0",
+            "0x0",
+            "0xdbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202",
+            "0x5c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e");
+    var actualCodeDelegation = transaction.getCodeDelegationList().get().getFirst();
+    assertThat(actualCodeDelegation.chainId()).isEqualTo(expectedCodeDelegation.chainId());
+    assertThat(actualCodeDelegation.address()).isEqualTo(expectedCodeDelegation.address());
+    assertThat(actualCodeDelegation.nonce()).isEqualTo(expectedCodeDelegation.nonce());
+    assertThat(actualCodeDelegation.signature()).isEqualTo(expectedCodeDelegation.signature());
+  }
 
   @Test
   void decodeFrontierNominalCase() {
@@ -77,6 +113,20 @@ class TransactionRLPDecoderTest {
         decodeRLP(RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getNonce()).isEqualTo(MAX_NONCE - 1);
+  }
+
+  @Test
+  void testForAccessListTransaction() {
+    BlockDataGenerator gen = new BlockDataGenerator();
+    Transaction accessListTransaction = gen.transaction(TransactionType.ACCESS_LIST);
+    Bytes encodedBytes =
+        TransactionEncoder.encodeOpaqueBytes(accessListTransaction, EncodingContext.BLOCK_BODY);
+    Transaction decodedTransaction =
+        TransactionDecoder.decodeOpaqueBytes(encodedBytes, EncodingContext.BLOCK_BODY);
+    assertThat(accessListTransaction).isEqualTo(decodedTransaction);
+    Bytes reencodedBytes =
+        TransactionEncoder.encodeOpaqueBytes(decodedTransaction, EncodingContext.BLOCK_BODY);
+    assertThat(encodedBytes).isEqualTo(reencodedBytes);
   }
 
   private static Collection<Object[]> dataTransactionSize() {

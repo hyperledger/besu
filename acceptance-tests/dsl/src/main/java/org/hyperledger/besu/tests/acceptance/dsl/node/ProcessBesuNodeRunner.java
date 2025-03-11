@@ -48,6 +48,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,8 +153,20 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add(node.getNetwork().name());
     }
 
-    params.add("--sync-mode");
-    params.add("FULL");
+    if (node.getSynchronizerConfiguration() != null) {
+
+      if (node.getSynchronizerConfiguration().getSyncMode() != null) {
+        params.add("--sync-mode");
+        params.add(node.getSynchronizerConfiguration().getSyncMode().toString());
+      }
+      params.add("--sync-min-peers");
+      params.add(Integer.toString(node.getSynchronizerConfiguration().getSyncMinimumPeerCount()));
+    } else {
+      params.add("--sync-mode");
+      params.add("FULL");
+    }
+
+    params.add("--Xsnapsync-server-enabled");
 
     params.add("--discovery-enabled");
     params.add(Boolean.toString(node.isDiscoveryEnabled()));
@@ -529,9 +542,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       return;
     }
 
-    LOG.info("Killing {} process, pid {}", name, process.pid());
-
-    process.destroy();
+    Stream.concat(process.descendants(), Stream.of(process.toHandle()))
+        .peek(
+            processHandle ->
+                LOG.info("Killing {} process, pid {}", processHandle.info(), processHandle.pid()))
+        .forEach(ProcessHandle::destroy);
     try {
       process.waitFor(30, TimeUnit.SECONDS);
     } catch (final InterruptedException e) {

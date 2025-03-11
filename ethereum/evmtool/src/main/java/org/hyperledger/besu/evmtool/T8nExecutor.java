@@ -43,7 +43,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
@@ -356,9 +357,18 @@ public class T8nExecutor {
             .orElse(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO)); // state-test
     final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(excessBlobGas);
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
+    BlockProcessingContext blockProcessingContext =
+        new BlockProcessingContext(
+            referenceTestEnv,
+            worldState,
+            protocolSpec,
+            protocolSpec
+                .getBlockHashProcessor()
+                .createBlockHashLookup(blockchain, referenceTestEnv),
+            OperationTracer.NO_TRACING);
 
     if (!referenceTestEnv.isStateTest()) {
-      protocolSpec.getBlockHashProcessor().processBlockHashes(worldState, referenceTestEnv);
+      protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
     }
 
     final WorldUpdater rootWorldStateUpdater = worldState.updater();
@@ -535,15 +545,10 @@ public class T8nExecutor {
     var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
     if (requestProcessorCoordinator.isPresent()) {
       var rpc = requestProcessorCoordinator.get();
-      ProcessRequestContext context =
-          new ProcessRequestContext(
-              blockHeader,
-              worldState,
-              protocolSpec,
-              receipts,
-              protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader),
-              OperationTracer.NO_TRACING);
-      Optional<List<Request>> maybeRequests = Optional.of(rpc.process(context));
+
+      RequestProcessingContext requestContext =
+          new RequestProcessingContext(blockProcessingContext, receipts);
+      Optional<List<Request>> maybeRequests = Optional.of(rpc.process(requestContext));
       Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 
       resultObject.put("requestsHash", requestsHash.toHexString());

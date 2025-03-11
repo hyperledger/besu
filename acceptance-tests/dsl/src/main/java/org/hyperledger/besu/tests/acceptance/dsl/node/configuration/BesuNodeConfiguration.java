@@ -23,11 +23,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.nio.file.Path;
@@ -72,6 +74,8 @@ public class BesuNodeConfiguration {
   private final Optional<KeyPair> keyPair;
   private final boolean strictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
+  private final SynchronizerConfiguration synchronizerConfiguration;
+  private final Optional<KeyValueStorageFactory> storageFactory;
 
   BesuNodeConfiguration(
       final String name,
@@ -108,7 +112,9 @@ public class BesuNodeConfiguration {
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
       final boolean strictTxReplayProtectionEnabled,
-      final Map<String, String> environment) {
+      final Map<String, String> environment,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final Optional<KeyValueStorageFactory> storageFactory) {
     this.name = name;
     this.miningConfiguration = miningConfiguration;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
@@ -144,6 +150,8 @@ public class BesuNodeConfiguration {
     this.keyPair = keyPair;
     this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
     this.environment = environment;
+    this.synchronizerConfiguration = synchronizerConfiguration;
+    this.storageFactory = storageFactory;
   }
 
   public String getName() {
@@ -284,5 +292,13 @@ public class BesuNodeConfiguration {
 
   public Map<String, String> getEnvironment() {
     return environment;
+  }
+
+  public SynchronizerConfiguration getSynchronizerConfiguration() {
+    return synchronizerConfiguration;
+  }
+
+  public Optional<KeyValueStorageFactory> storageImplementation() {
+    return storageFactory;
   }
 }
