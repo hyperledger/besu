@@ -16,6 +16,7 @@ package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.cli.options.JsonRpcHttpOptions;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -32,8 +33,8 @@ public class BesuConfigurationImpl implements BesuConfiguration {
 
   // defaults
   private MiningConfiguration miningConfiguration;
-  private String rpcHttpHost = "http://localhost";
-  private Integer rpcHttpPort = 8545;
+  private String rpcHttpHost = JsonRpcConfiguration.DEFAULT_JSON_RPC_HOST;
+  private Integer rpcHttpPort = JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 
   /** Default Constructor. */
   public BesuConfigurationImpl() {}
