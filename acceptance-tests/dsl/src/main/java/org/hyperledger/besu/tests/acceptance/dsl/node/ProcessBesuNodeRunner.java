@@ -153,8 +153,20 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add(node.getNetwork().name());
     }
 
-    params.add("--sync-mode");
-    params.add("FULL");
+    if (node.getSynchronizerConfiguration() != null) {
+
+      if (node.getSynchronizerConfiguration().getSyncMode() != null) {
+        params.add("--sync-mode");
+        params.add(node.getSynchronizerConfiguration().getSyncMode().toString());
+      }
+      params.add("--sync-min-peers");
+      params.add(Integer.toString(node.getSynchronizerConfiguration().getSyncMinimumPeerCount()));
+    } else {
+      params.add("--sync-mode");
+      params.add("FULL");
+    }
+
+    params.add("--Xsnapsync-server-enabled");
 
     params.add("--discovery-enabled");
     params.add(Boolean.toString(node.isDiscoveryEnabled()));
