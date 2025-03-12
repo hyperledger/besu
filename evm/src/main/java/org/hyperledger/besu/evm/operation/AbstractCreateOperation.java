@@ -103,19 +103,14 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     if (value.compareTo(account.getBalance()) > 0
         || frame.getDepth() >= 1024
         || account.getNonce() == -1
-        || code == null
-        || code.getEofVersion() != frame.getCode().getEofVersion()) {
+        || code == null) {
       fail(frame);
     } else {
       account.incrementNonce();
 
-      if (!code.isValid()) {
-        fail(frame);
-      } else {
-        frame.decrementRemainingGas(cost);
-        spawnChildMessage(frame, code, evm);
-        frame.incrementRemainingGas(cost);
-      }
+      frame.decrementRemainingGas(cost);
+      spawnChildMessage(frame, code, evm);
+      frame.incrementRemainingGas(cost);
     }
     return new OperationResult(cost, null, getPcIncrement());
   }
