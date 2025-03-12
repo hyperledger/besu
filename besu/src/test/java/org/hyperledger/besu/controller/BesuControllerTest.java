@@ -98,6 +98,27 @@ public class BesuControllerTest {
         .isInstanceOf(QbftBesuControllerBuilder.class);
   }
 
+  @Test
+  public void createConsensusScheduleBesuControllerBuilderWhenMigratingFromIbftLegacyToQbft() {
+    final long qbftStartBlock = 10L;
+    mockGenesisConfigForMigration("ibftLegacy", OptionalLong.of(qbftStartBlock));
+
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder().fromGenesisFile(genesisConfig, SyncMode.FULL);
+
+    assertThat(besuControllerBuilder).isInstanceOf(ConsensusScheduleBesuControllerBuilder.class);
+
+    final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule =
+        ((ConsensusScheduleBesuControllerBuilder) besuControllerBuilder)
+            .getBesuControllerBuilderSchedule();
+
+    assertThat(besuControllerBuilderSchedule).containsKeys(0L, qbftStartBlock);
+    assertThat(besuControllerBuilderSchedule.get(0L))
+        .isInstanceOf(IbftLegacyBesuControllerBuilder.class);
+    assertThat(besuControllerBuilderSchedule.get(qbftStartBlock))
+        .isInstanceOf(QbftBesuControllerBuilder.class);
+  }
+
   private void mockGenesisConfigForMigration(
       final String consensus, final OptionalLong startBlock) {
     when(genesisConfigOptions.isConsensusMigration()).thenReturn(true);
@@ -106,6 +127,11 @@ public class BesuControllerTest {
       case "ibft2":
         {
           when(genesisConfigOptions.isIbft2()).thenReturn(true);
+          break;
+        }
+      case "ibftlegacy":
+        {
+          when(genesisConfigOptions.isIbftLegacy()).thenReturn(true);
           break;
         }
       default:
