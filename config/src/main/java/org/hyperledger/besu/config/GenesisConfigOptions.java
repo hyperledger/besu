@@ -78,7 +78,7 @@ public interface GenesisConfigOptions {
    * @return the boolean
    */
   default boolean isConsensusMigration() {
-    return isIbft2() && isQbft();
+    return (isIbft2() || isIbftLegacy()) && isQbft();
   }
 
   /**
@@ -87,6 +87,13 @@ public interface GenesisConfigOptions {
    * @return the consensus engine
    */
   String getConsensusEngine();
+
+  /**
+   * Gets ibft legacy config options.
+   *
+   * @return the ibft legacy config options
+   */
+  IbftLegacyConfigOptions getIbftLegacyConfigOptions();
 
   /**
    * Gets checkpoint options.
