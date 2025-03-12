@@ -56,6 +56,9 @@ public class QbftFinalStateImpl implements QbftFinalState {
    * @param blockTimer the block timer
    * @param blockCreatorFactory the block creator factory
    * @param clock the clock
+   * @param isEarlyRoundChangeEnabled the early round change enabled flag
+   * @param isFastRecoveryEnabled the fast recovery enabled flag
+   * @param frequentRCMulticaster the frequent round change multicaster
    */
   public QbftFinalStateImpl(
       final ValidatorProvider validatorProvider,

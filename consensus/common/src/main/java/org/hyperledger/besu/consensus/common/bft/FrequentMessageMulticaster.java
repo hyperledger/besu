@@ -92,6 +92,11 @@ public class FrequentMessageMulticaster implements ValidatorMulticaster {
     LOG.debug("Scheduled new frequent multicast task for message.");
   }
 
+  /**
+   * Stop frequent multicasting.
+   *
+   * <p>Stops the current scheduled task.
+   */
   public synchronized void stopFrequentMulticasting() {
     if (scheduledTask != null) {
       LOG.debug("Cancelling existing frequent multicast task.");
