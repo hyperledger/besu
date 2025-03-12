@@ -17,17 +17,24 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The Permissioning service implementation. */
 public class PermissioningServiceImpl implements PermissioningService {
+  private static final Logger LOG = LoggerFactory.getLogger(PermissioningServiceImpl.class);
 
   private final List<NodeConnectionPermissioningProvider> connectionPermissioningProviders =
       Lists.newArrayList();
+  private final List<TransactionPermissioningProvider> transactionPermissioningProviders =
+      new ArrayList<>();
 
   /** Default Constructor. */
   @Inject
@@ -37,6 +44,13 @@ public class PermissioningServiceImpl implements PermissioningService {
   public void registerNodePermissioningProvider(
       final NodeConnectionPermissioningProvider provider) {
     connectionPermissioningProviders.add(provider);
+  }
+
+  @Override
+  public void registerTransactionPermissioningProvider(
+      final TransactionPermissioningProvider provider) {
+    transactionPermissioningProviders.add(provider);
+    LOG.info("Registered new transaction permissioning provider.");
   }
 
   /**
@@ -64,5 +78,14 @@ public class PermissioningServiceImpl implements PermissioningService {
    */
   public List<NodeMessagePermissioningProvider> getMessagePermissioningProviders() {
     return messagePermissioningProviders;
+  }
+
+  /**
+   * Gets transaction permissioning providers.
+   *
+   * @return the transaction permissioning providers
+   */
+  public List<TransactionPermissioningProvider> getTransactionPermissioningProviders() {
+    return transactionPermissioningProviders;
   }
 }

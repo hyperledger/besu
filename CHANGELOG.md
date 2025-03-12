@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+
 ### Breaking Changes
 - k8s (KUBERNETES) Nat method is removed. Use docker or none instead. [#8289](https://github.com/hyperledger/besu/pull/8289)
 - Change `Invalid block, unable to parse RLP` RPC error message to `Invalid block param (block not found)` [#8328](https://github.com/hyperledger/besu/pull/8328)
@@ -27,6 +28,7 @@
 - Update Holesky and Sepolia deposit contract addresses [#8346](https://github.com/hyperledger/besu/pull/8346)
 #### Plugins
 - Allow plugins to propose transactions during block creation [#8268](https://github.com/hyperledger/besu/pull/8268)
+- Add support for transaction permissioning rules in Plugin API [#8365](https://github.com/hyperledger/besu/pull/8365)
 #### Parallelization
 - Improve conflict detection by considering slots to reduce false positives [#7923](https://github.com/hyperledger/besu/pull/7923)
 #### Dependencies 
@@ -46,6 +48,7 @@
 ### Bug fixes
 - Add missing RPC method `debug_accountRange` to `RpcMethod.java` so this method can be used with `--rpc-http-api-method-no-auth` [#8153](https://github.com/hyperledger/besu/issues/8153)
 - Add a fallback pivot strategy when the safe block does not change for a long time, to make possible to complete the initial sync in case the chain is not finalizing [#8395](https://github.com/hyperledger/besu/pull/8395)
+- Fix issue with new QBFT/IBFT blocks being produced under certain circumstances. [#8308](https://github.com/hyperledger/besu/issues/8308)
 
 ## 25.2.2 hotfix
 - Pectra - Sepolia: Fix for deposit contract log decoding [#8383](https://github.com/hyperledger/besu/pull/8383)
@@ -106,6 +109,8 @@
   - Smart-contract-based (onchain) permissioning
   - Proof of Work consensus
   - Fast Sync
+- Plugins 
+  - `BesuConfiguration` methods `getRpcHttpHost` and `getRpcHttpPort` (which return Optionals) have been deprecated in favour of `getConfiguredRpcHttpHost` and `getConfiguredRpcHttpPort` which return the actual values, which will always be populated since these options have defaults. [#8127](https://github.com/hyperledger/besu/pull/8127) 
 
 ### Additions and Improvements
 - Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)
