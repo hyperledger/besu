@@ -33,7 +33,7 @@
         "nonce": "0x0",
         "to": null,
         "data": [
-          "ef000101000402000100090300010014ff000000008000035f355f5fa15f5fee00ef00010100040200010001ff0000000080000000c0de471fe5"
+          "ef0001010004020001000903000100000014ff000000008000035f355f5fa15f5fee00ef00010100040200010001ff0000000080000000c0de471fe5"
         ],
         "gasLimit": [
           "0x7a1200"
@@ -71,16 +71,16 @@
     }
   },
   "stdout": [
-    {"pc":0,"section":0,"op":95,"gas":"0x794068","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":1,"section":0,"op":53,"gas":"0x794066","gasCost":"0x3","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"CALLDATALOAD"},
-    {"pc":2,"section":0,"op":95,"gas":"0x794063","gasCost":"0x2","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000"],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":3,"section":0,"op":95,"gas":"0x794061","gasCost":"0x2","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":4,"section":0,"op":161,"gas":"0x79405f","gasCost":"0x2ee","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0","0x0"],"depth":1,"refund":0,"opName":"LOG1"},
-    {"pc":5,"section":0,"op":95,"gas":"0x793d71","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":6,"section":0,"op":95,"gas":"0x793d6f","gasCost":"0x2","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":7,"section":0,"op":238,"immediate":"0x00","gas":"0x793d6d","gasCost":"0x0","memSize":0,"stack":["0x0","0x0"],"depth":1,"refund":0,"opName":"RETURNCODE"},
-    {"output":"","gasUsed":"0xe433","test":"create-eof","fork":"Osaka","d":0,"g":0,"v":0,"postHash":"0x925adae06f85d66e6be8fd4c7a9f54d0c86f755ca31c680f3617cf9ca02511e8","postLogsHash":"0xf48b954a6a6f4ce6b28e4950b7027413f4bdc8f459df6003b6e8d7a1567c8940","pass":true},
-    {"pc":0,"op":239,"gas":"0x794068","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"INVALID","error":"Invalid opcode: 0xef"},
+    {"pc":0,"section":0,"op":95,"gas":"0x794060","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":1,"section":0,"op":53,"gas":"0x79405e","gasCost":"0x3","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"CALLDATALOAD"},
+    {"pc":2,"section":0,"op":95,"gas":"0x79405b","gasCost":"0x2","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000"],"depth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":3,"section":0,"op":95,"gas":"0x794059","gasCost":"0x2","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":4,"section":0,"op":161,"gas":"0x794057","gasCost":"0x2ee","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0","0x0"],"depth":1,"refund":0,"opName":"LOG1"},
+    {"pc":5,"section":0,"op":95,"gas":"0x793d69","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":6,"section":0,"op":95,"gas":"0x793d67","gasCost":"0x2","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":7,"section":0,"op":238,"immediate":"0x00","gas":"0x793d65","gasCost":"0x0","memSize":0,"stack":["0x0","0x0"],"depth":1,"refund":0,"opName":"RETURNCODE"},
+    {"output":"","gasUsed":"0xe43b","test":"create-eof","fork":"Osaka","d":0,"g":0,"v":0,"postHash":"0x2d5bc9c7a8b71900924d58af2220f5592d41be3a4f63d6e095ec73461d620c88","postLogsHash":"0xf48b954a6a6f4ce6b28e4950b7027413f4bdc8f459df6003b6e8d7a1567c8940","pass":false},
+    {"pc":0,"op":239,"gas":"0x794060","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"INVALID","error":"Invalid opcode: 0xef"},
     {"output":"","gasUsed":"0x7a1200","test":"create-eof","fork":"Cancun","d":0,"g":0,"v":0,"postHash":"0xaa80d89bc89f58da8de41d3894bd1a241896ff91f7a5964edaefb39e8e3a4a98","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true,"error":"Invalid opcode: 0xef"}
   ]
 }

@@ -317,12 +317,12 @@ public record EOFLayout(
       }
       containerSectionSizes = new int[containerSectionCount];
       for (int i = 0; i < containerSectionCount; i++) {
-        int size = readUnsignedShort(inputStream);
+        long size = readUnsignedInt(inputStream);
         if (size <= 0) {
           return invalidLayout(
               step.container, version, "Invalid container section size for section " + i);
         }
-        containerSectionSizes[i] = size;
+        containerSectionSizes[i] = (int) size;
       }
     } else {
       containerSectionCount = 0;
@@ -369,7 +369,7 @@ public record EOFLayout(
     if (containerSectionCount > 0) {
       pos +=
           3 // subcontainer header
-              + (containerSectionCount * 2); // subcontainer sizes
+              + (containerSectionCount * 4); // subcontainer sizes
     }
 
     for (int i = 0; i < codeSectionCount; i++) {
@@ -455,6 +455,23 @@ public record EOFLayout(
       return -1;
     } else {
       return inputStream.read() << 8 | inputStream.read();
+    }
+  }
+
+  /**
+   * Read unsigned int (4 bytes).
+   *
+   * @param inputStream the input stream
+   * @return the int
+   */
+  static long readUnsignedInt(final ByteArrayInputStream inputStream) {
+    if (inputStream.available() < 4) {
+      return -1;
+    } else {
+      return ((long) inputStream.read() << 24)
+          | ((long) inputStream.read() << 16)
+          | ((long) inputStream.read() << 8)
+          | (inputStream.read());
     }
   }
 
@@ -591,7 +608,7 @@ public record EOFLayout(
         out.writeByte(SECTION_CONTAINER);
         out.writeShort(subContainers.length);
         for (EOFLayout container : subContainers) {
-          out.writeShort(container.container.size());
+          out.writeInt(container.container.size());
         }
       }
 
@@ -703,7 +720,7 @@ public record EOFLayout(
       out.printf("03%04x # Total subcontainers ( %1$d )%n", subContainers.length);
       for (int i = 0; i < subContainers.length; i++) {
         out.print(prefix);
-        out.printf("  %04x # Sub container %d, %1$d byte%n", subContainers[i].container.size(), i);
+        out.printf("  %08x # Sub container %d, %1$d byte%n", subContainers[i].container.size(), i);
       }
     }
     out.print(prefix);

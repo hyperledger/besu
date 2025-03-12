@@ -57,7 +57,7 @@ class ContractCreationProcessorTest
     final Bytes contractCode = Bytes.fromHexString("EF01010101010101");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(10600L);
+    messageFrame.setGasRemaining(19_000L);
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
@@ -73,7 +73,7 @@ class ContractCreationProcessorTest
     final Bytes contractCode = Bytes.fromHexString("0101010101010101");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(10600L);
+    messageFrame.setGasRemaining(19_000L);
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
@@ -87,7 +87,7 @@ class ContractCreationProcessorTest
     final Bytes contractCode = Bytes.fromHexString("0F01010101010101");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(10600L);
+    messageFrame.setGasRemaining(19_000L);
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
@@ -105,7 +105,7 @@ class ContractCreationProcessorTest
     final Bytes contractCode = Bytes.fromHexString("EF00010101010101");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(10600L);
+    messageFrame.setGasRemaining(19_000L);
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
@@ -125,7 +125,7 @@ class ContractCreationProcessorTest
     final Bytes contractCode = Bytes.fromHexString("0101010101010101");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(10600L);
+    messageFrame.setGasRemaining(19_000L);
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
@@ -143,7 +143,7 @@ class ContractCreationProcessorTest
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder().code(evm.getCodeUncached(EOF_CREATE_CONTRACT)).build();
     messageFrame.setOutputData(INNER_CONTRACT);
-    messageFrame.setGasRemaining(10600L);
+    messageFrame.setGasRemaining(19_000L);
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
@@ -156,7 +156,7 @@ class ContractCreationProcessorTest
             evm, true, Collections.singletonList(PrefixCodeRule.of()), 1, Collections.emptyList());
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(INNER_CONTRACT);
-    messageFrame.setGasRemaining(10600L);
+    messageFrame.setGasRemaining(19_000L);
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
@@ -176,7 +176,7 @@ class ContractCreationProcessorTest
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder().code(evm.getCodeForCreation(initCode)).build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(10600L);
+    messageFrame.setGasRemaining(19_000L);
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
@@ -194,7 +194,7 @@ class ContractCreationProcessorTest
     final Bytes contractCode = EOF_CREATE_CONTRACT;
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(10600L);
+    messageFrame.setGasRemaining(19_000L);
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);

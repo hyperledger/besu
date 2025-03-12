@@ -198,7 +198,7 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               0011 # Code section 0 , 17 bytes
             030001 # Total subcontainers ( 1 )
-              0032 # Sub container 0, 50 byte
+              00000034 # Sub container 0, 50 byte
              ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
@@ -221,7 +221,7 @@ class CodeFactoryTest {
                 020001 # Total code sections ( 1 )
                   0006 # Code section 0 , 6 bytes
                 030001 # Total subcontainers ( 1 )
-                  0014 # Sub container 0, 20 byte
+                  00000014 # Sub container 0, 20 byte
                  ff0000 # Data section length(  0 )   \s
                     00 # Terminator (end of header)
                        # Code section 0 types
@@ -263,7 +263,7 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               000c # Code section 0 , 12 bytes
             030001 # Total subcontainers ( 1 )
-              0014 # Sub container 0, 20 byte
+              00000014 # Sub container 0, 20 byte
              ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
@@ -306,7 +306,7 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               000c # Code section 0 , 12 bytes
             030001 # Total subcontainers ( 1 )
-              0018 # Sub container 0, 24 byte
+              00000018 # Sub container 0, 24 byte
              ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
@@ -351,7 +351,7 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               0011 # Code section 0 , 17 bytes
             030001 # Total subcontainers ( 1 )
-              0018 # Sub container 0, 24 byte
+              00000018 # Sub container 0, 24 byte
              ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
@@ -399,7 +399,7 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               000c # Code section 0 , 12 bytes
             030001 # Total subcontainers ( 1 )
-              0018 # Sub container 0, 24 byte
+              00000018 # Sub container 0, 24 byte
              ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
@@ -444,7 +444,7 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               0011 # Code section 0 , 17 bytes
             030001 # Total subcontainers ( 1 )
-              0014 # Sub container 0, 20 byte
+              00000014 # Sub container 0, 20 byte
             ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
@@ -491,7 +491,7 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               0011 # Code section 0 , 17 bytes
             030001 # Total subcontainers ( 1 )
-              0018 # Sub container 0, 24 byte
+              00000018 # Sub container 0, 24 byte
              ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
@@ -540,7 +540,7 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               000c # Code section 0 , 12 bytes
             030001 # Total subcontainers ( 1 )
-              0032 # Sub container 0, 50 byte
+              00000034 # Sub container 0, 50 byte
              ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
@@ -560,7 +560,7 @@ class CodeFactoryTest {
                 020001 # Total code sections ( 1 )
                   0006 # Code section 0 , 6 bytes
                 030001 # Total subcontainers ( 1 )
-                  0014 # Sub container 0, 20 byte
+                  00000014 # Sub container 0, 20 byte
                  ff0000 # Data section length(  0 )   \s
                     00 # Terminator (end of header)
                        # Code section 0 types
