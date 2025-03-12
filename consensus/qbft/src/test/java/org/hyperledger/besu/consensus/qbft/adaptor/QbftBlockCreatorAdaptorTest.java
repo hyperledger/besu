@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
@@ -46,7 +45,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class QbftBlockCreatorAdaptorTest {
   @Mock private BlockCreator blockCreator;
   @Mock private Block besuBlock;
-  @Mock private QbftExtraDataProvider qbftExtraDataProvider;
   private final QbftExtraDataCodec qbftExtraDataCodec = new QbftExtraDataCodec();
 
   @Test
@@ -72,17 +70,15 @@ class QbftBlockCreatorAdaptorTest {
             Optional.of(Vote.authVote(Address.ZERO)),
             0,
             List.of(Address.ZERO));
-    BlockHeader header = new BlockHeaderTestFixture().buildHeader();
+    Bytes extraDataBytes = qbftExtraDataCodec.encode(bftExtraData);
+    BlockHeader header = new BlockHeaderTestFixture().extraData(extraDataBytes).buildHeader();
     Block besuBlock = new Block(header, BlockBody.empty());
     QbftBlock block = new QbftBlockAdaptor(besuBlock);
     SECPSignature seal = new SECPSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
-    when(qbftExtraDataProvider.getExtraData(new QbftBlockHeaderAdaptor(header)))
-        .thenReturn(bftExtraData);
 
     QbftBlockCreatorAdaptor qbftBlockCreator =
         new QbftBlockCreatorAdaptor(blockCreator, qbftExtraDataCodec);
-    QbftBlock sealedBlock =
-        qbftBlockCreator.createSealedBlock(qbftExtraDataProvider, block, 1, List.of(seal));
+    QbftBlock sealedBlock = qbftBlockCreator.createSealedBlock(block, 1, List.of(seal));
     BftExtraData sealedExtraData =
         qbftExtraDataCodec.decode(BlockUtil.toBesuBlockHeader(sealedBlock.getHeader()));
     assertThat(sealedExtraData.getVanityData()).isEqualTo(Bytes.wrap(new byte[32]));
