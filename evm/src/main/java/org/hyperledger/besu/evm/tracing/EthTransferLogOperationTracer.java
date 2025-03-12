@@ -38,11 +38,19 @@ import org.apache.tuweni.bytes.Bytes;
  * includes both value transfers and self-destructs.
  */
 public class EthTransferLogOperationTracer implements OperationTracer {
+  /** The list of logs emitted by this tracer */
   private final List<Log> traceTransfers = new ArrayList<>();
+
+  /** The constant address for transfer logs */
   public static final Address SIMULATION_TRANSFER_ADDRESS =
       Address.fromHexString("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+
+  /** The constant topic for transfer logs */
   public static final Bytes SIMULATION_TRANSFER_TOPIC =
       Bytes.fromHexString("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+
+  /** Default constructor. */
+  public EthTransferLogOperationTracer() {}
 
   @Override
   public void traceContextEnter(final MessageFrame frame) {
@@ -90,6 +98,11 @@ public class EthTransferLogOperationTracer implements OperationTracer {
         new org.hyperledger.besu.evm.log.Log(SIMULATION_TRANSFER_ADDRESS, value, builder.build()));
   }
 
+  /**
+   * Returns the logs emitted by this tracer.
+   *
+   * @return the logs emitted by this tracer
+   */
   public List<Log> getLogs() {
     return traceTransfers;
   }
