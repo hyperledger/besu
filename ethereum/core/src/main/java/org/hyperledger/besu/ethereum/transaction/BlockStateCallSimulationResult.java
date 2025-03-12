@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,14 +32,14 @@ import java.util.stream.Collectors;
  * Manages the results of simulating block calls, including a list of simulation results and
  * tracking cumulative gas used.
  */
-public class BlockCallSimulationResult {
+public class BlockStateCallSimulationResult {
   private final List<TransactionSimulatorResultWithMetadata> transactionSimulatorResults =
       new ArrayList<>();
   private long cumulativeGasUsed = 0;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final long blockGasLimit;
 
-  public BlockCallSimulationResult(final ProtocolSpec protocolSpec, final long blockGasLimit) {
+  public BlockStateCallSimulationResult(final ProtocolSpec protocolSpec, final long blockGasLimit) {
     this.transactionReceiptFactory = protocolSpec.getTransactionReceiptFactory();
     this.blockGasLimit = blockGasLimit;
   }
@@ -56,18 +58,25 @@ public class BlockCallSimulationResult {
    * @param result the transaction simulation result
    * @param worldState the world state after the transaction
    */
-  public void add(final TransactionSimulatorResult result, final MutableWorldState worldState) {
+  public void add(
+      final TransactionSimulatorResult result,
+      final MutableWorldState worldState,
+      final OperationTracer operationTracer) {
     Objects.requireNonNull(result, "TransactionSimulatorResult cannot be null");
     Objects.requireNonNull(worldState, "WorldState cannot be null");
 
-    long gasUsedByTransaction = result.result().getEstimateGasUsedByTransaction();
+    long gasUsedByTransaction = result.getGasEstimate();
     cumulativeGasUsed += gasUsedByTransaction;
 
     TransactionReceipt transactionReceipt =
         transactionReceiptFactory.create(
             result.transaction().getType(), result.result(), worldState, cumulativeGasUsed);
 
-    List<Log> logs = transactionReceipt.getLogsList();
+    List<Log> logs =
+        (operationTracer instanceof EthTransferLogOperationTracer)
+            ? ((EthTransferLogOperationTracer) operationTracer).getLogs()
+            : transactionReceipt.getLogsList();
+
     transactionSimulatorResults.add(
         new TransactionSimulatorResultWithMetadata(
             result, transactionReceipt, cumulativeGasUsed, logs));

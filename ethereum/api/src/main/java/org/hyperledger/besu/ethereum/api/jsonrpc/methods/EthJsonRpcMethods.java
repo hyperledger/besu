@@ -174,6 +174,10 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthBlobBaseFee(blockchainQueries.getBlockchain(), protocolSchedule),
         new EthMaxPriorityFeePerGas(blockchainQueries),
         new EthSimulateV1(
-            blockchainQueries, protocolSchedule, transactionSimulator, miningConfiguration));
+            blockchainQueries,
+            protocolSchedule,
+            transactionSimulator,
+            miningConfiguration,
+            apiConfiguration));
   }
 }

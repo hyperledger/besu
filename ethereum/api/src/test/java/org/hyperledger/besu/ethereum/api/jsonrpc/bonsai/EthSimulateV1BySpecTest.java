@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,12 @@ public class EthSimulateV1BySpecTest extends AbstractJsonRpcHttpBySpecTest {
   public void setup() throws Exception {
     setupBonsaiBlockchain();
     startService();
+  }
+
+  @Override
+  protected void setupBonsaiBlockchain() {
+    blockchainSetupUtil = getBlockchainSetupUtil(DataStorageFormat.BONSAI);
+    blockchainSetupUtil.importAllBlocks(HeaderValidationMode.NONE, HeaderValidationMode.NONE);
   }
 
   @Override

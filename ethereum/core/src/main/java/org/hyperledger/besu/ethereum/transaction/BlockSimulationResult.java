@@ -25,12 +25,12 @@ import java.util.List;
 
 public class BlockSimulationResult {
   final Block block;
-  final BlockCallSimulationResult blockCallSimulationResult;
+  final BlockStateCallSimulationResult blockStateCallSimulationResult;
 
   public BlockSimulationResult(
-      final Block block, final BlockCallSimulationResult blockCallSimulationResult) {
+      final Block block, final BlockStateCallSimulationResult blockStateCallSimulationResult) {
     this.block = block;
-    this.blockCallSimulationResult = blockCallSimulationResult;
+    this.blockStateCallSimulationResult = blockStateCallSimulationResult;
   }
 
   public BlockHeader getBlockHeader() {
@@ -42,11 +42,11 @@ public class BlockSimulationResult {
   }
 
   public List<TransactionReceipt> getReceipts() {
-    return blockCallSimulationResult.getReceipts();
+    return blockStateCallSimulationResult.getReceipts();
   }
 
   public List<TransactionSimulatorResult> getTransactionSimulations() {
-    return blockCallSimulationResult.getTransactionSimulationResults();
+    return blockStateCallSimulationResult.getTransactionSimulationResults();
   }
 
   public Block getBlock() {
@@ -55,7 +55,7 @@ public class BlockSimulationResult {
 
   public List<LogWithMetadata> getLogsWithMetadata() {
     List<LogWithMetadata> logs = new ArrayList<>();
-    blockCallSimulationResult
+    blockStateCallSimulationResult
         .getTransactionSimulatorResults()
         .forEach(
             transactionSimulation ->

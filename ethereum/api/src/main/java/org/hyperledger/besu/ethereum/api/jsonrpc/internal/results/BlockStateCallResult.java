@@ -127,15 +127,12 @@ public class BlockStateCallResult extends BlockResult {
         logs.stream()
             .filter(log -> log.getTransactionHash().equals(transactionHash))
             .collect(Collectors.toList());
-
     TransactionProcessingResult result = simulatorResult.result();
-    JsonRpcError error = determineError(result);
-
     return new CallProcessingResult(
         result.isSuccessful() ? 1 : 0,
         result.getOutput(),
-        result.getEstimateGasUsedByTransaction(),
-        error,
+        simulatorResult.getGasEstimate(),
+        getError(result),
         new LogsResult(transactionLogs));
   }
 
@@ -149,7 +146,7 @@ public class BlockStateCallResult extends BlockResult {
    * @return a {@link JsonRpcError} representing the error encountered during transaction
    *     processing, or {@code null} if no error occurred
    */
-  private static JsonRpcError determineError(final TransactionProcessingResult result) {
+  private static JsonRpcError getError(final TransactionProcessingResult result) {
     if (result.getRevertReason().isPresent()) {
       return new JsonRpcError(
           RpcErrorType.REVERT_ERROR, result.getRevertReason().get().toHexString());

@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.SimulateV1Parameter;
@@ -55,6 +56,7 @@ public class EthSimulateV1Test {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private TransactionSimulator transactionSimulator;
   @Mock private MiningConfiguration miningConfiguration;
+  @Mock private ApiConfiguration apiConfiguration;
 
   @Captor ArgumentCaptor<PreCloseStateHandler<Optional<JsonRpcResponse>>> mapperCaptor;
 
@@ -62,7 +64,11 @@ public class EthSimulateV1Test {
   public void setUp() {
     method =
         new EthSimulateV1(
-            blockchainQueries, protocolSchedule, transactionSimulator, miningConfiguration);
+            blockchainQueries,
+            protocolSchedule,
+            transactionSimulator,
+            miningConfiguration,
+            apiConfiguration);
   }
 
   @Test

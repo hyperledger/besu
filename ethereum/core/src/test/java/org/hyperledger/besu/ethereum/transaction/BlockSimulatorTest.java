@@ -87,7 +87,8 @@ public class BlockSimulatorTest {
             protocolSchedule,
             transactionSimulator,
             miningConfiguration,
-            blockchain);
+            blockchain,
+            0);
     blockHeader = BlockHeaderBuilder.createDefault().buildBlockHeader();
     ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
     when(miningConfiguration.getCoinbase())

@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -53,7 +54,8 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator,
-      final MiningConfiguration miningConfiguration) {
+      final MiningConfiguration miningConfiguration,
+      final ApiConfiguration apiConfiguration) {
     super(blockchainQueries);
     this.protocolSchedule = protocolSchedule;
     this.blockSimulator =
@@ -62,7 +64,8 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
             protocolSchedule,
             transactionSimulator,
             miningConfiguration,
-            blockchainQueries.getBlockchain());
+            blockchainQueries.getBlockchain(),
+            apiConfiguration.getGasCap());
   }
 
   @Override
@@ -116,10 +119,8 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
   }
 
   private Object process(final BlockHeader header, final SimulateV1Parameter simulateV1Parameter) {
-
     final List<BlockSimulationResult> simulationResults =
         blockSimulator.process(header, simulateV1Parameter);
-
     return simulationResults.stream()
         .map(
             result ->

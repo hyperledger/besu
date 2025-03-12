@@ -677,8 +677,4 @@ public class TransactionSimulator {
     }
     return callParams.getBlobVersionedHashes().isPresent();
   }
-
-  public WorldStateArchive getWorldStateArchive() {
-    return worldStateArchive;
-  }
 }
