@@ -72,6 +72,11 @@ public class SimulationTransactionProcessorFactory {
   private MainnetTransactionProcessor createProcessor(
       final MainnetTransactionProcessor baseProcessor,
       final Map<Address, Address> precompileAddressOverrides) {
+
+    if (precompileAddressOverrides.isEmpty()) {
+      return baseProcessor;
+    }
+
     return MainnetTransactionProcessor.builder()
         .populateFrom(baseProcessor)
         .messageCallProcessor(

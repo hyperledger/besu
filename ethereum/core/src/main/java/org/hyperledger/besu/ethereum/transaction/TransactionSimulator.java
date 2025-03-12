@@ -518,10 +518,17 @@ public class TransactionSimulator {
       }
     } else {
       if (rpcGasCap > 0) {
-        LOG.trace(
-            "No user provided gas limit, setting simulation gas cap to the value of min(rpc-gas-cap, blockGasLimit) {}",
-            rpcGasCap);
-        simulationGasCap = Math.min(rpcGasCap, blockGasLimit);
+        if (blockGasLimit > 0) {
+          LOG.trace(
+              "No user provided gas limit, setting simulation gas cap to the value of min(rpc-gas-cap,blockGasLimit) {}",
+              rpcGasCap);
+          simulationGasCap = Math.min(rpcGasCap, blockGasLimit);
+        } else {
+          LOG.trace(
+              "No user provided gas limit, setting simulation gas cap to the value of rpc-gas-cap {}",
+              rpcGasCap);
+          simulationGasCap = rpcGasCap;
+        }
       } else {
         simulationGasCap = blockGasLimit;
         LOG.trace(
