@@ -347,6 +347,7 @@ public class CodeV0 implements Code {
     int len = bytes.size();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     PrintStream ps = new PrintStream(out);
+    ps.println("0x # Legacy EVM Code");
     while (i < len) {
       i += printInstruction(i, ps);
     }
@@ -374,7 +375,7 @@ public class CodeV0 implements Code {
         decimalPush = "(" + slice.toLong() + ")";
       }
     }
-    out.printf(" %02x%s # [ %d ] %s%s%n", codeByte, push, offset, info.name(), decimalPush);
+    out.printf("%02x%s # [ %d ] %s%s%n", codeByte, push, offset, info.name(), decimalPush);
     return Math.max(1, info.pcAdvance());
   }
 }
