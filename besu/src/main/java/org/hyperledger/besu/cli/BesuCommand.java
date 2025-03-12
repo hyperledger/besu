@@ -21,7 +21,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
+import static org.hyperledger.besu.cli.config.NetworkName.HOLESKY;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -2209,9 +2211,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private OptionalLong getGenesisTargetGasLimit(final GenesisConfigOptions genesisConfigOptions) {
-    if (genesisConfigOptions.getGasLimit().isEmpty()
-        || genesisConfigOptions.getGasLimit().getAsLong() == 0) return OptionalLong.empty();
-    return genesisConfigOptions.getGasLimit();
+    final Optional<BigInteger> chainId = genesisConfigOptions.getChainId();
+    final OptionalLong gasLimit = genesisConfigOptions.getGasLimit();
+    if ((chainId.isPresent()
+            && (chainId.get().equals(SEPOLIA.getNetworkId())
+                || chainId.get().equals(HOLESKY.getNetworkId())))
+        || (gasLimit.isEmpty() || gasLimit.getAsLong() == 0)) return OptionalLong.empty();
+    return gasLimit;
   }
 
   // Blockchain synchronization from peers.

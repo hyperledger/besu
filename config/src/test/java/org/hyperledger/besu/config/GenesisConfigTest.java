@@ -231,7 +231,8 @@ class GenesisConfigTest {
   void assertTerminalTotalDifficultyOverride() {
     GenesisConfigOptions sepoliaOverrideOptions =
         GenesisConfig.fromResource("/sepolia.json")
-            .withOverrides(Map.of("terminalTotalDifficulty", String.valueOf(Long.MAX_VALUE)))
+            .withOverrides(
+                new HashMap<>(Map.of("terminalTotalDifficulty", String.valueOf(Long.MAX_VALUE))))
             .getConfigOptions();
 
     assertThat(sepoliaOverrideOptions.getTerminalTotalDifficulty()).isPresent();
