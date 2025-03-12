@@ -227,7 +227,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     return accountPreloader;
   }
 
-  protected Consumer<StorageSlotKey> getStoragePreloader() {
+  public Consumer<StorageSlotKey> getStoragePreloader() {
     return storagePreloader;
   }
 

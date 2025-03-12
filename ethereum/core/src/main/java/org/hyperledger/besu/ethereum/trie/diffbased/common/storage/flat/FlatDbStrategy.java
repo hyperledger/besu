@@ -99,47 +99,54 @@ public abstract class FlatDbStrategy {
    * Removes code for the given account hash.
    */
   public void removeFlatCode(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash codeHash) {
-    codeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash);
+    codeStorageStrategy.removeFlatCode(storage, transaction, accountHash, codeHash);
   }
 
   /*
    * Puts the code data for the given code hash and account hash.
    */
   public void putFlatCode(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash codeHash,
       final Bytes code) {
-    codeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
+    codeStorageStrategy.putFlatCode(storage, transaction, accountHash, codeHash, code);
   }
 
   /*
    * Puts the account data for the given account hash, using the world state root hash supplier and node loader.
    */
   public abstract void putFlatAccount(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Bytes accountValue);
 
   public abstract void removeFlatAccount(
-      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash);
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash);
 
   /*
    * Puts the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
    */
   public abstract void putFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash,
-      final Bytes storage);
+      final Bytes storageValue);
 
   /*
    * Removes the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
    */
   public abstract void removeFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash);

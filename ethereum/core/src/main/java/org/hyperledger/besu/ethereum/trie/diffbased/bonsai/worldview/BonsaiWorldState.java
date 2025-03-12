@@ -48,6 +48,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -311,7 +312,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
               .orElse(null);
       if (oldAccount == null) {
         // This is when an account is both created and deleted within the scope of the same
-        // block.  A not-uncommon DeFi bot pattern.
+        // block. A not-uncommon DeFi bot pattern.
         continue;
       }
       final Hash addressHash = address.addressHash();
@@ -320,24 +321,34 @@ public class BonsaiWorldState extends DiffBasedWorldState {
               (location, key) -> getStorageTrieNode(addressHash, location, key),
               oldAccount.getStorageRoot());
       try {
-        final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageToDelete =
-            worldStateUpdater.getStorageToUpdate().get(address);
+        StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageToDelete = null;
         Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
         while (!entriesToDelete.isEmpty()) {
-          entriesToDelete.forEach(
-              (k, v) -> {
-                final StorageSlotKey storageSlotKey =
-                    new StorageSlotKey(Hash.wrap(k), Optional.empty());
-                final UInt256 slotValue = UInt256.fromBytes(Bytes32.leftPad(RLP.decodeValue(v)));
-                maybeStateUpdater.ifPresent(
-                    bonsaiUpdater ->
-                        bonsaiUpdater.removeStorageValueBySlotHash(
-                            address.addressHash(), storageSlotKey.getSlotHash()));
-                storageToDelete
+          if (storageToDelete == null) {
+            storageToDelete =
+                worldStateUpdater
+                    .getStorageToUpdate()
                     .computeIfAbsent(
-                        storageSlotKey, key -> new DiffBasedValue<>(slotValue, null, true))
-                    .setPrior(slotValue);
-              });
+                        address,
+                        add ->
+                            new StorageConsumingMap<>(
+                                address,
+                                new ConcurrentHashMap<>(),
+                                worldStateUpdater.getStoragePreloader()));
+          }
+          for (Map.Entry<Bytes32, Bytes> slot : entriesToDelete.entrySet()) {
+            final StorageSlotKey storageSlotKey =
+                new StorageSlotKey(Hash.wrap(slot.getKey()), Optional.empty());
+            final UInt256 slotValue =
+                UInt256.fromBytes(Bytes32.leftPad(RLP.decodeValue(slot.getValue())));
+            maybeStateUpdater.ifPresent(
+                bonsaiUpdater ->
+                    bonsaiUpdater.removeStorageValueBySlotHash(
+                        address.addressHash(), storageSlotKey.getSlotHash()));
+            storageToDelete
+                .computeIfAbsent(storageSlotKey, key -> new DiffBasedValue<>(slotValue, null, true))
+                .setPrior(slotValue);
+          }
           entriesToDelete.keySet().forEach(storageTrie::remove);
           if (entriesToDelete.size() == 256) {
             entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
@@ -358,7 +369,10 @@ public class BonsaiWorldState extends DiffBasedWorldState {
     return calculateRootHash(
         Optional.of(
             new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
+                noOpSegmentedTx,
+                noOpTx,
+                worldStateKeyValueStorage.getFlatDbStrategy(),
+                worldStateKeyValueStorage.getComposedWorldStateStorage())),
         accumulator.copy());
   }
 

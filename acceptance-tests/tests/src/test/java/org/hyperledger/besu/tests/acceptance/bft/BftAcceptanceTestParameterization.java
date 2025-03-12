@@ -74,6 +74,11 @@ public class BftAcceptanceTestParameterization {
     return creatorFn.create(factory, name, true, DataStorageFormat.BONSAI);
   }
 
+  public BesuNode createBonsaiArchiveNodeFixedPort(BesuNodeFactory factory, String name)
+      throws Exception {
+    return creatorFn.create(factory, name, true, DataStorageFormat.X_BONSAI_ARCHIVE);
+  }
+
   public BesuNode createForestNodeFixedPort(BesuNodeFactory factory, String name) throws Exception {
     return creatorFn.create(factory, name, true, DataStorageFormat.FOREST);
   }
