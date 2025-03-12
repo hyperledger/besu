@@ -519,9 +519,9 @@ public class TransactionSimulator {
     } else {
       if (rpcGasCap > 0) {
         LOG.trace(
-            "No user provided gas limit, setting simulation gas cap to the value of rpc-gas-cap {}",
+            "No user provided gas limit, setting simulation gas cap to the value of min(rpc-gas-cap, blockGasLimit) {}",
             rpcGasCap);
-        simulationGasCap = rpcGasCap;
+        simulationGasCap = Math.min(rpcGasCap, blockGasLimit);
       } else {
         simulationGasCap = blockGasLimit;
         LOG.trace(
