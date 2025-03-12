@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.FrequentMessageMulticaster;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
@@ -188,6 +189,11 @@ public class QbftController implements QbftEventHandler {
 
   @Override
   public void handleNewBlockEvent(final QbftNewChainHead newChainHead) {
+    if (finalState.isFastRecoveryEnabled()) {
+      FrequentMessageMulticaster frequentMessageMulticaster =
+          (FrequentMessageMulticaster) finalState.getFrequentRCMulticaster();
+      frequentMessageMulticaster.stopFrequentMulticasting();
+    }
     final QbftBlockHeader newBlockHeader = newChainHead.newChainHeadHeader();
     final QbftBlockHeader currentMiningParent = getCurrentHeightManager().getParentBlockHeader();
     LOG.debug(

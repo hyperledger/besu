@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.core.network;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
@@ -37,10 +36,6 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleExcepti
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +47,6 @@ public class QbftMessageTransmitter {
 
   private final MessageFactory messageFactory;
   private final ValidatorMulticaster multicaster;
-  private final ScheduledExecutorService scheduledExecutorService;
 
   /**
    * Instantiates a new Qbft message transmitter.
@@ -64,7 +58,6 @@ public class QbftMessageTransmitter {
       final MessageFactory messageFactory, final ValidatorMulticaster multicaster) {
     this.messageFactory = messageFactory;
     this.multicaster = multicaster;
-    scheduledExecutorService = Executors.newScheduledThreadPool(1);
   }
 
   /**
@@ -140,38 +133,15 @@ public class QbftMessageTransmitter {
    */
   public void multicastRoundChange(
       final ConsensusRoundIdentifier roundIdentifier,
-      final Optional<PreparedCertificate> preparedRoundCertificate,
-      final RoundTimer roundTimer) {
+      final Optional<PreparedCertificate> preparedRoundCertificate) {
 
     try {
-
-      // Schedule periodic multicasting every 5 seconds
-      final long interval = 5000; // 5 seconds in milliseconds
-
-      final ScheduledFuture<?>[] scheduledTask = new ScheduledFuture<?>[1];
-
-      // Create the RoundChange message data
       final RoundChange data =
           messageFactory.createRoundChange(roundIdentifier, preparedRoundCertificate);
 
       final RoundChangeMessageData message = RoundChangeMessageData.create(data);
 
-      // Define the periodic multicast task
-      final Runnable periodicMulticast =
-          new Runnable() {
-            @Override
-            public void run() {
-              LOG.info("Broadcasting round change every 5 seconds for round {}", roundIdentifier);
-
-              multicaster.send(message);
-            }
-          };
-
-      // Schedule the periodic task
-      scheduledTask[0] =
-          scheduledExecutorService.scheduleAtFixedRate(
-              periodicMulticast, 0, interval, TimeUnit.MILLISECONDS);
-      roundTimer.setRCMulticastTask(scheduledTask[0]);
+      multicaster.send(message);
 
     } catch (final SecurityModuleException e) {
       LOG.warn("Failed to generate signature for RoundChange (not sent): {} ", e.getMessage());

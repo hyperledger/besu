@@ -34,8 +34,6 @@ public class RoundTimer {
   private final BftEventQueue queue;
   private final Duration baseExpiryPeriod;
 
-  private Optional<ScheduledFuture<?>> frequentRCMulticastTask = Optional.empty();
-
   /**
    * Construct a RoundTimer with primed executor service ready to start timers
    *
@@ -55,8 +53,6 @@ public class RoundTimer {
   public synchronized void cancelTimer() {
     currentTimerTask.ifPresent(t -> t.cancel(false));
     currentTimerTask = Optional.empty();
-
-    cancelRCMulticastTask();
   }
 
   /**
@@ -93,16 +89,5 @@ public class RoundTimer {
     }
 
     currentTimerTask = Optional.of(newTimerTask);
-  }
-
-  public synchronized void setRCMulticastTask(final ScheduledFuture<?> rcMulticastTask) {
-    // Cancel any existing multicast task before setting a new one
-    cancelRCMulticastTask();
-    frequentRCMulticastTask = Optional.of(rcMulticastTask);
-  }
-
-  private synchronized void cancelRCMulticastTask() {
-    frequentRCMulticastTask.ifPresent(t -> t.cancel(false));
-    frequentRCMulticastTask = Optional.empty();
   }
 }

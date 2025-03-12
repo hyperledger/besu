@@ -40,6 +40,9 @@ public class QbftFinalStateImpl implements QbftFinalState {
   private final BlockTimer blockTimer;
   private final QbftBlockCreatorFactory blockCreatorFactory;
   private final Clock clock;
+  private final boolean isEarlyRoundChangeEnabled;
+  private final boolean isFastRecoveryEnabled;
+  private final ValidatorMulticaster frequentRCMulticaster;
 
   /**
    * Constructs a new QBFT final state.
@@ -63,7 +66,10 @@ public class QbftFinalStateImpl implements QbftFinalState {
       final RoundTimer roundTimer,
       final BlockTimer blockTimer,
       final QbftBlockCreatorFactory blockCreatorFactory,
-      final Clock clock) {
+      final Clock clock,
+      final boolean isEarlyRoundChangeEnabled,
+      final boolean isFastRecoveryEnabled,
+      final ValidatorMulticaster frequentRCMulticaster) {
     this.validatorProvider = validatorProvider;
     this.nodeKey = nodeKey;
     this.localAddress = localAddress;
@@ -73,6 +79,9 @@ public class QbftFinalStateImpl implements QbftFinalState {
     this.blockTimer = blockTimer;
     this.blockCreatorFactory = blockCreatorFactory;
     this.clock = clock;
+    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
+    this.isFastRecoveryEnabled = isFastRecoveryEnabled;
+    this.frequentRCMulticaster = frequentRCMulticaster;
   }
 
   /**
@@ -93,6 +102,36 @@ public class QbftFinalStateImpl implements QbftFinalState {
   @Override
   public ValidatorMulticaster getValidatorMulticaster() {
     return validatorMulticaster;
+  }
+
+  /**
+   * Gets the frequent round change multicaster.
+   *
+   * @return the frequent round change multicaster
+   */
+  @Override
+  public ValidatorMulticaster getFrequentRCMulticaster() {
+    return frequentRCMulticaster;
+  }
+
+  /**
+   * Is early round change enabled boolean.
+   *
+   * @return the boolean
+   */
+  @Override
+  public boolean isEarlyRoundChangeEnabled() {
+    return isEarlyRoundChangeEnabled;
+  }
+
+  /**
+   * Is fast recovery enabled boolean.
+   *
+   * @return the boolean
+   */
+  @Override
+  public boolean isFastRecoveryEnabled() {
+    return isFastRecoveryEnabled;
   }
 
   /**

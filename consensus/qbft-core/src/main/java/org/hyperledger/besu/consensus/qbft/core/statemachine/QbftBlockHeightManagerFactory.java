@@ -34,7 +34,6 @@ public class QbftBlockHeightManagerFactory {
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
   private final QbftValidatorModeTransitionLogger validatorModeTransitionLogger;
-  private boolean isEarlyRoundChangeEnabled = false;
 
   /**
    * Instantiates a new Qbft block height manager factory.
@@ -76,15 +75,6 @@ public class QbftBlockHeightManagerFactory {
     }
   }
 
-  /**
-   * Sets early round change enabled.
-   *
-   * @param isEarlyRoundChangeEnabled the is early round change enabled
-   */
-  public void isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
-    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
-  }
-
   private BaseQbftBlockHeightManager createNoOpBlockHeightManager(
       final QbftBlockHeader parentHeader) {
     return new NoOpBlockHeightManager(parentHeader);
@@ -96,7 +86,7 @@ public class QbftBlockHeightManagerFactory {
     QbftBlockHeightManager qbftBlockHeightManager;
     RoundChangeManager roundChangeManager;
 
-    if (isEarlyRoundChangeEnabled) {
+    if (finalState.isEarlyRoundChangeEnabled()) {
       roundChangeManager =
           new RoundChangeManager(
               BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
@@ -104,16 +94,6 @@ public class QbftBlockHeightManagerFactory {
               messageValidatorFactory.createRoundChangeMessageValidator(
                   parentHeader.getNumber() + 1L, parentHeader),
               finalState.getLocalAddress());
-      qbftBlockHeightManager =
-          new QbftBlockHeightManager(
-              parentHeader,
-              finalState,
-              roundChangeManager,
-              roundFactory,
-              finalState.getClock(),
-              messageValidatorFactory,
-              messageFactory,
-              true);
     } else {
       roundChangeManager =
           new RoundChangeManager(
@@ -121,16 +101,16 @@ public class QbftBlockHeightManagerFactory {
               messageValidatorFactory.createRoundChangeMessageValidator(
                   parentHeader.getNumber() + 1L, parentHeader),
               finalState.getLocalAddress());
-      qbftBlockHeightManager =
-          new QbftBlockHeightManager(
-              parentHeader,
-              finalState,
-              roundChangeManager,
-              roundFactory,
-              finalState.getClock(),
-              messageValidatorFactory,
-              messageFactory);
     }
+    qbftBlockHeightManager =
+        new QbftBlockHeightManager(
+            parentHeader,
+            finalState,
+            roundChangeManager,
+            roundFactory,
+            finalState.getClock(),
+            messageValidatorFactory,
+            messageFactory);
 
     return qbftBlockHeightManager;
   }
