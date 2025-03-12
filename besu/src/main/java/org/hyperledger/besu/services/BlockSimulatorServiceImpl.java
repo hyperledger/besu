@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.transaction.BlockSimulationParameter;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulationResult;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 import org.hyperledger.besu.ethereum.transaction.BlockStateCall;
@@ -116,10 +117,12 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
     List<CallParameter> callParameters =
         transactions.stream().map(CallParameter::fromTransaction).toList();
     BlockStateCall blockStateCall =
-        new BlockStateCall(callParameters, blockOverrides, stateOverrides, true);
+        new BlockStateCall(callParameters, blockOverrides, stateOverrides);
     try (final MutableWorldState ws = getWorldState(header, persistWorldState)) {
+      BlockSimulationParameter blockSimulationParameter =
+          new BlockSimulationParameter(blockStateCall, true);
       List<BlockSimulationResult> results =
-          blockSimulator.process(header, List.of(blockStateCall), ws);
+          blockSimulator.process(header, blockSimulationParameter, ws);
       BlockSimulationResult result = results.getFirst();
       if (persistWorldState) {
         ws.persist(result.getBlock().getHeader());

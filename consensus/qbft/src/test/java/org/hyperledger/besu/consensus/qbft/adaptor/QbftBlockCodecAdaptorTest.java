@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -32,14 +31,12 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.api.Test;
 
 class QbftBlockCodecAdaptorTest {
 
-  @ParameterizedTest
-  @EnumSource(QbftHashMode.class)
-  void canRoundTripBlock(final QbftHashMode hashMode) {
+  @Test
+  void canRoundTripBlock() {
     BftExtraData bftExtraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, emptyList());
     Bytes encodedExtraData = new QbftExtraDataCodec().encode(bftExtraData);
@@ -52,7 +49,7 @@ class QbftBlockCodecAdaptorTest {
     qbftBlockCodec.writeTo(block, rlpOutput);
 
     RLPInput rlpInput = new BytesValueRLPInput(rlpOutput.encoded(), false);
-    QbftBlock decodedBlock = qbftBlockCodec.readFrom(rlpInput, hashMode);
+    QbftBlock decodedBlock = qbftBlockCodec.readFrom(rlpInput);
     assertThat(decodedBlock).isEqualTo(block);
   }
 }
