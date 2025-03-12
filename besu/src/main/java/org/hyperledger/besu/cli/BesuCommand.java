@@ -1452,25 +1452,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateTransactionPoolOptions();
     validateDataStorageOptions();
     validateGraphQlOptions();
-    validateConsensusSyncCompatibilityOptions();
     validatePluginOptions();
-  }
-
-  private void validateConsensusSyncCompatibilityOptions() {
-    // snap and checkpoint are experimental for BFT
-    if ((genesisConfigOptionsSupplier.get().isIbftLegacy()
-            || genesisConfigOptionsSupplier.get().isIbft2()
-            || genesisConfigOptionsSupplier.get().isQbft())
-        && !unstableSynchronizerOptions.isSnapSyncBftEnabled()) {
-      final String errorSuffix = "can't be used with BFT networks";
-      if (SyncMode.CHECKPOINT.equals(syncMode)) {
-        throw new ParameterException(
-            commandLine, String.format("%s %s", "Checkpoint sync", errorSuffix));
-      }
-      if (syncMode == SyncMode.SNAP) {
-        throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
-      }
-    }
   }
 
   private void validatePluginOptions() {
@@ -2762,7 +2744,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());
-    builder.setSnapSyncBftEnabled(this.unstableSynchronizerOptions.isSnapSyncBftEnabled());
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
     builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
