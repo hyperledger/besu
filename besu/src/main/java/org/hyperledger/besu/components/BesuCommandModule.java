@@ -17,6 +17,7 @@ package org.hyperledger.besu.components;
 import org.hyperledger.besu.Besu;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
+import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
@@ -50,6 +51,7 @@ public class BesuCommandModule {
         new BesuCommand(
             RlpBlockImporter::new,
             JsonBlockImporter::new,
+            Era1BlockImporter::new,
             RlpBlockExporter::new,
             new RunnerBuilder(),
             new BesuController.Builder(),
