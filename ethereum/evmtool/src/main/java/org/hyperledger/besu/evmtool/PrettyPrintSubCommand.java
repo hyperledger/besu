@@ -107,7 +107,8 @@ public class PrettyPrintSubCommand implements Runnable {
           || container.get(0) != ((byte) 0xef)
           || container.get(1) != 0) {
         Code code = evm.getCodeUncached(container);
-        parentCommand.out.println(code.prettyPrint());
+        parentCommand.out.print(code.prettyPrint());
+        parentCommand.out.flush();
       } else {
         EOFLayout layout = evm.parseEOF(container);
         if (layout.isValid()) {

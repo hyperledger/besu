@@ -375,7 +375,11 @@ public class CodeV0 implements Code {
         decimalPush = "(" + slice.toLong() + ")";
       }
     }
-    out.printf("%02x%s # [ %d ] %s%s%n", codeByte, push, offset, info.name(), decimalPush);
+    String name = info.name();
+    if (codeByte == 0x5b) {
+      name = "JUMPDEST";
+    }
+    out.printf("%02x%s # [ %d ] %s%s%n", codeByte, push, offset, name, decimalPush);
     return Math.max(1, info.pcAdvance());
   }
 }
