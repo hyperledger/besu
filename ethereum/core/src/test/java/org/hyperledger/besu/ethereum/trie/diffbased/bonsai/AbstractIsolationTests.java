@@ -218,6 +218,16 @@ public abstract class AbstractIsolationTests {
               }
 
               @Override
+              public String getConfiguredRpcHttpHost() {
+                return "";
+              }
+
+              @Override
+              public Integer getConfiguredRpcHttpPort() {
+                return 0;
+              }
+
+              @Override
               public Path getStoragePath() {
                 return tempData.resolve("database");
               }
