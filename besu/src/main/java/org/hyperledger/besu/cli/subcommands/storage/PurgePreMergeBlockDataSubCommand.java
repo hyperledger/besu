@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.subcommands.storage;
 
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -59,16 +60,11 @@ public class PurgePreMergeBlockDataSubCommand implements Runnable {
       }
 
       DefaultBlockchain blockchain = (DefaultBlockchain) mutableBlockchain;
-      BlockchainStorage blockchainStorage = blockchain.getBlockchainStorage();
-      BlockchainStorage.Updater updater = blockchainStorage.updater();
+      BlockchainStorage.Updater updater = blockchain.getBlockchainStorage().updater();
 
       long headerNumber = 0;
       do {
         Optional<BlockHeader> maybeHeader = blockchain.getBlockHeader(headerNumber);
-        if (maybeHeader.isEmpty()) {
-          LOG.info("Removed all block data before block header {} was missing", headerNumber);
-          break;
-        }
         maybeHeader
             .map(BlockHeader::getBlockHash)
             .ifPresent(
@@ -76,6 +72,14 @@ public class PurgePreMergeBlockDataSubCommand implements Runnable {
                   updater.removeBlockBody(h);
                   updater.removeTransactionReceipts(h);
                   updater.removeTotalDifficulty(h);
+                  blockchain
+                      .getBlockBody(h)
+                      .map((bb) -> bb.getTransactions())
+                      .ifPresent(
+                          (transactions) ->
+                              transactions.stream()
+                                  .map(Transaction::getHash)
+                                  .forEach((th) -> updater.removeTransactionLocation(th)));
                 });
         if (headerNumber % 10000 == 0) {
           LOG.info("{} block's data removed", headerNumber);
