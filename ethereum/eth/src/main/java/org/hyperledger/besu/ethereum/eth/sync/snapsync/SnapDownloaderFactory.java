@@ -93,7 +93,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
         .rootHash()
         .equals(Hash.EMPTY_TRIE_HASH)) {
       LOG.info(
-          "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
+          "Snap sync was requested, but cannot be enabled because the world state root hash exists.");
       return Optional.empty();
     }
 
