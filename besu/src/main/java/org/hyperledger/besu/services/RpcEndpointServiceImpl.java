@@ -77,7 +77,7 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
         inProcessRpcMethods,
         "Service not initialized yet, this method must be called after plugin 'beforeExternalServices' call completes");
 
-    LOG.atTrace()
+    LOG.atInfo()
         .setMessage("Calling method:{} with params:{}")
         .addArgument(methodName)
         .addArgument(() -> Arrays.toString(params))

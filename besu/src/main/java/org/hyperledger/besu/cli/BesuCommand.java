@@ -343,6 +343,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       Suppliers.memoize(this::getApiConfiguration);
 
   private RocksDBPlugin rocksDBPlugin;
+  private org.hyperledger.besu.plugin.services.consensus.PoAPlugin poaPlugin;
 
   private int maxPeers;
   private int maxRemoteInitiatedPeers;
@@ -1201,6 +1202,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     rocksDBPlugin.register(besuPluginContext);
     new InMemoryStoragePlugin().register(besuPluginContext);
 
+    poaPlugin = new org.hyperledger.besu.plugin.services.consensus.PoAPlugin();
+    poaPlugin.register(besuPluginContext);
+
     // register default security module
     securityModuleService.register(
         DEFAULT_SECURITY_MODULE, Suppliers.memoize(this::defaultSecurityModule));
@@ -1309,6 +1313,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
+
+    poaPlugin.start();
   }
 
   private void validatePrivacyPluginOptions() {
