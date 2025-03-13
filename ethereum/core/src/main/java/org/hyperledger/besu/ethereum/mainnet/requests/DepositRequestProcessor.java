@@ -65,4 +65,9 @@ public class DepositRequestProcessor implements RequestProcessor {
         && !log.getTopics().isEmpty()
         && log.getTopics().getFirst().equals(DEPOSIT_EVENT_TOPIC);
   }
+
+  @Override
+  public Optional<Address> getContractAddress() {
+    return depositContractAddress;
+  }
 }

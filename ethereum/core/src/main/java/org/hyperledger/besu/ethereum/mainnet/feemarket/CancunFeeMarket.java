@@ -80,7 +80,8 @@ public class CancunFeeMarket extends LondonFeeMarket {
     return output.divide(denominator);
   }
 
-  protected BigInteger getBaseFeeUpdateFraction() {
+  @Override
+  public BigInteger getBaseFeeUpdateFraction() {
     return baseFeeUpdateFraction;
   }
 }
