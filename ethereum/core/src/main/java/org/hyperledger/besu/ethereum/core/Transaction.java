@@ -728,6 +728,59 @@ public class Transaction
       checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
     }
     final Bytes preimage =
+        getPreimage(
+            transactionType,
+            nonce,
+            gasPrice,
+            maxPriorityFeePerGas,
+            maxFeePerGas,
+            maxFeePerBlobGas,
+            gasLimit,
+            to,
+            value,
+            payload,
+            accessList,
+            versionedHashes,
+            codeDelegationList,
+            chainId);
+    return keccak256(preimage);
+  }
+
+  @Override
+  public Bytes encodedPreimage() {
+    return getPreimage(
+        transactionType,
+        nonce,
+        gasPrice.orElse(null),
+        maxPriorityFeePerGas.orElse(null),
+        maxFeePerGas.orElse(null),
+        maxFeePerBlobGas.orElse(null),
+        gasLimit,
+        to,
+        value,
+        payload,
+        maybeAccessList,
+        versionedHashes.orElse(null),
+        maybeCodeDelegationList,
+        chainId);
+  }
+
+  private static Bytes getPreimage(
+      final TransactionType transactionType,
+      final long nonce,
+      final Wei gasPrice,
+      final Wei maxPriorityFeePerGas,
+      final Wei maxFeePerGas,
+      final Wei maxFeePerBlobGas,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final Optional<List<AccessListEntry>> accessList,
+      final List<VersionedHash> versionedHashes,
+      final Optional<List<CodeDelegation>> codeDelegationList,
+      final Optional<BigInteger> chainId) {
+    final Bytes preimage =
         switch (transactionType) {
           case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
           case EIP1559 ->
@@ -783,7 +836,7 @@ public class Transaction
                           new IllegalStateException(
                               "Developer error: the transaction should be guaranteed to have a code delegations here")));
         };
-    return keccak256(preimage);
+    return preimage;
   }
 
   private static Bytes frontierPreimage(
