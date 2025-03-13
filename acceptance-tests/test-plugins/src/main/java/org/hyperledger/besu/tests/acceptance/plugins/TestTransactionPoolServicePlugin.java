@@ -45,14 +45,14 @@ public class TestTransactionPoolServicePlugin implements BesuPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(TestTransactionPoolServicePlugin.class);
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  private static final SECPPrivateKey PRIVATE_KEY1 =
+  private static final SECPPrivateKey PRIVATE_KEY =
       SIGNATURE_ALGORITHM
           .get()
           .createPrivateKey(
               Bytes32.fromHexString(
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
-  private static final KeyPair KEYS1 =
-      new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
+  private static final KeyPair KEYS =
+      new KeyPair(PRIVATE_KEY, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY));
 
   private ServiceManager serviceManager;
   private File callbackDir;
@@ -61,7 +61,7 @@ public class TestTransactionPoolServicePlugin implements BesuPlugin {
   public void register(final ServiceManager serviceManager) {
     LOG.info("Registering TestTransactionPoolServicePlugin");
     this.serviceManager = serviceManager;
-    callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
+    this.callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
   }
 
   @Override
@@ -98,7 +98,7 @@ public class TestTransactionPoolServicePlugin implements BesuPlugin {
             .value(Wei.ONE)
             .payload(Bytes.EMPTY)
             .type(TransactionType.EIP1559)
-            .signAndBuild(KEYS1);
+            .signAndBuild(KEYS);
 
     final var result = txPoolService.validateTransaction(txValid, false, false);
 
