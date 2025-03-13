@@ -5,7 +5,7 @@
 ### Breaking Changes
 - k8s (KUBERNETES) Nat method is removed. Use docker or none instead. [#8289](https://github.com/hyperledger/besu/pull/8289)
 - Change `Invalid block, unable to parse RLP` RPC error message to `Invalid block param (block not found)` [#8328](https://github.com/hyperledger/besu/pull/8328)
-- BlockParameter now enforces hex 0x prefix for numerical values
+- BlockParameter now enforces hex 0x prefix for numerical values [#8225](https://github.com/hyperledger/besu/pull/8225)
 
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
