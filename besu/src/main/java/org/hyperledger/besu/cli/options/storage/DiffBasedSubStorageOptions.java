@@ -14,23 +14,19 @@
  */
 package org.hyperledger.besu.cli.options.storage;
 
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_LIMIT_TRIE_LOGS_ENABLED;
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DiffBasedUnstable.DEFAULT_CODE_USING_CODE_HASH_ENABLED;
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DiffBasedUnstable.DEFAULT_FULL_FLAT_DB_ENABLED;
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.MINIMUM_TRIE_LOG_RETENTION_LIMIT;
-
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
 import java.util.List;
 
-import picocli.CommandLine;
-import picocli.CommandLine.Option;
+import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.*;
+import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DiffBasedUnstable.DEFAULT_CODE_USING_CODE_HASH_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DiffBasedUnstable.DEFAULT_FULL_FLAT_DB_ENABLED;
 
 /** The Data storage CLI options. */
 public class DiffBasedSubStorageOptions implements CLIOptions<DiffBasedSubStorageConfiguration> {
@@ -93,8 +89,7 @@ public class DiffBasedSubStorageOptions implements CLIOptions<DiffBasedSubStorag
     @Option(
         hidden = true,
         names = {
-          "--Xbonsai-full-flat-db-enabled",
-          "--Xsnapsync-synchronizer-flat-db-healing-enabled"
+          "--Xbonsai-full-flat-db-enabled"
         },
         arity = "1",
         description = "Enables bonsai full flat database strategy. (default: ${DEFAULT-VALUE})")
