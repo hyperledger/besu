@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 public interface FeeMarket {
@@ -82,5 +83,9 @@ public interface FeeMarket {
 
   default Wei blobGasPricePerGas(final BlobGas excessBlobGas) {
     return Wei.ZERO;
+  }
+
+  default BigInteger getBaseFeeUpdateFraction() {
+    return BigInteger.ZERO;
   }
 }
