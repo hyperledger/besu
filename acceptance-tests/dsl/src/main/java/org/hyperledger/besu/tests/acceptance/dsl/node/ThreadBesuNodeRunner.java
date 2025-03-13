@@ -224,6 +224,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
 
     component.rpcEndpointService().init(runner.getInProcessRpcMethods());
+    component.transactionPoolValidatorService().init(besuController.getTransactionPool());
 
     besuPluginContext.startPlugins();
 
@@ -678,5 +679,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     ObservableMetricsSystem getObservableMetricsSystem();
 
     ThreadBesuNodeRunner getThreadBesuNodeRunner();
+
+    TransactionPoolValidatorServiceImpl transactionPoolValidatorService();
   }
 }

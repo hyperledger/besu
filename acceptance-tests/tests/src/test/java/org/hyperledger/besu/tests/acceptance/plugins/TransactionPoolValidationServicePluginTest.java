@@ -25,7 +25,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class TransactionPoolServicePluginTest extends AcceptanceTestBase {
+public class TransactionPoolValidationServicePluginTest extends AcceptanceTestBase {
   private BesuNode node;
 
   @BeforeEach
@@ -43,7 +43,7 @@ public class TransactionPoolServicePluginTest extends AcceptanceTestBase {
   @Test
   public void testValidationResults() {
     final var resultsFilePath =
-        node.homeDirectory().resolve("plugins/transactionPoolServicePluginTest.test");
+        node.homeDirectory().resolve("plugins/transactionPoolValidationServicePluginTest.test");
     waitForFile(resultsFilePath);
     assertThat(resultsFilePath)
         .content()

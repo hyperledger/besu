@@ -24,7 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
-import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
+import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -41,8 +41,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @AutoService(BesuPlugin.class)
-public class TestTransactionPoolServicePlugin implements BesuPlugin {
-  private static final Logger LOG = LoggerFactory.getLogger(TestTransactionPoolServicePlugin.class);
+public class TestTransactionPoolValidationServicePlugin implements BesuPlugin {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(TestTransactionPoolValidationServicePlugin.class);
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final SECPPrivateKey PRIVATE_KEY =
@@ -59,25 +60,24 @@ public class TestTransactionPoolServicePlugin implements BesuPlugin {
 
   @Override
   public void register(final ServiceManager serviceManager) {
-    LOG.info("Registering TestTransactionPoolServicePlugin");
+    LOG.info("Registering TestTransactionPoolValidationServicePlugin");
     this.serviceManager = serviceManager;
     this.callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
   }
 
   @Override
   public void start() {
-    LOG.info("Starting TestTransactionPoolServicePlugin");
+    LOG.info("Starting TestTransactionPoolValidationServicePlugin");
 
-    final var txPoolService = serviceManager.getService(TransactionPoolService.class).orElseThrow();
-
+    final var txPoolValidationService =
+        serviceManager.getService(TransactionPoolValidatorService.class).orElseThrow();
     try (var bw =
         Files.newBufferedWriter(
-            callbackDir.toPath().resolve("transactionPoolServicePluginTest.test"))) {
-
+            callbackDir.toPath().resolve("transactionPoolValidationServicePluginTest.test"))) {
       // valid tx
-      validateTransaction(txPoolService, bw, Wei.of(100_000));
+      validateTransaction(txPoolValidationService, bw, Wei.of(100_000));
       // invalid tx, below min gas price
-      validateTransaction(txPoolService, bw, Wei.of(100));
+      validateTransaction(txPoolValidationService, bw, Wei.of(100));
 
     } catch (final IOException ioe) {
       throw new RuntimeException(ioe);
@@ -85,7 +85,9 @@ public class TestTransactionPoolServicePlugin implements BesuPlugin {
   }
 
   private static void validateTransaction(
-      final TransactionPoolService txPoolService, final BufferedWriter bw, final Wei maxFeePerGas)
+      final TransactionPoolValidatorService txPoolValidationService,
+      final BufferedWriter bw,
+      final Wei maxFeePerGas)
       throws IOException {
     final var txValid =
         Transaction.builder()
@@ -99,15 +101,13 @@ public class TestTransactionPoolServicePlugin implements BesuPlugin {
             .payload(Bytes.EMPTY)
             .type(TransactionType.EIP1559)
             .signAndBuild(KEYS);
-
-    final var result = txPoolService.validateTransaction(txValid, false, false);
-
+    final var result = txPoolValidationService.validateTransaction(txValid, false, false);
     bw.write(result.isValid() ? "valid" : result.getErrorMessage());
     bw.newLine();
   }
 
   @Override
   public void stop() {
-    LOG.info("Stopping TestTransactionPoolServicePlugin");
+    LOG.info("Stopping TestTransactionPoolValidationServicePlugin");
   }
 }

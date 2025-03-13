@@ -15,9 +15,7 @@
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.datatypes.PendingTransaction;
-import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.plugin.data.ValidationResult;
 import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 
 import java.util.Collection;
@@ -49,18 +47,5 @@ public class TransactionPoolServiceImpl implements TransactionPoolService {
   @Override
   public Collection<? extends PendingTransaction> getPendingTransactions() {
     return transactionPool.getPendingTransactions();
-  }
-
-  @Override
-  public ValidationResult validateTransaction(
-      final Transaction transaction, final boolean isLocal, final boolean hasPriority) {
-    final var tx =
-        transaction instanceof org.hyperledger.besu.ethereum.core.Transaction coreTx
-            ? coreTx
-            : new org.hyperledger.besu.ethereum.core.Transaction.Builder()
-                .copiedFrom(transaction)
-                .build();
-
-    return transactionPool.validateTransaction(tx, isLocal, hasPriority);
   }
 }

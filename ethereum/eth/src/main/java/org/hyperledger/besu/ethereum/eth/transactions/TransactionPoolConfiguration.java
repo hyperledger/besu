@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.plugin.data.ValidationResult;
 import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidator;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidatorFactory;
@@ -190,6 +192,22 @@ public interface TransactionPoolConfiguration {
       @Override
       public void registerPluginTransactionValidatorFactory(
           final PluginTransactionPoolValidatorFactory pluginTransactionPoolValidatorFactory) {}
+
+      @Override
+      public ValidationResult validateTransaction(
+          final Transaction transaction, final boolean isLocal, final boolean hasPriority) {
+        return new ValidationResult() {
+          @Override
+          public boolean isValid() {
+            return false;
+          }
+
+          @Override
+          public String getErrorMessage() {
+            return "Not configured";
+          }
+        };
+      }
     };
   }
 

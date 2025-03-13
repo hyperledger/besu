@@ -15,8 +15,6 @@
 package org.hyperledger.besu.plugin.services.transactionpool;
 
 import org.hyperledger.besu.datatypes.PendingTransaction;
-import org.hyperledger.besu.datatypes.Transaction;
-import org.hyperledger.besu.plugin.data.ValidationResult;
 import org.hyperledger.besu.plugin.services.BesuService;
 
 import java.util.Collection;
@@ -35,15 +33,4 @@ public interface TransactionPoolService extends BesuService {
    * @return a collection of pending transactions
    */
   Collection<? extends PendingTransaction> getPendingTransactions();
-
-  /**
-   * Validate a transaction for txpool addition
-   *
-   * @param transaction the transaction
-   * @param isLocal if the transaction is from a local source
-   * @param hasPriority if the transaction has priority
-   * @return the result of the validation
-   */
-  ValidationResult validateTransaction(
-      Transaction transaction, boolean isLocal, boolean hasPriority);
 }

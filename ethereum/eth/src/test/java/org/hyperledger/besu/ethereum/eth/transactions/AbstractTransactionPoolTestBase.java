@@ -294,6 +294,14 @@ public abstract class AbstractTransactionPoolTestBase {
       @Override
       public void registerPluginTransactionValidatorFactory(
           final PluginTransactionPoolValidatorFactory pluginTransactionPoolValidatorFactory) {}
+
+      @Override
+      public org.hyperledger.besu.plugin.data.ValidationResult validateTransaction(
+          final org.hyperledger.besu.datatypes.Transaction transaction,
+          final boolean isLocal,
+          final boolean hasPriority) {
+        return ValidationResult.valid();
+      }
     };
   }
 
