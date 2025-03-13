@@ -23,15 +23,15 @@ import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 plugins {
-  id 'com.diffplug.spotless' version '6.25.0'
+  id 'com.diffplug.spotless' version '7.0.2'
   id 'com.github.jk1.dependency-license-report' version '2.9'
   id 'com.jfrog.artifactory' version '5.2.5'
   id 'me.champeau.jmh' version '0.7.2' apply false
-  id 'net.ltgt.errorprone' version '4.0.1'
+  id 'net.ltgt.errorprone' version '4.1.0'
   id 'maven-publish'
   id 'jacoco'
   id 'jacoco-report-aggregation'
-  id 'org.sonarqube' version '5.1.0.4882'
+  id 'org.sonarqube' version '6.0.1.5171'
 }
 
 sonarqube {
@@ -145,8 +145,11 @@ configure(allprojects - project(':platform')) {
   tasks.build {
     dependsOn 'javadoc'
   }
-  sourceCompatibility = 21
-  targetCompatibility = 21
+
+  java {
+    sourceCompatibility = 21
+    targetCompatibility = 21
+  }
 
   repositories {
     maven {
@@ -210,7 +213,7 @@ configure(allprojects - project(':platform')) {
       target 'src/**/*.java'
       targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
       removeUnusedImports()
-      googleJavaFormat('1.22.0')
+      googleJavaFormat('1.25.2')
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
@@ -643,32 +646,34 @@ subprojects {
 jar { enabled = false }
 
 apply plugin: 'application'
-mainClassName = 'org.hyperledger.besu.Besu'
-applicationDefaultJvmArgs = [
-  '-Dvertx.disableFileCPResolving=true',
-  // BESU_HOME is replaced by a doFirst block in the run task.
-  '-Dbesu.home=BESU_HOME',
-  // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
-  // happens during shutdown is not logged.
-  '-Dlog4j.shutdownHookEnabled=false',
-  // Disable JNI lookups in log4j messages to improve security
-  '-Dlog4j2.formatMsgNoLookups=true',
-  // Redirect java.util.logging loggers to use log4j2.
-  '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager',
-  // Suppress Java JPMS warnings.  Document the reason for each suppression.
-  // Bouncy Castle needs access to sun.security.provider, which is not open by default.
-  '--add-opens',
-  'java.base/sun.security.provider=ALL-UNNAMED',
-  // Jackson likes to access java.util.OptionalLong's constructor
-  '--add-opens',
-  'java.base/java.util=ALL-UNNAMED',
-  // suppress netty specific module warnings in debug
-  "-Dio.netty.tryReflectionSetAccessible=true",
-  "--add-exports",
-  "java.base/jdk.internal.misc=ALL-UNNAMED",
-  "--add-opens",
-  "java.base/java.nio=ALL-UNNAMED"
-]
+application {
+  mainClass = 'org.hyperledger.besu.Besu'
+  applicationDefaultJvmArgs = [
+    '-Dvertx.disableFileCPResolving=true',
+    // BESU_HOME is replaced by a doFirst block in the run task.
+    '-Dbesu.home=BESU_HOME',
+    // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
+    // happens during shutdown is not logged.
+    '-Dlog4j.shutdownHookEnabled=false',
+    // Disable JNI lookups in log4j messages to improve security
+    '-Dlog4j2.formatMsgNoLookups=true',
+    // Redirect java.util.logging loggers to use log4j2.
+    '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager',
+    // Suppress Java JPMS warnings.  Document the reason for each suppression.
+    // Bouncy Castle needs access to sun.security.provider, which is not open by default.
+    '--add-opens',
+    'java.base/sun.security.provider=ALL-UNNAMED',
+    // Jackson likes to access java.util.OptionalLong's constructor
+    '--add-opens',
+    'java.base/java.util=ALL-UNNAMED',
+    // suppress netty specific module warnings in debug
+    "-Dio.netty.tryReflectionSetAccessible=true",
+    "--add-exports",
+    "java.base/jdk.internal.misc=ALL-UNNAMED",
+    "--add-opens",
+    "java.base/java.nio=ALL-UNNAMED"
+  ]
+}
 
 run {
   args project.hasProperty("besu.run.args") ? project.property("besu.run.args").toString().split("\\s+") : []
@@ -696,7 +701,7 @@ def tweakStartScript(createScriptTask) {
 }
 
 startScripts {
-  defaultJvmOpts = applicationDefaultJvmArgs + [
+  defaultJvmOpts = application.applicationDefaultJvmArgs + [
     "-XX:G1ConcRefinementThreads=2",
     "-XX:G1HeapWastePercent=15",
     "-XX:MaxGCPauseMillis=100",
@@ -713,7 +718,6 @@ task untunedStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'besu-untuned'
-  defaultJvmOpts = applicationDefaultJvmArgs
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(untunedStartScripts) }

@@ -28,7 +28,9 @@ import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningCon
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -43,7 +45,8 @@ public class AccountPermissioningControllerFactory {
   public static Optional<AccountPermissioningController> create(
       final PermissioningConfiguration permissioningConfiguration,
       final TransactionSimulator transactionSimulator,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final List<TransactionPermissioningProvider> pluginProviders) {
 
     if (permissioningConfiguration == null) {
       return Optional.empty();
@@ -59,12 +62,14 @@ public class AccountPermissioningControllerFactory {
                 permissioningConfiguration, transactionSimulator, metricsSystem);
 
     if (accountLocalConfigPermissioningController.isPresent()
-        || transactionSmartContractPermissioningController.isPresent()) {
+        || transactionSmartContractPermissioningController.isPresent()
+        || pluginProviders.size() > 0) {
 
       final AccountPermissioningController controller =
           new AccountPermissioningController(
               accountLocalConfigPermissioningController,
-              transactionSmartContractPermissioningController);
+              transactionSmartContractPermissioningController,
+              pluginProviders);
 
       return Optional.of(controller);
     } else {

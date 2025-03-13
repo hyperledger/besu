@@ -1,6 +1,7 @@
 name: acceptance-tests
 on:
   workflow_dispatch:
+  merge_group:
   pull_request:
     branches:
       - main
@@ -12,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GRADLE_OPTS: "-Xmx7g"
+  GRADLE_OPTS: "-Xmx1g"
   total-runners: 14
 
 jobs:
@@ -78,7 +79,7 @@ jobs:
           name: test-args-${{ matrix.runner_index }}.txt
           path: '*.txt'
       - name: run acceptance tests
-        run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.caching=true
       - name: Remove downloaded test results
         run: rm -rf tmp/junit-xml-reports-downloaded
       - name: Upload Acceptance Test Results

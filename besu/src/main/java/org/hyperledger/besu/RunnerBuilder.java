@@ -118,8 +118,6 @@ import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.docker.DockerDetector;
 import org.hyperledger.besu.nat.docker.DockerNatManager;
-import org.hyperledger.besu.nat.kubernetes.KubernetesDetector;
-import org.hyperledger.besu.nat.kubernetes.KubernetesNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -170,7 +168,6 @@ public class RunnerBuilder {
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
   private NatMethod natMethod = NatMethod.AUTO;
-  private String natManagerServiceName;
   private boolean natMethodFallbackEnabled;
   private EthNetworkConfig ethNetworkConfig;
   private EthstatsOptions ethstatsOptions;
@@ -310,17 +307,6 @@ public class RunnerBuilder {
    */
   public RunnerBuilder natMethod(final NatMethod natMethod) {
     this.natMethod = natMethod;
-    return this;
-  }
-
-  /**
-   * Add Nat manager service name.
-   *
-   * @param natManagerServiceName the nat manager service name
-   * @return the runner builder
-   */
-  public RunnerBuilder natManagerServiceName(final String natManagerServiceName) {
-    this.natManagerServiceName = natManagerServiceName;
     return this;
   }
 
@@ -1191,10 +1177,17 @@ public class RunnerBuilder {
       final BesuController besuController,
       final TransactionSimulator transactionSimulator) {
 
-    if (permissioningConfiguration.isPresent()) {
+    if (permissioningConfiguration.isPresent()
+        || permissioningService.getTransactionPermissioningProviders().size() > 0) {
+      final PermissioningConfiguration configuration =
+          permissioningConfiguration.orElse(
+              new PermissioningConfiguration(Optional.empty(), Optional.empty()));
       final Optional<AccountPermissioningController> accountPermissioningController =
           AccountPermissioningControllerFactory.create(
-              permissioningConfiguration.get(), transactionSimulator, metricsSystem);
+              configuration,
+              transactionSimulator,
+              metricsSystem,
+              permissioningService.getTransactionPermissioningProviders());
 
       accountPermissioningController.ifPresent(
           permissioningController ->
@@ -1213,15 +1206,13 @@ public class RunnerBuilder {
     final NatMethod detectedNatMethod =
         Optional.of(natMethod)
             .filter(not(isEqual(NatMethod.AUTO)))
-            .orElse(NatService.autoDetectNatMethod(new KubernetesDetector(), new DockerDetector()));
+            .orElse(NatService.autoDetectNatMethod(new DockerDetector()));
     switch (detectedNatMethod) {
       case UPNP:
         return Optional.of(new UpnpNatManager());
       case DOCKER:
         return Optional.of(
             new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
-      case KUBERNETES:
-        return Optional.of(new KubernetesNatManager(natManagerServiceName));
       case NONE:
       default:
         return Optional.empty();

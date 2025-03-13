@@ -218,6 +218,16 @@ public abstract class AbstractIsolationTests {
               }
 
               @Override
+              public String getConfiguredRpcHttpHost() {
+                return "";
+              }
+
+              @Override
+              public Integer getConfiguredRpcHttpPort() {
+                return 0;
+              }
+
+              @Override
               public Path getStoragePath() {
                 return tempData.resolve("database");
               }
@@ -343,7 +353,7 @@ public abstract class AbstractIsolationTests {
         protocolSchedule
             .getByBlockHeader(blockHeader(0))
             .getBlockProcessor()
-            .processBlock(blockchain, ws, block);
+            .processBlock(protocolContext, blockchain, ws, block);
     blockchain.appendBlock(block, res.getReceipts());
     return res;
   }

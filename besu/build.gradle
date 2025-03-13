@@ -37,6 +37,7 @@ dependencies {
   implementation project(':consensus:clique')
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
+  implementation project(':consensus:ibftlegacy')
   implementation project(':consensus:merge')
   implementation project(':consensus:qbft')
   implementation project(':consensus:qbft-core')
@@ -81,7 +82,7 @@ dependencies {
   implementation 'org.rocksdb:rocksdbjni'
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
-  implementation 'tech.pegasys:jc-kzg-4844'
+  implementation 'io.consensys.protocols:jc-kzg-4844'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-jul'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'

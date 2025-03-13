@@ -33,11 +33,13 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.io.File;
@@ -95,6 +97,8 @@ public class BesuNodeConfigurationBuilder {
   private Optional<KeyPair> keyPair = Optional.empty();
   private Boolean strictTxReplayProtectionEnabled = false;
   private Map<String, String> environment = new HashMap<>();
+  private SynchronizerConfiguration synchronizerConfiguration;
+  private Optional<KeyValueStorageFactory> storageImplementation = Optional.empty();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -459,7 +463,23 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder storageImplementation(
+      final KeyValueStorageFactory storageFactory) {
+    this.storageImplementation = Optional.of(storageFactory);
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder synchronizerConfiguration(
+      final SynchronizerConfiguration config) {
+    this.synchronizerConfiguration = config;
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
+    if (name == null) {
+      throw new IllegalStateException("Name is required");
+    }
+
     return new BesuNodeConfiguration(
         name,
         dataPath,
@@ -495,6 +515,8 @@ public class BesuNodeConfigurationBuilder {
         runCommand,
         keyPair,
         strictTxReplayProtectionEnabled,
-        environment);
+        environment,
+        synchronizerConfiguration,
+        storageImplementation);
   }
 }

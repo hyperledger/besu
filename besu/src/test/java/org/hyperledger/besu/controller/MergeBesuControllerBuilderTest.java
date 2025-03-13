@@ -176,7 +176,6 @@ public class MergeBesuControllerBuilderTest {
   MergeBesuControllerBuilder visitWithMockConfigs(final MergeBesuControllerBuilder builder) {
     return (MergeBesuControllerBuilder)
         builder
-            .gasLimitCalculator(gasLimitCalculator)
             .genesisConfig(genesisConfig)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)

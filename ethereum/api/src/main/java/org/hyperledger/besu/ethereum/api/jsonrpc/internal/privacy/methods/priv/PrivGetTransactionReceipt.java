@@ -182,7 +182,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
           LOG.warn(
               "Unable to decrypt payload with configured privacy node key. Check if your 'privacy-public-key-file' property matches your Enclave public key.");
         }
-        // fall through
+      // fall through
       default:
         throw e;
     }

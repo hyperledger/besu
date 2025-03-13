@@ -60,7 +60,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       loadLib();
       final String trustedSetupResourceName = trustedSetupFile.toAbsolutePath().toString();
       LOG.info("Loading trusted setup from user-specified resource {}", trustedSetupResourceName);
-      CKZG4844JNI.loadTrustedSetup(trustedSetupResourceName);
+      CKZG4844JNI.loadTrustedSetup(trustedSetupResourceName, 0);
     } else {
       throw new IllegalStateException("KZG trusted setup was already loaded");
     }
@@ -78,7 +78,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       LOG.info(
           "Loading network trusted setup from classpath resource {}", trustedSetupResourceName);
       CKZG4844JNI.loadTrustedSetupFromResource(
-          trustedSetupResourceName, KZGPointEvalPrecompiledContract.class);
+          trustedSetupResourceName, KZGPointEvalPrecompiledContract.class, 0);
     }
   }
 

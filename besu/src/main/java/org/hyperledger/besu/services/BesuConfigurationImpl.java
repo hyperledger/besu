@@ -16,6 +16,7 @@ package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.cli.options.JsonRpcHttpOptions;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -32,8 +33,8 @@ public class BesuConfigurationImpl implements BesuConfiguration {
 
   // defaults
   private MiningConfiguration miningConfiguration;
-  private Optional<String> rpcHttpHost = Optional.of("http://localhost");
-  private Optional<Integer> rpcHttpPort = Optional.of(8545);
+  private String rpcHttpHost = JsonRpcConfiguration.DEFAULT_JSON_RPC_HOST;
+  private Integer rpcHttpPort = JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 
   /** Default Constructor. */
   public BesuConfigurationImpl() {}
@@ -74,18 +75,30 @@ public class BesuConfigurationImpl implements BesuConfiguration {
    * @return BesuConfigurationImpl instance
    */
   public BesuConfigurationImpl withJsonRpcHttpOptions(final JsonRpcHttpOptions rpcHttpOptions) {
-    this.rpcHttpHost = Optional.ofNullable(rpcHttpOptions.getRpcHttpHost());
-    this.rpcHttpPort = Optional.ofNullable(rpcHttpOptions.getRpcHttpPort());
+    this.rpcHttpHost = rpcHttpOptions.getRpcHttpHost();
+    this.rpcHttpPort = rpcHttpOptions.getRpcHttpPort();
     return this;
   }
 
+  @Deprecated
   @Override
   public Optional<String> getRpcHttpHost() {
+    return Optional.of(rpcHttpHost);
+  }
+
+  @Deprecated
+  @Override
+  public Optional<Integer> getRpcHttpPort() {
+    return Optional.of(rpcHttpPort);
+  }
+
+  @Override
+  public String getConfiguredRpcHttpHost() {
     return rpcHttpHost;
   }
 
   @Override
-  public Optional<Integer> getRpcHttpPort() {
+  public Integer getConfiguredRpcHttpPort() {
     return rpcHttpPort;
   }
 
