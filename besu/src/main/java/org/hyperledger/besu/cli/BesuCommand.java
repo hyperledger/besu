@@ -1443,25 +1443,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @VisibleForTesting
   void checkRequiredNativeLibraries(final NetworkName configuredNetwork) {
-  // assert native library requirements for named networks:
+    // assert native library requirements for named networks:
     List<NativeRequirement> failedNativeReqs =
-        configuredNetwork.getNativeRequirements()
-            .stream()
-            .filter(r -> !r.success())
-            .toList();
+        configuredNetwork.getNativeRequirements().stream().filter(r -> !r.success()).toList();
 
     if (!failedNativeReqs.isEmpty()) {
-      String failures = failedNativeReqs.stream()
-          .map(r -> r.libname() + " " + r.errorMessage())
-          .collect(Collectors.joining("\n\t"));
+      String failures =
+          failedNativeReqs.stream()
+              .map(r -> r.libname() + " " + r.errorMessage())
+              .collect(Collectors.joining("\n\t"));
       throw new UnsupportedOperationException(
           String.format(
               "Failed to load required native libraries for this network. "
-                  + "Verify whether your platform %s and arch %s are supported by besu. " +
-                  "Failures loading: \n%s",
-              System.getProperty("os.name"),
-              System.getProperty("os.arch"),
-              failures));
+                  + "Verify whether your platform %s and arch %s are supported by besu. "
+                  + "Failures loading: \n%s",
+              System.getProperty("os.name"), System.getProperty("os.arch"), failures));
     }
   }
 

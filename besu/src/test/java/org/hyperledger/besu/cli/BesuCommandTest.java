@@ -2582,8 +2582,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void assertNativeRequirements_UnMet() throws IOException {
     BesuCommand mockCmd = parseCommand("--network=mainnet");
     NetworkName spyDev = spy(NetworkName.DEV);
-    when(spyDev.getNativeRequirements()).thenReturn(
-        List.of(new NativeRequirement(false, "MOCKLIB", Optional.of("Mock error"))));
+    when(spyDev.getNativeRequirements())
+        .thenReturn(List.of(new NativeRequirement(false, "MOCKLIB", Optional.of("Mock error"))));
     assertThatExceptionOfType(UnsupportedOperationException.class)
         .isThrownBy(() -> mockCmd.checkRequiredNativeLibraries(spyDev))
         .withMessageContaining("MOCKLIB")
