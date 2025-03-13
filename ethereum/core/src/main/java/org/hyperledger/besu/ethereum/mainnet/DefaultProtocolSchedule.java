@@ -75,6 +75,30 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
+  public Optional<ProtocolSpec> getNextProtocolSpec(final ProtocolSpec currentProtocolSpec) {
+    checkArgument(
+        !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
+    checkArgument(
+        protocolSpecs.last().fork().milestone() == 0,
+        "There must be a milestone starting from block 0");
+
+    // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
+    // the requested level will be the most appropriate spec
+    ScheduledProtocolSpec priorProtocolSpec = null;
+    for (final ScheduledProtocolSpec spec : protocolSpecs) {
+      if (spec.spec() == currentProtocolSpec) {
+        if (priorProtocolSpec == null) {
+          return Optional.empty();
+        } else {
+          return Optional.of(priorProtocolSpec.spec());
+        }
+      }
+      priorProtocolSpec = spec;
+    }
+    return Optional.empty();
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return chainId;
   }

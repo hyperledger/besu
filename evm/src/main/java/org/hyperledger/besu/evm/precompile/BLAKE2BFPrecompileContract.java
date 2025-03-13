@@ -42,7 +42,7 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
    * @param gasCalculator the gas calculator
    */
   public BLAKE2BFPrecompileContract(final GasCalculator gasCalculator) {
-    super("BLAKE2f", gasCalculator);
+    super("BLAKE2F", gasCalculator);
   }
 
   @Override

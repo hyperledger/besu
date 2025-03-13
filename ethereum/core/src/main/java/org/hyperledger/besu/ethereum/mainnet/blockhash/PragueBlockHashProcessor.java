@@ -18,6 +18,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
 
+import java.util.Optional;
+
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -57,5 +59,10 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
     Bytes inputData = context.getBlockHeader().getParentHash();
     processor.process(historyStorageAddress, context, inputData);
     return null;
+  }
+
+  @Override
+  public Optional<Address> getHistoryContract() {
+    return Optional.of(historyStorageAddress);
   }
 }
