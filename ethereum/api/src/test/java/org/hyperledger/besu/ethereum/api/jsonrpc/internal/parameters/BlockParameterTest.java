@@ -78,30 +78,30 @@ public class BlockParameterTest {
     final BlockParameter blockParameter = new BlockParameter("safe");
     assertThat(blockParameter.getNumber()).isEmpty();
 
-    assertThat(blockParameter.isSafe()).isTrue();
-    assertThat(blockParameter.isEarliest()).isFalse();
     assertThat(blockParameter.isFinalized()).isFalse();
+    assertThat(blockParameter.isEarliest()).isFalse();
     assertThat(blockParameter.isLatest()).isFalse();
     assertThat(blockParameter.isNumeric()).isFalse();
     assertThat(blockParameter.isPending()).isFalse();
-  }
-
-  @Test
-  public void stringNumberShouldReturnLongNumberValue() {
-    assertThatThrownBy(() -> new BlockParameter("7"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid");
+    assertThat(blockParameter.isSafe()).isTrue();
   }
 
   @Test
   public void numberStringShouldReturnLongNumberValue() {
-    assertThatThrownBy(() -> new BlockParameter("55"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid");
+    final BlockParameter blockParameter = new BlockParameter("55");
+    assertThat(blockParameter.getNumber()).isPresent();
+    assertThat(blockParameter.getNumber().get()).isEqualTo(55L);
+
+    assertThat(blockParameter.isNumeric()).isTrue();
+    assertThat(blockParameter.isEarliest()).isFalse();
+    assertThat(blockParameter.isFinalized()).isFalse();
+    assertThat(blockParameter.isLatest()).isFalse();
+    assertThat(blockParameter.isPending()).isFalse();
+    assertThat(blockParameter.isSafe()).isFalse();
   }
 
   @Test
-  public void hexShouldReturnLongNumberValue() {
+  public void hexWithOnlyNumeralsShouldReturnLongNumberValue() {
     final BlockParameter blockParameter = new BlockParameter("0x55");
     assertThat(blockParameter.getNumber()).isPresent();
     assertThat(blockParameter.getNumber().get()).isEqualTo(85L);
@@ -112,6 +112,27 @@ public class BlockParameterTest {
     assertThat(blockParameter.isLatest()).isFalse();
     assertThat(blockParameter.isPending()).isFalse();
     assertThat(blockParameter.isSafe()).isFalse();
+  }
+
+  @Test
+  public void hexShouldReturnLongNumberValue() {
+    final BlockParameter blockParameter = new BlockParameter("0x5a");
+    assertThat(blockParameter.getNumber()).isPresent();
+    assertThat(blockParameter.getNumber().get()).isEqualTo(90L);
+
+    assertThat(blockParameter.isNumeric()).isTrue();
+    assertThat(blockParameter.isEarliest()).isFalse();
+    assertThat(blockParameter.isFinalized()).isFalse();
+    assertThat(blockParameter.isLatest()).isFalse();
+    assertThat(blockParameter.isPending()).isFalse();
+    assertThat(blockParameter.isSafe()).isFalse();
+  }
+
+  @Test
+  public void hexWithoutPrefixShouldThrow() {
+    assertThatThrownBy(() -> new BlockParameter("5a"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid hex number: 5a");
   }
 
   @Test

@@ -64,12 +64,18 @@ public class BlockParameter {
         number = Optional.empty();
         break;
       default:
-        // Otherwise, expect hex number and insist on 0x prefix
         type = BlockParameterType.NUMERIC;
-        if (!normalizedValue.startsWith("0x")) {
-          throw new IllegalArgumentException("Invalid hex number: " + normalizedValue);
+        if (normalizedValue.startsWith("0x")) {
+          // expect hex number and insist on 0x prefix
+          number = Optional.of(UInt256.fromHexString(normalizedValue).toLong());
+        } else {
+          // should be a decimal number, no conversion required
+          try {
+            number = Optional.of(Long.valueOf(normalizedValue));
+          } catch (final NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid hex number: " + normalizedValue);
+          }
         }
-        number = Optional.of(UInt256.fromHexString(normalizedValue).toLong());
         break;
     }
   }
