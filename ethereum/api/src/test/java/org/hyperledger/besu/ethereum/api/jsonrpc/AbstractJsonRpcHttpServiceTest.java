@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.ethereum.api.ApiConfiguration.DEFAULT_GAS_CAP;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -23,7 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
@@ -180,7 +181,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getProtocolSchedule(),
             miningConfiguration,
-            0L);
+            DEFAULT_GAS_CAP);
 
     return new JsonRpcMethodsFactory()
         .methods(
@@ -213,7 +214,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             folder,
             mock(EthPeers.class),
             syncVertx,
-            mock(ApiConfiguration.class),
+            ImmutableApiConfiguration.builder().build(),
             Optional.empty(),
             transactionSimulator,
             new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
