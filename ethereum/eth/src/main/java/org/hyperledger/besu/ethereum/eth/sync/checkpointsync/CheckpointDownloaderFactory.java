@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -92,11 +91,11 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
               address ->
                   snapContext.addAccountToHealingList(
                       CompactEncoding.bytesToPath(address.addressHash())));
-    } else if (protocolContext
+    } else if (!protocolContext
         .getWorldStateArchive()
         .getWorldState()
         .rootHash()
-        .equals(Hash.EMPTY_TRIE_HASH)) {
+        .equals(GENESIS_STATE_ROOT)) {
       LOG.info(
           "Checkpoint sync was requested, but cannot be enabled because the world state root hash exists.");
       return Optional.empty();
