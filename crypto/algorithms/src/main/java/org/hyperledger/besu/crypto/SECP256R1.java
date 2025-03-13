@@ -44,7 +44,7 @@ public class SECP256R1 extends AbstractSECP256 {
   public SECP256R1() {
     super(CURVE_NAME, SecP256R1Curve.q);
     try {
-      useNative = BesuNativeEC.INSTANCE != null;
+      useNative = BesuNativeEC.ENABLED;
     } catch (UnsatisfiedLinkError ule) {
       LOG.info("secp256r1 native precompile not available: {}", ule.getMessage());
       useNative = false;
@@ -69,7 +69,7 @@ public class SECP256R1 extends AbstractSECP256 {
   @Override
   public boolean maybeEnableNative() {
     try {
-      useNative = BesuNativeEC.INSTANCE != null;
+      useNative = BesuNativeEC.ENABLED;
     } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
       LOG.info("Native secp256r1 not available - {}", e.getMessage());
       useNative = false;
