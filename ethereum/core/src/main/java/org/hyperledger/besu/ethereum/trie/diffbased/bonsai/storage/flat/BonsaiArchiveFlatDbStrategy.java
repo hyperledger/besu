@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.ARCHIVE_PROOF_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -51,12 +50,9 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
 
   protected final Counter getAccountFromArchiveCounter;
   protected final Counter getStorageFromArchiveCounter;
-  private final Long trieNodeCheckpointInterval;
 
   public BonsaiArchiveFlatDbStrategy(
-      final MetricsSystem metricsSystem,
-      final CodeStorageStrategy codeStorageStrategy,
-      final Long trieNodeCheckpointInterval) {
+      final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
     super(metricsSystem, codeStorageStrategy);
 
     getAccountFromArchiveCounter =
@@ -70,8 +66,6 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
             BesuMetricCategory.BLOCKCHAIN,
             "get_storage_from_archive_counter",
             "Total number of calls to get storage that were from archived state");
-
-    this.trieNodeCheckpointInterval = trieNodeCheckpointInterval;
   }
 
   static final byte[] MAX_BLOCK_SUFFIX = Bytes.ofUnsignedLong(Long.MAX_VALUE).toArrayUnsafe();
@@ -80,45 +74,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   public static final byte[] DELETED_CODE_VALUE = new byte[0];
   public static final byte[] DELETED_STORAGE_VALUE = new byte[0];
 
-  private Optional<BonsaiContext> getStateTrieArchiveContextForWrite(
-      final SegmentedKeyValueStorage storage) {
-    // For Bonsai archive get the flat DB context to use for writing archive entries. We add one
-    // because we're working with the latest world state so putting new flat DB keys requires us to
-    // +1 to it
-    Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
-    if (archiveContext.isPresent()) {
-      try {
-
-        long trieContext;
-
-        Optional<byte[]> archiveRollingContext =
-            storage.get(TRIE_BRANCH_STORAGE, ARCHIVE_PROOF_BLOCK_NUMBER_KEY);
-        if (archiveRollingContext.isPresent()) {
-          trieContext = Bytes.wrap(archiveRollingContext.get()).toLong();
-        } else {
-          // MRW We're not rolling to a specific block's state trie - we need to round down to the
-          // nearest N
-          trieContext =
-              (((Bytes.wrap(archiveContext.get()).toLong() + 1) / trieNodeCheckpointInterval)
-                  * trieNodeCheckpointInterval);
-        }
-
-        return Optional.of(
-            // The context for flat-DB PUTs is the block number recorded in the specified world
-            // state, + 1
-            new BonsaiContext(trieContext));
-      } catch (NumberFormatException e) {
-        throw new IllegalStateException(
-            "World state archive context invalid format: "
-                + new String(archiveContext.get(), StandardCharsets.UTF_8));
-      }
-    } else {
-      // Archive flat-db entries cannot be PUT if we don't have block context
-      throw new IllegalStateException("World state missing archive context");
-    }
-  }
-
-  private Optional<BonsaiContext> getStateArchiveContextForWrite(
+  protected Optional<BonsaiContext> getStateArchiveContextForWrite(
       final SegmentedKeyValueStorage storage) {
     // For Bonsai archive get the flat DB context to use for writing archive entries. We add one
     // because we're working with the latest world state so putting new flat DB keys requires us to
@@ -141,7 +97,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     }
   }
 
-  private Optional<BonsaiContext> getStateArchiveContextForRead(
+  protected Optional<BonsaiContext> getStateArchiveContextForRead(
       final SegmentedKeyValueStorage storage) {
     // For Bonsai archive get the flat DB context to use for reading archive entries
     Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
@@ -212,81 +168,6 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     }
 
     return accountFound;
-  }
-
-  /*
-   * Retrieves the account data for the given account hash, using the world state root hash supplier and node loader.
-   */
-  @Override
-  public Optional<Bytes> getFlatAccountTrieNode(
-      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
-      final NodeLoader nodeLoader,
-      final Bytes location,
-      final Bytes32 nodeHash,
-      final SegmentedKeyValueStorage storage) {
-    // TODO - metrics?
-    Optional<Bytes> accountFound;
-
-    // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
-    Bytes keyNearest =
-        calculateArchiveKeyWithMaxSuffix(
-            getStateArchiveContextForRead(storage), location.toArrayUnsafe());
-
-    // Find the nearest account state for this address and block context
-    Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccountPreSizeCheck =
-        storage
-            .getNearestBeforeMatchLength(TRIE_BRANCH_STORAGE, keyNearest)
-            .filter(
-                found ->
-                    found.key().size() == (location.size() + 8)) // TODO - change for CONST length
-            .filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
-
-    // TODO - getFlatAccount does extra checks for the delete case. Do we need to do anything in
-    // that respect here?
-    accountFound =
-        nearestAccountPreSizeCheck.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
-
-    return accountFound;
-  }
-
-  /*
-   * Retrieves the storage value for the given storage slot hash, using the world state root hash supplier and node loader.
-   */
-  @Override
-  public Optional<Bytes> getFlatStorageTrieNode(
-      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
-      final NodeLoader nodeLoader,
-      final Hash accountHash,
-      final Bytes location,
-      final Bytes32 nodeHash,
-      final SegmentedKeyValueStorage storage) {
-    // TODO - metrics?
-    Optional<Bytes> storageFound;
-
-    // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
-    Bytes keyNearest =
-        calculateArchiveKeyWithMaxSuffix(
-            getStateArchiveContextForRead(storage),
-            Bytes.concatenate(accountHash, location).toArrayUnsafe());
-
-    // Find the nearest account state for this address and block context
-    Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccountPreSizeCheck =
-        storage
-            .getNearestBeforeMatchLength(TRIE_BRANCH_STORAGE, keyNearest)
-            .filter(
-                found ->
-                    found.key().size()
-                        == (accountHash.size()
-                            + location.size()
-                            + 8)) // TODO - change for CONST length
-            .filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
-
-    // TODO - getFlatAccount does extra checks for the delete case. Do we need to do anything in
-    // that respect here?
-    storageFound =
-        nearestAccountPreSizeCheck.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
-
-    return storageFound;
   }
 
   @Override
@@ -403,40 +284,6 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
             getStateArchiveContextForWrite(storage).get(), accountHash.toArrayUnsafe());
 
     transaction.put(ACCOUNT_INFO_STATE, keySuffixed, accountValue.toArrayUnsafe());
-  }
-
-  @Override
-  public void putFlatAccountTrieNode(
-      final SegmentedKeyValueStorage storage,
-      final SegmentedKeyValueStorageTransaction transaction,
-      final Bytes location,
-      final Bytes32 nodeHash,
-      final Bytes node) {
-
-    // key suffixed with block context, or MIN_BLOCK_SUFFIX if we have no context:
-    byte[] keySuffixed =
-        calculateArchiveKeyWithMinSuffix(
-            getStateTrieArchiveContextForWrite(storage).get(), location.toArrayUnsafe());
-
-    transaction.put(TRIE_BRANCH_STORAGE, keySuffixed, node.toArrayUnsafe());
-  }
-
-  @Override
-  public void putFlatStorageTrieNode(
-      final SegmentedKeyValueStorage storage,
-      final SegmentedKeyValueStorageTransaction transaction,
-      final Hash accountHash,
-      final Bytes location,
-      final Bytes32 nodeHash,
-      final Bytes node) {
-
-    // key suffixed with block context, or MIN_BLOCK_SUFFIX if we have no context:
-    byte[] keySuffixed =
-        calculateArchiveKeyWithMinSuffix(
-            getStateTrieArchiveContextForWrite(storage).get(),
-            Bytes.concatenate(accountHash, location).toArrayUnsafe());
-
-    transaction.put(TRIE_BRANCH_STORAGE, keySuffixed, node.toArrayUnsafe());
   }
 
   @Override

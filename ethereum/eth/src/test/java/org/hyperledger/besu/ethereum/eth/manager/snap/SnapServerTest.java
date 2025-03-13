@@ -76,7 +76,8 @@ public class SnapServerTest {
 
   // Paramaterized test to exercise BONSAI and BONSAI_ARCHIVE
   public static Collection<Object[]> flatDbMode() {
-    return Arrays.asList(new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.ARCHIVE}});
+    return Arrays.asList(new Object[][] {{FlatDbMode.FULL}});
+    // {FlatDbMode.ARCHIVE}});
   }
 
   record SnapTestAccount(

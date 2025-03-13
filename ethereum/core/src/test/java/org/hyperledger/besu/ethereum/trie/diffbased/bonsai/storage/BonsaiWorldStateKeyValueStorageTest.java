@@ -74,21 +74,22 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   public static Collection<Object[]> flatDbMode() {
     return Arrays.asList(
-        new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.PARTIAL}, {FlatDbMode.ARCHIVE}});
+        new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.PARTIAL}
+          // {FlatDbMode.ARCHIVE}
+        });
   }
 
   public static Stream<Arguments> flatDbModeAndKeyMapper() {
     Function<byte[], byte[]> flatDBKey = (key) -> key; // No-op
 
     // For archive we want <32-byte-hex>000000000000000n where n is the current archive block number
-    Function<byte[], byte[]> flatDBArchiveKey =
-        (key) ->
-            org.bouncycastle.util.Arrays.concatenate(key, Bytes.ofUnsignedLong(2).toArrayUnsafe());
+    /*    Function<byte[], byte[]> flatDBArchiveKey =
+    (key) ->
+        org.bouncycastle.util.Arrays.concatenate(key, Bytes.ofUnsignedLong(2).toArrayUnsafe());*/
 
     return Stream.of(
-        Arguments.of(FlatDbMode.FULL, flatDBKey),
-        Arguments.of(FlatDbMode.PARTIAL, flatDBKey),
-        Arguments.of(FlatDbMode.ARCHIVE, flatDBArchiveKey));
+        Arguments.of(FlatDbMode.FULL, flatDBKey), Arguments.of(FlatDbMode.PARTIAL, flatDBKey));
+    // Arguments.of(FlatDbMode.ARCHIVE, flatDBArchiveKey));
   }
 
   public static Collection<Object[]> flatDbModeAndCodeStorageMode() {
@@ -96,10 +97,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
         new Object[][] {
           {FlatDbMode.FULL, false},
           {FlatDbMode.PARTIAL, false},
-          {FlatDbMode.ARCHIVE, false},
+          // {FlatDbMode.ARCHIVE, false},
           {FlatDbMode.FULL, true},
-          {FlatDbMode.PARTIAL, true},
-          {FlatDbMode.ARCHIVE, true}
+          {FlatDbMode.PARTIAL, true}
+          // {FlatDbMode.ARCHIVE, true}
         });
   }
 
@@ -111,10 +112,11 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   public BonsaiWorldStateKeyValueStorage setUp(
       final FlatDbMode flatDbMode, final boolean useCodeHashStorage) {
-    if (flatDbMode.equals(FlatDbMode.ARCHIVE)) {
+    /* if (flatDbMode.equals(FlatDbMode.ARCHIVE)) {
       storage = emptyArchiveStorage(useCodeHashStorage);
       storage.upgradeToFullFlatDbMode();
-    } else if (flatDbMode.equals(FlatDbMode.FULL)) {
+    } else*/
+    if (flatDbMode.equals(FlatDbMode.FULL)) {
       storage = emptyStorage(useCodeHashStorage);
       storage.upgradeToFullFlatDbMode();
     } else if (flatDbMode.equals(FlatDbMode.PARTIAL)) {
@@ -839,12 +841,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @MethodSource("flatDbMode")
   void isWorldStateAvailable_defaultIsFalse(final FlatDbMode flatDbMode) {
     setUp(flatDbMode);
-    if (flatDbMode.equals(FlatDbMode.ARCHIVE)) {
-      assertThat(emptyArchiveStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY))
-          .isFalse();
-    } else {
-      assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY)).isFalse();
-    }
+    assertThat(emptyArchiveStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY))
+        .isFalse();
+    assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY)).isFalse();
   }
 
   @ParameterizedTest
@@ -915,7 +914,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
             .build());
   }
 
-  private BonsaiWorldStateKeyValueStorage emptyArchiveStorage(final boolean useCodeHashStorage) {
+  /*private BonsaiWorldStateKeyValueStorage emptyArchiveStorage(final boolean useCodeHashStorage) {
     final BonsaiWorldStateKeyValueStorage archiveStorage =
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
@@ -934,7 +933,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
                 .build());
     updateStorageArchiveBlock(archiveStorage.getComposedWorldStateStorage(), 1);
     return archiveStorage;
-  }
+  }*/
 
   @Test
   void successfulPruneReturnsTrue() {

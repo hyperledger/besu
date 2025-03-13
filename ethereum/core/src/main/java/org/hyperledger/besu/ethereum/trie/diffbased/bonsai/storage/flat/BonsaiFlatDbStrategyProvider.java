@@ -46,21 +46,9 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
   public void upgradeToFullFlatDbMode(final SegmentedKeyValueStorage composedWorldStateStorage) {
     final SegmentedKeyValueStorageTransaction transaction =
         composedWorldStateStorage.startTransaction();
-    if (dataStorageConfiguration.getDataStorageFormat() == DataStorageFormat.BONSAI) {
-      LOG.info("setting FlatDbStrategy to FULL");
-      transaction.put(
-          TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
-    } else if (dataStorageConfiguration.getDataStorageFormat()
-        == DataStorageFormat.X_BONSAI_ARCHIVE) {
-      LOG.info("setting FlatDbStrategy to ARCHIVE");
-      transaction.put(
-          TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.ARCHIVE.getVersion().toArrayUnsafe());
-    } else if (dataStorageConfiguration.getDataStorageFormat()
-        == DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS) {
-      LOG.info("setting FlatDbStrategy to ARCHIVE");
-      transaction.put(
-          TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.ARCHIVE.getVersion().toArrayUnsafe());
-    }
+    LOG.info("setting FlatDbStrategy to FULL");
+    transaction.put(
+        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
     transaction.commit();
     loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
   }
@@ -81,16 +69,20 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
       final FlatDbMode flatDbMode,
       final MetricsSystem metricsSystem,
       final CodeStorageStrategy codeStorageStrategy) {
-    if (flatDbMode == FlatDbMode.FULL) {
-      return new BonsaiFullFlatDbStrategy(metricsSystem, codeStorageStrategy);
-    } else if (flatDbMode == FlatDbMode.ARCHIVE) {
-      return new BonsaiArchiveFlatDbStrategy(
+    // TODO MRW - there should be a partial version of the bonsai archive DB strategies
+    if (dataStorageConfiguration.getDataStorageFormat() == DataStorageFormat.X_BONSAI_ARCHIVE) {
+      return new BonsaiArchiveFlatDbStrategy(metricsSystem, codeStorageStrategy);
+    } else if (dataStorageConfiguration.getDataStorageFormat()
+        == DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS) {
+      return new BonsaiArchiveProofsFlatDbStrategy(
           metricsSystem,
           codeStorageStrategy,
           dataStorageConfiguration
               .getDiffBasedSubStorageConfiguration()
               .getUnstable()
               .getArchiveTrieNodeCheckpointInterval());
+    } else if (flatDbMode == FlatDbMode.FULL) {
+      return new BonsaiFullFlatDbStrategy(metricsSystem, codeStorageStrategy);
     } else {
       return new BonsaiPartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
     }

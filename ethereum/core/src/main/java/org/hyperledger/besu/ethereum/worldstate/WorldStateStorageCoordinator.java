@@ -99,24 +99,6 @@ public class WorldStateStorageCoordinator {
         });
   }
 
-  public void applyOnMatchingFlatModes(
-      final List<FlatDbMode> flatDbModes,
-      final Consumer<BonsaiWorldStateKeyValueStorage> onStrategy) {
-    applyOnMatchingStrategies(
-        List.of(
-            DataStorageFormat.BONSAI,
-            DataStorageFormat.X_BONSAI_ARCHIVE,
-            DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS),
-        worldStateKeyValueStorage -> {
-          final BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorageStrategy =
-              (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage();
-
-          if (flatDbModes.contains(bonsaiWorldStateStorageStrategy.getFlatDbMode())) {
-            onStrategy.accept(bonsaiWorldStateStorageStrategy);
-          }
-        });
-  }
-
   public void applyWhenFlatModeEnabled(final Consumer<BonsaiWorldStateKeyValueStorage> onStrategy) {
     applyOnMatchingStrategies(
         List.of(

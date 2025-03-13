@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBa
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.nio.charset.StandardCharsets;
@@ -105,14 +104,7 @@ public abstract class FlatDbStrategyProvider {
                 .getDiffBasedSubStorageConfiguration()
                 .getUnstable()
                 .getFullFlatDbEnabled()
-            ? ((dataStorageConfiguration
-                        .getDataStorageFormat()
-                        .equals(DataStorageFormat.X_BONSAI_ARCHIVE)
-                    || dataStorageConfiguration
-                        .getDataStorageFormat()
-                        .equals(DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS))
-                ? FlatDbMode.ARCHIVE
-                : FlatDbMode.FULL)
+            ? FlatDbMode.FULL
             : FlatDbMode.PARTIAL;
 
     final var existingTrieData =
