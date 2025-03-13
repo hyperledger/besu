@@ -51,12 +51,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.ThreadContext;
 import org.awaitility.Awaitility;
@@ -205,16 +203,6 @@ public class AcceptanceTestBase {
 
   protected void waitForFile(final Path path) {
     final File file = path.toFile();
-    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              if (file.exists()) {
-                try (final Stream<String> s = Files.lines(path)) {
-                  return s.count() > 0;
-                }
-              } else {
-                return false;
-              }
-            });
+    Awaitility.waitAtMost(30, TimeUnit.SECONDS).until(() -> file.length() > 0);
   }
 }
