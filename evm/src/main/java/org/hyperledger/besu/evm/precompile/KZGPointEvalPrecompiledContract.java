@@ -82,10 +82,6 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     }
   }
 
-  public static boolean isLoaded() {
-    return loaded.get();
-  }
-
   /** free up resources. */
   @VisibleForTesting
   public static void tearDown() {
