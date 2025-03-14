@@ -203,6 +203,12 @@ configure(allprojects - project(':platform')) {
     resolutionStrategy.capabilitiesResolution.withCapability('org.bouncycastle:bcpkix-jdk18on') {
       selectHighestVersion()
     }
+
+    // transitive versions conflict with io.protocols.tuweni, prefer ours
+    exclude group: 'io.tmio', module: 'tuweni-bytes'
+    exclude group: 'io.tmio', module: 'tuweni-crypto'
+    exclude group: 'io.tmio', module: 'tuweni-rlp'
+    exclude group: 'io.tmio', module: 'tuweni-units'
   }
 
 
