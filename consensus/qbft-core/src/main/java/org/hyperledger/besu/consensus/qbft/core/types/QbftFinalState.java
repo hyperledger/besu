@@ -104,4 +104,25 @@ public interface QbftFinalState {
    * @return true if the local node is the proposer for the given round, false otherwise
    */
   boolean isLocalNodeProposerForRound(ConsensusRoundIdentifier roundIdentifier);
+
+  /**
+   * Gets the frequent round change multicaster.
+   *
+   * @return the frequent round change multicaster
+   */
+  public ValidatorMulticaster getFrequentRCMulticaster();
+
+  /**
+   * Is early round change enabled boolean.
+   *
+   * @return the boolean
+   */
+  public boolean isEarlyRoundChangeEnabled();
+
+  /**
+   * Is fast recovery enabled boolean.
+   *
+   * @return the boolean
+   */
+  public boolean isFastRecoveryEnabled();
 }

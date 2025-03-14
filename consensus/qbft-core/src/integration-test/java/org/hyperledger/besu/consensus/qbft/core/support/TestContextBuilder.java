@@ -541,7 +541,10 @@ public class TestContextBuilder {
             new RoundTimer(bftEventQueue, Duration.ofSeconds(ROUND_TIMER_SEC), bftExecutors),
             new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, TestClock.fixed()),
             new QbftBlockCreatorFactoryAdaptor(blockCreatorFactory, BFT_EXTRA_DATA_ENCODER),
-            clock);
+            clock,
+            false,
+            false,
+            multicaster);
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
 
