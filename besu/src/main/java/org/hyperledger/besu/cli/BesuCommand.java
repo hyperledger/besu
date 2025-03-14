@@ -444,7 +444,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
               + " (default: ${DEFAULT-VALUE})")
-  private final NetworkName network = null;
+  private NetworkName network = null;
 
   @Option(
       names = {PROFILE_OPTION_NAME},
@@ -2769,5 +2769,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public MetricsOptions getMetricsOptions() {
     return metricsOptions;
+  }
+
+  public void setNetwork(final NetworkName network) {
+    this.network = network;
   }
 }

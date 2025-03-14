@@ -14,6 +14,11 @@
  */
 package org.hyperledger.besu.cli.subcommands.storage;
 
+import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_NETWORK_FORMAT_HELP;
+import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP;
+import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
+
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Transaction;
@@ -22,6 +27,8 @@ import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -38,7 +45,10 @@ import picocli.CommandLine;
 public class PurgePreMergeBlockDataSubCommand implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(PurgePreMergeBlockDataSubCommand.class);
 
-  private static final long MERGE_BLOCK_NUMBER = 15_537_393;
+  private static final List<NetworkName> SUPPORTED_NETWORKS =
+      List.of(NetworkName.MAINNET, NetworkName.SEPOLIA);
+  private static final long MAINNET_MERGE_BLOCK_NUMBER = 15_537_393;
+  private static final long SEPOLIA_MERGE_BLOCK_NUMBER = 1_735_371;
 
   @CommandLine.ParentCommand private StorageSubCommand storageSubCommand;
 
@@ -46,13 +56,38 @@ public class PurgePreMergeBlockDataSubCommand implements Runnable {
   @CommandLine.Spec
   private CommandLine.Model.CommandSpec spec;
 
+  @CommandLine.Option(
+      names = {"--network"},
+      paramLabel = MANDATORY_NETWORK_FORMAT_HELP,
+      defaultValue = "MAINNET",
+      description =
+          "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
+              + " (default: ${DEFAULT-VALUE})")
+  private NetworkName network = null;
+
+  @CommandLine.Option(
+      names = {"--data-path"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
+  final Path dataPath = getDefaultBesuDataPath(this);
+
   /** Default constructor */
   public PurgePreMergeBlockDataSubCommand() {}
 
   @Override
   public void run() {
+    if (!SUPPORTED_NETWORKS.contains(network)) {
+      LOG.error(
+          "Unable to purge pre-merge blocks and transaction receipts for network: {}", network);
+      return;
+    }
+
     LOG.info("Purging pre-merge blocks and transaction receipts");
-    try (BesuController controller = storageSubCommand.besuCommand.buildController()) {
+    storageSubCommand.besuCommand.setNetwork(network);
+    try (BesuController controller =
+        storageSubCommand.besuCommand.setupControllerBuilder().dataDirectory(dataPath).build()) {
+      final long mergeBlockNumber = getMergeBlockNumber(network);
+
       MutableBlockchain mutableBlockchain = controller.getProtocolContext().getBlockchain();
       if (!(mutableBlockchain instanceof DefaultBlockchain)) {
         throw new RuntimeException(
@@ -84,12 +119,20 @@ public class PurgePreMergeBlockDataSubCommand implements Runnable {
         if (headerNumber % 10000 == 0) {
           LOG.info("{} block's data removed", headerNumber);
         }
-      } while (++headerNumber < MERGE_BLOCK_NUMBER);
+      } while (++headerNumber < mergeBlockNumber);
       LOG.info("Done removing block data, committing removal changes");
       updater.commit();
       LOG.info("Done committing removal changes");
     } catch (Exception e) {
       LOG.error("Unexpected exception", e);
     }
+  }
+
+  private static long getMergeBlockNumber(final NetworkName network) {
+    return switch (network) {
+      case MAINNET -> MAINNET_MERGE_BLOCK_NUMBER;
+      case SEPOLIA -> SEPOLIA_MERGE_BLOCK_NUMBER;
+      default -> throw new RuntimeException("Unexpected network: " + network);
+    };
   }
 }
