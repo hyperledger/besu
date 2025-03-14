@@ -26,9 +26,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
+import org.hyperledger.besu.ethereum.eth.sync.DownloadSyncBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
@@ -139,16 +139,14 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             metricsSystem);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
-    final DownloadBodiesStep downloadBodiesStep =
-        new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
-    final DownloadReceiptsStep downloadReceiptsStep =
-        new DownloadReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
-    final ImportBlocksStep importBlockStep =
-        new ImportBlocksStep(
+    final DownloadSyncBodiesStep downloadSyncBodiesStep =
+        new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
+    final DownloadSyncReceiptsStep downloadSyncReceiptsStep =
+        new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
+    final ImportSyncBlocksStep importSyncBlocksStep =
+        new ImportSyncBlocksStep(
             protocolSchedule,
             protocolContext,
-            attachedValidationPolicy,
-            ommerValidationPolicy,
             ethContext,
             fastSyncState.getPivotBlockHeader().get(),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
@@ -168,9 +166,11 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
-        .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
-        .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
-        .andFinishWith("importBlock", importBlockStep);
+        .thenProcessAsyncOrdered(
+            "downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
+        .thenProcessAsyncOrdered(
+            "downloadReceipts", downloadSyncReceiptsStep, downloaderParallelism)
+        .andFinishWith("importBlock", importSyncBlocksStep);
   }
 
   protected BlockHeader getCommonAncestor(final SyncTarget syncTarget) {
