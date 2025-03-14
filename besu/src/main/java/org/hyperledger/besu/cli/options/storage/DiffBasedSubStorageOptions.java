@@ -14,12 +14,9 @@
  */
 package org.hyperledger.besu.cli.options.storage;
 
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_LIMIT_TRIE_LOGS_ENABLED;
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.*;
 import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DiffBasedUnstable.DEFAULT_CODE_USING_CODE_HASH_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DiffBasedUnstable.DEFAULT_FULL_FLAT_DB_ENABLED;
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.MINIMUM_TRIE_LOG_RETENTION_LIMIT;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
@@ -88,14 +85,9 @@ public class DiffBasedSubStorageOptions implements CLIOptions<DiffBasedSubStorag
   /** The unstable options for data storage. */
   public static class Unstable {
 
-    // TODO: --Xsnapsync-synchronizer-flat-db-healing-enabled is deprecated, remove it in a future
-    // release
     @Option(
         hidden = true,
-        names = {
-          "--Xbonsai-full-flat-db-enabled",
-          "--Xsnapsync-synchronizer-flat-db-healing-enabled"
-        },
+        names = {"--Xbonsai-full-flat-db-enabled"},
         arity = "1",
         description = "Enables bonsai full flat database strategy. (default: ${DEFAULT-VALUE})")
     private Boolean fullFlatDbEnabled = DEFAULT_FULL_FLAT_DB_ENABLED;
