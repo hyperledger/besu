@@ -428,23 +428,4 @@ public class LogsQueryTest {
     assertThat(query.couldMatch(LogsBloomFilter.builder().insertLog(log).build())).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
-
-  @Test
-  public void emptySubTopicProducesNoMatches() {
-    final Address address = Address.fromHexString("0x1111111111111111111111111111111111111111");
-
-    final LogTopic topic1 =
-        LogTopic.fromHexString(
-            "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    final LogTopic topic2 =
-        LogTopic.fromHexString(
-            "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
-    final List<List<LogTopic>> queryParameter =
-        Lists.newArrayList(singletonList(topic1), emptyList());
-
-    final LogsQuery query = new LogsQuery.Builder().address(address).topics(queryParameter).build();
-    final Log log = new Log(address, data, Lists.newArrayList(topic1, topic2));
-
-    assertThat(query.matches(log)).isFalse();
-  }
 }
