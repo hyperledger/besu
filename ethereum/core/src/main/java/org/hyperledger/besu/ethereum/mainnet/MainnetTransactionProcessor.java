@@ -19,6 +19,8 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVAT
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetAccount;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
@@ -423,11 +425,7 @@ public class MainnetTransactionProcessor {
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
-        final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
-
-        if (maybeContract.isPresent() && maybeContract.get().hasDelegatedCode()) {
-          warmAddressList.add(maybeContract.get().codeDelegationAddress().get());
-        }
+        final Code code = processCodeFromAccount(worldState, warmAddressList, worldState.get(to));
 
         initialFrame =
             commonMessageFrameBuilder
@@ -435,20 +433,7 @@ public class MainnetTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
-                .code(
-                    maybeContract
-                        .map(
-                            c -> {
-                              if (c.hasDelegatedCode()) {
-                                return messageCallProcessor.getCodeFromEVM(
-                                    c.getCodeDelegationTargetHash().get(),
-                                    c.getCodeDelegationTargetCode().get());
-                              }
-
-                              return messageCallProcessor.getCodeFromEVM(
-                                  c.getCodeHash(), c.getCode());
-                            })
-                        .orElse(CodeV0.EMPTY_CODE))
+                .code(code)
                 .accessListWarmAddresses(warmAddressList)
                 .build();
       }
@@ -633,6 +618,28 @@ public class MainnetTransactionProcessor {
     }
 
     return builder.toString();
+  }
+
+  private Code processCodeFromAccount(
+      final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract) {
+    if (contract == null) {
+      return CodeV0.EMPTY_CODE;
+    }
+
+    if (!hasCodeDelegation(contract.getCode())) {
+      return messageCallProcessor.getCodeFromEVM(contract.getCodeHash(), contract.getCode());
+    }
+
+    final Optional<Account> maybeTargetAccount = getTargetAccount(worldUpdater, contract.getCode());
+    if (maybeTargetAccount.isEmpty()) {
+      throw new RuntimeException("Code delegation target account not found");
+    }
+
+    final Account targetAccount = maybeTargetAccount.get();
+    warmAddressList.add(targetAccount.getAddress());
+
+    return messageCallProcessor.getCodeFromEVM(
+        targetAccount.getCodeHash(), targetAccount.getCode());
   }
 
   public static Builder builder() {

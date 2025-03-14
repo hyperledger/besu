@@ -198,12 +198,10 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Account contract = frame.getWorldUpdater().get(to);
 
-    if (contract != null && hasCodeDelegation(contract.getCode())) {
-      try {
-        deductGasForCodeDelegationResolution(frame, contract);
-      } catch (InsufficientGasException e) {
-        return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      }
+    try {
+      deductGasForCodeDelegationResolution(frame, contract);
+    } catch (InsufficientGasException e) {
+      return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
@@ -251,7 +249,14 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     return new OperationResult(cost, null, 0);
   }
 
-  private void deductGasForCodeDelegationResolution(
+  /**
+   * Deducts the gas cost for delegated code resolution.
+   *
+   * @param frame the message frame
+   * @param contract the account
+   * @throws InsufficientGasException if there is insufficient gas to resolve delegated code
+   */
+  protected void deductGasForCodeDelegationResolution(
       final MessageFrame frame, final Account contract) throws InsufficientGasException {
     if (contract == null || !hasCodeDelegation(contract.getCode())) {
       return;
@@ -269,6 +274,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     if (frame.getRemainingGas() < codeDelegationResolutionGas) {
       throw new InsufficientGasException(
+          codeDelegationResolutionGas,
           "Insufficient gas to resolve delegated code. Gas required: "
               + codeDelegationResolutionGas
               + ", Gas available: "
