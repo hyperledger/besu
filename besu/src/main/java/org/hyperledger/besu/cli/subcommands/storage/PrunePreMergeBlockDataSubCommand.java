@@ -35,15 +35,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
-/** The purge pre-merge block data sub command */
+/** The prune pre-merge block data sub command */
 @CommandLine.Command(
-    name = "purge-pre-merge-blocks",
+    name = "prune-pre-merge-blocks",
     description =
-        "Purges all pre-merge blocks and associated transaction receipts, leaving only headers",
+        "Prunes all pre-merge blocks and associated transaction receipts, leaving only headers",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
-public class PurgePreMergeBlockDataSubCommand implements Runnable {
-  private static final Logger LOG = LoggerFactory.getLogger(PurgePreMergeBlockDataSubCommand.class);
+public class PrunePreMergeBlockDataSubCommand implements Runnable {
+  private static final Logger LOG = LoggerFactory.getLogger(PrunePreMergeBlockDataSubCommand.class);
 
   private static final List<NetworkName> SUPPORTED_NETWORKS =
       List.of(NetworkName.MAINNET, NetworkName.SEPOLIA);
@@ -72,17 +72,17 @@ public class PurgePreMergeBlockDataSubCommand implements Runnable {
   final Path dataPath = getDefaultBesuDataPath(this);
 
   /** Default constructor */
-  public PurgePreMergeBlockDataSubCommand() {}
+  public PrunePreMergeBlockDataSubCommand() {}
 
   @Override
   public void run() {
     if (!SUPPORTED_NETWORKS.contains(network)) {
       LOG.error(
-          "Unable to purge pre-merge blocks and transaction receipts for network: {}", network);
+          "Unable to prune pre-merge blocks and transaction receipts for network: {}", network);
       return;
     }
 
-    LOG.info("Purging pre-merge blocks and transaction receipts");
+    LOG.info("Pruning pre-merge blocks and transaction receipts");
     storageSubCommand.besuCommand.setNetwork(network);
     try (BesuController controller =
         storageSubCommand.besuCommand.setupControllerBuilder().dataDirectory(dataPath).build()) {
@@ -91,7 +91,7 @@ public class PurgePreMergeBlockDataSubCommand implements Runnable {
       MutableBlockchain mutableBlockchain = controller.getProtocolContext().getBlockchain();
       if (!(mutableBlockchain instanceof DefaultBlockchain)) {
         throw new RuntimeException(
-            "Unable to purge pre-merge data from MutableBlockchain implementations other than DefaultBlockchain");
+            "Unable to prune pre-merge data from MutableBlockchain implementations other than DefaultBlockchain");
       }
 
       DefaultBlockchain blockchain = (DefaultBlockchain) mutableBlockchain;
