@@ -59,11 +59,14 @@ public class CodeDelegationProcessor {
    * </ol>
    *
    * @param worldUpdater The world state updater which is aware of code delegation.
+   * @param codeDelegationService service that manages the code injection of delegated code
    * @param transaction The transaction being processed.
    * @return The result of the code delegation processing.
    */
   public CodeDelegationResult process(
-      final WorldUpdater worldUpdater, final Transaction transaction) {
+      final WorldUpdater worldUpdater,
+      final CodeDelegationService codeDelegationService,
+      final Transaction transaction) {
     final CodeDelegationResult result = new CodeDelegationResult();
 
     transaction
@@ -73,6 +76,7 @@ public class CodeDelegationProcessor {
             codeDelegation ->
                 processCodeDelegation(
                     worldUpdater,
+                    codeDelegationService,
                     (org.hyperledger.besu.ethereum.core.CodeDelegation) codeDelegation,
                     result));
 
@@ -81,6 +85,7 @@ public class CodeDelegationProcessor {
 
   private void processCodeDelegation(
       final WorldUpdater worldUpdater,
+      final CodeDelegationService codeDelegationService,
       final CodeDelegation codeDelegation,
       final CodeDelegationResult result) {
     LOG.trace("Processing code delegation: {}", codeDelegation);
@@ -118,8 +123,6 @@ public class CodeDelegationProcessor {
         Optional.ofNullable(worldUpdater.getAccount(authorizer.get()));
 
     result.addAccessedDelegatorAddress(authorizer.get());
-
-    final CodeDelegationService codeDelegationService = new CodeDelegationService();
 
     MutableAccount authority;
     boolean authorityDoesAlreadyExist = false;
