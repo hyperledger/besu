@@ -975,7 +975,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       // explicitly enabled, perform compatibility check
       VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
 
-      configureNativeLibs(network);
+      configureNativeLibs(Optional.ofNullable(network));
       besuController = buildController();
 
       besuPluginContext.beforeExternalServices();
@@ -1390,7 +1390,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return Optional.ofNullable(colorEnabled);
   }
 
-  private void configureNativeLibs(final NetworkName configuredNetwork) {
+  private void configureNativeLibs(final Optional<NetworkName> configuredNetwork) {
     if (unstableNativeLibraryOptions.getNativeAltbn128()
         && AbstractAltBnPrecompiledContract.maybeEnableNative()) {
       logger.info("Using the native implementation of alt bn128");
@@ -1438,7 +1438,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--kzg-trusted-setup can only be specified on networks with data blobs enabled");
     }
     // assert required native libraries have been loaded
-    checkRequiredNativeLibraries(configuredNetwork);
+    configuredNetwork.ifPresent(this::checkRequiredNativeLibraries);
   }
 
   @VisibleForTesting
