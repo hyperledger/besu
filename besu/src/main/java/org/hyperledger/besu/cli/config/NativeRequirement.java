@@ -35,10 +35,7 @@ public interface NativeRequirement {
    */
   record NativeRequirementResult(Boolean present, String libname, Optional<String> errorMessage) {}
 
-
-  /**
-   * Ethereum mainnet-like performance requirements:
-   */
+  /** Ethereum mainnet-like performance requirements: */
   Supplier<List<NativeRequirementResult>> MAINNET =
       () -> {
         List<NativeRequirementResult> requirements = new ArrayList<>();
