@@ -16,12 +16,27 @@ package org.hyperledger.besu.evm.operation;
 
 /** Exception thrown when an operation is executed with insufficient gas. */
 public class InsufficientGasException extends Exception {
+
+  /** The gas cost that would be required to execute the operation. */
+  private final long gasCost;
+
   /**
    * Creates a new {@link InsufficientGasException} with the given message.
    *
+   * @param gasCost the gas cost
    * @param message the message
    */
-  public InsufficientGasException(final String message) {
+  public InsufficientGasException(final long gasCost, final String message) {
     super(message);
+    this.gasCost = gasCost;
+  }
+
+  /**
+   * Returns the gas cost that would be required to execute the operation.
+   *
+   * @return the gas cost
+   */
+  public long getGasCost() {
+    return gasCost;
   }
 }

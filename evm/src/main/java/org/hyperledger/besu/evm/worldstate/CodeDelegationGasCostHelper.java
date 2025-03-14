@@ -14,10 +14,14 @@
  */
 package org.hyperledger.besu.evm.worldstate;
 
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import java.util.Optional;
 
 /**
  * Helper class to deduct gas cost for delegated code resolution.
@@ -43,16 +47,18 @@ public class CodeDelegationGasCostHelper {
    */
   public static long codeDelegationGasCost(
       final MessageFrame frame, final GasCalculator gasCalculator, final Account account) {
-    if (!account.hasDelegatedCode()) {
+    if (account == null || !hasCodeDelegation(account.getCode())) {
       return 0;
     }
 
-    if (account.codeDelegationAddress().isEmpty()) {
-      throw new RuntimeException("A delegated code account must have a delegated code address");
+    final Optional<Account> maybeTargetAccount =
+        CodeDelegationHelper.getTargetAccount(frame.getWorldUpdater(), account.getCode());
+    if (maybeTargetAccount.isEmpty()) {
+      throw new RuntimeException("A delegated code account must have a target account.");
     }
 
     return calculateCodeDelegationResolutionGas(
-        frame, gasCalculator, account.codeDelegationAddress().get());
+        frame, gasCalculator, maybeTargetAccount.get().getAddress());
   }
 
   private static long calculateCodeDelegationResolutionGas(
