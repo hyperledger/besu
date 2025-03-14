@@ -197,9 +197,10 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
-    return besuControllerBuilderSchedule
-        .get(0L)
-        .createAdditionalPluginServices(blockchain, protocolContext);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.createAdditionalPluginServices(blockchain, protocolContext));
+    return new NoopPluginServiceFactory();
   }
 
   @Override
@@ -207,10 +208,14 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final MiningConfiguration miningConfiguration) {
-    return besuControllerBuilderSchedule
-        .get(0L)
-        .createAdditionalJsonRpcMethodFactory(
-            protocolContext, protocolSchedule, miningConfiguration);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(
+            b ->
+                b.createAdditionalJsonRpcMethodFactory(
+                    protocolContext, protocolSchedule, miningConfiguration));
+    return super.createAdditionalJsonRpcMethodFactory(
+        protocolContext, protocolSchedule, miningConfiguration);
   }
 
   @Override
@@ -218,7 +223,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final EthProtocolManager ethProtocolManager,
       final Optional<SnapProtocolManager> maybeSnapProtocolManager) {
     return besuControllerBuilderSchedule
-        .get(0L)
+        .get(besuControllerBuilderSchedule.keySet().stream().skip(1).findFirst().orElseThrow())
         .createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
   }
 
@@ -240,20 +245,34 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
       final ForkIdManager forkIdManager) {
-    return besuControllerBuilderSchedule
-        .get(0L)
-        .createEthProtocolManager(
-            protocolContext,
-            synchronizerConfiguration,
-            transactionPool,
-            ethereumWireProtocolConfiguration,
-            ethPeers,
-            ethContext,
-            ethMessages,
-            scheduler,
-            peerValidators,
-            mergePeerFilter,
-            forkIdManager);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(
+            b ->
+                b.createEthProtocolManager(
+                    protocolContext,
+                    synchronizerConfiguration,
+                    transactionPool,
+                    ethereumWireProtocolConfiguration,
+                    ethPeers,
+                    ethContext,
+                    ethMessages,
+                    scheduler,
+                    peerValidators,
+                    mergePeerFilter,
+                    forkIdManager));
+    return super.createEthProtocolManager(
+        protocolContext,
+        synchronizerConfiguration,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethContext,
+        ethMessages,
+        scheduler,
+        peerValidators,
+        mergePeerFilter,
+        forkIdManager);
   }
 
   @Override

@@ -96,7 +96,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Duration;
@@ -152,7 +151,9 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   private ValidatorProvider createReadOnlyValidatorProvider(final Blockchain blockchain) {
     checkNotNull(
         transactionValidatorProvider, "transactionValidatorProvider should have been initialised");
-    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
+    final long startBlock =
+        qbftConfig.getStartBlock().isPresent() ? qbftConfig.getStartBlock().getAsLong() : 0;
+    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength(), startBlock);
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
     final BlockValidatorProvider readOnlyBlockValidatorProvider =
         BlockValidatorProvider.nonForkingValidatorProvider(
@@ -212,8 +213,16 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             qbftExtraDataCodec,
             ethProtocolManager.ethContext().getScheduler());
 
-    final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
+    final ValidatorProvider validatorProvider;
+    if (qbftConfig.getStartBlock().isPresent()) {
+      validatorProvider =
+          protocolContext
+              .getConsensusContext(BftContext.class, qbftConfig.getStartBlock().getAsLong())
+              .getValidatorProvider();
+    } else {
+      validatorProvider =
+          protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
+    }
     final QbftValidatorProvider qbftValidatorProvider =
         new QbftValidatorProviderAdaptor(validatorProvider);
 
@@ -316,7 +325,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             bftProcessor,
             blockCreatorFactory,
             blockchain,
-            bftEventQueue);
+            bftEventQueue,
+            syncState);
 
     // Update the next block period in seconds according to the transition schedule
     protocolContext
@@ -334,35 +344,6 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                       .getValue()
                       .getEmptyBlockPeriodSeconds());
             });
-
-    syncState.subscribeSyncStatus(
-        syncStatus -> {
-          if (syncState.syncTarget().isPresent()) {
-            // We're syncing so stop doing other stuff
-            LOG.info("Stopping QBFT mining coordinator while we are syncing");
-            miningCoordinator.stop();
-          } else {
-            LOG.info("Starting QBFT mining coordinator following sync");
-            miningCoordinator.enable();
-            miningCoordinator.start();
-          }
-        });
-
-    syncState.subscribeCompletionReached(
-        new BesuEvents.InitialSyncCompletionListener() {
-          @Override
-          public void onInitialSyncCompleted() {
-            LOG.info("Starting QBFT mining coordinator following initial sync");
-            miningCoordinator.enable();
-            miningCoordinator.start();
-          }
-
-          @Override
-          public void onInitialSyncRestart() {
-            // Nothing to do. The mining coordinator won't be started until
-            // sync has completed.
-          }
-        });
 
     return miningCoordinator;
   }
@@ -428,7 +409,9 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
+    final long startBlock =
+        qbftConfig.getStartBlock().isPresent() ? qbftConfig.getStartBlock().getAsLong() : 0;
+    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength(), startBlock);
 
     final BftValidatorOverrides validatorOverrides =
         convertBftForks(genesisConfigOptions.getTransitions().getQbftForks());
