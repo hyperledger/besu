@@ -55,6 +55,6 @@ public class CodeDelegationService {
    * @return {@code true} if the account can set delegated code, {@code false} otherwise.
    */
   public boolean canSetCodeDelegation(final Account account) {
-    return account.getCode().isEmpty() || hasCodeDelegation(account.getCode());
+    return account != null && (account.getCode().isEmpty() || hasCodeDelegation(account.getCode()));
   }
 }

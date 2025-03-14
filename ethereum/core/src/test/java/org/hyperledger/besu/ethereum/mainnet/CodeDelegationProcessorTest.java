@@ -72,7 +72,8 @@ class CodeDelegationProcessorTest {
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
@@ -87,7 +88,8 @@ class CodeDelegationProcessorTest {
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
@@ -105,7 +107,8 @@ class CodeDelegationProcessorTest {
     when(authority.getNonce()).thenReturn(0L);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
@@ -121,7 +124,8 @@ class CodeDelegationProcessorTest {
     when(worldUpdater.getAccount(any())).thenReturn(null);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
@@ -139,7 +143,8 @@ class CodeDelegationProcessorTest {
     when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(true);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isEqualTo(1);
@@ -157,7 +162,8 @@ class CodeDelegationProcessorTest {
     when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(true);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
@@ -201,7 +207,8 @@ class CodeDelegationProcessorTest {
     when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(true);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
@@ -217,7 +224,8 @@ class CodeDelegationProcessorTest {
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
@@ -235,7 +243,8 @@ class CodeDelegationProcessorTest {
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
@@ -255,7 +264,8 @@ class CodeDelegationProcessorTest {
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
@@ -272,7 +282,8 @@ class CodeDelegationProcessorTest {
     when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(false);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
