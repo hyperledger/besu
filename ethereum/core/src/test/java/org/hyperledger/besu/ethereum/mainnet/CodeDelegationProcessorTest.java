@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
-import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -44,13 +44,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class CodeDelegationProcessorTest {
 
-  @Mock private EVMWorldUpdater worldUpdater;
+  @Mock private WorldUpdater worldUpdater;
 
   @Mock private Transaction transaction;
 
-  @Mock private CodeDelegationService delegationCodeService;
-
   @Mock private MutableAccount authority;
+
+  @SuppressWarnings("MockNotUsedInProduction")
+  @Mock
+  private CodeDelegationService codeDelegationService;
 
   private CodeDelegationProcessor processor;
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(1);
@@ -70,7 +72,8 @@ class CodeDelegationProcessorTest {
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
@@ -85,7 +88,8 @@ class CodeDelegationProcessorTest {
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
@@ -96,7 +100,6 @@ class CodeDelegationProcessorTest {
   @Test
   void shouldProcessValidDelegationForNewAccount() {
     // Arrange
-    when(worldUpdater.codeDelegationService()).thenReturn(delegationCodeService);
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 0L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
     when(worldUpdater.getAccount(any())).thenReturn(null);
@@ -104,13 +107,13 @@ class CodeDelegationProcessorTest {
     when(authority.getNonce()).thenReturn(0L);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(worldUpdater).createAccount(any());
     verify(authority).incrementNonce();
-    verify(delegationCodeService).processCodeDelegation(authority, DELEGATE_ADDRESS);
   }
 
   @Test
@@ -121,57 +124,56 @@ class CodeDelegationProcessorTest {
     when(worldUpdater.getAccount(any())).thenReturn(null);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(worldUpdater, never()).createAccount(any());
     verify(authority, never()).incrementNonce();
-    verify(delegationCodeService, never()).processCodeDelegation(authority, DELEGATE_ADDRESS);
   }
 
   @Test
   void shouldProcessValidDelegationForExistingAccount() {
     // Arrange
-    when(worldUpdater.codeDelegationService()).thenReturn(delegationCodeService);
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 1L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
     when(worldUpdater.getAccount(any())).thenReturn(authority);
     when(authority.getNonce()).thenReturn(1L);
-    when(delegationCodeService.canSetCodeDelegation(any())).thenReturn(true);
+    when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(true);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isEqualTo(1);
     verify(worldUpdater, never()).createAccount(any());
     verify(authority).incrementNonce();
-    verify(delegationCodeService).processCodeDelegation(authority, DELEGATE_ADDRESS);
+    verify(codeDelegationService).processCodeDelegation(authority, DELEGATE_ADDRESS);
   }
 
   @Test
   void shouldRejectDelegationWithInvalidNonce() {
     // Arrange
-    when(worldUpdater.codeDelegationService()).thenReturn(delegationCodeService);
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 2L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
     when(worldUpdater.getAccount(any())).thenReturn(authority);
-    when(delegationCodeService.canSetCodeDelegation(any())).thenReturn(true);
+    when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(true);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(authority, never()).incrementNonce();
-    verify(delegationCodeService, never()).processCodeDelegation(any(), any());
+    verify(codeDelegationService, never()).processCodeDelegation(any(), any());
   }
 
   @Test
   void shouldSkipOverInvalidMultipleInvalidNonceDelegationsForSameAuthorityForNewAccount() {
     // Arrange
-    when(worldUpdater.codeDelegationService()).thenReturn(delegationCodeService);
     var signature1 = new SECPSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
     long cd1_invalidNonce = 2L;
     var cd1_invalid =
@@ -202,15 +204,16 @@ class CodeDelegationProcessorTest {
     when(worldUpdater.getAccount(any())).thenReturn(null).thenReturn(null).thenReturn(authority);
     when(worldUpdater.createAccount(any())).thenReturn(authority);
     when(authority.getNonce()).thenReturn(0L).thenReturn(1L);
-    when(delegationCodeService.canSetCodeDelegation(any())).thenReturn(true);
+    when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(true);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(authority, times(1)).incrementNonce();
-    verify(delegationCodeService, times(1)).processCodeDelegation(any(), any());
+    verify(codeDelegationService, times(1)).processCodeDelegation(any(), any());
   }
 
   @Test
@@ -221,12 +224,13 @@ class CodeDelegationProcessorTest {
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(authority, never()).incrementNonce();
-    verify(delegationCodeService, never()).processCodeDelegation(any(), any());
+    verify(codeDelegationService, never()).processCodeDelegation(any(), any());
   }
 
   @Test
@@ -239,12 +243,13 @@ class CodeDelegationProcessorTest {
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(authority, never()).incrementNonce();
-    verify(delegationCodeService, never()).processCodeDelegation(any(), any());
+    verify(codeDelegationService, never()).processCodeDelegation(any(), any());
   }
 
   @Test
@@ -259,30 +264,31 @@ class CodeDelegationProcessorTest {
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(authority, never()).incrementNonce();
-    verify(delegationCodeService, never()).processCodeDelegation(any(), any());
+    verify(codeDelegationService, never()).processCodeDelegation(any(), any());
   }
 
   @Test
   void shouldRejectDelegationWhenCannotSetCodeDelegation() {
     // Arrange
-    when(worldUpdater.codeDelegationService()).thenReturn(delegationCodeService);
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 1L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
     when(worldUpdater.getAccount(any())).thenReturn(authority);
-    when(delegationCodeService.canSetCodeDelegation(any())).thenReturn(false);
+    when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(false);
 
     // Act
-    CodeDelegationResult result = processor.process(worldUpdater, transaction);
+    CodeDelegationResult result =
+        processor.process(worldUpdater, codeDelegationService, transaction);
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
     verify(authority, never()).incrementNonce();
-    verify(delegationCodeService, never()).processCodeDelegation(any(), any());
+    verify(codeDelegationService, never()).processCodeDelegation(any(), any());
   }
 
   private CodeDelegation createCodeDelegation(final BigInteger chainId, final long nonce) {

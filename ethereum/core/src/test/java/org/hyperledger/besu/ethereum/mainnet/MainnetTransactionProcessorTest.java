@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
@@ -176,6 +177,7 @@ class MainnetTransactionProcessorTest {
     when(worldState.getOrCreateSenderAccount(senderAddress)).thenReturn(senderAccount);
     when(worldState.get(toAddress.get())).thenReturn(receiverAccount);
     when(worldState.updater()).thenReturn(worldState);
+    when(messageCallProcessor.getCodeFromEVM(any(), any())).thenReturn(CodeV0.EMPTY_CODE);
     // throw exception when processing the transaction
     doAnswer(
             invocation -> {

@@ -744,9 +744,6 @@ public abstract class MainnetProtocolSpecs {
                     .maxStackSize(evmConfiguration.evmStackSize())
                     .feeMarket(feeMarket)
                     .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
-                    .codeDelegationProcessor(
-                        new CodeDelegationProcessor(
-                            chainId, SIGNATURE_ALGORITHM.get().getHalfCurveOrder()))
                     .build())
         // change to check for max blob gas per block for EIP-4844
         .transactionValidatorFactoryBuilder(
@@ -891,6 +888,27 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.BLOB,
                         TransactionType.DELEGATE_CODE),
                     evm.getMaxInitcodeSize()))
+        // CodeDelegationProcessor
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidator)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccounts(true)
+                    .warmCoinbase(true)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
+                    .codeDelegationProcessor(
+                        new CodeDelegationProcessor(
+                            chainId, SIGNATURE_ALGORITHM.get().getHalfCurveOrder()))
+                    .build())
 
         // TODO SLD EIP-7840 Can we dynamically wire in the appropriate GasCalculator instead of
         // overriding
