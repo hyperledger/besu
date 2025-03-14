@@ -103,6 +103,15 @@ public class ProposerSelector {
         roundIdentifier, prevBlockProposer, validatorsForRound, changeEachBlock);
   }
 
+  /**
+   * Determines which validator should be acting as the proposer for a given sequence/round.
+   *
+   * @param roundIdentifier The round for which a proposer is required.
+   * @param prevBlockProposer The proposer of the previous block.
+   * @param validatorsForRound The validators for the round.
+   * @param changeEachBlock Whether the proposer should change each block.
+   * @return The address of the node which is to propose a block for the provided Round.
+   */
   public static Address selectProposerForRound(
       final ConsensusRoundIdentifier roundIdentifier,
       final Address prevBlockProposer,
