@@ -19,14 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
+import java.util.function.UnaryOperator;
 
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -43,7 +39,7 @@ public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
 
     node =
         besu.createPluginsNode(
-            "node1", Collections.singletonList("testPlugins"), Collections.emptyList());
+            "node1", Collections.singletonList("testPlugins"), UnaryOperator.identity());
     cluster.start(node);
   }
 
@@ -77,20 +73,5 @@ public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
     waitForFile(node.homeDirectory().resolve("plugins/pluginLifecycle.stopped"));
     assertThat(node.homeDirectory().resolve("plugins/badCliOptions.start")).doesNotExist();
     assertThat(node.homeDirectory().resolve("plugins/badCliOptions.stop")).doesNotExist();
-  }
-
-  private void waitForFile(final Path path) {
-    final File file = path.toFile();
-    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              if (file.exists()) {
-                try (final Stream<String> s = Files.lines(path)) {
-                  return s.count() > 0;
-                }
-              } else {
-                return false;
-              }
-            });
   }
 }
