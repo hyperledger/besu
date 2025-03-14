@@ -61,6 +61,8 @@
 
 ### Breaking Changes
 - `rpc-gas-cap` default value has changed from 0 (unlimited) to 50M. If you require `rpc-gas-cap` greater than 50M, you'll need to set that explicitly. [#8251](https://github.com/hyperledger/besu/issues/8251)
+- The CLI option `--Xsnapsync-synchronizer-flat-db-healing-enabled` has been removed. It has been replaced by `--Xbonsai-full-flat-db-enabled`. [#8415](https://github.com/hyperledger/besu/issues/8415)
+
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
 - k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release. Use docker or none instead.
