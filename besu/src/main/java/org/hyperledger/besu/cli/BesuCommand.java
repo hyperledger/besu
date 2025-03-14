@@ -21,7 +21,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
+import static org.hyperledger.besu.cli.config.NetworkName.HOLESKY;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -230,6 +232,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -2122,6 +2125,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final var miningParameters = miningOptions.toDomainObject();
     getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
         .ifPresent(miningParameters::setBlockPeriodSeconds);
+    getGenesisTargetGasLimit(genesisConfigOptionsSupplier.get())
+        .ifPresent(miningParameters::setTargetGasLimit);
     initMiningParametersMetrics(miningParameters);
 
     return miningParameters;
@@ -2194,6 +2199,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     return OptionalInt.empty();
+  }
+
+  private OptionalLong getGenesisTargetGasLimit(final GenesisConfigOptions genesisConfigOptions) {
+    final Optional<BigInteger> chainId = genesisConfigOptions.getChainId();
+    final OptionalLong gasLimit = genesisConfigOptions.getGasLimit();
+    if ((chainId.isPresent()
+            && (chainId.get().equals(SEPOLIA.getNetworkId())
+                || chainId.get().equals(HOLESKY.getNetworkId())))
+        || (gasLimit.isEmpty() || gasLimit.getAsLong() == 0)) return OptionalLong.empty();
+    return gasLimit;
   }
 
   // Blockchain synchronization from peers.

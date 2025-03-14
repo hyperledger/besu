@@ -333,6 +333,9 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         miningConfiguration.getNonPoaBlockTxsSelectionMaxTime();
     miningOptions.poaBlockTxsSelectionMaxTime =
         miningConfiguration.getPoaBlockTxsSelectionMaxTime();
+    if (miningConfiguration.getTargetGasLimit().isPresent()) {
+      miningOptions.targetGasLimit = miningConfiguration.getTargetGasLimit().getAsLong();
+    }
 
     miningOptions.unstableOptions.remoteSealersLimit =
         miningConfiguration.getUnstable().getRemoteSealersLimit();
