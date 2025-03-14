@@ -22,8 +22,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -33,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
@@ -94,6 +97,15 @@ public class FastDownloaderFactoryTest {
     }
     when(worldStateKeyValueStorage.getDataStorageFormat()).thenReturn(dataStorageFormat);
     worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+
+    WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
+    MutableWorldState mutableWorldState = mock(MutableWorldState.class);
+    when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
+    when(worldStateArchive.getWorldState()).thenReturn(mutableWorldState);
+    when(mutableWorldState.rootHash())
+        .thenReturn(
+            Hash.fromHexString(
+                "0xd7f8974fb5ac78d9ac099b9ad5018bedc2ce0a72dad1827a1709da30580f0544"));
   }
 
   @ParameterizedTest
@@ -149,8 +161,7 @@ public class FastDownloaderFactoryTest {
   @SuppressWarnings("unchecked")
   @ParameterizedTest
   @ArgumentsSource(FastDownloaderFactoryTestArguments.class)
-  public void shouldNotThrowWhenFastSyncModeRequested(final DataStorageFormat dataStorageFormat)
-      throws NoSuchFieldException {
+  public void shouldNotThrowWhenFastSyncModeRequested(final DataStorageFormat dataStorageFormat) {
     setup(dataStorageFormat);
     initDataDirectory(false);
 
@@ -171,8 +182,6 @@ public class FastDownloaderFactoryTest {
         syncState,
         clock,
         SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
-
-    verify(mutableBlockchain).getChainHeadBlockNumber();
   }
 
   @ParameterizedTest
