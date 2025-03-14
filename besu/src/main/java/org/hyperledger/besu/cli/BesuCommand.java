@@ -35,7 +35,7 @@ import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NativeRequirement;
+import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
@@ -839,7 +839,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param executionExceptionHandler Exception handler for business logic
    * @param in Standard input stream
    * @param args arguments to Besu command
-   * @return success or failure exit code.
+   * @return present or failure exit code.
    */
   /**
    * Parses command line arguments and configures the application accordingly.
@@ -1443,9 +1443,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @VisibleForTesting
   void checkRequiredNativeLibraries(final NetworkName configuredNetwork) {
+    if (configuredNetwork == null) {
+      return;
+    }
+
     // assert native library requirements for named networks:
-    List<NativeRequirement> failedNativeReqs =
-        configuredNetwork.getNativeRequirements().stream().filter(r -> !r.success()).toList();
+    List<NativeRequirementResult> failedNativeReqs =
+        configuredNetwork.getNativeRequirements().stream().filter(r -> !r.present()).toList();
 
     if (!failedNativeReqs.isEmpty()) {
       String failures =
@@ -1454,10 +1458,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               .collect(Collectors.joining("\n\t"));
       throw new UnsupportedOperationException(
           String.format(
-              "Failed to load required native libraries for this network. "
+              "Failed to load required native libraries for network %s. "
                   + "Verify whether your platform %s and arch %s are supported by besu. "
                   + "Failures loading: \n%s",
-              System.getProperty("os.name"), System.getProperty("os.arch"), failures));
+              configuredNetwork.name(),
+              System.getProperty("os.name"),
+              System.getProperty("os.arch"),
+              failures));
     }
   }
 

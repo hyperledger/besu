@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.config;
 
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.evm.precompile.AltBN128PairingPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BLS12PairingPrecompiledContract;
 
@@ -22,34 +23,32 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import ethereum.ckzg4844.CKZG4844JNI;
+/** Encapsulates the native library requirements of given networks. */
+public interface NativeRequirement {
 
-/**
- * Record type to encapsulate the result of native library loading
- *
- * @param success boolean indicating library loading success or failure.
- * @param libname string indicating the required library name.
- * @param errorMessage Optional error message suitable to log.
- */
-public record NativeRequirement(Boolean success, String libname, Optional<String> errorMessage) {
+  /**
+   * Record type to encapsulate the result of native library loading
+   *
+   * @param present boolean indicating library loading present or failure.
+   * @param libname string indicating the required library name.
+   * @param errorMessage Optional error message suitable to log.
+   */
+  record NativeRequirementResult(Boolean present, String libname, Optional<String> errorMessage) {}
 
-  public static final Supplier<List<NativeRequirement>> MAINNET =
+  Supplier<List<NativeRequirementResult>> MAINNET =
       () -> {
-        List<NativeRequirement> requirements = new ArrayList<>();
-        try {
-          CKZG4844JNI.loadNativeLibrary();
-          requirements.add(new NativeRequirement(true, "ckzg4844jni", Optional.empty()));
-        } catch (Exception ex) {
-          requirements.add(
-              new NativeRequirement(
-                  false,
-                  "ckzg4844jni",
-                  Optional.of(
-                      "C-KZG-4844: library failed to load with exception: " + ex.getMessage())));
-        }
+        List<NativeRequirementResult> requirements = new ArrayList<>();
+        var secp256k1 = new SECP256K1();
+        requirements.add(
+            new NativeRequirementResult(
+                secp256k1.maybeEnableNative(),
+                "secp256k1",
+                secp256k1.maybeEnableNative()
+                    ? Optional.empty()
+                    : Optional.of("secp256k1: Native secp256k1 not available")));
 
         requirements.add(
-            new NativeRequirement(
+            new NativeRequirementResult(
                 AltBN128PairingPrecompiledContract.isNative(),
                 "alt_bn128",
                 AltBN128PairingPrecompiledContract.isNative()
@@ -57,12 +56,12 @@ public record NativeRequirement(Boolean success, String libname, Optional<String
                     : Optional.of("alt_bn128: EC native library failed to load")));
 
         requirements.add(
-            new NativeRequirement(
+            new NativeRequirementResult(
                 BLS12PairingPrecompiledContract.isAvailable(),
                 "bls12-381",
                 BLS12PairingPrecompiledContract.isAvailable()
                     ? Optional.empty()
-                    : Optional.of("BLS12-381: EC native library failed to load")));
+                    : Optional.of("bls12-381: EC native library failed to load")));
 
         return requirements;
       };

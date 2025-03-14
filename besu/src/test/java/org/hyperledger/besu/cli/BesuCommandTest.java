@@ -50,7 +50,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NativeRequirement;
+import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.MergeConfiguration;
@@ -2583,7 +2583,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     BesuCommand mockCmd = parseCommand("--network=mainnet");
     NetworkName spyDev = spy(NetworkName.DEV);
     when(spyDev.getNativeRequirements())
-        .thenReturn(List.of(new NativeRequirement(false, "MOCKLIB", Optional.of("Mock error"))));
+        .thenReturn(
+            List.of(new NativeRequirementResult(false, "MOCKLIB", Optional.of("Mock error"))));
     assertThatExceptionOfType(UnsupportedOperationException.class)
         .isThrownBy(() -> mockCmd.checkRequiredNativeLibraries(spyDev))
         .withMessageContaining("MOCKLIB")

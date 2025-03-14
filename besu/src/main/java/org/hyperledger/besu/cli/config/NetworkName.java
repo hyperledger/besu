@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.cli.config;
 
+import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
+
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +57,7 @@ public enum NetworkName {
   private final BigInteger networkId;
   private final boolean canSnapSync;
   private final String deprecationDate;
-  private final Supplier<List<NativeRequirement>> nativeRequirements;
+  private final Supplier<List<NativeRequirementResult>> nativeRequirements;
 
   NetworkName(final String genesisFile, final BigInteger networkId) {
     this(genesisFile, networkId, true);
@@ -69,7 +71,7 @@ public enum NetworkName {
       final String genesisFile,
       final BigInteger networkId,
       final boolean canSnapSync,
-      final Supplier<List<NativeRequirement>> nativeRequirements) {
+      final Supplier<List<NativeRequirementResult>> nativeRequirements) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
     this.canSnapSync = canSnapSync;
@@ -137,7 +139,7 @@ public enum NetworkName {
    *
    * @return result of native library requirements defined for this network, as a list.
    */
-  public List<NativeRequirement> getNativeRequirements() {
+  public List<NativeRequirementResult> getNativeRequirements() {
     return this.nativeRequirements.get();
   }
 }
