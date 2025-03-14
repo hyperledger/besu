@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import static org.hyperledger.besu.ethereum.transaction.BlockStateCalls.fillBlockStateCalls;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;

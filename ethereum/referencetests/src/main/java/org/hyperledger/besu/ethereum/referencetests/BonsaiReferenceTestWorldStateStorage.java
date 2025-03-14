@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiPreImageProxy;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiPreImageProxy;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
@@ -65,7 +65,7 @@ public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerS
   }
 
   public Stream<WorldState.StreamableAccount> streamAccounts(
-      final DiffBasedWorldView context, final Bytes32 startKeyHash, final int limit) {
+      final PathBasedWorldView context, final Bytes32 startKeyHash, final int limit) {
     return streamFlatAccounts(startKeyHash, UInt256.MAX_VALUE, limit)
         .entrySet()
         // map back to addresses using preImage provider:

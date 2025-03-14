@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -221,7 +221,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         final Address miningBeneficiary,
         final BlockHashLookup blockHashLookup,
         final Wei blobGasPrice) {
-      if ((protocolContext.getWorldStateArchive() instanceof DiffBasedWorldStateProvider)) {
+      if ((protocolContext.getWorldStateArchive() instanceof PathBasedWorldStateProvider)) {
         ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =
             new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
         // runAsyncBlock, if activated, facilitates the  non-blocking parallel execution of

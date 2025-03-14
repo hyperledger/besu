@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.services;
 
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Hash;
@@ -26,9 +26,9 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -51,7 +51,7 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   private final Synchronizer synchronizer;
 
   private final SyncState syncState;
-  private final Optional<DiffBasedWorldStateProvider> worldStateArchive;
+  private final Optional<PathBasedWorldStateProvider> worldStateArchive;
 
   /**
    * Constructor for SynchronizationServiceImpl.
@@ -74,8 +74,8 @@ public class SynchronizationServiceImpl implements SynchronizationService {
     this.syncState = syncState;
     this.worldStateArchive =
         Optional.ofNullable(worldStateArchive)
-            .filter(z -> z instanceof DiffBasedWorldStateProvider)
-            .map(DiffBasedWorldStateProvider.class::cast);
+            .filter(z -> z instanceof PathBasedWorldStateProvider)
+            .map(PathBasedWorldStateProvider.class::cast);
   }
 
   @Override
@@ -147,14 +147,14 @@ public class SynchronizationServiceImpl implements SynchronizationService {
     worldStateArchive.ifPresent(
         archive -> {
           archive.getWorldStateSharedSpec().setTrieDisabled(true);
-          final DiffBasedWorldStateKeyValueStorage worldStateStorage =
+          final PathBasedWorldStateKeyValueStorage worldStateStorage =
               archive.getWorldStateKeyValueStorage();
           final Optional<Hash> worldStateBlockHash = worldStateStorage.getWorldStateBlockHash();
           final Optional<Bytes> worldStateRootHash = worldStateStorage.getWorldStateRootHash();
           if (worldStateRootHash.isPresent() && worldStateBlockHash.isPresent()) {
             worldStateStorage.clearTrie();
             // keep root and block hash in the trie branch
-            final DiffBasedWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
+            final PathBasedWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
             updater.saveWorldState(
                 worldStateBlockHash.get(), Bytes32.wrap(worldStateRootHash.get()), Bytes.EMPTY);
             updater.commit();

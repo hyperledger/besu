@@ -68,7 +68,7 @@ import org.hyperledger.besu.cli.options.RpcWebsocketOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
-import org.hyperledger.besu.cli.options.storage.DiffBasedSubStorageOptions;
+import org.hyperledger.besu.cli.options.storage.PathBasedExtraStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.QBFTOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
@@ -134,9 +134,9 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -1652,7 +1652,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--Xsnapsync-synchronizer-flat option can only be used when --Xbonsai-full-flat-db-enabled is true",
         dataStorageOptions
             .toDomainObject()
-            .getDiffBasedSubStorageConfiguration()
+            .getPathBasedExtraStorageConfiguration()
             .getUnstable()
             .getFullFlatDbEnabled(),
         asList(
@@ -1805,8 +1805,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
-      final DiffBasedSubStorageConfiguration subStorageConfiguration =
-          getDataStorageConfiguration().getDiffBasedSubStorageConfiguration();
+      final PathBasedExtraStorageConfiguration subStorageConfiguration =
+          getDataStorageConfiguration().getPathBasedExtraStorageConfiguration();
       besuControllerBuilder.isParallelTxProcessingEnabled(
           subStorageConfiguration.getUnstable().isParallelTxProcessingEnabled());
     }
@@ -2144,30 +2144,30 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (SyncMode.FULL.equals(getDefaultSyncModeIfNotSet())
         && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
-      final DiffBasedSubStorageConfiguration diffBasedSubStorageConfiguration =
-          dataStorageConfiguration.getDiffBasedSubStorageConfiguration();
-      if (diffBasedSubStorageConfiguration.getLimitTrieLogsEnabled()) {
+      final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration =
+          dataStorageConfiguration.getPathBasedExtraStorageConfiguration();
+      if (pathBasedExtraStorageConfiguration.getLimitTrieLogsEnabled()) {
         if (CommandLineUtils.isOptionSet(
-            commandLine, DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED)) {
+            commandLine, PathBasedExtraStorageOptions.LIMIT_TRIE_LOGS_ENABLED)) {
           throw new ParameterException(
               commandLine,
               String.format(
                   "Cannot enable %s with --sync-mode=%s and --data-storage-format=%s. You must set %s or use a different sync-mode",
-                  DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED,
+                  PathBasedExtraStorageOptions.LIMIT_TRIE_LOGS_ENABLED,
                   SyncMode.FULL,
                   DataStorageFormat.BONSAI,
-                  DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false"));
+                  PathBasedExtraStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false"));
         }
 
         dataStorageConfiguration =
             ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
-                .withDiffBasedSubStorageConfiguration(
-                    ImmutableDiffBasedSubStorageConfiguration.copyOf(
-                            dataStorageConfiguration.getDiffBasedSubStorageConfiguration())
+                .withPathBasedExtraStorageConfiguration(
+                    ImmutablePathBasedExtraStorageConfiguration.copyOf(
+                            dataStorageConfiguration.getPathBasedExtraStorageConfiguration())
                         .withLimitTrieLogsEnabled(false));
         logger.warn(
             "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
-            DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false",
+            PathBasedExtraStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false",
             SyncMode.FULL,
             DataStorageFormat.BONSAI);
       }
@@ -2734,8 +2734,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
-      final DiffBasedSubStorageConfiguration subStorageConfiguration =
-          getDataStorageConfiguration().getDiffBasedSubStorageConfiguration();
+      final PathBasedExtraStorageConfiguration subStorageConfiguration =
+          getDataStorageConfiguration().getPathBasedExtraStorageConfiguration();
       if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
         builder.setLimitTrieLogsEnabled();
         builder.setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad());
