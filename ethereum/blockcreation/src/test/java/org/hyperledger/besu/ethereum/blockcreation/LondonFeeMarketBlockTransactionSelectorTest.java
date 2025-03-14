@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class LondonFeeMarketBlockTransactionSelectorTest
@@ -291,4 +292,12 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             entry(
                 txNotSelected2, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
   }
+
+  @Disabled("this test is flaky see https://github.com/hyperledger/besu/issues/7150")
+  @Override
+  public void subsetOfInvalidPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver(
+      final boolean isPoa,
+      final boolean preProcessingTooLate,
+      final boolean processingTooLate,
+      final boolean postProcessingTooLate) {}
 }
