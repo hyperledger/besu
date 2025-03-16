@@ -284,22 +284,22 @@ public class BesuNodeFactory {
   public BesuNode createPluginsNode(
       final String name,
       final List<String> plugins,
-      final List<String> extraCLIOptions,
+      final UnaryOperator<BesuNodeConfigurationBuilder> configModifier,
       final String... extraRpcApis)
       throws IOException {
 
     final List<String> enableRpcApis = new ArrayList<>(Arrays.asList(extraRpcApis));
     enableRpcApis.addAll(List.of(IBFT.name(), ADMIN.name()));
 
-    return create(
+    final var confBuilder =
         new BesuNodeConfigurationBuilder()
             .name(name)
             .jsonRpcConfiguration(
                 node.createJsonRpcWithRpcApiEnabledConfig(enableRpcApis.toArray(String[]::new)))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
-            .plugins(plugins)
-            .extraCLIOptions(extraCLIOptions)
-            .build());
+            .plugins(plugins);
+
+    return create(configModifier.apply(confBuilder).build());
   }
 
   public BesuNode createArchiveNodeWithRpcApis(final String name, final String... enabledRpcApis)

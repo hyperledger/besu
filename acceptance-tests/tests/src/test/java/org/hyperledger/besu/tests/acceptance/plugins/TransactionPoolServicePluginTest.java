@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,15 +18,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class InProcessRpcServicePluginTest extends AcceptanceTestBase {
-  private static final long MIN_GAS_PRICE = 123456;
+public class TransactionPoolServicePluginTest extends AcceptanceTestBase {
   private BesuNode node;
 
   @BeforeEach
@@ -36,18 +35,22 @@ public class InProcessRpcServicePluginTest extends AcceptanceTestBase {
             "node1",
             List.of("testPlugins"),
             b ->
-                b.extraCLIOptions(
-                    List.of(
-                        "--Xin-process-rpc-enabled=true",
-                        "--Xin-process-rpc-apis=MINER",
-                        "--plugin-test-set-min-gas-price=" + MIN_GAS_PRICE)),
-            "MINER");
+                b.genesisConfigProvider(GenesisConfigurationFactory::createDevLondonGenesisConfig)
+                    .devMode(false));
     cluster.start(node);
   }
 
   @Test
-  public void smokeTest() {
-    final var currMinGasPrice = node.execute(minerTransactions.minerGetMinGasPrice());
-    assertThat(currMinGasPrice).isEqualTo(BigInteger.valueOf(MIN_GAS_PRICE));
+  public void testValidationResults() {
+    final var resultsFilePath =
+        node.homeDirectory().resolve("plugins/transactionPoolServicePluginTest.test");
+    waitForFile(resultsFilePath);
+    assertThat(resultsFilePath)
+        .content()
+        .isEqualTo(
+            """
+        valid
+        GAS_PRICE_TOO_LOW
+        """);
   }
 }
