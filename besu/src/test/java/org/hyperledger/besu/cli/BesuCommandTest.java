@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
@@ -44,6 +45,7 @@ import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -2591,6 +2593,21 @@ public class BesuCommandTest extends CommandTestAbstract {
         .withMessageContaining("Mock error")
         .withMessageContaining(System.getProperty("os.arch"))
         .withMessageContaining(System.getProperty("os.name"));
+  }
+
+  @Test
+  public void assertNativeRequirements_UnMetForUnnamedNetwork() throws IOException {
+    final Path fakeGenesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
+    BesuCommand mockCmd = parseCommand("--genesis-file=" + fakeGenesisFile.toString());
+    NetworkName spyMainnet = spy(NetworkName.MAINNET);
+    // assert no error output
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    // assert no exception
+    assertThatNoException().isThrownBy(() -> mockCmd.configureNativeLibs(Optional.of(spyMainnet)));
+    // assert we didn't check for native requirements for a custom-genesis
+    verify(spyMainnet, times(0)).getNativeRequirements();
   }
 
   @Test

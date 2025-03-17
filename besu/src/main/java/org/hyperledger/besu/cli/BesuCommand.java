@@ -1390,7 +1390,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return Optional.ofNullable(colorEnabled);
   }
 
-  private void configureNativeLibs(final Optional<NetworkName> configuredNetwork) {
+  @VisibleForTesting
+  void configureNativeLibs(final Optional<NetworkName> configuredNetwork) {
     if (unstableNativeLibraryOptions.getNativeAltbn128()
         && AbstractAltBnPrecompiledContract.maybeEnableNative()) {
       logger.info("Using the native implementation of alt bn128");
@@ -1438,7 +1439,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--kzg-trusted-setup can only be specified on networks with data blobs enabled");
     }
     // assert required native libraries have been loaded
-    configuredNetwork.ifPresent(this::checkRequiredNativeLibraries);
+    if (genesisFile == null && configuredNetwork.isPresent()) {
+      checkRequiredNativeLibraries(configuredNetwork.get());
+    }
   }
 
   @VisibleForTesting
