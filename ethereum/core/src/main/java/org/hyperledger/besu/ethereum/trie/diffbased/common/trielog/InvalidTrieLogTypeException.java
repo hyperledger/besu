@@ -12,10 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.transition;
+package org.hyperledger.besu.ethereum.trie.diffbased.common.trielog;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
@@ -25,9 +24,10 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
  * merkle trielog
  */
 @SuppressWarnings("unchecked")
-public class InvalidTrieLogLayer extends TrieLogLayer implements TrieLog {
+public class InvalidTrieLogTypeException extends TrieLogLayer implements TrieLog {
 
-  public InvalidTrieLogLayer(final Hash blockHash, final DataStorageFormat dataStorageFormat) {
+  public InvalidTrieLogTypeException(
+      final Hash blockHash, final DataStorageFormat dataStorageFormat) {
     super(blockHash, dataStorageFormat);
   }
 }

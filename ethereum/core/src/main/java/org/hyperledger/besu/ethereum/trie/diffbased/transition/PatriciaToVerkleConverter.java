@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -38,32 +39,31 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
- * Converts accounts and storage from a Patricia (Bonsai) WorldState to a Verkle-based WorldState.
+ * Converts accounts and storage from a Patricia Merkle Trie (Bonsai) WorldState to a Verkle-based
+ * WorldState.
  */
 public class PatriciaToVerkleConverter {
 
-  public static final Bytes LAST_PROCESSED_ACCOUNT_KEY =
-      Bytes.wrap("LAST_PROCESSED_ACCOUNT_KEY".getBytes(StandardCharsets.UTF_8));
-
-  public static final Bytes LAST_PROCESSED_STORAGE_KEY =
-      Bytes.wrap("LAST_PROCESSED_STORAGE_KEY".getBytes(StandardCharsets.UTF_8));
-
+  private static final Bytes NEXT_ACCOUNT_KEY =
+      Bytes.wrap("NEXT_ACCOUNT_KEY".getBytes(StandardCharsets.UTF_8));
+  private static final Bytes NEXT_STORAGE_KEY =
+      Bytes.wrap("NEXT_STORAGE_KEY".getBytes(StandardCharsets.UTF_8));
   private static final Map<Bytes, Bytes> PRE_IMAGES = new HashMap<>();
 
   /**
    * Adds a (hash -> preimage) entry to the static map.
    *
-   * @param hash the hash
-   * @param key the preimage key
+   * @param hash the hash of the key
+   * @param key the original preimage key
    */
   public static void addPreImage(final Bytes hash, final Bytes key) {
     PRE_IMAGES.put(hash, key);
   }
 
   /**
-   * Converts accounts and their storage from a {@link BonsaiWorldState} (Patricia / Merkle) to a
-   * {@link VerkleWorldState}. Returns a {@link LastProcessedState} holding the last processed
-   * account and storage key (if the limit was reached).
+   * Converts accounts and their storage from a BonsaiWorldState (Patricia / Merkle) to a
+   * VerkleWorldState. If the limit is reached, it returns a MigrationProgress holding the next
+   * account and storage key.
    *
    * @param bonsaiWorldState the source Patricia (Merkle) state
    * @param verkleWorldState the target Verkle state
@@ -73,84 +73,78 @@ public class PatriciaToVerkleConverter {
       final BonsaiWorldState bonsaiWorldState,
       final VerkleWorldState verkleWorldState,
       final int maxToConvert) {
+    VerkleWorldStateUpdateAccumulator verkleUpdateAccumulator = verkleWorldState.getAccumulator();
+    MigrationProgress migrationProgress = loadMigrationProgress(verkleUpdateAccumulator);
+    AtomicInteger convertedEntriesCount = new AtomicInteger(0);
 
-    final VerkleWorldStateUpdateAccumulator verkleUpdateAccumulator =
-        verkleWorldState.getAccumulator();
-
-    final LastProcessedState lastProcessedState = loadLastProcessedState(verkleUpdateAccumulator);
-
-    final AtomicInteger convertedEntriesCount = new AtomicInteger(0);
-
-    // Iterate over all accounts in the Bonsai (Merkle) and convert them
+    // Iterate over accounts in Bonsai (Merkle) and convert them
     bonsaiWorldState
         .getWorldStateStorage()
         .streamFlatAccounts(
-            lastProcessedState.lastProcessedAccount(),
+            migrationProgress.getNextAccountAndReset(),
             account -> {
               final Hash accountHash = Hash.wrap(account.getFirst());
-              // Build the BonsaiAccount from RLP
-              final BonsaiAccount merkleAccount =
-                  BonsaiAccount.fromRLP(
-                      bonsaiWorldState,
-                      Address.wrap(
-                          PRE_IMAGES.get(accountHash)), // Replace with the actual address if needed
-                      account.getSecond(),
-                      false);
-              // Convert storage slots if the account has any
-              if (!merkleAccount.isStorageEmpty()) {
-                final NavigableMap<Bytes32, Bytes> storages =
+              final Address address = Address.wrap(PRE_IMAGES.get(accountHash));
+              BonsaiAccount merkleAccount =
+                  BonsaiAccount.fromRLP(bonsaiWorldState, address, account.getSecond(), false);
+
+              // If the account has storage, migrate storage slots
+              if (!merkleAccount.isStorageEmpty()
+                  && !migrationProgress.isStorageAccountFullyMigrated()) {
+                NavigableMap<Bytes32, Bytes> storages =
                     bonsaiWorldState
                         .getWorldStateStorage()
                         .streamFlatStorages(
                             accountHash,
-                            lastProcessedState.lastProcessedStorageKey(),
+                            migrationProgress.getNextStorageKeyAndReset(),
                             storage -> {
-                              // If under the limit, keep going
-                              if (convertedEntriesCount.get() < maxToConvert) {
-                                convertedEntriesCount.incrementAndGet();
-                                return true;
+                              if (convertedEntriesCount.get() >= maxToConvert) {
+                                migrationProgress.setNextStorageKey(storage.getFirst());
+                                return false;
                               }
-                              // Otherwise, record next slot to migrate and stop
-                              lastProcessedState.setLastProcessedStorageKey(storage.getFirst());
-                              return false;
+                              convertedEntriesCount.incrementAndGet();
+                              return true;
                             });
+
+                if (!migrationProgress.hasNextStorage()) {
+                  migrationProgress.markStorageAccountFullyMigrated();
+                }
+
+                StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageMap =
+                    verkleUpdateAccumulator
+                        .getStorageToUpdate()
+                        .computeIfAbsent(
+                            merkleAccount.getAddress(),
+                            addr ->
+                                new StorageConsumingMap<>(
+                                    addr, new ConcurrentHashMap<>(), (a, v) -> {}));
 
                 // Convert each storage entry in parallel
                 storages.entrySet().parallelStream()
                     .forEach(
                         entry -> {
-                          final Hash slotHash = Hash.wrap(entry.getKey());
-                          // Replace with actual slot key extraction logic if available
-                          final UInt256 slotKey = UInt256.fromBytes(PRE_IMAGES.get(slotHash));
-
-                          // If this slot doesn't exist in the Verkle trie, add it
+                          Hash slotHash = Hash.wrap(entry.getKey());
+                          StorageSlotKey storageSlotKey =
+                              new StorageSlotKey(
+                                  slotHash,
+                                  Optional.of(UInt256.fromBytes(PRE_IMAGES.get(slotHash))));
                           if (verkleWorldState
-                              .getPriorStorageValue(merkleAccount.getAddress(), slotKey)
+                              .getStorageValueByStorageSlotKey(
+                                  merkleAccount.getAddress(), storageSlotKey)
                               .isEmpty()) {
-                            final UInt256 slotValue = UInt256.fromBytes(entry.getValue());
-                            verkleUpdateAccumulator
-                                .getStorageToUpdate()
-                                .computeIfAbsent(
-                                    merkleAccount.getAddress(),
-                                    address ->
-                                        new StorageConsumingMap<>(
-                                            address, new ConcurrentHashMap<>(), (a, v) -> {}))
-                                .putIfAbsent(
-                                    new StorageSlotKey(slotHash, Optional.of(slotKey)),
-                                    new DiffBasedValue<>(null, slotValue));
+                            storageMap.putIfAbsent(
+                                storageSlotKey,
+                                new DiffBasedValue<>(null, UInt256.fromBytes(entry.getValue())));
                           }
                         });
               }
 
               // Convert the account itself if still under the limit
               if (convertedEntriesCount.get() < maxToConvert) {
-                // Clear any previously recorded "next to migrate" data
-                lastProcessedState.clearLastProcessedAccount();
-                lastProcessedState.clearLastProcessedStorageKey();
+                migrationProgress.clearNextStorageKey();
 
-                // If the account is not already in the Verkle trie, add it
                 if (verkleWorldState.get(merkleAccount.getAddress()) == null) {
-                  final VerkleAccount verkleAccount =
+                  VerkleAccount verkleAccount =
                       new VerkleAccount(
                           verkleUpdateAccumulator,
                           merkleAccount.getAddress(),
@@ -158,6 +152,7 @@ public class PatriciaToVerkleConverter {
                           merkleAccount.getNonce(),
                           merkleAccount.getBalance(),
                           merkleAccount.getCodeSize().orElse(0L),
+                          merkleAccount.getCode(),
                           merkleAccount.getCodeHash(),
                           false);
 
@@ -165,88 +160,170 @@ public class PatriciaToVerkleConverter {
                       .getAccountsToUpdate()
                       .putIfAbsent(
                           verkleAccount.getAddress(), new DiffBasedValue<>(null, verkleAccount));
+                  if (verkleAccount.hasCode()) {
+                    verkleUpdateAccumulator
+                        .getCodeToUpdate()
+                        .putIfAbsent(
+                            verkleAccount.getAddress(),
+                            new DiffBasedValue<>(null, verkleAccount.getCode()));
+                    convertedEntriesCount.addAndGet(
+                        TrieKeyUtils.chunkifyCode(verkleAccount.getCode()).size());
+                  }
                 }
-                // Always increment the counter, even if the account is already in Verkle
                 convertedEntriesCount.incrementAndGet();
                 return true;
               }
 
               // If we've reached the limit, record this as the next account
-              lastProcessedState.setLastProcessedAccount(accountHash);
-
+              migrationProgress.setNextAccount(accountHash);
               return false;
             });
 
-    // Persist the updated last-processed state back to the accumulator
-    writeLastProcessedState(lastProcessedState, verkleUpdateAccumulator);
+    if (!migrationProgress.hasNextAccount()) {
+      migrationProgress.markAccountsFullyMigrated();
+    }
+
+    // Persist the migration process back to the accumulator
+    writeMigrationProgress(migrationProgress, verkleUpdateAccumulator);
   }
 
   /**
-   * Loads the previously saved "last processed account/storage key" from the accumulator's extra
-   * fields (if any).
+   * Loads the previously saved migration progress from the accumulator.
    *
-   * @param verkleWorldStateUpdateAccumulator the accumulator to read from
-   * @return a {@link LastProcessedState} instance
+   * @param accumulator the accumulator to read from.
+   * @return a {@link MigrationProgress} instance holding the migration process state.
    */
-  private static LastProcessedState loadLastProcessedState(
-      final VerkleWorldStateUpdateAccumulator verkleWorldStateUpdateAccumulator) {
-    final Bytes lastProcessedAccount =
-        verkleWorldStateUpdateAccumulator.getExtraFields().get(LAST_PROCESSED_ACCOUNT_KEY);
-    final Bytes lastProcessedStorageKey =
-        verkleWorldStateUpdateAccumulator.getExtraFields().get(LAST_PROCESSED_STORAGE_KEY);
-    return new LastProcessedState(
-        Optional.ofNullable(lastProcessedAccount), Optional.ofNullable(lastProcessedStorageKey));
+  private static MigrationProgress loadMigrationProgress(
+      final VerkleWorldStateUpdateAccumulator accumulator) {
+    Bytes nextAccount = accumulator.getExtraField(NEXT_ACCOUNT_KEY).getUpdated();
+    Bytes nextStorageKey = accumulator.getExtraField(NEXT_STORAGE_KEY).getUpdated();
+    return new MigrationProgress(
+        Optional.ofNullable(nextAccount), Optional.ofNullable(nextStorageKey));
   }
 
   /**
-   * Writes the given {@link LastProcessedState} back to the accumulator's extra fields.
+   * Writes the current migration progress back to the accumulator.
    *
-   * @param lastProcessedState the last-processed info to store
-   * @param verkleWorldStateUpdateAccumulator the accumulator to update
+   * @param progress the migration progress to store.
+   * @param accumulator the accumulator to update.
    */
-  private static void writeLastProcessedState(
-      final LastProcessedState lastProcessedState,
-      final VerkleWorldStateUpdateAccumulator verkleWorldStateUpdateAccumulator) {
-    verkleWorldStateUpdateAccumulator.addExtraField(
-        LAST_PROCESSED_ACCOUNT_KEY, lastProcessedState.lastProcessedAccount());
-    verkleWorldStateUpdateAccumulator.addExtraField(
-        LAST_PROCESSED_STORAGE_KEY, lastProcessedState.lastProcessedStorageKey());
+  private static void writeMigrationProgress(
+      final MigrationProgress progress, final VerkleWorldStateUpdateAccumulator accumulator) {
+    accumulator.getExtraField(NEXT_ACCOUNT_KEY).setUpdated(progress.getNextAccountAndReset());
+    accumulator.getExtraField(NEXT_STORAGE_KEY).setUpdated(progress.getNextStorageKeyAndReset());
   }
 
-  /** Holds the account/storage info that was last processed or next to be migrated. */
-  private static final class LastProcessedState {
+  /** Holds the migration progress, tracking the next account and storage key. */
+  private static final class MigrationProgress {
 
-    private Optional<Bytes> lastProcessedAccount;
-    private Optional<Bytes> lastProcessedStorageKey;
+    private Optional<Bytes> nextAccount;
+    private Optional<Bytes> nextStorageKey;
 
-    private LastProcessedState(
-        final Optional<Bytes> lastProcessedAccount, final Optional<Bytes> lastProcessedStorageKey) {
-      this.lastProcessedAccount = lastProcessedAccount;
-      this.lastProcessedStorageKey = lastProcessedStorageKey;
+    /**
+     * Constructor to initialize the migration progress.
+     *
+     * @param nextAccount The next account to process.
+     * @param nextStorageKey The next storage key to process.
+     */
+    private MigrationProgress(
+        final Optional<Bytes> nextAccount, final Optional<Bytes> nextStorageKey) {
+      this.nextAccount = nextAccount;
+      this.nextStorageKey = nextStorageKey;
     }
 
-    public Bytes lastProcessedAccount() {
-      return lastProcessedAccount.orElse(Bytes32.ZERO);
+    /**
+     * Retrieves the next account to process and resets it.
+     *
+     * @return The next account, or a zero value if none exists.
+     */
+    public Bytes getNextAccountAndReset() {
+      return nextAccount
+          .map(
+              k -> {
+                clearNextAccount();
+                return k;
+              })
+          .orElse(Bytes32.ZERO);
     }
 
-    public Bytes lastProcessedStorageKey() {
-      return lastProcessedStorageKey.orElse(Bytes32.ZERO);
+    /**
+     * Retrieves the next storage key and resets it.
+     *
+     * @return The next storage key, or a zero value if none exists.
+     */
+    public Bytes getNextStorageKeyAndReset() {
+      return nextStorageKey
+          .map(
+              k -> {
+                clearNextStorageKey();
+                return k;
+              })
+          .orElse(Bytes32.ZERO);
     }
 
-    public void setLastProcessedAccount(final Bytes lastProcessedAccount) {
-      this.lastProcessedAccount = Optional.ofNullable(lastProcessedAccount);
+    /**
+     * Sets the next account to be processed.
+     *
+     * @param nextAccount The account to set.
+     */
+    public void setNextAccount(final Bytes nextAccount) {
+      this.nextAccount = Optional.ofNullable(nextAccount);
     }
 
-    public void setLastProcessedStorageKey(final Bytes lastProcessedStorageKey) {
-      this.lastProcessedStorageKey = Optional.ofNullable(lastProcessedStorageKey);
+    /**
+     * Checks if there is a next account to process.
+     *
+     * @return true if there is a next account, false otherwise.
+     */
+    public boolean hasNextAccount() {
+      return this.nextAccount.isPresent();
     }
 
-    public void clearLastProcessedAccount() {
-      this.lastProcessedAccount = Optional.empty();
+    /** Marks all the accounts as fully migrated by setting an empty value. */
+    public void markAccountsFullyMigrated() {
+      this.nextAccount = Optional.of(Bytes.EMPTY);
     }
 
-    public void clearLastProcessedStorageKey() {
-      this.lastProcessedStorageKey = Optional.empty();
+    /**
+     * Sets the next storage key to be processed.
+     *
+     * @param nextStorageKey The storage key to set.
+     */
+    public void setNextStorageKey(final Bytes nextStorageKey) {
+      this.nextStorageKey = Optional.ofNullable(nextStorageKey);
+    }
+
+    /** Marks the storage account as fully migrated by setting an empty value. */
+    public void markStorageAccountFullyMigrated() {
+      this.nextStorageKey = Optional.of(Bytes.EMPTY);
+    }
+
+    /**
+     * Checks if there is a next storage key to process.
+     *
+     * @return true if there is a next storage key, false otherwise.
+     */
+    public boolean hasNextStorage() {
+      return this.nextStorageKey.isPresent();
+    }
+
+    /**
+     * Checks if the storage account has been fully migrated.
+     *
+     * @return true if fully migrated, false otherwise.
+     */
+    public boolean isStorageAccountFullyMigrated() {
+      return this.nextStorageKey.map(Bytes.EMPTY::equals).orElse(false);
+    }
+
+    /** Clears the next account field, indicating all accounts have been processed. */
+    public void clearNextAccount() {
+      this.nextAccount = Optional.empty();
+    }
+
+    /** Clears the next storage key field, indicating all storage keys have been processed. */
+    public void clearNextStorageKey() {
+      this.nextStorageKey = Optional.empty();
     }
   }
 }

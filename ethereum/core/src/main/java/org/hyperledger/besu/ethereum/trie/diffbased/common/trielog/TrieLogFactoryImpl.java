@@ -69,7 +69,13 @@ public abstract class TrieLogFactoryImpl implements TrieLogFactory {
       }
     }
 
-    accumulator.getExtraFields().forEach(layer::addExtraField);
+    // add optional extra fields in the trielog
+    accumulator
+        .getExtraFields()
+        .forEach(
+            (key, value) -> {
+              layer.addExtraField(key, value.getPrior(), value.getUpdated());
+            });
 
     return layer;
   }

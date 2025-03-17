@@ -52,7 +52,7 @@ public interface TrieLog {
 
   DataStorageFormat getDataStorageFormat();
 
-  Map<Bytes, Bytes> getExtraFields();
+  <U extends LogTuple<Bytes>> Map<Bytes, U> getExtraFields();
 
   /**
    * Gets a map of addresses to their account value changes.

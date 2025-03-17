@@ -51,14 +51,14 @@ public class TrieLogLayer implements TrieLog {
   protected final Map<Address, DiffBasedValue<AccountValue>> accounts;
   protected final Map<Address, DiffBasedValue<Bytes>> code;
   protected final Map<Address, Map<StorageSlotKey, DiffBasedValue<UInt256>>> storage;
-  protected Map<Bytes, Bytes> extraFields;
+  protected Map<Bytes, DiffBasedValue<Bytes>> extraFields;
   protected boolean frozen = false;
 
   public TrieLogLayer(
       final Map<Address, DiffBasedValue<AccountValue>> accounts,
       final Map<Address, DiffBasedValue<Bytes>> code,
       final Map<Address, Map<StorageSlotKey, DiffBasedValue<UInt256>>> storage,
-      final Map<Bytes, Bytes> extraFields) {
+      final Map<Bytes, DiffBasedValue<Bytes>> extraFields) {
     this.accounts = accounts;
     this.code = code;
     this.storage = storage;
@@ -134,9 +134,9 @@ public class TrieLogLayer implements TrieLog {
     return this;
   }
 
-  public TrieLogLayer addExtraField(final Bytes key, final Bytes value) {
+  public TrieLogLayer addExtraField(final Bytes key, final Bytes oldValue, final Bytes newValue) {
     checkState(!frozen, "Layer is Frozen");
-    extraFields.put(key, value);
+    extraFields.put(key, new DiffBasedValue<>(oldValue, newValue));
     return this;
   }
 
@@ -170,7 +170,7 @@ public class TrieLogLayer implements TrieLog {
   }
 
   @Override
-  public Map<Bytes, Bytes> getExtraFields() {
+  public Map<Bytes, DiffBasedValue<Bytes>> getExtraFields() {
     return extraFields;
   }
 

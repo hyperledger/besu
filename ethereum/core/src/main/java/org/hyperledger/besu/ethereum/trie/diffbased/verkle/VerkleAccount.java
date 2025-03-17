@@ -55,6 +55,20 @@ public class VerkleAccount extends DiffBasedAccount {
   public VerkleAccount(
       final DiffBasedWorldView context,
       final Address address,
+      final Hash addressHash,
+      final long nonce,
+      final Wei balance,
+      final long codeSize,
+      final Bytes code,
+      final Hash codeHash,
+      final boolean mutable) {
+    super(context, address, addressHash, nonce, balance, codeHash, code, mutable);
+    this.codeSize = codeSize;
+  }
+
+  public VerkleAccount(
+      final DiffBasedWorldView context,
+      final Address address,
       final AccountValue stateTrieAccount,
       final boolean mutable) {
     super(context, address, stateTrieAccount, mutable);
@@ -108,6 +122,11 @@ public class VerkleAccount extends DiffBasedAccount {
   @Override
   public Optional<Long> getCodeSize() {
     return Optional.of(codeSize);
+  }
+
+  @Override
+  public boolean hasCode() {
+    return codeSize > 0;
   }
 
   @Override

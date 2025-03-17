@@ -149,9 +149,10 @@ public class StateTransitionWorldState implements MutableWorldState, DiffBasedWo
           .getAccumulator()
           .importStateChangesFromSource(
               (DiffBasedWorldStateUpdateAccumulator<VerkleAccount>) accumulator);
-      PatriciaToVerkleConverter.convert(bonsaiWorldState, verkleWorldState, 3);
+      PatriciaToVerkleConverter.convert(bonsaiWorldState, verkleWorldState, 7);
 
       verkleWorldState.persist(blockHeader);
+
     } else {
       bonsaiWorldState
           .getAccumulator()

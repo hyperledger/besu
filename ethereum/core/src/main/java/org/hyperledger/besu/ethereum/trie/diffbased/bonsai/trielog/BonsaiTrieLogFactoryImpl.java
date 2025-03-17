@@ -24,9 +24,9 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.InvalidTrieLogTypeException;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
-import org.hyperledger.besu.ethereum.trie.diffbased.transition.InvalidTrieLogLayer;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
@@ -105,12 +105,13 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
       output.endList();
     }
 
+    // add optional extra fields
     if (!layer.getExtraFields().isEmpty()) {
       output.startList();
-      for (Map.Entry<Bytes, Bytes> entry : layer.getExtraFields().entrySet()) {
+      for (Map.Entry<Bytes, TrieLog.LogTuple<Bytes>> entry : layer.getExtraFields().entrySet()) {
         output.startList();
         output.writeBytes(entry.getKey());
-        output.writeBytes(entry.getValue());
+        writeInnerRlp(entry.getValue(), output, RLPOutput::writeBytes);
         output.endList();
       }
       output.endList();
@@ -132,7 +133,7 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
       if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
         newLayer.setDataStorageFormat(dataStorageFormat);
       } else {
-        return new InvalidTrieLogLayer(blockHash, dataStorageFormat);
+        return new InvalidTrieLogTypeException(blockHash, dataStorageFormat);
       }
     }
 
@@ -186,13 +187,15 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
         newLayer.getStorageChanges().put(address, storageChanges);
       }
 
+      // add optional extra fields
       if (input.nextIsList()) {
         input.enterList();
         while (!input.isEndOfCurrentList()) {
           input.enterList();
           final Bytes key = input.readBytes();
-          final Bytes value = input.readBytes();
-          newLayer.addExtraField(key, value);
+          final Bytes oldValue = nullOrValue(input, RLPInput::readBytes);
+          final Bytes newValue = nullOrValue(input, RLPInput::readBytes);
+          newLayer.addExtraField(key, oldValue, newValue);
           input.leaveList();
         }
         input.leaveList();
