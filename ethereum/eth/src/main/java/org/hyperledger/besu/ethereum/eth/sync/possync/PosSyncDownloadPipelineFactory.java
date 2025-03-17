@@ -148,7 +148,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
             true,
             "headerDownload")
         .thenProcessAsync("downloadHeaders", downloadHeadersStep, downloaderHeaderParallelism)
-        .andFinishWith("saveHeader", importHeadersStep);
+        .andFinishWith("importHeaders", importHeadersStep);
   }
 
   @Override

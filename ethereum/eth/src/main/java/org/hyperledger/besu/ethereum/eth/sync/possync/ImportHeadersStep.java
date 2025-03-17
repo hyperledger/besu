@@ -51,9 +51,9 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
       final long lastHeader = blockHeaders.getLast().getNumber();
       final long pivotBlock = pivotBlockNumber.get();
       final long blocksPercent = getBlocksPercent(lastHeader, pivotBlock);
-      LOG.info("Block import progress: {} of {} ({}%)", lastHeader, pivotBlock, blocksPercent);
+      LOG.info("Header import progress: {} of {} ({}%)", lastHeader, pivotBlock, blocksPercent);
       LOG.debug(
-          "Imported block headers for range {} to {}",
+          "Header imported range {} to {}",
           blockHeaders.getFirst().getNumber(),
           blockHeaders.getLast().getNumber());
       accumulatedTime = 0L;
