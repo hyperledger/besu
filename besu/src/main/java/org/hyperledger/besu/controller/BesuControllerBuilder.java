@@ -755,7 +755,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     ethPeers.setTrailingPeerRequirementsSupplier(synchronizer::calculateTrailingPeerRequirements);
 
     if (syncConfig.getSyncMode() == SyncMode.SNAP
-        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
+        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT
+        || syncConfig.getSyncMode() == SyncMode.POS) {
       synchronizer.subscribeInSync((b) -> ethPeers.snapServerPeersNeeded(!b));
       ethPeers.snapServerPeersNeeded(true);
     } else {
