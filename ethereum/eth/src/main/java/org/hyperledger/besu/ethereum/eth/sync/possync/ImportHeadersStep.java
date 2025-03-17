@@ -56,6 +56,7 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
           "Imported block headers for range {} to {}",
           blockHeaders.getFirst().getNumber(),
           blockHeaders.getLast().getNumber());
+      accumulatedTime = 0L;
     }
   }
 
