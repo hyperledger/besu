@@ -16,9 +16,10 @@ package org.hyperledger.besu.ethereum.eth.sync.possync;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.util.log.LogUtil;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -27,12 +28,11 @@ import org.slf4j.LoggerFactory;
 
 public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(ImportHeadersStep.class);
-  private static final long PRINT_DELAY = TimeUnit.SECONDS.toMillis(30L);
-
-  private long accumulatedTime = 0L;
+  private static final int LOG_DELAY = 30;
 
   private final MutableBlockchain blockchainStorage;
   private final Supplier<Long> pivotBlockNumber;
+  private final AtomicBoolean logInfo = new AtomicBoolean(true);
 
   public ImportHeadersStep(
       final MutableBlockchain blockchain, final Supplier<Long> pivotBlockNumber) {
@@ -42,22 +42,17 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
 
   @Override
   public void accept(final List<BlockHeader> blockHeaders) {
-    final long startTime = System.nanoTime();
     blockHeaders.forEach(blockchainStorage::importHeader);
 
-    final long endTime = System.nanoTime();
-    accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
-    if (accumulatedTime > PRINT_DELAY) {
-      final long lastHeader = blockHeaders.getLast().getNumber();
-      final long pivotBlock = pivotBlockNumber.get();
-      final long blocksPercent = getBlocksPercent(lastHeader, pivotBlock);
-      LOG.info("Header import progress: {} of {} ({}%)", lastHeader, pivotBlock, blocksPercent);
-      LOG.debug(
-          "Header imported range {} to {}",
-          blockHeaders.getFirst().getNumber(),
-          blockHeaders.getLast().getNumber());
-      accumulatedTime = 0L;
-    }
+    final long lastHeader = blockHeaders.get(blockHeaders.size() - 1).getNumber();
+    final long pivotBlock = pivotBlockNumber.get();
+    final long blocksPercent = getBlocksPercent(lastHeader, pivotBlock);
+    LogUtil.throttledLog(
+        LOG::info,
+        String.format(
+            "Header import progress: {} of {} ({}%)", lastHeader, pivotBlock, blocksPercent),
+        logInfo,
+        LOG_DELAY);
   }
 
   protected static long getBlocksPercent(final long lastHeader, final long totalHeaders) {
