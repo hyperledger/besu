@@ -76,6 +76,22 @@ public interface MutableBlockchain extends Blockchain {
       SyncBlock syncBlock, List<TransactionReceipt> receipts);
 
   /**
+   * Adds a block to the blockchain without a header.
+   *
+   * <p>Block header must already be stored in the blockchain.
+   *
+   * <p>Block must be connected to the existing blockchain (its parent must already be stored),
+   * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
+   * as long as they are connected.
+   *
+   * @param block The block to append.
+   * @param receipts The list of receipts associated with this block's transactions.
+   * @param importWithTxIndexing Whether index transactions
+   */
+  void appendBlockWithoutHeader(
+      Block block, List<TransactionReceipt> receipts, boolean importWithTxIndexing);
+
+  /**
    * Adds a syncBlock to the blockchain without indexing transactions.
    *
    * <p>Block must be connected to the existing blockchain (its parent must already be stored),
@@ -97,6 +113,13 @@ public interface MutableBlockchain extends Blockchain {
    * @param receipts The list of receipts associated with this block's transactions.
    */
   void storeBlock(Block block, List<TransactionReceipt> receipts);
+
+  /**
+   * Adds a block header to the blockchain, without updating the chain state.
+   *
+   * @param blockHeader The block to append.
+   */
+  void importHeader(BlockHeader blockHeader);
 
   void unsafeImportBlock(
       final Block block,

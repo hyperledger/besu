@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.PosDownloadAndStoreSyncBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -34,11 +33,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FinishPosSyncStep;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PosDownloadSyncReceiptsStep;
-import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
-import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
-import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersValidationStep;
-import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
-import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRangeSource;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -113,37 +107,59 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
       final SyncState syncState,
       final SyncTarget syncTarget,
       final Pipeline<?> pipeline) {
-    return scheduler.startPipeline(pipeline);
+    return scheduler
+        .startPipeline(createDownloadHeadersPipeline(syncTarget))
+        .thenCompose(__ -> scheduler.startPipeline(pipeline));
   }
 
-  @Override
-  public Pipeline<SyncTargetRange> createDownloadPipelineForSyncTarget(final SyncTarget target) {
+  protected Pipeline<SyncTargetNumberRange> createDownloadHeadersPipeline(final SyncTarget target) {
+    final int downloaderHeaderParallelism = syncConfig.getDownloaderHeaderParallelism();
 
-    final int downloaderParallelism = syncConfig.getDownloaderParallelism();
-    final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
-    final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
-
-    final SyncTargetRangeSource checkpointRangeSource =
-        new SyncTargetRangeSource(
-            new RangeHeadersFetcher(
-                syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
-            this::shouldContinueDownloadingFromPeer,
-            ethContext.getScheduler(),
-            target.peer(),
-            getCommonAncestor(target),
-            syncConfig.getDownloaderCheckpointRetries(),
-            SyncTerminationCondition.never());
-    final DownloadHeadersStep downloadHeadersStep =
-        new DownloadHeadersStep(
+    final PosSyncSource syncSource =
+        new PosSyncSource(
+            0,
+            () -> fastSyncState.getPivotBlockHeader().get().getNumber(),
+            downloaderHeaderParallelism,
+            true);
+    final DownloadPosHeadersStep downloadHeadersStep =
+        new DownloadPosHeadersStep(
             protocolSchedule,
             protocolContext,
             ethContext,
             detachedValidationPolicy,
             syncConfig,
-            headerRequestSize,
             metricsSystem);
-    final RangeHeadersValidationStep validateHeadersJoinUpStep =
-        new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
+    final ImportHeadersStep importHeadersStep =
+        new ImportHeadersStep(protocolContext.getBlockchain());
+
+    return PipelineBuilder.createPipelineFrom(
+            "fetchCheckpoints",
+            syncSource,
+            downloaderHeaderParallelism,
+            metricsSystem.createLabelledCounter(
+                BesuMetricCategory.SYNCHRONIZER,
+                "chain_download_pipeline_processed_total",
+                "Number of entries process by each chain download pipeline stage",
+                "step",
+                "action"),
+            true,
+            "headerDownload")
+        .thenProcessAsync("downloadHeaders", downloadHeadersStep, downloaderHeaderParallelism)
+        .andFinishWith("saveHeader", importHeadersStep);
+  }
+
+  @Override
+  public Pipeline<SyncTargetNumberRange> createDownloadPipelineForSyncTarget(
+      final SyncTarget target) {
+    final int downloaderParallelism = syncConfig.getDownloaderParallelism();
+
+    final PosSyncSource syncSource =
+        new PosSyncSource(
+            getCommonAncestor(target).getNumber() + 1,
+            () -> fastSyncState.getPivotBlockHeader().get().getNumber(),
+            downloaderParallelism,
+            false);
+    final LoadHeadersStep loadHeadersStep = new LoadHeadersStep(protocolContext.getBlockchain());
     final PosDownloadAndStoreSyncBodiesStep downloadSyncBodiesStep =
         new PosDownloadAndStoreSyncBodiesStep(
             protocolSchedule, ethContext, metricsSystem, syncConfig);
@@ -159,7 +175,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
-            checkpointRangeSource,
+            syncSource,
             downloaderParallelism,
             metricsSystem.createLabelledCounter(
                 BesuMetricCategory.SYNCHRONIZER,
@@ -169,9 +185,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
                 "action"),
             true,
             "fastSync")
-        .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
-        .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
-        .inBatches(headerRequestSize)
+        .thenProcessAsync("loadHeaders", loadHeadersStep, downloaderParallelism)
         .thenProcessAsyncOrdered(
             "downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
         .thenProcessAsyncOrdered(
