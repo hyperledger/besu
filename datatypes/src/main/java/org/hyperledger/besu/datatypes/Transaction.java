@@ -229,6 +229,13 @@ public interface Transaction {
   Bytes encoded();
 
   /**
+   * Returns the preimage of the transaction with the proper encoding
+   *
+   * @return the encoded preimage of the transaction as Bytes
+   */
+  Bytes encodedPreimage();
+
+  /**
    * Returns the size in bytes of the encoded transaction.
    *
    * @return the size in bytes of the encoded transaction.

@@ -155,9 +155,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
     lastChainHeight = chainHeight;
 
-    // Leave the chain stalled for 3 minutes. Check no new blocks are mined. Then
+    // Leave the chain stalled for 1 minute. Check no new blocks are mined. Then
     // resume the other validators.
-    nextStepEndTime = previousStepEndTime.plus(3, ChronoUnit.MINUTES);
+    nextStepEndTime = previousStepEndTime.plus(1, ChronoUnit.MINUTES);
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
       Thread.sleep(ONE_MINUTE);
       chainHeight = minerNode1.execute(ethTransactions.blockNumber());
