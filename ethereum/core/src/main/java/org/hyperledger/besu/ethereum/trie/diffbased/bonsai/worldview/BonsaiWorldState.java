@@ -322,27 +322,29 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       try {
         final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageToDelete =
             worldStateUpdater.getStorageToUpdate().get(address);
-        Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-        while (!entriesToDelete.isEmpty()) {
-          entriesToDelete.forEach(
-              (k, v) -> {
-                final StorageSlotKey storageSlotKey =
-                    new StorageSlotKey(Hash.wrap(k), Optional.empty());
-                final UInt256 slotValue = UInt256.fromBytes(Bytes32.leftPad(RLP.decodeValue(v)));
-                maybeStateUpdater.ifPresent(
-                    bonsaiUpdater ->
-                        bonsaiUpdater.removeStorageValueBySlotHash(
-                            address.addressHash(), storageSlotKey.getSlotHash()));
-                storageToDelete
-                    .computeIfAbsent(
-                        storageSlotKey, key -> new DiffBasedValue<>(slotValue, null, true))
-                    .setPrior(slotValue);
-              });
-          entriesToDelete.keySet().forEach(storageTrie::remove);
-          if (entriesToDelete.size() == 256) {
-            entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-          } else {
-            break;
+        if (storageToDelete != null) {
+          Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+          while (!entriesToDelete.isEmpty()) {
+            entriesToDelete.forEach(
+                (k, v) -> {
+                  final StorageSlotKey storageSlotKey =
+                      new StorageSlotKey(Hash.wrap(k), Optional.empty());
+                  final UInt256 slotValue = UInt256.fromBytes(Bytes32.leftPad(RLP.decodeValue(v)));
+                  maybeStateUpdater.ifPresent(
+                      bonsaiUpdater ->
+                          bonsaiUpdater.removeStorageValueBySlotHash(
+                              address.addressHash(), storageSlotKey.getSlotHash()));
+                  storageToDelete
+                      .computeIfAbsent(
+                          storageSlotKey, key -> new DiffBasedValue<>(slotValue, null, true))
+                      .setPrior(slotValue);
+                });
+            entriesToDelete.keySet().forEach(storageTrie::remove);
+            if (entriesToDelete.size() == 256) {
+              entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+            } else {
+              break;
+            }
           }
         }
       } catch (MerkleTrieException e) {
