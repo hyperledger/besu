@@ -28,12 +28,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
-import org.hyperledger.besu.ethereum.eth.sync.DownloadSyncBodiesStep;
+import org.hyperledger.besu.ethereum.eth.sync.PosDownloadAndStoreSyncBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.DownloadSyncReceiptsStep;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncValidationPolicy;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.ImportSyncBlocksStep;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FinishPosSyncStep;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PosDownloadSyncReceiptsStep;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersValidationStep;
@@ -144,12 +144,13 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
             metricsSystem);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
-    final DownloadSyncBodiesStep downloadSyncBodiesStep =
-        new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
-    final DownloadSyncReceiptsStep downloadSyncReceiptsStep =
-        new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
-    final ImportSyncBlocksStep importSyncBlocksStep =
-        new ImportSyncBlocksStep(
+    final PosDownloadAndStoreSyncBodiesStep downloadSyncBodiesStep =
+        new PosDownloadAndStoreSyncBodiesStep(
+            protocolSchedule, ethContext, metricsSystem, syncConfig);
+    final PosDownloadSyncReceiptsStep downloadSyncReceiptsStep =
+        new PosDownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
+    final FinishPosSyncStep importSyncBlocksStep =
+        new FinishPosSyncStep(
             protocolSchedule,
             protocolContext,
             ethContext,

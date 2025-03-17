@@ -434,6 +434,16 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public void appendSyncBlocksForPoC(final List<SyncBlock> syncBlocks) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    syncBlocks.forEach(
+        syncBlock -> {
+          updater.putSyncBlockBody(syncBlock.getHash(), syncBlock.getBody());
+        });
+    updater.commit();
+  }
+
+  @Override
   public synchronized void storeBlock(final Block block, final List<TransactionReceipt> receipts) {
     if (numberOfBlocksToCache != 0) cacheBlockData(block, receipts);
     appendBlockHelper(new BlockWithReceipts(block, receipts), true, true);

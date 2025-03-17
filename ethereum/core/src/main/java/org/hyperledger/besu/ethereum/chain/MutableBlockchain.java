@@ -76,6 +76,17 @@ public interface MutableBlockchain extends Blockchain {
       SyncBlock syncBlock, List<TransactionReceipt> receipts);
 
   /**
+   * Adds a syncBlock to the blockchain without indexing transactions.
+   *
+   * <p>Block must be connected to the existing blockchain (its parent must already be stored),
+   * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
+   * as long as they are connected.
+   *
+   * @param syncBlocks The block to append.
+   */
+  void appendSyncBlocksForPoC(List<SyncBlock> syncBlocks);
+
+  /**
    * Adds a block to the blockchain, without updating the chain state.
    *
    * <p>Block must be connected to the existing blockchain (its parent must already be stored),
