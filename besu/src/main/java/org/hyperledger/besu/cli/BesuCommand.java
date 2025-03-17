@@ -995,7 +995,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       runner.awaitStop();
 
     } catch (final Exception e) {
-      logger.error("Failed to start Besu: {}", e);
+      logger.error("Failed to start Besu: {}", e.getMessage());
       logger.debug("Startup failure cause", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
