@@ -132,7 +132,12 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   }
 
   public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
-    return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
+    return getFlatDbStrategy()
+        .getFlatTrieNodeUnsafe(
+            this::getWorldStateRootHash,
+            this::getAccountStateTrieNode,
+            key,
+            composedWorldStateStorage);
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(

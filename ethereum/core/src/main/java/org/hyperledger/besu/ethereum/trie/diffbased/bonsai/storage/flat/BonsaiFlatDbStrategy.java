@@ -75,6 +75,17 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
   }
 
   /*
+   * Retrieves the account data for the given account hash, using the world state root hash supplier and node loader.
+   */
+  public Optional<Bytes> getFlatTrieNodeUnsafe(
+      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      final NodeLoader nodeLoader,
+      final Bytes key,
+      final SegmentedKeyValueStorage storage) {
+    return storage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
+  }
+
+  /*
    * Retrieves the value for the given storage key, using the world state root hash supplier and node loader.
    */
   public Optional<Bytes> getFlatStorageTrieNode(

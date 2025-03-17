@@ -55,9 +55,9 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
 
   private Optional<BonsaiContext> getStateTrieArchiveContextForWrite(
       final SegmentedKeyValueStorage storage) {
-    // For Bonsai archive get the flat DB context to use for writing archive entries. We add one
-    // because we're working with the latest world state so putting new flat DB keys requires us to
-    // +1 to it
+    // For Bonsai archive get the flat DB context to use for writing trie archive entries. We add
+    // one because we're working with the latest world state so putting new flat DB keys requires us
+    // to +1 to it
     Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
     if (archiveContext.isPresent()) {
       try {
@@ -70,7 +70,7 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
           trieContext = Bytes.wrap(archiveRollingContext.get()).toLong();
         } else {
           // MRW We're not rolling to a specific block's state trie - we need to round down to the
-          // nearest N
+          // nearest checkpoint interval
           trieContext =
               (((Bytes.wrap(archiveContext.get()).toLong() + 1) / trieNodeCheckpointInterval)
                   * trieNodeCheckpointInterval);
@@ -120,6 +120,38 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
 
     // TODO - getFlatAccount does extra checks for the delete case. Do we need to do anything in
     // that respect here?
+    accountFound =
+        nearestAccountPreSizeCheck.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+
+    return accountFound;
+  }
+
+  /*
+   * Retrieves the account data for the given account hash, using the world state root hash supplier and node loader.
+   */
+  @Override
+  public Optional<Bytes> getFlatTrieNodeUnsafe(
+      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      final NodeLoader nodeLoader,
+      final Bytes location,
+      final SegmentedKeyValueStorage storage) {
+    Optional<Bytes> accountFound;
+
+    // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
+    Bytes keyNearest =
+        calculateArchiveKeyWithMaxSuffix(
+            getStateArchiveContextForRead(storage), location.toArrayUnsafe());
+
+    // MRW todo - is common prefix length check valid for state proof DB?
+    // Find the nearest account state for this address and block context
+    Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccountPreSizeCheck =
+        storage
+            .getNearestBeforeMatchLength(TRIE_BRANCH_STORAGE, keyNearest)
+            .filter(
+                found ->
+                    found.key().size() == (location.size() + 8)) // TODO - change for CONST length);
+            .filter(found -> location.commonPrefixLength(found.key()) >= location.size());
+
     accountFound =
         nearestAccountPreSizeCheck.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
 

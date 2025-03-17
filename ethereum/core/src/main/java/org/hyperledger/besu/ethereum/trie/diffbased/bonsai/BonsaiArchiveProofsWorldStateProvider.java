@@ -135,6 +135,10 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
       final Hash targetBlockHash) {
 
     // Create a world state representation at the next checkpoint block after the target block hash
+    // E.g.chain head = 230, target = 120, checkpoint blocks every 100 blocks. Since archive state
+    // at chainhead includes everything we need recreate state at any block we simply assert that
+    // the current world state is for block 200 (e.g. the nearest checkpoint). Rolling back will
+    // then start from 200 and replay trie logs backwards to 120.
     ((BonsaiArchiveWorldState) mutableState).createCheckpointState(checkpointBlock);
 
     // Roll back from the checkpoint state to the target block hash
