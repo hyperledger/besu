@@ -18,14 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,18 +33,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class QbftValidatorProviderAdaptorTest {
   @Mock private ValidatorProvider validatorProvider;
-  @Mock private VoteProvider voteProvider;
-
-  @Test
-  void returnsValidatorsAtHead() {
-    List<Address> validatorsAtHead =
-        List.of(Address.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"));
-    when(validatorProvider.getValidatorsAtHead()).thenReturn(validatorsAtHead);
-
-    QbftValidatorProviderAdaptor qbftValidatorProviderAdaptor =
-        new QbftValidatorProviderAdaptor(validatorProvider);
-    assertThat(qbftValidatorProviderAdaptor.getValidatorsAtHead()).isEqualTo(validatorsAtHead);
-  }
 
   @Test
   void returnsValidatorsAfterBlock() {
@@ -74,14 +60,5 @@ class QbftValidatorProviderAdaptorTest {
         new QbftValidatorProviderAdaptor(validatorProvider);
     assertThat(qbftValidatorProviderAdaptor.getValidatorsForBlock(qbftBlockHeader))
         .isEqualTo(validatorsForBlock);
-  }
-
-  @Test
-  void returnsVoteProviderAtHead() {
-    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
-
-    QbftValidatorProviderAdaptor qbftValidatorProviderAdaptor =
-        new QbftValidatorProviderAdaptor(validatorProvider);
-    assertThat(qbftValidatorProviderAdaptor.getVoteProviderAtHead()).contains(voteProvider);
   }
 }

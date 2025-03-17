@@ -86,11 +86,6 @@ public class SnapSyncConfiguration {
   }
 
   @Value.Default
-  public Boolean isSnapSyncBftEnabled() {
-    return DEFAULT_SNAP_SYNC_BFT_ENABLED;
-  }
-
-  @Value.Default
   public Boolean isSnapSyncTransactionIndexingEnabled() {
     return DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
   }

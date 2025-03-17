@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -1081,7 +1082,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             .nonce(transactionNumber)
             .createTransaction(KEYS1),
         true,
-        true);
+        true,
+        MAX_SCORE);
   }
 
   private static BlockHeader mockBlockHeader() {
