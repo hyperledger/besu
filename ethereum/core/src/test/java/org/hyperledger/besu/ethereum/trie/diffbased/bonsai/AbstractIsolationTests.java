@@ -218,6 +218,16 @@ public abstract class AbstractIsolationTests {
               }
 
               @Override
+              public String getConfiguredRpcHttpHost() {
+                return "";
+              }
+
+              @Override
+              public Integer getConfiguredRpcHttpPort() {
+                return 0;
+              }
+
+              @Override
               public Path getStoragePath() {
                 return tempData.resolve("database");
               }
@@ -296,7 +306,7 @@ public abstract class AbstractIsolationTests {
 
       return new TestBlockCreator(
           miningConfiguration,
-          __ -> Address.ZERO,
+          (__, ___) -> Address.ZERO,
           __ -> Bytes.fromHexString("deadbeef"),
           transactionPool,
           protocolContext,
