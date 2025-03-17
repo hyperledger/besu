@@ -29,7 +29,7 @@
         "baseFeeUpdateFraction": 5007716
       }
     },
-    "depositContractAddress": "0x00000000219ab540356cBB839Cbe05303d7705Fa",
+    "depositContractAddress": "0x00000000219ab540356cbb839cbe05303d7705fa",
     "discovery": {
       "bootnodes": [
         "enode://2112dd3839dd752813d4df7f40936f06829fc54c0e051a93967c26e5f5d27d99d886b57b4ffcc3c475e930ec9e79c56ef1dbb7d86ca5ee83a9d2ccf36e5c240c@134.209.138.84:30303",
