@@ -116,7 +116,8 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
             .filter(
                 found ->
                     found.key().size() == (location.size() + 8)) // TODO - change for CONST length
-            .filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
+            .filter(found -> location.commonPrefixLength(found.key()) >= location.size());
+    // .filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
 
     // TODO - getFlatAccount does extra checks for the delete case. Do we need to do anything in
     // that respect here?
@@ -188,10 +189,12 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
                         == (accountHash.size()
                             + location.size()
                             + 8)) // TODO - change for CONST length
-            .filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
+            .filter(
+                found ->
+                    Bytes.concatenate(accountHash, location).commonPrefixLength(found.key())
+                        >= Bytes.concatenate(accountHash, location).size());
+    // .filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
 
-    // TODO - getFlatAccount does extra checks for the delete case. Do we need to do anything in
-    // that respect here?
     storageFound =
         nearestAccountPreSizeCheck.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
 
