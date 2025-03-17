@@ -1224,7 +1224,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void diffbasedLimitTrieLogsEnabledByDefault() {
+  public void pathbasedLimitTrieLogsEnabledByDefault() {
     parseCommand();
     verify(mockControllerBuilder)
         .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
@@ -1234,7 +1234,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
     assertThat(
             dataStorageConfiguration
-                .getDiffBasedSubStorageConfiguration()
+                .getPathBasedExtraStorageConfiguration()
                 .getLimitTrieLogsEnabled())
         .isTrue();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -1253,7 +1253,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
     assertThat(
             dataStorageConfiguration
-                .getDiffBasedSubStorageConfiguration()
+                .getPathBasedExtraStorageConfiguration()
                 .getLimitTrieLogsEnabled())
         .isFalse();
     verify(mockLogger)
@@ -1290,7 +1290,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getDiffBasedSubStorageConfiguration().getMaxLayersToLoad())
+    assertThat(
+            dataStorageConfiguration.getPathBasedExtraStorageConfiguration().getMaxLayersToLoad())
         .isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -2467,7 +2468,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             besuCommand
                 .getDataStorageOptions()
                 .toDomainObject()
-                .getDiffBasedSubStorageConfiguration()
+                .getPathBasedExtraStorageConfiguration()
                 .getUnstable()
                 .getFullFlatDbEnabled())
         .isTrue();
@@ -2480,7 +2481,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             besuCommand
                 .dataStorageOptions
                 .toDomainObject()
-                .getDiffBasedSubStorageConfiguration()
+                .getPathBasedExtraStorageConfiguration()
                 .getUnstable()
                 .getFullFlatDbEnabled())
         .isFalse();
