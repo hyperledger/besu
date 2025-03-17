@@ -1632,9 +1632,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   }
 
   private void verifyBlockResult(
-      final Block block,
-      final JsonObject result,
-      final boolean shouldTransactionsBeHashed) {
+      final Block block, final JsonObject result, final boolean shouldTransactionsBeHashed) {
     assertBlockResultMatchesBlock(result, block);
 
     assertThat(result.getJsonObject("totalDifficulty")).isNull();

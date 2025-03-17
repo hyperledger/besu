@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.ArrayList;
