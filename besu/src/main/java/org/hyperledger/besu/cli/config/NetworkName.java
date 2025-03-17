@@ -34,7 +34,7 @@ public enum NetworkName {
   /** Holešky network name. */
   HOLESKY("/holesky.json", BigInteger.valueOf(17000), true, NativeRequirement.MAINNET),
   /** Hoodi network name. */
-  HOODI("/hoodi.json", BigInteger.valueOf(560048),true, NativeRequirement.MAINNET),
+  HOODI("/hoodi.json", BigInteger.valueOf(560048), true, NativeRequirement.MAINNET),
   /**
    * EPHEMERY network name. The actual networkId used is calculated based on this default value and
    * the current time. https://ephemery.dev/
