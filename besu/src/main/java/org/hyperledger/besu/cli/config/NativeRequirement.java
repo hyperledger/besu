@@ -46,7 +46,7 @@ public interface NativeRequirement {
                 "secp256k1",
                 secp256k1.maybeEnableNative()
                     ? Optional.empty()
-                    : Optional.of("secp256k1: Native secp256k1 not available")));
+                    : Optional.of("secp256k1: Native secp256k1 failed to load")));
 
         requirements.add(
             new NativeRequirementResult(

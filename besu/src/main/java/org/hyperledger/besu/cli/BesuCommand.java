@@ -839,7 +839,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param executionExceptionHandler Exception handler for business logic
    * @param in Standard input stream
    * @param args arguments to Besu command
-   * @return present or failure exit code.
+   * @return success or failure exit code.
    */
   /**
    * Parses command line arguments and configures the application accordingly.
