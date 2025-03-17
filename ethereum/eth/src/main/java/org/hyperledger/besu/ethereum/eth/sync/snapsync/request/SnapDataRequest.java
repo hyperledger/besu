@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
-import static org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest.MAX_CHILDREN;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
@@ -45,6 +43,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   protected int depth;
   protected long priority;
   protected final AtomicInteger pendingChildren = new AtomicInteger(0);
+  public static final int MAX_CHILDREN = 16;
 
   private final RequestType requestType;
   private Hash rootHash;

@@ -163,22 +163,6 @@ public final class RunnerTest {
     syncFromGenesis(SyncMode.FULL, getFastSyncGenesis(), true);
   }
 
-  @Test
-  public void fastSyncFromGenesis() throws Exception {
-    // set merge flag to false, otherwise this test can fail if a merge test runs first
-    MergeConfiguration.setMergeEnabled(false);
-
-    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), false);
-  }
-
-  @Test
-  public void fastSyncFromGenesisUsingPeerTaskSystem() throws Exception {
-    // set merge flag to false, otherwise this test can fail if a merge test runs first
-    MergeConfiguration.setMergeEnabled(false);
-
-    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), true);
-  }
-
   private void syncFromGenesis(
       final SyncMode mode, final GenesisConfig genesisConfig, final boolean isPeerTaskSystemEnabled)
       throws Exception {

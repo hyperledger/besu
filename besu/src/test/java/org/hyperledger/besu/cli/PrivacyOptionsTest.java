@@ -168,15 +168,6 @@ public class PrivacyOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  public void privacyWithFastSyncMustError() {
-    parseCommand("--sync-mode=FAST", "--privacy-enabled");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Fast sync cannot be enabled with privacy.");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void privacyWithSnapSyncMustError() {
     parseCommand("--sync-mode=SNAP", "--privacy-enabled");
 
