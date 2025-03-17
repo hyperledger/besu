@@ -66,15 +66,6 @@ public class NormalBlockAdapter extends BlockAdapterBase {
   }
 
   /**
-   * Returns the total difficulty of the block.
-   *
-   * @return the total difficulty of the block.
-   */
-  public Difficulty getTotalDifficulty() {
-    return blockWithMetaData.getTotalDifficulty();
-  }
-
-  /**
    * Returns the ommer count of the block.
    *
    * @return the ommer count of the block.
