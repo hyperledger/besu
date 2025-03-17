@@ -162,7 +162,7 @@ class ConfigurationOverviewBuilderTest {
   }
 
   @Test
-  void setDiffbasedLimitTrieLogsEnabled() {
+  void setPathBasedLimitTrieLogsEnabled() {
     final String noTrieLogRetentionLimitSet = builder.build();
     assertThat(noTrieLogRetentionLimitSet).doesNotContain("Limit trie logs enabled");
 
