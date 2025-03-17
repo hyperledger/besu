@@ -67,6 +67,11 @@ public class DepositRequestProcessor implements RequestProcessor {
   }
 
   @Override
+  public Optional<String> getContractName() {
+    return Optional.of("DEPOSIT_CONTRACT_ADDRESS");
+  }
+
+  @Override
   public Optional<Address> getContractAddress() {
     return depositContractAddress;
   }

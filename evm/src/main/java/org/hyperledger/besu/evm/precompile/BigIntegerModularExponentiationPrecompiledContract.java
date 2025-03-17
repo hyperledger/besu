@@ -58,7 +58,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
    * @param gasCalculator the gas calculator
    */
   public BigIntegerModularExponentiationPrecompiledContract(final GasCalculator gasCalculator) {
-    super("EXPMOD", gasCalculator);
+    super("MODEXP", gasCalculator);
   }
 
   /** Disable native Arithmetic libraries. */

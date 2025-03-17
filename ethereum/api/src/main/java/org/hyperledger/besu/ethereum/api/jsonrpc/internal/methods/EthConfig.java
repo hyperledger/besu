@@ -14,18 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper.BEACON_ROOTS_ADDRESS;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.Hardfork;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.zip.CRC32;
@@ -54,29 +60,33 @@ public class EthConfig implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    var header = blockchain.getBlockchain().getChainHeadHeader();
-    var current = protocolSchedule.getForNextBlockHeader(header, System.currentTimeMillis() / 1000);
-    var next = protocolSchedule.getNextProtocolSpec(current);
-
-    var currentConfig = generateConfig(current);
-    var nextConfig = next.map(this::generateConfig).orElse(null);
+    BlockHeader header = blockchain.getBlockchain().getChainHeadHeader();
+    ProtocolSpec current =
+        protocolSchedule.getForNextBlockHeader(header, System.currentTimeMillis() / 1000);
+    Optional<ProtocolSpec> next = protocolSchedule.getNextProtocolSpec(current);
 
     ObjectNode result = mapperSupplier.get().createObjectNode();
-    result.put("current", currentConfig);
-    result.put("currentHash", configHash(currentConfig));
-    result.put("next", nextConfig);
-    result.put("nextHash", configHash(nextConfig));
+    ObjectNode currentNode = result.putObject("current");
+    generateConfig(currentNode, current);
+    result.put("currentHash", configHash(currentNode));
+    if (next.isPresent()) {
+      ObjectNode nextNode = result.putObject("next");
+      generateConfig(nextNode, next.get());
+      result.put("nextHash", configHash(nextNode));
+    } else {
+      result.putNull("next");
+      result.putNull("nextHash");
+    }
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
-  JsonNode generateConfig(final ProtocolSpec spec) {
-    var result = mapperSupplier.get().createObjectNode();
-    var forkId = protocolSchedule.hardforkFor(x -> x.spec() == spec).orElseThrow();
+  void generateConfig(final ObjectNode result, final ProtocolSpec spec) {
+    Hardfork forkId = protocolSchedule.hardforkFor(x -> x.spec() == spec).orElseThrow();
 
-    result.put("activation", forkId.milestone());
+    result.put("activationTime", forkId.milestone());
 
-    var blobs = result.putObject("blobs");
+    ObjectNode blobs = result.putObject("blobSchedule");
     blobs.put(
         "baseFeeUpdateFraction", spec.getFeeMarket().getBaseFeeUpdateFraction().longValueExact());
     blobs.put("max", spec.getGasLimitCalculator().currentBlobGasLimit() / (128 * 1024));
@@ -85,26 +95,27 @@ public class EthConfig implements JsonRpcMethod {
     result.put(
         "chainId", protocolSchedule.getChainId().map(c -> "0x" + c.toString(16)).orElse(null));
 
-    var contracts =
+    PrecompileContractRegistry registry = spec.getPrecompileContractRegistry();
+    ObjectNode precompiles = result.putObject("precompiles");
+    registry.getPrecompileAddresses().stream()
+        .sorted()
+        .forEach(a -> precompiles.put(a.toHexString(), registry.get(a).getName()));
+
+    TreeMap<String, String> systemContracts =
         new TreeMap<>(
             spec.getRequestProcessorCoordinator()
                 .map(RequestProcessorCoordinator::getContractConfigs)
                 .orElse(Map.of()));
     spec.getBlockHashProcessor()
         .getHistoryContract()
-        .ifPresent(a -> contracts.put("HISTORY", a.toHexString()));
-    if (!contracts.isEmpty()) {
-      var jsonContracts = result.putObject("contracts");
-      contracts.forEach(jsonContracts::put);
+        .ifPresent(a -> systemContracts.put("HISTORY_STORAGE_ADDRESS", a.toHexString()));
+    if (spec.getEvm().getEvmVersion().compareTo(EvmSpecVersion.CANCUN) >= 0) {
+      systemContracts.put("BEACON_ROOTS_ADDRESS", BEACON_ROOTS_ADDRESS.toHexString());
     }
-
-    PrecompileContractRegistry registry = spec.getPrecompileContractRegistry();
-    var precompiles = result.putObject("precompiles");
-    registry.getPrecompileAddresses().stream()
-        .sorted()
-        .forEach(a -> precompiles.put(a.toHexString(), registry.get(a).getName()));
-
-    return result;
+    if (!systemContracts.isEmpty()) {
+      ObjectNode jsonContracts = result.putObject("systemContracts");
+      systemContracts.forEach(jsonContracts::put);
+    }
   }
 
   String configHash(final JsonNode node) {

@@ -22,5 +22,7 @@ import java.util.Optional;
 public interface RequestProcessor {
   Request process(final RequestProcessingContext context);
 
+  Optional<String> getContractName();
+
   Optional<Address> getContractAddress();
 }

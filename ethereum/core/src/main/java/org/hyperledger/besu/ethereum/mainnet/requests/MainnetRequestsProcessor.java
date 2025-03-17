@@ -24,11 +24,13 @@ public class MainnetRequestsProcessor {
         .addProcessor(
             RequestType.WITHDRAWAL,
             new SystemCallRequestProcessor(
+                "WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS",
                 requestContractAddresses.getWithdrawalRequestContractAddress(),
                 RequestType.WITHDRAWAL))
         .addProcessor(
             RequestType.CONSOLIDATION,
             new SystemCallRequestProcessor(
+                "CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS",
                 requestContractAddresses.getConsolidationRequestContractAddress(),
                 RequestType.CONSOLIDATION))
         .addProcessor(
