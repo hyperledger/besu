@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.unstable;
+package org.hyperledger.besu.cli.options;
 
 import picocli.CommandLine;
 
@@ -38,6 +38,12 @@ public class QBFTOptions {
       hidden = true)
   private boolean enableEarlyRoundChange = false;
 
+  @CommandLine.Option(
+      names = {"--Xqbft-fast-recovery"},
+      description = "Enable fast recovery mode for QBFT consensus (experimental)",
+      hidden = true)
+  private boolean enableFastRecovery = false;
+
   /**
    * Is early round change enabled boolean.
    *
@@ -45,5 +51,14 @@ public class QBFTOptions {
    */
   public boolean isEarlyRoundChangeEnabled() {
     return enableEarlyRoundChange;
+  }
+
+  /**
+   * Is fast recovery enabled boolean.
+   *
+   * @return true if fast recovery is enabled
+   */
+  public boolean isFastRecoveryEnabled() {
+    return enableFastRecovery;
   }
 }
