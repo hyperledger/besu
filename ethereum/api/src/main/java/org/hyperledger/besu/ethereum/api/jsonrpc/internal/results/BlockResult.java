@@ -294,5 +294,4 @@ public class BlockResult implements JsonRpcResult {
   public List<CallProcessingResult> getTransactionProcessingResults() {
     return callProcessingResults;
   }
-
 }

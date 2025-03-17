@@ -12,7 +12,6 @@
         "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "nonce": "0x0000000000000000",
         "stateRoot": "0x34727aff24d1c51cd63fdc14515b15ddaa156fa0671c58a96c72b1553819945d",
-        "totalDifficulty": "0x427c00",
         "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
         "withdrawals": [],
         "blobGasUsed": "0x40000",
