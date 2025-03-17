@@ -65,12 +65,13 @@ public class RequestProcessorCoordinator {
   }
 
   public Map<String, String> getContractConfigs() {
-    return processors.entrySet().stream()
+    return processors.values().stream()
+        .filter(processor -> processor.getContractAddress().isPresent())
         .map(
-            e ->
+            processor ->
                 Map.entry(
-                    e.getKey().toString(),
-                    e.getValue().getContractAddress().map(Address::toHexString).orElse("")))
+                    processor.getContractName().orElse(""),
+                    processor.getContractAddress().map(Address::toHexString).orElse("")))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 }
