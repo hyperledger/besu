@@ -114,12 +114,13 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
 
   protected Pipeline<SyncTargetNumberRange> createDownloadHeadersPipeline(final SyncTarget target) {
     final int downloaderHeaderParallelism = syncConfig.getDownloaderHeaderParallelism();
+    final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
 
     final PosSyncSource syncSource =
         new PosSyncSource(
             0,
             () -> fastSyncState.getPivotBlockHeader().get().getNumber(),
-            downloaderHeaderParallelism,
+            headerRequestSize,
             true);
     final DownloadPosHeadersStep downloadHeadersStep =
         new DownloadPosHeadersStep(
