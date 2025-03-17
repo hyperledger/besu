@@ -130,7 +130,9 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
             syncConfig,
             metricsSystem);
     final ImportHeadersStep importHeadersStep =
-        new ImportHeadersStep(protocolContext.getBlockchain());
+        new ImportHeadersStep(
+            protocolContext.getBlockchain(),
+            () -> fastSyncState.getPivotBlockHeader().get().getNumber());
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",

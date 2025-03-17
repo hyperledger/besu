@@ -60,7 +60,7 @@ public class DownloadPosHeadersStep
 
   @Override
   public CompletableFuture<List<BlockHeader>> apply(final SyncTargetNumberRange syncRange) {
-    LOG.info(
+    LOG.debug(
         "Downloading headers for range {} to {}",
         syncRange.lowerBlockNumber(),
         syncRange.upperBlockNumber());
