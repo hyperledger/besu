@@ -50,7 +50,7 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
     LogUtil.throttledLog(
         LOG::info,
         String.format(
-            "Header import progress: {} of {} ({}%)", lastHeader, pivotBlock, blocksPercent),
+            "Header import progress: %d of %d (%d%%)", lastHeader, pivotBlock, blocksPercent),
         logInfo,
         LOG_DELAY);
   }
