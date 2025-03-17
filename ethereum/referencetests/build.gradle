@@ -179,7 +179,7 @@ dependencies {
   implementation project(':evm')
   implementation project(':services:kvstore')
 
-  implementation 'io.tmio:tuweni-rlp'
+  implementation 'io.consensys.protocols:tuweni-rlp'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'com.google.dagger:dagger'
@@ -201,8 +201,8 @@ dependencies {
   referenceTestImplementation 'ethereum:execution-spec-tests:4.1.0:fixtures_develop@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
-  referenceTestImplementation 'io.tmio:tuweni-bytes'
-  referenceTestImplementation 'io.tmio:tuweni-units'
+  referenceTestImplementation 'io.consensys.protocols:tuweni-bytes'
+  referenceTestImplementation 'io.consensys.protocols:tuweni-units'
   referenceTestImplementation 'org.assertj:assertj-core'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-params'
