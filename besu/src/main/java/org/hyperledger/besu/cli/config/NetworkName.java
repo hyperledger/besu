@@ -28,6 +28,8 @@ public enum NetworkName {
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
   /** Holešky network name. */
   HOLESKY("/holesky.json", BigInteger.valueOf(17000)),
+  /** Hoodi network name. */
+  HOODI("/hoodi.json", BigInteger.valueOf(560048)),
   /** LUKSO mainnet network name. */
   LUKSO("/lukso.json", BigInteger.valueOf(42)),
 
