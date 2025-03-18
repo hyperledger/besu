@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+### Breaking Changes
+### Additions and Improvements
+### Bug fixes
+
+
+## 25.3.0 
 
 ### Breaking Changes
 NOTE: This release breaks native Windows compatibility for mainnet ethereum configurations.  As the prague(pectra) hardfork require 
