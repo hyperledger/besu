@@ -155,12 +155,13 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
   public Pipeline<SyncTargetNumberRange> createDownloadPipelineForSyncTarget(
       final SyncTarget target) {
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
+    final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
 
     final PosSyncSource syncSource =
         new PosSyncSource(
             getCommonAncestor(target).getNumber() + 1,
             () -> fastSyncState.getPivotBlockHeader().get().getNumber(),
-            downloaderParallelism,
+            headerRequestSize,
             false);
     final LoadHeadersStep loadHeadersStep = new LoadHeadersStep(protocolContext.getBlockchain());
     final PosDownloadAndStoreSyncBodiesStep downloadSyncBodiesStep =
