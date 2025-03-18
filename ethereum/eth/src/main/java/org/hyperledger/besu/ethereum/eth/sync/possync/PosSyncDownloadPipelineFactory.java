@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FinishPosSyncStep;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.PosDownloadSyncReceiptsStep;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PosDownloadAndStoreSyncReceiptsStep;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersValidationStep;
@@ -147,8 +147,9 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
     final PosDownloadAndStoreSyncBodiesStep downloadSyncBodiesStep =
         new PosDownloadAndStoreSyncBodiesStep(
             protocolSchedule, ethContext, metricsSystem, syncConfig);
-    final PosDownloadSyncReceiptsStep downloadSyncReceiptsStep =
-        new PosDownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
+    final PosDownloadAndStoreSyncReceiptsStep downloadSyncReceiptsStep =
+        new PosDownloadAndStoreSyncReceiptsStep(
+            protocolSchedule, ethContext, syncConfig, metricsSystem);
     final FinishPosSyncStep importSyncBlocksStep =
         new FinishPosSyncStep(
             protocolSchedule,

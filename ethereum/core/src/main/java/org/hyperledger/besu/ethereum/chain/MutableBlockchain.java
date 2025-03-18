@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.List;
@@ -80,11 +81,26 @@ public interface MutableBlockchain extends Blockchain {
    *
    * <p>Block must be connected to the existing blockchain (its parent must already be stored),
    * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
-   * as long as they are connected.
+   * as long as they are connected. TODO: This is not really appending, they are being stored when
+   * they are ready to be stored.
    *
-   * @param syncBlocks The block to append.
+   * @param syncBlocks The sync blocks to store.
    */
   void appendSyncBlocksForPoC(List<SyncBlock> syncBlocks);
+
+  /**
+   * Adds a syncBlock to the blockchain without indexing transactions.
+   *
+   * <p>Block must be connected to the existing blockchain (its parent must already be stored),
+   * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
+   * as long as they are connected. TODO: This is not really appending, they are being stored when
+   * they are ready to be stored.
+   *
+   * @param blockHeaders The block headers
+   * @param syncReceiptsList The sync receipts to store.
+   */
+  void appendSyncTransactionReceiptsForPoC(
+      List<BlockHeader> blockHeaders, List<SyncTransactionReceipts> syncReceiptsList);
 
   /**
    * Adds a block to the blockchain, without updating the chain state.

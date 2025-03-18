@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -50,6 +51,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -440,6 +442,23 @@ public class DefaultBlockchain implements MutableBlockchain {
         syncBlock -> {
           updater.putSyncBlockBody(syncBlock.getHash(), syncBlock.getBody());
         });
+    updater.commit();
+  }
+
+  @Override
+  public void appendSyncTransactionReceiptsForPoC(
+      final List<BlockHeader> blockHeaders, final List<SyncTransactionReceipts> syncReceiptsList) {
+    if (blockHeaders.size() != syncReceiptsList.size()) {
+      throw new InvalidConfigurationException(
+          "Block headers and sync receipts list must have the same size");
+    }
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    IntStream.range(0, blockHeaders.size())
+        .forEach(
+            i -> {
+              updater.putSyncTransactionReceipts(
+                  blockHeaders.get(i).getHash(), syncReceiptsList.get(i));
+            });
     updater.commit();
   }
 
