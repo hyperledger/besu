@@ -121,9 +121,9 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
 
   @Override
   public Optional<Address> authorizer() {
-    // recId needs to be between 0 and 3, otherwise the signature is invalid
+    // recId needs to be between either 0 or 1, otherwise the signature is invalid
     // which means we can't recover the authorizer.
-    if (signature.getRecId() < 0 || signature.getRecId() > 3) {
+    if (signature.getRecId() < 0 || signature.getRecId() > 1) {
       return Optional.empty();
     }
 
