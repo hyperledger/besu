@@ -411,16 +411,23 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public synchronized void appendBlockWithoutHeader(
+      final Block block, final List<TransactionReceipt> receipts, final boolean txIndexing) {
+    if (numberOfBlocksToCache != 0) cacheBlockData(block, receipts);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), false, txIndexing, true);
+  }
+
+  @Override
   public synchronized void appendBlock(final Block block, final List<TransactionReceipt> receipts) {
     if (numberOfBlocksToCache != 0) cacheBlockData(block, receipts);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), false, true);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), false, false, true);
   }
 
   @Override
   public synchronized void appendBlockWithoutIndexingTransactions(
       final Block block, final List<TransactionReceipt> receipts) {
     if (numberOfBlocksToCache != 0) cacheBlockData(block, receipts);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), false, false);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), false, false, false);
   }
 
   @Override
@@ -465,7 +472,15 @@ public class DefaultBlockchain implements MutableBlockchain {
   @Override
   public synchronized void storeBlock(final Block block, final List<TransactionReceipt> receipts) {
     if (numberOfBlocksToCache != 0) cacheBlockData(block, receipts);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), true, true);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), true, true, false);
+  }
+
+  @Override
+  public void importHeader(final BlockHeader blockHeader) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    updater.putBlockHeader(blockHeader.getHash(), blockHeader);
+    updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
+    updater.commit();
   }
 
   private void cacheBlockData(final Block block, final List<TransactionReceipt> receipts) {
@@ -491,9 +506,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   private void appendBlockHelper(
       final BlockWithReceipts blockWithReceipts,
       final boolean storeOnly,
-      final boolean transactionIndexing) {
+      final boolean transactionIndexing,
+      final boolean blocksOnly) {
 
-    if (!blockShouldBeProcessed(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts())) {
+    if (!blocksOnly
+        && !blockShouldBeProcessed(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts())) {
       return;
     }
 
@@ -503,6 +520,10 @@ public class DefaultBlockchain implements MutableBlockchain {
     final Difficulty td = calculateTotalDifficulty(block.getHeader());
 
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
+
+    if (!blocksOnly) {
+      updater.putBlockHeader(hash, block.getHeader());
+    }
 
     updater.putBlockHeader(hash, block.getHeader());
     updater.putBlockBody(hash, block.getBody());
