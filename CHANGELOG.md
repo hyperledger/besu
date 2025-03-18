@@ -3,8 +3,13 @@
 ## Unreleased
 
 ### Breaking Changes
+NOTE: This release breaks native Windows compatibility for mainnet ethereum configurations.  As the prague(pectra) hardfork require 
+BLS12-381 precompiles and besu does not currently have a pure java implementation of bls12-381, only platforms which
+have support in besu-native can run mainnet ethereum configurations.  Windows support via WSL should still continue to work.
+
 - k8s (KUBERNETES) Nat method is removed. Use docker or none instead. [#8289](https://github.com/hyperledger/besu/pull/8289)
 - Change `Invalid block, unable to parse RLP` RPC error message to `Invalid block param (block not found)` [#8328](https://github.com/hyperledger/besu/pull/8328)
+- Mainnet ethereum now REQUIRES native crypto libraries, so only linux and macos(darwin) are supported mainnet configurations [#8418](https://github.com/hyperledger/besu/pull/8418)
 
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
@@ -54,6 +59,7 @@
 - Add a fallback pivot strategy when the safe block does not change for a long time, to make possible to complete the initial sync in case the chain is not finalizing [#8395](https://github.com/hyperledger/besu/pull/8395)
 - Fix issue with new QBFT/IBFT blocks being produced under certain circumstances. [#8308](https://github.com/hyperledger/besu/issues/8308)
 - Fix QBFT and IBFT transitions that change the mining beneficiary [#8387](https://github.com/hyperledger/besu/issues/8387)
+- `eth_getLogs` - empty topic is a wildcard match [#8420](https://github.com/hyperledger/besu/pull/8420)
 
 ## 25.2.2 hotfix
 - Pectra - Sepolia: Fix for deposit contract log decoding [#8383](https://github.com/hyperledger/besu/pull/8383)
