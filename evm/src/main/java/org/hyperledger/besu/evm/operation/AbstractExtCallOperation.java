@@ -148,7 +148,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     currentGas -= cost;
     frame.expandMemory(inputOffset, inputLength);
 
-    final Code code = getCode(evm, frame.getWorldUpdater(), contract);
+    final Code code = getCode(evm, frame, contract);
 
     // invalid code results in a quick exit
     if (!code.isValid()) {

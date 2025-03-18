@@ -18,6 +18,7 @@ import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDe
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -51,8 +52,8 @@ public class CodeDelegationGasCostHelper {
       return 0;
     }
 
-    final Optional<Account> maybeTargetAccount =
-        CodeDelegationHelper.getTargetAccount(frame.getWorldUpdater(), account.getCode());
+    final Optional<CodeDelegationAccount> maybeTargetAccount =
+        CodeDelegationHelper.getTargetAccount(frame.getWorldUpdater(), gasCalculator, account);
     if (maybeTargetAccount.isEmpty()) {
       throw new RuntimeException("A delegated code account must have a target account.");
     }

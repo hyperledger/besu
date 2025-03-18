@@ -16,22 +16,20 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetAccount;
-import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetCode;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Optional;
 
@@ -221,7 +219,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Bytes inputData = frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));
 
-    final Code code = getCode(evm, frame.getWorldUpdater(), contract);
+    final Code code = getCode(evm, frame, contract);
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
@@ -262,8 +260,8 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return;
     }
 
-    final Optional<Account> maybeTargetAccount =
-        getTargetAccount(frame.getWorldUpdater(), contract.getCode());
+    final Optional<CodeDelegationAccount> maybeTargetAccount =
+        getTargetAccount(frame.getWorldUpdater(), gasCalculator(), contract);
 
     if (maybeTargetAccount.isEmpty()) {
       throw new RuntimeException("A delegated code account must have a target account");
@@ -377,12 +375,11 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * Gets the code from the contract or EOA with delegated code.
    *
    * @param evm the evm
-   * @param worldUpdater the world updater
+   * @param frame the message frame
    * @param account the account which codes needs to be retrieved
    * @return the code
    */
-  protected static Code getCode(
-      final EVM evm, final WorldUpdater worldUpdater, final Account account) {
+  protected static Code getCode(final EVM evm, final MessageFrame frame, final Account account) {
     if (account == null) {
       return CodeV0.EMPTY_CODE;
     }
@@ -391,7 +388,13 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return evm.getCode(account.getCodeHash(), account.getCode());
     }
 
-    final Bytes targetCode = getTargetCode(worldUpdater, evm.getGasCalculator(), account.getCode());
-    return evm.getCode(Hash.hash(targetCode), targetCode);
+    final Optional<CodeDelegationAccount> targetAccount =
+        getTargetAccount(frame.getWorldUpdater(), evm.getGasCalculator(), account);
+
+    if (targetAccount.isEmpty()) {
+      return CodeV0.EMPTY_CODE;
+    }
+
+    return evm.getCode(targetAccount.get().getCodeHash(), targetAccount.get().getCode());
   }
 }

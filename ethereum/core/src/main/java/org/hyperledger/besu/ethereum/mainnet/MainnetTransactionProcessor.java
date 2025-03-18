@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeInvalid;
@@ -633,13 +634,14 @@ public class MainnetTransactionProcessor {
       return messageCallProcessor.getCodeFromEVM(contract.getCodeHash(), contract.getCode());
     }
 
-    final Optional<Account> maybeTargetAccount = getTargetAccount(worldUpdater, contract.getCode());
+    final Optional<CodeDelegationAccount> maybeTargetAccount =
+        getTargetAccount(worldUpdater, gasCalculator, contract);
     if (maybeTargetAccount.isEmpty()) {
       throw new RuntimeException("Code delegation target account not found");
     }
 
-    final Account targetAccount = maybeTargetAccount.get();
-    warmAddressList.add(targetAccount.getAddress());
+    final CodeDelegationAccount targetAccount = maybeTargetAccount.get();
+    warmAddressList.add(targetAccount.getTargetAddress());
 
     return messageCallProcessor.getCodeFromEVM(
         targetAccount.getCodeHash(), targetAccount.getCode());
