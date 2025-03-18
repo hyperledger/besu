@@ -14,11 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.possync;
 
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.FULL;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_DETACHED_ONLY;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
+import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.NONE;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.SKIP_DETACHED;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -59,7 +58,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
   protected final FastSyncState fastSyncState;
   protected final MetricsSystem metricsSystem;
   protected final FastSyncValidationPolicy attachedValidationPolicy;
-  protected final FastSyncValidationPolicy detachedValidationPolicy;
+  protected final FastSyncValidationPolicy headerValidationPolicy;
   protected final FastSyncValidationPolicy ommerValidationPolicy;
 
   public PosSyncDownloadPipelineFactory(
@@ -93,12 +92,9 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
             LIGHT,
             FULL,
             fastSyncValidationCounter);
-    detachedValidationPolicy =
+    headerValidationPolicy =
         new FastSyncValidationPolicy(
-            this.syncConfig.getFastSyncFullValidationRate(),
-            LIGHT_DETACHED_ONLY,
-            DETACHED_ONLY,
-            fastSyncValidationCounter);
+            this.syncConfig.getFastSyncFullValidationRate(), NONE, NONE, fastSyncValidationCounter);
   }
 
   @Override
@@ -127,7 +123,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
             protocolSchedule,
             protocolContext,
             ethContext,
-            detachedValidationPolicy,
+            headerValidationPolicy,
             syncConfig,
             metricsSystem);
     final ImportHeadersStep importHeadersStep =
@@ -155,12 +151,13 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
   public Pipeline<SyncTargetNumberRange> createDownloadPipelineForSyncTarget(
       final SyncTarget target) {
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
+    final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
 
     final PosSyncSource syncSource =
         new PosSyncSource(
             getCommonAncestor(target).getNumber() + 1,
             () -> fastSyncState.getPivotBlockHeader().get().getNumber(),
-            downloaderParallelism,
+            headerRequestSize,
             false);
     final LoadHeadersStep loadHeadersStep = new LoadHeadersStep(protocolContext.getBlockchain());
     final PosDownloadAndStoreSyncBodiesStep downloadSyncBodiesStep =
