@@ -287,17 +287,6 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   }
 
   @Override
-  public void removeFlatAccountStateTrieNode(
-      final SegmentedKeyValueStorage storage,
-      final SegmentedKeyValueStorageTransaction transaction,
-      final Bytes location) {
-
-    // MRW todo - archive trie node removal
-    throw new IllegalStateException(
-        "Removing Bonsai archive flat account trie node. Must reset chain head to previous checkpoint block.");
-  }
-
-  @Override
   public void removeFlatAccount(
       final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,

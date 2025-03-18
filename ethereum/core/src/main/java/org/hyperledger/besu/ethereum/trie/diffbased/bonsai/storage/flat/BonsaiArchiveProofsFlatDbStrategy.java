@@ -32,11 +32,15 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Placeholder */
 public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrategy {
 
   private final Long trieNodeCheckpointInterval;
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BonsaiArchiveProofsFlatDbStrategy.class);
 
   /**
    * Placeholder
@@ -61,7 +65,6 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
     Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
     if (archiveContext.isPresent()) {
       try {
-
         long trieContext;
 
         Optional<byte[]> archiveRollingContext =
@@ -69,17 +72,11 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
         if (archiveRollingContext.isPresent()) {
           trieContext = Bytes.wrap(archiveRollingContext.get()).toLong();
         } else {
-          // MRW We're not rolling to a specific block's state trie - we need to round down to the
-          // nearest checkpoint interval
           trieContext =
               (((Bytes.wrap(archiveContext.get()).toLong() + 1) / trieNodeCheckpointInterval)
                   * trieNodeCheckpointInterval);
         }
-
-        return Optional.of(
-            // The context for flat-DB PUTs is the block number recorded in the specified world
-            // state, + 1
-            new BonsaiContext(trieContext));
+        return Optional.of(new BonsaiContext(trieContext));
       } catch (NumberFormatException e) {
         throw new IllegalStateException(
             "World state archive context invalid format: "
@@ -119,8 +116,6 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
             .filter(found -> location.commonPrefixLength(found.key()) >= location.size());
     // .filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
 
-    // TODO - getFlatAccount does extra checks for the delete case. Do we need to do anything in
-    // that respect here?
     accountFound =
         nearestAccountPreSizeCheck.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
 
@@ -215,6 +210,41 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
             getStateTrieArchiveContextForWrite(storage).get(), location.toArrayUnsafe());
 
     transaction.put(TRIE_BRANCH_STORAGE, keySuffixed, node.toArrayUnsafe());
+  }
+
+  @Override
+  public void removeFlatAccountStateTrieNode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Bytes location) {
+
+    byte[] keySuffixed =
+        calculateArchiveKeyWithMinSuffix(
+            getStateArchiveContextForWrite(storage).get(), location.toArrayUnsafe());
+
+    // Ensure we only ever delete the exact node being requested for delete
+    Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccountPreSizeCheck =
+        storage
+            .getNearestBeforeMatchLength(TRIE_BRANCH_STORAGE, Bytes.of(keySuffixed))
+            .filter(
+                found ->
+                    found.key().size() == (location.size() + 8)) // TODO - change for CONST length);
+            .filter(found -> location.commonPrefixLength(found.key()) >= location.size());
+
+    if (nearestAccountPreSizeCheck.isPresent()
+        && nearestAccountPreSizeCheck.get().key().commonPrefixLength(Bytes.of(keySuffixed))
+            != keySuffixed.length) {
+      throw new IllegalStateException(
+          "Attempt to delete key "
+              + Bytes.of(keySuffixed).toHexString()
+              + " would delete incorrect trie node "
+              + nearestAccountPreSizeCheck.get().key().toHexString());
+    }
+
+    transaction.remove(TRIE_BRANCH_STORAGE, keySuffixed);
+
+    // While archive state-proof is experimental, extra warnings are better than fewer
+    LOG.warn("Deleted archive state trie node " + Bytes.of(keySuffixed).toHexString());
   }
 
   @Override

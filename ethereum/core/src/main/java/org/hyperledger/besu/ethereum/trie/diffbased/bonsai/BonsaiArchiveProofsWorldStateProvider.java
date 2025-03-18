@@ -134,11 +134,14 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
       final BlockHeader checkpointBlock,
       final Hash targetBlockHash) {
 
-    // Create a world state representation at the next checkpoint block after the target block hash
-    // E.g.chain head = 230, target = 120, checkpoint blocks every 100 blocks. Since archive state
+    // "Create" (fake) a world state representation at the next checkpoint block after the target
+    // block hash
+    // E.g. chain head = 230, target = 120, checkpoint blocks every 100 blocks. Since archive state
     // at chainhead includes everything we need recreate state at any block we simply assert that
     // the current world state is for block 200 (e.g. the nearest checkpoint). Rolling back will
-    // then start from 200 and replay trie logs backwards to 120.
+    // then start from 200 and replay trie logs backwards to 120. We will then PUT new trie nodes
+    // as if we were at block 120, and after those puts (during mutablestate.persist()) the
+    // WORLD_BLOCK_NUMBER_KEY, WORLD_BLOCK_HASH_KEY, and WORLD_ROOT_HASH_KEY will be set to 120.
     ((BonsaiArchiveWorldState) mutableState).createCheckpointState(checkpointBlock);
 
     // Roll back from the checkpoint state to the target block hash
@@ -178,11 +181,24 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
             (DiffBasedWorldStateUpdateAccumulator<?>) mutableState.updater();
         try {
           for (final TrieLog rollBack : rollBacks) {
-            LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
+            LOG.info("Attempting Rollback of {}", rollBack.getBlockHash());
             diffBasedUpdater.rollBack(rollBack);
           }
           diffBasedUpdater.commit();
 
+          // We now have an updater with all of the account changes necessary. Persisting the
+          // mutable state will store the new trie nodes defined in the updater. We can't yet assert
+          // that the mutable
+          // world state is at the target block because persisting involves reading the current trie
+          // nodes to
+          // validate the root hash. WORLD_BLOCK_NUMBER_KEY is therefore still set to the origin
+          // block. We
+          // use an additional key ARCHIVE_PROOF_BLOCK_NUMBER_KEY which persist() will use for PUTs
+          // to the
+          // state trie.
+
+          // This will finish creating usable world state by setting the WORLD_BLOCK_NUMBER_KEY,
+          // WORLD_BLOCK_HASH_KEY and WORLD_ROOT_HASH_KEY to the target block.
           LOG.info(
               "Forcing archive state trie context to {}",
               blockchain.getBlockHeader(targetBlockHash).get().getNumber());
