@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbSt
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
@@ -69,22 +68,31 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
       final FlatDbMode flatDbMode,
       final MetricsSystem metricsSystem,
       final CodeStorageStrategy codeStorageStrategy) {
-    // TODO MRW - there should be a partial version of the bonsai archive DB strategies
-    if (dataStorageConfiguration.getDataStorageFormat() == DataStorageFormat.X_BONSAI_ARCHIVE) {
-      return new BonsaiArchiveFlatDbStrategy(metricsSystem, codeStorageStrategy);
-    } else if (dataStorageConfiguration.getDataStorageFormat()
-        == DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS) {
-      return new BonsaiArchiveProofsFlatDbStrategy(
-          metricsSystem,
-          codeStorageStrategy,
-          dataStorageConfiguration
-              .getDiffBasedSubStorageConfiguration()
-              .getUnstable()
-              .getArchiveTrieNodeCheckpointInterval());
-    } else if (flatDbMode == FlatDbMode.FULL) {
-      return new BonsaiFullFlatDbStrategy(metricsSystem, codeStorageStrategy);
-    } else {
-      return new BonsaiPartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
-    }
+    return switch (dataStorageConfiguration.getDataStorageFormat()) {
+      case X_BONSAI_ARCHIVE ->
+          flatDbMode == FlatDbMode.FULL
+              ? new BonsaiArchiveFlatDbStrategy(metricsSystem, codeStorageStrategy)
+              : new BonsaiArchivePartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
+      case X_BONSAI_ARCHIVE_PROOFS ->
+          flatDbMode == FlatDbMode.FULL
+              ? new BonsaiArchiveProofsFlatDbStrategy(
+                  metricsSystem,
+                  codeStorageStrategy,
+                  dataStorageConfiguration
+                      .getDiffBasedSubStorageConfiguration()
+                      .getUnstable()
+                      .getArchiveTrieNodeCheckpointInterval())
+              : new BonsaiArchiveProofsPartialFlatDbStrategy(
+                  metricsSystem,
+                  codeStorageStrategy,
+                  dataStorageConfiguration
+                      .getDiffBasedSubStorageConfiguration()
+                      .getUnstable()
+                      .getArchiveTrieNodeCheckpointInterval());
+      default ->
+          flatDbMode == FlatDbMode.FULL
+              ? new BonsaiFullFlatDbStrategy(metricsSystem, codeStorageStrategy)
+              : new BonsaiPartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
+    };
   }
 }
