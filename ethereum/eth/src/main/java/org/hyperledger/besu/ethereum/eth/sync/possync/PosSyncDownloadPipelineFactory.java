@@ -169,7 +169,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
     final PosDownloadAndStoreSyncReceiptsStep downloadSyncReceiptsStep =
         new PosDownloadAndStoreSyncReceiptsStep(
             protocolSchedule, ethContext, syncConfig, metricsSystem);
-    final FinishPosSyncStep importSyncBlocksStep =
+    final FinishPosSyncStep finishPosSyncStep =
         new FinishPosSyncStep(
             protocolSchedule,
             protocolContext,
@@ -194,7 +194,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
             "downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
         .thenProcessAsyncOrdered(
             "downloadReceipts", downloadSyncReceiptsStep, downloaderParallelism)
-        .andFinishWith("importBlock", importSyncBlocksStep);
+        .andFinishWith("importBlock", finishPosSyncStep);
   }
 
   protected BlockHeader getCommonAncestor(final SyncTarget syncTarget) {
