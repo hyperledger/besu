@@ -109,7 +109,7 @@ public class PosDownloadAndStoreSyncReceiptsStep
         blockHeaders, receiptsList); // store all receipts for these headers
     LOG.atDebug()
         .setMessage("Block no. {} Stored receipts for {} blocks")
-        .addArgument(headers.getLast().getNumber())
+        .addArgument(blockHeaders.getLast().getNumber())
         .addArgument(blockHeaders.size())
         .log();
   }
