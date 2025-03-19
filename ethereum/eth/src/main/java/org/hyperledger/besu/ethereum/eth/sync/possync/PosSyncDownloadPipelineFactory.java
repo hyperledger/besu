@@ -23,7 +23,6 @@ import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.SKIP_DE
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.PosDownloadAndStoreSyncBodiesStep;
@@ -49,7 +48,7 @@ import org.slf4j.LoggerFactory;
 
 public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PosSyncDownloadPipelineFactory.class);
+  public static final int HEADER_TARGET = 22_000_000;
 
   protected final SynchronizerConfiguration syncConfig;
   protected final ProtocolSchedule protocolSchedule;
@@ -104,17 +103,17 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
       final SyncTarget syncTarget,
       final Pipeline<?> pipeline) {
     return scheduler
-        .startPipeline(createDownloadHeadersPipeline(syncTarget))
+        .startPipeline(createDownloadHeadersPipeline())
         .thenCompose(__ -> scheduler.startPipeline(pipeline));
   }
 
-  protected Pipeline<SyncTargetNumberRange> createDownloadHeadersPipeline(final SyncTarget target) {
+  protected Pipeline<SyncTargetNumberRange> createDownloadHeadersPipeline() {
     final int downloaderHeaderParallelism = syncConfig.getDownloaderHeaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
 
     final PosSyncSource syncSource =
         new PosSyncSource(
-            0,
+                HEADER_TARGET,
             () -> fastSyncState.getPivotBlockHeader().get().getNumber(),
             headerRequestSize,
             true);
@@ -155,7 +154,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
 
     final PosSyncSource syncSource =
         new PosSyncSource(
-            getCommonAncestor(target).getNumber() + 1,
+            getCommonAncestor(target) + 1, // TODO remove the +1 when check in DefaultBlockChain is fixed
             () -> fastSyncState.getPivotBlockHeader().get().getNumber(),
             headerRequestSize,
             false);
@@ -194,25 +193,8 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
         .andFinishWith("importBlock", finishPosSyncStep);
   }
 
-  protected BlockHeader getCommonAncestor(final SyncTarget syncTarget) {
-    return syncTarget.commonAncestor();
+  private long getCommonAncestor(final SyncTarget syncTarget) {
+    return Math.max(HEADER_TARGET, syncTarget.commonAncestor().getNumber());
   }
 
-  protected boolean shouldContinueDownloadingFromPeer(
-      final EthPeer peer, final BlockHeader lastRoundHeader) {
-    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
-    final boolean shouldContinue =
-        !peer.isDisconnected() && lastRoundHeader.getNumber() < pivotBlockHeader.getNumber();
-
-    if (!shouldContinue && peer.isDisconnected()) {
-      LOG.debug("Stopping chain download due to disconnected peer {}", peer);
-    } else if (!shouldContinue && lastRoundHeader.getNumber() >= pivotBlockHeader.getNumber()) {
-      LOG.debug(
-          "Stopping chain download as lastRoundHeader={} is not less than pivotBlockHeader={} for peer {}",
-          lastRoundHeader.getNumber(),
-          pivotBlockHeader.getNumber(),
-          peer);
-    }
-    return shouldContinue;
-  }
 }
