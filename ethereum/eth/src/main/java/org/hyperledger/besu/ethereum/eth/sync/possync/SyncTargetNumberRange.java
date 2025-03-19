@@ -16,7 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync.possync;
 
 import static java.lang.Math.toIntExact;
 
-public record SyncTargetNumberRange(long lowerBlockNumber, long upperBlockNumber) {
+public record SyncTargetNumberRange(
+    boolean firstRange, long lowerBlockNumber, long upperBlockNumber) {
 
   public int getSegmentLengthExclusive() {
     return toIntExact(upperBlockNumber - lowerBlockNumber - 1);
