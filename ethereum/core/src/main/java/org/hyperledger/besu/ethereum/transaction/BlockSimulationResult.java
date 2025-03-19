@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class BlockSimulationResult {
@@ -54,23 +53,21 @@ public class BlockSimulationResult {
   }
 
   public List<LogWithMetadata> getLogsWithMetadata() {
-    List<LogWithMetadata> logs = new ArrayList<>();
-    blockCallSimulationResult
-        .getTransactionSimulatorResults()
-        .forEach(
+    return blockCallSimulationResult.getTransactionSimulatorResults().stream()
+        .flatMap(
             transactionSimulation ->
-                logs.addAll(
-                    LogWithMetadata.generate(
-                        0,
-                        transactionSimulation.logs(),
-                        block.getHeader().getNumber(),
-                        block.getHash(),
-                        transactionSimulation.result().transaction().getHash(),
-                        block
-                            .getBody()
-                            .getTransactions()
-                            .indexOf(transactionSimulation.result().transaction()),
-                        false)));
-    return logs;
+                LogWithMetadata.generate(
+                    0,
+                    transactionSimulation.logs(),
+                    block.getHeader().getNumber(),
+                    block.getHash(),
+                    transactionSimulation.result().transaction().getHash(),
+                    block
+                        .getBody()
+                        .getTransactions()
+                        .indexOf(transactionSimulation.result().transaction()),
+                    false)
+                    .stream())
+        .toList();
   }
 }

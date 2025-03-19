@@ -368,11 +368,11 @@ public class BlockOverrides {
     /**
      * Sets the mix hash
      *
-     * @param mixHash the mix hash
+     * @param mixHashOrPrevRandao the mix hash
      * @return the builder instance
      */
-    public Builder mixHashOrPrevRandao(final Hash mixHash) {
-      this.mixHashOrPrevRandao = mixHash;
+    public Builder mixHashOrPrevRandao(final Hash mixHashOrPrevRandao) {
+      this.mixHashOrPrevRandao = mixHashOrPrevRandao;
       return this;
     }
 

@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
@@ -74,16 +73,11 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class BlockSimulator {
 
-  private static final ImmutableTransactionValidationParams STRICT_VALIDATION_PARAMS =
-      ImmutableTransactionValidationParams.builder()
-          .from(TransactionValidationParams.transactionSimulator())
-          .build();
+  private static final TransactionValidationParams STRICT_VALIDATION_PARAMS =
+      TransactionValidationParams.transactionSimulator();
 
-  private static final ImmutableTransactionValidationParams SIMULATION_PARAMS =
-      ImmutableTransactionValidationParams.builder()
-          .from(TransactionValidationParams.transactionSimulator())
-          .isAllowExceedingBalance(true)
-          .build();
+  private static final TransactionValidationParams SIMULATION_PARAMS =
+      TransactionValidationParams.transactionSimulatorAllowExceedingBalance();
 
   private final TransactionSimulator transactionSimulator;
   private final WorldStateArchive worldStateArchive;
@@ -170,7 +164,7 @@ public class BlockSimulator {
         protocolSchedule.getForNextBlockHeader(
             baseBlockHeader, blockOverrides.getTimestamp().orElseThrow());
 
-    BlockHeader overridenBaseblockHeader =
+    BlockHeader overridenBaseBlockHeader =
         overrideBlockHeader(baseBlockHeader, protocolSpec, blockOverrides, shouldValidate);
 
     blockStateCall
@@ -181,14 +175,14 @@ public class BlockSimulator {
     MainnetTransactionProcessor transactionProcessor =
         new SimulationTransactionProcessorFactory(protocolSchedule)
             .getTransactionProcessor(
-                overridenBaseblockHeader, blockStateCall.getStateOverrideMap());
+                overridenBaseBlockHeader, blockStateCall.getStateOverrideMap());
 
     BlockHashLookup blockHashLookup =
-        createBlockHashLookup(blockOverrides, protocolSpec, overridenBaseblockHeader);
+        createBlockHashLookup(blockOverrides, protocolSpec, overridenBaseBlockHeader);
 
     BlockCallSimulationResult blockCallSimulationResult =
         processTransactions(
-            overridenBaseblockHeader,
+            overridenBaseBlockHeader,
             blockStateCall,
             ws,
             protocolSpec,
@@ -197,7 +191,7 @@ public class BlockSimulator {
             blockHashLookup);
 
     return createFinalBlock(
-        overridenBaseblockHeader, blockCallSimulationResult, blockOverrides, ws);
+        overridenBaseBlockHeader, blockCallSimulationResult, blockOverrides, ws);
   }
 
   protected BlockCallSimulationResult processTransactions(
