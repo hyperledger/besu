@@ -983,7 +983,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       configureNativeLibs(Optional.ofNullable(network));
       if (enablePrecompileCaching
-          && getDataStorageConfiguration()
+          || getDataStorageConfiguration()
               .getPathBasedExtraStorageConfiguration()
               .getUnstable()
               .isParallelTxProcessingEnabled()) {
@@ -1019,6 +1019,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void configurePrecompileCaching() {
     // enable precompile caching:
     AbstractPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+    // separately set KZG precompile to cache, it does not extend AbstractPrecompiledContract:
+    KZGPointEvalPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
 
     // set a metric logger
     final var precompileCounter =
