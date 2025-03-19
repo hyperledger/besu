@@ -59,13 +59,13 @@ public class CodeDelegationGasCostHelper {
     }
 
     return calculateCodeDelegationResolutionGas(
-        frame, gasCalculator, maybeTargetAccount.get().getAddress());
+        frame, gasCalculator, maybeTargetAccount.get().getTargetAddress());
   }
 
   private static long calculateCodeDelegationResolutionGas(
-      final MessageFrame frame, final GasCalculator gasCalculator, final Address delegateeAddress) {
+      final MessageFrame frame, final GasCalculator gasCalculator, final Address targetAddress) {
     final boolean isWarm =
-        frame.warmUpAddress(delegateeAddress) || gasCalculator.isPrecompile(delegateeAddress);
+        frame.warmUpAddress(targetAddress) || gasCalculator.isPrecompile(targetAddress);
     return isWarm
         ? gasCalculator.getWarmStorageReadCost()
         : gasCalculator.getColdAccountAccessCost();
