@@ -27,8 +27,10 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.InvalidTrieLogTypeException;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 
 import java.util.Map;
 import java.util.Optional;
@@ -40,6 +42,19 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
+
+  @Override
+  public TrieLogLayer create(
+      final TrieLogAccumulator accumulator,
+      final DataStorageFormat dataStorageFormat,
+      final BlockHeader blockHeader) {
+    TrieLogLayer layer = new TrieLogLayer();
+    layer.setBlockHash(blockHeader.getBlockHash());
+    layer.setBlockNumber(blockHeader.getNumber());
+    layer.setDataStorageFormat(dataStorageFormat);
+    applyStateModification(layer, accumulator, blockHeader);
+    return layer;
+  }
 
   @Override
   public byte[] serialize(final TrieLog layer) {
@@ -102,18 +117,6 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
         output.endList();
       }
 
-      output.endList();
-    }
-
-    // add optional extra fields
-    if (!layer.getExtraFields().isEmpty()) {
-      output.startList();
-      for (Map.Entry<Bytes, TrieLog.LogTuple<Bytes>> entry : layer.getExtraFields().entrySet()) {
-        output.startList();
-        output.writeBytes(entry.getKey());
-        writeInnerRlp(entry.getValue(), output, RLPOutput::writeBytes);
-        output.endList();
-      }
       output.endList();
     }
 
@@ -185,20 +188,6 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
         }
         input.leaveList();
         newLayer.getStorageChanges().put(address, storageChanges);
-      }
-
-      // add optional extra fields
-      if (input.nextIsList()) {
-        input.enterList();
-        while (!input.isEndOfCurrentList()) {
-          input.enterList();
-          final Bytes key = input.readBytes();
-          final Bytes oldValue = nullOrValue(input, RLPInput::readBytes);
-          final Bytes newValue = nullOrValue(input, RLPInput::readBytes);
-          newLayer.addExtraField(key, oldValue, newValue);
-          input.leaveList();
-        }
-        input.leaveList();
       }
 
       // lenient leave list for forward compatible additions.

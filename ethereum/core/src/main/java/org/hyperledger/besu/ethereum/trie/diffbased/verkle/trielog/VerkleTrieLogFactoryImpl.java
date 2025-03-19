@@ -28,8 +28,12 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.InvalidTrieLo
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldStateUpdateAccumulator;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.plugin.services.trielogs.StateMigrationLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 
 import java.util.Map;
 import java.util.Optional;
@@ -43,6 +47,27 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
 
   @Override
+  public TrieLogLayer create(
+      final TrieLogAccumulator accumulator,
+      final DataStorageFormat dataStorageFormat,
+      final BlockHeader blockHeader) {
+    final VerkleWorldStateUpdateAccumulator verkleWorldStateUpdateAccumulator =
+        (VerkleWorldStateUpdateAccumulator) accumulator;
+    TrieLogLayer layer = new TrieLogLayer();
+    layer.setBlockHash(blockHeader.getBlockHash());
+    layer.setBlockNumber(blockHeader.getNumber());
+    layer.setDataStorageFormat(dataStorageFormat);
+    applyStateModification(layer, verkleWorldStateUpdateAccumulator, blockHeader);
+    applyStateMigration(layer, verkleWorldStateUpdateAccumulator);
+    return layer;
+  }
+
+  private void applyStateMigration(
+      final TrieLogLayer layer, final VerkleWorldStateUpdateAccumulator accumulator) {
+    layer.setStateMigrationLog(accumulator.getStateMigrationLog());
+  }
+
+  @Override
   public byte[] serialize(final TrieLog layer) {
     final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
     writeTo(layer, rlpLog);
@@ -51,17 +76,32 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
 
   public static void writeTo(final TrieLog layer, final RLPOutput output) {
     layer.freeze();
+    output.startList();
+    output.writeBytes(layer.getBlockHash());
+    output.writeInt(layer.getDataStorageFormat().getValue());
+    writeStateMigrationLog(layer.getStateMigrationLog(), output);
+    writeStateModification(layer, output);
+    output.endList();
+  }
+
+  private static void writeStateMigrationLog(
+      final Optional<StateMigrationLog> maybeMigrationProgress, final RLPOutput output) {
+    output.startList();
+    maybeMigrationProgress.ifPresent(
+        stateMigrationLog -> {
+          output.writeBytes(stateMigrationLog.getNextAccount());
+          output.writeBytes(stateMigrationLog.getNextStorageKey());
+          output.writeLong(stateMigrationLog.getMaxToConvert());
+        });
+    output.endList();
+  }
+
+  private static void writeStateModification(final TrieLog layer, final RLPOutput output) {
 
     final Set<Address> addresses = new TreeSet<>();
     addresses.addAll(layer.getAccountChanges().keySet());
     addresses.addAll(layer.getCodeChanges().keySet());
     addresses.addAll(layer.getStorageChanges().keySet());
-
-    output.startList();
-
-    output.writeBytes(layer.getBlockHash());
-
-    output.writeInt(layer.getDataStorageFormat().getValue());
 
     for (final Address address : addresses) {
       output.startList();
@@ -117,20 +157,6 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
 
       output.endList();
     }
-
-    // add optional extra fields
-    if (!layer.getExtraFields().isEmpty()) {
-      output.startList();
-      for (Map.Entry<Bytes, TrieLog.LogTuple<Bytes>> entry : layer.getExtraFields().entrySet()) {
-        output.startList();
-        output.writeBytes(entry.getKey());
-        writeInnerRlp(entry.getValue(), output, RLPOutput::writeBytes);
-        output.endList();
-      }
-      output.endList();
-    }
-
-    output.endList();
   }
 
   @Override
@@ -151,6 +177,17 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
     } else {
       return new InvalidTrieLogTypeException(blockHash, dataStorageFormat);
     }
+
+    final int stateMigrationLogListSize = input.enterList();
+    if (stateMigrationLogListSize != 0) {
+      StateMigrationLog migrationProgress =
+          new StateMigrationLog(
+              Optional.of(input.readBytes(Bytes::wrap)),
+              Optional.of(input.readBytes(Bytes::wrap)),
+              input.readLong());
+      newLayer.setStateMigrationLog(Optional.of(migrationProgress));
+    }
+    input.leaveList();
 
     while (!input.isEndOfCurrentList()) {
       input.enterList();
@@ -207,19 +244,6 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
         }
         input.leaveList();
         newLayer.getStorageChanges().put(address, storageChanges);
-      }
-
-      if (input.nextIsList()) {
-        input.enterList();
-        while (!input.isEndOfCurrentList()) {
-          input.enterList();
-          final Bytes key = input.readBytes();
-          final Bytes oldValue = nullOrValue(input, RLPInput::readBytes);
-          final Bytes newValue = nullOrValue(input, RLPInput::readBytes);
-          newLayer.addExtraField(key, oldValue, newValue);
-          input.leaveList();
-        }
-        input.leaveList();
       }
 
       // lenient leave list for forward compatible additions.

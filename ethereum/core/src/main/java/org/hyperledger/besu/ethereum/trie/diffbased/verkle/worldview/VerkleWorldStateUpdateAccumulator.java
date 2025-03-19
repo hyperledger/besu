@@ -26,11 +26,16 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
+import org.hyperledger.besu.plugin.services.trielogs.StateMigrationLog;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class VerkleWorldStateUpdateAccumulator
     extends DiffBasedWorldStateUpdateAccumulator<VerkleAccount> {
+
+  private Optional<StateMigrationLog> maybeStateMigrationLog;
 
   public VerkleWorldStateUpdateAccumulator(
       final DiffBasedWorldView world,
@@ -39,12 +44,13 @@ public class VerkleWorldStateUpdateAccumulator
       final Consumer<Bytes> codePreloader,
       final EvmConfiguration evmConfiguration) {
     super(world, accountPreloader, storagePreloader, codePreloader, evmConfiguration);
+    this.maybeStateMigrationLog = Optional.empty();
   }
 
   public VerkleWorldStateUpdateAccumulator(
-      final DiffBasedWorldView worldView,
-      final DiffBasedWorldStateUpdateAccumulator<VerkleAccount> source) {
+      final DiffBasedWorldView worldView, final VerkleWorldStateUpdateAccumulator source) {
     super(worldView, source);
+    this.maybeStateMigrationLog = source.getStateMigrationLog();
   }
 
   @Override
@@ -98,5 +104,19 @@ public class VerkleWorldStateUpdateAccumulator
   @Override
   protected boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate() {
     return false;
+  }
+
+  public Optional<StateMigrationLog> getStateMigrationLog() {
+    return maybeStateMigrationLog;
+  }
+
+  public void setStateMigrationLog(final Optional<StateMigrationLog> maybeStateMigrationLog) {
+    this.maybeStateMigrationLog = maybeStateMigrationLog;
+  }
+
+  @Override
+  public void reset() {
+    super.reset();
+    this.maybeStateMigrationLog = Optional.empty();
   }
 }

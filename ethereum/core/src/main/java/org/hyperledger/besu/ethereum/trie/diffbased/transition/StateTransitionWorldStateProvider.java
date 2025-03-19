@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvi
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.plugin.services.trielogs.StateMigrationLog;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,8 +37,13 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StateTransitionWorldStateProvider implements WorldStateArchive {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(StateTransitionWorldStateProvider.class);
 
   private final BonsaiWorldStateProvider bonsaiWorldStateProvider;
   private final VerkleWorldStateProvider verkleWorldStateProvider;
@@ -71,46 +78,95 @@ public class StateTransitionWorldStateProvider implements WorldStateArchive {
   @Override
   public Optional<MutableWorldState> getWorldState(
       final WorldStateQueryParams worldStateQueryParams) {
+    LOG.debug("Fetching world state for block hash: {}", worldStateQueryParams.getBlockHash());
 
-    // Retrieve Bonsai state and reorg if needed
+    // Retrieve Bonsai state and handle potential reorganization
     final Optional<BonsaiWorldState> bonsaiWorldState =
         getBonsaiTransitionWorldState(worldStateQueryParams);
-    // Retrieve verkle state and reorg if needed
+    // Retrieve Verkle state and handle potential reorganization
     final Optional<VerkleWorldState> verkleWorldState =
         getVerkleTransitionWorldState(worldStateQueryParams);
 
+    // If both states are missing, return empty
     if (bonsaiWorldState.isEmpty() && verkleWorldState.isEmpty()) {
+      LOG.debug("No world state available for the requested block hash.");
       return Optional.empty();
     }
 
+    // Check if retrieved states match the requested block hash
     final boolean isBonsaiWorldState =
         bonsaiWorldState
-            .get()
-            .getWorldStateBlockHash()
-            .equals(worldStateQueryParams.getBlockHash());
+            .map(
+                state ->
+                    state.getWorldStateBlockHash().equals(worldStateQueryParams.getBlockHash()))
+            .orElse(false);
     final boolean isVerkleWorldState =
         verkleWorldState
-            .get()
-            .getWorldStateBlockHash()
-            .equals(worldStateQueryParams.getBlockHash());
+            .map(
+                state ->
+                    state.getWorldStateBlockHash().equals(worldStateQueryParams.getBlockHash()))
+            .orElse(false);
+
     if (isBonsaiWorldState || isVerkleWorldState) {
-      // Combine both states if they are present.
+      LOG.debug("Matching world state found. Proceeding with state transition.");
+
+      // Retrieve state migration log
+      final StateMigrationLog stateMigrationLog =
+          verkleWorldStateProvider
+              .getTrieLogManager()
+              .getTrieLogLayer(worldStateQueryParams.getBlockHash())
+              .flatMap(TrieLog::getStateMigrationLog)
+              .orElse(new StateMigrationLog(7));
+
+      LOG.debug(
+          "State migration log retrieved for block hash: {}", worldStateQueryParams.getBlockHash());
+
+      // Combine both states if available and return the transition state
       return Optional.of(
           new StateTransitionWorldState(
-              bonsaiWorldState.get(), verkleWorldState.get(), isVerkleWorldState, verkleMilestone));
+              bonsaiWorldState.get(),
+              verkleWorldState.get(),
+              stateMigrationLog,
+              isVerkleWorldState,
+              verkleMilestone));
     }
+
+    LOG.debug("No matching world state found for the requested block hash.");
     return Optional.empty();
   }
 
   @Override
   public MutableWorldState getWorldState() {
+    LOG.debug("Fetching current world state.");
+
+    // Retrieve current Bonsai and Verkle states
     final BonsaiWorldState bonsaiState =
         (BonsaiWorldState) bonsaiWorldStateProvider.getWorldState();
     final VerkleWorldState verkleState =
         (VerkleWorldState) verkleWorldStateProvider.getWorldState();
-    final boolean isVerkleActive =
-        blockchain.getChainHeadHeader().getTimestamp() >= verkleMilestone;
-    return new StateTransitionWorldState(bonsaiState, verkleState, isVerkleActive, verkleMilestone);
+
+    // Retrieve the current chain head block header
+    final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
+    LOG.debug("Current chain head block hash: {}", chainHeadHeader.getBlockHash());
+
+    // Check if Verkle is active based on the milestone timestamp
+    final boolean isVerkleActive = chainHeadHeader.getTimestamp() >= verkleMilestone;
+    LOG.debug("Verkle active status: {}", isVerkleActive);
+
+    // Retrieve state migration log
+    final StateMigrationLog stateMigrationLog =
+        verkleWorldStateProvider
+            .getTrieLogManager()
+            .getTrieLogLayer(chainHeadHeader.getBlockHash())
+            .flatMap(TrieLog::getStateMigrationLog)
+            .orElse(new StateMigrationLog(7));
+
+    LOG.debug(
+        "State migration log retrieved for chain head block hash: {}",
+        chainHeadHeader.getBlockHash());
+
+    return new StateTransitionWorldState(
+        bonsaiState, verkleState, stateMigrationLog, isVerkleActive, verkleMilestone);
   }
 
   private Optional<BonsaiWorldState> getBonsaiTransitionWorldState(

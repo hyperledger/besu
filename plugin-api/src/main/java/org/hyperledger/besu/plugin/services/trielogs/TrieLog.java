@@ -52,8 +52,6 @@ public interface TrieLog {
 
   DataStorageFormat getDataStorageFormat();
 
-  <U extends LogTuple<Bytes>> Map<Bytes, U> getExtraFields();
-
   /**
    * Gets a map of addresses to their account value changes.
    *
@@ -140,6 +138,8 @@ public interface TrieLog {
    * @return an Optional containing the account value if available, otherwise an empty Optional
    */
   Optional<? extends AccountValue> getAccount(final Address address);
+
+  Optional<StateMigrationLog> getStateMigrationLog();
 
   /**
    * An interface representing a tuple of prior and updated values for a specific type T in a log.

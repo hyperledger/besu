@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.plugin.services.trielogs.StateMigrationLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.HashMap;
@@ -51,27 +52,25 @@ public class TrieLogLayer implements TrieLog {
   protected final Map<Address, DiffBasedValue<AccountValue>> accounts;
   protected final Map<Address, DiffBasedValue<Bytes>> code;
   protected final Map<Address, Map<StorageSlotKey, DiffBasedValue<UInt256>>> storage;
-  protected Map<Bytes, DiffBasedValue<Bytes>> extraFields;
+  protected Optional<StateMigrationLog> maybeStateMigrationLog = Optional.empty();
   protected boolean frozen = false;
 
   public TrieLogLayer(
       final Map<Address, DiffBasedValue<AccountValue>> accounts,
       final Map<Address, DiffBasedValue<Bytes>> code,
-      final Map<Address, Map<StorageSlotKey, DiffBasedValue<UInt256>>> storage,
-      final Map<Bytes, DiffBasedValue<Bytes>> extraFields) {
+      final Map<Address, Map<StorageSlotKey, DiffBasedValue<UInt256>>> storage) {
     this.accounts = accounts;
     this.code = code;
     this.storage = storage;
-    this.extraFields = extraFields;
   }
 
   public TrieLogLayer() {
     // TODO when tuweni fixes zero length byte comparison consider TreeMap
-    this(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
+    this(new HashMap<>(), new HashMap<>(), new HashMap<>());
   }
 
   public TrieLogLayer(final Hash blockHash, final DataStorageFormat dataStorageFormat) {
-    this(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
+    this(new HashMap<>(), new HashMap<>(), new HashMap<>());
     this.blockHash = blockHash;
     this.dataStorageFormat = dataStorageFormat;
   }
@@ -134,12 +133,6 @@ public class TrieLogLayer implements TrieLog {
     return this;
   }
 
-  public TrieLogLayer addExtraField(final Bytes key, final Bytes oldValue, final Bytes newValue) {
-    checkState(!frozen, "Layer is Frozen");
-    extraFields.put(key, new DiffBasedValue<>(oldValue, newValue));
-    return this;
-  }
-
   @Override
   public Map<Address, DiffBasedValue<AccountValue>> getAccountChanges() {
     return accounts;
@@ -167,11 +160,6 @@ public class TrieLogLayer implements TrieLog {
   @Override
   public DataStorageFormat getDataStorageFormat() {
     return dataStorageFormat;
-  }
-
-  @Override
-  public Map<Bytes, DiffBasedValue<Bytes>> getExtraFields() {
-    return extraFields;
   }
 
   @Override
@@ -208,6 +196,15 @@ public class TrieLogLayer implements TrieLog {
   @Override
   public Optional<AccountValue> getAccount(final Address address) {
     return Optional.ofNullable(accounts.get(address)).map(DiffBasedValue::getUpdated);
+  }
+
+  @Override
+  public Optional<StateMigrationLog> getStateMigrationLog() {
+    return maybeStateMigrationLog;
+  }
+
+  public void setStateMigrationLog(final Optional<StateMigrationLog> maybeStateMigrationLog) {
+    this.maybeStateMigrationLog = maybeStateMigrationLog;
   }
 
   public String dump() {

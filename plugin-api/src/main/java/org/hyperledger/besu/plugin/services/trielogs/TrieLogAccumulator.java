@@ -47,6 +47,4 @@ public interface TrieLogAccumulator {
    */
   Map<Address, ? extends Map<StorageSlotKey, ? extends TrieLog.LogTuple<UInt256>>>
       getStorageToUpdate();
-
-  Map<Bytes, ? extends TrieLog.LogTuple<Bytes>> getExtraFields();
 }

@@ -41,7 +41,6 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -77,8 +76,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   // alternative was to keep a giant pre-image cache of the entire trie.
   private final Map<Address, StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>>>
       storageToUpdate = new ConcurrentHashMap<>();
-
-  private final Map<Bytes, DiffBasedValue<Bytes>> extraFields = new HashMap<>();
 
   private final Map<UInt256, Hash> storageKeyHashLookup = new ConcurrentHashMap<>();
 
@@ -311,19 +308,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   public Map<Address, StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>>>
       getStorageToUpdate() {
     return storageToUpdate;
-  }
-
-  @Override
-  public Map<Bytes, DiffBasedValue<Bytes>> getExtraFields() {
-    return extraFields;
-  }
-
-  public DiffBasedValue<Bytes> getExtraField(final Bytes key) {
-    return extraFields.computeIfAbsent(key, k -> new DiffBasedValue<>(null, null));
-  }
-
-  public void addExtraField(final Bytes key, final DiffBasedValue<Bytes> value) {
-    extraFields.put(key, value);
   }
 
   @Override
@@ -675,13 +659,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                     (storageSlotKey, value) ->
                         rollStorageChange(
                             address, storageSlotKey, value.getPrior(), value.getUpdated())));
-    // add optional extra fields in the trielog
-    layer
-        .getExtraFields()
-        .forEach(
-            (key, value) -> {
-              addExtraField(key, new DiffBasedValue<>(value.getPrior(), value.getUpdated()));
-            });
   }
 
   public void rollBack(final TrieLog layer) {
@@ -702,13 +679,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                     (storageSlotKey, value) ->
                         rollStorageChange(
                             address, storageSlotKey, value.getUpdated(), value.getPrior())));
-    // add optional extra fields in the trielog
-    layer
-        .getExtraFields()
-        .forEach(
-            (key, value) -> {
-              addExtraField(key, new DiffBasedValue<>(value.getPrior(), value.getUpdated()));
-            });
   }
 
   private void rollAccountChange(
@@ -955,7 +925,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     updatedAccounts.clear();
     deletedAccounts.clear();
     storageKeyHashLookup.clear();
-    // extraFields.clear();
   }
 
   protected Hash hashAndSaveAccountPreImage(final Address address) {

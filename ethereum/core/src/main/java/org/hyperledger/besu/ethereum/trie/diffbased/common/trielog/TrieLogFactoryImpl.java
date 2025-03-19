@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
@@ -28,15 +27,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public abstract class TrieLogFactoryImpl implements TrieLogFactory {
-  @Override
-  public TrieLogLayer create(
+
+  protected void applyStateModification(
+      final TrieLogLayer layer,
       final TrieLogAccumulator accumulator,
-      final DataStorageFormat dataStorageFormat,
       final BlockHeader blockHeader) {
-    TrieLogLayer layer = new TrieLogLayer();
-    layer.setBlockHash(blockHeader.getBlockHash());
-    layer.setBlockNumber(blockHeader.getNumber());
-    layer.setDataStorageFormat(dataStorageFormat);
     for (final var updatedAccount : accumulator.getAccountsToUpdate().entrySet()) {
       final var value = updatedAccount.getValue();
       final var oldAccountValue = value.getPrior();
@@ -68,16 +63,6 @@ public abstract class TrieLogFactoryImpl implements TrieLogFactory {
         layer.addStorageChange(address, slotUpdate.getKey(), val.getPrior(), val.getUpdated());
       }
     }
-
-    // add optional extra fields in the trielog
-    accumulator
-        .getExtraFields()
-        .forEach(
-            (key, value) -> {
-              layer.addExtraField(key, value.getPrior(), value.getUpdated());
-            });
-
-    return layer;
   }
 
   protected static <T> T nullOrValue(final RLPInput input, final Function<RLPInput, T> reader) {

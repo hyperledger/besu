@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorld
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.trielogs.StateMigrationLog;
 
 import java.util.Map;
 import java.util.Optional;
@@ -53,26 +54,33 @@ public class StateTransitionWorldState implements MutableWorldState, DiffBasedWo
 
   private final BonsaiWorldState bonsaiWorldState;
   private final VerkleWorldState verkleWorldState;
+  private final StateMigrationLog migrationProgress;
   private DiffBasedWorldStateUpdateAccumulator<?> accumulator;
 
   private boolean isVerkleActive;
-  private final long verkleTimeStamp;
+  private final long verkleForkTimeStamp;
 
   public StateTransitionWorldState(
       final BonsaiWorldState bonsaiWorldState,
       final VerkleWorldState verkleWorldState,
+      final StateMigrationLog migrationProgress,
       final boolean isVerkleActive,
-      final long verkleTimeStamp) {
+      final long verkleForkTimeStamp) {
     this.bonsaiWorldState = bonsaiWorldState;
     this.verkleWorldState = verkleWorldState;
     this.isVerkleActive = isVerkleActive;
-    this.verkleTimeStamp = verkleTimeStamp;
+    this.verkleForkTimeStamp = verkleForkTimeStamp;
+    this.migrationProgress = migrationProgress;
     this.accumulator = loadAccumulator();
   }
 
   @Override
   public void announceBlockToImport(final BlockHeader blockToImport) {
-    this.isVerkleActive = blockToImport.getTimestamp() >= verkleTimeStamp;
+    // Determine if Verkle should be activated based on the fork timestamp.
+    if (migrationProgress.isMigrationInProgress()) {
+      this.isVerkleActive = blockToImport.getTimestamp() >= verkleForkTimeStamp;
+    }
+    // Load the appropriate state accumulator.
     this.accumulator = loadAccumulator();
   }
 
@@ -80,8 +88,12 @@ public class StateTransitionWorldState implements MutableWorldState, DiffBasedWo
   public Account get(final Address address) {
     if (isVerkleActive) {
       Account account = verkleWorldState.get(address);
-      if (account == null) {
+
+      // If the account is not found in Verkle but migration is ongoing, check in Bonsai
+      if (account == null && migrationProgress.isMigrationInProgress()) {
         account = bonsaiWorldState.get(address);
+
+        // Convert Bonsai account to Verkle format if necessary
         if (account instanceof BonsaiAccount bonsaiAccount) {
           return new VerkleAccount(
               getAccumulator(),
@@ -96,6 +108,7 @@ public class StateTransitionWorldState implements MutableWorldState, DiffBasedWo
       }
       return account;
     } else {
+      // If Verkle is not active, retrieve the account from Bonsai
       return bonsaiWorldState.get(address);
     }
   }
@@ -113,11 +126,18 @@ public class StateTransitionWorldState implements MutableWorldState, DiffBasedWo
   @Override
   public Optional<UInt256> getStorageValueByStorageSlotKey(
       final Address address, final StorageSlotKey storageSlotKey) {
+
     if (isVerkleActive) {
-      return verkleWorldState
-          .getStorageValueByStorageSlotKey(address, storageSlotKey)
-          .or(() -> bonsaiWorldState.getStorageValueByStorageSlotKey(address, storageSlotKey));
+      Optional<UInt256> slot =
+          verkleWorldState.getStorageValueByStorageSlotKey(address, storageSlotKey);
+
+      // If not found in Verkle and migration is ongoing, check in Bonsai
+      if (slot.isEmpty() && migrationProgress.isMigrationInProgress()) {
+        slot = bonsaiWorldState.getStorageValueByStorageSlotKey(address, storageSlotKey);
+      }
+      return slot;
     } else {
+      // If Verkle is not active, retrieve the storage value from Bonsai
       return bonsaiWorldState.getStorageValueByStorageSlotKey(address, storageSlotKey);
     }
   }
@@ -145,42 +165,64 @@ public class StateTransitionWorldState implements MutableWorldState, DiffBasedWo
   @Override
   public void persist(final BlockHeader blockHeader) {
     if (isVerkleActive) {
+      // Import state changes into the Verkle accumulator
       verkleWorldState
           .getAccumulator()
           .importStateChangesFromSource(
               (DiffBasedWorldStateUpdateAccumulator<VerkleAccount>) accumulator);
-      PatriciaToVerkleConverter.convert(bonsaiWorldState, verkleWorldState, 7);
 
+      // If migration is in progress, perform conversion from Bonsai to Verkle
+      if (migrationProgress.isMigrationInProgress()) {
+        PatriciaToVerkleConverter.convert(bonsaiWorldState, verkleWorldState, migrationProgress);
+        verkleWorldState.getAccumulator().setStateMigrationLog(Optional.of(migrationProgress));
+      }
+
+      // Persist Verkle world state
       verkleWorldState.persist(blockHeader);
-
     } else {
+      // Import state changes into the Bonsai accumulator
       bonsaiWorldState
           .getAccumulator()
           .importStateChangesFromSource(
               (DiffBasedWorldStateUpdateAccumulator<BonsaiAccount>) accumulator);
-      // TODO REMOVE IT TO GENERATE PRE IMAGE
-      bonsaiWorldState
-          .getAccumulator()
-          .getAccountsToUpdate()
-          .forEach(
-              (address, bonsaiAccountDiffBasedValue) -> {
-                PatriciaToVerkleConverter.addPreImage(Hash.hash(address), address);
-              });
-      bonsaiWorldState
-          .getAccumulator()
-          .getStorageToUpdate()
-          .forEach(
-              (address, bonsaiAccountDiffBasedValue) ->
-                  bonsaiAccountDiffBasedValue.forEach(
-                      (storageSlotKey, value) -> {
-                        PatriciaToVerkleConverter.addPreImage(
-                            storageSlotKey.getSlotHash(),
-                            storageSlotKey.getSlotKey().orElseThrow());
-                      }));
-      // TODO END REMOVE IT TO GENERATE PRE IMAGE
+
+      // Generate pre-images for Bonsai state transition
+      // TODO (this should be removed in final version)
+      generatePreImagesForBonsai();
+
+      // Persist Bonsai world state
       bonsaiWorldState.persist(blockHeader);
     }
+
+    // Reset the accumulator after persisting state
     accumulator.reset();
+  }
+
+  /**
+   * Generates pre-images for the Bonsai world state.
+   *
+   * <p>This method ensures that addresses and storage slot keys are correctly mapped to their
+   * hashes. It is currently used for pre-image generation and should be removed in the final
+   * version.
+   */
+  private void generatePreImagesForBonsai() {
+    bonsaiWorldState
+        .getAccumulator()
+        .getAccountsToUpdate()
+        .forEach(
+            (address, bonsaiAccountDiffBasedValue) ->
+                PatriciaToVerkleConverter.addPreImage(Hash.hash(address), address));
+
+    bonsaiWorldState
+        .getAccumulator()
+        .getStorageToUpdate()
+        .forEach(
+            (address, storageUpdates) ->
+                storageUpdates.forEach(
+                    (storageSlotKey, value) ->
+                        PatriciaToVerkleConverter.addPreImage(
+                            storageSlotKey.getSlotHash(),
+                            storageSlotKey.getSlotKey().orElseThrow())));
   }
 
   @Override
