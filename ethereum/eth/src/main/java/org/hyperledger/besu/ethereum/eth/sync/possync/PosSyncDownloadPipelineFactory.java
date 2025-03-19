@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.NONE;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.SKIP_DETACHED;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
@@ -43,12 +42,7 @@ import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
 import java.util.concurrent.CompletionStage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
-
-  public static final int HEADER_TARGET = 22_000_000;
 
   protected final SynchronizerConfiguration syncConfig;
   protected final ProtocolSchedule protocolSchedule;
@@ -113,7 +107,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
 
     final PosSyncSource syncSource =
         new PosSyncSource(
-                HEADER_TARGET,
+            syncConfig.getDownloaderHeaderTarget(),
             () -> fastSyncState.getPivotBlockHeader().get().getNumber(),
             headerRequestSize,
             true);
@@ -154,7 +148,8 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
 
     final PosSyncSource syncSource =
         new PosSyncSource(
-            getCommonAncestor(target) + 1, // TODO remove the +1 when check in DefaultBlockChain is fixed
+            getCommonAncestor(target)
+                + 1, // TODO remove the +1 when check in DefaultBlockChain is fixed
             () -> fastSyncState.getPivotBlockHeader().get().getNumber(),
             headerRequestSize,
             false);
@@ -194,7 +189,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
   }
 
   private long getCommonAncestor(final SyncTarget syncTarget) {
-    return Math.max(HEADER_TARGET, syncTarget.commonAncestor().getNumber());
+    return Math.max(
+        syncConfig.getDownloaderHeaderTarget(), syncTarget.commonAncestor().getNumber());
   }
-
 }
