@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -44,7 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -94,6 +94,7 @@ public class BlockSimulatorTest {
     when(miningConfiguration.getCoinbase())
         .thenReturn(Optional.ofNullable(Address.fromHexString("0x1")));
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getMiningBeneficiaryCalculator())
         .thenReturn(mock(MiningBeneficiaryCalculator.class));
     GasLimitCalculator gasLimitCalculator = mock(GasLimitCalculator.class);
@@ -142,7 +143,7 @@ public class BlockSimulatorTest {
         .thenReturn(Optional.of("Invalid Transaction"));
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(), any(), any(), any(), any(), any(), any(), 0, any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(), any(), any()))
         .thenReturn(Optional.of(transactionSimulatorResult));
 
     BlockStateCallException exception =
@@ -152,8 +153,7 @@ public class BlockSimulatorTest {
                 blockSimulator.process(
                     blockHeader, createSimulationParameter(blockStateCall), mutableWorldState));
 
-    assertEquals(
-        "Transaction simulator result is invalid: Invalid Transaction", exception.getMessage());
+    assertEquals("Transaction simulator result is invalid", exception.getMessage());
   }
 
   @Test
@@ -163,7 +163,7 @@ public class BlockSimulatorTest {
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(), any(), any(), any(), any(), any(), any(), 0, any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(), any(), any()))
         .thenReturn(Optional.empty());
 
     BlockStateCallException exception =

@@ -50,12 +50,12 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   private Boolean receiptCompactionEnabled = DEFAULT_RECEIPT_COMPACTION_ENABLED;
 
   /**
-   * Options specific to diff-based storage modes. Holds the necessary parameters to configure
-   * diff-based storage, such as the Bonsai mode or Verkle in the future.
+   * Options specific to path-based storage modes. Holds the necessary parameters to configure
+   * path-based storage, such as the Bonsai mode or Verkle in the future.
    */
   @Mixin
-  private DiffBasedSubStorageOptions diffBasedSubStorageOptions =
-      DiffBasedSubStorageOptions.create();
+  private PathBasedExtraStorageOptions pathBasedExtraStorageOptions =
+      PathBasedExtraStorageOptions.create();
 
   /** Default Constructor. */
   DataStorageOptions() {}
@@ -75,7 +75,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    * @param commandLine the full commandLine to check all the options specified by the user
    */
   public void validate(final CommandLine commandLine) {
-    diffBasedSubStorageOptions.validate(commandLine, dataStorageFormat);
+    pathBasedExtraStorageOptions.validate(commandLine, dataStorageFormat);
   }
 
   /**
@@ -88,8 +88,9 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
     dataStorageOptions.receiptCompactionEnabled = domainObject.getReceiptCompactionEnabled();
-    dataStorageOptions.diffBasedSubStorageOptions =
-        DiffBasedSubStorageOptions.fromConfig(domainObject.getDiffBasedSubStorageConfiguration());
+    dataStorageOptions.pathBasedExtraStorageOptions =
+        PathBasedExtraStorageOptions.fromConfig(
+            domainObject.getPathBasedExtraStorageConfiguration());
     return dataStorageOptions;
   }
 
@@ -99,14 +100,14 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(dataStorageFormat)
             .receiptCompactionEnabled(receiptCompactionEnabled)
-            .diffBasedSubStorageConfiguration(diffBasedSubStorageOptions.toDomainObject());
+            .pathBasedExtraStorageConfiguration(pathBasedExtraStorageOptions.toDomainObject());
     return builder.build();
   }
 
   @Override
   public List<String> getCLIOptions() {
     final List<String> cliOptions = CommandLineUtils.getCLIOptions(this, new DataStorageOptions());
-    cliOptions.addAll(diffBasedSubStorageOptions.getCLIOptions());
+    cliOptions.addAll(pathBasedExtraStorageOptions.getCLIOptions());
     return cliOptions;
   }
 

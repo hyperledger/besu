@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 import static org.hyperledger.besu.ethereum.transaction.BlockStateCalls.fillBlockStateCalls;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
@@ -83,16 +82,11 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class BlockSimulator {
 
-  private static final ImmutableTransactionValidationParams STRICT_VALIDATION_PARAMS =
-      ImmutableTransactionValidationParams.builder()
-          .from(TransactionValidationParams.transactionSimulator())
-          .build();
+  private static final TransactionValidationParams STRICT_VALIDATION_PARAMS =
+      TransactionValidationParams.transactionSimulator();
 
-  private static final ImmutableTransactionValidationParams SIMULATION_PARAMS =
-      ImmutableTransactionValidationParams.builder()
-          .from(
-              TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce())
-          .build();
+  private static final TransactionValidationParams SIMULATION_PARAMS =
+      TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce();
 
   private final TransactionSimulator transactionSimulator;
   private final WorldStateArchive worldStateArchive;
@@ -198,7 +192,7 @@ public class BlockSimulator {
         protocolSchedule.getForNextBlockHeader(
             baseBlockHeader, blockOverrides.getTimestamp().orElseThrow());
 
-    BlockHeader overridenBaseblockHeader =
+    BlockHeader overridenBaseBlockHeader =
         overrideBlockHeader(baseBlockHeader, protocolSpec, blockOverrides, shouldValidate);
 
     blockStateCall
@@ -209,15 +203,15 @@ public class BlockSimulator {
     MainnetTransactionProcessor transactionProcessor =
         new SimulationTransactionProcessorFactory(protocolSchedule)
             .getTransactionProcessor(
-                overridenBaseblockHeader, blockStateCall.getStateOverrideMap());
+                overridenBaseBlockHeader, blockStateCall.getStateOverrideMap());
 
     BlockHashLookup blockHashLookup =
         createBlockHashLookup(
-            blockOverrides, protocolSpec, overridenBaseblockHeader, blockHashCache);
+            blockOverrides, protocolSpec, overridenBaseBlockHeader, blockHashCache);
 
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
-            overridenBaseblockHeader,
+            overridenBaseBlockHeader,
             ws,
             protocolSpec,
             blockHashLookup,
@@ -226,7 +220,7 @@ public class BlockSimulator {
 
     BlockStateCallSimulationResult blockStateCallSimulationResult =
         processTransactions(
-            overridenBaseblockHeader,
+            overridenBaseBlockHeader,
             blockStateCall,
             ws,
             protocolSpec,
@@ -249,7 +243,7 @@ public class BlockSimulator {
     }
 
     return createFinalBlock(
-        overridenBaseblockHeader,
+        overridenBaseBlockHeader,
         blockStateCallSimulationResult,
         blockOverrides,
         ws,
