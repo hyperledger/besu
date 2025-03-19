@@ -20,12 +20,19 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPa
 
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.util.VersionProvider;
-import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
-import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
+import org.hyperledger.besu.services.BesuConfigurationImpl;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -50,7 +57,9 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
   private static final long MAINNET_MERGE_BLOCK_NUMBER = 15_537_393;
   private static final long SEPOLIA_MERGE_BLOCK_NUMBER = 1_735_371;
 
-  @CommandLine.ParentCommand private StorageSubCommand storageSubCommand;
+  @SuppressWarnings("unused")
+  @CommandLine.ParentCommand
+  private StorageSubCommand storageSubCommand;
 
   @SuppressWarnings("unused")
   @CommandLine.Spec
@@ -82,50 +91,49 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
       return;
     }
 
-    LOG.info("Pruning pre-merge blocks and transaction receipts");
-    storageSubCommand.besuCommand.setNetwork(network);
-    try (BesuController controller =
-        storageSubCommand.besuCommand.setupControllerBuilder().dataDirectory(dataPath).build()) {
-      final long mergeBlockNumber = getMergeBlockNumber(network);
+    LOG.info(
+        "Pruning pre-merge blocks and transaction receipts, network={}, data path={}",
+        network,
+        dataPath);
+    final long mergeBlockNumber = getMergeBlockNumber(network);
 
-      MutableBlockchain mutableBlockchain = controller.getProtocolContext().getBlockchain();
-      if (!(mutableBlockchain instanceof DefaultBlockchain)) {
-        throw new RuntimeException(
-            "Unable to prune pre-merge data from MutableBlockchain implementations other than DefaultBlockchain");
+    KeyValueStorageProvider storageProvider = keyValueStorageProvider();
+    BlockchainStorage blockchainStorage =
+        storageProvider.createBlockchainStorage(
+            new DefaultProtocolSchedule(Optional.of(network.getNetworkId())),
+            storageProvider.createVariablesStorage(),
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+    BlockchainStorage.Updater updater = blockchainStorage.updater();
+
+    long headerNumber = 0;
+    do {
+      Optional<Hash> maybeBlockHash = blockchainStorage.getBlockHash(headerNumber);
+      if (maybeBlockHash.isPresent()) {
+        LOG.info("Found hash for block number {}", headerNumber);
       }
-
-      DefaultBlockchain blockchain = (DefaultBlockchain) mutableBlockchain;
-      BlockchainStorage.Updater updater = blockchain.getBlockchainStorage().updater();
-
-      long headerNumber = 0;
-      do {
-        Optional<BlockHeader> maybeHeader = blockchain.getBlockHeader(headerNumber);
-        maybeHeader
-            .map(BlockHeader::getBlockHash)
-            .ifPresent(
-                (h) -> {
-                  updater.removeBlockBody(h);
-                  updater.removeTransactionReceipts(h);
-                  updater.removeTotalDifficulty(h);
-                  blockchain
-                      .getBlockBody(h)
-                      .map((bb) -> bb.getTransactions())
-                      .ifPresent(
-                          (transactions) ->
-                              transactions.stream()
-                                  .map(Transaction::getHash)
-                                  .forEach((th) -> updater.removeTransactionLocation(th)));
-                });
-        if (headerNumber % 10000 == 0) {
-          LOG.info("{} block's data removed", headerNumber);
-        }
-      } while (++headerNumber < mergeBlockNumber);
-      LOG.info("Done removing block data, committing removal changes");
-      updater.commit();
-      LOG.info("Done committing removal changes");
-    } catch (Exception e) {
-      LOG.error("Unexpected exception", e);
-    }
+      maybeBlockHash
+          .filter((h) -> blockchainStorage.getBlockBody(h).isPresent())
+          .ifPresent(
+              (h) -> {
+                updater.removeBlockBody(h);
+                updater.removeTransactionReceipts(h);
+                updater.removeTotalDifficulty(h);
+                blockchainStorage
+                    .getBlockBody(h)
+                    .map((bb) -> bb.getTransactions())
+                    .ifPresent(
+                        (transactions) ->
+                            transactions.stream()
+                                .map(Transaction::getHash)
+                                .forEach((th) -> updater.removeTransactionLocation(th)));
+              });
+      if (headerNumber % 10000 == 0) {
+        LOG.info("{} block's data removed", headerNumber);
+      }
+    } while (++headerNumber < mergeBlockNumber);
+    LOG.info("Done removing block data, committing removal changes");
+    updater.commit();
+    LOG.info("Done committing removal changes");
   }
 
   private static long getMergeBlockNumber(final NetworkName network) {
@@ -134,5 +142,19 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
       case SEPOLIA -> SEPOLIA_MERGE_BLOCK_NUMBER;
       default -> throw new RuntimeException("Unexpected network: " + network);
     };
+  }
+
+  private KeyValueStorageProvider keyValueStorageProvider() {
+    return new KeyValueStorageProviderBuilder()
+        .withStorageFactory(
+            new RocksDBKeyValueStorageFactory(
+                RocksDBCLIOptions.create()::toDomainObject,
+                List.of(KeyValueSegmentIdentifier.values()),
+                RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
+        .withCommonConfiguration(
+            new BesuConfigurationImpl()
+                .init(dataPath, dataPath, DataStorageConfiguration.DEFAULT_BONSAI_CONFIG))
+        .withMetricsSystem(new NoOpMetricsSystem())
+        .build();
   }
 }
