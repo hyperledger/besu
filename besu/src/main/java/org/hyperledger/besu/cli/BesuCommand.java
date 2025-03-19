@@ -2770,8 +2770,4 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public MetricsOptions getMetricsOptions() {
     return metricsOptions;
   }
-
-  public void setNetwork(final NetworkName network) {
-    this.network = network;
-  }
 }
