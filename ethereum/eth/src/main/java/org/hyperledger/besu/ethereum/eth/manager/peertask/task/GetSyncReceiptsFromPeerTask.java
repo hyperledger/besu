@@ -128,6 +128,6 @@ public class GetSyncReceiptsFromPeerTask
   @Override
   public PeerTaskValidationResponse validateResult(
       final Map<BlockHeader, SyncTransactionReceipts> result) {
-    return null;
+    return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
   }
 }

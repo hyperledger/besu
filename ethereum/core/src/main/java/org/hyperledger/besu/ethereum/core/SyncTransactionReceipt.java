@@ -46,7 +46,7 @@ public class SyncTransactionReceipt {
     if (rlpInput.nextIsList()) {
       ret = new SyncTransactionReceipt(rlpInput.currentListAsBytesNoCopy(true));
     } else {
-      ret = new SyncTransactionReceipt(rlpInput.currentListAsBytes());
+      ret = new SyncTransactionReceipt(rlpInput.readBytes());
     }
     return ret;
   }

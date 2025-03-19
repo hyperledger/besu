@@ -50,6 +50,11 @@ public class PosDownloadAndStoreSyncBodiesStep
   @Override
   public CompletableFuture<List<BlockHeader>> apply(final List<BlockHeader> blockHeaders) {
 
+    LOG.atDebug()
+        .setMessage("Downloading {} block headers starting with {}")
+        .addArgument(blockHeaders.size())
+        .addArgument(blockHeaders.getFirst().getNumber())
+        .log();
     // for now only use the legacy peer tasks
     final CompleteSyncBlocksTask syncBlocksTask =
         CompleteSyncBlocksTask.forHeaders(
@@ -71,7 +76,11 @@ public class PosDownloadAndStoreSyncBodiesStep
             (sbList) -> {
               // store blocks in the database, no TX indexing.
               ethContext.getBlockchain().appendSyncBlocksForPoC(sbList);
-
+              LOG.atDebug()
+                  .setMessage("Stored {} Sync blocks for up to block no {}")
+                  .addArgument(sbList.size())
+                  .addArgument(blockHeaders.getLast().getNumber())
+                  .log();
               return blockHeaders;
             });
   }

@@ -33,8 +33,14 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class PosDownloadAndStoreSyncReceiptsStep
     implements Function<List<BlockHeader>, CompletableFuture<List<BlockHeader>>> {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(PosDownloadAndStoreSyncReceiptsStep.class);
 
   private final ProtocolSchedule protocolSchedule;
   private final PeerTaskExecutor peerTaskExecutor;
@@ -58,6 +64,12 @@ public class PosDownloadAndStoreSyncReceiptsStep
 
   private void getAndStoreReceipts(final List<BlockHeader> blockHeaders) {
     final List<BlockHeader> headers = new ArrayList<>(blockHeaders);
+    LOG.atDebug()
+        .setMessage("Downloading {} receipts starting with {}")
+        .addArgument(blockHeaders.size())
+        .addArgument(blockHeaders.getFirst().getNumber())
+        .log();
+
     Map<BlockHeader, SyncTransactionReceipts> getReceipts = new HashMap<>();
     do {
       GetSyncReceiptsFromPeerTask task = new GetSyncReceiptsFromPeerTask(headers, protocolSchedule);
@@ -86,5 +98,10 @@ public class PosDownloadAndStoreSyncReceiptsStep
         getReceipts.values().stream().toList(); // one per block
     blockchain.appendSyncTransactionReceiptsForPoC(
         headers, receiptsList); // store all receipts for these headers
+    LOG.atDebug()
+        .setMessage("Block no. {} Stored receipts for {} blocks")
+        .addArgument(headers.getLast().getNumber())
+        .addArgument(blockHeaders.size())
+        .log();
   }
 }
