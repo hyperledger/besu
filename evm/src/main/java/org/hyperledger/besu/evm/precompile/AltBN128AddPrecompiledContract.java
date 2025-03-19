@@ -38,7 +38,7 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
 
   private AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
-        "AltBN128Add",
+        "BN256_ADD",
         gasCalculator,
         LibGnarkEIP196.EIP196_ADD_OPERATION_RAW_VALUE,
         PARAMETER_LENGTH);
