@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Besu.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,15 +15,19 @@
 package org.hyperledger.besu.plugin.services.consensus.jsonrpc;
 
 /** Placeholder */
-public class InvalidJsonRpcParameters extends InvalidJsonRpcRequestException {
+public class InvalidJsonRpcRequestException extends IllegalArgumentException {
+
+  /** The RPC error type */
+  private final RpcErrorType rpcErrorType;
 
   /**
    * Placeholder
    *
-   * @param s message
+   * @param message the message
    */
-  public InvalidJsonRpcParameters(final String s) {
-    super(s);
+  public InvalidJsonRpcRequestException(final String message) {
+    super(message);
+    rpcErrorType = RpcErrorType.INVALID_PARAMS;
   }
 
   /**
@@ -32,18 +36,20 @@ public class InvalidJsonRpcParameters extends InvalidJsonRpcRequestException {
    * @param message the error message
    * @param rpcErrorType the error type
    */
-  public InvalidJsonRpcParameters(final String message, final RpcErrorType rpcErrorType) {
-    super(message, rpcErrorType);
+  public InvalidJsonRpcRequestException(final String message, final RpcErrorType rpcErrorType) {
+    super(message);
+    this.rpcErrorType = rpcErrorType;
   }
 
   /**
    * Placeholder
    *
    * @param message the error message
-   * @param cause the error cause
+   * @param cause the cause of the error
    */
-  public InvalidJsonRpcParameters(final String message, final Throwable cause) {
+  public InvalidJsonRpcRequestException(final String message, final Throwable cause) {
     super(message, cause);
+    rpcErrorType = RpcErrorType.INVALID_PARAMS;
   }
 
   /**
@@ -51,10 +57,20 @@ public class InvalidJsonRpcParameters extends InvalidJsonRpcRequestException {
    *
    * @param message the error message
    * @param rpcErrorType the error type
-   * @param cause the error cause
+   * @param cause the cause of the error
    */
-  public InvalidJsonRpcParameters(
+  public InvalidJsonRpcRequestException(
       final String message, final RpcErrorType rpcErrorType, final Throwable cause) {
-    super(message, rpcErrorType, cause);
+    super(message, cause);
+    this.rpcErrorType = rpcErrorType;
+  }
+
+  /**
+   * Get the error type
+   *
+   * @return the error type
+   */
+  public RpcErrorType getRpcErrorType() {
+    return rpcErrorType;
   }
 }

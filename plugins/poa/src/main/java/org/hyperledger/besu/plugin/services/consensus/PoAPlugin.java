@@ -23,6 +23,7 @@ import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.consensus.configuration.PoACLIOptions;
 import org.hyperledger.besu.plugin.services.consensus.jsonrpc.BftService;
+import org.hyperledger.besu.plugin.services.consensus.jsonrpc.QbftGetValidatorsByBlockHash;
 import org.hyperledger.besu.plugin.services.consensus.jsonrpc.QbftGetValidatorsByBlockNumber;
 import org.hyperledger.besu.plugin.services.query.BftQueryService;
 
@@ -65,9 +66,14 @@ public class PoAPlugin implements BesuPlugin, BesuEvents.BlockAddedListener {
     final Optional<BlockchainService> blockchain = context.getService(BlockchainService.class);
     this.blockchain = blockchain.get();
     rpcService = context.getService(RpcEndpointService.class).get();
-    QbftGetValidatorsByBlockNumber thing =
-        new QbftGetValidatorsByBlockNumber(this.blockchain, bftService);
-    rpcService.registerRPCEndpoint("qbft", "getValidatorsByBlockNumberV2", thing::response);
+    rpcService.registerRPCEndpoint(
+        "qbft",
+        "getValidatorsByBlockNumberV2",
+        new QbftGetValidatorsByBlockNumber(this.blockchain, bftService)::response);
+    rpcService.registerRPCEndpoint(
+        "qbft",
+        "getValidatorsByBlockHashV2",
+        new QbftGetValidatorsByBlockHash(this.blockchain, bftService)::response);
 
     LOG.debug("Plugin registered.");
   }

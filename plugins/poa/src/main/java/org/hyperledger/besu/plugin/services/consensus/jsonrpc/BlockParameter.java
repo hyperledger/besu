@@ -161,19 +161,26 @@ public class BlockParameter {
    * @return the block number
    */
   public Optional<Long> getBlockNumber(final BlockchainService blockchain) {
-
-    /*if (this.isFinalized()) {
-        return blockchain.finalizedBlockHeader().map(ProcessableBlockHeader::getNumber);
-    } else */
-    if (this.isLatest()) {
+    if (this.isFinalized()) {
+      return Optional.of(
+          blockchain
+              .getBlockByHash(blockchain.getFinalizedBlock().get())
+              .get()
+              .getBlockHeader()
+              .getNumber());
+    } else if (this.isLatest()) {
       return Optional.of(blockchain.getChainHeadHeader().getNumber());
-    }
-    /*else if (this.isPending()) {
-        // Pending not implemented, returns latest
-        return Optional.of(blockchain.headBlockNumber());
+    } else if (this.isPending()) {
+      // Pending not implemented, returns latest
+      return Optional.of(blockchain.getChainHeadHeader().getNumber());
     } else if (this.isSafe()) {
-        return blockchain.safeBlockHeader().map(ProcessableBlockHeader::getNumber);
-    } else {*/
+      return Optional.of(
+          blockchain
+              .getBlockByHash(blockchain.getSafeBlock().get())
+              .get()
+              .getBlockHeader()
+              .getNumber());
+    } // else {
     // Alternate cases (numeric input or "earliest")
     return this.getNumber();
     // }

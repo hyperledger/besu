@@ -22,9 +22,13 @@ import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** QBFT getValidatorsByBlockNumber JSON/RPC call */
 public class QbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod {
 
+  private static final Logger LOG = LoggerFactory.getLogger(QbftGetValidatorsByBlockNumber.class);
   private final BftService bftService;
 
   /**
@@ -51,7 +55,7 @@ public class QbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
   @Override
   protected Object resultByBlockNumber(final PluginRpcRequest request, final long blockNumber) {
     final Optional<BlockContext> blockContext = getBlockchain().getBlockByNumber(blockNumber);
-    // LOG.trace("Received RPC rpcName={} block={}", getName(), blockNumber);
+    LOG.trace("Received RPC rpcName={} block={}", getName(), blockNumber);
     return blockContext
         .map(
             block ->
@@ -59,5 +63,10 @@ public class QbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
                     .map(Address::toString)
                     .collect(Collectors.toList()))
         .orElse(null);
+  }
+
+  @Override
+  public String getName() {
+    return RpcMethod.QBFT_GET_VALIDATORS_BY_BLOCK_NUMBER.getMethodName();
   }
 }

@@ -26,4 +26,11 @@ public interface JsonRpcMethod {
    * @return output from applying the JSON-RPC method to the input.
    */
   String response(PluginRpcRequest request);
+
+  /**
+   * Placeholder
+   *
+   * @return the name of the method
+   */
+  String getName();
 }

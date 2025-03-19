@@ -111,6 +111,8 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
 
     if (response instanceof JsonRpcErrorResponse) {
       return ((JsonRpcErrorResponse) response).getErrorResponse();
+    } else if (response == null) {
+      return "null";
     }
 
     return response.toString();
