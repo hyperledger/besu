@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.UNKNOWN_BLOCK;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 
 import java.util.Optional;
 
@@ -90,9 +90,9 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
     if (maybeMoveWorldstate.orElse(Boolean.FALSE)) {
       var archive = blockchainQueries.getWorldStateArchive();
 
-      // Only DiffBasedWorldState's need to be moved:
-      if (archive instanceof DiffBasedWorldStateProvider diffBasedArchive) {
-        if (rollIncrementally(maybeBlockHeader.get(), blockchain, diffBasedArchive)) {
+      // Only PathBasedWorldState's need to be moved:
+      if (archive instanceof PathBasedWorldStateProvider pathBasedArchive) {
+        if (rollIncrementally(maybeBlockHeader.get(), blockchain, pathBasedArchive)) {
           return JsonRpcSuccessResponse.SUCCESS_RESULT;
         }
       }
@@ -108,11 +108,11 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
   private boolean rollIncrementally(
       final BlockHeader target,
       final MutableBlockchain blockchain,
-      final DiffBasedWorldStateProvider archive) {
+      final PathBasedWorldStateProvider archive) {
 
     try {
       if (archive.isWorldStateAvailable(target.getStateRoot(), target.getBlockHash())) {
-        // WARNING, this can be dangerous for a DiffBasedWorldstate if a concurrent
+        // WARNING, this can be dangerous for a PathBasedWorldstate if a concurrent
         //          process attempts to move or modify the head worldstate.
         //          Ensure no block processing is occuring when using this feature.
         //          No engine-api, block import, sync, mining or other rpc calls should be running.

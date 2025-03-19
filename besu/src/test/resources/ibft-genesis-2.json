@@ -1,0 +1,65 @@
+{
+  "nonce": "0x0",
+  "timestamp": "0x58ee40ba",
+  "extraData": "0x0000000000000000000000000000000000000000000000000000000000000000f86df86994a18182ee8ca476f2f0fb8170a1d4620edb39c5e194065541903bf3bb8c088a18046b441f5d286288c994d1e106d68cac92668b100f6f43791ddcb2c7588094d156777a1e1539fe654fc82266f41fd5d4aa548494efbbd8900222d7b2f75d081c3e7446a1f4fe10ce80c0",
+  "gasLimit": "700000000",
+  "gasUsed": "0x0",
+  "number": "0x0",
+  "difficulty": "0x1",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "mixHash": "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365",
+  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "config": {
+    "chainId": 1337,
+    "homesteadBlock": 0,
+    "eip150Block": 20,
+    "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "eip155Block": 30,
+    "eip158Block": 40,
+    "byzantiumBlock": 50,
+    "constantinopleBlock": 60,
+    "petersburgBlock": 70,
+    "istanbulBlock": 80,
+    "ibft": {
+      "epochlength": 1000,
+      "blockperiodseconds": 5,
+      "requesttimeoutseconds": 10,
+      "policy": 0,
+      "ceil2Nby3Block": 0,
+      "validatorcontractaddress": "0x0000000000000000000000000000000000000000"
+    },
+    "qbft": {
+      "epochLength": 30000,
+      "blockPeriodSeconds" : 1,
+      "requestTimeoutSeconds": 10,
+      "startBlock": 101
+    },
+    "txnSizeLimit": 64,
+    "maxCodeSize": 0,
+    "maxCodeSizeConfig": [
+      {
+        "block": 0,
+        "size": 64
+      }
+    ],
+    "isMPS": false
+
+  },
+  "alloc": {
+    "0xde8e2ae09f2ee2c6c282c054b2384f8b5f9debee": {
+      "balance": "1000000000000000000000000000"
+    },
+    "0x23bcbca17fc4978909ab44ac82559c7d379aa006": {
+      "balance": "1000000000000000000000000000"
+    },
+    "0x870276532cca9f33e66273cfa494cf41e04b5a66": {
+      "balance": "1000000000000000000000000000"
+    },
+    "0x7d7fc9fdfa49e2db22fc6ebab593dcf3aeffbde8": {
+      "balance": "1000000000000000000000000000"
+    },
+    "0x4df76ad0678513846699056e0070c5f587580eb5": {
+      "balance": "1000000000000000000000000000"
+    }
+  }
+}

@@ -35,17 +35,6 @@ class QbftValidatorProviderAdaptorTest {
   @Mock private ValidatorProvider validatorProvider;
 
   @Test
-  void returnsValidatorsAtHead() {
-    List<Address> validatorsAtHead =
-        List.of(Address.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"));
-    when(validatorProvider.getValidatorsAtHead()).thenReturn(validatorsAtHead);
-
-    QbftValidatorProviderAdaptor qbftValidatorProviderAdaptor =
-        new QbftValidatorProviderAdaptor(validatorProvider);
-    assertThat(qbftValidatorProviderAdaptor.getValidatorsAtHead()).isEqualTo(validatorsAtHead);
-  }
-
-  @Test
   void returnsValidatorsAfterBlock() {
     BlockHeader header = new BlockHeaderTestFixture().buildHeader();
     QbftBlockHeader qbftBlockHeader = new QbftBlockHeaderAdaptor(header);
