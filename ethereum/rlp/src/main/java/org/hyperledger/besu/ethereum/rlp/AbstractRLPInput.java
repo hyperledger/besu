@@ -623,4 +623,27 @@ abstract class AbstractRLPInput implements RLPInput {
     }
     return res;
   }
+
+  @Override
+  public Bytes currentBytesNoCopy() {
+    // TODO: this returns the same as readBytes, but adds some checking and logging.
+    if (currentItem >= size) {
+      throw error("Cannot read bytes, input is fully consumed");
+    }
+    if (!(currentKind.equals(RLPDecodingHelpers.Kind.SHORT_ELEMENT)
+        || currentKind.equals(RLPDecodingHelpers.Kind.LONG_ELEMENT))) {
+      LOG.atDebug()
+          .setMessage(
+              "Current item is not a bytes array, it is: {}, raw bytes: {}, offset: {}, size: {}")
+          .addArgument(currentKind)
+          .addArgument(inputSlice(0, (int) size))
+          .addArgument(currentPayloadOffset)
+          .addArgument(currentPayloadSize)
+          .log();
+      throw error("Cannot read bytes, current item is not a bytes array, it is: " + currentKind);
+    }
+    final Bytes res = inputSlice(currentPayloadOffset, currentPayloadSize);
+    setTo(nextItem());
+    return res;
+  }
 }
