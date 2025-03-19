@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.services.consensus.jsonrpc.BftService;
 import org.hyperledger.besu.plugin.services.consensus.jsonrpc.QbftGetValidatorsByBlockHash;
 import org.hyperledger.besu.plugin.services.consensus.jsonrpc.QbftGetValidatorsByBlockNumber;
 import org.hyperledger.besu.plugin.services.query.BftQueryService;
+import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 
 import java.util.Optional;
 
@@ -33,18 +34,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The PoA plugin. */
-public class PoAPlugin implements BesuPlugin, BesuEvents.BlockAddedListener {
+public class BesuEnterpriseConsensus implements BesuPlugin, BesuEvents.BlockAddedListener {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PoAPlugin.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BesuEnterpriseConsensus.class);
   private final PoACLIOptions options;
   private static final String NAME = "poa";
   private ServiceManager context;
   private BlockchainService blockchain;
   private BftService bftService;
   private RpcEndpointService rpcService;
+  private TransactionPoolService txPoolService;
 
   /** Instantiates a new PoA plugin. */
-  public PoAPlugin() {
+  public BesuEnterpriseConsensus() {
     this.options = PoACLIOptions.create();
   }
 
@@ -87,6 +89,7 @@ public class PoAPlugin implements BesuPlugin, BesuEvents.BlockAddedListener {
     }
 
     bftService.setBftService(context.getService(BftQueryService.class).get());
+    txPoolService = context.getService(TransactionPoolService.class).get();
   }
 
   @Override
@@ -96,16 +99,22 @@ public class PoAPlugin implements BesuPlugin, BesuEvents.BlockAddedListener {
 
   @Override
   public void onBlockAdded(final AddedBlockContext addedBlockContext) {
-    LOG.debug("PoA plugin - block {} added", addedBlockContext.getBlockHeader().getNumber());
-    LOG.debug(
-        "PoA plugin - block requested: {}",
-        blockchain
-            .getBlockByNumber(addedBlockContext.getBlockHeader().getNumber())
-            .get()
-            .getBlockHeader()
-            .getBlockHash());
-    LOG.debug(
-        "Block signers: {}",
-        bftService.getBftService().getSignersFrom(addedBlockContext.getBlockHeader()));
+    LOG.info(
+        String.format(
+            "%s %s #%,d / %d tx / %d pending / %,d (%01.1f%%) gas / (%s)",
+            addedBlockContext
+                    .getBlockHeader()
+                    .getCoinbase()
+                    .equals(bftService.getBftService().getLocalSignerAddress())
+                ? "Produced"
+                : "Imported",
+            addedBlockContext.getBlockBody().getTransactions().isEmpty() ? "empty block" : "block",
+            addedBlockContext.getBlockHeader().getNumber(),
+            addedBlockContext.getBlockBody().getTransactions().size(),
+            txPoolService.getPendingTransactions().size(),
+            addedBlockContext.getBlockHeader().getGasUsed(),
+            (addedBlockContext.getBlockHeader().getGasUsed() * 100.0)
+                / addedBlockContext.getBlockHeader().getGasLimit(),
+            addedBlockContext.getBlockHeader().getBlockHash().toHexString()));
   }
 }

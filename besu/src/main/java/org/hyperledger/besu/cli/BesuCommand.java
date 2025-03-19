@@ -165,6 +165,7 @@ import org.hyperledger.besu.plugin.services.TraceService;
 import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
+import org.hyperledger.besu.plugin.services.consensus.BesuEnterpriseConsensus;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.mining.MiningService;
@@ -343,7 +344,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       Suppliers.memoize(this::getApiConfiguration);
 
   private RocksDBPlugin rocksDBPlugin;
-  private org.hyperledger.besu.plugin.services.consensus.PoAPlugin poaPlugin;
+  private BesuEnterpriseConsensus poaPlugin;
 
   private int maxPeers;
   private int maxRemoteInitiatedPeers;
@@ -1202,7 +1203,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     rocksDBPlugin.register(besuPluginContext);
     new InMemoryStoragePlugin().register(besuPluginContext);
 
-    poaPlugin = new org.hyperledger.besu.plugin.services.consensus.PoAPlugin();
+    poaPlugin = new BesuEnterpriseConsensus();
     poaPlugin.register(besuPluginContext);
 
     // register default security module
