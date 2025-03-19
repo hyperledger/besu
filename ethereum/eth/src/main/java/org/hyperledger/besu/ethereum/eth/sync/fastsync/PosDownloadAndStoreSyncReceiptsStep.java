@@ -58,18 +58,27 @@ public class PosDownloadAndStoreSyncReceiptsStep
 
   @Override
   public CompletableFuture<List<BlockHeader>> apply(final List<BlockHeader> blockHeaders) {
-    return CompletableFuture.runAsync(() -> getAndStoreReceipts(blockHeaders))
+    return CompletableFuture.runAsync(
+            () -> {
+              int start = 0;
+              while (blockHeaders.size() > 0) {
+                final int to = Math.min(blockHeaders.size(), 50 + start);
+                final List<BlockHeader> subList = blockHeaders.subList(start, to);
+                getAndStoreReceipts(subList);
+                start = to + 1;
+              }
+            })
         .thenApply((__) -> blockHeaders);
   }
 
   private void getAndStoreReceipts(final List<BlockHeader> blockHeaders) {
-    final List<BlockHeader> headers = new ArrayList<>(blockHeaders);
     LOG.atDebug()
         .setMessage("Downloading {} receipts starting with {}")
         .addArgument(blockHeaders.size())
         .addArgument(blockHeaders.getFirst().getNumber())
         .log();
 
+    final List<BlockHeader> headers = new ArrayList<>(blockHeaders);
     Map<BlockHeader, SyncTransactionReceipts> getReceipts = new HashMap<>();
     do {
       GetSyncReceiptsFromPeerTask task = new GetSyncReceiptsFromPeerTask(headers, protocolSchedule);
@@ -97,7 +106,7 @@ public class PosDownloadAndStoreSyncReceiptsStep
     final List<SyncTransactionReceipts> receiptsList =
         getReceipts.values().stream().toList(); // one per block
     blockchain.appendSyncTransactionReceiptsForPoC(
-        headers, receiptsList); // store all receipts for these headers
+        blockHeaders, receiptsList); // store all receipts for these headers
     LOG.atDebug()
         .setMessage("Block no. {} Stored receipts for {} blocks")
         .addArgument(headers.getLast().getNumber())
