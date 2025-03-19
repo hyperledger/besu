@@ -14,16 +14,21 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
+import static org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract.cacheEventConsumer;
+
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.annotations.VisibleForTesting;
 import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
@@ -34,6 +39,13 @@ import org.slf4j.LoggerFactory;
 /** The KZGPointEval precompile contract. */
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   private static final AtomicBoolean loaded = new AtomicBoolean(false);
+
+  private static final String PRECOMPILE_NAME = "KZGPointEval";
+  private static final Cache<Integer, PrecompileInputResultTuple> kzgCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
+
+  /** Default result caching to false unless otherwise set. */
+  protected static Boolean enableResultCaching = Boolean.FALSE;
 
   private static final Logger LOG = LoggerFactory.getLogger(KZGPointEvalPrecompiledContract.class);
 
@@ -89,6 +101,15 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     loaded.set(false);
   }
 
+  /**
+   * Enable or disable precompile result caching.
+   *
+   * @param enablePrecompileCaching boolean indicating whether to cache precompile results
+   */
+  public static void setPrecompileCaching(final boolean enablePrecompileCaching) {
+    enableResultCaching = enablePrecompileCaching;
+  }
+
   /** Default constructor. */
   public KZGPointEvalPrecompiledContract() {}
 
@@ -112,6 +133,31 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
+
+    PrecompileInputResultTuple res;
+    Integer cacheKey = null;
+
+    if (enableResultCaching) {
+      cacheKey = Arrays.hashCode(input.toArrayUnsafe());
+      res = kzgCache.getIfPresent(cacheKey);
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(
+              new AbstractPrecompiledContract.CacheEvent(
+                  PRECOMPILE_NAME, AbstractPrecompiledContract.CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          cacheEventConsumer.accept(
+              new AbstractPrecompiledContract.CacheEvent(
+                  PRECOMPILE_NAME, AbstractPrecompiledContract.CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(
+            new AbstractPrecompiledContract.CacheEvent(
+                PRECOMPILE_NAME, AbstractPrecompiledContract.CacheMetric.MISS));
+      }
+    }
+
     Bytes32 versionedHash = Bytes32.wrap(input.slice(0, 32));
     Bytes z = input.slice(32, 32);
     Bytes y = input.slice(64, 32);
@@ -134,16 +180,30 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
               commitment.toArray(), z.toArray(), y.toArray(), proof.toArray());
 
       if (proved) {
-        return PrecompileContractResult.success(successResult);
+        res =
+            new PrecompileInputResultTuple(input, PrecompileContractResult.success(successResult));
       } else {
-        return PrecompileContractResult.halt(
-            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+        res =
+            new PrecompileInputResultTuple(
+                input,
+                PrecompileContractResult.halt(
+                    null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR)));
       }
+      if (cacheKey != null) {
+        kzgCache.put(cacheKey, res);
+      }
+      return res.cachedResult();
     } catch (RuntimeException kzgFailed) {
       LOG.debug("Native KZG failed", kzgFailed);
-
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      res =
+          new PrecompileInputResultTuple(
+              input,
+              PrecompileContractResult.halt(
+                  null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR)));
+      if (cacheKey != null) {
+        kzgCache.put(cacheKey, res);
+      }
+      return res.cachedResult();
     }
   }
 }

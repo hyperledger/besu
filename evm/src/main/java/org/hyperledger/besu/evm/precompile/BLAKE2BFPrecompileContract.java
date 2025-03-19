@@ -105,7 +105,7 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
             input, PrecompileContractResult.success(Hash.blake2bf(input)));
 
     if (cacheKey != null) {
-      blakeCache.put(input.hashCode(), res);
+      blakeCache.put(cacheKey, res);
     }
 
     return res.cachedResult();
