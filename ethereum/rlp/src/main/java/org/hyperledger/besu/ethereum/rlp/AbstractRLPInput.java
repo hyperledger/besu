@@ -31,6 +31,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt64;
 
 abstract class AbstractRLPInput implements RLPInput {
+
   private static final String errorMessageSuffix = " (at bytes %d-%d: %s%s[%s]%s%s)";
 
   private final boolean lenient;
@@ -632,14 +633,14 @@ abstract class AbstractRLPInput implements RLPInput {
     }
     if (!(currentKind.equals(RLPDecodingHelpers.Kind.SHORT_ELEMENT)
         || currentKind.equals(RLPDecodingHelpers.Kind.LONG_ELEMENT))) {
-      LOG.atDebug()
-          .setMessage(
-              "Current item is not a bytes array, it is: {}, raw bytes: {}, offset: {}, size: {}")
-          .addArgument(currentKind)
-          .addArgument(inputSlice(0, (int) size))
-          .addArgument(currentPayloadOffset)
-          .addArgument(currentPayloadSize)
-          .log();
+//      LOG.atDebug()
+//          .setMessage(
+//              "Current item is not a bytes array, it is: {}, raw bytes: {}, offset: {}, size: {}")
+//          .addArgument(currentKind)
+//          .addArgument(inputSlice(0, (int) size))
+//          .addArgument(currentPayloadOffset)
+//          .addArgument(currentPayloadSize)
+//          .log();
       throw error("Cannot read bytes, current item is not a bytes array, it is: " + currentKind);
     }
     final Bytes res = inputSlice(currentPayloadOffset, currentPayloadSize);
