@@ -23,10 +23,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.DownloadHeaderSequenceTask;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
-import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
@@ -80,35 +77,6 @@ public class DownloadPosHeadersStep
             syncRange.getSegmentLengthExclusive(),
             validationPolicy,
             metricsSystem)
-        .run()
-        .thenApply(
-            headers -> {
-              if (!validateHeaderRange(syncRange, headers)) {
-                final String errorMessage =
-                    String.format(
-                        "Invalid range headers.  Headers downloaded between #%d and #%d do not connect at #%d",
-                        syncRange.lowerBlockNumber(),
-                        syncRange.upperBlockNumber(),
-                        syncRange.upperBlockNumber());
-                throw InvalidBlockException.create(errorMessage);
-              }
-              return headers;
-            });
-  }
-
-  private boolean validateHeaderRange(
-      final SyncTargetNumberRange syncRange, final List<BlockHeader> headers) {
-    if (!syncRange.firstRange()) {
-      final BlockHeader parentHeader = headers.get(0);
-      final BlockHeader firstHeader = headers.get(1);
-      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(firstHeader);
-      final BlockHeaderValidator validator = protocolSpec.getBlockHeaderValidator();
-      return validator.validateHeader(
-          firstHeader,
-          parentHeader,
-          protocolContext,
-          validationPolicy.getValidationModeForNextBlock());
-    }
-    return true;
+        .run();
   }
 }

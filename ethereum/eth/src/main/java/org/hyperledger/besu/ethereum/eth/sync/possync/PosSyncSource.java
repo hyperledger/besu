@@ -60,22 +60,20 @@ public class PosSyncSource implements Iterator<SyncTargetNumberRange> {
 
   private SyncTargetNumberRange createFirstRange() {
     if (backwards) {
-      return new SyncTargetNumberRange(
-          true, syncTarget.get() - headerRequestSize, syncTarget.get());
+      return new SyncTargetNumberRange(syncTarget.get() - headerRequestSize, syncTarget.get());
     } else {
       final long startBlockNumber = Math.max(checkpointTarget, 1);
-      return new SyncTargetNumberRange(
-          true, startBlockNumber, startBlockNumber + headerRequestSize);
+      return new SyncTargetNumberRange(startBlockNumber, startBlockNumber + headerRequestSize);
     }
   }
 
   private SyncTargetNumberRange createNextRange(final SyncTargetNumberRange lastRange) {
     if (backwards) {
       final long lowerBlockNumber = Math.max(lastRange.lowerBlockNumber() - headerRequestSize, 0);
-      return new SyncTargetNumberRange(false, lowerBlockNumber, lastRange.lowerBlockNumber());
+      return new SyncTargetNumberRange(lowerBlockNumber, lastRange.lowerBlockNumber());
     } else {
       return new SyncTargetNumberRange(
-          false, lastRange.upperBlockNumber(), lastRange.upperBlockNumber() + headerRequestSize);
+          lastRange.upperBlockNumber(), lastRange.upperBlockNumber() + headerRequestSize);
     }
   }
 
