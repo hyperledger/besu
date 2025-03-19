@@ -53,6 +53,7 @@ have support in besu-native can run mainnet ethereum configurations.  Windows su
 - Replace tuweni libs with https://github.com/Consensys/tuweni
 - Performance: Consensys/tuweni 2.6.0 reduces boxing/unboxing overhead on some EVM opcodes, like PushX and Caller
 - Add Hoodi as new named testnet [#8428](https://github.com/hyperledger/besu/issues/8428)
+- Decode deposit log data without Web3j [#8394](https://github.com/hyperledger/besu/issues/8394)
 
 ### Bug fixes
 - Add missing RPC method `debug_accountRange` to `RpcMethod.java` so this method can be used with `--rpc-http-api-method-no-auth` [#8153](https://github.com/hyperledger/besu/issues/8153)
