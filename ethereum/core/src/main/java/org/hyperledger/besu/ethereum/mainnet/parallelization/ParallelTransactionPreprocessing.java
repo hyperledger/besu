@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.Preprocessin
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor.ParallelizedPreProcessingContext;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 
 import java.util.List;
@@ -51,7 +51,7 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice) {
-    if ((protocolContext.getWorldStateArchive() instanceof DiffBasedWorldStateProvider)) {
+    if ((protocolContext.getWorldStateArchive() instanceof PathBasedWorldStateProvider)) {
       ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =
           new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
       // runAsyncBlock, if activated, facilitates the non-blocking parallel execution

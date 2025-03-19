@@ -1,0 +1,8 @@
+{
+  "cli": [
+    "pretty-print",
+    "60538060095f395ff33373fffffffffffffffffffffffffffffffffffffffe14604f5760203603604b575f35600143038111604b57611fff81430311604b57611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500"
+  ],
+  "stdin": "",
+  "stdout": "0x # Legacy EVM Code\n6053 # [ 0 ] PUSH1(83)\n80 # [ 2 ] DUP1\n6009 # [ 3 ] PUSH1(9)\n5f # [ 5 ] PUSH0\n39 # [ 6 ] CODECOPY\n5f # [ 7 ] PUSH0\nf3 # [ 8 ] RETURN\n33 # [ 9 ] CALLER\n73fffffffffffffffffffffffffffffffffffffffe # [ 10 ] PUSH20\n14 # [ 31 ] EQ\n604f # [ 32 ] PUSH1(79)\n57 # [ 34 ] JUMPI\n6020 # [ 35 ] PUSH1(32)\n36 # [ 37 ] CALLDATASIZE\n03 # [ 38 ] SUB\n604b # [ 39 ] PUSH1(75)\n57 # [ 41 ] JUMPI\n5f # [ 42 ] PUSH0\n35 # [ 43 ] CALLDATALOAD\n6001 # [ 44 ] PUSH1(1)\n43 # [ 46 ] NUMBER\n03 # [ 47 ] SUB\n81 # [ 48 ] DUP2\n11 # [ 49 ] GT\n604b # [ 50 ] PUSH1(75)\n57 # [ 52 ] JUMPI\n611fff # [ 53 ] PUSH2(8191)\n81 # [ 56 ] DUP2\n43 # [ 57 ] NUMBER\n03 # [ 58 ] SUB\n11 # [ 59 ] GT\n604b # [ 60 ] PUSH1(75)\n57 # [ 62 ] JUMPI\n611fff # [ 63 ] PUSH2(8191)\n90 # [ 66 ] SWAP1\n06 # [ 67 ] MOD\n54 # [ 68 ] SLOAD\n5f # [ 69 ] PUSH0\n52 # [ 70 ] MSTORE\n6020 # [ 71 ] PUSH1(32)\n5f # [ 73 ] PUSH0\nf3 # [ 74 ] RETURN\n5b # [ 75 ] JUMPDEST\n5f # [ 76 ] PUSH0\n5f # [ 77 ] PUSH0\nfd # [ 78 ] REVERT\n5b # [ 79 ] JUMPDEST\n5f # [ 80 ] PUSH0\n35 # [ 81 ] CALLDATALOAD\n611fff # [ 82 ] PUSH2(8191)\n6001 # [ 85 ] PUSH1(1)\n43 # [ 87 ] NUMBER\n03 # [ 88 ] SUB\n06 # [ 89 ] MOD\n55 # [ 90 ] SSTORE\n00 # [ 91 ] STOP\n"
+}
