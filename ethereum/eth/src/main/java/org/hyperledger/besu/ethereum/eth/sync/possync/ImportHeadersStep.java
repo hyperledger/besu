@@ -54,7 +54,7 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
     final double headersPercent = (double) (downloadedHeaders) / totalHeaders * 100;
     LogUtil.throttledLog(
         LOG::info,
-        String.format("Header import progress %.1f%%", headersPercent),
+        String.format("Header import progress %.2f%%", headersPercent),
         logInfo,
         LOG_DELAY);
   }
