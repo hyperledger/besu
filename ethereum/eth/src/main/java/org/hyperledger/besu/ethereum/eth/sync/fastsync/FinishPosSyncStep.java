@@ -54,7 +54,7 @@ public class FinishPosSyncStep implements Consumer<List<BlockHeader>> {
       final long startingBlock) {
     this.protocolContext = protocolContext;
     this.blockchain = ethContext.getBlockchain();
-//    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
+    //    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
     this.nextLowestBlockNumber = startingBlock;
     //    if (chainHeadBlockNumber != 0) { // TODO: if we still want TD, we need to fix this
     //      final Optional<BlockHeader> chainHeadBlockHeader =

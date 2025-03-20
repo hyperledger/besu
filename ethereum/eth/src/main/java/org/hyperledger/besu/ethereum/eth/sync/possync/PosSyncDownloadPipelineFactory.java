@@ -194,8 +194,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
             true,
             "fastSync")
         .thenProcessAsync("loadHeaders", loadHeadersStep, headerRequestSize)
-        .thenProcessAsync(
-            "downloadSyncBodies", downloadSyncBodiesStep, downloaderBodyParallelism)
+        .thenProcessAsync("downloadSyncBodies", downloadSyncBodiesStep, downloaderBodyParallelism)
         .thenProcessAsync(
             "downloadReceipts", downloadSyncReceiptsStep, downloaderReceiptParallelism)
         .andFinishWith("importBlock", finishPosSyncStep);

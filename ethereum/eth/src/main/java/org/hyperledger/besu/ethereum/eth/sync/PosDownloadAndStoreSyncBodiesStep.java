@@ -15,11 +15,15 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.CompleteSyncBlocksTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -35,7 +39,6 @@ public class PosDownloadAndStoreSyncBodiesStep
 
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
-  private final MetricsSystem metricsSystem;
 
   public PosDownloadAndStoreSyncBodiesStep(
       final ProtocolSchedule protocolSchedule,
@@ -44,7 +47,6 @@ public class PosDownloadAndStoreSyncBodiesStep
       final SynchronizerConfiguration syncConfig) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
-    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -56,12 +58,7 @@ public class PosDownloadAndStoreSyncBodiesStep
         .addArgument(blockHeaders.getFirst().getNumber())
         .log();
     // for now only use the legacy peer tasks
-    final CompleteSyncBlocksTask syncBlocksTask =
-        CompleteSyncBlocksTask.forHeaders(
-            protocolSchedule, ethContext, blockHeaders, metricsSystem);
-
-    return syncBlocksTask
-        .run()
+    return getSyncBodiesWithPeerTaskSystem(blockHeaders)
         .exceptionally(
             th -> {
               LOG.info(
@@ -83,5 +80,26 @@ public class PosDownloadAndStoreSyncBodiesStep
                   .log();
               return blockHeaders;
             });
+  }
+
+  private CompletableFuture<List<SyncBlock>> getSyncBodiesWithPeerTaskSystem(
+      final List<BlockHeader> headers) {
+    final int numSyncBlocksToGet = headers.size();
+    final List<SyncBlock> syncBlocks = new ArrayList<>(numSyncBlocksToGet);
+    do {
+      final List<BlockHeader> headersForBodiesStillToGet =
+          headers.subList(syncBlocks.size(), numSyncBlocksToGet);
+      GetSyncBlockBodiesFromPeerTask task =
+          new GetSyncBlockBodiesFromPeerTask(headersForBodiesStillToGet, protocolSchedule);
+      PeerTaskExecutorResult<List<SyncBlock>> result =
+          ethContext.getPeerTaskExecutor().execute(task);
+      if (result.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+          && result.result().isPresent()) {
+        List<SyncBlock> taskResult = result.result().get();
+        syncBlocks.addAll(taskResult);
+      }
+      // repeat until all sync blocks have been downloaded
+    } while (syncBlocks.size() < numSyncBlocksToGet);
+    return CompletableFuture.completedFuture(syncBlocks);
   }
 }
