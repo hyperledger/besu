@@ -58,7 +58,9 @@ public class PosDownloadAndStoreSyncBodiesStep
         .addArgument(blockHeaders.getFirst().getNumber())
         .log();
     // for now only use the legacy peer tasks
-    return getSyncBodiesWithPeerTaskSystem(blockHeaders)
+    return ethContext
+        .getScheduler()
+        .scheduleServiceTask(() -> getSyncBodiesWithPeerTaskSystem(blockHeaders))
         .exceptionally(
             th -> {
               LOG.info(
