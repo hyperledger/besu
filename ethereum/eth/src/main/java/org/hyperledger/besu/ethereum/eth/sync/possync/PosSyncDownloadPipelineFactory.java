@@ -42,7 +42,11 @@ import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
 import java.util.concurrent.CompletionStage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
+  private static final Logger LOG = LoggerFactory.getLogger(PosSyncDownloadPipelineFactory.class);
 
   protected final SynchronizerConfiguration syncConfig;
   protected final ProtocolSchedule protocolSchedule;
@@ -96,9 +100,14 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
       final SyncState syncState,
       final SyncTarget syncTarget,
       final Pipeline<?> pipeline) {
-    return scheduler
-        .startPipeline(createDownloadHeadersPipeline())
-        .thenCompose(__ -> scheduler.startPipeline(pipeline));
+    if (!hasReachedHeaderDownloadTarget()) {
+      return scheduler
+          .startPipeline(createDownloadHeadersPipeline())
+          .thenCompose(__ -> scheduler.startPipeline(pipeline));
+    } else {
+      LOG.debug("Skipping header download pipeline as target header already reached");
+      return scheduler.startPipeline(pipeline);
+    }
   }
 
   protected Pipeline<SyncTargetNumberRange> createDownloadHeadersPipeline() {
@@ -194,8 +203,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
             true,
             "fastSync")
         .thenProcessAsync("loadHeaders", loadHeadersStep, headerRequestSize)
-        .thenProcessAsync(
-            "downloadSyncBodies", downloadSyncBodiesStep, downloaderBodyParallelism)
+        .thenProcessAsync("downloadSyncBodies", downloadSyncBodiesStep, downloaderBodyParallelism)
         .thenProcessAsync(
             "downloadReceipts", downloadSyncReceiptsStep, downloaderReceiptParallelism)
         .andFinishWith("importBlock", finishPosSyncStep);
@@ -204,5 +212,12 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
   private long getCommonAncestor(final SyncTarget syncTarget) {
     return Math.max(
         syncConfig.getDownloaderHeaderTarget(), syncTarget.commonAncestor().getNumber());
+  }
+
+  private boolean hasReachedHeaderDownloadTarget() {
+    return ethContext
+        .getBlockchain()
+        .getBlockHeader(syncConfig.getDownloaderHeaderTarget())
+        .isPresent();
   }
 }
