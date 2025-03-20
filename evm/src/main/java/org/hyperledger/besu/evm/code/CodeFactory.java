@@ -53,24 +53,17 @@ public class CodeFactory {
    * Create Code.
    *
    * @param bytes the bytes
-   * @return the code
-   */
-  public Code createCode(final Bytes bytes) {
-    return createCode(bytes, false);
-  }
-
-  /**
-   * Create Code.
-   *
-   * @param bytes the bytes
    * @param createTransaction This is in a create transaction, allow dangling data
+   * @param maxRequestedVersion the meximum version to create, limiting the factory's setting.
    * @return the code
    */
-  public Code createCode(final Bytes bytes, final boolean createTransaction) {
-    return switch (maxEofVersion) {
+  public Code createCode(
+      final Bytes bytes, final boolean createTransaction, final int maxRequestedVersion) {
+    int version = Math.min(maxEofVersion, maxRequestedVersion);
+    return switch (version) {
       case 0 -> new CodeV0(bytes);
       case 1 -> createV1Code(bytes, createTransaction);
-      default -> new CodeInvalid(bytes, "Unsupported max code version " + maxEofVersion);
+      default -> new CodeInvalid(bytes, "Unsupported max code version " + version);
     };
   }
 

@@ -377,7 +377,7 @@ public class EVM {
     checkNotNull(codeHash);
     Code result = codeCache.getIfPresent(codeHash);
     if (result == null) {
-      result = getCodeUncached(codeBytes);
+      result = getCodeUncached(codeBytes, getMaxEOFVersion());
       codeCache.put(codeHash, result);
     }
     return result;
@@ -390,7 +390,18 @@ public class EVM {
    * @return the code
    */
   public Code getCodeUncached(final Bytes codeBytes) {
-    return codeFactory.createCode(codeBytes);
+    return getCodeUncached(codeBytes, getMaxEOFVersion());
+  }
+
+  /**
+   * Gets code skipping the code cache.
+   *
+   * @param codeBytes the code bytes
+   * @param maxRequestedVersion the maximum version to return, will restrict EVM range.
+   * @return the code
+   */
+  public Code getCodeUncached(final Bytes codeBytes, final int maxRequestedVersion) {
+    return codeFactory.createCode(codeBytes, false, maxRequestedVersion);
   }
 
   /**
@@ -400,7 +411,7 @@ public class EVM {
    * @return the code
    */
   public Code getCodeForCreation(final Bytes codeBytes) {
-    return codeFactory.createCode(codeBytes, true);
+    return codeFactory.createCode(codeBytes, true, getMaxEOFVersion());
   }
 
   /**

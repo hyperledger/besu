@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
+import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.code.OpcodeInfo;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -125,7 +126,8 @@ public class StandardJsonTracer implements OperationTracer {
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
     }
-    pc = messageFrame.getPC() - messageFrame.getCode().getCodeSection(0).getEntryPoint();
+    CodeSection section1 = messageFrame.getCode().getCodeSection(0);
+    pc = section1 == null ? 0 : messageFrame.getPC() - section1.getEntryPoint();
     section = messageFrame.getSection();
     gas = shortNumber(messageFrame.getRemainingGas());
     memorySize = messageFrame.memoryWordSize() * 32;

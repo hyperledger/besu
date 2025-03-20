@@ -62,7 +62,7 @@ public class EOFCreateOperation extends AbstractCreateOperation {
   public Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
     final Address sender = frame.getRecipientAddress();
     final Bytes32 salt = getSalt(frame);
-    final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt, initcode.getCodeHash()));
+    final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt));
     return Address.extract(hash);
   }
 
