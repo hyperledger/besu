@@ -31,12 +31,16 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
   private static final int LOG_DELAY = 30;
 
   private final MutableBlockchain blockchainStorage;
+  private final long downloaderHeaderTarget;
   private final Supplier<Long> pivotBlockNumber;
   private final AtomicBoolean logInfo = new AtomicBoolean(true);
 
   public ImportHeadersStep(
-      final MutableBlockchain blockchain, final Supplier<Long> pivotBlockNumber) {
+      final MutableBlockchain blockchain,
+      final long downloaderHeaderTarget,
+      final Supplier<Long> pivotBlockNumber) {
     this.blockchainStorage = blockchain;
+    this.downloaderHeaderTarget = downloaderHeaderTarget;
     this.pivotBlockNumber = pivotBlockNumber;
   }
 
@@ -44,21 +48,14 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
   public void accept(final List<BlockHeader> blockHeaders) {
     blockHeaders.forEach(blockchainStorage::importHeader);
 
-    final long lastHeader = blockHeaders.get(blockHeaders.size() - 1).getNumber();
-    final long pivotBlock = pivotBlockNumber.get();
-    final long blocksPercent = getBlocksPercent(lastHeader, pivotBlock);
+    final long totalHeaders = pivotBlockNumber.get() - downloaderHeaderTarget;
+    final long downloadedHeaders =
+        totalHeaders - (blockHeaders.getFirst().getNumber() - downloaderHeaderTarget);
+    final double headersPercent = (double) (downloadedHeaders) / totalHeaders * 100;
     LogUtil.throttledLog(
         LOG::info,
-        String.format(
-            "Header import progress: %d of %d (%d%%)", lastHeader, pivotBlock, blocksPercent),
+        String.format("Header import progress %.1f%%", headersPercent),
         logInfo,
         LOG_DELAY);
-  }
-
-  protected static long getBlocksPercent(final long lastHeader, final long totalHeaders) {
-    if (totalHeaders == 0) {
-      return 0;
-    }
-    return (100 * lastHeader / totalHeaders);
   }
 }

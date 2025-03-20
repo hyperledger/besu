@@ -122,6 +122,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
     final ImportHeadersStep importHeadersStep =
         new ImportHeadersStep(
             protocolContext.getBlockchain(),
+            syncConfig.getDownloaderHeaderTarget(),
             () -> fastSyncState.getPivotBlockHeader().get().getNumber());
 
     return PipelineBuilder.createPipelineFrom(
