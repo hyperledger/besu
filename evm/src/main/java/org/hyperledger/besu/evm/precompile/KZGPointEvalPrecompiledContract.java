@@ -147,6 +147,13 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
                   PRECOMPILE_NAME, AbstractPrecompiledContract.CacheMetric.HIT));
           return res.cachedResult();
         } else {
+          LOG.debug(
+              "false positive kzgPointEval {}, cache key {}, cached input: {}, input: {}",
+              input.getClass().getSimpleName(),
+              cacheKey,
+              res.cachedInput().toHexString(),
+              input.toHexString());
+
           cacheEventConsumer.accept(
               new AbstractPrecompiledContract.CacheEvent(
                   PRECOMPILE_NAME, AbstractPrecompiledContract.CacheMetric.FALSE_POSITIVE));
@@ -181,11 +188,13 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
       if (proved) {
         res =
-            new PrecompileInputResultTuple(input, PrecompileContractResult.success(successResult));
+            new PrecompileInputResultTuple(
+                enableResultCaching ? input.copy() : input,
+                PrecompileContractResult.success(successResult));
       } else {
         res =
             new PrecompileInputResultTuple(
-                input,
+                enableResultCaching ? input.copy() : input,
                 PrecompileContractResult.halt(
                     null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR)));
       }
@@ -197,7 +206,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       LOG.debug("Native KZG failed", kzgFailed);
       res =
           new PrecompileInputResultTuple(
-              input,
+              enableResultCaching ? input.copy() : input,
               PrecompileContractResult.halt(
                   null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR)));
       if (cacheKey != null) {
