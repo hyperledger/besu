@@ -34,9 +34,12 @@ public class LoadHeadersStep
     implements Function<SyncTargetNumberRange, CompletableFuture<List<BlockHeader>>> {
   private static final Logger LOG = LoggerFactory.getLogger(LoadHeadersStep.class);
   private final Blockchain blockchain;
+  private final DownloadPosHeadersStep downloadPosHeadersStep;
 
-  public LoadHeadersStep(final Blockchain blockchain) {
+  public LoadHeadersStep(
+      final Blockchain blockchain, final DownloadPosHeadersStep downloadPosHeadersStep) {
     this.blockchain = blockchain;
+    this.downloadPosHeadersStep = downloadPosHeadersStep;
   }
 
   @Override
@@ -61,6 +64,10 @@ public class LoadHeadersStep
               .map(blockchain::getBlockHeader)
               .flatMap(Optional::stream)
               .collect(Collectors.toList());
+      if (headers.size() != range.getSegmentLengthExclusive()) {
+        // Fallback to download headers if we don't have all headers
+        return downloadPosHeadersStep.apply(range);
+      }
       return CompletableFuture.completedFuture(headers);
     } catch (final Exception e) {
       LOG.error(

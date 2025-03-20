@@ -153,7 +153,16 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
             () -> fastSyncState.getPivotBlockHeader().get().getNumber(),
             headerRequestSize,
             false);
-    final LoadHeadersStep loadHeadersStep = new LoadHeadersStep(protocolContext.getBlockchain());
+    final DownloadPosHeadersStep downloadHeadersStep =
+        new DownloadPosHeadersStep(
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            headerValidationPolicy,
+            syncConfig,
+            metricsSystem);
+    final LoadHeadersStep loadHeadersStep =
+        new LoadHeadersStep(protocolContext.getBlockchain(), downloadHeadersStep);
     final PosDownloadAndStoreSyncBodiesStep downloadSyncBodiesStep =
         new PosDownloadAndStoreSyncBodiesStep(
             protocolSchedule, ethContext, metricsSystem, syncConfig);
