@@ -69,9 +69,10 @@ public class FinishPosSyncStep implements Consumer<List<BlockHeader>> {
   @Override
   public void accept(final List<BlockHeader> blockHeaderRange) {
     LOG.atInfo()
-        .setMessage("Next lowest block number: {}, lowest block number: {}")
+        .setMessage("Next lowest block number: {}, lowest block number: {}, sorted set size: {}")
         .addArgument(nextLowestBlockNumber)
         .addArgument(blockHeaderRange.getFirst().getNumber())
+            .addArgument(sortedSet.size())
         .log();
     final BlockHeaderRange newRange =
         new BlockHeaderRange(
@@ -84,7 +85,7 @@ public class FinishPosSyncStep implements Consumer<List<BlockHeader>> {
     BlockHeader nextChainHead = null;
     BlockHeaderRange removedRange = null;
     int i = 0;
-    while (nextLowestBlockNumber == sortedSet.first()) {
+    while (!sortedSet.isEmpty() && sortedSet.first() <= nextLowestBlockNumber) {
       final Long removed = sortedSet.removeFirst();
       removedRange = blockRanges.remove(removed);
       nextChainHead = removedRange.getHighestBlockHeader();
