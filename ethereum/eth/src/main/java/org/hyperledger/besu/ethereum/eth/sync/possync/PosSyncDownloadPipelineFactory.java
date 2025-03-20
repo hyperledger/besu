@@ -146,10 +146,10 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
 
+    final long startingBlock = getCommonAncestor(target) + 1;
     final PosSyncSource syncSource =
         new PosSyncSource(
-            getCommonAncestor(target)
-                + 1, // TODO remove the +1 when check in DefaultBlockChain is fixed
+            startingBlock, // TODO remove the +1 when check in DefaultBlockChain is fixed
             () -> fastSyncState.getPivotBlockHeader().get().getNumber(),
             headerRequestSize,
             false);
@@ -166,7 +166,8 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
             protocolContext,
             ethContext,
             fastSyncState.getPivotBlockHeader().get(),
-            syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
+            syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled(),
+            startingBlock);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
