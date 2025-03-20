@@ -430,8 +430,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.downloaderChainSegmentSize = config.getDownloaderChainSegmentSize();
     options.downloaderParallelism = config.getDownloaderParallelism();
     options.downloaderHeaderParallelism = config.getDownloaderHeaderParallelism();
-    options.downloaderBodyParallelism = config.getDownloaderHeaderParallelism();
-    options.downloaderReceiptsParallelism = config.getDownloaderHeaderParallelism();
+    options.downloaderBodyParallelism = config.getDownloaderBodyParallelism();
+    options.downloaderReceiptsParallelism = config.getDownloaderReceiptsParallelism();
     options.downloaderHeaderTarget = config.getDownloaderHeaderParallelism();
     options.transactionsParallelism = config.getTransactionsParallelism();
     options.computationParallelism = config.getComputationParallelism();
