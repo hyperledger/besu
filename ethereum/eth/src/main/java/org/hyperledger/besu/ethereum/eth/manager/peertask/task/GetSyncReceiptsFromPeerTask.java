@@ -76,7 +76,7 @@ public class GetSyncReceiptsFromPeerTask
 
     isPoS = protocolSchedule.anyMatch((ps) -> ps.spec().isPoS());
   }
-
+  @Override
   public int getRetriesWithOtherPeer() {
     return retries;
   }
