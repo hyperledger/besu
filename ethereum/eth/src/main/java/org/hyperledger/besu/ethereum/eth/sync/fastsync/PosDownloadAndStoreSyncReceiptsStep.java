@@ -58,16 +58,7 @@ public class PosDownloadAndStoreSyncReceiptsStep
 
   @Override
   public CompletableFuture<List<BlockHeader>> apply(final List<BlockHeader> blockHeaders) {
-    return CompletableFuture.runAsync(
-            () -> {
-              int start = 0;
-              while (blockHeaders.size() > 0) {
-                final int to = Math.min(blockHeaders.size(), 50 + start);
-                final List<BlockHeader> subList = blockHeaders.subList(start, to);
-                getAndStoreReceipts(subList);
-                start = to + 1;
-              }
-            })
+    return CompletableFuture.runAsync(() -> getAndStoreReceipts(blockHeaders))
         .thenApply((__) -> blockHeaders);
   }
 
@@ -81,7 +72,8 @@ public class PosDownloadAndStoreSyncReceiptsStep
     final List<BlockHeader> headers = new ArrayList<>(blockHeaders);
     Map<BlockHeader, SyncTransactionReceipts> getReceipts = new HashMap<>();
     do {
-      GetSyncReceiptsFromPeerTask task = new GetSyncReceiptsFromPeerTask(headers, protocolSchedule);
+      GetSyncReceiptsFromPeerTask task =
+          new GetSyncReceiptsFromPeerTask(headers, protocolSchedule, 10);
       PeerTaskExecutorResult<Map<BlockHeader, SyncTransactionReceipts>> getReceiptsResult =
           peerTaskExecutor.execute(task);
       if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS

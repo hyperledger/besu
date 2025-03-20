@@ -43,9 +43,13 @@ public class GetSyncReceiptsFromPeerTask
   private final Map<Hash, List<BlockHeader>> headersByReceiptsRoot = new HashMap<>();
   private final long requiredBlockchainHeight;
   private final boolean isPoS;
+  private final int retries;
 
   public GetSyncReceiptsFromPeerTask(
-      final Collection<BlockHeader> blockHeaders, final ProtocolSchedule protocolSchedule) {
+      final Collection<BlockHeader> blockHeaders,
+      final ProtocolSchedule protocolSchedule,
+      final int retries) {
+    this.retries = retries;
     this.blockHeaders = new ArrayList<>(blockHeaders);
 
     // pre-fill any headers with an empty receipts root into the result map
@@ -71,6 +75,10 @@ public class GetSyncReceiptsFromPeerTask
             .orElse(BlockHeader.GENESIS_BLOCK_NUMBER);
 
     isPoS = protocolSchedule.anyMatch((ps) -> ps.spec().isPoS());
+  }
+
+  public int getRetriesWithOtherPeer() {
+    return retries;
   }
 
   @Override
