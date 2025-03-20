@@ -72,7 +72,7 @@ public class FinishPosSyncStep implements Consumer<List<BlockHeader>> {
         .setMessage("Next lowest block number: {}, lowest block number: {}, sorted set size: {}")
         .addArgument(nextLowestBlockNumber)
         .addArgument(blockHeaderRange.getFirst().getNumber())
-            .addArgument(sortedSet.size())
+        .addArgument(sortedSet.size())
         .log();
     final BlockHeaderRange newRange =
         new BlockHeaderRange(
