@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Consumer;
@@ -55,15 +54,16 @@ public class FinishPosSyncStep implements Consumer<List<BlockHeader>> {
       final long startingBlock) {
     this.protocolContext = protocolContext;
     this.blockchain = ethContext.getBlockchain();
-    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
+//    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
     this.nextLowestBlockNumber = startingBlock;
-    if (chainHeadBlockNumber != 0) {
-      final Optional<BlockHeader> chainHeadBlockHeader =
-          blockchain.getBlockHeader(chainHeadBlockNumber);
-      this.chainHeadDifficulty = blockchain.calculateTotalDifficulty(chainHeadBlockHeader.get());
-    } else {
-      this.chainHeadDifficulty = Difficulty.ZERO;
-    }
+    //    if (chainHeadBlockNumber != 0) { // TODO: if we still want TD, we need to fix this
+    //      final Optional<BlockHeader> chainHeadBlockHeader =
+    //          blockchain.getBlockHeader(chainHeadBlockNumber);
+    //      this.chainHeadDifficulty =
+    // blockchain.calculateTotalDifficulty(chainHeadBlockHeader.get());
+    //    } else {
+    this.chainHeadDifficulty = Difficulty.ZERO;
+    //    }
   }
 
   @Override
@@ -72,7 +72,7 @@ public class FinishPosSyncStep implements Consumer<List<BlockHeader>> {
         .setMessage("Next lowest block number: {}, lowest block number: {}, sorted set size: {}")
         .addArgument(nextLowestBlockNumber)
         .addArgument(blockHeaderRange.getFirst().getNumber())
-            .addArgument(sortedSet.size())
+        .addArgument(sortedSet.size())
         .log();
     final BlockHeaderRange newRange =
         new BlockHeaderRange(
@@ -89,7 +89,7 @@ public class FinishPosSyncStep implements Consumer<List<BlockHeader>> {
       final Long removed = sortedSet.removeFirst();
       removedRange = blockRanges.remove(removed);
       nextChainHead = removedRange.getHighestBlockHeader();
-      this.chainHeadDifficulty.add(removedRange.getRangeDifficulty());
+      //      this.chainHeadDifficulty.add(removedRange.getRangeDifficulty());
       i++;
     }
     if (i > 0) {
