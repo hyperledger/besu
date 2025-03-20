@@ -105,7 +105,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
           .startPipeline(createDownloadHeadersPipeline())
           .thenCompose(__ -> scheduler.startPipeline(pipeline));
     } else {
-      LOG.debug("Skipping header download pipeline as target header already reached");
+      LOG.info("Skipping header download pipeline as target header already reached");
       return scheduler.startPipeline(pipeline);
     }
   }
@@ -215,9 +215,8 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
   }
 
   private boolean hasReachedHeaderDownloadTarget() {
-    return ethContext
-        .getBlockchain()
-        .getBlockHeader(syncConfig.getDownloaderHeaderTarget())
-        .isPresent();
+    var targetToCheck =
+        syncConfig.getDownloaderHeaderTarget() == 0 ? 1 : syncConfig.getDownloaderHeaderTarget();
+    return ethContext.getBlockchain().getBlockHeader(targetToCheck).isPresent();
   }
 }
