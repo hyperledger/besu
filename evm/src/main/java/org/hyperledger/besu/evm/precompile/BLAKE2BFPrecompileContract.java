@@ -39,6 +39,7 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(BLAKE2BFPrecompileContract.class);
   private static final String PRECOMPILE_NAME = "BLAKE2f";
+
   private static final Cache<Integer, PrecompileInputResultTuple> blakeCache =
       Caffeine.newBuilder().maximumSize(1000).build();
 
@@ -86,13 +87,20 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
     PrecompileInputResultTuple res = null;
     Integer cacheKey = null;
     if (enableResultCaching) {
-      cacheKey = Arrays.hashCode(input.toArrayUnsafe());
+      cacheKey = getCacheKey(input);
       res = blakeCache.getIfPresent(cacheKey);
       if (res != null) {
         if (res.cachedInput().equals(input)) {
           cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
           return res.cachedResult();
         } else {
+          LOG.info(
+              "false positive blake2bf {}, cache key {}, cached input: {}, input: {}",
+              input.getClass().getSimpleName(),
+              cacheKey,
+              res.cachedInput().toHexString(),
+              input.toHexString());
+
           cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
         }
       } else {
@@ -102,12 +110,16 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
 
     res =
         new PrecompileInputResultTuple(
-            input, PrecompileContractResult.success(Hash.blake2bf(input)));
+            input.copy(), PrecompileContractResult.success(Hash.blake2bf(input)));
 
     if (cacheKey != null) {
       blakeCache.put(cacheKey, res);
     }
 
     return res.cachedResult();
+  }
+
+  private Integer getCacheKey(final Bytes input) {
+    return Arrays.hashCode(input.toArrayUnsafe());
   }
 }

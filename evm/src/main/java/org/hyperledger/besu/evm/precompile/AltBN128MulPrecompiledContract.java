@@ -30,9 +30,12 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The AltBN128Mul precompiled contract. */
 public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledContract {
+  private static final Logger LOG = LoggerFactory.getLogger(AltBN128MulPrecompiledContract.class);
 
   private static final int PARAMETER_LENGTH = 96;
   private static final String PRECOMPILE_NAME = "AltBN128Mul";
@@ -88,13 +91,20 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     PrecompileInputResultTuple res;
     Integer cacheKey = null;
     if (enableResultCaching) {
-      cacheKey = Arrays.hashCode(input.toArrayUnsafe());
+      cacheKey = getCacheKey(input);
       res = bnMulCache.getIfPresent(cacheKey);
       if (res != null) {
         if (res.cachedInput().equals(input)) {
           cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
           return res.cachedResult();
         } else {
+          LOG.debug(
+              "false positive altbn128Mul {}, cache key {}, cached input: {}, input: {}",
+              input.getClass().getSimpleName(),
+              cacheKey,
+              res.cachedInput().toHexString(),
+              input.toHexString());
+
           cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
         }
       } else {
@@ -108,9 +118,13 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     }
 
     if (useNative) {
-      res = new PrecompileInputResultTuple(input, computeNative(input, messageFrame));
+      res =
+          new PrecompileInputResultTuple(
+              enableResultCaching ? input.copy() : input, computeNative(input, messageFrame));
     } else {
-      res = new PrecompileInputResultTuple(input, computeDefault(input));
+      res =
+          new PrecompileInputResultTuple(
+              enableResultCaching ? input.copy() : input, computeDefault(input));
     }
     if (cacheKey != null) {
       bnMulCache.put(cacheKey, res);
@@ -147,5 +161,9 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     }
     final byte[] raw = Arrays.copyOfRange(input.toArrayUnsafe(), offset, offset + length);
     return new BigInteger(1, raw);
+  }
+
+  private static Integer getCacheKey(final Bytes input) {
+    return Arrays.hashCode(input.toArrayUnsafe());
   }
 }
