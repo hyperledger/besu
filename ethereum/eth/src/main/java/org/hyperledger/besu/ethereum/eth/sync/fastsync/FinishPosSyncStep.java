@@ -51,11 +51,12 @@ public class FinishPosSyncStep implements Consumer<List<BlockHeader>> {
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final BlockHeader pivotHeader,
-      final boolean transactionIndexingEnabled) {
+      final boolean transactionIndexingEnabled,
+      final long startingBlock) {
     this.protocolContext = protocolContext;
     this.blockchain = ethContext.getBlockchain();
     final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
-    this.nextLowestBlockNumber = (int) (chainHeadBlockNumber + 1);
+    this.nextLowestBlockNumber = startingBlock;
     if (chainHeadBlockNumber != 0) {
       final Optional<BlockHeader> chainHeadBlockHeader =
           blockchain.getBlockHeader(chainHeadBlockNumber);
@@ -67,6 +68,11 @@ public class FinishPosSyncStep implements Consumer<List<BlockHeader>> {
 
   @Override
   public void accept(final List<BlockHeader> blockHeaderRange) {
+    LOG.atInfo()
+        .setMessage("Next lowest block number: {}, lowest block number: {}")
+        .addArgument(nextLowestBlockNumber)
+        .addArgument(blockHeaderRange.getFirst().getNumber())
+        .log();
     final BlockHeaderRange newRange =
         new BlockHeaderRange(
             blockHeaderRange.getFirst(),
