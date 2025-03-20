@@ -38,6 +38,7 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 
@@ -92,7 +93,8 @@ class MainnetTransactionProcessorTest {
         .feeMarket(FeeMarket.legacy())
         .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
         .codeDelegationProcessor(
-            new CodeDelegationProcessor(Optional.of(BigInteger.ONE), BigInteger.TEN))
+            new CodeDelegationProcessor(
+                Optional.of(BigInteger.ONE), BigInteger.TEN, new CodeDelegationService()))
         .build();
   }
 

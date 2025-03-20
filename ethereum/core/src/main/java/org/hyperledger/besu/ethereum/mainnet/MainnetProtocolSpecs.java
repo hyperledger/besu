@@ -71,6 +71,7 @@ import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -907,7 +908,9 @@ public abstract class MainnetProtocolSpecs {
                     .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
                     .codeDelegationProcessor(
                         new CodeDelegationProcessor(
-                            chainId, SIGNATURE_ALGORITHM.get().getHalfCurveOrder()))
+                            chainId,
+                            SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+                            new CodeDelegationService()))
                     .build())
 
         // TODO SLD EIP-7840 Can we dynamically wire in the appropriate GasCalculator instead of

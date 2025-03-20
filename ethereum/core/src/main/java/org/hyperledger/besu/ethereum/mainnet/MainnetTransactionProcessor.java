@@ -48,7 +48,6 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -329,9 +328,7 @@ public class MainnetTransactionProcessor {
         }
 
         final CodeDelegationResult codeDelegationResult =
-            maybeCodeDelegationProcessor
-                .get()
-                .process(worldState, new CodeDelegationService(), transaction);
+            maybeCodeDelegationProcessor.get().process(worldState, transaction);
         warmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
