@@ -44,7 +44,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String DOWNLOADER_PARALLELISM_FLAG =
       "--Xsynchronizer-downloader-parallelism";
   private static final String DOWNLOADER_HEADER_PARALLELISM_FLAG =
-      "--Xsynchronizer-downloader-header-parallelism";
+      "--Xsynchronizer-downloader-body-parallelism";
+  private static final String DOWNLOADER_BODY_PARALLELISM_FLAG =
+      "--Xsynchronizer-downloader-body-parallelism";
+  private static final String DOWNLOADER_RECEIPTS_PARALLELISM_FLAG =
+      "--Xsynchronizer-downloader-receipts-parallelism";
   private static final String DOWNLOADER_HEADER_TARGET_FLAG =
       "--Xsynchronizer-downloader-header-target";
   private static final String TRANSACTIONS_PARALLELISM_FLAG =
@@ -164,9 +168,28 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       names = DOWNLOADER_HEADER_PARALLELISM_FLAG,
       hidden = true,
       paramLabel = "<INTEGER>",
-      description = "Number of threads to provide to chain downloader (default: ${DEFAULT-VALUE})")
+      description =
+          "Number of threads to provide to header chain downloader (default: ${DEFAULT-VALUE})")
   private int downloaderHeaderParallelism =
       SynchronizerConfiguration.DEFAULT_DOWNLOADER_HEADER_PARALLELISM;
+
+  @CommandLine.Option(
+      names = DOWNLOADER_BODY_PARALLELISM_FLAG,
+      hidden = true,
+      paramLabel = "<INTEGER>",
+      description =
+          "Number of threads to provide to body chain downloader (default: ${DEFAULT-VALUE})")
+  private int downloaderBodyParallelism =
+      SynchronizerConfiguration.DEFAULT_DOWNLOADER_BODY_PARALLELISM;
+
+  @CommandLine.Option(
+      names = DOWNLOADER_RECEIPTS_PARALLELISM_FLAG,
+      hidden = true,
+      paramLabel = "<INTEGER>",
+      description =
+          "Number of threads to provide to receipt chain downloader (default: ${DEFAULT-VALUE})")
+  private int downloaderReceiptsParallelism =
+      SynchronizerConfiguration.DEFAULT_DOWNLOADER_RECEIPTS_PARALLELISM;
 
   @CommandLine.Option(
       names = DOWNLOADER_HEADER_TARGET_FLAG,
@@ -407,6 +430,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.downloaderChainSegmentSize = config.getDownloaderChainSegmentSize();
     options.downloaderParallelism = config.getDownloaderParallelism();
     options.downloaderHeaderParallelism = config.getDownloaderHeaderParallelism();
+    options.downloaderBodyParallelism = config.getDownloaderHeaderParallelism();
+    options.downloaderReceiptsParallelism = config.getDownloaderHeaderParallelism();
     options.downloaderHeaderTarget = config.getDownloaderHeaderParallelism();
     options.transactionsParallelism = config.getTransactionsParallelism();
     options.computationParallelism = config.getComputationParallelism();
@@ -449,6 +474,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.downloaderChainSegmentSize(downloaderChainSegmentSize);
     builder.downloaderParallelism(downloaderParallelism);
     builder.downloaderHeaderParallelism(downloaderHeaderParallelism);
+    builder.downloaderBodyParallelism(downloaderHeaderParallelism);
+    builder.downloaderReceiptsParallelism(downloaderHeaderParallelism);
     builder.downloaderHeaderTarget(downloaderHeaderTarget);
     builder.transactionsParallelism(transactionsParallelism);
     builder.computationParallelism(computationParallelism);

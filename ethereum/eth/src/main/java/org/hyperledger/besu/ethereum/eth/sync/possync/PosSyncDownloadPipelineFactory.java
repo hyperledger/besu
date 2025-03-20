@@ -146,6 +146,8 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
       final SyncTarget target) {
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
+    final int downloaderBodyParallelism = syncConfig.getDownloaderBodyParallelism();
+    final int downloaderReceiptParallelism = syncConfig.getDownloaderBodyParallelism();
 
     final long startingBlock = getCommonAncestor(target) + 1;
     final PosSyncSource syncSource =
@@ -191,11 +193,11 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
                 "action"),
             true,
             "fastSync")
-        .thenProcessAsync("loadHeaders", loadHeadersStep, downloaderParallelism)
+        .thenProcessAsync("loadHeaders", loadHeadersStep, headerRequestSize)
         .thenProcessAsyncOrdered(
-            "downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
+            "downloadSyncBodies", downloadSyncBodiesStep, downloaderBodyParallelism)
         .thenProcessAsyncOrdered(
-            "downloadReceipts", downloadSyncReceiptsStep, downloaderParallelism)
+            "downloadReceipts", downloadSyncReceiptsStep, downloaderReceiptParallelism)
         .andFinishWith("importBlock", finishPosSyncStep);
   }
 
