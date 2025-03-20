@@ -88,6 +88,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       List.of(
           BigInteger.valueOf(11155111), // Sepolia
           BigInteger.valueOf(17000), // Holesky
+          BigInteger.valueOf(560048), // Hoodi
           BigInteger.valueOf(39438135) // Ephemery
           );
 
