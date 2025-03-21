@@ -444,12 +444,12 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public void appendSyncBlocksForPoC(final List<SyncBlock> syncBlocks) {
-    final BlockchainStorage.Updater updater = blockchainStorage.updater();
     syncBlocks.forEach(
         syncBlock -> {
+          final BlockchainStorage.Updater updater = blockchainStorage.updater();
           updater.putSyncBlockBody(syncBlock.getHash(), syncBlock.getBody());
+          updater.commit();
         });
-    updater.commit();
   }
 
   @Override
@@ -459,14 +459,14 @@ public class DefaultBlockchain implements MutableBlockchain {
       throw new InvalidConfigurationException(
           "Block headers and sync receipts list must have the same size");
     }
-    final BlockchainStorage.Updater updater = blockchainStorage.updater();
     IntStream.range(0, blockHeaders.size())
         .forEach(
             i -> {
+              final BlockchainStorage.Updater updater = blockchainStorage.updater();
               updater.putSyncTransactionReceipts(
                   blockHeaders.get(i).getHash(), syncReceiptsList.get(i));
+              updater.commit();
             });
-    updater.commit();
   }
 
   @Override
