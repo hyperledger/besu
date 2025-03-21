@@ -445,7 +445,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
               + " (default: ${DEFAULT-VALUE})")
-  private final NetworkName network = null;
+  private NetworkName network = null;
 
   @Option(
       names = {PROFILE_OPTION_NAME},
@@ -2207,6 +2207,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
     return dataStorageConfiguration;
+  }
+
+  /**
+   * Gets the network for this BesuCommand
+   *
+   * @return the network for this BesuCommand
+   */
+  public NetworkName getNetwork() {
+    return network;
   }
 
   private void initMiningParametersMetrics(final MiningConfiguration miningConfiguration) {
