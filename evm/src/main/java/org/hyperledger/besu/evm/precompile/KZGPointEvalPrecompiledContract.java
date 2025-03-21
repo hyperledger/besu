@@ -22,7 +22,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
@@ -138,7 +137,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     Integer cacheKey = null;
 
     if (enableResultCaching) {
-      cacheKey = Arrays.hashCode(input.toArrayUnsafe());
+      cacheKey = AbstractPrecompiledContract.getCacheKey(input);
       res = kzgCache.getIfPresent(cacheKey);
       if (res != null) {
         if (res.cachedInput().equals(input)) {

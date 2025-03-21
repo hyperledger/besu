@@ -89,7 +89,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     PrecompileInputResultTuple res;
     Integer cacheKey = null;
     if (enableResultCaching) {
-      cacheKey = input.hashCode();
+      cacheKey = getCacheKey(input);
       res = ecrecCache.getIfPresent(cacheKey);
 
       if (res != null) {

@@ -16,8 +16,10 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import java.util.Arrays;
 import java.util.function.Consumer;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,5 +97,9 @@ public abstract class AbstractPrecompiledContract implements PrecompiledContract
    */
   public static void setCacheEventConsumer(final Consumer<CacheEvent> eventConsumer) {
     cacheEventConsumer = eventConsumer;
+  }
+
+  public static Integer getCacheKey(final Bytes input) {
+    return Arrays.hashCode(input.toArrayUnsafe());
   }
 }
