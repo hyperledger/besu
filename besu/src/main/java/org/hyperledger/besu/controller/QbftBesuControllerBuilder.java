@@ -82,7 +82,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
@@ -268,10 +267,6 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(
         qbftBlock -> ethProtocolManager.blockMined(BlockUtil.toBesuBlock(qbftBlock)));
-    minedBlockObservers.subscribe(
-        qbftBlock ->
-            blockLogger(transactionPool, localAddress)
-                .blockMined(BlockUtil.toBesuBlock(qbftBlock)));
 
     final FutureMessageBuffer futureMessageBuffer =
         new FutureMessageBuffer(
@@ -445,21 +440,5 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     }
 
     return new BftValidatorOverrides(result);
-  }
-
-  private static MinedBlockObserver blockLogger(
-      final TransactionPool transactionPool, final Address localAddress) {
-    return block ->
-        LOG.info(
-            String.format(
-                "%s %s #%,d / %d tx / %d pending / %,d (%01.1f%%) gas / (%s)",
-                block.getHeader().getCoinbase().equals(localAddress) ? "Produced" : "Imported",
-                block.getBody().getTransactions().isEmpty() ? "empty block" : "block",
-                block.getHeader().getNumber(),
-                block.getBody().getTransactions().size(),
-                transactionPool.count(),
-                block.getHeader().getGasUsed(),
-                (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-                block.getHash().toHexString()));
   }
 }
