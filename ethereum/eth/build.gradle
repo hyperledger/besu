@@ -90,9 +90,6 @@ dependencies {
   testSupportImplementation project(':testutil')
   testSupportImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testSupportImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-
-  jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  jmhImplementation project(':plugins:rocksdb')
 }
 
 artifacts {
