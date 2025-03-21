@@ -982,11 +982,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
 
       configureNativeLibs(Optional.ofNullable(network));
-      if (enablePrecompileCaching
-          || getDataStorageConfiguration()
-              .getPathBasedExtraStorageConfiguration()
-              .getUnstable()
-              .isParallelTxProcessingEnabled()) {
+      if (enablePrecompileCaching) {
         // enable precompile caching if it is enabled and parallel tx processing is enabled:
         configurePrecompileCaching();
       }

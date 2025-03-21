@@ -198,8 +198,4 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     final byte[] raw = Arrays.copyOfRange(input.toArrayUnsafe(), offset, offset + length);
     return new BigInteger(1, raw);
   }
-
-  private static Integer getCacheKey(final Bytes input) {
-    return Arrays.hashCode(input.toArrayUnsafe());
-  }
 }

@@ -88,6 +88,11 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
+    if (input.size() >= 64 && input.slice(0, 64).equals(POINT_AT_INFINITY)) {
+      return new PrecompileContractResult(
+          POINT_AT_INFINITY, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
+    }
+
     PrecompileInputResultTuple res;
     Integer cacheKey = null;
     if (enableResultCaching) {
@@ -110,11 +115,6 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
       } else {
         cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
       }
-    }
-
-    if (input.size() >= 64 && input.slice(0, 64).equals(POINT_AT_INFINITY)) {
-      return new PrecompileContractResult(
-          POINT_AT_INFINITY, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
     }
 
     if (useNative) {
@@ -161,9 +161,5 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     }
     final byte[] raw = Arrays.copyOfRange(input.toArrayUnsafe(), offset, offset + length);
     return new BigInteger(1, raw);
-  }
-
-  private static Integer getCacheKey(final Bytes input) {
-    return Arrays.hashCode(input.toArrayUnsafe());
   }
 }
