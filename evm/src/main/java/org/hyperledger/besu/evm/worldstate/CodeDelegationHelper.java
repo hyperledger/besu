@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,6 +15,11 @@
 package org.hyperledger.besu.evm.worldstate;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.CodeDelegationAccount;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -41,5 +46,48 @@ public class CodeDelegationHelper {
     return code != null
         && code.size() == DELEGATED_CODE_SIZE
         && code.slice(0, CODE_DELEGATION_PREFIX.size()).equals(CODE_DELEGATION_PREFIX);
+  }
+
+  /**
+   * Returns the target account of the delegated code.
+   *
+   * @param worldUpdater the world updater.
+   * @param gasCalculator the gas calculator.
+   * @param account the account which has a code delegation.
+   * @return the target account of the delegated code, empty if account is null or doesn't have code
+   *     delegation.
+   */
+  public static Optional<CodeDelegationAccount> getTargetAccount(
+      final WorldUpdater worldUpdater, final GasCalculator gasCalculator, final Account account) {
+    if (account == null) {
+      return Optional.empty();
+    }
+
+    if (!hasCodeDelegation(account.getCode())) {
+      return Optional.empty();
+    }
+
+    final Address targetAddress =
+        Address.wrap(account.getCode().slice(CODE_DELEGATION_PREFIX.size()));
+
+    final Bytes targetCode = processTargetCode(worldUpdater, gasCalculator, targetAddress);
+
+    return Optional.of(new CodeDelegationAccount(account, targetAddress, targetCode));
+  }
+
+  private static Bytes processTargetCode(
+      final WorldUpdater worldUpdater,
+      final GasCalculator gasCalculator,
+      final Address targetAddress) {
+    if (targetAddress == null) {
+      return Bytes.EMPTY;
+    }
+
+    final Account targetAccount = worldUpdater.get(targetAddress);
+
+    if (targetAccount == null || gasCalculator.isPrecompile(targetAddress)) {
+      return Bytes.EMPTY;
+    }
+    return targetAccount.getCode();
   }
 }

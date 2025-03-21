@@ -25,11 +25,12 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
 
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A skeleton class for implementing call operations.
@@ -38,6 +39,8 @@ import org.apache.tuweni.bytes.Bytes;
  * execute, and then updates the current message context based on its execution.
  */
 public abstract class AbstractExtCallOperation extends AbstractCallOperation {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractExtCallOperation.class);
 
   static final int STACK_TO = 0;
   static final int STACK_INPUT_OFFSET = 1;
@@ -125,24 +128,16 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     Address to = Words.toAddress(toBytes);
     final Account contract = frame.getWorldUpdater().get(to);
 
-    if (contract != null && contract.hasDelegatedCode()) {
-      if (contract.getCodeDelegationTargetCode().isEmpty()) {
-        throw new RuntimeException("A delegated code account must have delegated code");
-      }
-
-      if (contract.getCodeDelegationTargetHash().isEmpty()) {
-        throw new RuntimeException("A delegated code account must have a delegated code hash");
-      }
-
-      final long codeDelegationResolutionGas =
-          CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract);
-
-      if (frame.getRemainingGas() < codeDelegationResolutionGas) {
-        return new Operation.OperationResult(
-            codeDelegationResolutionGas, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      }
-
-      frame.decrementRemainingGas(codeDelegationResolutionGas);
+    try {
+      deductGasForCodeDelegationResolution(frame, contract);
+    } catch (InsufficientGasException e) {
+      LOG.atDebug()
+          .setMessage(
+              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
+          .addArgument(frame.getRemainingGas())
+          .addArgument(e.getGasCost())
+          .log();
+      return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     boolean accountCreation = (contract == null || contract.isEmpty()) && !zeroValue;
@@ -163,7 +158,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     currentGas -= cost;
     frame.expandMemory(inputOffset, inputLength);
 
-    final Code code = getCode(evm, contract);
+    final Code code = getCode(evm, frame, contract);
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
