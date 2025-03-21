@@ -80,6 +80,10 @@ public class TransactionSimulator {
               SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
               (byte) 0);
 
+  // Default signature supplier
+  private static final Supplier<SECPSignature> DEFAULT_SIGNATURE_SUPPLIER =
+      Suppliers.memoize(() -> FAKE_SIGNATURE);
+
   // TODO: Identify a better default from account to use, such as the registered
   // coinbase or an account currently unlocked by the client.
   private static final Address DEFAULT_FROM =
@@ -391,7 +395,7 @@ public class TransactionSimulator {
         transactionProcessor,
         blobGasPricePerGasSupplier,
         blockHashLookup,
-        () -> FAKE_SIGNATURE);
+        DEFAULT_SIGNATURE_SUPPLIER);
   }
 
   @Nonnull
@@ -649,18 +653,14 @@ public class TransactionSimulator {
 
   private boolean shouldSetMaxFeePerGas(
       final CallParameter callParams, final ProcessableBlockHeader header) {
-
-    // Return false if chain ID is not present
     if (protocolSchedule.getChainId().isEmpty()) {
       return false;
     }
 
-    // Return false if base fee is not present
     if (header.getBaseFee().isEmpty()) {
       return false;
     }
 
-    // Return true if blob gas price should be set
     if (shouldSetBlobGasPrice(callParams)) {
       return true;
     }
