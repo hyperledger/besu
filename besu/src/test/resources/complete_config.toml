@@ -29,7 +29,7 @@ metrics-port=309
 # chain
 genesis-file="/opt/besu/genesis.json" # Path
 network-id=42
-sync-mode="fast"# should be FAST or FULL (or fast or full)
+sync-mode="full"
 fast-sync-min-peers=13
 
 #mining

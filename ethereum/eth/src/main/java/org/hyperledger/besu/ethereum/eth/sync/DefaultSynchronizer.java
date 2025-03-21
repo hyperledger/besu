@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloade
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.NoSyncRequiredState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
@@ -140,22 +139,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                     peerTaskExecutor,
                     syncDurationMetrics));
 
-    if (SyncMode.FAST.equals(syncConfig.getSyncMode())) {
-      this.fastSyncFactory =
-          () ->
-              FastDownloaderFactory.create(
-                  pivotBlockSelector,
-                  syncConfig,
-                  dataDirectory,
-                  protocolSchedule,
-                  protocolContext,
-                  metricsSystem,
-                  ethContext,
-                  worldStateStorageCoordinator,
-                  syncState,
-                  clock,
-                  syncDurationMetrics);
-    } else if (syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
+    if (syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
       this.fastSyncFactory =
           () ->
               CheckpointDownloaderFactory.createCheckpointDownloader(
