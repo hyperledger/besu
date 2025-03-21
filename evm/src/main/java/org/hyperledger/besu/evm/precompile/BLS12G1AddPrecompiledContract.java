@@ -16,12 +16,16 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The BLS12G1 Add precompiled contract. */
 public class BLS12G1AddPrecompiledContract extends AbstractBLS12PrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 256;
+  private static final Cache<Integer, PrecompileInputResultTuple> g1AddCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
 
   /** Instantiates a new BLS12G1 Add precompiled contract. */
   public BLS12G1AddPrecompiledContract() {
@@ -31,5 +35,10 @@ public class BLS12G1AddPrecompiledContract extends AbstractBLS12PrecompiledContr
   @Override
   public long gasRequirement(final Bytes input) {
     return 375L;
+  }
+
+  @Override
+  protected Cache<Integer, PrecompileInputResultTuple> getCache() {
+    return g1AddCache;
   }
 }
