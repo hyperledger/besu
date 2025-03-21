@@ -47,7 +47,7 @@ class AltBN128PairingPrecompiledContractTest {
       AbstractAltBnPrecompiledContract.disableNative();
     }
     final Bytes input = validPointBytes();
-    final Bytes result = byzantiumContract.computePrecompile(input, messageFrame).getOutput();
+    final Bytes result = byzantiumContract.computePrecompile(input, messageFrame).output();
     assertThat(result).isEqualTo(AltBN128PairingPrecompiledContract.TRUE);
   }
 
@@ -130,7 +130,7 @@ class AltBN128PairingPrecompiledContractTest {
                 "0x1fbf8045ce3e79b5cde4112d38bcd0efbdb1295d2eefdf58151ae309d7ded7db"));
 
     final Bytes input = Bytes.concatenate(g1Point0, g2Point0, g1Point1, g2Point1);
-    final Bytes result = byzantiumContract.computePrecompile(input, messageFrame).getOutput();
+    final Bytes result = byzantiumContract.computePrecompile(input, messageFrame).output();
     assertThat(result).isNull();
   }
 
