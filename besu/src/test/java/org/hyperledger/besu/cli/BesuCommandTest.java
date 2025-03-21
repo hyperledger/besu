@@ -31,6 +31,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.HOODI_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.HOODI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_BOOTSTRAP_NODES;
@@ -547,7 +548,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.bootNodes()).isEqualTo(HOODI_BOOTSTRAP_NODES);
-    assertThat(config.dnsDiscoveryUrl()).isNull();
+    assertThat(config.dnsDiscoveryUrl()).isEqualTo(HOODI_DISCOVERY_URL);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(560048));
   }
 
