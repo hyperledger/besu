@@ -257,6 +257,46 @@ class GenesisConfigTest {
   }
 
   @Test
+  void assertMainnetDepositContractAddress() {
+    GenesisConfigOptions mainnetOptions =
+        GenesisConfig.fromResource("/mainnet.json").getConfigOptions();
+
+    assertThat(mainnetOptions.getDepositContractAddress()).isPresent();
+    assertThat(mainnetOptions.getDepositContractAddress().get())
+        .isEqualTo(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
+  }
+
+  @Test
+  void assertSepoliaDepositContractAddress() {
+    GenesisConfigOptions sepoliaOptions =
+        GenesisConfig.fromResource("/sepolia.json").getConfigOptions();
+
+    assertThat(sepoliaOptions.getDepositContractAddress()).isPresent();
+    assertThat(sepoliaOptions.getDepositContractAddress().get())
+        .isEqualTo(Address.fromHexString("0x7f02c3e3c98b133055b8b348b2ac625669ed295d"));
+  }
+
+  @Test
+  void assertHoleskyDepositContractAddress() {
+    GenesisConfigOptions holeskyOptions =
+        GenesisConfig.fromResource("/holesky.json").getConfigOptions();
+
+    assertThat(holeskyOptions.getDepositContractAddress()).isPresent();
+    assertThat(holeskyOptions.getDepositContractAddress().get())
+        .isEqualTo(Address.fromHexString("0x4242424242424242424242424242424242424242"));
+  }
+
+  @Test
+  void assertEphemeryDepositContractAddress() {
+    GenesisConfigOptions ephemeryOptions =
+        GenesisConfig.fromResource("/ephemery.json").getConfigOptions();
+
+    assertThat(ephemeryOptions.getDepositContractAddress()).isPresent();
+    assertThat(ephemeryOptions.getDepositContractAddress().get())
+        .isEqualTo(Address.fromHexString("0x4242424242424242424242424242424242424242"));
+  }
+
+  @Test
   void shouldDefaultTimestampToZero() {
     assertThat(EMPTY_CONFIG.getTimestamp()).isZero();
   }
