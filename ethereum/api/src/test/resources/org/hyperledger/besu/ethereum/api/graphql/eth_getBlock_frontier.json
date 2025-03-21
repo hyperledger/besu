@@ -11,7 +11,6 @@
         "mixHash": "0x4edd77bfff565659bb0ae09421918e4def65d938a900eb94230eb01f5ce80c99",
         "nonce": "0xdb063000b00e8026",
         "stateRoot": "0xf65f3dd13f72f5fa5607a5224691419969b4f4bae7a00a6cdb853f2ca9eeb1be",
-        "totalDifficulty": "0x427c00",
         "transactions": [
           {
             "gasPrice": "0x1",
