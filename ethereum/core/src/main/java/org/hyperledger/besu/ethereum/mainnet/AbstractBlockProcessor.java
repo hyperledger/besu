@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,6 +117,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         new NoPreprocessing());
   }
 
+  @VisibleForTesting
   protected BlockProcessingResult processBlock(
       final ProtocolContext protocolContext,
       final Blockchain blockchain,
