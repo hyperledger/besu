@@ -29,6 +29,8 @@ import org.hyperledger.besu.evm.internal.Words;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A skeleton class for implementing call operations.
@@ -37,6 +39,8 @@ import org.apache.tuweni.bytes.Bytes;
  * execute, and then updates the current message context based on its execution.
  */
 public abstract class AbstractExtCallOperation extends AbstractCallOperation {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractExtCallOperation.class);
 
   static final int STACK_TO = 0;
   static final int STACK_INPUT_OFFSET = 1;
@@ -127,6 +131,12 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     try {
       deductGasForCodeDelegationResolution(frame, contract);
     } catch (InsufficientGasException e) {
+      LOG.atDebug()
+          .setMessage(
+              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
+          .addArgument(frame.getRemainingGas())
+          .addArgument(e.getGasCost())
+          .log();
       return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 

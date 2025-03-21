@@ -34,6 +34,8 @@ import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A skeleton class for implementing call operations.
@@ -42,6 +44,8 @@ import org.apache.tuweni.bytes.Bytes;
  * execute, and then updates the current message context based on its execution.
  */
 public abstract class AbstractCallOperation extends AbstractOperation {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractCallOperation.class);
 
   /** The constant UNDERFLOW_RESPONSE. */
   protected static final OperationResult UNDERFLOW_RESPONSE =
@@ -199,6 +203,12 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     try {
       deductGasForCodeDelegationResolution(frame, contract);
     } catch (InsufficientGasException e) {
+      LOG.atDebug()
+          .setMessage(
+              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
+          .addArgument(frame.getRemainingGas())
+          .addArgument(e.getGasCost())
+          .log();
       return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
