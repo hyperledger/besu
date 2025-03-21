@@ -116,7 +116,7 @@ public class BlockSimulationParameter {
   }
 
   private Optional<BlockStateCallError> validateBlockNumbers() {
-    long previousBlockNumber = 0;
+    long previousBlockNumber = -1;
     for (BlockStateCall call : blockStateCalls) {
       Optional<Long> blockNumberOverride = call.getBlockOverrides().getBlockNumber();
       if (blockNumberOverride.isPresent()) {
@@ -131,7 +131,7 @@ public class BlockSimulationParameter {
   }
 
   private Optional<BlockStateCallError> validateTimestamps() {
-    long previousTimestamp = 0;
+    long previousTimestamp = -1;
     for (BlockStateCall call : blockStateCalls) {
       Optional<Long> blockTimestampOverride = call.getBlockOverrides().getTimestamp();
       if (blockTimestampOverride.isPresent()) {

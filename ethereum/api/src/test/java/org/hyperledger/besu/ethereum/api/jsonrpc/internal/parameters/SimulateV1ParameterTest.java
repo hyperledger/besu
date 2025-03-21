@@ -47,8 +47,8 @@ public class SimulateV1ParameterTest {
 
   @Test
   public void shouldFailWhenBlockNumbersAreNotAscending() {
-    JsonBlockStateCallParameter blockStateCall1 = createBlockStateCallParameter(2L, null, null);
-    JsonBlockStateCallParameter blockStateCall2 = createBlockStateCallParameter(1L, null, null);
+    JsonBlockStateCallParameter blockStateCall1 = createBlockStateCallParameter(2L, 1000L, null);
+    JsonBlockStateCallParameter blockStateCall2 = createBlockStateCallParameter(1L, 1012L, null);
 
     validateSimulateV1Parameter(
         List.of(blockStateCall1, blockStateCall2), BlockStateCallError.BLOCK_NUMBERS_NOT_ASCENDING);
@@ -56,8 +56,8 @@ public class SimulateV1ParameterTest {
 
   @Test
   public void shouldFailWhenTimestampsAreNotAscending() {
-    JsonBlockStateCallParameter blockStateCall1 = createBlockStateCallParameter(null, 2L, null);
-    JsonBlockStateCallParameter blockStateCall2 = createBlockStateCallParameter(null, 1L, null);
+    JsonBlockStateCallParameter blockStateCall1 = createBlockStateCallParameter(0L, 1012L, null);
+    JsonBlockStateCallParameter blockStateCall2 = createBlockStateCallParameter(1L, 1000L, null);
 
     validateSimulateV1Parameter(
         List.of(blockStateCall1, blockStateCall2), BlockStateCallError.TIMESTAMPS_NOT_ASCENDING);
@@ -71,7 +71,7 @@ public class SimulateV1ParameterTest {
     stateOverrideMap.put(INVALID_PRECOMPILE_ADDRESS, stateOverride);
 
     JsonBlockStateCallParameter blockStateCall =
-        createBlockStateCallParameter(null, null, stateOverrideMap);
+        createBlockStateCallParameter(1L, 1000L, stateOverrideMap);
 
     validateSimulateV1Parameter(
         List.of(blockStateCall), BlockStateCallError.INVALID_PRECOMPILE_ADDRESS);
