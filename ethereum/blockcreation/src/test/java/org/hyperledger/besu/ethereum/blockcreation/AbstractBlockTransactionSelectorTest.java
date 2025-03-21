@@ -1132,7 +1132,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     assertThat(results.getNotSelectedTransactions())
         .containsOnly(entry(lateTx, longProcessingTxResult));
     assertThat(transactionPool.getTransactionByHash(lateTx.getHash()).isEmpty())
-        .isEqualTo(isLongProcessingTxDropped ? true : false);
+        .isEqualTo(isLongProcessingTxDropped);
   }
 
   @ParameterizedTest
@@ -1292,7 +1292,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsExactlyInAnyOrderEntriesOf(expectedEntries);
 
     assertThat(transactionPool.getTransactionByHash(lateTx.getHash()).isEmpty())
-        .isEqualTo(isLongProcessingTxDropped ? true : false);
+        .isEqualTo(isLongProcessingTxDropped);
   }
 
   private static Stream<Arguments>
