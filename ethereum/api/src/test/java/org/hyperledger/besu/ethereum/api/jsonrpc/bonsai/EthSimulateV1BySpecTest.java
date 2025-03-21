@@ -15,7 +15,10 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.bonsai;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.ApiConfiguration.DEFAULT_GAS_CAP;
 
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -49,6 +52,11 @@ public class EthSimulateV1BySpecTest extends AbstractJsonRpcHttpBySpecTest {
         "eth/simulateV1/chain-data/genesis.json",
         "eth/simulateV1/chain-data/blocks.bin",
         storageFormat);
+  }
+
+  @Override
+  protected ApiConfiguration createApiConfiguration() {
+    return ImmutableApiConfiguration.builder().gasCap(DEFAULT_GAS_CAP).build();
   }
 
   public static Object[][] specs() {

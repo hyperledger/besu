@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.ethereum.api.ApiConfiguration.DEFAULT_GAS_CAP;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -24,6 +23,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
@@ -135,6 +135,10 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     return emptySetupUtil;
   }
 
+  protected ApiConfiguration createApiConfiguration() {
+    return ImmutableApiConfiguration.builder().gasCap(0L).build();
+  }
+
   protected Map<String, JsonRpcMethod> getRpcMethods(
       final JsonRpcConfiguration config, final BlockchainSetupUtil blockchainSetupUtil) {
     final ProtocolContext protocolContext = mock(ProtocolContext.class);
@@ -143,6 +147,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
     final MiningConfiguration miningConfiguration = mock(MiningConfiguration.class);
     final PoWMiningCoordinator miningCoordinatorMock = mock(PoWMiningCoordinator.class);
+    final ApiConfiguration apiConfiguration = createApiConfiguration();
     when(transactionPoolMock.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
     // nonce too low tests uses a tx with nonce=16
@@ -181,7 +186,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getProtocolSchedule(),
             miningConfiguration,
-            DEFAULT_GAS_CAP);
+            apiConfiguration.getGasCap());
 
     return new JsonRpcMethodsFactory()
         .methods(
