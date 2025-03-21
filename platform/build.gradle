@@ -167,7 +167,7 @@ dependencies {
 
     api 'org.rocksdb:rocksdbjni:9.7.3'
 
-    api 'org.springframework.security:spring-security-crypto:6.4.3'
+    api 'org.springframework.security:spring-security-crypto:6.4.4'
 
     api 'org.web3j:abi:4.12.3'
     api 'org.web3j:besu:4.12.3'
