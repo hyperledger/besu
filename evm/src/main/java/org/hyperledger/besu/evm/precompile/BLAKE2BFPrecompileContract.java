@@ -23,7 +23,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
@@ -110,16 +109,13 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
 
     res =
         new PrecompileInputResultTuple(
-            input.copy(), PrecompileContractResult.success(Hash.blake2bf(input)));
+            enableResultCaching ? input.copy() : input,
+            PrecompileContractResult.success(Hash.blake2bf(input)));
 
     if (cacheKey != null) {
       blakeCache.put(cacheKey, res);
     }
 
     return res.cachedResult();
-  }
-
-  private Integer getCacheKey(final Bytes input) {
-    return Arrays.hashCode(input.toArrayUnsafe());
   }
 }
