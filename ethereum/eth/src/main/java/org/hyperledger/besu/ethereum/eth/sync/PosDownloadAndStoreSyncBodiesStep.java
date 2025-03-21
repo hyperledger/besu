@@ -53,7 +53,7 @@ public class PosDownloadAndStoreSyncBodiesStep
   public CompletableFuture<List<BlockHeader>> apply(final List<BlockHeader> blockHeaders) {
 
     LOG.atDebug()
-        .setMessage("Downloading {} block headers starting with {}")
+        .setMessage("Downloading {} block bodies starting with {}")
         .addArgument(blockHeaders.size())
         .addArgument(blockHeaders.getFirst().getNumber())
         .log();
@@ -76,7 +76,7 @@ public class PosDownloadAndStoreSyncBodiesStep
               // store blocks in the database, no TX indexing.
               ethContext.getBlockchain().appendSyncBlocksForPoC(sbList);
               LOG.atDebug()
-                  .setMessage("Stored {} Sync blocks for up to block no {}")
+                  .setMessage("Stored {} sync blocks for up to block no {}")
                   .addArgument(sbList.size())
                   .addArgument(blockHeaders.getLast().getNumber())
                   .log();

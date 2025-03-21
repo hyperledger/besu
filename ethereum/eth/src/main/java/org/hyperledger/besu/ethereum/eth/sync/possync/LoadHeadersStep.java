@@ -60,7 +60,7 @@ public class LoadHeadersStep
 
       List<BlockHeader> headers =
           Stream.iterate(startBlockNumber, n -> n + 1)
-              .limit(endBlockNumber - startBlockNumber)
+              .limit(endBlockNumber - startBlockNumber + 1)
               .map(blockchain::getBlockHeader)
               .flatMap(Optional::stream)
               .collect(Collectors.toList());
