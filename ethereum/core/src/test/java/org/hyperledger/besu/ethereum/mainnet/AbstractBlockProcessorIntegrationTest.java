@@ -215,7 +215,7 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   @Test
-  void testBlockProcessingConsistency() {
+  void testProcessBlockZeroReward() {
     ExecutionContextTestFixture contextTestFixture =
         ExecutionContextTestFixture.builder(
                 GenesisConfig.fromResource(

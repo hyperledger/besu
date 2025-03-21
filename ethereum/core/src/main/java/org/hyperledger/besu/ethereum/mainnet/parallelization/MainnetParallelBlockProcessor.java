@@ -54,7 +54,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
   private final Optional<Counter> conflictingButCachedTransactionCounter;
 
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
-  private final Executor executor;
+  private static final Executor executor = Executors.newFixedThreadPool(NCPU);
 
   public MainnetParallelBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -64,26 +64,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem) {
-    this(
-        transactionProcessor,
-        transactionReceiptFactory,
-        blockReward,
-        miningBeneficiaryCalculator,
-        skipZeroBlockRewards,
-        protocolSchedule,
-        metricsSystem,
-        Executors.newFixedThreadPool(NCPU));
-  }
-
-  public MainnetParallelBlockProcessor(
-      final MainnetTransactionProcessor transactionProcessor,
-      final TransactionReceiptFactory transactionReceiptFactory,
-      final Wei blockReward,
-      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards,
-      final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem,
-      final Executor executor) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
@@ -91,7 +71,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         protocolSchedule);
-    this.executor = executor;
     this.confirmedParallelizedTransactionCounter =
         Optional.of(
             metricsSystem.createCounter(
