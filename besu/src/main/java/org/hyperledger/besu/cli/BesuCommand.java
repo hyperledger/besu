@@ -139,6 +139,7 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -1015,8 +1016,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void configurePrecompileCaching() {
     // enable precompile caching:
     AbstractPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
-    // separately set KZG precompile to cache, it does not extend AbstractPrecompiledContract:
+    // separately set KZG precompile caching, it does not extend AbstractPrecompiledContract:
     KZGPointEvalPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+    // separately set BLS precompiles caching, they do not extend AbstractPrecompiledContract:
+    AbstractBLS12PrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
 
     // set a metric logger
     final var precompileCounter =

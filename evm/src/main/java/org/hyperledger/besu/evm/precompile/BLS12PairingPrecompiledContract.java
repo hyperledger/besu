@@ -16,12 +16,16 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The BLS12Pairing precompiled contract. */
 public class BLS12PairingPrecompiledContract extends AbstractBLS12PrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 384;
+  private static final Cache<Integer, PrecompileInputResultTuple> pairingCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
 
   /** Instantiates a new BLS12Pairing precompiled contract. */
   public BLS12PairingPrecompiledContract() {
@@ -35,5 +39,10 @@ public class BLS12PairingPrecompiledContract extends AbstractBLS12PrecompiledCon
   public long gasRequirement(final Bytes input) {
     final int k = input.size() / PARAMETER_LENGTH;
     return 32_600L * k + 37_700L;
+  }
+
+  @Override
+  protected Cache<Integer, PrecompileInputResultTuple> getCache() {
+    return pairingCache;
   }
 }
