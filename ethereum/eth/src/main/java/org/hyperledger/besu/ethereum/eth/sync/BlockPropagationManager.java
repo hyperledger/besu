@@ -192,7 +192,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
         .log();
 
     // If there is no children to process, maybe try non announced blocks
-    if (!maybeProcessPendingChildrenBlocks(newBlock)) {
+    if (!maybeProcessPendingChildrenBlocks(newBlock.getHeader())) {
       LOG.atTrace()
           .setMessage("There are no pending blocks ready to import for block {}")
           .addArgument(newBlock::toLogString)
@@ -210,17 +210,17 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   /**
    * Process pending Children if any
    *
-   * @param block the block to process the children
+   * @param header the header of the block to process the children of
    * @return true if block has any pending child
    */
-  private boolean maybeProcessPendingChildrenBlocks(final Block block) {
+  private boolean maybeProcessPendingChildrenBlocks(final BlockHeader header) {
     final List<Block> readyForImport;
     synchronized (pendingBlocksManager) {
       // Remove block from pendingBlocks list
-      pendingBlocksManager.deregisterPendingBlock(block);
+      pendingBlocksManager.deregisterPendingBlock(header);
 
       // Import any pending blocks that are children of the newly added block
-      readyForImport = pendingBlocksManager.childrenOf(block.getHash());
+      readyForImport = pendingBlocksManager.childrenOf(header.getHash());
     }
 
     if (!readyForImport.isEmpty()) {
@@ -230,7 +230,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
           .addArgument(
               () ->
                   readyForImport.stream().map(Block::toLogString).collect(Collectors.joining(", ")))
-          .addArgument(block::toLogString)
+          .addArgument(header::toLogString)
           .log();
 
       final Supplier<CompletableFuture<List<Block>>> importBlocksTask =
@@ -657,7 +657,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       } else {
         LOG.trace("Parent block is already in the chain");
         // if the parent is already imported, process its children
-        maybeProcessPendingChildrenBlocks(lowestPendingBlock);
+        maybeProcessPendingChildrenBlocks(lowestPendingBlock.getHeader());
       }
     }
   }

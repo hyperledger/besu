@@ -225,7 +225,8 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
             .setTtl(0)
             .setCompressionType(CompressionType.LZ4_COMPRESSION)
             .setTableFormatConfig(basedTableConfig)
-            .setLevelCompactionDynamicLevelBytes(dynamicLevelBytes);
+            .setLevelCompactionDynamicLevelBytes(dynamicLevelBytes)
+            .setMaxWriteBufferNumber(4); // 2 is the default value
     if (segment.containsStaticData()) {
       options
           .setEnableBlobFiles(true)

@@ -221,7 +221,8 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
     boolean isValidChainHead =
         protocolContext.getBlockchain().getChainHeadHash().equals(pivotBlockHeader.getHash());
     if (!isValidChainHead) {
-      if (protocolContext.getBlockchain().contains(pivotBlockHeader.getHash())) {
+      if (protocolContext.getBlockchain().contains(pivotBlockHeader.getHash())
+          && protocolContext.getBlockchain().getBlockBody(pivotBlockHeader.getHash()).isPresent()) {
         protocolContext.getBlockchain().rewindToBlock(pivotBlockHeader.getHash());
       } else {
         return true;

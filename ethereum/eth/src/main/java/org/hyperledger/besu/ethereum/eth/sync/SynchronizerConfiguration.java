@@ -43,6 +43,10 @@ public class SynchronizerConfiguration {
   public static final int DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED = 5;
   public static final int DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE = 200;
   public static final int DEFAULT_DOWNLOADER_PARALLELISM = 4;
+  public static final int DEFAULT_DOWNLOADER_HEADER_PARALLELISM = 25;
+  public static final int DEFAULT_DOWNLOADER_BODY_PARALLELISM = 25;
+  public static final int DEFAULT_DOWNLOADER_RECEIPTS_PARALLELISM = 25;
+  public static final int DEFAULT_DOWNLOADER_HEADER_TARGET = 0;
   public static final int DEFAULT_TRANSACTIONS_PARALLELISM = 4;
   public static final int DEFAULT_COMPUTATION_PARALLELISM = 2;
   public static final int DEFAULT_WORLD_STATE_TASK_CACHE_SIZE =
@@ -80,6 +84,10 @@ public class SynchronizerConfiguration {
   private final int downloaderCheckpointRetries;
   private final int downloaderChainSegmentSize;
   private final int downloaderParallelism;
+  private final int downloaderHeaderParallelism;
+  private final int downloaderBodyParallelism;
+  private final int downloaderReceiptsParallelism;
+  private final long downloaderHeaderTarget;
   private final int transactionsParallelism;
   private final int computationParallelism;
   private final int maxTrailingPeers;
@@ -105,6 +113,10 @@ public class SynchronizerConfiguration {
       final int downloaderCheckpointRetries,
       final int downloaderChainSegmentSize,
       final int downloaderParallelism,
+      final int downloaderHeaderParallelism,
+      final int downloaderBodyParallelism,
+      final int downloaderReceiptsParallelism,
+      final int downloaderHeaderTarget,
       final int transactionsParallelism,
       final int computationParallelism,
       final int maxTrailingPeers,
@@ -128,6 +140,10 @@ public class SynchronizerConfiguration {
     this.downloaderCheckpointRetries = downloaderCheckpointRetries;
     this.downloaderChainSegmentSize = downloaderChainSegmentSize;
     this.downloaderParallelism = downloaderParallelism;
+    this.downloaderHeaderParallelism = downloaderHeaderParallelism;
+    this.downloaderBodyParallelism = downloaderBodyParallelism;
+    this.downloaderReceiptsParallelism = downloaderReceiptsParallelism;
+    this.downloaderHeaderTarget = downloaderHeaderTarget;
     this.transactionsParallelism = transactionsParallelism;
     this.computationParallelism = computationParallelism;
     this.maxTrailingPeers = maxTrailingPeers;
@@ -208,6 +224,22 @@ public class SynchronizerConfiguration {
     return downloaderParallelism;
   }
 
+  public int getDownloaderHeaderParallelism() {
+    return downloaderHeaderParallelism;
+  }
+
+  public int getDownloaderBodyParallelism() {
+    return downloaderBodyParallelism;
+  }
+
+  public int getDownloaderReceiptsParallelism() {
+    return downloaderReceiptsParallelism;
+  }
+
+  public long getDownloaderHeaderTarget() {
+    return downloaderHeaderTarget;
+  }
+
   public int getTransactionsParallelism() {
     return transactionsParallelism;
   }
@@ -277,6 +309,10 @@ public class SynchronizerConfiguration {
     private SnapSyncConfiguration snapSyncConfiguration = SnapSyncConfiguration.getDefault();
     private int downloaderChainSegmentSize = DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE;
     private int downloaderParallelism = DEFAULT_DOWNLOADER_PARALLELISM;
+    private int downloaderHeaderParallelism = DEFAULT_DOWNLOADER_HEADER_PARALLELISM;
+    private int downloaderBodyParallelism = DEFAULT_DOWNLOADER_HEADER_PARALLELISM;
+    private int downloaderReceiptsParallelism = DEFAULT_DOWNLOADER_HEADER_PARALLELISM;
+    private int downloaderHeaderTarget = DEFAULT_DOWNLOADER_HEADER_TARGET;
     private int transactionsParallelism = DEFAULT_TRANSACTIONS_PARALLELISM;
     private int computationParallelism = DEFAULT_COMPUTATION_PARALLELISM;
     private int syncPivotDistance = DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
@@ -354,6 +390,26 @@ public class SynchronizerConfiguration {
 
     public Builder downloaderParallelism(final int downloaderParallelism) {
       this.downloaderParallelism = downloaderParallelism;
+      return this;
+    }
+
+    public Builder downloaderHeaderParallelism(final int downloaderHeaderParallelism) {
+      this.downloaderHeaderParallelism = downloaderHeaderParallelism;
+      return this;
+    }
+
+    public Builder downloaderBodyParallelism(final int downloaderBodyParallelism) {
+      this.downloaderBodyParallelism = downloaderBodyParallelism;
+      return this;
+    }
+
+    public Builder downloaderReceiptsParallelism(final int downloaderReceiptsParallelism) {
+      this.downloaderReceiptsParallelism = downloaderReceiptsParallelism;
+      return this;
+    }
+
+    public Builder downloaderHeaderTarget(final int downloaderHeaderTarget) {
+      this.downloaderHeaderTarget = downloaderHeaderTarget;
       return this;
     }
 
@@ -438,6 +494,10 @@ public class SynchronizerConfiguration {
           downloaderCheckpointRetries,
           downloaderChainSegmentSize,
           downloaderParallelism,
+          downloaderHeaderParallelism,
+          downloaderBodyParallelism,
+          downloaderReceiptsParallelism,
+          downloaderHeaderTarget,
           transactionsParallelism,
           computationParallelism,
           maxTrailingPeers,

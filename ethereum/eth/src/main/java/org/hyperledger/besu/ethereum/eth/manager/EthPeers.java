@@ -574,7 +574,9 @@ public class EthPeers implements PeerSelector {
 
             peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
             CompletableFuture<Void> isServingSnapFuture;
-            if (syncMode == SyncMode.SNAP || syncMode == SyncMode.CHECKPOINT) {
+            if (syncMode == SyncMode.SNAP
+                || syncMode == SyncMode.CHECKPOINT
+                || syncMode == SyncMode.POS) {
               // even if we have finished the snap sync, we still want to know if the peer is a snap
               // server
               isServingSnapFuture =

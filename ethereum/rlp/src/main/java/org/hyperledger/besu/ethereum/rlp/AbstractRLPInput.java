@@ -31,6 +31,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt64;
 
 abstract class AbstractRLPInput implements RLPInput {
+
   private static final String errorMessageSuffix = " (at bytes %d-%d: %s%s[%s]%s%s)";
 
   private final boolean lenient;
@@ -593,6 +594,57 @@ abstract class AbstractRLPInput implements RLPInput {
     payloadSlice().copyTo(scratch, headerSize);
     final Bytes res = scratch.slice(0, currentPayloadSize + headerSize);
 
+    setTo(nextItem());
+    return res;
+  }
+
+  @Override
+  public Bytes currentListAsBytesNoCopy(final boolean moveToNextItem) {
+    if (currentItem >= size) {
+      throw error("Cannot read list, input is fully consumed");
+    }
+    if (currentKind != RLPDecodingHelpers.Kind.SHORT_LIST
+        && currentKind != RLPDecodingHelpers.Kind.LONG_LIST) {
+      throw error("Cannot read list, current item is not a list, it is: " + currentKind);
+    }
+
+    int takeNumPrevBytes;
+    if (currentPayloadSize <= 55) {
+      // list header is a single byte
+      takeNumPrevBytes = 1;
+    } else {
+      takeNumPrevBytes = RLPEncodingHelpers.sizeLength(currentPayloadSize) + 1;
+    }
+    Bytes res =
+        inputSlice(
+            (int) currentPayloadOffset - takeNumPrevBytes, currentPayloadSize + takeNumPrevBytes);
+
+    if (moveToNextItem) {
+      setTo(nextItem());
+    }
+    return res;
+  }
+
+  @Override
+  public Bytes currentBytesNoCopy() {
+    // TODO: this returns the same as readBytes, but adds some checking and logging.
+    if (currentItem >= size) {
+      throw error("Cannot read bytes, input is fully consumed");
+    }
+    if (!(currentKind.equals(RLPDecodingHelpers.Kind.SHORT_ELEMENT)
+        || currentKind.equals(RLPDecodingHelpers.Kind.LONG_ELEMENT))) {
+      //      LOG.atDebug()
+      //          .setMessage(
+      //              "Current item is not a bytes array, it is: {}, raw bytes: {}, offset: {},
+      // size: {}")
+      //          .addArgument(currentKind)
+      //          .addArgument(inputSlice(0, (int) size))
+      //          .addArgument(currentPayloadOffset)
+      //          .addArgument(currentPayloadSize)
+      //          .log();
+      throw error("Cannot read bytes, current item is not a bytes array, it is: " + currentKind);
+    }
+    final Bytes res = inputSlice(currentPayloadOffset, currentPayloadSize);
     setTo(nextItem());
     return res;
   }
