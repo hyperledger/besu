@@ -112,7 +112,7 @@ public class LogWithMetadata extends Log
         removed);
   }
 
-  private static List<LogWithMetadata> generate(
+  public static List<LogWithMetadata> generate(
       final int logIndexOffset,
       final List<Log> receiptLogs,
       final long number,
