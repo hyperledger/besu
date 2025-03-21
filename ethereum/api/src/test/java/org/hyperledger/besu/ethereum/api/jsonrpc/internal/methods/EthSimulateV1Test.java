@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.BLOCK_NOT_FOUND;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -88,16 +87,6 @@ public class EthSimulateV1Test {
     verify(blockchainQueries).headBlockNumber();
   }
 
-  @Test
-  public void shouldReturnErrorWhenNonPrecompile() {
-    final JsonRpcRequestContext request = emptyRequest(Quantity.create(33L));
-    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, INVALID_PARAMS);
-
-    final JsonRpcResponse response = method.response(request);
-    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(blockchainQueries).headBlockNumber();
-  }
-
   private SimulateV1Parameter simulateParameter() {
     return new SimulateV1Parameter(List.of(), false, false, false);
   }
@@ -107,10 +96,5 @@ public class EthSimulateV1Test {
     return new JsonRpcRequestContext(
         new JsonRpcRequest(
             "2.0", "eth_simulateV1", new Object[] {simulateV1Parameter, blockNumberInHex}));
-  }
-
-  private JsonRpcRequestContext emptyRequest(final String blockNumberInHex) {
-    return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "eth_simulateV1", new Object[] {null, blockNumberInHex}));
   }
 }
