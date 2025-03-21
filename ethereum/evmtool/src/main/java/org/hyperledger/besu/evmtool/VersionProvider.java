@@ -39,6 +39,9 @@ public class VersionProvider implements CommandLine.IVersionProvider {
    */
   @Override
   public String[] getVersion() {
+    // This version string is used in the execution spec tests to identify the client.
+    // If modified, update the `detect_binary_pattern` variable in the following repository:
+    // https://github.com/ethereum/execution-spec-tests/blob/main/src/ethereum_clis/clis/besu.py
     return new String[] {"Besu evm " + BesuInfo.shortVersion()};
   }
 }
