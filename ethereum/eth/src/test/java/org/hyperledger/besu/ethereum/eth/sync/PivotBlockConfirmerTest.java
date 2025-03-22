@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,8 +35,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockConfirmer.ContestedPivotBlockException;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockConfirmer.ContestedPivotBlockException;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -132,7 +131,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<QuickSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
 
     // First peer responds
     respondingPeerA.respond(responder);
@@ -144,7 +143,7 @@ public class PivotBlockConfirmerTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new QuickSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @ParameterizedTest
@@ -179,12 +178,12 @@ public class PivotBlockConfirmerTest {
                 Optional.of(respondingPeerB.getEthPeer())));
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<QuickSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
 
     future.join();
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new QuickSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @ParameterizedTest
@@ -203,7 +202,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<QuickSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
 
     // First peer is responsive
     respondingPeerA.respond(responder);
@@ -219,7 +218,7 @@ public class PivotBlockConfirmerTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new QuickSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @ParameterizedTest
@@ -239,7 +238,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<QuickSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
 
     // First peer is responsive
     respondingPeerA.respond(responder);
@@ -261,7 +260,7 @@ public class PivotBlockConfirmerTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new QuickSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @ParameterizedTest
@@ -281,7 +280,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<QuickSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
 
     // First peer is responsive
     respondingPeerA.respond(responder);
@@ -303,7 +302,7 @@ public class PivotBlockConfirmerTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new QuickSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @ParameterizedTest
@@ -333,11 +332,11 @@ public class PivotBlockConfirmerTest {
                 Optional.empty()));
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<QuickSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new QuickSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @ParameterizedTest
@@ -357,7 +356,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<QuickSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
 
     // First peer is responsive
     respondingPeerA.respond(responder);
@@ -381,7 +380,7 @@ public class PivotBlockConfirmerTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new QuickSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @ParameterizedTest
@@ -401,7 +400,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task and wait for response
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<QuickSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
     respondingPeerA.respond(responderA);
     assertThat(future).isNotDone();
     respondingPeerB.respond(responderB);
@@ -453,7 +452,7 @@ public class PivotBlockConfirmerTest {
                 Optional.of(respondingPeerB.getEthPeer())));
 
     // Execute task and wait for response
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<QuickSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
 
     assertThat(future).isCompletedExceptionally();
     assertThatThrownBy(future::get).hasRootCauseInstanceOf(ContestedPivotBlockException.class);

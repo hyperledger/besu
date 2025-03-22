@@ -12,22 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-public class FastSyncChainDownloader {
+public class QuickSyncChainDownloader {
 
-  protected FastSyncChainDownloader() {}
+  protected QuickSyncChainDownloader() {}
 
   public static ChainDownloader create(
       final SynchronizerConfiguration config,
@@ -37,7 +34,7 @@ public class FastSyncChainDownloader {
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
-      final FastSyncState fastSyncState,
+      final QuickSyncState quickSyncState,
       final SyncDurationMetrics syncDurationMetrics) {
 
     final SyncTargetManager syncTargetManager =
@@ -48,12 +45,12 @@ public class FastSyncChainDownloader {
             protocolContext,
             ethContext,
             metricsSystem,
-            fastSyncState);
+            quickSyncState);
     return new PipelineChainDownloader(
         syncState,
         syncTargetManager,
-        new FastSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem),
+        new QuickSyncDownloadPipelineFactory(
+            config, protocolSchedule, protocolContext, ethContext, quickSyncState, metricsSystem),
         ethContext.getScheduler(),
         metricsSystem,
         syncDurationMetrics);

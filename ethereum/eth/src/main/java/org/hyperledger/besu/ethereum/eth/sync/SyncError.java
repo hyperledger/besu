@@ -12,23 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
-public class SyncException extends RuntimeException {
-
-  private final SyncError error;
-
-  public SyncException(final SyncError error) {
-    super("Sync failed: " + error);
-    this.error = error;
-  }
-
-  public SyncError getError() {
-    return error;
-  }
-
-  public SyncException(final Throwable error) {
-    super(error);
-    this.error = SyncError.UNEXPECTED_ERROR;
-  }
+public enum SyncError {
+  NO_PEERS_AVAILABLE,
+  PIVOT_BLOCK_HEADER_MISMATCH,
+  UNEXPECTED_ERROR
 }

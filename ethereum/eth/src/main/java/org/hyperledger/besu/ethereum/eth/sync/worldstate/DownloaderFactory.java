@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,6 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
-public class NoSyncRequiredException extends RuntimeException {}
+import java.io.File;
+
+public class DownloaderFactory {
+
+  protected static final String FAST_SYNC_FOLDER = "fastsync";
+
+  protected static void ensureDirectoryExists(final File dir) {
+    if (!dir.mkdirs() && !dir.isDirectory()) {
+      throw new IllegalStateException("Unable to create directory: " + dir.getAbsolutePath());
+    }
+  }
+}

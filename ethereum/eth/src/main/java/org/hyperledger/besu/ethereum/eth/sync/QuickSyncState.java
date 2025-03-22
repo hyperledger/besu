@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -21,36 +21,36 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-public class FastSyncState {
+public class QuickSyncState {
 
-  public static final FastSyncState EMPTY_SYNC_STATE = new FastSyncState();
+  public static final QuickSyncState EMPTY_SYNC_STATE = new QuickSyncState();
 
   private OptionalLong pivotBlockNumber;
   private Optional<Hash> pivotBlockHash;
   private Optional<BlockHeader> pivotBlockHeader;
 
-  public FastSyncState() {
+  public QuickSyncState() {
     pivotBlockNumber = OptionalLong.empty();
     pivotBlockHash = Optional.empty();
     pivotBlockHeader = Optional.empty();
   }
 
-  public FastSyncState(final long pivotBlockNumber) {
+  public QuickSyncState(final long pivotBlockNumber) {
     this(OptionalLong.of(pivotBlockNumber), Optional.empty(), Optional.empty());
   }
 
-  public FastSyncState(final Hash pivotBlockHash) {
+  public QuickSyncState(final Hash pivotBlockHash) {
     this(OptionalLong.empty(), Optional.of(pivotBlockHash), Optional.empty());
   }
 
-  public FastSyncState(final BlockHeader pivotBlockHeader) {
+  public QuickSyncState(final BlockHeader pivotBlockHeader) {
     this(
         OptionalLong.of(pivotBlockHeader.getNumber()),
         Optional.of(pivotBlockHeader.getHash()),
         Optional.of(pivotBlockHeader));
   }
 
-  protected FastSyncState(
+  protected QuickSyncState(
       final OptionalLong pivotBlockNumber,
       final Optional<Hash> pivotBlockHash,
       final Optional<BlockHeader> pivotBlockHeader) {
@@ -89,7 +89,7 @@ public class FastSyncState {
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    FastSyncState that = (FastSyncState) o;
+    QuickSyncState that = (QuickSyncState) o;
     return Objects.equals(pivotBlockNumber, that.pivotBlockNumber)
         && Objects.equals(pivotBlockHash, that.pivotBlockHash)
         && Objects.equals(pivotBlockHeader, that.pivotBlockHeader);
@@ -102,7 +102,7 @@ public class FastSyncState {
 
   @Override
   public String toString() {
-    return "FastSyncState{"
+    return "QuickSyncState{"
         + "pivotBlockNumber="
         + pivotBlockNumber
         + ", pivotBlockHash="

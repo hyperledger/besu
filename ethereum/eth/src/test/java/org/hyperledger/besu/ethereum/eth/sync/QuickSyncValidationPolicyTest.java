@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
@@ -24,25 +24,25 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import org.junit.jupiter.api.Test;
 
-public class FastSyncValidationPolicyTest {
+public class QuickSyncValidationPolicyTest {
   @Test
   public void shouldAlwaysUseFastValidationWhenFullValidationRateIsZero() {
-    final FastSyncValidationPolicy policy =
-        new FastSyncValidationPolicy(0, LIGHT, FULL, NO_OP_LABELLED_1_COUNTER);
+    final QuickSyncValidationPolicy policy =
+        new QuickSyncValidationPolicy(0, LIGHT, FULL, NO_OP_LABELLED_1_COUNTER);
     assertThat(policy.getValidationModeForNextBlock()).isEqualTo(LIGHT);
   }
 
   @Test
   public void shouldAlwaysUseFullValidationWhenFullValidationRateIsOne() {
-    final FastSyncValidationPolicy policy =
-        new FastSyncValidationPolicy(1, LIGHT, FULL, NO_OP_LABELLED_1_COUNTER);
+    final QuickSyncValidationPolicy policy =
+        new QuickSyncValidationPolicy(1, LIGHT, FULL, NO_OP_LABELLED_1_COUNTER);
     assertThat(policy.getValidationModeForNextBlock()).isEqualTo(FULL);
   }
 
   @Test
   public void shouldEventuallyUseBothModesWhenValidationPolicyIsHalf() {
-    final FastSyncValidationPolicy policy =
-        new FastSyncValidationPolicy(0.5f, LIGHT, FULL, NO_OP_LABELLED_1_COUNTER);
+    final QuickSyncValidationPolicy policy =
+        new QuickSyncValidationPolicy(0.5f, LIGHT, FULL, NO_OP_LABELLED_1_COUNTER);
     boolean seenLight = false;
     boolean seenFull = false;
     // It's theoretically possible to flip a coin 2^31-1 times and only ever get heads but

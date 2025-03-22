@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
@@ -23,8 +23,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -82,7 +80,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock() {
+  public Optional<QuickSyncState> selectNewPivotBlock() {
     final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
     final var now = System.currentTimeMillis();
 
@@ -129,17 +127,17 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
     return CompletableFuture.completedFuture(null);
   }
 
-  private FastSyncState selectLastSafeBlockAsPivot(final Hash safeHash) {
+  private QuickSyncState selectLastSafeBlockAsPivot(final Hash safeHash) {
     LOG.debug("Returning safe block hash {} as pivot", safeHash);
-    return new FastSyncState(safeHash);
+    return new QuickSyncState(safeHash);
   }
 
-  private FastSyncState selectFallbackBlockAsPivot(final Hash fallbackBlockHash) {
+  private QuickSyncState selectFallbackBlockAsPivot(final Hash fallbackBlockHash) {
     LOG.debug(
         "Safe block not changed in the last {} min, using a previous head block {} as fallback",
         UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL / 60,
         fallbackBlockHash);
-    return new FastSyncState(fallbackBlockHash);
+    return new QuickSyncState(fallbackBlockHash);
   }
 
   @Override

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,16 +26,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-public class FastSyncStateStorageTest {
+public class QuickSyncStateStorageTest {
   @TempDir private Path tempDir;
 
-  private FastSyncStateStorage storage;
+  private QuickSyncStateStorage storage;
   private final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().buildHeader();
-  private final FastSyncState syncStateWithHeader = new FastSyncState(pivotBlockHeader);
+  private final QuickSyncState syncStateWithHeader = new QuickSyncState(pivotBlockHeader);
 
   @BeforeEach
   public void setUp() throws Exception {
-    storage = new FastSyncStateStorage(tempDir);
+    storage = new QuickSyncStateStorage(tempDir);
   }
 
   @Test
@@ -48,7 +48,7 @@ public class FastSyncStateStorageTest {
     storage.storeState(syncStateWithHeader);
     assertThat(storage.isFastSyncInProgress()).isTrue();
 
-    final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir);
+    final QuickSyncStateStorage newStorage = new QuickSyncStateStorage(tempDir);
     assertThat(newStorage.isFastSyncInProgress()).isTrue();
   }
 
@@ -57,7 +57,7 @@ public class FastSyncStateStorageTest {
     storage.storeState(syncStateWithHeader);
     assertThat(storage.loadState(new MainnetBlockHeaderFunctions())).isEqualTo(syncStateWithHeader);
 
-    final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir);
+    final QuickSyncStateStorage newStorage = new QuickSyncStateStorage(tempDir);
     assertThat(newStorage.loadState(new MainnetBlockHeaderFunctions()))
         .isEqualTo(syncStateWithHeader);
   }
@@ -65,7 +65,7 @@ public class FastSyncStateStorageTest {
   @Test
   public void shouldReturnEmptyWhenLoadingHeaderAndFileDoesNotExist() {
     assertThat(storage.loadState(new MainnetBlockHeaderFunctions()))
-        .isEqualTo(FastSyncState.EMPTY_SYNC_STATE);
+        .isEqualTo(QuickSyncState.EMPTY_SYNC_STATE);
   }
 
   @Test
@@ -73,8 +73,8 @@ public class FastSyncStateStorageTest {
     storage.storeState(syncStateWithHeader);
     assertThat(storage.loadState(new MainnetBlockHeaderFunctions())).isEqualTo(syncStateWithHeader);
 
-    storage.storeState(FastSyncState.EMPTY_SYNC_STATE);
+    storage.storeState(QuickSyncState.EMPTY_SYNC_STATE);
     assertThat(storage.loadState(new MainnetBlockHeaderFunctions()))
-        .isEqualTo(FastSyncState.EMPTY_SYNC_STATE);
+        .isEqualTo(QuickSyncState.EMPTY_SYNC_STATE);
   }
 }

@@ -28,10 +28,10 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.sync.NoSyncRequiredException;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.NoSyncRequiredException;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.ArrayList;
@@ -79,7 +79,7 @@ public class QbftPivotSelectorTest {
     BFTPivotSelectorFromPeers pivotSelector =
         new BFTPivotSelectorFromPeers(
             ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
-    Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
+    Optional<QuickSyncState> pivotState = pivotSelector.selectNewPivotBlock();
     assertThat(pivotState.isEmpty()).isTrue();
   }
 
@@ -99,7 +99,7 @@ public class QbftPivotSelectorTest {
             ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
 
     try {
-      Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
+      Optional<QuickSyncState> pivotState = pivotSelector.selectNewPivotBlock();
       fail("Expected NoSyncRequiredException but none thrown");
     } catch (NoSyncRequiredException e) {
       // Ignore - just make sure we get here
@@ -114,7 +114,7 @@ public class QbftPivotSelectorTest {
         new BFTPivotSelectorFromPeers(
             ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
 
-    Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
+    Optional<QuickSyncState> pivotState = pivotSelector.selectNewPivotBlock();
     assertThat(pivotState.isEmpty()).isTrue();
   }
 
@@ -127,7 +127,7 @@ public class QbftPivotSelectorTest {
         new BFTPivotSelectorFromPeers(
             ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
 
-    Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
+    Optional<QuickSyncState> pivotState = pivotSelector.selectNewPivotBlock();
     assertThat(pivotState.isEmpty()).isTrue();
   }
 }

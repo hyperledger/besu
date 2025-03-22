@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.FULL;
@@ -26,10 +26,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
-import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
-import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersValidationStep;
@@ -50,31 +46,31 @@ import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory {
-  private static final Logger LOG = LoggerFactory.getLogger(FastSyncDownloadPipelineFactory.class);
+public class QuickSyncDownloadPipelineFactory implements DownloadPipelineFactory {
+  private static final Logger LOG = LoggerFactory.getLogger(QuickSyncDownloadPipelineFactory.class);
 
   protected final SynchronizerConfiguration syncConfig;
   protected final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
   protected final EthContext ethContext;
-  protected final FastSyncState fastSyncState;
+  protected final QuickSyncState quickSyncState;
   protected final MetricsSystem metricsSystem;
-  protected final FastSyncValidationPolicy attachedValidationPolicy;
-  protected final FastSyncValidationPolicy detachedValidationPolicy;
-  protected final FastSyncValidationPolicy ommerValidationPolicy;
+  protected final QuickSyncValidationPolicy attachedValidationPolicy;
+  protected final QuickSyncValidationPolicy detachedValidationPolicy;
+  protected final QuickSyncValidationPolicy ommerValidationPolicy;
 
-  public FastSyncDownloadPipelineFactory(
+  public QuickSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final FastSyncState fastSyncState,
+      final QuickSyncState quickSyncState,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.fastSyncState = fastSyncState;
+    this.quickSyncState = quickSyncState;
     this.metricsSystem = metricsSystem;
     final LabelledMetric<Counter> fastSyncValidationCounter =
         metricsSystem.createLabelledCounter(
@@ -83,19 +79,19 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             "Number of blocks validated using light vs full validation during fast sync",
             "validationMode");
     attachedValidationPolicy =
-        new FastSyncValidationPolicy(
+        new QuickSyncValidationPolicy(
             this.syncConfig.getFastSyncFullValidationRate(),
             LIGHT_SKIP_DETACHED,
             SKIP_DETACHED,
             fastSyncValidationCounter);
     ommerValidationPolicy =
-        new FastSyncValidationPolicy(
+        new QuickSyncValidationPolicy(
             this.syncConfig.getFastSyncFullValidationRate(),
             LIGHT,
             FULL,
             fastSyncValidationCounter);
     detachedValidationPolicy =
-        new FastSyncValidationPolicy(
+        new QuickSyncValidationPolicy(
             this.syncConfig.getFastSyncFullValidationRate(),
             LIGHT_DETACHED_ONLY,
             DETACHED_ONLY,
@@ -121,7 +117,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
             new RangeHeadersFetcher(
-                syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
+                syncConfig, protocolSchedule, ethContext, quickSyncState, metricsSystem),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -150,7 +146,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             attachedValidationPolicy,
             ommerValidationPolicy,
             ethContext,
-            fastSyncState.getPivotBlockHeader().get(),
+            quickSyncState.getPivotBlockHeader().get(),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 
     return PipelineBuilder.createPipelineFrom(
@@ -179,7 +175,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
   protected boolean shouldContinueDownloadingFromPeer(
       final EthPeer peer, final BlockHeader lastRoundHeader) {
-    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader pivotBlockHeader = quickSyncState.getPivotBlockHeader().get();
     final boolean shouldContinue =
         !peer.isDisconnected() && lastRoundHeader.getNumber() < pivotBlockHeader.getNumber();
 

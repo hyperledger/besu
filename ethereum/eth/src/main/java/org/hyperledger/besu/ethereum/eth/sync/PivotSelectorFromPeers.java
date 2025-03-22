@@ -12,15 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerLimiter;
-import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.List;
@@ -48,7 +44,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock() {
+  public Optional<QuickSyncState> selectNewPivotBlock() {
     return selectBestPeer().flatMap(this::fromBestPeer);
   }
 
@@ -74,7 +70,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
     return syncState.bestChainHeight();
   }
 
-  protected Optional<FastSyncState> fromBestPeer(final EthPeer peer) {
+  protected Optional<QuickSyncState> fromBestPeer(final EthPeer peer) {
     final long pivotBlockNumber =
         peer.chainState().getEstimatedHeight() - syncConfig.getSyncPivotDistance();
     if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
@@ -83,7 +79,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
       return Optional.empty();
     }
     LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
-    return Optional.of(new FastSyncState(pivotBlockNumber));
+    return Optional.of(new QuickSyncState(pivotBlockNumber));
   }
 
   protected Optional<EthPeer> selectBestPeer() {

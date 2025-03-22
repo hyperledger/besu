@@ -12,13 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.Optional;
@@ -61,7 +60,7 @@ public class PivotSelectorFromPeersTest {
     Mockito.when(ethPeers.getBestPeerComparator())
         .thenReturn((p1, ignored) -> p1 == peer1 ? 1 : -1);
 
-    Optional<FastSyncState> result = selector.selectNewPivotBlock();
+    Optional<QuickSyncState> result = selector.selectNewPivotBlock();
 
     Assertions.assertTrue(result.isPresent());
     Assertions.assertEquals(9, result.get().getPivotBlockNumber().getAsLong());
@@ -72,7 +71,7 @@ public class PivotSelectorFromPeersTest {
     Mockito.when(ethContext.getEthPeers()).thenReturn(ethPeers);
     Mockito.when(ethPeers.streamAvailablePeers()).thenReturn(Stream.empty());
 
-    Optional<FastSyncState> result = selector.selectNewPivotBlock();
+    Optional<QuickSyncState> result = selector.selectNewPivotBlock();
 
     Assertions.assertTrue(result.isEmpty());
   }

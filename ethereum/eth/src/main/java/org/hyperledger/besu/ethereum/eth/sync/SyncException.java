@@ -12,17 +12,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync;
 
-import java.io.File;
+public class SyncException extends RuntimeException {
 
-public class FastDownloaderFactory {
+  private final SyncError error;
 
-  protected static final String FAST_SYNC_FOLDER = "fastsync";
+  public SyncException(final SyncError error) {
+    super("Sync failed: " + error);
+    this.error = error;
+  }
 
-  protected static void ensureDirectoryExists(final File dir) {
-    if (!dir.mkdirs() && !dir.isDirectory()) {
-      throw new IllegalStateException("Unable to create directory: " + dir.getAbsolutePath());
-    }
+  public SyncError getError() {
+    return error;
+  }
+
+  public SyncException(final Throwable error) {
+    super(error);
+    this.error = SyncError.UNEXPECTED_ERROR;
   }
 }

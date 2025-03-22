@@ -12,11 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
@@ -59,7 +58,7 @@ public class PivotBlockRetriever {
   // The current pivot block number, gets pushed back if peers disagree on the pivot block
   AtomicLong pivotBlockNumber;
 
-  private final CompletableFuture<FastSyncState> result = new CompletableFuture<>();
+  private final CompletableFuture<QuickSyncState> result = new CompletableFuture<>();
   private final Map<Long, PivotBlockConfirmer> confirmationTasks = new ConcurrentHashMap<>();
 
   private final AtomicBoolean isStarted = new AtomicBoolean(false);
@@ -102,7 +101,7 @@ public class PivotBlockRetriever {
         DEFAULT_MAX_PIVOT_BLOCK_RESETS);
   }
 
-  public CompletableFuture<FastSyncState> downloadPivotBlockHeader() {
+  public CompletableFuture<QuickSyncState> downloadPivotBlockHeader() {
     if (isStarted.compareAndSet(false, true)) {
       LOG.info("Retrieve a pivot block that can be confirmed by at least {} peers.", peersToQuery);
       confirmBlock(pivotBlockNumber.get());
@@ -131,7 +130,8 @@ public class PivotBlockRetriever {
     pivotBlockConfirmationTask.confirmPivotBlock().whenComplete(this::handleConfirmationResult);
   }
 
-  private void handleConfirmationResult(final FastSyncState fastSyncState, final Throwable error) {
+  private void handleConfirmationResult(
+      final QuickSyncState quickSyncState, final Throwable error) {
     if (error != null) {
       final Throwable rootCause = ExceptionUtils.rootCause(error);
       if (rootCause instanceof PivotBlockConfirmer.ContestedPivotBlockException) {
@@ -145,7 +145,7 @@ public class PivotBlockRetriever {
       return;
     }
 
-    result.complete(fastSyncState);
+    result.complete(quickSyncState);
   }
 
   private void handleContestedPivotBlock(final long contestedBlockNumber) {

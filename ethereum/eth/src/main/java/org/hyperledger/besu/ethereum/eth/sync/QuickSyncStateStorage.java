@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -31,17 +31,17 @@ import org.slf4j.LoggerFactory;
 /**
  * Supports persisting fast sync state to disk to enable resuming after a restart.
  *
- * <p>Note that a {@link FastSyncState} with a block number selected but no pivot block header is
+ * <p>Note that a {@link QuickSyncState} with a block number selected but no pivot block header is
  * not stored. If we haven't yet retrieved and confirmed the actual block header we can't have
  * started downloading data so should pick a new pivot block when resuming. Once we have the pivot
  * block header we want to continue with that pivot block so the world state downloaded matches up.
  */
-public class FastSyncStateStorage {
-  private static final Logger LOG = LoggerFactory.getLogger(FastSyncStateStorage.class);
+public class QuickSyncStateStorage {
+  private static final Logger LOG = LoggerFactory.getLogger(QuickSyncStateStorage.class);
   private static final String PIVOT_BLOCK_HEADER_FILENAME = "pivotBlockHeader.rlp";
   private final File pivotBlockHeaderFile;
 
-  public FastSyncStateStorage(final Path fastSyncDataDir) {
+  public QuickSyncStateStorage(final Path fastSyncDataDir) {
     pivotBlockHeaderFile = fastSyncDataDir.resolve(PIVOT_BLOCK_HEADER_FILENAME).toFile();
   }
 
@@ -49,13 +49,13 @@ public class FastSyncStateStorage {
     return pivotBlockHeaderFile.isFile();
   }
 
-  public FastSyncState loadState(final BlockHeaderFunctions blockHeaderFunctions) {
+  public QuickSyncState loadState(final BlockHeaderFunctions blockHeaderFunctions) {
     try {
       if (!isFastSyncInProgress()) {
-        return FastSyncState.EMPTY_SYNC_STATE;
+        return QuickSyncState.EMPTY_SYNC_STATE;
       }
       final Bytes rlp = Bytes.wrap(Files.toByteArray(pivotBlockHeaderFile));
-      return new FastSyncState(
+      return new QuickSyncState(
           BlockHeader.readFrom(new BytesValueRLPInput(rlp, false), blockHeaderFunctions));
     } catch (final IOException e) {
       throw new IllegalStateException(
@@ -63,7 +63,7 @@ public class FastSyncStateStorage {
     }
   }
 
-  public void storeState(final FastSyncState state) {
+  public void storeState(final QuickSyncState state) {
     if (!state.hasPivotBlockHeader()) {
       if (!pivotBlockHeaderFile.delete() && pivotBlockHeaderFile.exists()) {
         LOG.error(

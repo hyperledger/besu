@@ -12,14 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
-import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -43,7 +41,7 @@ import com.google.common.io.RecursiveDeleteOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FastSyncDownloader<REQUEST> {
+public class QuickSyncDownloader<REQUEST> {
 
   private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
 
@@ -58,39 +56,39 @@ public class FastSyncDownloader<REQUEST> {
   private volatile Optional<TrailingPeerRequirements> trailingPeerRequirements = Optional.empty();
   private final AtomicBoolean running = new AtomicBoolean(false);
 
-  protected final FastSyncActions fastSyncActions;
-  protected final FastSyncStateStorage fastSyncStateStorage;
-  protected FastSyncState initialFastSyncState;
+  protected final QuickSyncActions quickSyncActions;
+  protected final QuickSyncStateStorage quickSyncStateStorage;
+  protected QuickSyncState initialQuickSyncState;
 
-  public FastSyncDownloader(
-      final FastSyncActions fastSyncActions,
+  public QuickSyncDownloader(
+      final QuickSyncActions quickSyncActions,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStateDownloader worldStateDownloader,
-      final FastSyncStateStorage fastSyncStateStorage,
+      final QuickSyncStateStorage quickSyncStateStorage,
       final TaskCollection<REQUEST> taskCollection,
       final Path fastSyncDataDirectory,
-      final FastSyncState initialFastSyncState,
+      final QuickSyncState initialQuickSyncState,
       final SyncDurationMetrics syncDurationMetrics) {
-    this.fastSyncActions = fastSyncActions;
+    this.quickSyncActions = quickSyncActions;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.worldStateDownloader = worldStateDownloader;
-    this.fastSyncStateStorage = fastSyncStateStorage;
+    this.quickSyncStateStorage = quickSyncStateStorage;
     this.taskCollection = taskCollection;
     this.fastSyncDataDirectory = fastSyncDataDirectory;
-    this.initialFastSyncState = initialFastSyncState;
+    this.initialQuickSyncState = initialQuickSyncState;
     this.syncDurationMetrics = syncDurationMetrics;
   }
 
-  public CompletableFuture<FastSyncState> start() {
+  public CompletableFuture<QuickSyncState> start() {
     if (!running.compareAndSet(false, true)) {
       throw new IllegalStateException("SyncDownloader already running");
     }
     LOG.info("Starting pivot-based sync");
 
-    return start(initialFastSyncState);
+    return start(initialQuickSyncState);
   }
 
-  protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
+  protected CompletableFuture<QuickSyncState> start(final QuickSyncState quickSyncState) {
     worldStateStorageCoordinator.applyOnMatchingStrategy(
         DataStorageFormat.BONSAI,
         worldStateKeyValueStorage -> {
@@ -100,24 +98,24 @@ public class FastSyncDownloader<REQUEST> {
           onBonsai.clearFlatDatabase();
           onBonsai.clearTrieLog();
         });
-    LOG.debug("Start fast sync with initial sync state {}", fastSyncState);
-    return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
+    LOG.debug("Start fast sync with initial sync state {}", quickSyncState);
+    return findPivotBlock(quickSyncState, fss -> downloadChainAndWorldState(quickSyncActions, fss));
   }
 
-  public CompletableFuture<FastSyncState> findPivotBlock(
-      final FastSyncState fastSyncState,
-      final Function<FastSyncState, CompletableFuture<FastSyncState>> onNewPivotBlock) {
+  public CompletableFuture<QuickSyncState> findPivotBlock(
+      final QuickSyncState quickSyncState,
+      final Function<QuickSyncState, CompletableFuture<QuickSyncState>> onNewPivotBlock) {
     return exceptionallyCompose(
-        CompletableFuture.completedFuture(fastSyncState)
-            .thenCompose(fastSyncActions::selectPivotBlock)
-            .thenCompose(fastSyncActions::downloadPivotBlockHeader)
+        CompletableFuture.completedFuture(quickSyncState)
+            .thenCompose(quickSyncActions::selectPivotBlock)
+            .thenCompose(quickSyncActions::downloadPivotBlockHeader)
             .thenApply(this::updateMaxTrailingPeers)
             .thenApply(this::storeState)
             .thenCompose(onNewPivotBlock),
         this::handleFailure);
   }
 
-  protected CompletableFuture<FastSyncState> handleFailure(final Throwable error) {
+  protected CompletableFuture<QuickSyncState> handleFailure(final Throwable error) {
     trailingPeerRequirements = Optional.empty();
     Throwable rootCause = ExceptionUtils.rootCause(error);
     if (rootCause instanceof NoSyncRequiredException) {
@@ -126,27 +124,27 @@ public class FastSyncDownloader<REQUEST> {
       return CompletableFuture.failedFuture(error);
     } else if (rootCause instanceof StalledDownloadException) {
       LOG.debug("Stalled sync re-pivoting to newer block.");
-      return start(FastSyncState.EMPTY_SYNC_STATE);
+      return start(QuickSyncState.EMPTY_SYNC_STATE);
     } else if (rootCause instanceof CancellationException) {
       return CompletableFuture.failedFuture(error);
     } else if (rootCause instanceof MaxRetriesReachedException) {
       LOG.debug(
           "A download operation reached the max number of retries, re-pivoting to newer block");
-      return start(FastSyncState.EMPTY_SYNC_STATE);
+      return start(QuickSyncState.EMPTY_SYNC_STATE);
     } else if (rootCause instanceof NoAvailablePeersException) {
       LOG.debug(
           "No peers available for sync. Restarting sync in {} seconds",
           FAST_SYNC_RETRY_DELAY.getSeconds());
-      return fastSyncActions.scheduleFutureTask(
-          () -> start(FastSyncState.EMPTY_SYNC_STATE), FAST_SYNC_RETRY_DELAY);
+      return quickSyncActions.scheduleFutureTask(
+          () -> start(QuickSyncState.EMPTY_SYNC_STATE), FAST_SYNC_RETRY_DELAY);
     } else {
       LOG.error(
           "Encountered an unexpected error during sync. Restarting sync in "
               + FAST_SYNC_RETRY_DELAY.getSeconds()
               + " seconds.",
           error);
-      return fastSyncActions.scheduleFutureTask(
-          () -> start(FastSyncState.EMPTY_SYNC_STATE), FAST_SYNC_RETRY_DELAY);
+      return quickSyncActions.scheduleFutureTask(
+          () -> start(QuickSyncState.EMPTY_SYNC_STATE), FAST_SYNC_RETRY_DELAY);
     }
   }
 
@@ -174,7 +172,7 @@ public class FastSyncDownloader<REQUEST> {
     }
   }
 
-  protected FastSyncState updateMaxTrailingPeers(final FastSyncState state) {
+  protected QuickSyncState updateMaxTrailingPeers(final QuickSyncState state) {
     if (state.getPivotBlockNumber().isPresent()) {
       trailingPeerRequirements =
           Optional.of(new TrailingPeerRequirements(state.getPivotBlockNumber().getAsLong(), 0));
@@ -184,13 +182,13 @@ public class FastSyncDownloader<REQUEST> {
     return state;
   }
 
-  protected FastSyncState storeState(final FastSyncState state) {
-    fastSyncStateStorage.storeState(state);
+  protected QuickSyncState storeState(final QuickSyncState state) {
+    quickSyncStateStorage.storeState(state);
     return state;
   }
 
-  protected CompletableFuture<FastSyncState> downloadChainAndWorldState(
-      final FastSyncActions fastSyncActions, final FastSyncState currentState) {
+  protected CompletableFuture<QuickSyncState> downloadChainAndWorldState(
+      final QuickSyncActions quickSyncActions, final QuickSyncState currentState) {
     // Synchronized ensures that stop isn't called while we're in the process of starting a
     // world state and chain download. If it did we might wind up starting a new download
     // after the stop method had called cancel.
@@ -200,9 +198,9 @@ public class FastSyncDownloader<REQUEST> {
             new CancellationException("FastSyncDownloader stopped"));
       }
       final CompletableFuture<Void> worldStateFuture =
-          worldStateDownloader.run(fastSyncActions, currentState);
+          worldStateDownloader.run(quickSyncActions, currentState);
       final ChainDownloader chainDownloader =
-          fastSyncActions.createChainDownloader(currentState, syncDurationMetrics);
+          quickSyncActions.createChainDownloader(currentState, syncDurationMetrics);
       final CompletableFuture<Void> chainFuture = chainDownloader.start();
 
       // If either download fails, cancel the other one.

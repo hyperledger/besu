@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -24,9 +24,6 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersExce
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -45,9 +42,9 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FastSyncActions {
+public class QuickSyncActions {
 
-  private static final Logger LOG = LoggerFactory.getLogger(FastSyncActions.class);
+  private static final Logger LOG = LoggerFactory.getLogger(QuickSyncActions.class);
   protected final SynchronizerConfiguration syncConfig;
   protected final WorldStateStorageCoordinator worldStateStorageCoordinator;
   protected final ProtocolSchedule protocolSchedule;
@@ -59,7 +56,7 @@ public class FastSyncActions {
   protected final Counter pivotBlockSelectionCounter;
   protected final AtomicLong pivotBlockGauge = new AtomicLong(0);
 
-  public FastSyncActions(
+  public QuickSyncActions(
       final SynchronizerConfiguration syncConfig,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolSchedule protocolSchedule,
@@ -97,13 +94,13 @@ public class FastSyncActions {
     return pivotBlockSelector.getBestChainHeight();
   }
 
-  public CompletableFuture<FastSyncState> selectPivotBlock(final FastSyncState fastSyncState) {
-    return fastSyncState.hasPivotBlockHeader()
-        ? completedFuture(fastSyncState)
+  public CompletableFuture<QuickSyncState> selectPivotBlock(final QuickSyncState quickSyncState) {
+    return quickSyncState.hasPivotBlockHeader()
+        ? completedFuture(quickSyncState)
         : selectNewPivotBlock();
   }
 
-  private CompletableFuture<FastSyncState> selectNewPivotBlock() {
+  private CompletableFuture<QuickSyncState> selectNewPivotBlock() {
     return pivotBlockSelector
         .selectNewPivotBlock()
         .map(CompletableFuture::completedFuture)
@@ -115,20 +112,20 @@ public class FastSyncActions {
     return ethContext.getScheduler().scheduleFutureTask(future, duration);
   }
 
-  private CompletableFuture<FastSyncState> retrySelectPivotBlockAfterDelay() {
+  private CompletableFuture<QuickSyncState> retrySelectPivotBlockAfterDelay() {
     return ethContext
         .getScheduler()
         .scheduleFutureTask(pivotBlockSelector::prepareRetry, Duration.ofSeconds(5))
         .thenCompose(ignore -> selectNewPivotBlock());
   }
 
-  public CompletableFuture<FastSyncState> downloadPivotBlockHeader(
-      final FastSyncState currentState) {
+  public CompletableFuture<QuickSyncState> downloadPivotBlockHeader(
+      final QuickSyncState currentState) {
     return internalDownloadPivotBlockHeader(currentState).thenApply(this::updateStats);
   }
 
-  private CompletableFuture<FastSyncState> internalDownloadPivotBlockHeader(
-      final FastSyncState currentState) {
+  private CompletableFuture<QuickSyncState> internalDownloadPivotBlockHeader(
+      final QuickSyncState currentState) {
     if (currentState.hasPivotBlockHeader()) {
       LOG.debug("Initial sync state {} already contains the block header", currentState);
       return completedFuture(currentState);
@@ -155,17 +152,17 @@ public class FastSyncActions {
                                 .downloadPivotBlockHeader()));
   }
 
-  private FastSyncState updateStats(final FastSyncState fastSyncState) {
+  private QuickSyncState updateStats(final QuickSyncState quickSyncState) {
     pivotBlockSelectionCounter.inc();
-    fastSyncState
+    quickSyncState
         .getPivotBlockHeader()
         .ifPresent(blockHeader -> pivotBlockGauge.set(blockHeader.getNumber()));
-    return fastSyncState;
+    return quickSyncState;
   }
 
   public ChainDownloader createChainDownloader(
-      final FastSyncState currentState, final SyncDurationMetrics syncDurationMetrics) {
-    return FastSyncChainDownloader.create(
+      final QuickSyncState currentState, final SyncDurationMetrics syncDurationMetrics) {
+    return QuickSyncChainDownloader.create(
         syncConfig,
         worldStateStorageCoordinator,
         protocolSchedule,
@@ -177,7 +174,7 @@ public class FastSyncActions {
         syncDurationMetrics);
   }
 
-  private CompletableFuture<FastSyncState> downloadPivotBlockHeader(final Hash hash) {
+  private CompletableFuture<QuickSyncState> downloadPivotBlockHeader(final Hash hash) {
     LOG.debug("Downloading pivot block header by hash {}", hash);
     CompletableFuture<BlockHeader> blockHeaderFuture;
     if (syncConfig.isPeerTaskSystemEnabled()) {
@@ -240,7 +237,7 @@ public class FastSyncActions {
                     .log();
               }
             })
-        .thenApply(FastSyncState::new);
+        .thenApply(QuickSyncState::new);
   }
 
   public boolean isBlockchainBehind(final long blockNumber) {

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
@@ -25,8 +25,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.AbstractSyncTargetManager;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -55,7 +53,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
-  private final FastSyncState fastSyncState;
+  private final QuickSyncState quickSyncState;
   private final AtomicBoolean logDebug = new AtomicBoolean(true);
   private final AtomicBoolean logInfo = new AtomicBoolean(true);
 
@@ -66,7 +64,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final FastSyncState fastSyncState) {
+      final QuickSyncState quickSyncState) {
     super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
     this.config = config;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
@@ -74,12 +72,12 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
-    this.fastSyncState = fastSyncState;
+    this.quickSyncState = quickSyncState;
   }
 
   @Override
   protected CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget() {
-    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader pivotBlockHeader = quickSyncState.getPivotBlockHeader().get();
     final EthPeers ethPeers = ethContext.getEthPeers();
     final Optional<EthPeer> maybeBestPeer = ethPeers.bestPeerWithHeightEstimate();
     if (maybeBestPeer.isEmpty()) {
@@ -121,7 +119,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
   }
 
   private CompletableFuture<Optional<EthPeer>> confirmPivotBlockHeader(final EthPeer bestPeer) {
-    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader pivotBlockHeader = quickSyncState.getPivotBlockHeader().get();
     CompletableFuture<List<BlockHeader>> headersFuture;
     if (config.isPeerTaskSystemEnabled()) {
       headersFuture =
@@ -204,20 +202,20 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
   }
 
   private boolean hasPivotChanged(final BlockHeader requestedPivot) {
-    return fastSyncState
+    return quickSyncState
         .getPivotBlockHash()
         .filter(currentPivotHash -> requestedPivot.getBlockHash().equals(currentPivotHash))
         .isEmpty();
   }
 
   private boolean peerHasDifferentPivotBlock(final List<BlockHeader> result) {
-    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader pivotBlockHeader = quickSyncState.getPivotBlockHeader().get();
     return result.size() != 1 || !result.get(0).equals(pivotBlockHeader);
   }
 
   @Override
   public boolean shouldContinueDownloading() {
-    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader pivotBlockHeader = quickSyncState.getPivotBlockHeader().get();
     boolean isValidChainHead =
         protocolContext.getBlockchain().getChainHeadHash().equals(pivotBlockHeader.getHash());
     if (!isValidChainHead) {

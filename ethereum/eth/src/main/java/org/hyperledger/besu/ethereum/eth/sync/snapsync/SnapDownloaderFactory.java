@@ -18,16 +18,16 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncActions;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.DownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -44,11 +44,11 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SnapDownloaderFactory extends FastDownloaderFactory {
+public class SnapDownloaderFactory extends DownloaderFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
 
-  public static Optional<FastSyncDownloader<?>> createSnapDownloader(
+  public static Optional<QuickSyncDownloader<?>> createSnapDownloader(
       final SnapSyncStatePersistenceManager snapContext,
       final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
@@ -63,11 +63,11 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       final SyncDurationMetrics syncDurationMetrics) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
-    final FastSyncStateStorage fastSyncStateStorage =
-        new FastSyncStateStorage(fastSyncDataDirectory);
+    final QuickSyncStateStorage quickSyncStateStorage =
+        new QuickSyncStateStorage(fastSyncDataDirectory);
 
     if (SyncMode.isFullSync(syncConfig.getSyncMode())) {
-      if (fastSyncStateStorage.isFastSyncInProgress()) {
+      if (quickSyncStateStorage.isFastSyncInProgress()) {
         throw new IllegalStateException(
             "Unable to change the sync mode when snap sync is incomplete, please restart with snap sync mode");
       } else {
@@ -77,8 +77,8 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
 
     ensureDirectoryExists(fastSyncDataDirectory.toFile());
 
-    final FastSyncState fastSyncState =
-        fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
+    final QuickSyncState quickSyncState =
+        quickSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
     if (syncState.isResyncNeeded()) {
       snapContext.clear();
       syncState
@@ -87,7 +87,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
               address ->
                   snapContext.addAccountToHealingList(
                       CompactEncoding.bytesToPath(address.addressHash())));
-    } else if (fastSyncState.getPivotBlockHeader().isEmpty()
+    } else if (quickSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
@@ -95,7 +95,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       return Optional.empty();
     }
 
-    final SnapSyncProcessState snapSyncState = new SnapSyncProcessState(fastSyncState);
+    final SnapSyncProcessState snapSyncState = new SnapSyncProcessState(quickSyncState);
 
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection();
@@ -113,9 +113,9 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             clock,
             metricsSystem,
             syncDurationMetrics);
-    final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
+    final QuickSyncDownloader<SnapDataRequest> fastSyncDownloader =
         new SnapSyncDownloader(
-            new FastSyncActions(
+            new QuickSyncActions(
                 syncConfig,
                 worldStateStorageCoordinator,
                 protocolSchedule,
@@ -126,7 +126,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
                 metricsSystem),
             worldStateStorageCoordinator,
             snapWorldStateDownloader,
-            fastSyncStateStorage,
+            quickSyncStateStorage,
             snapTaskCollection,
             fastSyncDataDirectory,
             snapSyncState,

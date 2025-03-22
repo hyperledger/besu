@@ -12,6 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
-public class NoSyncRequiredState extends FastSyncState {}
+public class NoSyncRequiredState extends QuickSyncState {}

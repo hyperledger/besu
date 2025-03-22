@@ -12,20 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
-import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
-public class FastSyncValidationPolicy implements ValidationPolicy {
+public class QuickSyncValidationPolicy implements ValidationPolicy {
   private final float targetFullValidationRate;
   private final HeaderValidationMode lightValidationMode;
   private final HeaderValidationMode fullValidationMode;
   private final LabelledMetric<Counter> fastSyncValidationCounter;
 
-  public FastSyncValidationPolicy(
+  public QuickSyncValidationPolicy(
       final float targetFullValidationRate,
       final HeaderValidationMode lightValidationMode,
       final HeaderValidationMode fullValidationMode,

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -68,7 +67,7 @@ class PivotBlockConfirmer {
   // The number of times to retry if a peer fails to return an answer to our query
   private final int numberOfRetriesPerPeer;
 
-  private final CompletableFuture<FastSyncState> result = new CompletableFuture<>();
+  private final CompletableFuture<QuickSyncState> result = new CompletableFuture<>();
   private final Collection<CompletableFuture<?>> runningQueries = new ConcurrentLinkedQueue<>();
   private final Map<Bytes, RetryingGetHeaderFromPeerByNumberTask> pivotBlockQueriesByPeerId =
       new ConcurrentHashMap<>();
@@ -95,7 +94,7 @@ class PivotBlockConfirmer {
     this.numberOfRetriesPerPeer = numberOfRetriesPerPeer;
   }
 
-  public CompletableFuture<FastSyncState> confirmPivotBlock() {
+  public CompletableFuture<QuickSyncState> confirmPivotBlock() {
     if (isStarted.compareAndSet(false, true)) {
       LOG.info(
           "Confirm pivot block {} with at least {} peers.", pivotBlockNumber, numberOfPeersToQuery);
@@ -145,7 +144,7 @@ class PivotBlockConfirmer {
     } else if (votes >= numberOfPeersToQuery) {
       // We've received the required number of votes and have selected our pivot block
       LOG.info("Confirmed pivot block at {}: {}", pivotBlockNumber, blockHeader.getHash());
-      result.complete(new FastSyncState(blockHeader));
+      result.complete(new QuickSyncState(blockHeader));
     } else {
       LOG.info(
           "Received {} confirmation(s) for pivot block header {}: {}",
