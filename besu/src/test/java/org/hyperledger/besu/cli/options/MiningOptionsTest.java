@@ -22,7 +22,6 @@ import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.Unstable;
@@ -32,7 +31,6 @@ import org.hyperledger.besu.util.number.PositiveNumber;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -41,101 +39,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguration, MiningOptions> {
-
-  @Test
-  public void besuDoesNotStartInMiningModeIfCoinbaseNotSet() {
-    internalTestFailure(
-        "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled) or specify the beneficiary of mining (via --miner-coinbase <Address>)",
-        "--miner-enabled");
-  }
-
-  @Test
-  public void miningIsEnabledWhenSpecified() {
-    final String coinbaseStr = String.format("%040x", 1);
-    internalTestSuccess(
-        miningOpts -> {
-          assertThat(miningOpts.isMiningEnabled()).isTrue();
-          assertThat(miningOpts.getCoinbase())
-              .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
-        },
-        "--miner-enabled",
-        "--miner-coinbase=" + coinbaseStr);
-  }
-
-  @Test
-  public void stratumMiningIsEnabledWhenSpecified() {
-    final String coinbaseStr = String.format("%040x", 1);
-    internalTestSuccess(
-        miningOpts -> {
-          assertThat(miningOpts.isMiningEnabled()).isTrue();
-          assertThat(miningOpts.getCoinbase())
-              .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
-          assertThat(miningOpts.isStratumMiningEnabled()).isTrue();
-        },
-        "--miner-enabled",
-        "--miner-coinbase=" + coinbaseStr,
-        "--miner-stratum-enabled");
-  }
-
-  @Test
-  public void stratumMiningOptionsRequiresServiceToBeEnabled() {
-    internalTestFailure(
-        "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)",
-        "--network",
-        "dev",
-        "--miner-stratum-enabled");
-  }
-
-  @Test
-  public void stratumMiningOptionsRequiresServiceToBeEnabledToml() throws IOException {
-    final Path toml = createTempFile("toml", "miner-stratum-enabled=true\n");
-    internalTestFailure(
-        "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)",
-        "--network",
-        "dev",
-        "--config-file",
-        toml.toString());
-  }
-
-  @Test
-  public void blockProducingOptionsWarnsMinerShouldBeEnabled() {
-    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
-    internalTestSuccess(
-        miningOpts ->
-            verifyOptionsConstraintLoggerCall(
-                "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data"),
-        "--network",
-        "dev",
-        "--miner-coinbase",
-        requestedCoinbase.toString(),
-        "--min-gas-price",
-        "42",
-        "--miner-extra-data",
-        "0x1122334455667788990011223344556677889900112233445566778899001122");
-  }
-
-  @Test
-  public void blockProducingOptionsWarnsMinerShouldBeEnabledToml() throws IOException {
-
-    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
-
-    final Path toml =
-        createTempFile(
-            "toml",
-            "network=\"dev\"\n"
-                + "miner-coinbase=\""
-                + requestedCoinbase
-                + "\"\n"
-                + "min-gas-price=42\n"
-                + "miner-extra-data=\"0x1122334455667788990011223344556677889900112233445566778899001122\"\n");
-
-    internalTestSuccess(
-        miningOpts ->
-            verifyOptionsConstraintLoggerCall(
-                "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data"),
-        "--config-file",
-        toml.toString());
-  }
 
   @Test
   public void blockProducingOptionsDoNotWarnWhenPoAQBFT() throws IOException {
@@ -195,25 +98,6 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
   }
 
   @Test
-  public void minGasPriceRequiresMainOption() {
-    internalTestSuccess(
-        miningOpt -> verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price"),
-        "--min-gas-price",
-        "0",
-        "--network",
-        "dev");
-  }
-
-  @Test
-  public void minGasPriceRequiresMainOptionToml() throws IOException {
-    final Path toml = createTempFile("toml", "min-gas-price=0\nnetwork=\"dev\"\n");
-    internalTestSuccess(
-        miningOpt -> verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price"),
-        "--config-file",
-        toml.toString());
-  }
-
-  @Test
   public void minGasPriceDoesNotRequireMainOptionWhenPoAQBFT() throws IOException {
     final Path genesisFileQBFT = createFakeGenesisFile(VALID_GENESIS_QBFT_POST_LONDON);
     internalTestSuccess(
@@ -244,23 +128,6 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
         genesisFileIBFT2.toString(),
         "--min-gas-price",
         "0");
-  }
-
-  @Test
-  public void miningParametersAreCaptured() {
-    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
-    final String extraDataString =
-        "0x1122334455667788990011223344556677889900112233445566778899001122";
-    internalTestSuccess(
-        miningParams -> {
-          assertThat(miningParams.getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
-          assertThat(miningParams.getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
-          assertThat(miningParams.getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
-        },
-        "--miner-enabled",
-        "--miner-coinbase=" + requestedCoinbase.toString(),
-        "--min-gas-price=15",
-        "--miner-extra-data=" + extraDataString);
   }
 
   @Test
@@ -303,26 +170,6 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
         miningParams ->
             assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
                 .isEqualTo(DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME));
-  }
-
-  @Test
-  public void blockTxsSelectionMaxTimeOption() {
-    internalTestSuccess(
-        this::runtimeConfiguration,
-        miningParams -> assertThat(miningParams.getBlockTxsSelectionMaxTime()).isEqualTo(1700L),
-        "--block-txs-selection-max-time",
-        "1700");
-  }
-
-  @Test
-  public void blockTxsSelectionMaxTimeIncompatibleWithPoaNetworks() throws IOException {
-    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
-    internalTestFailure(
-        "--block-txs-selection-max-time can't be used with PoA networks, see poa-block-txs-selection-max-time instead",
-        "--genesis-file",
-        genesisFileIBFT2.toString(),
-        "--block-txs-selection-max-time",
-        "2");
   }
 
   @Test
@@ -383,12 +230,10 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
     return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
             MutableInitValues.builder()
-                .isMiningEnabled(true)
                 .extraData(Bytes.fromHexString("0xabc321"))
                 .minBlockOccupancyRatio(0.5)
                 .coinbase(Address.ZERO)
                 .build())
-        .isStratumMiningEnabled(true)
         .unstable(Unstable.builder().posBlockCreationMaxTime(1000).build())
         .build();
   }

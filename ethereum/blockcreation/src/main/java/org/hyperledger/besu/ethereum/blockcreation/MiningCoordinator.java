@@ -20,8 +20,6 @@ import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
-import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.List;
 import java.util.Optional;
@@ -69,16 +67,6 @@ public interface MiningCoordinator {
 
   default Optional<Long> hashesPerSecond() {
     return Optional.empty();
-  }
-
-  default Optional<PoWSolverInputs> getWorkDefinition() {
-    throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents querying work definition.");
-  }
-
-  default boolean submitWork(final PoWSolution solution) {
-    throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents submission of work solutions.");
   }
 
   /**

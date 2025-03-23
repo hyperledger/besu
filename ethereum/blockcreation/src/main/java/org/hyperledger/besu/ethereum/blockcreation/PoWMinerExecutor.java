@@ -58,17 +58,6 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
   }
 
   @Override
-  public Optional<PoWBlockMiner> startAsyncMining(
-      final Subscribers<MinedBlockObserver> observers,
-      final Subscribers<PoWObserver> ethHashObservers,
-      final BlockHeader parentHeader) {
-    if (miningConfiguration.getCoinbase().isEmpty()) {
-      throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");
-    }
-    return super.startAsyncMining(observers, ethHashObservers, parentHeader);
-  }
-
-  @Override
   public PoWBlockMiner createMiner(
       final Subscribers<MinedBlockObserver> observers,
       final Subscribers<PoWObserver> ethHashObservers,
@@ -107,16 +96,8 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     }
   }
 
-  void setStratumMiningEnabled(final boolean stratumMiningEnabled) {
-    this.stratumMiningEnabled = stratumMiningEnabled;
-  }
-
   @Override
   public Optional<Address> getCoinbase() {
     return miningConfiguration.getCoinbase();
-  }
-
-  public EpochCalculator getEpochCalculator() {
-    return epochCalculator;
   }
 }

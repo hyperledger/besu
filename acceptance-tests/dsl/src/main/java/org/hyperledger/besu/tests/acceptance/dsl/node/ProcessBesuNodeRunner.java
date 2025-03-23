@@ -189,28 +189,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.addAll(
         DataStorageOptions.fromConfig(node.getDataStorageConfiguration()).getCLIOptions());
 
-    if (node.getMiningParameters().isMiningEnabled()) {
-      params.add("--miner-enabled");
-      params.add("--miner-coinbase");
-      params.add(node.getMiningParameters().getCoinbase().get().toString());
-      params.add("--miner-stratum-port");
-      params.add(Integer.toString(node.getMiningParameters().getStratumPort()));
-      params.add("--miner-stratum-host");
-      params.add(node.getMiningParameters().getStratumNetworkInterface());
-      params.add("--min-gas-price");
-      params.add(
-          Integer.toString(node.getMiningParameters().getMinTransactionGasPrice().intValue()));
-      params.add("--Xminer-remote-sealers-limit");
-      params.add(
-          Integer.toString(node.getMiningParameters().getUnstable().getRemoteSealersLimit()));
-      params.add("--Xminer-remote-sealers-hashrate-ttl");
-      params.add(
-          Long.toString(node.getMiningParameters().getUnstable().getRemoteSealersTimeToLive()));
-    }
-    if (node.getMiningParameters().isStratumMiningEnabled()) {
-      params.add("--miner-stratum-enabled");
-    }
-
     if (node.getPrivacyParameters().isEnabled()) {
       params.add("--privacy-enabled");
 

@@ -87,53 +87,6 @@ public class BesuNodeFactory {
         config.storageImplementation());
   }
 
-  public BesuNode createMinerNode(
-      final String name, final UnaryOperator<BesuNodeConfigurationBuilder> configModifier)
-      throws IOException {
-    BesuNodeConfigurationBuilder builder =
-        new BesuNodeConfigurationBuilder()
-            .name(name)
-            .miningEnabled()
-            .jsonRpcEnabled()
-            .webSocketEnabled();
-    builder = configModifier.apply(builder);
-    final BesuNodeConfiguration config = builder.build();
-
-    return create(config);
-  }
-
-  public BesuNode createMinerNodeWithExtraCliOptions(
-      final String name,
-      final UnaryOperator<BesuNodeConfigurationBuilder> configModifier,
-      final List<String> extraCliOptions)
-      throws IOException {
-    BesuNodeConfigurationBuilder builder =
-        new BesuNodeConfigurationBuilder()
-            .name(name)
-            .miningEnabled()
-            .jsonRpcEnabled()
-            .jsonRpcTxPool()
-            .webSocketEnabled()
-            .extraCLIOptions(extraCliOptions);
-    builder = configModifier.apply(builder);
-    final BesuNodeConfiguration config = builder.build();
-
-    return create(config);
-  }
-
-  public BesuNode createMinerNode(final String name) throws IOException {
-    return createMinerNode(name, UnaryOperator.identity());
-  }
-
-  public BesuNode createMinerNodeWithExtraCliOptions(
-      final String name, final List<String> extraCliOptions) throws IOException {
-    return createMinerNodeWithExtraCliOptions(name, UnaryOperator.identity(), extraCliOptions);
-  }
-
-  public BesuNode createMinerNodeWithRevertReasonEnabled(final String name) throws IOException {
-    return createMinerNode(name, BesuNodeConfigurationBuilder::revertReasonEnabled);
-  }
-
   public BesuNode createArchiveNode(final String name) throws IOException {
     return createArchiveNode(name, UnaryOperator.identity());
   }
@@ -697,16 +650,6 @@ public class BesuNodeFactory {
         .discoveryEnabled(false)
         .staticNodes(staticNodesUrls)
         .bootnodeEligible(false);
-  }
-
-  public BesuNode createNodeWithNonDefaultSignatureAlgorithm(
-      final String name, final String genesisPath, final KeyPair keyPair) throws IOException {
-    BesuNodeConfigurationBuilder builder =
-        createNodeConfigurationWithNonDefaultSignatureAlgorithm(
-            name, genesisPath, keyPair, new ArrayList<>());
-    builder.miningEnabled();
-
-    return create(builder.build());
   }
 
   public BesuNode createNodeWithNonDefaultSignatureAlgorithm(

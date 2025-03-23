@@ -209,8 +209,4 @@ public class PoWSolver {
     LOG.debug("Rejecting a solution from a miner");
     return false;
   }
-
-  public Iterable<Long> getNonceGenerator() {
-    return miningConfiguration.getNonceGenerator().get();
-  }
 }

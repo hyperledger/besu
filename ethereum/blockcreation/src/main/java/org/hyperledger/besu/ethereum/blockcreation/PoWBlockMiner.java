@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
-import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -44,15 +42,7 @@ public class PoWBlockMiner extends BlockMiner<PoWBlockCreator> {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
   }
 
-  public Optional<PoWSolverInputs> getWorkDefinition() {
-    return minerBlockCreator.getWorkDefinition();
-  }
-
   public Optional<Long> getHashesPerSecond() {
     return minerBlockCreator.getHashesPerSecond();
-  }
-
-  public boolean submitWork(final PoWSolution solution) {
-    return minerBlockCreator.submitWork(solution);
   }
 }

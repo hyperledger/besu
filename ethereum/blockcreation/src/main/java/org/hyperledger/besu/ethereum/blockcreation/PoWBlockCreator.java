@@ -88,16 +88,8 @@ public class PoWBlockCreator extends AbstractBlockCreator {
         target, EthHash.hashHeader(sealableBlockHeader), sealableBlockHeader.getNumber());
   }
 
-  public Optional<PoWSolverInputs> getWorkDefinition() {
-    return nonceSolver.getWorkDefinition();
-  }
-
   public Optional<Long> getHashesPerSecond() {
     return nonceSolver.hashesPerSecond();
-  }
-
-  public boolean submitWork(final PoWSolution solution) {
-    return nonceSolver.submitSolution(solution);
   }
 
   @Override

@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolEvictionService;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
-import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethstats.EthStatsService;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.nat.NatService;
@@ -78,7 +77,6 @@ public class Runner implements AutoCloseable {
 
   private final BesuController besuController;
   private final Path dataDir;
-  private final Optional<StratumServer> stratumServer;
   private final Optional<AutoTransactionLogBloomCachingService>
       autoTransactionLogBloomCachingService;
 
@@ -94,7 +92,6 @@ public class Runner implements AutoCloseable {
    * @param webSocketRpc the web socket rpc
    * @param ipcJsonRpc the ipc json rpc
    * @param inProcessRpcMethods the in-process rpc methods
-   * @param stratumServer the stratum server
    * @param metrics the metrics
    * @param ethStatsService the eth stats service
    * @param besuController the besu controller
@@ -113,7 +110,6 @@ public class Runner implements AutoCloseable {
       final Optional<WebSocketService> webSocketRpc,
       final Optional<JsonRpcIpcService> ipcJsonRpc,
       final Map<String, JsonRpcMethod> inProcessRpcMethods,
-      final Optional<StratumServer> stratumServer,
       final Optional<MetricsService> metrics,
       final Optional<EthStatsService> ethStatsService,
       final BesuController besuController,
@@ -135,7 +131,6 @@ public class Runner implements AutoCloseable {
     this.ethStatsService = ethStatsService;
     this.besuController = besuController;
     this.dataDir = dataDir;
-    this.stratumServer = stratumServer;
     this.autoTransactionLogBloomCachingService =
         transactionLogBloomCacher.map(
             cacher -> new AutoTransactionLogBloomCachingService(blockchain, cacher));
@@ -156,10 +151,6 @@ public class Runner implements AutoCloseable {
         service ->
             waitForServiceToStart(
                 "ipcJsonRpc", service.start().toCompletionStage().toCompletableFuture()));
-    stratumServer.ifPresent(
-        server ->
-            waitForServiceToStart(
-                "stratum", server.start().toCompletionStage().toCompletableFuture()));
     autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
   }
 
@@ -210,7 +201,6 @@ public class Runner implements AutoCloseable {
     ethStatsService.ifPresent(EthStatsService::stop);
     besuController.getMiningCoordinator().stop();
     waitForServiceToStop("Mining Coordinator", besuController.getMiningCoordinator()::awaitStop);
-    stratumServer.ifPresent(server -> waitForServiceToStop("Stratum", server::stop));
     if (networkRunner.getNetwork().isP2pEnabled()) {
       besuController.getSynchronizer().stop();
       waitForServiceToStop("Synchronizer", besuController.getSynchronizer()::awaitStop);

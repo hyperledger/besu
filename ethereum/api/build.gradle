@@ -168,6 +168,10 @@ tasks.register('generateTestBlockchain') {
         ]
       }
     }
+    if (!new File(blocksBin).exists()) {
+      dataPath.deleteDir()
+      throw new GradleException("blocks.bin file was not created successfully")
+    }
   }
 }
 test.dependsOn(generateTestBlockchain)

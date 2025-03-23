@@ -117,7 +117,7 @@ public abstract class JsonBlockImporterTest {
     }
 
     public static Stream<Arguments> getParameters() {
-      return Stream.of(Arguments.of("ethash"), Arguments.of("clique"));
+      return Stream.of(Arguments.of("ethash"));
     }
 
     @ParameterizedTest(name = "{index}: {0}")
@@ -461,7 +461,7 @@ public abstract class JsonBlockImporterTest {
             ImmutableMiningConfiguration.builder()
                 .mutableInitValues(
                     MutableInitValues.builder()
-                        .isMiningEnabled(true)
+                        // .isMiningEnabled(true)
                         .minTransactionGasPrice(Wei.ZERO)
                         .build())
                 .build())
