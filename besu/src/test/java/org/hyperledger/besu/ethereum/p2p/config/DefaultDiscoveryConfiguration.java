@@ -26,6 +26,8 @@ import java.util.stream.Stream;
 public class DefaultDiscoveryConfiguration {
   public static final String SEPOLIA_DISCOVERY_URL =
       "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.sepolia.ethdisco.net";
+  public static final String HOODI_DISCOVERY_URL =
+      "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.hoodi.ethdisco.net";
   public static final String MAINNET_DISCOVERY_URL =
       "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.mainnet.ethdisco.net";
 
