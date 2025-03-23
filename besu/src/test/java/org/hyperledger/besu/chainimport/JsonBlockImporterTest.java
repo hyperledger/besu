@@ -117,7 +117,7 @@ public abstract class JsonBlockImporterTest {
     }
 
     public static Stream<Arguments> getParameters() {
-      return Stream.of(Arguments.of("ethash"));
+      return Stream.of(Arguments.of("clique"));
     }
 
     @ParameterizedTest(name = "{index}: {0}")
