@@ -158,7 +158,7 @@ public class PosSyncDownloadPipelineFactory implements DownloadPipelineFactory {
     final int downloaderBodyParallelism = syncConfig.getDownloaderBodyParallelism();
     final int downloaderReceiptParallelism = syncConfig.getDownloaderReceiptsParallelism();
 
-    final long startingBlock = getCommonAncestor(target) + 1;
+    final long startingBlock = getCommonAncestor(target);
     final PosSyncSource syncSource =
         new PosSyncSource(
             startingBlock, // TODO remove the +1 when check in DefaultBlockChain is fixed
