@@ -25,7 +25,10 @@ public class BLS12G1MultiExpPrecompiledContract extends AbstractBLS12Precompiled
 
   private static final int PARAMETER_LENGTH = 160;
   private static final Cache<Integer, PrecompileInputResultTuple> g1MSMCache =
-      Caffeine.newBuilder().maximumSize(1000).build();
+      Caffeine.newBuilder()
+          .maximumWeight(16_000_000)
+          .weigher((k, v) -> ((PrecompileInputResultTuple) v).cachedInput().size())
+          .build();
 
   /** Instantiates a new BLS12_G1 MultiExp precompiled contract. */
   public BLS12G1MultiExpPrecompiledContract() {

@@ -25,8 +25,10 @@ public class BLS12PairingPrecompiledContract extends AbstractBLS12PrecompiledCon
 
   private static final int PARAMETER_LENGTH = 384;
   private static final Cache<Integer, PrecompileInputResultTuple> pairingCache =
-      Caffeine.newBuilder().maximumSize(1000).build();
-
+      Caffeine.newBuilder()
+          .maximumWeight(16_000_000)
+          .weigher((k, v) -> ((PrecompileInputResultTuple) v).cachedInput().size())
+          .build();
   /** Instantiates a new BLS12Pairing precompiled contract. */
   public BLS12PairingPrecompiledContract() {
     super(
