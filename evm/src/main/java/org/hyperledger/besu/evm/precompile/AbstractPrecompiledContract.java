@@ -99,6 +99,11 @@ public abstract class AbstractPrecompiledContract implements PrecompiledContract
     cacheEventConsumer = eventConsumer;
   }
 
+  /**
+   * calculate a cache key based on input bytes
+   * @param input bytes
+   * @return integer cache key
+   */
   public static Integer getCacheKey(final Bytes input) {
     return Arrays.hashCode(input.toArrayUnsafe());
   }
