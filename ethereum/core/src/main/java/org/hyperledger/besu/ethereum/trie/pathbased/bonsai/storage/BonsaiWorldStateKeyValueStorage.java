@@ -37,9 +37,11 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -126,6 +128,14 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
 
   public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
     return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
+  }
+
+  public List<byte[]> getMultipleKeys(final List<byte[]> keys) {
+    List<SegmentIdentifier> listSegments = new ArrayList<>(keys.size());
+    for (int i = 0; i < keys.size(); i++) {
+      listSegments.add(TRIE_BRANCH_STORAGE);
+    }
+    return composedWorldStateStorage.multiget(listSegments, keys);
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(
