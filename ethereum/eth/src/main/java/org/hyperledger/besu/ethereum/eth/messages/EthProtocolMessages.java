@@ -36,8 +36,6 @@ public final class EthProtocolMessages {
 
   public static final int GET_POOLED_TRANSACTIONS = 0x09;
 
-  public static final int RECEIPTS = 0x10;
-
   public static final int POOLED_TRANSACTIONS = 0x0A;
 
   public static final int GET_NODE_DATA = 0x0D;
@@ -45,6 +43,8 @@ public final class EthProtocolMessages {
   public static final int NODE_DATA = 0x0E;
 
   public static final int GET_RECEIPTS = 0x0F;
+
+  public static final int RECEIPTS = 0x10;
 
   private EthProtocolMessages() {
     // Holder for constants only
