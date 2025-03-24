@@ -283,6 +283,61 @@ public class BesuNodeFactory {
     return createCliqueNode(name, CliqueOptions.DEFAULT);
   }
 
+  public BesuNode createCliqueNode(
+      final String name, final UnaryOperator<BesuNodeConfigurationBuilder> configModifier)
+      throws IOException {
+    BesuNodeConfigurationBuilder builder =
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcEnabled()
+            .jsonRpcTxPool()
+            .webSocketEnabled();
+
+    builder = configModifier.apply(builder);
+
+    return create(builder.build());
+  }
+
+  public BesuNode createCliqueNodeWithNoDiscovery(final String name) throws IOException {
+    return createCliqueNode(
+        name,
+        (builder) -> {
+          builder.discoveryEnabled(false).engineRpcEnabled(false);
+          return builder;
+        });
+  }
+
+  public BesuNode createCliqueNodeWithRevertReasonEnabled(final String name) throws IOException {
+    return createCliqueNode(name, BesuNodeConfigurationBuilder::revertReasonEnabled);
+  }
+
+  public BesuNode createCliquePluginsNode(
+      final String name,
+      final List<String> plugins,
+      final List<String> extraCLIOptions,
+      final String... extraRpcApis)
+      throws IOException {
+
+    final List<String> enableRpcApis = new ArrayList<>(Arrays.asList(extraRpcApis));
+    enableRpcApis.addAll(List.of(IBFT.name(), ADMIN.name()));
+
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcConfiguration(
+                node.createJsonRpcWithRpcApiEnabledConfig(enableRpcApis.toArray(String[]::new)))
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .plugins(plugins)
+            .extraCLIOptions(extraCLIOptions)
+            .devMode(false)
+            .jsonRpcTxPool()
+            .genesisConfigProvider(
+                validators ->
+                    GenesisConfigurationFactory.createCliqueGenesisConfig(
+                        validators, CliqueOptions.DEFAULT))
+            .build());
+  }
+
   public BesuNode createCliqueNode(final String name, final CliqueOptions cliqueOptions)
       throws IOException {
     return createCliqueNodeWithExtraCliOptionsAndRpcApis(name, cliqueOptions, List.of());

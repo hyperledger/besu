@@ -126,4 +126,3 @@ dependencies {
 }
 
 artifacts { testSupportArtifacts testSupportJar }
-
