@@ -18,16 +18,16 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncActions;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-public class CheckpointSyncActions extends FastSyncActions {
+public class CheckpointSyncActions extends QuickSyncActions {
   public CheckpointSyncActions(
       final SynchronizerConfiguration syncConfig,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
@@ -50,7 +50,7 @@ public class CheckpointSyncActions extends FastSyncActions {
 
   @Override
   public ChainDownloader createChainDownloader(
-      final FastSyncState currentState, final SyncDurationMetrics syncDurationMetrics) {
+      final QuickSyncState currentState, final SyncDurationMetrics syncDurationMetrics) {
     return CheckpointSyncChainDownloader.create(
         syncConfig,
         worldStateStorageCoordinator,

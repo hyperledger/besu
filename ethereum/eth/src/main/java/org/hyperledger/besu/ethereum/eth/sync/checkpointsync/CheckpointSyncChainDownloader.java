@@ -18,17 +18,17 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.SyncTargetManager;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncChainDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.SyncTargetManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
+public class CheckpointSyncChainDownloader extends QuickSyncChainDownloader {
 
   public static ChainDownloader create(
       final SynchronizerConfiguration config,
@@ -38,7 +38,7 @@ public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
-      final FastSyncState fastSyncState,
+      final QuickSyncState quickSyncState,
       final SyncDurationMetrics syncDurationMetrics) {
 
     final SyncTargetManager syncTargetManager =
@@ -49,13 +49,13 @@ public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
             protocolContext,
             ethContext,
             metricsSystem,
-            fastSyncState);
+            quickSyncState);
 
     return new PipelineChainDownloader(
         syncState,
         syncTargetManager,
         new CheckpointSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem),
+            config, protocolSchedule, protocolContext, ethContext, quickSyncState, metricsSystem),
         ethContext.getScheduler(),
         metricsSystem,
         syncDurationMetrics);

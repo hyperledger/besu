@@ -21,8 +21,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncActions;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -118,7 +118,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
   @Override
   public CompletableFuture<Void> run(
-      final FastSyncActions fastSyncActions, final FastSyncState fastSyncState) {
+      final QuickSyncActions quickSyncActions, final QuickSyncState quickSyncState) {
     synchronized (this) {
       final SnapWorldDownloadState oldDownloadState = this.downloadState.get();
       if (oldDownloadState != null && oldDownloadState.isDownloading()) {
@@ -129,8 +129,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
         return failed;
       }
 
-      final SnapSyncProcessState snapSyncState = (SnapSyncProcessState) fastSyncState;
-      final BlockHeader header = fastSyncState.getPivotBlockHeader().get();
+      final SnapSyncProcessState snapSyncState = (SnapSyncProcessState) quickSyncState;
+      final BlockHeader header = quickSyncState.getPivotBlockHeader().get();
       final Hash stateRoot = header.getStateRoot();
       LOG.info(
           "Downloading world state from peers for pivot block {}. State root {} pending requests {}",
@@ -201,7 +201,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final DynamicPivotBlockSelector dynamicPivotBlockManager =
           new DynamicPivotBlockSelector(
               ethContext,
-              fastSyncActions,
+              quickSyncActions,
               snapSyncState,
               snapSyncConfiguration.getPivotBlockWindowValidity(),
               snapSyncConfiguration.getPivotBlockDistanceBeforeCaching());

@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncActions;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -27,38 +27,38 @@ import org.hyperledger.besu.services.tasks.TaskCollection;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
-public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
+public class SnapSyncDownloader extends QuickSyncDownloader<SnapDataRequest> {
 
   public SnapSyncDownloader(
-      final FastSyncActions fastSyncActions,
+      final QuickSyncActions quickSyncActions,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStateDownloader worldStateDownloader,
-      final FastSyncStateStorage fastSyncStateStorage,
+      final QuickSyncStateStorage quickSyncStateStorage,
       final TaskCollection<SnapDataRequest> taskCollection,
       final Path fastSyncDataDirectory,
-      final FastSyncState initialFastSyncState,
+      final QuickSyncState initialQuickSyncState,
       final SyncDurationMetrics syncDurationMetrics) {
     super(
-        fastSyncActions,
+        quickSyncActions,
         worldStateStorageCoordinator,
         worldStateDownloader,
-        fastSyncStateStorage,
+        quickSyncStateStorage,
         taskCollection,
         fastSyncDataDirectory,
-        initialFastSyncState,
+        initialQuickSyncState,
         syncDurationMetrics);
   }
 
   @Override
-  protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
-    LOG.debug("Start snap sync with initial sync state {}", fastSyncState);
-    return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
+  protected CompletableFuture<QuickSyncState> start(final QuickSyncState quickSyncState) {
+    LOG.debug("Start snap sync with initial sync state {}", quickSyncState);
+    return findPivotBlock(quickSyncState, fss -> downloadChainAndWorldState(quickSyncActions, fss));
   }
 
   @Override
-  protected FastSyncState storeState(final FastSyncState fastSyncState) {
-    initialFastSyncState = fastSyncState;
-    fastSyncStateStorage.storeState(fastSyncState);
-    return new SnapSyncProcessState(fastSyncState);
+  protected QuickSyncState storeState(final QuickSyncState quickSyncState) {
+    initialQuickSyncState = quickSyncState;
+    quickSyncStateStorage.storeState(quickSyncState);
+    return new SnapSyncProcessState(quickSyncState);
   }
 }

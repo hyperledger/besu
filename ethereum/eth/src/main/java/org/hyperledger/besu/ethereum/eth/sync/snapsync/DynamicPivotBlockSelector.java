@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncActions;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncState;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -46,7 +46,7 @@ public class DynamicPivotBlockSelector {
   private final AtomicBoolean isTimeToCheckAgain = new AtomicBoolean(true);
 
   private final EthContext ethContext;
-  private final FastSyncActions syncActions;
+  private final QuickSyncActions syncActions;
 
   private final SnapSyncProcessState syncState;
   private final int pivotBlockWindowValidity;
@@ -56,12 +56,12 @@ public class DynamicPivotBlockSelector {
 
   public DynamicPivotBlockSelector(
       final EthContext ethContext,
-      final FastSyncActions fastSyncActions,
+      final QuickSyncActions quickSyncActions,
       final SnapSyncProcessState fastSyncState,
       final int pivotBlockWindowValidity,
       final int pivotBlockDistanceBeforeCaching) {
     this.ethContext = ethContext;
-    this.syncActions = fastSyncActions;
+    this.syncActions = quickSyncActions;
     this.syncState = fastSyncState;
     this.pivotBlockWindowValidity = pivotBlockWindowValidity;
     this.pivotBlockDistanceBeforeCaching = pivotBlockDistanceBeforeCaching;
@@ -96,7 +96,7 @@ public class DynamicPivotBlockSelector {
                       .log();
 
                   searchForNewPivot =
-                      CompletableFuture.completedFuture(FastSyncState.EMPTY_SYNC_STATE)
+                      CompletableFuture.completedFuture(QuickSyncState.EMPTY_SYNC_STATE)
                           .thenCompose(syncActions::selectPivotBlock)
                           .thenCompose(
                               fss -> {
@@ -150,7 +150,7 @@ public class DynamicPivotBlockSelector {
     }
   }
 
-  private CompletableFuture<Void> downloadNewPivotBlock(final FastSyncState fss) {
+  private CompletableFuture<Void> downloadNewPivotBlock(final QuickSyncState fss) {
     return syncActions
         .downloadPivotBlockHeader(fss)
         .thenAccept(
@@ -164,7 +164,7 @@ public class DynamicPivotBlockSelector {
         .orTimeout(20, TimeUnit.SECONDS);
   }
 
-  private boolean isSamePivotBlock(final FastSyncState fss) {
+  private boolean isSamePivotBlock(final QuickSyncState fss) {
     return lastPivotBlockFound.isPresent()
         && fss.hasPivotBlockHash()
         && lastPivotBlockFound.get().getHash().equals(fss.getPivotBlockHash().get());

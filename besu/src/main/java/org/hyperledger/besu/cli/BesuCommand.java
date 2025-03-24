@@ -1666,10 +1666,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-    if (SyncMode.FAST == syncMode) {
-      logger.warn("FAST sync is deprecated. Recommend using SNAP sync instead.");
-    }
-
     if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
         && isOptionSet(commandLine, "--sync-min-peers")) {
       logger.warn("--sync-min-peers is ignored in FULL sync-mode");
@@ -1957,9 +1953,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
       logger.warn("--privacy-enabled and related options are " + PRIVACY_DEPRECATION_PREFIX);
       final String errorSuffix = "cannot be enabled with privacy.";
-      if (syncMode == SyncMode.FAST) {
-        throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
-      }
       if (syncMode == SyncMode.SNAP) {
         throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
       }

@@ -27,8 +27,8 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.eth.sync.QuickSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -46,7 +46,7 @@ public class RangeHeadersFetcher {
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   // The range we're aiming to reach at the end of this sync.
-  private final FastSyncState fastSyncState;
+  private final QuickSyncState quickSyncState;
   private final MetricsSystem metricsSystem;
 
   public RangeHeadersFetcher(
@@ -54,19 +54,19 @@ public class RangeHeadersFetcher {
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem) {
-    this(syncConfig, protocolSchedule, ethContext, new FastSyncState(), metricsSystem);
+    this(syncConfig, protocolSchedule, ethContext, new QuickSyncState(), metricsSystem);
   }
 
   public RangeHeadersFetcher(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final FastSyncState fastSyncState,
+      final QuickSyncState quickSyncState,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
-    this.fastSyncState = fastSyncState;
+    this.quickSyncState = quickSyncState;
     this.metricsSystem = metricsSystem;
   }
 
@@ -81,7 +81,7 @@ public class RangeHeadersFetcher {
     final long previousRangeNumber = previousRangeHeader.getNumber();
 
     final int additionalHeaderCount;
-    final Optional<BlockHeader> finalRangeHeader = fastSyncState.getPivotBlockHeader();
+    final Optional<BlockHeader> finalRangeHeader = quickSyncState.getPivotBlockHeader();
     if (finalRangeHeader.isPresent()) {
       final BlockHeader targetHeader = finalRangeHeader.get();
       final long blocksUntilTarget = targetHeader.getNumber() - previousRangeNumber;
@@ -190,7 +190,7 @@ public class RangeHeadersFetcher {
 
   public boolean nextRangeEndsAtChainHead(
       final EthPeer peer, final BlockHeader previousRangeHeader) {
-    final Optional<BlockHeader> finalRangeHeader = fastSyncState.getPivotBlockHeader();
+    final Optional<BlockHeader> finalRangeHeader = quickSyncState.getPivotBlockHeader();
     if (finalRangeHeader.isPresent()) {
       return false;
     }
