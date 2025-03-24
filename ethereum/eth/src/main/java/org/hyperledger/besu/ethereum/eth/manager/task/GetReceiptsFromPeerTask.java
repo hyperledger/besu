@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -50,7 +50,7 @@ public class GetReceiptsFromPeerTask
       final EthContext ethContext,
       final Collection<BlockHeader> blockHeaders,
       final MetricsSystem metricsSystem) {
-    super(ethContext, EthPV63.GET_RECEIPTS, metricsSystem);
+    super(ethContext, EthProtocolMessages.GET_RECEIPTS, metricsSystem);
     this.blockHeaders = blockHeaders;
     blockHeaders.forEach(
         header ->

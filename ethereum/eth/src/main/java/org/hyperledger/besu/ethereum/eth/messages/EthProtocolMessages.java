@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
-public final class EthPV62 {
+public final class EthProtocolMessages {
 
   public static final int STATUS = 0x00;
 
@@ -32,7 +32,21 @@ public final class EthPV62 {
 
   public static final int NEW_BLOCK = 0X07;
 
-  private EthPV62() {
+  public static final int NEW_POOLED_TRANSACTION_HASHES = 0x08;
+
+  public static final int GET_POOLED_TRANSACTIONS = 0x09;
+
+  public static final int RECEIPTS = 0x10;
+
+  public static final int POOLED_TRANSACTIONS = 0x0A;
+
+  public static final int GET_NODE_DATA = 0x0D;
+
+  public static final int NODE_DATA = 0x0E;
+
+  public static final int GET_RECEIPTS = 0x0F;
+
+  private EthProtocolMessages() {
     // Holder for constants only
   }
 }
