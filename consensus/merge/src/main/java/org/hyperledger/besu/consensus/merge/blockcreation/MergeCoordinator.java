@@ -541,24 +541,25 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         .map(BlockHeader::getHash)
         .map(finalizedHash::equals)
         .orElse(Boolean.FALSE)) {
-            LOG.atDebug()
-            .setMessage("Finalized block already set to {}, nothing to do")
-            .addArgument(finalizedHash)
-            .log();
+      LOG.atDebug()
+          .setMessage("Finalized block already set to {}, nothing to do")
+          .addArgument(finalizedHash)
+          .log();
       return;
     }
 
     // Check if the finalized block actually exists in the blockchain
-    if (finalizedHash.equals(Hash.ZERO)) {  // Check for zero hash
+    if (finalizedHash.equals(Hash.ZERO)) { // Check for zero hash
       LOG.warn("Received zero hash as finalized block. Ignoring...");
     } else {
-      Optional<BlockHeader> maybeFinalizedHeader = protocolContext.getBlockchain().getBlockHeader(finalizedHash);
+      Optional<BlockHeader> maybeFinalizedHeader =
+          protocolContext.getBlockchain().getBlockHeader(finalizedHash);
 
       if (maybeFinalizedHeader.isPresent()) {
         LOG.atDebug()
-                .setMessage("Setting finalized block header to {}")
-                .addArgument(maybeFinalizedHeader.get()::toLogString)
-                .log();
+            .setMessage("Setting finalized block header to {}")
+            .addArgument(maybeFinalizedHeader.get()::toLogString)
+            .log();
 
         mergeContext.setFinalized(maybeFinalizedHeader.get());
       } else {
