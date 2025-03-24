@@ -16,6 +16,7 @@ package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.CompactableStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -32,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** This class will adapt a SegmentedKeyValueStorage to a KeyValueStorage instance. */
-public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
+public class SegmentedKeyValueStorageAdapter implements KeyValueStorage, CompactableStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(SegmentedKeyValueStorageAdapter.class);
   private final SegmentIdentifier segmentIdentifier;
@@ -134,6 +135,14 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
     if (storage.isClosed()) {
       LOG.error("Attempting to use a closed Storage instance.");
       throw new StorageException("Storage has been closed");
+    }
+  }
+
+  @Override
+  public void compact() {
+    throwIfClosed();
+    if (storage instanceof CompactableStorage) {
+      ((CompactableStorage) storage).compact();
     }
   }
 
