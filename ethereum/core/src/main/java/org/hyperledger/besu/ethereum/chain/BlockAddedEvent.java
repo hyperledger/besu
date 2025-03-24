@@ -16,22 +16,25 @@ package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class BlockAddedEvent {
 
-  private final Block block;
+  private final Supplier<Block> blockSupplier;
   private final List<Transaction> addedTransactions;
   private final List<Transaction> removedTransactions;
   private final List<TransactionReceipt> transactionReceipts;
   private final EventType eventType;
   private final List<LogWithMetadata> logsWithMetadata;
   private final Hash commonAncestorHash;
+  private final BlockHeader header;
 
   public enum EventType {
     HEAD_ADVANCED,
@@ -42,19 +45,37 @@ public class BlockAddedEvent {
 
   private BlockAddedEvent(
       final EventType eventType,
-      final Block block,
+      final Supplier<Block> blockSupplier,
+      final BlockHeader header,
       final List<Transaction> addedTransactions,
       final List<Transaction> removedTransactions,
       final List<TransactionReceipt> transactionReceipts,
       final List<LogWithMetadata> logsWithMetadata,
       final Hash commonAncestorHash) {
     this.eventType = eventType;
-    this.block = block;
+    this.blockSupplier = blockSupplier;
+    this.header = header;
     this.addedTransactions = addedTransactions;
     this.removedTransactions = removedTransactions;
     this.transactionReceipts = transactionReceipts;
     this.logsWithMetadata = logsWithMetadata;
     this.commonAncestorHash = commonAncestorHash;
+  }
+
+  public static BlockAddedEvent createForSyncHeadAdvancement(
+      final BlockHeader blockHeader,
+      final Supplier<Block> blockSupplier,
+      final List<LogWithMetadata> logsWithMetadata,
+      final List<TransactionReceipt> transactionReceipts) {
+    return new BlockAddedEvent(
+        EventType.HEAD_ADVANCED,
+        blockSupplier,
+        blockHeader,
+        Collections.emptyList(),
+        Collections.emptyList(),
+        transactionReceipts,
+        logsWithMetadata,
+        blockHeader.getParentHash());
   }
 
   public static BlockAddedEvent createForHeadAdvancement(
@@ -63,7 +84,8 @@ public class BlockAddedEvent {
       final List<TransactionReceipt> transactionReceipts) {
     return new BlockAddedEvent(
         EventType.HEAD_ADVANCED,
-        block,
+        () -> block,
+        block.getHeader(),
         block.getBody().getTransactions(),
         Collections.emptyList(),
         transactionReceipts,
@@ -80,7 +102,8 @@ public class BlockAddedEvent {
       final Hash commonAncestorHash) {
     return new BlockAddedEvent(
         EventType.CHAIN_REORG,
-        block,
+        () -> block,
+        block.getHeader(),
         addedTransactions,
         removedTransactions,
         transactionReceipts,
@@ -91,7 +114,8 @@ public class BlockAddedEvent {
   public static BlockAddedEvent createForFork(final Block block) {
     return new BlockAddedEvent(
         EventType.FORK,
-        block,
+        () -> block,
+        block.getHeader(),
         Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),
@@ -102,7 +126,8 @@ public class BlockAddedEvent {
   public static BlockAddedEvent createForStoredOnly(final Block block) {
     return new BlockAddedEvent(
         EventType.STORED_ONLY,
-        block,
+        () -> block,
+        block.getHeader(),
         Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),
@@ -111,7 +136,11 @@ public class BlockAddedEvent {
   }
 
   public Block getBlock() {
-    return block;
+    return blockSupplier.get();
+  }
+
+  public BlockHeader getHeader() {
+    return header;
   }
 
   public boolean isNewCanonicalHead() {
@@ -148,7 +177,7 @@ public class BlockAddedEvent {
         + "eventType="
         + eventType
         + ", block="
-        + block.toLogString()
+        + header.toLogString()
         + ", commonAncestorHash="
         + commonAncestorHash
         + ", addedTransactions count="
