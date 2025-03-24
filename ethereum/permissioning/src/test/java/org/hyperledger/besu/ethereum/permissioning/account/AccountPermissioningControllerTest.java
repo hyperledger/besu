@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 
+import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +46,9 @@ public class AccountPermissioningControllerTest {
   public void before() {
     permissioningController =
         new AccountPermissioningController(
-            Optional.of(localConfigController), Optional.of(smartContractController));
+            Optional.of(localConfigController),
+            Optional.of(smartContractController),
+            Collections.emptyList());
   }
 
   @Test

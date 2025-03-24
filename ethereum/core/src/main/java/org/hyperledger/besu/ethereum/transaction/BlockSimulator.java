@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.transaction.BlockStateCalls.fillBlockStateCalls;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -90,11 +91,11 @@ public class BlockSimulator {
    * Processes a list of BlockStateCalls sequentially, collecting the results.
    *
    * @param header The block header for all simulations.
-   * @param blockStateCalls The list of BlockStateCalls to process.
+   * @param blockSimulationParameter The blockSimulationParameter containing the block state calls.
    * @return A list of BlockSimulationResult objects from processing each BlockStateCall.
    */
   public List<BlockSimulationResult> process(
-      final BlockHeader header, final List<? extends BlockStateCall> blockStateCalls) {
+      final BlockHeader header, final BlockSimulationParameter blockSimulationParameter) {
     try (final MutableWorldState ws =
         worldStateArchive
             .getWorldState(withBlockHeaderAndNoUpdateNodeHead(header))
@@ -102,7 +103,7 @@ public class BlockSimulator {
                 () ->
                     new IllegalArgumentException(
                         "Public world state not available for block " + header.toLogString()))) {
-      return process(header, blockStateCalls, ws);
+      return process(header, blockSimulationParameter, ws);
     } catch (IllegalArgumentException e) {
       throw e;
     } catch (final Exception e) {
@@ -114,18 +115,24 @@ public class BlockSimulator {
    * Processes a list of BlockStateCalls sequentially, collecting the results.
    *
    * @param header The block header for all simulations.
-   * @param blockStateCalls The list of BlockStateCalls to process.
+   * @param blockSimulationParameter The blockSimulationParameter containing the block state calls.
    * @param worldState The initial MutableWorldState to start with.
    * @return A list of BlockSimulationResult objects from processing each BlockStateCall.
    */
   public List<BlockSimulationResult> process(
       final BlockHeader header,
-      final List<? extends BlockStateCall> blockStateCalls,
+      final BlockSimulationParameter blockSimulationParameter,
       final MutableWorldState worldState) {
     List<BlockSimulationResult> simulationResults = new ArrayList<>();
+
+    // Fill gaps between blocks
+    List<BlockStateCall> blockStateCalls =
+        fillBlockStateCalls(blockSimulationParameter.getBlockStateCalls(), header);
+
     for (BlockStateCall blockStateCall : blockStateCalls) {
       BlockSimulationResult simulationResult =
-          processSingleBlockStateCall(header, blockStateCall, worldState);
+          processBlockStateCall(
+              header, blockStateCall, worldState, blockSimulationParameter.isValidation());
       simulationResults.add(simulationResult);
     }
     return simulationResults;
@@ -139,8 +146,11 @@ public class BlockSimulator {
    * @param ws The MutableWorldState to use for the simulation.
    * @return A BlockSimulationResult from processing the BlockStateCall.
    */
-  private BlockSimulationResult processSingleBlockStateCall(
-      final BlockHeader header, final BlockStateCall blockStateCall, final MutableWorldState ws) {
+  private BlockSimulationResult processBlockStateCall(
+      final BlockHeader header,
+      final BlockStateCall blockStateCall,
+      final MutableWorldState ws,
+      final boolean shouldValidate) {
     BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
     long timestamp = blockOverrides.getTimestamp().orElse(header.getTimestamp() + 1);
     ProtocolSpec newProtocolSpec = protocolSchedule.getForNextBlockHeader(header, timestamp);
@@ -159,7 +169,12 @@ public class BlockSimulator {
 
     List<TransactionSimulatorResult> transactionSimulatorResults =
         processTransactions(
-            blockHeader, blockStateCall, ws, miningBeneficiaryCalculator, blockHashLookup);
+            blockHeader,
+            blockStateCall,
+            ws,
+            shouldValidate,
+            miningBeneficiaryCalculator,
+            blockHashLookup);
 
     return finalizeBlock(
         blockHeader, blockStateCall, ws, newProtocolSpec, transactionSimulatorResults);
@@ -170,6 +185,7 @@ public class BlockSimulator {
       final BlockHeader blockHeader,
       final BlockStateCall blockStateCall,
       final MutableWorldState ws,
+      final boolean shouldValidate,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final BlockHashLookup blockHashLookup) {
 
@@ -182,7 +198,7 @@ public class BlockSimulator {
           transactionSimulator.processWithWorldUpdater(
               callParameter,
               Optional.empty(), // We have already applied state overrides on block level
-              buildTransactionValidationParams(blockStateCall.isValidate()),
+              buildTransactionValidationParams(shouldValidate),
               OperationTracer.NO_TRACING,
               blockHeader,
               transactionUpdater,

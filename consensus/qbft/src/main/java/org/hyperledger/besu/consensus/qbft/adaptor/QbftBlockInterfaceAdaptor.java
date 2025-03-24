@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
-import static org.hyperledger.besu.consensus.qbft.adaptor.BlockHeaderFunctionsUtil.getBlockHeaderFunctions;
 import static org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil.toBesuBlock;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 
@@ -42,11 +41,10 @@ public class QbftBlockInterfaceAdaptor implements QbftBlockInterface {
   }
 
   @Override
-  public QbftBlock replaceRoundInBlock(
-      final QbftBlock proposalBlock, final int roundNumber, final QbftHashMode hashMode) {
+  public QbftBlock replaceRoundInBlock(final QbftBlock proposalBlock, final int roundNumber) {
     final Block besuBlock = toBesuBlock(proposalBlock);
     final BlockHeaderFunctions blockHeaderFunctions =
-        getBlockHeaderFunctions(bftExtraDataCodec, hashMode);
+        BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec);
     final Block updatedRoundBlock =
         bftBlockInterface.replaceRoundInBlock(besuBlock, roundNumber, blockHeaderFunctions);
     return new QbftBlockAdaptor(updatedRoundBlock);
