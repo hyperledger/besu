@@ -98,7 +98,7 @@ public class FilterManagerLogFilterTest {
     filterManager.installPrivateLogFilter(
         PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY, latest(), latest(), logsQuery());
     filterManager.installLogFilter(latest(), latest(), logsQuery());
-    final Hash blockAddedHash = recordBlockEvents(1).get(0).getBlock().getHash();
+    final Hash blockAddedHash = recordBlockEvents(1).get(0).getHeader().getHash();
 
     verify(blockchainQueries, never()).matchingLogs(eq(100L), eq(100L), eq(logsQuery()), any());
     verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery()));
@@ -110,7 +110,7 @@ public class FilterManagerLogFilterTest {
         PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY, blockNum(1L), blockNum(10L), logsQuery());
     filterManager.installLogFilter(blockNum(1L), blockNum(10L), logsQuery());
 
-    final Hash blockAddedHash = recordBlockEvents(1).get(0).getBlock().getHash();
+    final Hash blockAddedHash = recordBlockEvents(1).get(0).getHeader().getHash();
 
     verify(blockchainQueries, never()).matchingLogs(any(Hash.class), any(LogsQuery.class), any());
     verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery()));
@@ -245,7 +245,7 @@ public class FilterManagerLogFilterTest {
     final String filterId =
         filterManager.installPrivateLogFilter(
             PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY, latest(), latest(), logsQuery);
-    final Hash blockAddedHash = recordBlockEvents(1).get(0).getBlock().getHash();
+    final Hash blockAddedHash = recordBlockEvents(1).get(0).getHeader().getHash();
 
     verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery));
     assertThat(filterManager.logsChanges(filterId).get(0)).isEqualTo(logWithMetadata);
