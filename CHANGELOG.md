@@ -4,6 +4,7 @@
 ### Breaking Changes
 ### Additions and Improvements
 - Add Hoodi discovery DNS [#8446](https://github.com/hyperledger/besu/pull/8446)
+- Decode deposit log data without Web3j [#8394](https://github.com/hyperledger/besu/issues/8394)
 
 #### Dependencies 
 - Replace tuweni libs with https://github.com/Consensys/tuweni [#8330](https://github.com/hyperledger/besu/pull/8330)
@@ -64,7 +65,6 @@ have support in besu-native can run mainnet ethereum configurations.  Windows su
 - Upgrade to execution-spec-tests v4.1.0 including better EIP-2537 coverage for BLS [#8402](https://github.com/hyperledger/besu/pull/8402)
 - Add era1 format to blocks import subcommand [#7935](https://github.com/hyperledger/besu/issues/7935)
 - Add Hoodi as new named testnet [#8428](https://github.com/hyperledger/besu/issues/8428)
-- Decode deposit log data without Web3j [#8394](https://github.com/hyperledger/besu/issues/8394)
 
 ### Bug fixes
 - Add missing RPC method `debug_accountRange` to `RpcMethod.java` so this method can be used with `--rpc-http-api-method-no-auth` [#8153](https://github.com/hyperledger/besu/issues/8153)
