@@ -4,6 +4,7 @@
 ### Breaking Changes
 ### Additions and Improvements
 - Add Hoodi discovery DNS [#8446](https://github.com/hyperledger/besu/pull/8446)
+- Decode deposit log data without Web3j [#8394](https://github.com/hyperledger/besu/issues/8394)
 
 #### Dependencies 
 - Replace tuweni libs with https://github.com/Consensys/tuweni [#8330](https://github.com/hyperledger/besu/pull/8330)

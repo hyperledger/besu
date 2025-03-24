@@ -32,7 +32,6 @@ dependencies {
   api platform('io.opentelemetry:opentelemetry-bom:1.47.0')
   api platform('io.prometheus:prometheus-metrics-bom:1.3.5')
   api platform('io.vertx:vertx-stack-depchain:4.5.13')
-  api platform('javax.inject:javax.inject:1')
   api platform('org.apache.logging.log4j:log4j-bom:2.24.3')
   api platform('org.assertj:assertj-bom:3.27.3')
   api platform('org.immutables:bom:2.10.1')
@@ -117,6 +116,8 @@ dependencies {
     api 'io.consensys.protocols:tuweni-rlp:2.6.0'
     api 'io.consensys.protocols:tuweni-toml:2.6.0'
     api 'io.consensys.protocols:tuweni-units:2.6.0'
+
+    api 'javax.inject:javax.inject:1'
 
     api 'net.java.dev.jna:jna:5.16.0'
 
