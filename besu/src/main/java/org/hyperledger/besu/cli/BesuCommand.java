@@ -984,7 +984,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       configureNativeLibs(Optional.ofNullable(network));
       if (enablePrecompileCaching) {
-        // enable precompile caching if it is enabled and parallel tx processing is enabled:
         configurePrecompileCaching();
       }
 

@@ -101,6 +101,7 @@ public abstract class AbstractPrecompiledContract implements PrecompiledContract
 
   /**
    * calculate a cache key based on input bytes
+   *
    * @param input bytes
    * @return integer cache key
    */

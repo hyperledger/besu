@@ -29,6 +29,7 @@ public class BLS12G2MultiExpPrecompiledContract extends AbstractBLS12Precompiled
           .maximumWeight(16_000_000)
           .weigher((k, v) -> ((PrecompileInputResultTuple) v).cachedInput().size())
           .build();
+
   /** Instantiates a new BLS12_G2 MultiExp precompiled contract. */
   public BLS12G2MultiExpPrecompiledContract() {
     super(
