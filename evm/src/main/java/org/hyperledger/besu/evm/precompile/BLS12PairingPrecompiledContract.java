@@ -29,6 +29,7 @@ public class BLS12PairingPrecompiledContract extends AbstractBLS12PrecompiledCon
           .maximumWeight(16_000_000)
           .weigher((k, v) -> ((PrecompileInputResultTuple) v).cachedInput().size())
           .build();
+
   /** Instantiates a new BLS12Pairing precompiled contract. */
   public BLS12PairingPrecompiledContract() {
     super(
