@@ -147,9 +147,6 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
       }
     }
 
-
-
-
     final byte[] result = new byte[LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_RESULT_BYTES];
     final byte[] error = new byte[LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_ERROR_BYTES];
 
@@ -159,19 +156,30 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
         new IntByReference(LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_ERROR_BYTES);
 
     final int inputSize = Math.min(inputLimit, input.size());
-    final int errorNo = LibGnarkEIP2537.eip2537_perform_operation(operationId,
-        input.slice(0, inputSize).toArrayUnsafe(), inputSize, result, o_len, error, err_len);
+    final int errorNo =
+        LibGnarkEIP2537.eip2537_perform_operation(
+            operationId,
+            input.slice(0, inputSize).toArrayUnsafe(),
+            inputSize,
+            result,
+            o_len,
+            error,
+            err_len);
 
     if (errorNo == 0) {
-      res = new PrecompileInputResultTuple(enableResultCaching ? input.copy() : input,
-          PrecompileContractResult.success(Bytes.wrap(result, 0, o_len.getValue())));
+      res =
+          new PrecompileInputResultTuple(
+              enableResultCaching ? input.copy() : input,
+              PrecompileContractResult.success(Bytes.wrap(result, 0, o_len.getValue())));
     } else {
       final String errorMessage = new String(error, 0, err_len.getValue(), UTF_8);
       messageFrame.setRevertReason(Bytes.wrap(error, 0, err_len.getValue()));
       LOG.trace("Error executing precompiled contract {}: '{}'", name, errorMessage);
-      res = new PrecompileInputResultTuple(enableResultCaching ? input.copy() : input,
-          PrecompileContractResult.halt(null,
-              Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR)));
+      res =
+          new PrecompileInputResultTuple(
+              enableResultCaching ? input.copy() : input,
+              PrecompileContractResult.halt(
+                  null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR)));
     }
 
     if (enableResultCaching && cacheKey != null) {
@@ -227,5 +235,10 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     enableResultCaching = enablePrecompileCaching;
   }
 
+  /**
+   * get the presompile-specific cache.
+   *
+   * @return precompile cache.
+   */
   protected abstract Cache<Integer, PrecompileInputResultTuple> getCache();
 }
