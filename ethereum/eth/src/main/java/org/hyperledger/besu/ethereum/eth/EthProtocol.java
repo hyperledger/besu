@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth;
 
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
@@ -40,16 +38,16 @@ public class EthProtocol implements SubProtocol {
 
   public static boolean requestIdCompatible(final int code) {
     return Set.of(
-            EthPV62.GET_BLOCK_HEADERS,
-            EthPV62.BLOCK_HEADERS,
-            EthPV62.GET_BLOCK_BODIES,
-            EthPV62.BLOCK_BODIES,
-            EthPV65.GET_POOLED_TRANSACTIONS,
-            EthPV65.POOLED_TRANSACTIONS,
-            EthPV63.GET_NODE_DATA,
-            EthPV63.NODE_DATA,
-            EthPV63.GET_RECEIPTS,
-            EthPV63.RECEIPTS)
+            EthProtocolMessages.GET_BLOCK_HEADERS,
+            EthProtocolMessages.BLOCK_HEADERS,
+            EthProtocolMessages.GET_BLOCK_BODIES,
+            EthProtocolMessages.BLOCK_BODIES,
+            EthProtocolMessages.GET_POOLED_TRANSACTIONS,
+            EthProtocolMessages.POOLED_TRANSACTIONS,
+            EthProtocolMessages.GET_NODE_DATA,
+            EthProtocolMessages.NODE_DATA,
+            EthProtocolMessages.GET_RECEIPTS,
+            EthProtocolMessages.RECEIPTS)
         .contains(code);
   }
 
@@ -85,35 +83,35 @@ public class EthProtocol implements SubProtocol {
   @Override
   public String messageName(final int protocolVersion, final int code) {
     switch (code) {
-      case EthPV62.STATUS:
+      case EthProtocolMessages.STATUS:
         return "Status";
-      case EthPV62.NEW_BLOCK_HASHES:
+      case EthProtocolMessages.NEW_BLOCK_HASHES:
         return "NewBlockHashes";
-      case EthPV62.TRANSACTIONS:
+      case EthProtocolMessages.TRANSACTIONS:
         return "Transactions";
-      case EthPV62.GET_BLOCK_HEADERS:
+      case EthProtocolMessages.GET_BLOCK_HEADERS:
         return "GetBlockHeaders";
-      case EthPV62.BLOCK_HEADERS:
+      case EthProtocolMessages.BLOCK_HEADERS:
         return "BlockHeaders";
-      case EthPV62.GET_BLOCK_BODIES:
+      case EthProtocolMessages.GET_BLOCK_BODIES:
         return "GetBlockBodies";
-      case EthPV62.BLOCK_BODIES:
+      case EthProtocolMessages.BLOCK_BODIES:
         return "BlockBodies";
-      case EthPV62.NEW_BLOCK:
+      case EthProtocolMessages.NEW_BLOCK:
         return "NewBlock";
-      case EthPV65.NEW_POOLED_TRANSACTION_HASHES:
+      case EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES:
         return "NewPooledTransactionHashes";
-      case EthPV65.GET_POOLED_TRANSACTIONS:
+      case EthProtocolMessages.GET_POOLED_TRANSACTIONS:
         return "GetPooledTransactions";
-      case EthPV65.POOLED_TRANSACTIONS:
+      case EthProtocolMessages.POOLED_TRANSACTIONS:
         return "PooledTransactions";
-      case EthPV63.GET_NODE_DATA:
+      case EthProtocolMessages.GET_NODE_DATA:
         return "GetNodeData";
-      case EthPV63.NODE_DATA:
+      case EthProtocolMessages.NODE_DATA:
         return "NodeData";
-      case EthPV63.GET_RECEIPTS:
+      case EthProtocolMessages.GET_RECEIPTS:
         return "GetReceipts";
-      case EthPV63.RECEIPTS:
+      case EthProtocolMessages.RECEIPTS:
         return "Receipts";
       default:
         return INVALID_MESSAGE_NAME;

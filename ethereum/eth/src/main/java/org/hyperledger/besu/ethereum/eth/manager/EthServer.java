@@ -25,9 +25,7 @@ import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
@@ -73,7 +71,7 @@ class EthServer {
     final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
 
     ethMessages.registerResponseConstructor(
-        EthPV62.GET_BLOCK_HEADERS,
+        EthProtocolMessages.GET_BLOCK_HEADERS,
         messageData ->
             constructGetHeadersResponse(
                 blockchain,
@@ -81,7 +79,7 @@ class EthServer {
                 ethereumWireProtocolConfiguration.getMaxGetBlockHeaders(),
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
-        EthPV62.GET_BLOCK_BODIES,
+        EthProtocolMessages.GET_BLOCK_BODIES,
         messageData ->
             constructGetBodiesResponse(
                 blockchain,
@@ -89,7 +87,7 @@ class EthServer {
                 ethereumWireProtocolConfiguration.getMaxGetBlockBodies(),
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
-        EthPV63.GET_RECEIPTS,
+        EthProtocolMessages.GET_RECEIPTS,
         messageData ->
             constructGetReceiptsResponse(
                 blockchain,
@@ -97,7 +95,7 @@ class EthServer {
                 ethereumWireProtocolConfiguration.getMaxGetReceipts(),
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
-        EthPV63.GET_NODE_DATA,
+        EthProtocolMessages.GET_NODE_DATA,
         messageData ->
             constructGetNodeDataResponse(
                 worldStateArchive,
@@ -105,7 +103,7 @@ class EthServer {
                 ethereumWireProtocolConfiguration.getMaxGetNodeData(),
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
-        EthPV65.GET_POOLED_TRANSACTIONS,
+        EthProtocolMessages.GET_POOLED_TRANSACTIONS,
         messageData ->
             constructGetPooledTransactionsResponse(
                 transactionPool,
