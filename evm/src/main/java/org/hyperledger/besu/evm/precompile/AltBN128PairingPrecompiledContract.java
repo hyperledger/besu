@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -50,6 +51,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       Caffeine.newBuilder()
           .maximumWeight(16_000_000)
           .weigher((k, v) -> ((PrecompileInputResultTuple) v).cachedInput().size())
+          .expireAfterWrite(15, TimeUnit.MINUTES)  // Evict 15 minutes after each entry is written
           .build();
 
   /** The constant FALSE. */
