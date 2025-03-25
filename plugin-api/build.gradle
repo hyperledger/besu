@@ -31,8 +31,8 @@ jar {
 dependencies {
   api project(':datatypes')
   api 'org.apache.commons:commons-lang3'
-  api 'io.consensys.protocols:tuweni-bytes'
-  api 'io.consensys.protocols:tuweni-units'
+  api 'io.consensys.tuweni:tuweni-bytes'
+  api 'io.consensys.tuweni:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation project(':evm')
   compileOnly 'io.vertx:vertx-core'
