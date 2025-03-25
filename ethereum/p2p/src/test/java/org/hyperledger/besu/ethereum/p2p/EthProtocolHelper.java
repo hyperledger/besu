@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.p2p;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 public class EthProtocolHelper {
-  private static final int LAST_ETH_PROTOCOL_VERSION = 68;
-  private static final Capability LAST_ETH_PROTOCOL_CAPABILITY =
-      Capability.create("eth", LAST_ETH_PROTOCOL_VERSION);
+  private static final int ETH_LATEST_PROTOCOL_VERSION = 68;
+  private static final Capability ETH_LATEST_PROTOCOL_CAPABILITY =
+      Capability.create("eth", ETH_LATEST_PROTOCOL_VERSION);
 
   public static Capability getLatestVersion() {
-    return LAST_ETH_PROTOCOL_CAPABILITY;
+    return ETH_LATEST_PROTOCOL_CAPABILITY;
   }
 }
