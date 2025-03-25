@@ -2,8 +2,29 @@
 
 ## Unreleased
 ### Breaking Changes
+### Additions and Improvements
+- Add Hoodi discovery DNS [#8446](https://github.com/hyperledger/besu/pull/8446)
+- Decode deposit log data without Web3j [#8394](https://github.com/hyperledger/besu/issues/8394)
+
+#### Dependencies 
+- Replace tuweni libs with https://github.com/Consensys/tuweni [#8330](https://github.com/hyperledger/besu/pull/8330)
+- Performance: Consensys/tuweni 2.6.0 reduces boxing/unboxing overhead on some EVM opcodes, like PushX and Caller [#8330](https://github.com/hyperledger/besu/pull/8330)
+
+### Bug fixes
+- Fix QBFT and IBFT transitions that change the mining beneficiary [#8387](https://github.com/hyperledger/besu/issues/8387)
+- `eth_getLogs` - empty topic is a wildcard match [#8420](https://github.com/hyperledger/besu/pull/8420)
+- Upgrade spring-security-crypto to address CVE-2025-22228 [#8448](https://github.com/hyperledger/besu/pull/8448)
+
+## 25.3.0 
+
+### Breaking Changes
+NOTE: This release breaks native Windows compatibility for mainnet ethereum configurations.  As the prague(pectra) hardfork require 
+BLS12-381 precompiles and besu does not currently have a pure java implementation of bls12-381, only platforms which
+have support in besu-native can run mainnet ethereum configurations.  Windows support via WSL should still continue to work.
+
 - k8s (KUBERNETES) Nat method is removed. Use docker or none instead. [#8289](https://github.com/hyperledger/besu/pull/8289)
 - Change `Invalid block, unable to parse RLP` RPC error message to `Invalid block param (block not found)` [#8328](https://github.com/hyperledger/besu/pull/8328)
+- Mainnet ethereum now REQUIRES native crypto libraries, so only linux and macos(darwin) are supported mainnet configurations [#8418](https://github.com/hyperledger/besu/pull/8418)
 
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
@@ -27,6 +48,7 @@
 - Update Holesky and Sepolia deposit contract addresses [#8346](https://github.com/hyperledger/besu/pull/8346)
 #### Plugins
 - Allow plugins to propose transactions during block creation [#8268](https://github.com/hyperledger/besu/pull/8268)
+- Add support for transaction permissioning rules in Plugin API [#8365](https://github.com/hyperledger/besu/pull/8365)
 #### Parallelization
 - Improve conflict detection by considering slots to reduce false positives [#7923](https://github.com/hyperledger/besu/pull/7923)
 #### Dependencies 
@@ -39,13 +61,16 @@
 - Add TLS/mTLS options and configure the GraphQL HTTP service[#7910](https://github.com/hyperledger/besu/pull/7910)
 - Update `eth_getLogs` to return a `Block not found` error when the requested block is not found. [#8290](https://github.com/hyperledger/besu/pull/8290)
 - Change `Invalid block, unable to parse RLP` RPC error message to `Invalid block param (block not found)` [#8328](https://github.com/hyperledger/besu/pull/8328)
+- Add IBFT1 to QBFT migration capability [#8262](https://github.com/hyperledger/besu/pull/8262)
 - Support pending transaction score when saving and restoring txpool [#8363](https://github.com/hyperledger/besu/pull/8363)
 - Upgrade to execution-spec-tests v4.1.0 including better EIP-2537 coverage for BLS [#8402](https://github.com/hyperledger/besu/pull/8402)
 - Add era1 format to blocks import subcommand [#7935](https://github.com/hyperledger/besu/issues/7935)
+- Add Hoodi as new named testnet [#8428](https://github.com/hyperledger/besu/issues/8428)
 
 ### Bug fixes
 - Add missing RPC method `debug_accountRange` to `RpcMethod.java` so this method can be used with `--rpc-http-api-method-no-auth` [#8153](https://github.com/hyperledger/besu/issues/8153)
 - Add a fallback pivot strategy when the safe block does not change for a long time, to make possible to complete the initial sync in case the chain is not finalizing [#8395](https://github.com/hyperledger/besu/pull/8395)
+- Fix issue with new QBFT/IBFT blocks being produced under certain circumstances. [#8308](https://github.com/hyperledger/besu/issues/8308)
 
 ## 25.2.2 hotfix
 - Pectra - Sepolia: Fix for deposit contract log decoding [#8383](https://github.com/hyperledger/besu/pull/8383)
@@ -106,6 +131,8 @@
   - Smart-contract-based (onchain) permissioning
   - Proof of Work consensus
   - Fast Sync
+- Plugins 
+  - `BesuConfiguration` methods `getRpcHttpHost` and `getRpcHttpPort` (which return Optionals) have been deprecated in favour of `getConfiguredRpcHttpHost` and `getConfiguredRpcHttpPort` which return the actual values, which will always be populated since these options have defaults. [#8127](https://github.com/hyperledger/besu/pull/8127) 
 
 ### Additions and Improvements
 - Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)

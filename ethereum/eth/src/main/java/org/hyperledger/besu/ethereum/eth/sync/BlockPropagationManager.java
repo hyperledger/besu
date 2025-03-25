@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
@@ -163,19 +163,21 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
         Optional.of(
             ethContext
                 .getEthMessages()
-                .subscribe(EthPV62.NEW_BLOCK, this::handleNewBlockFromNetwork));
+                .subscribe(EthProtocolMessages.NEW_BLOCK, this::handleNewBlockFromNetwork));
     newBlockHashesSId =
         Optional.of(
             ethContext
                 .getEthMessages()
-                .subscribe(EthPV62.NEW_BLOCK_HASHES, this::handleNewBlockHashesFromNetwork));
+                .subscribe(
+                    EthProtocolMessages.NEW_BLOCK_HASHES, this::handleNewBlockHashesFromNetwork));
   }
 
   private void clearListeners() {
     onBlockAddedSId.ifPresent(id -> protocolContext.getBlockchain().removeObserver(id));
-    newBlockSId.ifPresent(id -> ethContext.getEthMessages().unsubscribe(id, EthPV62.NEW_BLOCK));
+    newBlockSId.ifPresent(
+        id -> ethContext.getEthMessages().unsubscribe(id, EthProtocolMessages.NEW_BLOCK));
     newBlockHashesSId.ifPresent(
-        id -> ethContext.getEthMessages().unsubscribe(id, EthPV62.NEW_BLOCK_HASHES));
+        id -> ethContext.getEthMessages().unsubscribe(id, EthProtocolMessages.NEW_BLOCK_HASHES));
     onBlockAddedSId = Optional.empty();
     newBlockSId = Optional.empty();
     newBlockHashesSId = Optional.empty();

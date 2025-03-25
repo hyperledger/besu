@@ -71,7 +71,7 @@ public final class StatusMessage extends AbstractMessageData {
       return (StatusMessage) message;
     }
     final int code = message.getCode();
-    if (code != EthPV62.STATUS) {
+    if (code != EthProtocolMessages.STATUS) {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a StatusMessage.", code));
     }
@@ -80,7 +80,7 @@ public final class StatusMessage extends AbstractMessageData {
 
   @Override
   public int getCode() {
-    return EthPV62.STATUS;
+    return EthProtocolMessages.STATUS;
   }
 
   /**

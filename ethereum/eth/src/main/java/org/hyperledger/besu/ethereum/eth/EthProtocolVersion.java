@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth;
 
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,14 +36,14 @@ public class EthProtocolVersion {
   /** eth/62 (2015) */
   private static final List<Integer> eth62Messages =
       List.of(
-          EthPV62.STATUS,
-          EthPV62.NEW_BLOCK_HASHES,
-          EthPV62.TRANSACTIONS,
-          EthPV62.GET_BLOCK_HEADERS,
-          EthPV62.BLOCK_HEADERS,
-          EthPV62.GET_BLOCK_BODIES,
-          EthPV62.BLOCK_BODIES,
-          EthPV62.NEW_BLOCK);
+          EthProtocolMessages.STATUS,
+          EthProtocolMessages.NEW_BLOCK_HASHES,
+          EthProtocolMessages.TRANSACTIONS,
+          EthProtocolMessages.GET_BLOCK_HEADERS,
+          EthProtocolMessages.BLOCK_HEADERS,
+          EthProtocolMessages.GET_BLOCK_BODIES,
+          EthProtocolMessages.BLOCK_BODIES,
+          EthProtocolMessages.NEW_BLOCK);
 
   /**
    * eth/63 (2016)
@@ -55,18 +53,18 @@ public class EthProtocolVersion {
    */
   private static final List<Integer> eth63Messages =
       List.of(
-          EthPV62.STATUS,
-          EthPV62.NEW_BLOCK_HASHES,
-          EthPV62.TRANSACTIONS,
-          EthPV62.GET_BLOCK_HEADERS,
-          EthPV62.BLOCK_HEADERS,
-          EthPV62.GET_BLOCK_BODIES,
-          EthPV62.BLOCK_BODIES,
-          EthPV62.NEW_BLOCK,
-          EthPV63.GET_NODE_DATA,
-          EthPV63.NODE_DATA,
-          EthPV63.GET_RECEIPTS,
-          EthPV63.RECEIPTS);
+          EthProtocolMessages.STATUS,
+          EthProtocolMessages.NEW_BLOCK_HASHES,
+          EthProtocolMessages.TRANSACTIONS,
+          EthProtocolMessages.GET_BLOCK_HEADERS,
+          EthProtocolMessages.BLOCK_HEADERS,
+          EthProtocolMessages.GET_BLOCK_BODIES,
+          EthProtocolMessages.BLOCK_BODIES,
+          EthProtocolMessages.NEW_BLOCK,
+          EthProtocolMessages.GET_NODE_DATA,
+          EthProtocolMessages.NODE_DATA,
+          EthProtocolMessages.GET_RECEIPTS,
+          EthProtocolMessages.RECEIPTS);
 
   /**
    * eth/65 (EIP-2464, January 2020)
@@ -76,21 +74,21 @@ public class EthProtocolVersion {
    */
   private static final List<Integer> eth65Messages =
       List.of(
-          EthPV62.STATUS,
-          EthPV62.NEW_BLOCK_HASHES,
-          EthPV62.TRANSACTIONS,
-          EthPV62.GET_BLOCK_HEADERS,
-          EthPV62.BLOCK_HEADERS,
-          EthPV62.GET_BLOCK_BODIES,
-          EthPV62.BLOCK_BODIES,
-          EthPV62.NEW_BLOCK,
-          EthPV63.GET_NODE_DATA,
-          EthPV63.NODE_DATA,
-          EthPV63.GET_RECEIPTS,
-          EthPV63.RECEIPTS,
-          EthPV65.NEW_POOLED_TRANSACTION_HASHES,
-          EthPV65.GET_POOLED_TRANSACTIONS,
-          EthPV65.POOLED_TRANSACTIONS);
+          EthProtocolMessages.STATUS,
+          EthProtocolMessages.NEW_BLOCK_HASHES,
+          EthProtocolMessages.TRANSACTIONS,
+          EthProtocolMessages.GET_BLOCK_HEADERS,
+          EthProtocolMessages.BLOCK_HEADERS,
+          EthProtocolMessages.GET_BLOCK_BODIES,
+          EthProtocolMessages.BLOCK_BODIES,
+          EthProtocolMessages.NEW_BLOCK,
+          EthProtocolMessages.GET_NODE_DATA,
+          EthProtocolMessages.NODE_DATA,
+          EthProtocolMessages.GET_RECEIPTS,
+          EthProtocolMessages.RECEIPTS,
+          EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES,
+          EthProtocolMessages.GET_POOLED_TRANSACTIONS,
+          EthProtocolMessages.POOLED_TRANSACTIONS);
 
   /**
    * eth/67 (EIP-4938, March 2022)
@@ -99,19 +97,19 @@ public class EthProtocolVersion {
    */
   private static final List<Integer> eth67Messages =
       List.of(
-          EthPV62.STATUS,
-          EthPV62.NEW_BLOCK_HASHES,
-          EthPV62.TRANSACTIONS,
-          EthPV62.GET_BLOCK_HEADERS,
-          EthPV62.BLOCK_HEADERS,
-          EthPV62.GET_BLOCK_BODIES,
-          EthPV62.BLOCK_BODIES,
-          EthPV62.NEW_BLOCK,
-          EthPV63.GET_RECEIPTS,
-          EthPV63.RECEIPTS,
-          EthPV65.NEW_POOLED_TRANSACTION_HASHES,
-          EthPV65.GET_POOLED_TRANSACTIONS,
-          EthPV65.POOLED_TRANSACTIONS);
+          EthProtocolMessages.STATUS,
+          EthProtocolMessages.NEW_BLOCK_HASHES,
+          EthProtocolMessages.TRANSACTIONS,
+          EthProtocolMessages.GET_BLOCK_HEADERS,
+          EthProtocolMessages.BLOCK_HEADERS,
+          EthProtocolMessages.GET_BLOCK_BODIES,
+          EthProtocolMessages.BLOCK_BODIES,
+          EthProtocolMessages.NEW_BLOCK,
+          EthProtocolMessages.GET_RECEIPTS,
+          EthProtocolMessages.RECEIPTS,
+          EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES,
+          EthProtocolMessages.GET_POOLED_TRANSACTIONS,
+          EthProtocolMessages.POOLED_TRANSACTIONS);
 
   /**
    * Returns a list of integers containing the supported messages given the protocol version
