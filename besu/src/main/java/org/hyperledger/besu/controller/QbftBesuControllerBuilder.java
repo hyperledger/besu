@@ -36,6 +36,7 @@ import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.UniqueMessageMulticaster;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorPeers;
 import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
@@ -64,7 +65,6 @@ import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
@@ -227,16 +227,9 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
         new QbftValidatorProviderAdaptor(validatorProvider);
 
     final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
-    final QbftContext qbftContext = new QbftContext(qbftValidatorProvider, qbftBlockInterface);
-    final ProtocolContext qbftProtocolContext =
-        new ProtocolContext(
-            blockchain,
-            protocolContext.getWorldStateArchive(),
-            qbftContext,
-            protocolContext.getBadBlockManager());
 
     final ProposerSelector proposerSelector =
-        new ProposerSelector(blockchain, bftBlockInterface, true, validatorProvider);
+        new BftProposerSelector(blockchain, bftBlockInterface, true, validatorProvider);
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
@@ -263,7 +256,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, qbftProtocolSchedule, qbftProtocolContext);
+        new MessageValidatorFactory(
+            proposerSelector, qbftProtocolSchedule, qbftValidatorProvider, qbftBlockInterface);
 
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(
@@ -286,18 +280,18 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     QbftRoundFactory qbftRoundFactory =
         new QbftRoundFactory(
             finalState,
-            qbftProtocolContext,
+            qbftBlockInterface,
             qbftProtocolSchedule,
             minedBlockObservers,
             messageValidatorFactory,
-            messageFactory,
-            qbftExtraDataCodec);
+            messageFactory);
     QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory =
         new QbftBlockHeightManagerFactory(
             finalState,
             qbftRoundFactory,
             messageValidatorFactory,
             messageFactory,
+            qbftValidatorProvider,
             new QbftValidatorModeTransitionLoggerAdaptor(
                 new ValidatorModeTransitionLogger(qbftForksSchedule)));
 

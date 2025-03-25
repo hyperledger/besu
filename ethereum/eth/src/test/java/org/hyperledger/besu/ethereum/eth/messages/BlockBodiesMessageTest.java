@@ -88,7 +88,8 @@ public final class BlockBodiesMessageTest {
                   rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
-    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.BLOCK_BODIES, initialMessage.getData());
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
     final Iterator<BlockBody> readBodies = message.bodies(protocolSchedule).iterator();
     for (int i = 0; i < 50; ++i) {
@@ -99,7 +100,7 @@ public final class BlockBodiesMessageTest {
   @Test
   public void shouldEncodeEmptyBlocksInBlockBodiesMessage() {
     final Bytes bytes = Bytes.fromHexString("0xc2c0c0");
-    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, bytes);
+    final MessageData raw = new RawMessage(EthProtocolMessages.BLOCK_BODIES, bytes);
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
     final List<BlockBody> bodies = message.bodies(protocolSchedule);
     bodies.forEach(blockBody -> Assertions.assertThat(blockBody.isEmpty()).isTrue());

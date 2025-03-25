@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -58,7 +58,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
       final EthContext ethContext,
       final List<BlockHeader> headers,
       final MetricsSystem metricsSystem) {
-    super(ethContext, EthPV62.GET_BLOCK_BODIES, metricsSystem);
+    super(ethContext, EthProtocolMessages.GET_BLOCK_BODIES, metricsSystem);
     checkArgument(headers.size() > 0);
     this.protocolSchedule = protocolSchedule;
 
