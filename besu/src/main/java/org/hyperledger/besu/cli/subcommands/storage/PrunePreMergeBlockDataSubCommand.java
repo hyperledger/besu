@@ -126,7 +126,6 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
           .filter((h) -> blockchainStorage.getBlockBody(h).isPresent())
           .ifPresent(
               (h) -> {
-                updater.removeBlockBody(h);
                 updater.removeTransactionReceipts(h);
                 updater.removeTotalDifficulty(h);
                 blockchainStorage
@@ -137,6 +136,7 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
                             transactions.stream()
                                 .map(Transaction::getHash)
                                 .forEach((th) -> updater.removeTransactionLocation(th)));
+                updater.removeBlockBody(h);
               });
     } while (++headerNumber < endBlockNumber);
     LOG.info("Completed deletion of block range {} to {}", startBlockNumber, endBlockNumber);
