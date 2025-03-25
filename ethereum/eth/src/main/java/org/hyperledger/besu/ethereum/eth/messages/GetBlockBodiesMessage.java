@@ -33,7 +33,7 @@ public final class GetBlockBodiesMessage extends AbstractMessageData {
       return (GetBlockBodiesMessage) message;
     }
     final int code = message.getCode();
-    if (code != EthPV62.GET_BLOCK_BODIES) {
+    if (code != EthProtocolMessages.GET_BLOCK_BODIES) {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a GetBlockBodiesMessage.", code));
     }
@@ -54,7 +54,7 @@ public final class GetBlockBodiesMessage extends AbstractMessageData {
 
   @Override
   public int getCode() {
-    return EthPV62.GET_BLOCK_BODIES;
+    return EthProtocolMessages.GET_BLOCK_BODIES;
   }
 
   public Iterable<Hash> hashes() {
