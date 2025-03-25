@@ -54,7 +54,7 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   @Test
   public void getPeers() throws Exception {
     final List<Capability> caps = new ArrayList<>();
-    caps.add(Capability.create("eth", EthProtocol.LATEST.getVersion()));
+    caps.add(EthProtocol.LATEST);
     final List<EthPeer> peerList = new ArrayList<>();
     final PeerInfo info1 =
         new PeerInfo(
