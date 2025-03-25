@@ -1056,7 +1056,7 @@ public final class EthProtocolManagerTest {
               messageSentCaptor.capture(),
               receivingPeerCaptor.capture());
 
-      // assert that all entries in capability param were Eth63
+      // assert that all entries in capability param were latest
       assertThat(capabilityCaptor.getAllValues().stream().distinct().collect(Collectors.toList()))
           .isEqualTo(Collections.singletonList(EthProtocol.getLatestVersion()));
 
@@ -1248,13 +1248,12 @@ public final class EthProtocolManagerTest {
 
     // If min cap = v64, should not contain v63
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V64).build();
+        EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V67).build();
 
     final EthProtocolManager ethManager = createEthManager(SyncMode.SNAP, configuration);
 
-    assertThat(ethManager.getSupportedCapabilities()).contains(EthProtocol.ETH64);
-    assertThat(ethManager.getSupportedCapabilities())
-        .doesNotContain(EthProtocol.getLatestVersion());
+    assertThat(ethManager.getSupportedCapabilities()).contains(EthProtocol.ETH67);
+    assertThat(ethManager.getSupportedCapabilities()).doesNotContain(EthProtocol.ETH66);
   }
 
   @Test

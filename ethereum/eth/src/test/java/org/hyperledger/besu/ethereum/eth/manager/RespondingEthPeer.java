@@ -133,7 +133,11 @@ public class RespondingEthPeer {
     ethPeers.registerNewConnection(peerConnection, peerValidators);
     final int before = ethPeers.peerCount();
     final EthPeer peer = ethPeers.peer(peerConnection);
-    peer.registerStatusReceived(chainHeadHash, totalDifficulty, 63, peerConnection);
+    peer.registerStatusReceived(
+        chainHeadHash,
+        totalDifficulty,
+        EthProtocol.getLatestVersion().getVersion(),
+        peerConnection);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
     if (addToEthPeers) {
       peer.registerStatusSent(peerConnection);
@@ -218,12 +222,21 @@ public class RespondingEthPeer {
   }
 
   private void respondToMessage(final Responder responder, final OutgoingMessage msg) {
-    final Optional<MessageData> maybeResponse = responder.respond(msg.capability, msg.messageData);
+    MessageData messageData = msg.messageData;
+    if (EthProtocol.isEth66Compatible(msg.capability)) {
+      messageData = msg.messageData.unwrapMessageData().getValue();
+    }
+    final Optional<MessageData> maybeResponse = responder.respond(msg.capability, messageData);
     maybeResponse.ifPresent(
         (response) -> {
           if (ethProtocolManager.getSupportedCapabilities().contains(msg.capability)) {
+            var unWrappedResponse = response;
+            if (EthProtocol.isEth66Compatible(msg.capability)) {
+              unWrappedResponse =
+                  response.wrapMessageData(msg.messageData().unwrapMessageData().getKey());
+            }
             ethProtocolManager.processMessage(
-                msg.capability, new DefaultMessage(peerConnection, response));
+                msg.capability, new DefaultMessage(peerConnection, unWrappedResponse));
           } else
             snapProtocolManager.ifPresent(
                 protocolManager ->

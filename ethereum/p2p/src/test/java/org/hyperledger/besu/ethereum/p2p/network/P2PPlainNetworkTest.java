@@ -189,9 +189,9 @@ public class P2PPlainNetworkTest {
     final NodeKey connectorNodeKey = NodeKeyUtils.generate();
 
     final SubProtocol subprotocol1 = MockSubProtocol.create("eth");
-    final Capability cap1 = Capability.create(subprotocol1.getName(), 63);
+    final Capability cap1 = Capability.create(subprotocol1.getName(), 68);
     final SubProtocol subprotocol2 = MockSubProtocol.create("oth");
-    final Capability cap2 = Capability.create(subprotocol2.getName(), 63);
+    final Capability cap2 = Capability.create(subprotocol2.getName(), 68);
     try (final P2PNetwork listener =
             builder().nodeKey(listenerNodeKey).supportedCapabilities(cap1).build();
         final P2PNetwork connector =
