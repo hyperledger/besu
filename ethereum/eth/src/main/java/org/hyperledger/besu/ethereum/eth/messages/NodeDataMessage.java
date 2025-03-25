@@ -32,7 +32,7 @@ public final class NodeDataMessage extends AbstractMessageData {
       return (NodeDataMessage) message;
     }
     final int code = message.getCode();
-    if (code != EthPV63.NODE_DATA) {
+    if (code != EthProtocolMessages.NODE_DATA) {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a NodeDataMessage.", code));
     }
@@ -64,7 +64,7 @@ public final class NodeDataMessage extends AbstractMessageData {
 
   @Override
   public int getCode() {
-    return EthPV63.NODE_DATA;
+    return EthProtocolMessages.NODE_DATA;
   }
 
   public List<Bytes> nodeData() {

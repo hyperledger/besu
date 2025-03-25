@@ -47,7 +47,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -474,7 +474,8 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
   @Test
   public void shouldSendPooledTransactionHashesIfPeerSupportsEth65() {
     EthPeer peer = mock(EthPeer.class);
-    when(peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)).thenReturn(true);
+    when(peer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
+        .thenReturn(true);
 
     givenTransactionIsValid(transaction0);
     transactionPool.addTransactionViaApi(transaction0);
@@ -486,7 +487,8 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
   @Test
   public void shouldSendFullTransactionsIfPeerDoesNotSupportEth65() {
     EthPeer peer = mock(EthPeer.class);
-    when(peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)).thenReturn(false);
+    when(peer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
+        .thenReturn(false);
 
     givenTransactionIsValid(transaction0);
     transactionPool.addTransactionViaApi(transaction0);
