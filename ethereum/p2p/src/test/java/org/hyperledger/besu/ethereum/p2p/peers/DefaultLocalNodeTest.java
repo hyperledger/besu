@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.peers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Java6Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -32,7 +33,7 @@ public class DefaultLocalNodeTest {
   private final String clientId = "test client";
   private final int p2pVersion = 5;
   private final List<Capability> supportedCapabilities =
-      Arrays.asList(Capability.create("eth", 63));
+      Arrays.asList(EthProtocolHelper.getLatestVersion());
   private final Bytes nodeId = Bytes.of(new byte[64]);
   private final int port = 30303;
   private final EnodeURL enode =
