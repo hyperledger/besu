@@ -498,7 +498,7 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
   }
 
   @Test
-  public void shouldSendFullTransactionPoolToNewlyConnectedPeer() {
+  public void shouldSendPooledTransactionHashesToNewlyConnectedPeer() {
     givenTransactionIsValid(transaction0);
     givenTransactionIsValid(transaction1);
 
@@ -508,7 +508,7 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
     RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
     Set<Transaction> transactionsToSendToPeer =
-        peerTransactionTracker.claimTransactionsToSendToPeer(peer.getEthPeer());
+        peerTransactionTracker.claimTransactionHashesToSendToPeer(peer.getEthPeer());
 
     assertThat(transactionsToSendToPeer).contains(transaction0, transaction1);
   }
