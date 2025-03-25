@@ -30,8 +30,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -74,7 +72,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,7 +104,6 @@ public class QbftBlockHeightManagerTest {
   @Mock private ValidatorMulticaster validatorMulticaster;
   @Mock private QbftProtocolSchedule protocolSchedule;
   @Mock private QbftBlockHeader parentHeader;
-  @Mock private BftExtraDataCodec bftExtraDataCodec;
   @Mock private QbftBlockCodec blockEncoder;
   @Mock private QbftBlockInterface blockInterface;
   @Mock private QbftValidatorProvider validatorProvider;
@@ -164,7 +160,6 @@ public class QbftBlockHeightManagerTest {
                   messageFactory,
                   messageTransmitter,
                   roundTimer,
-                  bftExtraDataCodec,
                   parentHeader);
             });
 
@@ -182,16 +177,8 @@ public class QbftBlockHeightManagerTest {
                   messageFactory,
                   messageTransmitter,
                   roundTimer,
-                  bftExtraDataCodec,
                   parentHeader);
             });
-
-    when(bftExtraDataCodec.decode(any()))
-        .thenReturn(
-            new BftExtraData(
-                Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators));
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
   }
 
   @Test
