@@ -51,7 +51,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
@@ -65,7 +64,6 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.util.Subscribers;
@@ -107,7 +105,6 @@ public class QbftBlockHeightManagerTest {
   @Mock private RoundTimer roundTimer;
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   @Mock private ValidatorMulticaster validatorMulticaster;
-  @Mock private ProtocolContext protocolContext;
   @Mock private QbftProtocolSchedule protocolSchedule;
   @Mock private QbftBlockHeader parentHeader;
   @Mock private BftExtraDataCodec bftExtraDataCodec;
@@ -145,9 +142,6 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getClock()).thenReturn(clock);
     when(blockCreator.createBlock(anyLong(), any())).thenReturn(createdBlock);
 
-    QbftContext qbftContext = new QbftContext(validatorProvider, blockInterface);
-    when(protocolContext.getConsensusContext(QbftContext.class)).thenReturn(qbftContext);
-
     when(futureRoundProposalMessageValidator.validateProposalMessage(any())).thenReturn(true);
     when(messageValidatorFactory.createFutureRoundProposalMessageValidator(anyLong(), any()))
         .thenReturn(futureRoundProposalMessageValidator);
@@ -163,7 +157,7 @@ public class QbftBlockHeightManagerTest {
               return new QbftRound(
                   createdRoundState,
                   blockCreator,
-                  protocolContext,
+                  blockInterface,
                   protocolSchedule,
                   Subscribers.create(),
                   nodeKey,
@@ -181,7 +175,7 @@ public class QbftBlockHeightManagerTest {
               return new QbftRound(
                   providedRoundState,
                   blockCreator,
-                  protocolContext,
+                  blockInterface,
                   protocolSchedule,
                   Subscribers.create(),
                   nodeKey,
@@ -209,7 +203,8 @@ public class QbftBlockHeightManagerTest {
         roundFactory,
         clock,
         messageValidatorFactory,
-        messageFactory);
+        messageFactory,
+        validatorProvider);
 
     verify(blockTimer, times(1)).startTimer(any(), any());
     verify(finalState, never()).isLocalNodeProposerForRound(any());
@@ -224,7 +219,8 @@ public class QbftBlockHeightManagerTest {
         roundFactory,
         clock,
         messageValidatorFactory,
-        messageFactory);
+        messageFactory,
+        validatorProvider);
 
     verify(roundTimer, never()).startTimer(any());
     verify(finalState, never()).isLocalNodeProposerForRound(any());
@@ -244,7 +240,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
     verify(messageTransmitter, atLeastOnce())
@@ -268,7 +265,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
     verify(messageTransmitter, never()).multicastProposal(eq(roundIdentifier), any(), any(), any());
@@ -287,7 +285,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2))).thenReturn(createdBlock);
 
@@ -325,7 +324,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
     manager.handleBlockTimerExpiry(roundIdentifier);
     verify(roundFactory).createNewRound(any(), eq(0));
 
@@ -346,7 +346,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
     manager.handleBlockTimerExpiry(roundIdentifier);
     verify(roundFactory).createNewRound(any(), eq(0));
 
@@ -375,7 +376,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
     reset(messageTransmitter);
 
     manager.handleRoundChangePayload(roundChange);
@@ -405,7 +407,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     final Prepare prepare =
         validatorMessageFactory
@@ -451,7 +454,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     final Prepare prepare =
         validatorMessageFactory
@@ -491,7 +495,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     manager.handleBlockTimerExpiry(roundIdentifier); // Trigger a Proposal creation.
 
@@ -548,7 +553,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     // Force a new round to be started at new round number.
     final Proposal futureRoundProposal =
@@ -572,7 +578,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
 
@@ -609,6 +616,7 @@ public class QbftBlockHeightManagerTest {
             clock,
             messageValidatorFactory,
             validatorMessageFactory.get(2),
+            validatorProvider,
             true); // Enable early round change
 
     manager.handleRoundChangePayload(roundChange1);
