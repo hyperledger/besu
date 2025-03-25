@@ -16,6 +16,8 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
+import java.util.concurrent.TimeUnit;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
@@ -28,6 +30,7 @@ public class BLS12G2MultiExpPrecompiledContract extends AbstractBLS12Precompiled
       Caffeine.newBuilder()
           .maximumWeight(16_000_000)
           .weigher((k, v) -> ((PrecompileInputResultTuple) v).cachedInput().size())
+          .expireAfterWrite(15, TimeUnit.MINUTES) // Evict 15 minutes after each entry is written
           .build();
 
   /** Instantiates a new BLS12_G2 MultiExp precompiled contract. */
