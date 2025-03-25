@@ -445,7 +445,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
               + " (default: ${DEFAULT-VALUE})")
-  private NetworkName network = null;
+  private final NetworkName network = null;
 
   @Option(
       names = {PROFILE_OPTION_NAME},
