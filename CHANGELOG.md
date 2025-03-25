@@ -2,13 +2,14 @@
 
 ## Unreleased
 ### Breaking Changes
+
 ### Additions and Improvements
 - Add Hoodi discovery DNS [#8446](https://github.com/hyperledger/besu/pull/8446)
 - Decode deposit log data without Web3j [#8394](https://github.com/hyperledger/besu/issues/8394)
 
 #### Dependencies 
-- Replace tuweni libs with https://github.com/Consensys/tuweni [#8330](https://github.com/hyperledger/besu/pull/8330)
-- Performance: Consensys/tuweni 2.6.0 reduces boxing/unboxing overhead on some EVM opcodes, like PushX and Caller [#8330](https://github.com/hyperledger/besu/pull/8330)
+- Replace tuweni libs with https://github.com/Consensys/tuweni [#8330](https://github.com/hyperledger/besu/pull/8330), [#8461](https://github.com/hyperledger/besu/pull/8461) 
+- Performance: Consensys/tuweni 2.7.0 reduces boxing/unboxing overhead on some EVM opcodes, like PushX and Caller [#8330](https://github.com/hyperledger/besu/pull/8330)
 
 ### Bug fixes
 - Fix QBFT and IBFT transitions that change the mining beneficiary [#8387](https://github.com/hyperledger/besu/issues/8387)
