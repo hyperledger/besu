@@ -39,7 +39,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.HashMap;
@@ -82,7 +81,6 @@ public class ProposalValidatorTest {
   @Mock private QbftProtocolSchedule protocolSchedule;
   @Mock private QbftBlockCodec blockEncoder;
   @Mock private QbftBlockInterface blockInterface;
-  @Mock private QbftValidatorProvider validatorProvider;
   private QbftNodeList validators;
 
   private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
