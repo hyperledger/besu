@@ -44,6 +44,9 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
   private static final long MAINNET_MERGE_BLOCK_NUMBER = 15_537_393;
   private static final long SEPOLIA_MERGE_BLOCK_NUMBER = 1_735_371;
 
+  private static final int DEFAULT_THREADS = 4;
+  private static final int DEFAULT_PRUNE_RANGE_SIZE = 10000;
+
   @SuppressWarnings("unused")
   @CommandLine.ParentCommand
   private StorageSubCommand storageSubCommand;
@@ -56,12 +59,12 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
       names = {"--threads"},
       description =
           "Specifies the number of concurrent threads to use when pruning (default: ${DEFAULT-VALUE})")
-  private final Integer threads = 4;
+  private final Integer threads = DEFAULT_THREADS;
 
   @CommandLine.Option(
       names = {"--prune-range-size"},
       description = "Specifies the size of block ranges to be pruned (default: ${DEFAULT-VALUE})")
-  private final Integer pruneRangeSize = 10000;
+  private final Integer pruneRangeSize = DEFAULT_PRUNE_RANGE_SIZE;
 
   /** Default constructor */
   public PrunePreMergeBlockDataSubCommand() {}
