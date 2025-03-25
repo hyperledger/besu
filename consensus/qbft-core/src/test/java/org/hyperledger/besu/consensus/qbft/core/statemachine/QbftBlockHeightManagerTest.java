@@ -209,7 +209,8 @@ public class QbftBlockHeightManagerTest {
         roundFactory,
         clock,
         messageValidatorFactory,
-        messageFactory);
+        messageFactory,
+        validatorProvider);
 
     verify(blockTimer, times(1)).startTimer(any(), any());
     verify(finalState, never()).isLocalNodeProposerForRound(any());
@@ -224,7 +225,8 @@ public class QbftBlockHeightManagerTest {
         roundFactory,
         clock,
         messageValidatorFactory,
-        messageFactory);
+        messageFactory,
+        validatorProvider);
 
     verify(roundTimer, never()).startTimer(any());
     verify(finalState, never()).isLocalNodeProposerForRound(any());
@@ -244,7 +246,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
     verify(messageTransmitter, atLeastOnce())
@@ -268,7 +271,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
     verify(messageTransmitter, never()).multicastProposal(eq(roundIdentifier), any(), any(), any());
@@ -287,7 +291,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2))).thenReturn(createdBlock);
 
@@ -325,7 +330,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
     manager.handleBlockTimerExpiry(roundIdentifier);
     verify(roundFactory).createNewRound(any(), eq(0));
 
@@ -346,7 +352,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
     manager.handleBlockTimerExpiry(roundIdentifier);
     verify(roundFactory).createNewRound(any(), eq(0));
 
@@ -375,7 +382,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
     reset(messageTransmitter);
 
     manager.handleRoundChangePayload(roundChange);
@@ -405,7 +413,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     final Prepare prepare =
         validatorMessageFactory
@@ -451,7 +460,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     final Prepare prepare =
         validatorMessageFactory
@@ -491,7 +501,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     manager.handleBlockTimerExpiry(roundIdentifier); // Trigger a Proposal creation.
 
@@ -548,7 +559,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     // Force a new round to be started at new round number.
     final Proposal futureRoundProposal =
@@ -572,7 +584,8 @@ public class QbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
 
@@ -609,6 +622,7 @@ public class QbftBlockHeightManagerTest {
             clock,
             messageValidatorFactory,
             validatorMessageFactory.get(2),
+            validatorProvider,
             true); // Enable early round change
 
     manager.handleRoundChangePayload(roundChange1);

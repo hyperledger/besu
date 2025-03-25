@@ -263,7 +263,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, qbftProtocolSchedule, qbftProtocolContext);
+        new MessageValidatorFactory(
+            proposerSelector, qbftProtocolSchedule, qbftValidatorProvider, qbftBlockInterface);
 
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(
@@ -298,6 +299,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             qbftRoundFactory,
             messageValidatorFactory,
             messageFactory,
+            qbftValidatorProvider,
             new QbftValidatorModeTransitionLoggerAdaptor(
                 new ValidatorModeTransitionLogger(qbftForksSchedule)));
 

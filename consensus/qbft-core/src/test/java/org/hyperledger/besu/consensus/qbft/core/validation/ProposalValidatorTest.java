@@ -119,7 +119,7 @@ public class ProposalValidatorTest {
         block,
         roundIdentifier,
         new ProposalValidator(
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             validators.getNodeAddresses(),

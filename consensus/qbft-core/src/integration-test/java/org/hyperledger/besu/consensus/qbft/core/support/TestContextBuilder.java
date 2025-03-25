@@ -548,7 +548,8 @@ public class TestContextBuilder {
     final QbftProtocolScheduleAdaptor qbftProtocolSchedule =
         new QbftProtocolScheduleAdaptor(protocolSchedule, bftProtocolContext);
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, qbftProtocolSchedule, qbftProtocolContext);
+        new MessageValidatorFactory(
+            proposerSelector, qbftProtocolSchedule, qbftValidatorProvider, qbftBlockInterface);
 
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
 
@@ -578,6 +579,7 @@ public class TestContextBuilder {
                     BFT_EXTRA_DATA_ENCODER),
                 messageValidatorFactory,
                 messageFactory,
+                qbftValidatorProvider,
                 validatorModeTransitionLogger),
             gossiper,
             duplicateMessageTracker,
