@@ -39,8 +39,8 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
   @BeforeEach
   public void setUp() throws Exception {
     vertx = Vertx.vertx();
-    minerNode = besu.createCliqueNode("miner-node1");
-    archiveNode = besu.createCliqueNode("full-node1");
+    minerNode = besu.createQbftNode("miner-node1");
+    archiveNode = besu.createQbftNode("full-node1");
     cluster.start(minerNode, archiveNode);
 
     // verify nodes are fully connected otherwise tx could not be propagated

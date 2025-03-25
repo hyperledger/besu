@@ -34,9 +34,9 @@ public class BesuEventsPluginTest extends AcceptanceTestBase {
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode = besu.createCliqueNode("minerNode");
+    minerNode = besu.createQbftNode("minerNode");
     pluginNode =
-        besu.createCliquePluginsNode(
+        besu.createQbftPluginsNode(
             "node1", Collections.singletonList("testPlugins"), Collections.emptyList());
     cluster.start(pluginNode, minerNode);
   }

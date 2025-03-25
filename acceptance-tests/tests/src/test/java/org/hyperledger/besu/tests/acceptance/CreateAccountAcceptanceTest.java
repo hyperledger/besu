@@ -28,8 +28,8 @@ public class CreateAccountAcceptanceTest extends AcceptanceTestBase {
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode = besu.createCliqueNode("minerNode");
-    cluster.start(minerNode, besu.createCliqueNode("archiveNode"));
+    minerNode = besu.createQbftNode("minerNode");
+    cluster.start(minerNode, besu.createQbftNode("archiveNode"));
   }
 
   @Test

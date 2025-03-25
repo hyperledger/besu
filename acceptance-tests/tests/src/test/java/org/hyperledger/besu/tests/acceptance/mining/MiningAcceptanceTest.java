@@ -27,7 +27,7 @@ class MiningAcceptanceTest extends AcceptanceTestBase {
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode = besu.createCliqueNode("miner1");
+    minerNode = besu.createQbftNode("miner1");
     cluster.start(minerNode);
   }
 
