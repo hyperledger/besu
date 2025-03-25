@@ -31,8 +31,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
 
-import java.util.Optional;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -270,13 +268,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return;
     }
 
-    final Optional<CodeDelegationAccount> maybeTargetAccount =
-        getTargetAccount(frame.getWorldUpdater(), gasCalculator(), contract);
-
-    if (maybeTargetAccount.isEmpty()) {
-      throw new RuntimeException("A delegated code account must have a target account");
-    }
-
     final long codeDelegationResolutionGas =
         CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract);
 
@@ -398,13 +389,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return evm.getCode(account.getCodeHash(), account.getCode());
     }
 
-    final Optional<CodeDelegationAccount> targetAccount =
+    final CodeDelegationAccount targetAccount =
         getTargetAccount(frame.getWorldUpdater(), evm.getGasCalculator(), account);
 
-    if (targetAccount.isEmpty()) {
-      return CodeV0.EMPTY_CODE;
-    }
-
-    return evm.getCode(targetAccount.get().getCodeHash(), targetAccount.get().getCode());
+    return evm.getCode(targetAccount.getCodeHash(), targetAccount.getCode());
   }
 }

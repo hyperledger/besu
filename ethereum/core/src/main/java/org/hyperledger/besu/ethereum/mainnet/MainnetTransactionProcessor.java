@@ -635,13 +635,8 @@ public class MainnetTransactionProcessor {
       return messageCallProcessor.getCodeFromEVM(contract.getCodeHash(), contract.getCode());
     }
 
-    final Optional<CodeDelegationAccount> maybeTargetAccount =
+    final CodeDelegationAccount targetAccount =
         getTargetAccount(worldUpdater, gasCalculator, contract);
-    if (maybeTargetAccount.isEmpty()) {
-      throw new RuntimeException("Code delegation target account not found");
-    }
-
-    final CodeDelegationAccount targetAccount = maybeTargetAccount.get();
     warmAddressList.add(targetAccount.getTargetAddress());
 
     return messageCallProcessor.getCodeFromEVM(

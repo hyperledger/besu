@@ -19,8 +19,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.Optional;
-
 import org.apache.tuweni.bytes.Bytes;
 
 /** Helper class for 7702 delegated code interactions */
@@ -54,17 +52,18 @@ public class CodeDelegationHelper {
    * @param worldUpdater the world updater.
    * @param gasCalculator the gas calculator.
    * @param account the account which has a code delegation.
-   * @return the target account of the delegated code, empty if account is null or doesn't have code
-   *     delegation.
+   * @return the target account of the delegated code, throws IllegalArgumentException if account is
+   *     null or doesn't have code delegation.
    */
-  public static Optional<CodeDelegationAccount> getTargetAccount(
-      final WorldUpdater worldUpdater, final GasCalculator gasCalculator, final Account account) {
+  public static CodeDelegationAccount getTargetAccount(
+      final WorldUpdater worldUpdater, final GasCalculator gasCalculator, final Account account)
+      throws IllegalArgumentException {
     if (account == null) {
-      return Optional.empty();
+      throw new IllegalArgumentException("Account must not be null.");
     }
 
     if (!hasCodeDelegation(account.getCode())) {
-      return Optional.empty();
+      throw new IllegalArgumentException("Account does not have code delegation.");
     }
 
     final Address targetAddress =
@@ -72,7 +71,7 @@ public class CodeDelegationHelper {
 
     final Bytes targetCode = processTargetCode(worldUpdater, gasCalculator, targetAddress);
 
-    return Optional.of(new CodeDelegationAccount(account, targetAddress, targetCode));
+    return new CodeDelegationAccount(account, targetAddress, targetCode);
   }
 
   private static Bytes processTargetCode(
