@@ -1217,7 +1217,7 @@ public final class EthProtocolManagerTest {
   @Test
   public void shouldRespectFlagForMinCapability() {
 
-    // If min cap = v64, should not contain v63
+    // If min cap = v67, should not contain v66
     final EthProtocolConfiguration configuration =
         EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V67).build();
 
