@@ -20,11 +20,11 @@ import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.util.Subscribers;
 
 /** The Qbft round factory. */
@@ -32,7 +32,7 @@ public class QbftRoundFactory {
 
   private final QbftFinalState finalState;
   private final QbftBlockCreatorFactory blockCreatorFactory;
-  private final ProtocolContext protocolContext;
+  private final QbftBlockInterface blockInterface;
   private final QbftProtocolSchedule protocolSchedule;
   private final Subscribers<QbftMinedBlockObserver> minedBlockObservers;
   private final MessageValidatorFactory messageValidatorFactory;
@@ -42,7 +42,7 @@ public class QbftRoundFactory {
    * Instantiates a new Qbft round factory.
    *
    * @param finalState the final state
-   * @param protocolContext the protocol context
+   * @param blockInterface the block interface
    * @param protocolSchedule the protocol schedule
    * @param minedBlockObservers the mined block observers
    * @param messageValidatorFactory the message validator factory
@@ -50,14 +50,14 @@ public class QbftRoundFactory {
    */
   public QbftRoundFactory(
       final QbftFinalState finalState,
-      final ProtocolContext protocolContext,
+      final QbftBlockInterface blockInterface,
       final QbftProtocolSchedule protocolSchedule,
       final Subscribers<QbftMinedBlockObserver> minedBlockObservers,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory) {
     this.finalState = finalState;
     this.blockCreatorFactory = finalState.getBlockCreatorFactory();
-    this.protocolContext = protocolContext;
+    this.blockInterface = blockInterface;
     this.protocolSchedule = protocolSchedule;
     this.minedBlockObservers = minedBlockObservers;
     this.messageValidatorFactory = messageValidatorFactory;
@@ -104,7 +104,7 @@ public class QbftRoundFactory {
     return new QbftRound(
         roundState,
         blockCreator,
-        protocolContext,
+        blockInterface,
         protocolSchedule,
         minedBlockObservers,
         finalState.getNodeKey(),

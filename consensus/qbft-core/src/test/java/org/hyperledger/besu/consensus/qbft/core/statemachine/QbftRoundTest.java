@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.qbft.core.statemachine;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.qbft.core.QbftContextBuilder.setupContextWithBftBlockInterface;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -42,7 +41,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
@@ -51,10 +49,6 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -81,13 +75,10 @@ public class QbftRoundTest {
   private final NodeKey nodeKey2 = NodeKeyUtils.generate();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final Subscribers<QbftMinedBlockObserver> subscribers = Subscribers.create();
-  private ProtocolContext protocolContext;
   private MessageFactory messageFactory;
   private MessageFactory messageFactory2;
 
   @Mock private QbftProtocolSchedule protocolSchedule;
-  @Mock private MutableBlockchain blockChain;
-  @Mock private WorldStateArchive worldStateArchive;
   @Mock private QbftMessageTransmitter transmitter;
   @Mock private QbftMinedBlockObserver minedBlockObserver;
   @Mock private QbftBlockCreator blockCreator;
@@ -95,7 +86,7 @@ public class QbftRoundTest {
   @Mock private RoundTimer roundTimer;
   @Mock private QbftBlockImporter blockImporter;
   @Mock private QbftBlockHeader parentHeader;
-  @Mock private QbftBlockInterface blockInteface;
+  @Mock private QbftBlockInterface blockInterface;
   @Mock private QbftBlockCodec blockEncoder;
 
   @Captor private ArgumentCaptor<QbftBlock> blockCaptor;
@@ -110,13 +101,6 @@ public class QbftRoundTest {
   public void setup() {
     messageFactory = new MessageFactory(nodeKey, blockEncoder);
     messageFactory2 = new MessageFactory(nodeKey2, blockEncoder);
-
-    protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            setupContextWithBftBlockInterface(QbftContext.class, emptyList(), blockInteface),
-            new BadBlockManager());
 
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);
@@ -141,7 +125,7 @@ public class QbftRoundTest {
     new QbftRound(
         roundState,
         blockCreator,
-        protocolContext,
+        blockInterface,
         protocolSchedule,
         subscribers,
         nodeKey,
@@ -159,7 +143,7 @@ public class QbftRoundTest {
         new QbftRound(
             roundState,
             blockCreator,
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             subscribers,
             nodeKey,
@@ -168,7 +152,7 @@ public class QbftRoundTest {
             roundTimer,
             parentHeader);
 
-    when(blockInteface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);
+    when(blockInterface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);
 
     round.handleProposalMessage(
         messageFactory.createProposal(
@@ -182,14 +166,14 @@ public class QbftRoundTest {
     final QbftBlockHeader header = new QbftBlockHeaderTestFixture().number(0).buildHeader();
 
     final QbftBlock commitBlock = new QbftBlockTestFixture().blockHeader(header).build();
-    when(blockInteface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(commitBlock);
+    when(blockInterface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(commitBlock);
 
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
     final QbftRound round =
         new QbftRound(
             roundState,
             blockCreator,
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             subscribers,
             nodeKey,
@@ -214,8 +198,8 @@ public class QbftRoundTest {
         new QbftBlockTestFixture()
             .blockHeader(new QbftBlockHeaderTestFixture().number(0).buildHeader())
             .build();
-    when(blockInteface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(publishBlock);
-    when(blockInteface.replaceRoundInBlock(publishBlock, 0)).thenReturn(commitBlock);
+    when(blockInterface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(publishBlock);
+    when(blockInterface.replaceRoundInBlock(publishBlock, 0)).thenReturn(commitBlock);
 
     final ConsensusRoundIdentifier priorRoundChange = new ConsensusRoundIdentifier(1, 0);
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
@@ -223,7 +207,7 @@ public class QbftRoundTest {
         new QbftRound(
             roundState,
             blockCreator,
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             subscribers,
             nodeKey,
@@ -266,14 +250,14 @@ public class QbftRoundTest {
         new QbftBlockTestFixture()
             .blockHeader(new QbftBlockHeaderTestFixture().number(0).buildHeader())
             .build();
-    when(blockInteface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(commitBlock);
+    when(blockInterface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(commitBlock);
 
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
     final QbftRound round =
         new QbftRound(
             roundState,
             blockCreator,
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             subscribers,
             nodeKey,
@@ -314,7 +298,7 @@ public class QbftRoundTest {
         new QbftRound(
             roundState,
             blockCreator,
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             subscribers,
             nodeKey,
@@ -323,7 +307,7 @@ public class QbftRoundTest {
             roundTimer,
             parentHeader);
 
-    when(blockInteface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(proposedBlock);
+    when(blockInterface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(proposedBlock);
     when(blockCreator.createSealedBlock(eq(proposedBlock), eq(0), any())).thenReturn(proposedBlock);
 
     round.handleCommitMessage(
@@ -344,7 +328,7 @@ public class QbftRoundTest {
         new QbftRound(
             roundState,
             blockCreator,
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             subscribers,
             nodeKey,
@@ -353,7 +337,7 @@ public class QbftRoundTest {
             roundTimer,
             parentHeader);
 
-    when(blockInteface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);
+    when(blockInterface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);
     when(blockCreator.createSealedBlock(eq(proposedBlock), eq(0), any())).thenReturn(proposedBlock);
 
     round.handleCommitMessage(
@@ -378,7 +362,7 @@ public class QbftRoundTest {
         new QbftRound(
             roundState,
             blockCreator,
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             subscribers,
             throwingNodeKey,
@@ -387,7 +371,7 @@ public class QbftRoundTest {
             roundTimer,
             parentHeader);
 
-    when(blockInteface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);
+    when(blockInterface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);
 
     round.handleProposalMessage(
         messageFactory.createProposal(

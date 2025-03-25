@@ -31,13 +31,11 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -61,7 +59,7 @@ public class QbftRound {
   protected final QbftBlockCreator blockCreator;
 
   /** The Protocol context. */
-  protected final ProtocolContext protocolContext;
+  protected final QbftBlockInterface blockInterface;
 
   /** The Protocol schedule. */
   protected final QbftProtocolSchedule protocolSchedule;
@@ -77,7 +75,7 @@ public class QbftRound {
    *
    * @param roundState the round state
    * @param blockCreator the block creator
-   * @param protocolContext the protocol context
+   * @param blockInterface the block interface
    * @param protocolSchedule the protocol schedule
    * @param observers the observers
    * @param nodeKey the node key
@@ -89,7 +87,7 @@ public class QbftRound {
   public QbftRound(
       final RoundState roundState,
       final QbftBlockCreator blockCreator,
-      final ProtocolContext protocolContext,
+      final QbftBlockInterface blockInterface,
       final QbftProtocolSchedule protocolSchedule,
       final Subscribers<QbftMinedBlockObserver> observers,
       final NodeKey nodeKey,
@@ -99,7 +97,7 @@ public class QbftRound {
       final QbftBlockHeader parentHeader) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
-    this.protocolContext = protocolContext;
+    this.blockInterface = blockInterface;
     this.protocolSchedule = protocolSchedule;
     this.observers = observers;
     this.nodeKey = nodeKey;
@@ -148,10 +146,8 @@ public class QbftRound {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
       QbftBlock preparedBlock = bestPreparedCertificate.get().getBlock();
-      final QbftBlockInterface bftBlockInterface =
-          protocolContext.getConsensusContext(QbftContext.class).blockInterface();
       blockToPublish =
-          bftBlockInterface.replaceRoundInBlock(
+          blockInterface.replaceRoundInBlock(
               preparedBlock, roundState.getRoundIdentifier().getRoundNumber());
     }
 
@@ -373,9 +369,7 @@ public class QbftRound {
   }
 
   private QbftBlock createCommitBlock(final QbftBlock block) {
-    final QbftBlockInterface bftBlockInterface =
-        protocolContext.getConsensusContext(QbftContext.class).blockInterface();
-    return bftBlockInterface.replaceRoundInBlock(block, getRoundIdentifier().getRoundNumber());
+    return blockInterface.replaceRoundInBlock(block, getRoundIdentifier().getRoundNumber());
   }
 
   private void notifyNewBlockListeners(final QbftBlock block) {
