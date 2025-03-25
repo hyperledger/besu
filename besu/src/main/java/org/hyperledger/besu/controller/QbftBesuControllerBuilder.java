@@ -65,7 +65,6 @@ import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
@@ -228,13 +227,6 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
         new QbftValidatorProviderAdaptor(validatorProvider);
 
     final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
-    final QbftContext qbftContext = new QbftContext(qbftValidatorProvider, qbftBlockInterface);
-    final ProtocolContext qbftProtocolContext =
-        new ProtocolContext(
-            blockchain,
-            protocolContext.getWorldStateArchive(),
-            qbftContext,
-            protocolContext.getBadBlockManager());
 
     final ProposerSelector proposerSelector =
         new BftProposerSelector(blockchain, bftBlockInterface, true, validatorProvider);
