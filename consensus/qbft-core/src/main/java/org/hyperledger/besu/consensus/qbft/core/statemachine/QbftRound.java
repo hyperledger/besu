@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
 import static java.util.Collections.emptyList;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -71,9 +70,6 @@ public class QbftRound {
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
 
-  /** The Bft extra data codec. */
-  protected final BftExtraDataCodec bftExtraDataCodec;
-
   private final QbftBlockHeader parentHeader;
 
   /**
@@ -88,7 +84,6 @@ public class QbftRound {
    * @param messageFactory the message factory
    * @param transmitter the transmitter
    * @param roundTimer the round timer
-   * @param bftExtraDataCodec the bft extra data codec
    * @param parentHeader the parent header
    */
   public QbftRound(
@@ -101,7 +96,6 @@ public class QbftRound {
       final MessageFactory messageFactory,
       final QbftMessageTransmitter transmitter,
       final RoundTimer roundTimer,
-      final BftExtraDataCodec bftExtraDataCodec,
       final QbftBlockHeader parentHeader) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
@@ -111,7 +105,6 @@ public class QbftRound {
     this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
-    this.bftExtraDataCodec = bftExtraDataCodec;
     this.parentHeader = parentHeader;
     roundTimer.startTimer(getRoundIdentifier());
   }

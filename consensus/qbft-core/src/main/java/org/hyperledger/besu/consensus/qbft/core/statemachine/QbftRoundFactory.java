@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
@@ -38,7 +37,6 @@ public class QbftRoundFactory {
   private final Subscribers<QbftMinedBlockObserver> minedBlockObservers;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
-  private final BftExtraDataCodec bftExtraDataCodec;
 
   /**
    * Instantiates a new Qbft round factory.
@@ -49,7 +47,6 @@ public class QbftRoundFactory {
    * @param minedBlockObservers the mined block observers
    * @param messageValidatorFactory the message validator factory
    * @param messageFactory the message factory
-   * @param bftExtraDataCodec the bft extra data codec
    */
   public QbftRoundFactory(
       final QbftFinalState finalState,
@@ -57,8 +54,7 @@ public class QbftRoundFactory {
       final QbftProtocolSchedule protocolSchedule,
       final Subscribers<QbftMinedBlockObserver> minedBlockObservers,
       final MessageValidatorFactory messageValidatorFactory,
-      final MessageFactory messageFactory,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final MessageFactory messageFactory) {
     this.finalState = finalState;
     this.blockCreatorFactory = finalState.getBlockCreatorFactory();
     this.protocolContext = protocolContext;
@@ -66,7 +62,6 @@ public class QbftRoundFactory {
     this.minedBlockObservers = minedBlockObservers;
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
-    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   /**
@@ -116,7 +111,6 @@ public class QbftRoundFactory {
         messageFactory,
         messageTransmitter,
         finalState.getRoundTimer(),
-        bftExtraDataCodec,
         parentHeader);
   }
 }

@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
@@ -78,7 +77,6 @@ public class QbftRoundIntegrationTest {
 
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final Subscribers<QbftMinedBlockObserver> subscribers = Subscribers.create();
-  private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
   private MessageFactory peerMessageFactory;
   private MessageFactory peerMessageFactory2;
   private ProtocolContext protocolContext;
@@ -156,7 +154,6 @@ public class QbftRoundIntegrationTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
             parentHeader);
 
     round.handleProposalMessage(
@@ -194,7 +191,6 @@ public class QbftRoundIntegrationTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
             parentHeader);
 
     // inject a block first, then a prepare on it.

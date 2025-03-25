@@ -291,8 +291,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             qbftProtocolSchedule,
             minedBlockObservers,
             messageValidatorFactory,
-            messageFactory,
-            qbftExtraDataCodec);
+            messageFactory);
     QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory =
         new QbftBlockHeightManagerFactory(
             finalState,
