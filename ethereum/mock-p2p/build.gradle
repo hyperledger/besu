@@ -36,7 +36,7 @@ dependencies {
   implementation project(':util')
 
   implementation 'io.vertx:vertx-core'
-  implementation 'io.consensys.protocols:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
 
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'

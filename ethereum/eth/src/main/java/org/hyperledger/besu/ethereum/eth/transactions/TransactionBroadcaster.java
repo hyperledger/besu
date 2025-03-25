@@ -21,7 +21,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 
 import java.util.ArrayList;
@@ -82,7 +82,7 @@ public class TransactionBroadcaster
   public void relayTransactionPoolTo(
       final EthPeer peer, final Collection<PendingTransaction> pendingTransactions) {
     if (!pendingTransactions.isEmpty()) {
-      if (peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)) {
+      if (peer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES)) {
         sendTransactionHashes(toTransactionList(pendingTransactions), List.of(peer));
       } else {
         // we need to exclude txs that support hash only broadcasting
@@ -120,7 +120,7 @@ public class TransactionBroadcaster
         .streamAvailablePeers()
         .forEach(
             peer -> {
-              if (peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)) {
+              if (peer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES)) {
                 sendOnlyHashPeers.add(peer);
               } else {
                 sendOnlyFullTransactionPeers.add(peer);

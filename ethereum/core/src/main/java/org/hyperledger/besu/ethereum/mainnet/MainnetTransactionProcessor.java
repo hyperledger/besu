@@ -611,6 +611,10 @@ public class MainnetTransactionProcessor {
     return messageCallProcessor;
   }
 
+  public boolean getClearEmptyAccounts() {
+    return clearEmptyAccounts;
+  }
+
   private String printableStackTraceFromThrowable(final RuntimeException re) {
     final StringBuilder builder = new StringBuilder();
 
