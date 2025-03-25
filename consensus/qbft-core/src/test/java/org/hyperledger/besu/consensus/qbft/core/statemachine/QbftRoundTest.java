@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -28,8 +27,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -60,7 +57,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,7 +86,6 @@ public class QbftRoundTest {
   @Mock private RoundTimer roundTimer;
   @Mock private QbftBlockImporter blockImporter;
   @Mock private QbftBlockHeader parentHeader;
-  @Mock private BftExtraDataCodec bftExtraDataCodec;
   @Mock private QbftBlockInterface blockInterface;
   @Mock private QbftBlockCodec blockEncoder;
 
@@ -121,13 +116,6 @@ public class QbftRoundTest {
 
     when(blockImporter.importBlock(any())).thenReturn(true);
 
-    BftExtraData bftExtraData =
-        new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
-    when(bftExtraDataCodec.decode(any())).thenReturn(bftExtraData);
-    when(bftExtraDataCodec.encode(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSeals(any())).thenReturn(Bytes.EMPTY);
-    when(bftExtraDataCodec.encodeWithoutCommitSealsAndRoundNumber(any())).thenReturn(Bytes.EMPTY);
-
     subscribers.subscribe(minedBlockObserver);
   }
 
@@ -144,7 +132,6 @@ public class QbftRoundTest {
         messageFactory,
         transmitter,
         roundTimer,
-        bftExtraDataCodec,
         parentHeader);
     verify(roundTimer, times(1)).startTimer(roundIdentifier);
   }
@@ -163,7 +150,6 @@ public class QbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
             parentHeader);
 
     when(blockInterface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);
@@ -194,7 +180,6 @@ public class QbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
             parentHeader);
 
     round.startRoundWith(new RoundChangeArtifacts(emptyList(), Optional.empty()), 15);
@@ -229,7 +214,6 @@ public class QbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
             parentHeader);
 
     final SignedData<PreparePayload> preparedPayload =
@@ -280,7 +264,6 @@ public class QbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
             parentHeader);
 
     final RoundChange roundChange =
@@ -322,7 +305,6 @@ public class QbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
             parentHeader);
 
     when(blockInterface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(proposedBlock);
@@ -353,7 +335,6 @@ public class QbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
             parentHeader);
 
     when(blockInterface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);
@@ -388,7 +369,6 @@ public class QbftRoundTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
             parentHeader);
 
     when(blockInterface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);

@@ -143,7 +143,6 @@ public class QbftRoundIntegrationTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
             parentHeader);
 
     round.handleProposalMessage(
@@ -181,7 +180,6 @@ public class QbftRoundIntegrationTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
             parentHeader);
 
     // inject a block first, then a prepare on it.
