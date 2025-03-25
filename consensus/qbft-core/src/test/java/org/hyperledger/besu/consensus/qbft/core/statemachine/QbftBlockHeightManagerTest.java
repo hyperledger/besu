@@ -107,7 +107,6 @@ public class QbftBlockHeightManagerTest {
   @Mock private RoundTimer roundTimer;
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   @Mock private ValidatorMulticaster validatorMulticaster;
-  @Mock private ProtocolContext protocolContext;
   @Mock private QbftProtocolSchedule protocolSchedule;
   @Mock private QbftBlockHeader parentHeader;
   @Mock private BftExtraDataCodec bftExtraDataCodec;
@@ -145,9 +144,6 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getClock()).thenReturn(clock);
     when(blockCreator.createBlock(anyLong(), any())).thenReturn(createdBlock);
 
-    QbftContext qbftContext = new QbftContext(validatorProvider, blockInterface);
-    when(protocolContext.getConsensusContext(QbftContext.class)).thenReturn(qbftContext);
-
     when(futureRoundProposalMessageValidator.validateProposalMessage(any())).thenReturn(true);
     when(messageValidatorFactory.createFutureRoundProposalMessageValidator(anyLong(), any()))
         .thenReturn(futureRoundProposalMessageValidator);
@@ -163,7 +159,7 @@ public class QbftBlockHeightManagerTest {
               return new QbftRound(
                   createdRoundState,
                   blockCreator,
-                  protocolContext,
+                  blockInterface,
                   protocolSchedule,
                   Subscribers.create(),
                   nodeKey,
@@ -181,7 +177,7 @@ public class QbftBlockHeightManagerTest {
               return new QbftRound(
                   providedRoundState,
                   blockCreator,
-                  protocolContext,
+                  blockInterface,
                   protocolSchedule,
                   Subscribers.create(),
                   nodeKey,

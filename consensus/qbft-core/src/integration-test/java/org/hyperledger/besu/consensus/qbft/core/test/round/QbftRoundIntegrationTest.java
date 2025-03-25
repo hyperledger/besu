@@ -40,7 +40,7 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
@@ -50,7 +50,6 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -79,13 +78,12 @@ public class QbftRoundIntegrationTest {
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final Subscribers<QbftMinedBlockObserver> subscribers = Subscribers.create();
   private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+  private final QbftBlockInterface blockInterface =
+      new QbftBlockInterfaceAdaptor(new BftBlockInterface(bftExtraDataCodec));
   private MessageFactory peerMessageFactory;
   private MessageFactory peerMessageFactory2;
-  private ProtocolContext protocolContext;
 
   @Mock private QbftProtocolSchedule protocolSchedule;
-  @Mock private MutableBlockchain blockChain;
-  @Mock private WorldStateArchive worldStateArchive;
   @Mock private QbftBlockImporter blockImporter;
 
   @Mock private QbftBlockCreator blockCreator;
@@ -131,14 +129,6 @@ public class QbftRoundIntegrationTest {
     when(protocolSchedule.getBlockImporter(any())).thenReturn(blockImporter);
 
     when(blockImporter.importBlock(any())).thenReturn(true);
-
-    protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            new QbftContext(
-                null, new QbftBlockInterfaceAdaptor(new BftBlockInterface(qbftExtraDataEncoder))),
-            new BadBlockManager());
   }
 
   @Test
@@ -149,7 +139,7 @@ public class QbftRoundIntegrationTest {
         new QbftRound(
             roundState,
             blockCreator,
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             subscribers,
             nodeKey,
@@ -187,7 +177,7 @@ public class QbftRoundIntegrationTest {
         new QbftRound(
             roundState,
             blockCreator,
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             subscribers,
             nodeKey,

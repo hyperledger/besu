@@ -482,12 +482,6 @@ public class TestContextBuilder {
             worldStateArchive,
             new BftContext(validatorProvider, epochManager, bftBlockInterface),
             new BadBlockManager());
-    final ProtocolContext qbftProtocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            new QbftContext(qbftValidatorProvider, qbftBlockInterface),
-            new BadBlockManager());
 
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
@@ -571,7 +565,7 @@ public class TestContextBuilder {
                 finalState,
                 new QbftRoundFactory(
                     finalState,
-                    qbftProtocolContext,
+                    qbftBlockInterface,
                     qbftProtocolSchedule,
                     minedBlockObservers,
                     messageValidatorFactory,
