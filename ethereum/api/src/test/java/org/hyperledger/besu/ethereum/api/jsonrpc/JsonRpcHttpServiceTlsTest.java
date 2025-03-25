@@ -102,7 +102,7 @@ public class JsonRpcHttpServiceTlsTest {
     final Synchronizer synchronizer = mock(Synchronizer.class);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.getLatestVersion());
+    supportedCapabilities.add(EthProtocol.LATEST);
 
     rpcMethods =
         new JsonRpcMethodsFactory()

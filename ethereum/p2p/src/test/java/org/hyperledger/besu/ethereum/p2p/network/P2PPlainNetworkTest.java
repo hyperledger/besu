@@ -327,7 +327,7 @@ public class P2PPlainNetworkTest {
         .config(config)
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(Arrays.asList(EthProtocolHelper.getLatestVersion()))
+        .supportedCapabilities(Arrays.asList(EthProtocolHelper.LATEST))
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .blockNumberForks(Collections.emptyList())
         .timestampForks(Collections.emptyList())

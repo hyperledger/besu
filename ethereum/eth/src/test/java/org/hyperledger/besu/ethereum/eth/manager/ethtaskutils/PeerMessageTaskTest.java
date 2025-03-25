@@ -158,8 +158,7 @@ public abstract class PeerMessageTaskTest<T>
   protected abstract void assertPartialResultMatchesExpectation(T requestedData, T partialResponse);
 
   protected EthPeer createPeer() {
-    final PeerConnection peerConnection =
-        new MockPeerConnection(Set.of(EthProtocol.getLatestVersion()));
+    final PeerConnection peerConnection = new MockPeerConnection(Set.of(EthProtocol.LATEST));
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
     return new EthPeer(
         peerConnection,

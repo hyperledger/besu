@@ -56,7 +56,6 @@ public class PeerTestHelper {
    * @return A MutableLocalNode that is not ready (the enode has not been set).
    */
   public static MutableLocalNode createMutableLocalNode() {
-    return MutableLocalNode.create(
-        "clientId", 5, Arrays.asList(EthProtocolHelper.getLatestVersion()));
+    return MutableLocalNode.create("clientId", 5, Arrays.asList(EthProtocolHelper.LATEST));
   }
 }

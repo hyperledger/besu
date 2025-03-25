@@ -391,7 +391,7 @@ public final class DefaultP2PNetworkTest {
         .nodeKey(nodeKey)
         .maintainedPeers(maintainedPeers)
         .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(EthProtocolHelper.getLatestVersion())
+        .supportedCapabilities(EthProtocolHelper.LATEST)
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .blockNumberForks(Collections.emptyList())
         .timestampForks(Collections.emptyList())

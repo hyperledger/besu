@@ -169,7 +169,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             .build();
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.getLatestVersion());
+    supportedCapabilities.add(EthProtocol.LATEST);
 
     final NatService natService = new NatService(Optional.empty());
 

@@ -205,7 +205,7 @@ public class NetworkingServiceLifecycleTest {
         .nodeKey(nodeKey)
         .config(config)
         .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(Arrays.asList(EthProtocolHelper.getLatestVersion()))
+        .supportedCapabilities(Arrays.asList(EthProtocolHelper.LATEST))
         .storageProvider(new InMemoryKeyValueStorageProvider());
   }
 }

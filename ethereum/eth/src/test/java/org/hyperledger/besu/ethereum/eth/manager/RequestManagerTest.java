@@ -298,8 +298,7 @@ public class RequestManagerTest {
   }
 
   private EthPeer createPeer() {
-    final Set<Capability> caps =
-        new HashSet<>(Collections.singletonList(EthProtocol.getLatestVersion()));
+    final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.LATEST));
     final PeerConnection peerConnection = new MockPeerConnection(caps);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
     return new EthPeer(

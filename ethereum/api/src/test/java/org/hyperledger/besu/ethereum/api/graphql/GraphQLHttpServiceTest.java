@@ -95,7 +95,7 @@ public class GraphQLHttpServiceTest {
             synchronizer);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.getLatestVersion());
+    supportedCapabilities.add(EthProtocol.LATEST);
     final GraphQLDataFetchers dataFetchers = new GraphQLDataFetchers(supportedCapabilities);
     graphQL = GraphQLProvider.buildGraphQL(dataFetchers);
     service = createGraphQLHttpService();

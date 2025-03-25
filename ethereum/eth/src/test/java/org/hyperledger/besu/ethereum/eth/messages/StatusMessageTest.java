@@ -34,7 +34,7 @@ public class StatusMessageTest {
 
   @Test
   public void getters() {
-    final int version = EthProtocol.getLatestVersion().getVersion();
+    final int version = EthProtocol.LATEST.getVersion();
     final BigInteger networkId = BigInteger.ONE;
     final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);
@@ -51,7 +51,7 @@ public class StatusMessageTest {
 
   @Test
   public void serializeDeserialize() {
-    final int version = EthProtocol.getLatestVersion().getVersion();
+    final int version = EthProtocol.LATEST.getVersion();
     final BigInteger networkId = BigInteger.ONE;
     final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);

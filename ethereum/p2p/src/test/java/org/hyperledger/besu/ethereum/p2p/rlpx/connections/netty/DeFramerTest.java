@@ -100,7 +100,7 @@ public class DeFramerTest {
   private final int p2pVersion = 5;
   private final String clientId = "abc";
   private final int port = 30303;
-  private final List<Capability> capabilities = Arrays.asList(EthProtocolHelper.getLatestVersion());
+  private final List<Capability> capabilities = Arrays.asList(EthProtocolHelper.LATEST);
   private final EnodeURL localEnode =
       EnodeURLImpl.builder()
           .ipAddress("127.0.0.1")

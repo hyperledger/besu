@@ -124,8 +124,7 @@ public class RespondingEthPeer {
       final boolean addToEthPeers) {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
 
-    final Set<Capability> caps =
-        new HashSet<>(Collections.singletonList(EthProtocol.getLatestVersion()));
+    final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.LATEST));
     final BlockingQueue<OutgoingMessage> outgoingMessages = new ArrayBlockingQueue<>(1000);
     final MockPeerConnection peerConnection =
         new MockPeerConnection(
@@ -134,10 +133,7 @@ public class RespondingEthPeer {
     final int before = ethPeers.peerCount();
     final EthPeer peer = ethPeers.peer(peerConnection);
     peer.registerStatusReceived(
-        chainHeadHash,
-        totalDifficulty,
-        EthProtocol.getLatestVersion().getVersion(),
-        peerConnection);
+        chainHeadHash, totalDifficulty, EthProtocol.LATEST.getVersion(), peerConnection);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
     if (addToEthPeers) {
       peer.registerStatusSent(peerConnection);

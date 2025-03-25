@@ -36,7 +36,7 @@ public class EthProtocolVersionTest {
 
   @Test
   public void returnsCorrectMethodName() {
-    setupSupportedEthProtocols(EthProtocol.getLatestVersion());
+    setupSupportedEthProtocols(EthProtocol.LATEST);
     assertThat(method.getName()).isEqualTo(ETH_METHOD);
   }
 

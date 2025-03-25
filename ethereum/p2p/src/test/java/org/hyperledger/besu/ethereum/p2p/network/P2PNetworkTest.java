@@ -135,12 +135,10 @@ public class P2PNetworkTest {
 
     final SubProtocol subprotocol1 = MockSubProtocol.create("eth");
     final Capability cap1 =
-        Capability.create(
-            subprotocol1.getName(), EthProtocolHelper.getLatestVersion().getVersion());
+        Capability.create(subprotocol1.getName(), EthProtocolHelper.LATEST.getVersion());
     final SubProtocol subprotocol2 = MockSubProtocol.create("oth");
     final Capability cap2 =
-        Capability.create(
-            subprotocol2.getName(), EthProtocolHelper.getLatestVersion().getVersion());
+        Capability.create(subprotocol2.getName(), EthProtocolHelper.LATEST.getVersion());
     try (final P2PNetwork listener =
             builder().nodeKey(listenerNodeKey).supportedCapabilities(cap1).build();
         final P2PNetwork connector =
@@ -274,7 +272,7 @@ public class P2PNetworkTest {
         .config(config)
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(Collections.singletonList(EthProtocolHelper.getLatestVersion()))
+        .supportedCapabilities(Collections.singletonList(EthProtocolHelper.LATEST))
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .blockNumberForks(Collections.emptyList())
         .timestampForks(Collections.emptyList())

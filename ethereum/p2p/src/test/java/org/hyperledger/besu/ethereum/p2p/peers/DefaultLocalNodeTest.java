@@ -32,8 +32,7 @@ import org.junit.jupiter.api.Test;
 public class DefaultLocalNodeTest {
   private final String clientId = "test client";
   private final int p2pVersion = 5;
-  private final List<Capability> supportedCapabilities =
-      Arrays.asList(EthProtocolHelper.getLatestVersion());
+  private final List<Capability> supportedCapabilities = Arrays.asList(EthProtocolHelper.LATEST);
   private final Bytes nodeId = Bytes.of(new byte[64]);
   private final int port = 30303;
   private final EnodeURL enode =
