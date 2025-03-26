@@ -1116,18 +1116,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void syncMode_fast() {
-    parseCommand("--sync-mode", "FAST");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void syncMode_full_requires_bonsaiLimitTrieLogsToBeDisabled() {
     parseCommand("--sync-mode", "FULL", "--bonsai-limit-trie-logs-enabled=false");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
@@ -1202,11 +1190,11 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void checkValidDefaultFastSyncMinPeers() {
-    parseCommand("--sync-mode", "FAST");
+    parseCommand("--sync-mode", "SNAP");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(5);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1214,11 +1202,11 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void parsesValidFastSyncMinPeersOption() {
-    parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "11");
+    parseCommand("--sync-mode", "SNAP", "--fast-sync-min-peers", "11");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1237,21 +1225,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesValidSyncMinPeersOption() {
-    parseCommand("--sync-mode", "FAST", "--sync-min-peers", "11");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void parsesInvalidFastSyncMinPeersOptionWrongFormatShouldFail() {
 
-    parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "ten");
+    parseCommand("--sync-mode", "SNAP", "--fast-sync-min-peers", "ten");
     verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))

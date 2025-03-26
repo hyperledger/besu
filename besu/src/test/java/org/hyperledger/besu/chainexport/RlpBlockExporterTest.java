@@ -89,7 +89,7 @@ public final class RlpBlockExporterTest {
 
   private static BesuController createController(final @TempDir Path dataDir) throws IOException {
     return new BesuController.Builder()
-        .fromEthNetworkConfig(EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.FAST)
+        .fromEthNetworkConfig(EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.SNAP)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
