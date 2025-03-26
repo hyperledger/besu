@@ -39,7 +39,10 @@ public class StorageEntryProof {
 
   @JsonGetter(value = "key")
   public String getKey() {
-    return key.trimLeadingZeros().toHexString();
+    final Bytes keyTrimmed = key.trimLeadingZeros();
+    // avoid returning 0x
+    if (keyTrimmed.isEmpty()) return "0x0";
+    return keyTrimmed.toHexString();
   }
 
   @JsonGetter(value = "value")
