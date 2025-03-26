@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -44,26 +46,38 @@ public class TransactionReceiptEncoder {
       final RLPOutput rlpOutput,
       final TransactionReceiptEncodingOptions options) {
 
-    if (options.withOpaqueBytes) {
-      if (receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
-        write(receipt, rlpOutput, options);
-      } else {
-        rlpOutput.writeBytes(RLP.encode(out -> write(receipt, out, options)));
-      }
-    } else {
-      write(receipt, rlpOutput, options);
+    // Network Eth69
+    if(options.withFlatResponse) {
+      writeInner(receipt, rlpOutput, options);
+      return;
     }
+
+    if (isOpaqueBytes(options, receipt)) {
+      rlpOutput.writeBytes(RLP.encode(out -> writeInner(receipt, out, options)));
+      return;
+    }
+
+    writeInner(receipt, rlpOutput, options);
   }
 
-  private static void write(
+  private static boolean isOpaqueBytes(
+      final TransactionReceiptEncodingOptions options, final TransactionReceipt receipt) {
+    return options.withOpaqueBytes
+        && !receipt.getTransactionType().equals(TransactionType.FRONTIER);
+  }
+
+  private static void writeInner(
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
       final TransactionReceiptEncodingOptions options) {
-    if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
+    if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)
+        || options.withFlatResponse) {
       rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
     }
 
-    rlpOutput.startList();
+    if (!options.withFlatResponse) {
+      rlpOutput.startList();
+    }
 
     // Determine whether it's a state root-encoded transaction receipt
     // or is a status code-encoded transaction receipt.
@@ -82,7 +96,10 @@ public class TransactionReceiptEncoder {
     if (options.withRevertReason && receipt.getRevertReason().isPresent()) {
       rlpOutput.writeBytes(receipt.getRevertReason().get());
     }
-    rlpOutput.endList();
+
+    if (!options.withFlatResponse) {
+      rlpOutput.endList();
+    }
   }
 
   public static class TransactionReceiptEncodingOptions {
@@ -90,12 +107,18 @@ public class TransactionReceiptEncoder {
     private final boolean withCompactedLogs;
     private final boolean withOpaqueBytes;
     private final boolean withBloomFilter;
+    private final boolean withFlatResponse;
 
     private TransactionReceiptEncodingOptions(final Builder builder) {
+      checkArgument(
+          !builder.withFlatResponse || !builder.withOpaqueBytes,
+          "Flat response encoding is not compatible with opaque bytes encoding");
+
       this.withRevertReason = builder.withRevertReason;
       this.withCompactedLogs = builder.withCompactedLogs;
       this.withOpaqueBytes = builder.withOpaqueBytes;
       this.withBloomFilter = builder.withBloomFilter;
+      this.withFlatResponse = builder.withFlatResponse;
     }
 
     public static class Builder {
@@ -103,6 +126,7 @@ public class TransactionReceiptEncoder {
       private boolean withCompactedLogs = false;
       private boolean withOpaqueBytes = true;
       private boolean withBloomFilter = true;
+      private boolean withFlatResponse = false;
 
       public Builder withRevertReason(final boolean withRevertReason) {
         this.withRevertReason = withRevertReason;
@@ -121,6 +145,11 @@ public class TransactionReceiptEncoder {
 
       public Builder withBloomFilter(final boolean withBloomFilter) {
         this.withBloomFilter = withBloomFilter;
+        return this;
+      }
+
+      public Builder withFlatResponse(final boolean withFlatResponse) {
+        this.withFlatResponse = withFlatResponse;
         return this;
       }
 
