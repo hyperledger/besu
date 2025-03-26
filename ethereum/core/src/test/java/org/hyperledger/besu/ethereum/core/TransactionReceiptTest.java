@@ -42,6 +42,11 @@ public class TransactionReceiptTest {
 
   @Test
   public void toFromRlpWithReason() {
+    final TransactionReceiptEncoder.TransactionReceiptEncodingOptions encodingOptions =
+        new TransactionReceiptEncoder.TransactionReceiptEncodingOptions.Builder()
+            .withRevertReason(true)
+            .build();
+
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
@@ -49,16 +54,18 @@ public class TransactionReceiptTest {
             RLP.input(
                 RLP.encode(
                     rlpOut ->
-                        TransactionReceiptEncoder.writeTo(
-                            receipt,
-                            rlpOut,
-                            new TransactionReceiptEncoder.TransactionReceiptEncodingOptions(
-                                true, false, false, false)))));
+                        TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))));
     assertThat(copy).isEqualTo(receipt);
   }
 
   @Test
   public void toFromRlpCompacted() {
+    final TransactionReceiptEncoder.TransactionReceiptEncodingOptions encodingOptions =
+        new TransactionReceiptEncoder.TransactionReceiptEncodingOptions.Builder()
+            .withCompactedLogs(true)
+            .withBloomFilter(false)
+            .build();
+
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
@@ -66,16 +73,19 @@ public class TransactionReceiptTest {
             RLP.input(
                 RLP.encode(
                     rlpOut ->
-                        TransactionReceiptEncoder.writeTo(
-                            receipt,
-                            rlpOut,
-                            new TransactionReceiptEncoder.TransactionReceiptEncodingOptions(
-                                false, true, false, false)))));
+                        TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))));
     assertThat(copy).isEqualTo(receipt);
   }
 
   @Test
   public void toFromRlpCompactedWithReason() {
+    final TransactionReceiptEncoder.TransactionReceiptEncodingOptions encodingOptions =
+        new TransactionReceiptEncoder.TransactionReceiptEncodingOptions.Builder()
+            .withRevertReason(true)
+            .withCompactedLogs(true)
+            .withBloomFilter(false)
+            .build();
+
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
@@ -83,34 +93,38 @@ public class TransactionReceiptTest {
             RLP.input(
                 RLP.encode(
                     rlpOut ->
-                        TransactionReceiptEncoder.writeTo(
-                            receipt,
-                            rlpOut,
-                            new TransactionReceiptEncoder.TransactionReceiptEncodingOptions(
-                                true, true, false, false)))));
+                        TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))));
     assertThat(copy).isEqualTo(receipt);
   }
 
   @Test
   public void uncompactedAndCompactedDecodeToSameReceipt() {
+
+    final TransactionReceiptEncoder.TransactionReceiptEncodingOptions
+        encodingOptionsWithCompaction =
+            new TransactionReceiptEncoder.TransactionReceiptEncodingOptions.Builder()
+                .withCompactedLogs(true)
+                .withBloomFilter(false)
+                .build();
+
+    final TransactionReceiptEncoder.TransactionReceiptEncodingOptions
+        encodingOptionsWithoutCompaction =
+            new TransactionReceiptEncoder.TransactionReceiptEncodingOptions.Builder()
+                .withCompactedLogs(false)
+                .withBloomFilter(true)
+                .build();
+
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final Bytes compactedReceipt =
         RLP.encode(
             rlpOut ->
-                TransactionReceiptEncoder.writeTo(
-                    receipt,
-                    rlpOut,
-                    new TransactionReceiptEncoder.TransactionReceiptEncodingOptions(
-                        false, true, false, false)));
+                TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptionsWithCompaction));
     final Bytes unCompactedReceipt =
         RLP.encode(
             rlpOut ->
                 TransactionReceiptEncoder.writeTo(
-                    receipt,
-                    rlpOut,
-                    new TransactionReceiptEncoder.TransactionReceiptEncodingOptions(
-                        false, false, false, false)));
+                    receipt, rlpOut, encodingOptionsWithoutCompaction));
     assertThat(TransactionReceiptDecoder.readFrom(RLP.input(compactedReceipt))).isEqualTo(receipt);
     assertThat(TransactionReceiptDecoder.readFrom(RLP.input(unCompactedReceipt)))
         .isEqualTo(receipt);

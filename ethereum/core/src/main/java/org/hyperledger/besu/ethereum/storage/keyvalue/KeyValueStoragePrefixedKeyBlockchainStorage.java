@@ -381,8 +381,8 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
                   (r, rlpOutput) -> {
                     var options =
                         receiptCompaction
-                            ? TransactionReceiptEncoder.STORAGE_COMPACTED
-                            : TransactionReceiptEncoder.STORAGE_UNCOMPACTED;
+                            ? TransactionReceiptEncoder.STORAGE_WITH_COMPACTION
+                            : TransactionReceiptEncoder.STORAGE_WITHOUT_COMPACTION;
                     TransactionReceiptEncoder.writeTo(r, rlpOutput, options);
                   }));
     }

@@ -313,7 +313,7 @@ public class StateBackupService {
             receipts.get(),
             (r, rlpOut) ->
                 TransactionReceiptEncoder.writeTo(
-                    r, rlpOut, TransactionReceiptEncoder.STORAGE_UNCOMPACTED));
+                    r, rlpOut, TransactionReceiptEncoder.STORAGE_WITHOUT_COMPACTION));
         receiptsWriter.writeBytes(receiptsOutput.encoded().toArrayUnsafe());
 
         backupStatus.storedBlock = blockNumber;

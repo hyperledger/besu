@@ -20,21 +20,24 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 public class TransactionReceiptEncoder {
-
   public static final TransactionReceiptEncodingOptions NETWORK =
-      new TransactionReceiptEncodingOptions(false, false, true, true);
+      new TransactionReceiptEncodingOptions.Builder()
+          .withCompactedLogs(false)
+          .withBloomFilter(true)
+          .build();
 
-  public static final TransactionReceiptEncodingOptions NETWORK_ETH69 =
-      new TransactionReceiptEncodingOptions(false, false, false, false);
+  public static final TransactionReceiptEncodingOptions STORAGE_WITH_COMPACTION =
+      new TransactionReceiptEncodingOptions.Builder()
+          .withRevertReason(true)
+          .withCompactedLogs(true)
+          .withBloomFilter(false)
+          .build();
 
-  public static final TransactionReceiptEncodingOptions STORAGE_COMPACTED =
-      new TransactionReceiptEncodingOptions(true, true, true, false);
-
-  public static final TransactionReceiptEncodingOptions STORAGE_UNCOMPACTED =
-      new TransactionReceiptEncodingOptions(true, false, true, true);
+  public static final TransactionReceiptEncodingOptions STORAGE_WITHOUT_COMPACTION =
+      new TransactionReceiptEncodingOptions.Builder().withRevertReason(true).build();
 
   public static final TransactionReceiptEncodingOptions TRIE =
-      new TransactionReceiptEncodingOptions(false, false, false, true);
+      new TransactionReceiptEncodingOptions.Builder().withOpaqueBytes(false).build();
 
   public static void writeTo(
       final TransactionReceipt receipt,
@@ -70,7 +73,7 @@ public class TransactionReceiptEncoder {
       rlpOutput.writeLongScalar(receipt.getStatus());
     }
     rlpOutput.writeLongScalar(receipt.getCumulativeGasUsed());
-    if (!options.withBloomFilter) {
+    if (options.withBloomFilter) {
       rlpOutput.writeBytes(receipt.getBloomFilter());
     }
     rlpOutput.writeList(
@@ -88,15 +91,42 @@ public class TransactionReceiptEncoder {
     private final boolean withOpaqueBytes;
     private final boolean withBloomFilter;
 
-    public TransactionReceiptEncodingOptions(
-        final boolean withRevertReason,
-        final boolean withCompactedLogs,
-        final boolean withOpaqueBytes,
-        final boolean withBloomFilter) {
-      this.withRevertReason = withRevertReason;
-      this.withCompactedLogs = withCompactedLogs;
-      this.withOpaqueBytes = withOpaqueBytes;
-      this.withBloomFilter = withBloomFilter;
+    private TransactionReceiptEncodingOptions(final Builder builder) {
+      this.withRevertReason = builder.withRevertReason;
+      this.withCompactedLogs = builder.withCompactedLogs;
+      this.withOpaqueBytes = builder.withOpaqueBytes;
+      this.withBloomFilter = builder.withBloomFilter;
+    }
+
+    public static class Builder {
+      private boolean withRevertReason = false;
+      private boolean withCompactedLogs = false;
+      private boolean withOpaqueBytes = true;
+      private boolean withBloomFilter = true;
+
+      public Builder withRevertReason(final boolean withRevertReason) {
+        this.withRevertReason = withRevertReason;
+        return this;
+      }
+
+      public Builder withCompactedLogs(final boolean withCompactedLogs) {
+        this.withCompactedLogs = withCompactedLogs;
+        return this;
+      }
+
+      public Builder withOpaqueBytes(final boolean withOpaqueBytes) {
+        this.withOpaqueBytes = withOpaqueBytes;
+        return this;
+      }
+
+      public Builder withBloomFilter(final boolean withBloomFilter) {
+        this.withBloomFilter = withBloomFilter;
+        return this;
+      }
+
+      public TransactionReceiptEncodingOptions build() {
+        return new TransactionReceiptEncodingOptions(this);
+      }
     }
   }
 }
