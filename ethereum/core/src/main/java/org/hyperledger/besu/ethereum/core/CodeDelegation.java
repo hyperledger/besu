@@ -123,7 +123,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
   public Optional<Address> authorizer() {
     // recId needs to be between either 0 or 1, otherwise the signature is invalid
     // which means we can't recover the authorizer.
-    if (signature.getRecId() < 0 || signature.getRecId() > 1) {
+    if (signature.getRecId() > 1 || signature.getRecId() < 0) {
       return Optional.empty();
     }
 

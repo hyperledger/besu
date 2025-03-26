@@ -198,18 +198,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Account contract = frame.getWorldUpdater().get(to);
 
-    try {
-      deductGasForCodeDelegationResolution(frame, contract);
-    } catch (InsufficientGasException e) {
-      LOG.atDebug()
-          .setMessage(
-              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
-          .addArgument(frame.getRemainingGas())
-          .addArgument(e.getGasCost())
-          .log();
-      return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
-
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
     // If the call is sending more value than the account has or the message frame is to deep
@@ -223,6 +211,18 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       return new OperationResult(cost, null);
+    }
+
+    try {
+      deductGasForCodeDelegationResolution(frame, contract);
+    } catch (InsufficientGasException e) {
+      LOG.atDebug()
+          .setMessage(
+              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
+          .addArgument(frame.getRemainingGas())
+          .addArgument(e.getGasCost())
+          .log();
+      return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     final Bytes inputData = frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));

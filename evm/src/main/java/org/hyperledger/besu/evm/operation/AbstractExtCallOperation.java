@@ -128,18 +128,6 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     Address to = Words.toAddress(toBytes);
     final Account contract = frame.getWorldUpdater().get(to);
 
-    try {
-      deductGasForCodeDelegationResolution(frame, contract);
-    } catch (InsufficientGasException e) {
-      LOG.atDebug()
-          .setMessage(
-              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
-          .addArgument(frame.getRemainingGas())
-          .addArgument(e.getGasCost())
-          .log();
-      return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
-
     boolean accountCreation = (contract == null || contract.isEmpty()) && !zeroValue;
     long cost =
         clampedAdd(
@@ -187,6 +175,19 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     if (!zeroValue && (value.compareTo(balance) > 0)) {
       return softFailure(frame, cost);
     }
+
+    try {
+      deductGasForCodeDelegationResolution(frame, contract);
+    } catch (InsufficientGasException e) {
+      LOG.atDebug()
+          .setMessage(
+              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
+          .addArgument(frame.getRemainingGas())
+          .addArgument(e.getGasCost())
+          .log();
+      return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
     // stack too deep, for large gas systems.
     if (frame.getDepth() >= 1024) {
       return softFailure(frame, cost);
