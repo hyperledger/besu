@@ -39,7 +39,12 @@ public class FutureMessageBuffer {
   private final NavigableMap<Long, List<Message>> buffer = new TreeMap<>();
   private final long futureMessagesMaxDistance;
   private final long futureMessagesLimit;
+  private final FutureMessageHandler futureMessageHandler;
   private long chainHeight;
+
+  public interface FutureMessageHandler {
+    void handleFutureMessage(long msgChainHeight, Message message);
+  }
 
   /**
    * Instantiates a new Future message buffer.
@@ -55,6 +60,26 @@ public class FutureMessageBuffer {
     this.futureMessagesMaxDistance = futureMessagesMaxDistance;
     this.futureMessagesLimit = futureMessagesLimit;
     this.chainHeight = chainHeight;
+    this.futureMessageHandler = (msgChainHeight, message) -> {};
+  }
+
+  /**
+   * Instantiates a new Future message buffer.
+   *
+   * @param futureMessagesMaxDistance the future messages max distance
+   * @param futureMessagesLimit the future messages limit
+   * @param chainHeight the chain height
+   * @param futureMessageHandler the future message handler
+   */
+  public FutureMessageBuffer(
+      final long futureMessagesMaxDistance,
+      final long futureMessagesLimit,
+      final long chainHeight,
+      final FutureMessageHandler futureMessageHandler) {
+    this.futureMessagesMaxDistance = futureMessagesMaxDistance;
+    this.futureMessagesLimit = futureMessagesLimit;
+    this.chainHeight = chainHeight;
+    this.futureMessageHandler = futureMessageHandler;
   }
 
   /**
@@ -64,6 +89,8 @@ public class FutureMessageBuffer {
    * @param rawMsg the raw msg
    */
   public void addMessage(final long msgChainHeight, final Message rawMsg) {
+    futureMessageHandler.handleFutureMessage(msgChainHeight, rawMsg);
+
     if (futureMessagesLimit == 0 || !validMessageHeight(msgChainHeight, chainHeight)) {
       return;
     }
