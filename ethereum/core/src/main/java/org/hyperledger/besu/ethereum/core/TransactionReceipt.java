@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
