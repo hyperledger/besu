@@ -51,14 +51,13 @@ public class TransactionReceiptEncoder {
       final RLPOutput rlpOutput,
       final TransactionReceiptEncodingOptions options) {
     if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)
-        || options.isWithFlatResponse()) {
+        && !options.isWithFlatResponse()) {
       rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
     }
-
-    if (!options.isWithFlatResponse()) {
-      rlpOutput.startList();
+    rlpOutput.startList();
+    if (options.isWithFlatResponse()) {
+      rlpOutput.writeIntScalar(receipt.getTransactionType().getEthSerializedType());
     }
-
     // Determine whether it's a state root-encoded transaction receipt
     // or is a status code-encoded transaction receipt.
     if (receipt.getStateRoot() != null) {
@@ -77,8 +76,6 @@ public class TransactionReceiptEncoder {
       rlpOutput.writeBytes(receipt.getRevertReason().get());
     }
 
-    if (!options.isWithFlatResponse()) {
-      rlpOutput.endList();
-    }
+    rlpOutput.endList();
   }
 }
