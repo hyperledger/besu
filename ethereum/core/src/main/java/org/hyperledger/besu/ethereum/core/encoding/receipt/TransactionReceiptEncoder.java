@@ -14,36 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding.receipt;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 public class TransactionReceiptEncoder {
-  public static final TransactionReceiptEncodingOptions NETWORK =
-      new TransactionReceiptEncodingOptions.Builder().build();
-
-  public static final TransactionReceiptEncodingOptions NETWORK_FLAT =
-      new TransactionReceiptEncodingOptions.Builder()
-          .withOpaqueBytes(false)
-          .withBloomFilter(false)
-          .withFlatResponse(true)
-          .build();
-
-  public static final TransactionReceiptEncodingOptions STORAGE_WITH_COMPACTION =
-      new TransactionReceiptEncodingOptions.Builder()
-          .withRevertReason(true)
-          .withCompactedLogs(true)
-          .withBloomFilter(false)
-          .build();
-
-  public static final TransactionReceiptEncodingOptions STORAGE_WITHOUT_COMPACTION =
-      new TransactionReceiptEncodingOptions.Builder().withRevertReason(true).build();
-
-  public static final TransactionReceiptEncodingOptions TRIE =
-      new TransactionReceiptEncodingOptions.Builder().withOpaqueBytes(false).build();
 
   public static void writeTo(
       final TransactionReceipt receipt,
@@ -51,7 +27,7 @@ public class TransactionReceiptEncoder {
       final TransactionReceiptEncodingOptions options) {
 
     // Network Eth69
-    if (options.withFlatResponse) {
+    if (options.isWithFlatResponse()) {
       writeInner(receipt, rlpOutput, options);
       return;
     }
@@ -66,7 +42,7 @@ public class TransactionReceiptEncoder {
 
   private static boolean isOpaqueBytes(
       final TransactionReceiptEncodingOptions options, final TransactionReceipt receipt) {
-    return options.withOpaqueBytes
+    return options.isWithOpaqueBytes()
         && !receipt.getTransactionType().equals(TransactionType.FRONTIER);
   }
 
@@ -75,11 +51,11 @@ public class TransactionReceiptEncoder {
       final RLPOutput rlpOutput,
       final TransactionReceiptEncodingOptions options) {
     if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)
-        || options.withFlatResponse) {
+        || options.isWithFlatResponse()) {
       rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
     }
 
-    if (!options.withFlatResponse) {
+    if (!options.isWithFlatResponse()) {
       rlpOutput.startList();
     }
 
@@ -91,75 +67,18 @@ public class TransactionReceiptEncoder {
       rlpOutput.writeLongScalar(receipt.getStatus());
     }
     rlpOutput.writeLongScalar(receipt.getCumulativeGasUsed());
-    if (options.withBloomFilter) {
+    if (options.isWithBloomFilter()) {
       rlpOutput.writeBytes(receipt.getBloomFilter());
     }
     rlpOutput.writeList(
         receipt.getLogsList(),
-        (log, logOutput) -> log.writeTo(logOutput, options.withCompactedLogs));
-    if (options.withRevertReason && receipt.getRevertReason().isPresent()) {
+        (log, logOutput) -> log.writeTo(logOutput, options.isWithCompactedLogs()));
+    if (options.isWithRevertReason() && receipt.getRevertReason().isPresent()) {
       rlpOutput.writeBytes(receipt.getRevertReason().get());
     }
 
-    if (!options.withFlatResponse) {
+    if (!options.isWithFlatResponse()) {
       rlpOutput.endList();
-    }
-  }
-
-  public static class TransactionReceiptEncodingOptions {
-    private final boolean withRevertReason;
-    private final boolean withCompactedLogs;
-    private final boolean withOpaqueBytes;
-    private final boolean withBloomFilter;
-    private final boolean withFlatResponse;
-
-    private TransactionReceiptEncodingOptions(final Builder builder) {
-      checkArgument(
-          !builder.withFlatResponse || !builder.withOpaqueBytes,
-          "Flat response encoding is not compatible with opaque bytes encoding");
-
-      this.withRevertReason = builder.withRevertReason;
-      this.withCompactedLogs = builder.withCompactedLogs;
-      this.withOpaqueBytes = builder.withOpaqueBytes;
-      this.withBloomFilter = builder.withBloomFilter;
-      this.withFlatResponse = builder.withFlatResponse;
-    }
-
-    public static class Builder {
-      private boolean withRevertReason = false;
-      private boolean withCompactedLogs = false;
-      private boolean withOpaqueBytes = true;
-      private boolean withBloomFilter = true;
-      private boolean withFlatResponse = false;
-
-      public Builder withRevertReason(final boolean withRevertReason) {
-        this.withRevertReason = withRevertReason;
-        return this;
-      }
-
-      public Builder withCompactedLogs(final boolean withCompactedLogs) {
-        this.withCompactedLogs = withCompactedLogs;
-        return this;
-      }
-
-      public Builder withOpaqueBytes(final boolean withOpaqueBytes) {
-        this.withOpaqueBytes = withOpaqueBytes;
-        return this;
-      }
-
-      public Builder withBloomFilter(final boolean withBloomFilter) {
-        this.withBloomFilter = withBloomFilter;
-        return this;
-      }
-
-      public Builder withFlatResponse(final boolean withFlatResponse) {
-        this.withFlatResponse = withFlatResponse;
-        return this;
-      }
-
-      public TransactionReceiptEncodingOptions build() {
-        return new TransactionReceiptEncodingOptions(this);
-      }
     }
   }
 }

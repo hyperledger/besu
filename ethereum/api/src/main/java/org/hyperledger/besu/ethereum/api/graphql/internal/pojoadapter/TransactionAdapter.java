@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -569,7 +570,7 @@ public class TransactionAdapter extends AdapterBase {
             receipt -> {
               final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
               TransactionReceiptEncoder.writeTo(
-                  receipt.getReceipt(), rlpOutput, TransactionReceiptEncoder.NETWORK);
+                  receipt.getReceipt(), rlpOutput, TransactionReceiptEncodingOptions.NETWORK);
               return rlpOutput.encoded();
             });
   }

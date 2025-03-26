@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -35,17 +36,15 @@ public class TransactionReceiptTest {
                 RLP.encode(
                     output ->
                         TransactionReceiptEncoder.writeTo(
-                            receipt, output, TransactionReceiptEncoder.NETWORK))),
+                            receipt, output, TransactionReceiptEncodingOptions.NETWORK))),
             false);
     assertThat(copy).isEqualTo(receipt);
   }
 
   @Test
   public void toFromRlpWithReason() {
-    final TransactionReceiptEncoder.TransactionReceiptEncodingOptions encodingOptions =
-        new TransactionReceiptEncoder.TransactionReceiptEncodingOptions.Builder()
-            .withRevertReason(true)
-            .build();
+    final TransactionReceiptEncodingOptions encodingOptions =
+        new TransactionReceiptEncodingOptions.Builder().withRevertReason(true).build();
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
@@ -60,8 +59,8 @@ public class TransactionReceiptTest {
 
   @Test
   public void toFromRlpCompacted() {
-    final TransactionReceiptEncoder.TransactionReceiptEncodingOptions encodingOptions =
-        new TransactionReceiptEncoder.TransactionReceiptEncodingOptions.Builder()
+    final TransactionReceiptEncodingOptions encodingOptions =
+        new TransactionReceiptEncodingOptions.Builder()
             .withCompactedLogs(true)
             .withBloomFilter(false)
             .build();
@@ -79,8 +78,8 @@ public class TransactionReceiptTest {
 
   @Test
   public void toFromRlpCompactedWithReason() {
-    final TransactionReceiptEncoder.TransactionReceiptEncodingOptions encodingOptions =
-        new TransactionReceiptEncoder.TransactionReceiptEncodingOptions.Builder()
+    final TransactionReceiptEncodingOptions encodingOptions =
+        new TransactionReceiptEncodingOptions.Builder()
             .withRevertReason(true)
             .withCompactedLogs(true)
             .withBloomFilter(false)
@@ -100,19 +99,17 @@ public class TransactionReceiptTest {
   @Test
   public void uncompactedAndCompactedDecodeToSameReceipt() {
 
-    final TransactionReceiptEncoder.TransactionReceiptEncodingOptions
-        encodingOptionsWithCompaction =
-            new TransactionReceiptEncoder.TransactionReceiptEncodingOptions.Builder()
-                .withCompactedLogs(true)
-                .withBloomFilter(false)
-                .build();
+    final TransactionReceiptEncodingOptions encodingOptionsWithCompaction =
+        new TransactionReceiptEncodingOptions.Builder()
+            .withCompactedLogs(true)
+            .withBloomFilter(false)
+            .build();
 
-    final TransactionReceiptEncoder.TransactionReceiptEncodingOptions
-        encodingOptionsWithoutCompaction =
-            new TransactionReceiptEncoder.TransactionReceiptEncodingOptions.Builder()
-                .withCompactedLogs(false)
-                .withBloomFilter(true)
-                .build();
+    final TransactionReceiptEncodingOptions encodingOptionsWithoutCompaction =
+        new TransactionReceiptEncodingOptions.Builder()
+            .withCompactedLogs(false)
+            .withBloomFilter(true)
+            .build();
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
