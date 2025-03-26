@@ -53,6 +53,12 @@ public class SelfDestructOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+
+    // checking for static violations first means fewer account accesses
+    if (frame.isStatic()) {
+      return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    }
+
     // First calculate cost.  There's a bit of yak shaving getting values to calculate the cost.
     final Address beneficiaryAddress = Words.toAddress(frame.popStackItem());
     // Because of weird EIP150/158 reasons we care about a null account, so we can't merge this.
@@ -69,9 +75,7 @@ public class SelfDestructOperation extends AbstractOperation {
             + (beneficiaryIsWarm ? 0L : gasCalculator().getColdAccountAccessCost());
 
     // With the cost we can test for two early WithdrawalRequests: static or not enough gas.
-    if (frame.isStatic()) {
-      return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else if (frame.getRemainingGas() < cost) {
+    if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
