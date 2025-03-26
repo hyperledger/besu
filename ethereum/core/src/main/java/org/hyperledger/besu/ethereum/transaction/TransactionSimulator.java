@@ -653,14 +653,18 @@ public class TransactionSimulator {
 
   private boolean shouldSetMaxFeePerGas(
       final CallParameter callParams, final ProcessableBlockHeader header) {
+
+    // Return false if chain ID is not present
     if (protocolSchedule.getChainId().isEmpty()) {
       return false;
     }
 
+    // Return false if base fee is not present
     if (header.getBaseFee().isEmpty()) {
       return false;
     }
 
+    // Return true if blob gas price should be set
     if (shouldSetBlobGasPrice(callParams)) {
       return true;
     }

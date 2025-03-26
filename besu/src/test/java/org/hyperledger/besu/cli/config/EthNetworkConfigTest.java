@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.HOODI_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.HOODI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_BOOTSTRAP_NODES;
@@ -52,7 +53,7 @@ public class EthNetworkConfigTest {
   @Test
   public void testDefaultHoodiConfig() {
     EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.HOODI);
-    assertThat(config.dnsDiscoveryUrl()).isNull();
+    assertThat(config.dnsDiscoveryUrl()).isEqualTo(HOODI_DISCOVERY_URL);
     assertThat(config.bootNodes()).isEqualTo(HOODI_BOOTSTRAP_NODES);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(560048));
   }

@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -380,7 +380,7 @@ public class FullSyncChainDownloaderTest {
     final Optional<MessageData> maybeNextMessage = bestPeer.peekNextOutgoingRequest();
     assertThat(maybeNextMessage).isPresent();
     final MessageData nextMessage = maybeNextMessage.get();
-    assertThat(nextMessage.getCode()).isEqualTo(EthPV62.GET_BLOCK_HEADERS);
+    assertThat(nextMessage.getCode()).isEqualTo(EthProtocolMessages.GET_BLOCK_HEADERS);
     final GetBlockHeadersMessage headersMessage = GetBlockHeadersMessage.readFrom(nextMessage);
     assertThat(headersMessage.skip()).isGreaterThan(0);
 
@@ -478,7 +478,7 @@ public class FullSyncChainDownloaderTest {
           otherPeers.stream()
               .map(RespondingEthPeer::streamPendingOutgoingRequests)
               .flatMap(Function.identity())
-              .filter(m -> m.getCode() == EthPV62.GET_BLOCK_HEADERS)
+              .filter(m -> m.getCode() == EthProtocolMessages.GET_BLOCK_HEADERS)
               .map(GetBlockHeadersMessage::readFrom)
               .filter(m -> m.skip() > 0)
               .count();
