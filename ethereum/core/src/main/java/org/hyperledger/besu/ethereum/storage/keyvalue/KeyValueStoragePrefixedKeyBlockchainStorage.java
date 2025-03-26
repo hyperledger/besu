@@ -378,9 +378,13 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
           o ->
               o.writeList(
                   receipts,
-                  (r, rlpOutput) ->
-                      TransactionReceiptEncoder.writeToForStorage(
-                          r, rlpOutput, receiptCompaction)));
+                  (r, rlpOutput) -> {
+                    var options =
+                        receiptCompaction
+                            ? TransactionReceiptEncoder.STORAGE_COMPACTED
+                            : TransactionReceiptEncoder.STORAGE_UNCOMPACTED;
+                    TransactionReceiptEncoder.writeTo(r, rlpOutput, options);
+                  }));
     }
 
     private void removeVariables() {

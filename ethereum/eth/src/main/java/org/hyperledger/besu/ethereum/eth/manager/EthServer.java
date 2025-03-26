@@ -235,7 +235,10 @@ class EthServer {
       encodedReceipts.startList();
       maybeReceipts
           .get()
-          .forEach(r -> TransactionReceiptEncoder.writeToForNetwork(r, encodedReceipts));
+          .forEach(
+              r ->
+                  TransactionReceiptEncoder.writeTo(
+                      r, encodedReceipts, TransactionReceiptEncoder.NETWORK));
       encodedReceipts.endList();
       final int encodedSize = encodedReceipts.encodedSize();
       if (responseSizeEstimate + encodedSize > maxMessageSize) {

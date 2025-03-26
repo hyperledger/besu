@@ -19,42 +19,43 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import com.google.common.annotations.VisibleForTesting;
-
 public class TransactionReceiptEncoder {
-  /**
-   * Write an RLP representation.
-   *
-   * @param out The RLP output to write to
-   */
-  public static void writeToForNetwork(final TransactionReceipt receipt, final RLPOutput out) {
-    writeTo(receipt, out, false, false);
-  }
 
-  public static void writeToForStorage(
-      final TransactionReceipt receipt, final RLPOutput out, final boolean compacted) {
-    writeTo(receipt, out, true, compacted);
-  }
+  public static final TransactionReceiptEncodingOptions NETWORK =
+      new TransactionReceiptEncodingOptions(false, false, true, true);
 
-  @VisibleForTesting
-  static void writeTo(
+  public static final TransactionReceiptEncodingOptions NETWORK_ETH69 =
+      new TransactionReceiptEncodingOptions(false, false, false, false);
+
+  public static final TransactionReceiptEncodingOptions STORAGE_COMPACTED =
+      new TransactionReceiptEncodingOptions(true, true, true, false);
+
+  public static final TransactionReceiptEncodingOptions STORAGE_UNCOMPACTED =
+      new TransactionReceiptEncodingOptions(true, false, true, true);
+
+  public static final TransactionReceiptEncodingOptions TRIE =
+      new TransactionReceiptEncodingOptions(false, false, false, true);
+
+  public static void writeTo(
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
-      final boolean withRevertReason,
-      final boolean compacted) {
-    if (receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
-      writeToForReceiptTrie(receipt, rlpOutput, withRevertReason, compacted);
+      final TransactionReceiptEncodingOptions options) {
+
+    if (options.withOpaqueBytes) {
+      if (receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
+        write(receipt, rlpOutput, options);
+      } else {
+        rlpOutput.writeBytes(RLP.encode(out -> write(receipt, out, options)));
+      }
     } else {
-      rlpOutput.writeBytes(
-          RLP.encode(out -> writeToForReceiptTrie(receipt, out, withRevertReason, compacted)));
+      write(receipt, rlpOutput, options);
     }
   }
 
-  public static void writeToForReceiptTrie(
+  private static void write(
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
-      final boolean withRevertReason,
-      final boolean compacted) {
+      final TransactionReceiptEncodingOptions options) {
     if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
       rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
     }
@@ -69,14 +70,33 @@ public class TransactionReceiptEncoder {
       rlpOutput.writeLongScalar(receipt.getStatus());
     }
     rlpOutput.writeLongScalar(receipt.getCumulativeGasUsed());
-    if (!compacted) {
+    if (!options.withBloomFilter) {
       rlpOutput.writeBytes(receipt.getBloomFilter());
     }
     rlpOutput.writeList(
-        receipt.getLogsList(), (log, logOutput) -> log.writeTo(logOutput, compacted));
-    if (withRevertReason && receipt.getRevertReason().isPresent()) {
+        receipt.getLogsList(),
+        (log, logOutput) -> log.writeTo(logOutput, options.withCompactedLogs));
+    if (options.withRevertReason && receipt.getRevertReason().isPresent()) {
       rlpOutput.writeBytes(receipt.getRevertReason().get());
     }
     rlpOutput.endList();
+  }
+
+  public static class TransactionReceiptEncodingOptions {
+    private final boolean withRevertReason;
+    private final boolean withCompactedLogs;
+    private final boolean withOpaqueBytes;
+    private final boolean withBloomFilter;
+
+    public TransactionReceiptEncodingOptions(
+        final boolean withRevertReason,
+        final boolean withCompactedLogs,
+        final boolean withOpaqueBytes,
+        final boolean withBloomFilter) {
+      this.withRevertReason = withRevertReason;
+      this.withCompactedLogs = withCompactedLogs;
+      this.withOpaqueBytes = withOpaqueBytes;
+      this.withBloomFilter = withBloomFilter;
+    }
   }
 }

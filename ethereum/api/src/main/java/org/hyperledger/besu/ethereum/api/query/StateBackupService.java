@@ -311,7 +311,9 @@ public class StateBackupService {
         final BytesValueRLPOutput receiptsOutput = new BytesValueRLPOutput();
         receiptsOutput.writeList(
             receipts.get(),
-            (r, rlpOut) -> TransactionReceiptEncoder.writeToForStorage(r, rlpOut, false));
+            (r, rlpOut) ->
+                TransactionReceiptEncoder.writeTo(
+                    r, rlpOut, TransactionReceiptEncoder.STORAGE_UNCOMPACTED));
         receiptsWriter.writeBytes(receiptsOutput.encoded().toArrayUnsafe());
 
         backupStatus.storedBlock = blockNumber;

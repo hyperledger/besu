@@ -568,7 +568,8 @@ public class TransactionAdapter extends AdapterBase {
         .map(
             receipt -> {
               final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-              TransactionReceiptEncoder.writeToForNetwork(receipt.getReceipt(), rlpOutput);
+              TransactionReceiptEncoder.writeTo(
+                  receipt.getReceipt(), rlpOutput, TransactionReceiptEncoder.NETWORK);
               return rlpOutput.encoded();
             });
   }

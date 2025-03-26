@@ -32,7 +32,10 @@ public class TransactionReceiptTest {
     final TransactionReceipt copy =
         TransactionReceiptDecoder.readFrom(
             RLP.input(
-                RLP.encode(output -> TransactionReceiptEncoder.writeToForNetwork(receipt, output))),
+                RLP.encode(
+                    output ->
+                        TransactionReceiptEncoder.writeTo(
+                            receipt, output, TransactionReceiptEncoder.NETWORK))),
             false);
     assertThat(copy).isEqualTo(receipt);
   }
@@ -46,8 +49,11 @@ public class TransactionReceiptTest {
             RLP.input(
                 RLP.encode(
                     rlpOut ->
-                        TransactionReceiptEncoder.writeToForReceiptTrie(
-                            receipt, rlpOut, true, false))));
+                        TransactionReceiptEncoder.writeTo(
+                            receipt,
+                            rlpOut,
+                            new TransactionReceiptEncoder.TransactionReceiptEncodingOptions(
+                                true, false, false, false)))));
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -60,8 +66,11 @@ public class TransactionReceiptTest {
             RLP.input(
                 RLP.encode(
                     rlpOut ->
-                        TransactionReceiptEncoder.writeToForReceiptTrie(
-                            receipt, rlpOut, false, true))));
+                        TransactionReceiptEncoder.writeTo(
+                            receipt,
+                            rlpOut,
+                            new TransactionReceiptEncoder.TransactionReceiptEncodingOptions(
+                                false, true, false, false)))));
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -74,8 +83,11 @@ public class TransactionReceiptTest {
             RLP.input(
                 RLP.encode(
                     rlpOut ->
-                        TransactionReceiptEncoder.writeToForReceiptTrie(
-                            receipt, rlpOut, true, true))));
+                        TransactionReceiptEncoder.writeTo(
+                            receipt,
+                            rlpOut,
+                            new TransactionReceiptEncoder.TransactionReceiptEncodingOptions(
+                                true, true, false, false)))));
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -86,11 +98,19 @@ public class TransactionReceiptTest {
     final Bytes compactedReceipt =
         RLP.encode(
             rlpOut ->
-                TransactionReceiptEncoder.writeToForReceiptTrie(receipt, rlpOut, false, true));
+                TransactionReceiptEncoder.writeTo(
+                    receipt,
+                    rlpOut,
+                    new TransactionReceiptEncoder.TransactionReceiptEncodingOptions(
+                        false, true, false, false)));
     final Bytes unCompactedReceipt =
         RLP.encode(
             rlpOut ->
-                TransactionReceiptEncoder.writeToForReceiptTrie(receipt, rlpOut, false, false));
+                TransactionReceiptEncoder.writeTo(
+                    receipt,
+                    rlpOut,
+                    new TransactionReceiptEncoder.TransactionReceiptEncodingOptions(
+                        false, false, false, false)));
     assertThat(TransactionReceiptDecoder.readFrom(RLP.input(compactedReceipt))).isEqualTo(receipt);
     assertThat(TransactionReceiptDecoder.readFrom(RLP.input(unCompactedReceipt)))
         .isEqualTo(receipt);
