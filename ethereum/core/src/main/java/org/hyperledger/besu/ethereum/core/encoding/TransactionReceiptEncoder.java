@@ -23,9 +23,13 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 public class TransactionReceiptEncoder {
   public static final TransactionReceiptEncodingOptions NETWORK =
+      new TransactionReceiptEncodingOptions.Builder().build();
+
+  public static final TransactionReceiptEncodingOptions NETWORK_FLAT =
       new TransactionReceiptEncodingOptions.Builder()
-          .withCompactedLogs(false)
-          .withBloomFilter(true)
+          .withOpaqueBytes(false)
+          .withBloomFilter(false)
+          .withFlatResponse(true)
           .build();
 
   public static final TransactionReceiptEncodingOptions STORAGE_WITH_COMPACTION =
@@ -47,7 +51,7 @@ public class TransactionReceiptEncoder {
       final TransactionReceiptEncodingOptions options) {
 
     // Network Eth69
-    if(options.withFlatResponse) {
+    if (options.withFlatResponse) {
       writeInner(receipt, rlpOutput, options);
       return;
     }

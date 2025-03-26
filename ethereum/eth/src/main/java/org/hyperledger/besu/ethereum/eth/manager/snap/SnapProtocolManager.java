@@ -123,7 +123,7 @@ public class SnapProtocolManager implements ProtocolManager {
           ethMessage.getData().unwrapMessageData();
       maybeResponseData =
           snapMessages
-              .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
+              .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()), cap)
               .map(responseData -> responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
     } catch (final RLPException e) {
       LOG.debug(

@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public final class ReceiptsMessage extends AbstractMessageData {
@@ -42,6 +43,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
     return new ReceiptsMessage(message.getData());
   }
 
+  @VisibleForTesting
   public static ReceiptsMessage create(final List<List<TransactionReceipt>> receipts) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();

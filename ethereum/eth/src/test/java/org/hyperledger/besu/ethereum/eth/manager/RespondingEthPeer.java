@@ -287,7 +287,7 @@ public class RespondingEthPeer {
           response = EthServer.constructGetBodiesResponse(blockchain, msg, 200, maxMsgSize);
           break;
         case EthProtocolMessages.GET_RECEIPTS:
-          response = EthServer.constructGetReceiptsResponse(blockchain, msg, 200, maxMsgSize);
+          response = EthServer.constructGetReceiptsResponse(blockchain, msg, 200, maxMsgSize, cap);
           break;
         case EthProtocolMessages.GET_NODE_DATA:
           response =

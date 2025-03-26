@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -76,7 +77,9 @@ public class EthServerTest {
     hashes.add(dataGenerator.hash()); // Add unknown hash
     final List<Bytes> expectedResult = new ArrayList<>(nodeData.values());
 
-    assertThat(ethMessages.dispatch(new EthMessage(ethPeer, GetNodeDataMessage.create(hashes))))
+    assertThat(
+            ethMessages.dispatch(
+                new EthMessage(ethPeer, GetNodeDataMessage.create(hashes)), EthProtocol.ETH63))
         .contains(NodeDataMessage.create(expectedResult));
   }
 
@@ -90,7 +93,9 @@ public class EthServerTest {
     final List<Bytes> expectedResult =
         hashes.stream().limit(limit).map(nodeData::get).collect(Collectors.toList());
 
-    assertThat(ethMessages.dispatch(new EthMessage(ethPeer, GetNodeDataMessage.create(hashes))))
+    assertThat(
+            ethMessages.dispatch(
+                new EthMessage(ethPeer, GetNodeDataMessage.create(hashes)), EthProtocol.ETH63))
         .contains(NodeDataMessage.create(expectedResult));
   }
 
@@ -107,7 +112,9 @@ public class EthServerTest {
             knownHashes.get(1));
     final List<Bytes> expectedResult = singletonList(nodeData.get(knownHashes.get(0)));
 
-    assertThat(ethMessages.dispatch(new EthMessage(ethPeer, GetNodeDataMessage.create(hashes))))
+    assertThat(
+            ethMessages.dispatch(
+                new EthMessage(ethPeer, GetNodeDataMessage.create(hashes)), EthProtocol.ETH63))
         .contains(NodeDataMessage.create(expectedResult));
   }
 
@@ -126,7 +133,9 @@ public class EthServerTest {
     final int messageSizeLimit = sizeLimit;
     setupEthServer(b -> b.maxMessageSize(messageSizeLimit));
 
-    assertThat(ethMessages.dispatch(new EthMessage(ethPeer, GetNodeDataMessage.create(hashes))))
+    assertThat(
+            ethMessages.dispatch(
+                new EthMessage(ethPeer, GetNodeDataMessage.create(hashes)), EthProtocol.ETH63))
         .contains(NodeDataMessage.create(expectedResult));
   }
 
@@ -152,7 +161,7 @@ public class EthServerTest {
 
     // Check response
     final BlockHeadersMessage expectedMsg = BlockHeadersMessage.create(expectedHeaders);
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH63);
     assertThat(result).contains(expectedMsg);
   }
 
@@ -174,7 +183,7 @@ public class EthServerTest {
 
     // Check response
     final BlockHeadersMessage expectedMsg = BlockHeadersMessage.create(expectedHeaders);
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH63);
     assertThat(result).contains(expectedMsg);
   }
 
@@ -199,7 +208,7 @@ public class EthServerTest {
 
     // Check response
     final BlockBodiesMessage expectedMsg = BlockBodiesMessage.create(expectedBodies);
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH63);
     assertThat(result).contains(expectedMsg);
   }
 
@@ -220,7 +229,7 @@ public class EthServerTest {
 
     // Check response
     final BlockBodiesMessage expectedMsg = BlockBodiesMessage.create(expectedBodies);
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH63);
     assertThat(result).contains(expectedMsg);
   }
 
@@ -245,7 +254,7 @@ public class EthServerTest {
 
     // Check response
     final ReceiptsMessage expectedMsg = ReceiptsMessage.create(expectedResults);
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH63);
     assertThat(result).contains(expectedMsg);
   }
 
@@ -265,7 +274,7 @@ public class EthServerTest {
 
     // Check response
     final ReceiptsMessage expectedMsg = ReceiptsMessage.create(expectedResults);
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH63);
     assertThat(result).contains(expectedMsg);
   }
 
@@ -291,7 +300,7 @@ public class EthServerTest {
 
     // Check response
     final PooledTransactionsMessage expectedMsg = PooledTransactionsMessage.create(expectedResult);
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH63);
     assertThat(result).contains(expectedMsg);
   }
 
@@ -312,7 +321,7 @@ public class EthServerTest {
 
     // Check response
     final PooledTransactionsMessage expectedMsg = PooledTransactionsMessage.create(expectedResult);
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH63);
     assertThat(result).contains(expectedMsg);
   }
 

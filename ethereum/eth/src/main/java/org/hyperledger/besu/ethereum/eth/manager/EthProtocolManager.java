@@ -307,10 +307,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             ethMessage.getData().unwrapMessageData();
         maybeResponseData =
             ethMessages
-                .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
+                .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()), cap)
                 .map(responseData -> responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
       } else {
-        maybeResponseData = ethMessages.dispatch(ethMessage);
+        maybeResponseData = ethMessages.dispatch(ethMessage, cap);
       }
     } catch (final RLPException e) {
       LOG.atDebug()

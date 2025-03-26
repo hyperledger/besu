@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -73,7 +75,7 @@ class EthServer {
 
     ethMessages.registerResponseConstructor(
         EthProtocolMessages.GET_BLOCK_HEADERS,
-        messageData ->
+        (messageData, capability) ->
             constructGetHeadersResponse(
                 blockchain,
                 messageData,
@@ -81,7 +83,7 @@ class EthServer {
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
         EthProtocolMessages.GET_BLOCK_BODIES,
-        messageData ->
+        (messageData, capability) ->
             constructGetBodiesResponse(
                 blockchain,
                 messageData,
@@ -89,15 +91,16 @@ class EthServer {
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
         EthProtocolMessages.GET_RECEIPTS,
-        messageData ->
+        (messageData, capability) ->
             constructGetReceiptsResponse(
                 blockchain,
                 messageData,
                 ethereumWireProtocolConfiguration.getMaxGetReceipts(),
-                maxMessageSize));
+                maxMessageSize,
+                capability));
     ethMessages.registerResponseConstructor(
         EthProtocolMessages.GET_NODE_DATA,
-        messageData ->
+        (messageData, capability) ->
             constructGetNodeDataResponse(
                 worldStateArchive,
                 messageData,
@@ -105,7 +108,7 @@ class EthServer {
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
         EthProtocolMessages.GET_POOLED_TRANSACTIONS,
-        messageData ->
+        (messageData, capability) ->
             constructGetPooledTransactionsResponse(
                 transactionPool,
                 messageData,
@@ -214,7 +217,8 @@ class EthServer {
       final Blockchain blockchain,
       final MessageData message,
       final int requestLimit,
-      final int maxMessageSize) {
+      final int maxMessageSize,
+      final Capability cap) {
     final GetReceiptsMessage getReceipts = GetReceiptsMessage.readFrom(message);
     final Iterable<Hash> hashes = getReceipts.hashes();
 
@@ -233,12 +237,15 @@ class EthServer {
       }
       final BytesValueRLPOutput encodedReceipts = new BytesValueRLPOutput();
       encodedReceipts.startList();
+      TransactionReceiptEncoder.TransactionReceiptEncodingOptions encodingOptions;
+      if (EthProtocol.isEth69Compatible(cap)) {
+        encodingOptions = TransactionReceiptEncoder.NETWORK_FLAT;
+      } else {
+        encodingOptions = TransactionReceiptEncoder.NETWORK;
+      }
       maybeReceipts
           .get()
-          .forEach(
-              r ->
-                  TransactionReceiptEncoder.writeTo(
-                      r, encodedReceipts, TransactionReceiptEncoder.NETWORK));
+          .forEach(r -> TransactionReceiptEncoder.writeTo(r, encodedReceipts, encodingOptions));
       encodedReceipts.endList();
       final int encodedSize = encodedReceipts.encodedSize();
       if (responseSizeEstimate + encodedSize > maxMessageSize) {

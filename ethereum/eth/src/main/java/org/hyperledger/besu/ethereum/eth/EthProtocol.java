@@ -35,6 +35,7 @@ public class EthProtocol implements SubProtocol {
   public static final Capability ETH66 = Capability.create(NAME, EthProtocolVersion.V66);
   public static final Capability ETH67 = Capability.create(NAME, EthProtocolVersion.V67);
   public static final Capability ETH68 = Capability.create(NAME, EthProtocolVersion.V68);
+  public static final Capability ETH69 = Capability.create(NAME, EthProtocolVersion.V68);
 
   public static boolean requestIdCompatible(final int code) {
     return Set.of(
@@ -124,5 +125,9 @@ public class EthProtocol implements SubProtocol {
 
   public static boolean isEth66Compatible(final Capability capability) {
     return NAME.equals(capability.getName()) && capability.getVersion() >= ETH66.getVersion();
+  }
+
+  public static boolean isEth69Compatible(final Capability capability) {
+    return NAME.equals(capability.getName()) && capability.getVersion() >= ETH69.getVersion();
   }
 }
