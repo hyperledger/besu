@@ -46,8 +46,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
@@ -283,7 +282,7 @@ public final class EthProtocolManagerTest {
             .build()) {
       final MessageData messageData = mock(MessageData.class);
       when(messageData.getSize()).thenReturn(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
-      when(messageData.getCode()).thenReturn(EthPV62.TRANSACTIONS);
+      when(messageData.getCode()).thenReturn(EthProtocolMessages.TRANSACTIONS);
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
@@ -362,11 +361,11 @@ public final class EthProtocolManagerTest {
           GetBlockHeadersMessage.create(startBlock, blockCount, 0, false);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_HEADERS);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_HEADERS);
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
@@ -403,11 +402,11 @@ public final class EthProtocolManagerTest {
           GetBlockHeadersMessage.create(startBlock, blockCount, 0, false);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_HEADERS);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_HEADERS);
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
@@ -441,11 +440,11 @@ public final class EthProtocolManagerTest {
       final MessageData messageData = GetBlockHeadersMessage.create(endBlock, blockCount, 0, true);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_HEADERS);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_HEADERS);
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
@@ -481,11 +480,11 @@ public final class EthProtocolManagerTest {
           GetBlockHeadersMessage.create(startBlock, blockCount, 1, false);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_HEADERS);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_HEADERS);
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
@@ -522,11 +521,11 @@ public final class EthProtocolManagerTest {
           GetBlockHeadersMessage.create(endBlock, blockCount, skip, true);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_HEADERS);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_HEADERS);
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
@@ -586,11 +585,11 @@ public final class EthProtocolManagerTest {
           GetBlockHeadersMessage.create(startBlock, blockCount, 0, false);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_HEADERS);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_HEADERS);
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
@@ -625,11 +624,11 @@ public final class EthProtocolManagerTest {
           GetBlockHeadersMessage.create(startBlock, blockCount, 0, false);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_HEADERS);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_HEADERS);
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
@@ -671,11 +670,11 @@ public final class EthProtocolManagerTest {
       // Define handler to validate response
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_BODIES);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_BODIES);
             final BlockBodiesMessage blocksMessage = BlockBodiesMessage.readFrom(message);
             final List<BlockBody> bodies =
                 Lists.newArrayList(blocksMessage.bodies(protocolSchedule));
@@ -724,11 +723,11 @@ public final class EthProtocolManagerTest {
       // Define handler to validate response
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_BODIES);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_BODIES);
             final BlockBodiesMessage blocksMessage = BlockBodiesMessage.readFrom(message);
             final List<BlockBody> bodies =
                 Lists.newArrayList(blocksMessage.bodies(protocolSchedule));
@@ -770,11 +769,11 @@ public final class EthProtocolManagerTest {
       // Define handler to validate response
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_BODIES);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_BODIES);
             final BlockBodiesMessage blocksMessage = BlockBodiesMessage.readFrom(message);
             final List<BlockBody> bodies =
                 Lists.newArrayList(blocksMessage.bodies(protocolSchedule));
@@ -817,11 +816,11 @@ public final class EthProtocolManagerTest {
       // Define handler to validate response
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV63.RECEIPTS);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.RECEIPTS);
             final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
             final List<List<TransactionReceipt>> receipts =
                 Lists.newArrayList(receiptsMessage.receipts());
@@ -869,11 +868,11 @@ public final class EthProtocolManagerTest {
       // Define handler to validate response
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV63.RECEIPTS);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.RECEIPTS);
             final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
             final List<List<TransactionReceipt>> receipts =
                 Lists.newArrayList(receiptsMessage.receipts());
@@ -915,11 +914,11 @@ public final class EthProtocolManagerTest {
       // Define handler to validate response
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV63.RECEIPTS);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.RECEIPTS);
             final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
             final List<List<TransactionReceipt>> receipts =
                 Lists.newArrayList(receiptsMessage.receipts());
@@ -966,11 +965,11 @@ public final class EthProtocolManagerTest {
       // Define handler to validate response
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV63.NODE_DATA);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.NODE_DATA);
             final NodeDataMessage receiptsMessage = NodeDataMessage.readFrom(message);
             final List<Bytes> nodeData = receiptsMessage.nodeData();
             assertThat(nodeData).hasSize(blockCount);
@@ -1078,11 +1077,11 @@ public final class EthProtocolManagerTest {
           GetBlockHeadersMessage.create(startBlock, requestedBlockCount, 0, true);
       final MockPeerConnection.PeerSendHandler onSend =
           (cap, message, conn) -> {
-            if (message.getCode() == EthPV62.STATUS) {
+            if (message.getCode() == EthProtocolMessages.STATUS) {
               // Ignore status message
               return;
             }
-            assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_HEADERS);
+            assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_HEADERS);
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
@@ -1126,7 +1125,8 @@ public final class EthProtocolManagerTest {
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final List<Transaction> txes = Collections.singletonList(gen.transaction());
     final MessageData initialMessage = TransactionsMessage.create(txes);
-    final MessageData raw = new RawMessage(EthPV62.TRANSACTIONS, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.TRANSACTIONS, initialMessage.getData());
     final TransactionsMessage transactionMessage = TransactionsMessage.readFrom(raw);
 
     try (final EthProtocolManager ethManager =
