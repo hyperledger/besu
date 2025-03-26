@@ -72,11 +72,11 @@ public class SStoreOperation extends AbstractOperation {
       return ILLEGAL_STATE_CHANGE;
     }
 
-    final long remainingGas = frame.getRemainingGas();
-
     if (frame.isStatic()) {
-      return new OperationResult(remainingGas, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
+
+    final long remainingGas = frame.getRemainingGas();
 
     if (remainingGas <= minimumGasRemaining) {
       return new OperationResult(minimumGasRemaining, ExceptionalHaltReason.INSUFFICIENT_GAS);
