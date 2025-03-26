@@ -139,6 +139,7 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
                 updater.removeBlockBody(h);
               });
     } while (++headerNumber < endBlockNumber);
+    updater.commit();
     LOG.info("Completed deletion of block range {} to {}", startBlockNumber, endBlockNumber);
   }
 }
