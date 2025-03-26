@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;

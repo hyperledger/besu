@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.encoding;
+package org.hyperledger.besu.ethereum.core.encoding.receipt;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
