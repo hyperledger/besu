@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidatorRunner;
@@ -256,7 +256,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     }
 
     // Handle STATUS processing
-    if (code == EthPV62.STATUS) {
+    if (code == EthProtocolMessages.STATUS) {
       handleStatusMessage(ethPeer, message);
       return;
     } else if (!ethPeer.statusHasBeenReceived()) {
@@ -265,7 +265,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           .setMessage(
               "{} requires a Status ({}) message to be sent first.  Instead, received message {} (BREACH_OF_PROTOCOL).  Disconnecting from {}.")
           .addArgument(() -> this.getClass().getSimpleName())
-          .addArgument(EthPV62.STATUS)
+          .addArgument(EthProtocolMessages.STATUS)
           .addArgument(code)
           .addArgument(ethPeer::toString)
           .log();
