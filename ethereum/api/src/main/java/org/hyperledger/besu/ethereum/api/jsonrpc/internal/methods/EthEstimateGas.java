@@ -51,8 +51,22 @@ public class EthEstimateGas extends AbstractEstimateGas {
       final TransactionSimulationFunction simulationFunction) {
 
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
-
     LOG.debug("Processing transaction with params: {}", callParams);
+
+    // If the transaction is a plain value transfer, try gasLimit 21_000. It is likely to succeed.
+    if (callParams.getPayload() == null || (callParams.getPayload().isEmpty())) {
+      if (callParams.getTo() != null) {
+        var maybeSimpleTransferResult =
+            simulationFunction.simulate(
+                overrideGasLimit(callParams, DEFAULT_BLOCK_GAS_USED), operationTracer);
+        // if succeeded, return 21_000
+        if (maybeSimpleTransferResult.isPresent()
+            && maybeSimpleTransferResult.get().isSuccessful()) {
+          return Quantity.create(DEFAULT_BLOCK_GAS_USED);
+        }
+      }
+    }
+
     final var maybeResult =
         simulationFunction.simulate(overrideGasLimit(callParams, gasLimit), operationTracer);
 
@@ -66,7 +80,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
     long high = gasLimit;
     long mid;
 
-    long low = result.result().getEstimateGasUsedByTransaction();
+    long low = result.result().getEstimateGasUsedByTransaction() - 1;
     var optimisticGasLimit = processEstimateGas(result, operationTracer);
 
     final var optimisticResult =
@@ -80,6 +94,10 @@ public class EthEstimateGas extends AbstractEstimateGas {
     }
 
     while (low + 1 < high) {
+      // check if we are close enough
+      if ((double) (high - low) / high < ESTIMATE_GAS_TOLERANCE_RATIO) {
+        break;
+      }
       mid = (low + high) / 2;
       var binarySearchResult =
           simulationFunction.simulate(overrideGasLimit(callParams, mid), operationTracer);

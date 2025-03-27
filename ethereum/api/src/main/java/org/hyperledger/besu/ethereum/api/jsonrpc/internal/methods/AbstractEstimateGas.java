@@ -46,6 +46,8 @@ import com.google.common.annotations.VisibleForTesting;
 public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
 
   private static final double SUB_CALL_REMAINING_GAS_RATIO = 64D / 63D;
+  public static final double ESTIMATE_GAS_TOLERANCE_RATIO = 0.015;
+  protected static final long DEFAULT_BLOCK_GAS_USED = 21_000;
 
   protected final TransactionSimulator transactionSimulator;
 
