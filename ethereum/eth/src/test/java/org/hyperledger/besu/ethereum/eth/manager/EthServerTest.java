@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -401,7 +402,7 @@ public class EthServerTest {
     final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
     rlp.startList();
     receipts.forEach(
-        r -> TransactionReceiptEncoder.writeTo(r, rlp, TransactionReceiptEncoder.NETWORK));
+        r -> TransactionReceiptEncoder.writeTo(r, rlp, TransactionReceiptEncodingOptions.NETWORK));
     rlp.endList();
     return rlp.encodedSize();
   }

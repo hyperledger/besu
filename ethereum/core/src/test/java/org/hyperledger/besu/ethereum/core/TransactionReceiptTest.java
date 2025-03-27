@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -35,7 +36,7 @@ public class TransactionReceiptTest {
                 RLP.encode(
                     output ->
                         TransactionReceiptEncoder.writeTo(
-                            receipt, output, TransactionReceiptEncoder.NETWORK))),
+                            receipt, output, TransactionReceiptEncodingOptions.NETWORK))),
             false);
     assertThat(copy).isEqualTo(receipt);
   }

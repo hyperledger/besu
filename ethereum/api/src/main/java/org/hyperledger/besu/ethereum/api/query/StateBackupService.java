@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -313,7 +314,7 @@ public class StateBackupService {
             receipts.get(),
             (r, rlpOut) ->
                 TransactionReceiptEncoder.writeTo(
-                    r, rlpOut, TransactionReceiptEncoder.STORAGE_WITHOUT_COMPACTION));
+                    r, rlpOut, TransactionReceiptEncodingOptions.STORAGE_WITHOUT_COMPACTION));
         receiptsWriter.writeBytes(receiptsOutput.encoded().toArrayUnsafe());
 
         backupStatus.storedBlock = blockNumber;
