@@ -200,19 +200,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
-    // If the call is sending more value than the account has or the message frame is to deep
-    // return a failed call
-    if (value(frame).compareTo(balance) > 0 || frame.getDepth() >= 1024) {
-      frame.expandMemory(inputDataOffset(frame), inputDataLength(frame));
-      frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
-      // For the following, we either increment the gas or return zero, so we don't get double
-      // charged. If we return zero then the traces don't have the right per-opcode cost.
-      frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
-      frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
-      return new OperationResult(cost, null);
-    }
 
+    // code resolution gas must be deducted before we check for frame depth too deep to be spec
+    // compliant
     try {
       deductGasForCodeDelegationResolution(frame, contract);
     } catch (InsufficientGasException e) {
@@ -223,6 +213,19 @@ public abstract class AbstractCallOperation extends AbstractOperation {
           .addArgument(e.getGasCost())
           .log();
       return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    // If the call is sending more value than the account has or the message frame is too deep
+    // return a failed call
+    if (value(frame).compareTo(balance) > 0 || frame.getDepth() >= 1024) {
+      frame.expandMemory(inputDataOffset(frame), inputDataLength(frame));
+      frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
+      // For the following, we either increment the gas or return zero, so we don't get double
+      // charged. If we return zero then the traces don't have the right per-opcode cost.
+      frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
+      frame.popStackItems(getStackItemsConsumed());
+      frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
+      return new OperationResult(cost, null);
     }
 
     final Bytes inputData = frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));
