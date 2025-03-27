@@ -240,7 +240,7 @@ class EthServer {
       encodedReceipts.startList();
       TransactionReceiptEncodingOptions encodingOptions;
       if (EthProtocol.isEth69Compatible(cap)) {
-        encodingOptions = TransactionReceiptEncodingOptions.NETWORK_FLAT;
+        encodingOptions = TransactionReceiptEncodingOptions.NETWORK_ETH69;
       } else {
         encodingOptions = TransactionReceiptEncodingOptions.NETWORK;
       }

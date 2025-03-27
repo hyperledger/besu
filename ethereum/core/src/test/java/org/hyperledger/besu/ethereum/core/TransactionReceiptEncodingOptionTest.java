@@ -18,9 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.datatypes.TransactionType.EIP1559;
 import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.NETWORK;
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.NETWORK_ETH69;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.STORAGE_WITHOUT_COMPACTION;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.STORAGE_WITH_COMPACTION;
-import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.TRIE;
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.TRIE_ROOT;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -38,16 +39,17 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class TransactionReceiptParameterizedTest {
+public class TransactionReceiptEncodingOptionTest {
 
   private static final Bytes REVERT_REASON = Bytes.fromHexString("0x1122334455667788");
 
   private static Stream<Object[]> provider() {
     return Stream.of(
-        new Object[] {"network", NETWORK},
-        new Object[] {"storage_with_compaction", STORAGE_WITH_COMPACTION},
-        new Object[] {"storage_without_compaction", STORAGE_WITHOUT_COMPACTION},
-        new Object[] {"trie", TRIE});
+        new Object[] {"NETWORK", NETWORK},
+        new Object[] {"NETWORK_ETH69", NETWORK_ETH69},
+        new Object[] {"STORAGE_WITH_COMPACTION", STORAGE_WITH_COMPACTION},
+        new Object[] {"STORAGE_WITHOUT_COMPACTION", STORAGE_WITHOUT_COMPACTION},
+        new Object[] {"TRIE_ROOT", TRIE_ROOT});
   }
 
   @ParameterizedTest(name = "{0}={1}")
@@ -135,7 +137,7 @@ public class TransactionReceiptParameterizedTest {
     long cumulativeGasUsed = 1L;
     return new TransactionReceipt(
         transactionType,
-      Hash.EMPTY_TRIE_HASH,
+        Hash.EMPTY_TRIE_HASH,
         cumulativeGasUsed,
         Collections.singletonList(gen.log()),
         LogsBloomFilter.builder().insertLogs(Collections.singletonList(gen.log())).build(),
