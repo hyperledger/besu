@@ -254,11 +254,12 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       // The logs below will populate the bloom filter upon construction.
       bloomFilter = LogsBloomFilter.readFrom(input);
     }
-    // TODO consider validating that the logs and bloom filter match.
     final boolean compacted = !hasLogs;
     final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, compacted));
     if (compacted) {
       bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
+    } else {
+      validateLogsAndBloomFilter(logs, bloomFilter);
     }
 
     final Optional<Bytes> revertReason;
@@ -383,5 +384,23 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         .add("status", status)
         .add("transactionReceiptType", transactionReceiptType)
         .toString();
+  }
+
+  /**
+   * Validates that the logs and bloom filter match.
+   * 
+   * @param logs the logs to validate
+   * @param bloomFilter the bloom filter to validate against
+   * @throws RLPException if the logs and bloom filter don't match
+   */
+  private static void validateLogsAndBloomFilter(
+      final List<Log> logs, final LogsBloomFilter bloomFilter) {
+    final LogsBloomFilter computedBloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
+    
+    // A bloom filter generated from the logs should be a subset of the provided bloom filter
+    // and vice versa, meaning they should be equal
+    if (!bloomFilter.couldContain(computedBloomFilter) || !computedBloomFilter.couldContain(bloomFilter)) {
+      throw new RLPException("Bloom filter does not match logs in transaction receipt");
+    }
   }
 }
