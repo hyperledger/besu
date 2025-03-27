@@ -80,7 +80,9 @@ public class TransactionReceiptDecoder {
       if (isTypedReceipt) {
         throw new RLPException("Receipt is EIP-7642 but has transaction type");
       }
-      transactionType = TransactionType.of(firstElement.readIntScalar());
+      int transactionByte = firstElement.readIntScalar();
+      transactionType =
+          transactionByte == 0x00 ? TransactionType.FRONTIER : TransactionType.of(transactionByte);
       statusOrStateRoot = secondElement;
       cumulativeGas = input.readLongScalar();
     } else {

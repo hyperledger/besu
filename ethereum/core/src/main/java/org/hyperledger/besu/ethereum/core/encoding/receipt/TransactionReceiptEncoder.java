@@ -50,9 +50,11 @@ public class TransactionReceiptEncoder {
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
       final TransactionReceiptEncodingOptions options) {
-    if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)
-        && !options.isWithFlatResponse()) {
-      rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
+    if (options.isWithOpaqueBytes()) {
+      if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)
+          && !options.isWithFlatResponse()) {
+        rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
+      }
     }
     rlpOutput.startList();
     if (options.isWithFlatResponse()) {

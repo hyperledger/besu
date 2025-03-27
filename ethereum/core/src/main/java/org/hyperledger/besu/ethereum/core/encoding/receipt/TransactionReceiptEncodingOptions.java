@@ -70,6 +70,22 @@ public class TransactionReceiptEncodingOptions {
     return withFlatResponse;
   }
 
+  @Override
+  public String toString() {
+    return "TransactionReceiptEncodingOptions{"
+        + "withRevertReason="
+        + withRevertReason
+        + ", withCompactedLogs="
+        + withCompactedLogs
+        + ", withOpaqueBytes="
+        + withOpaqueBytes
+        + ", withBloomFilter="
+        + withBloomFilter
+        + ", withFlatResponse="
+        + withFlatResponse
+        + '}';
+  }
+
   public static class Builder {
     private boolean withRevertReason = false;
     private boolean withCompactedLogs = false;

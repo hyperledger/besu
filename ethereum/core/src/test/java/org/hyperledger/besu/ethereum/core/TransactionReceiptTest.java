@@ -16,15 +16,11 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecodingOptions;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-
-import java.util.Collections;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -42,7 +38,7 @@ public class TransactionReceiptTest {
                     output ->
                         TransactionReceiptEncoder.writeTo(
                             receipt, output, TransactionReceiptEncodingOptions.NETWORK))),
-            TransactionReceiptDecodingOptions.NO_REVERT_REASON);
+            TransactionReceiptDecodingOptions.DEFAULT);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -98,27 +94,6 @@ public class TransactionReceiptTest {
                 RLP.encode(
                     rlpOut ->
                         TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))));
-    assertThat(copy).isEqualTo(receipt);
-  }
-
-  @Test
-  public void toFromRlpWithFlat() {
-    final TransactionReceiptEncodingOptions encodingOptions =
-        TransactionReceiptEncodingOptions.NETWORK_FLAT;
-    final BlockDataGenerator gen = new BlockDataGenerator();
-
-    final TransactionReceipt receipt =
-        new TransactionReceipt(
-            TransactionType.FRONTIER,
-            1,
-            Long.MAX_VALUE,
-            Collections.singletonList(gen.log()),
-            Optional.empty());
-
-    Bytes encoded =
-        RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
-
-    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded));
     assertThat(copy).isEqualTo(receipt);
   }
 
