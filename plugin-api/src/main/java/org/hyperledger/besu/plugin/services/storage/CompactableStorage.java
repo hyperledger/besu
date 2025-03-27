@@ -14,12 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage;
 
-/**
- * Interface for storage implementations that support compaction operations.
- */
+/** Interface for storage implementations that support compaction operations. */
 public interface CompactableStorage {
-  /**
-   * Triggers a compaction of the storage to reclaim space and optimize data organization.
-   */
+  /** Triggers a compaction of the storage to reclaim space and optimize data organization. */
   void compact();
 }

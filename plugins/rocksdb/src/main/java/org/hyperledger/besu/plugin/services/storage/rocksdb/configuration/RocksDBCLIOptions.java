@@ -32,6 +32,25 @@ public class RocksDBCLIOptions {
   /** The constant DEFAULT_IS_HIGH_SPEC. */
   public static final boolean DEFAULT_IS_HIGH_SPEC = false;
 
+  /** Expected size of a single WAL file, to determine how many WAL files to keep around */
+  protected static final long EXPECTED_WAL_FILE_SIZE = 67_108_864L;
+
+  /** Max total size of all WAL file, after which a flush is triggered */
+  public static final long DEFAULT_MAX_TOTAL_WAL_SIZE = 1_073_741_824L;
+
+  /** RocksDb number of log files to recycle */
+  public static final int DEFAULT_RECYCLE_LOG_FILE_NUM = 16;
+
+  /** RocksDb number of log files to keep on disk */
+  public static final int DEFAULT_KEEP_LOG_FILE_NUM =
+      (int) (DEFAULT_MAX_TOTAL_WAL_SIZE / EXPECTED_WAL_FILE_SIZE);
+
+  /** RocksDb time interval to roll log files in seconds (1 day = 3600 * 24 seconds) */
+  public static final long DEFAULT_LOG_FILE_TIME_TO_ROLL = 86_400L;
+
+  /** Period in microseconds to delete obsolete files */
+  public static final long DEFAULT_DELETE_OBSOLETE_FILES_PERIOD = 10000000L;
+
   /** The constant MAX_OPEN_FILES_FLAG. */
   public static final String MAX_OPEN_FILES_FLAG = "--Xplugin-rocksdb-max-open-files";
 
@@ -44,6 +63,63 @@ public class RocksDBCLIOptions {
 
   /** The constant IS_HIGH_SPEC. */
   public static final String IS_HIGH_SPEC = "--Xplugin-rocksdb-high-spec-enabled";
+
+  /** The constant RECYCLE_LOG_FILE_NUM_FLAG. */
+  public static final String RECYCLE_LOG_FILE_NUM_FLAG = "--Xplugin-rocksdb-recycle-log-file-num";
+
+  /** The constant KEEP_LOG_FILE_NUM_FLAG. */
+  public static final String KEEP_LOG_FILE_NUM_FLAG = "--Xplugin-rocksdb-keep-log-file-num";
+
+  /** The constant LOG_FILE_TIME_TO_ROLL_FLAG. */
+  public static final String LOG_FILE_TIME_TO_ROLL_FLAG = "--Xplugin-rocksdb-log-file-time-to-roll";
+
+  /** The constant MAX_TOTAL_WAL_SIZE_FLAG. */
+  public static final String MAX_TOTAL_WAL_SIZE_FLAG = "--Xplugin-rocksdb-max-total-wal-size";
+
+  /** The constant DELETE_OBSOLETE_FILES_PERIOD_FLAG. */
+  public static final String DELETE_OBSOLETE_FILES_PERIOD_FLAG =
+      "--Xplugin-rocksdb-delete-obsolete-files-period";
+
+  // Add these fields with CommandLine options
+  @CommandLine.Option(
+      names = {RECYCLE_LOG_FILE_NUM_FLAG},
+      hidden = true,
+      defaultValue = "1",
+      paramLabel = "<INTEGER>",
+      description = "Number of log files to recycle (default: ${DEFAULT-VALUE})")
+  int recycleLogFileNum;
+
+  @CommandLine.Option(
+      names = {KEEP_LOG_FILE_NUM_FLAG},
+      hidden = true,
+      defaultValue = "5",
+      paramLabel = "<INTEGER>",
+      description = "Number of log files to keep (default: ${DEFAULT-VALUE})")
+  int keepLogFileNum;
+
+  @CommandLine.Option(
+      names = {LOG_FILE_TIME_TO_ROLL_FLAG},
+      hidden = true,
+      defaultValue = "0",
+      paramLabel = "<LONG>",
+      description = "Time interval to roll log files in seconds (default: ${DEFAULT-VALUE})")
+  long logFileTimeToRoll;
+
+  @CommandLine.Option(
+      names = {MAX_TOTAL_WAL_SIZE_FLAG},
+      hidden = true,
+      defaultValue = "0",
+      paramLabel = "<LONG>",
+      description = "Maximum total size of WAL files in bytes (default: ${DEFAULT-VALUE})")
+  long maxTotalWalSize;
+
+  @CommandLine.Option(
+      names = {DELETE_OBSOLETE_FILES_PERIOD_FLAG},
+      hidden = true,
+      defaultValue = "10000000",
+      paramLabel = "<LONG>",
+      description = "Period in microseconds to delete obsolete files (default: ${DEFAULT-VALUE})")
+  long deleteObsoleteFilesPeriod;
 
   /** The Max open files. */
   @CommandLine.Option(
@@ -104,6 +180,11 @@ public class RocksDBCLIOptions {
     options.cacheCapacity = config.getCacheCapacity();
     options.backgroundThreadCount = config.getBackgroundThreadCount();
     options.isHighSpec = config.isHighSpec();
+    options.recycleLogFileNum = config.getRecycleLogFileNum();
+    options.keepLogFileNum = config.getKeepLogFileNum();
+    options.logFileTimeToRoll = config.getLogFileTimeToRoll();
+    options.maxTotalWalSize = config.getMaxTotalWalSize();
+    options.deleteObsoleteFilesPeriod = config.getDeleteObsoleteFilesPeriod();
     return options;
   }
 
@@ -114,7 +195,15 @@ public class RocksDBCLIOptions {
    */
   public RocksDBFactoryConfiguration toDomainObject() {
     return new RocksDBFactoryConfiguration(
-        maxOpenFiles, backgroundThreadCount, cacheCapacity, isHighSpec);
+        maxOpenFiles,
+        backgroundThreadCount,
+        cacheCapacity,
+        isHighSpec,
+        recycleLogFileNum,
+        keepLogFileNum,
+        logFileTimeToRoll,
+        maxTotalWalSize,
+        deleteObsoleteFilesPeriod);
   }
 
   /**
@@ -133,6 +222,11 @@ public class RocksDBCLIOptions {
         .add("cacheCapacity", cacheCapacity)
         .add("backgroundThreadCount", backgroundThreadCount)
         .add("isHighSpec", isHighSpec)
+        .add("recycleLogFileNum", recycleLogFileNum)
+        .add("keepLogFileNum", keepLogFileNum)
+        .add("logFileTimeToRoll", logFileTimeToRoll)
+        .add("maxTotalWalSize", maxTotalWalSize)
+        .add("deleteObsoleteFilesPeriod", deleteObsoleteFilesPeriod)
         .toString();
   }
 }

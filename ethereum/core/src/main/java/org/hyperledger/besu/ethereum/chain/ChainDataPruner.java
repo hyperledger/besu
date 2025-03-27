@@ -68,14 +68,14 @@ public class ChainDataPruner implements BlockAddedObserver {
     prunerStorage.setForkBlocks(recordBlockHashesTransaction, blockNumber, forkBlocks);
     recordBlockHashesTransaction.commit();
 
-
     pruningExecutor.submit(
         () -> {
           final KeyValueStorageTransaction pruningTransaction = prunerStorage.startTransaction();
           long currentPruningMark = storedPruningMark;
           final long newPruningMark = blockNumber - blocksToRetain;
           final long blocksToBePruned = newPruningMark - currentPruningMark;
-          final boolean pruningRequired = (event.isNewCanonicalHead() && blocksToBePruned >= pruningFrequency);
+          final boolean pruningRequired =
+              (event.isNewCanonicalHead() && blocksToBePruned >= pruningFrequency);
           if (pruningRequired) {
             long currentRetainedBlock = blockNumber - currentPruningMark + 1;
             while (currentRetainedBlock > blocksToRetain) {
@@ -85,16 +85,15 @@ public class ChainDataPruner implements BlockAddedObserver {
               currentRetainedBlock = blockNumber - currentPruningMark;
             }
           }
-            prunerStorage.setPruningMark(pruningTransaction, currentPruningMark);
-            pruningTransaction.commit();
-            if (pruningRequired) {
-              // After pruning data, compact storage to reclaim space
-              if (blockchainStorage instanceof CompactableStorage compactable) {
-                compactable.compact();
-              }
+          prunerStorage.setPruningMark(pruningTransaction, currentPruningMark);
+          pruningTransaction.commit();
+          if (pruningRequired) {
+            // After pruning data, compact storage to reclaim space
+            if (blockchainStorage instanceof CompactableStorage compactable) {
+              compactable.compact();
             }
+          }
         });
-
   }
 
   private void pruneChainDataAtBlock(final KeyValueStorageTransaction tx, final long blockNumber) {
