@@ -15,6 +15,12 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.TransactionType.EIP1559;
+import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.NETWORK;
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.STORAGE_WITHOUT_COMPACTION;
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.STORAGE_WITH_COMPACTION;
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.TRIE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -24,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEnc
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -35,84 +40,105 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class TransactionReceiptParameterizedTest {
 
-  private static Stream<Object[]> provider() {
-    Object[][] encodingOptions = {
-      {"NETWORK", TransactionReceiptEncodingOptions.NETWORK},
-      {"NETWORK_FLAT", TransactionReceiptEncodingOptions.NETWORK_FLAT},
-      {"STORAGE_WITH_COMPACTION", TransactionReceiptEncodingOptions.STORAGE_WITH_COMPACTION},
-      {"STORAGE_WITHOUT_COMPACTION", TransactionReceiptEncodingOptions.STORAGE_WITHOUT_COMPACTION},
-      {"TRIE", TransactionReceiptEncodingOptions.TRIE}
-    };
+  private static final Bytes REVERT_REASON = Bytes.fromHexString("0x1122334455667788");
 
-    return Stream.of(encodingOptions)
-        .flatMap(
-            encodingOption ->
-                Stream.of(TransactionType.values())
-                    .flatMap(
-                        transactionType ->
-                            Stream.of(Hash.EMPTY_TRIE_HASH, null)
-                                .flatMap(
-                                    stateRoot -> {
-                                      if (stateRoot == null) {
-                                        return Stream.of(0, 1)
-                                            .map(
-                                                status ->
-                                                    new Object[] {
-                                                      encodingOption[0],
-                                                      encodingOption[1],
-                                                      transactionType,
-                                                      status,
-                                                      null
-                                                    });
-                                      }
-                                      Object[][] objects = {
-                                        {
-                                          encodingOption[0],
-                                          encodingOption[1],
-                                          transactionType,
-                                          null,
-                                          stateRoot
-                                        }
-                                      };
-                                      return Arrays.stream(objects);
-                                    })));
+  private static Stream<Object[]> provider() {
+    return Stream.of(
+        new Object[] {"network", NETWORK},
+        new Object[] {"storage_with_compaction", STORAGE_WITH_COMPACTION},
+        new Object[] {"storage_without_compaction", STORAGE_WITHOUT_COMPACTION},
+        new Object[] {"trie", TRIE});
   }
 
-  @ParameterizedTest(name = "transactionType={2}, encoding={0}, status={3}, stateRoot={4}")
+  @ParameterizedTest(name = "{0}={1}")
   @MethodSource("provider")
-  public void toFromRlp(
-      final String name,
-      final TransactionReceiptEncodingOptions encodingOptions,
-      final TransactionType transactionType,
-      final Integer status,
-      final Hash stateRoot) {
-    final TransactionReceipt receipt = createTransactionReceipt(transactionType, status, stateRoot);
+  public void toFromRlpLegacyTransactionSuccessfulStatus(
+      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+    final TransactionReceipt receipt = createTransactionReceiptStatus(FRONTIER, 1);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
     final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded));
     assertThat(copy).isEqualTo(receipt);
   }
 
-  private TransactionReceipt createTransactionReceipt(
-      final TransactionType transactionType, final Integer status, final Hash stateRoot) {
+  @ParameterizedTest(name = "{0}={1}")
+  @MethodSource("provider")
+  public void toFromRlpLegacyTransactionFailedStatus(
+      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+    final TransactionReceipt receipt = createTransactionReceiptStatus(FRONTIER, 0);
+    Bytes encoded =
+        RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
+    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded));
+    assertThat(copy).isEqualTo(receipt);
+  }
+
+  @ParameterizedTest(name = "{0}={1}")
+  @MethodSource("provider")
+  public void toFromRlpLegacyTransactionStateRoot(
+      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+    final TransactionReceipt receipt = createTransactionReceiptStateRoot(FRONTIER);
+    Bytes encoded =
+        RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
+    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded));
+    assertThat(copy).isEqualTo(receipt);
+  }
+
+  @ParameterizedTest(name = "{0}={1}")
+  @MethodSource("provider")
+  public void toFrom1559TransactionSuccessfulStatus(
+      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+
+    final TransactionReceipt receipt = createTransactionReceiptStatus(EIP1559, 1);
+    Bytes encoded =
+        RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
+    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded));
+    assertThat(copy).isEqualTo(receipt);
+  }
+
+  @ParameterizedTest(name = "{0}={1}")
+  @MethodSource("provider")
+  public void toFrom1559TransactionFailedStatus(
+      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+    final TransactionReceipt receipt = createTransactionReceiptStatus(EIP1559, 0);
+    Bytes encoded =
+        RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
+    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded));
+    assertThat(copy).isEqualTo(receipt);
+  }
+
+  @ParameterizedTest(name = "{0}={1}")
+  @MethodSource("provider")
+  public void toFrom1559TransactionStateRoot(
+      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+    final TransactionReceipt receipt = createTransactionReceiptStateRoot(EIP1559);
+    Bytes encoded =
+        RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
+    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded));
+    assertThat(copy).isEqualTo(receipt);
+  }
+
+  private TransactionReceipt createTransactionReceiptStatus(
+      final TransactionType transactionType, final int status) {
     final BlockDataGenerator gen = new BlockDataGenerator();
     long cumulativeGasUsed = 1L;
-    Bytes revertReason = Bytes.fromHexString("0x1122334455667788");
-    if (stateRoot == null) {
-      return new TransactionReceipt(
-          transactionType,
-          status,
+    return new TransactionReceipt(
+        transactionType,
+        status,
         cumulativeGasUsed,
-          Collections.singletonList(gen.log()),
-          Optional.of(revertReason));
-    } else {
-      return new TransactionReceipt(
-          transactionType,
-          stateRoot,
+        Collections.singletonList(gen.log()),
+        Optional.of(REVERT_REASON));
+  }
+
+  private TransactionReceipt createTransactionReceiptStateRoot(
+      final TransactionType transactionType) {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    long cumulativeGasUsed = 1L;
+    return new TransactionReceipt(
+        transactionType,
+      Hash.EMPTY_TRIE_HASH,
         cumulativeGasUsed,
-          Collections.singletonList(gen.log()),
-          LogsBloomFilter.builder().insertLogs(Collections.singletonList(gen.log())).build(),
-        Optional.of(revertReason));
-    }
+        Collections.singletonList(gen.log()),
+        LogsBloomFilter.builder().insertLogs(Collections.singletonList(gen.log())).build(),
+        Optional.of(REVERT_REASON));
   }
 }
