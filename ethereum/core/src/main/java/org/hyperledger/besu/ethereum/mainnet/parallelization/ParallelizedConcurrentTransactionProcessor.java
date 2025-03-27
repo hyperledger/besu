@@ -39,7 +39,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -51,9 +50,6 @@ import com.google.common.annotations.VisibleForTesting;
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class ParallelizedConcurrentTransactionProcessor {
-
-  private static final int NCPU = Runtime.getRuntime().availableProcessors();
-  private static final Executor executor = Executors.newFixedThreadPool(NCPU);
 
   private final MainnetTransactionProcessor transactionProcessor;
 
@@ -98,6 +94,7 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @param blockHashLookup Function for block hash lookup.
    * @param blobGasPrice Gas price for blob transactions.
    * @param privateMetadataUpdater Updater for private transaction metadata.
+   * @param executor The executor to use for asynchronous execution.
    */
   public void runAsyncBlock(
       final ProtocolContext protocolContext,
@@ -106,7 +103,8 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
+      final PrivateMetadataUpdater privateMetadataUpdater,
+      final Executor executor) {
 
     completableFuturesForBackgroundTransactions = new CompletableFuture[transactions.size()];
     for (int i = 0; i < transactions.size(); i++) {
@@ -261,9 +259,10 @@ public class ParallelizedConcurrentTransactionProcessor {
           transactionCollisionDetector.hasCollision(
               transaction, miningBeneficiary, parallelizedTransactionContext, blockAccumulator);
       if (transactionProcessingResult.isSuccessful() && !hasCollision) {
-        blockAccumulator
-            .getOrCreate(miningBeneficiary)
-            .incrementBalance(parallelizedTransactionContext.miningBeneficiaryReward());
+        Wei reward = parallelizedTransactionContext.miningBeneficiaryReward();
+        if (!reward.isZero() || !transactionProcessor.getClearEmptyAccounts()) {
+          blockAccumulator.getOrCreate(miningBeneficiary).incrementBalance(reward);
+        }
 
         blockAccumulator.importStateChangesFromSource(transactionAccumulator);
 
