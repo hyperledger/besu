@@ -80,10 +80,6 @@ public class TransactionSimulator {
               SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
               (byte) 0);
 
-  // Default signature supplier
-  private static final Supplier<SECPSignature> DEFAULT_SIGNATURE_SUPPLIER =
-      Suppliers.memoize(() -> FAKE_SIGNATURE);
-
   // TODO: Identify a better default from account to use, such as the registered
   // coinbase or an account currently unlocked by the client.
   private static final Address DEFAULT_FROM =
@@ -395,7 +391,7 @@ public class TransactionSimulator {
         transactionProcessor,
         blobGasPricePerGasSupplier,
         blockHashLookup,
-        DEFAULT_SIGNATURE_SUPPLIER);
+        () -> FAKE_SIGNATURE);
   }
 
   @Nonnull

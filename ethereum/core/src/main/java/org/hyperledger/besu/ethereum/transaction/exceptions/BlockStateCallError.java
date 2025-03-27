@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
  * <p>These errors are returned as JSON-RPC errors.
  */
 public enum BlockStateCallError {
-  /** The block number is not ascending. */
+  /** Too many block calls. */
   TOO_MANY_BLOCK_CALLS(-38026, "Too many block calls"),
   /** The block number is not ascending. */
   BLOCK_NUMBERS_NOT_ASCENDING(-38020, "Block numbers are not ascending"),

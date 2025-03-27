@@ -140,14 +140,15 @@ public class BlockSimulator {
       final BlockHeader blockHeader,
       final BlockSimulationParameter simulationParameter,
       final MutableWorldState worldState) {
-    List<BlockSimulationResult> results = new ArrayList<>();
+    int countStateCalls = simulationParameter.getBlockStateCalls().size();
+    List<BlockSimulationResult> results = new ArrayList<>(countStateCalls);
 
     // Fill gaps between blocks and set the correct block number and timestamp
     List<BlockStateCall> blockStateCalls =
         fillBlockStateCalls(simulationParameter.getBlockStateCalls(), blockHeader);
 
     BlockHeader currentBlockHeader = blockHeader;
-    HashMap<Long, Hash> blockHashCache = new HashMap<>();
+    HashMap<Long, Hash> blockHashCache = HashMap.newHashMap(countStateCalls);
     long simulationCumulativeGasUsed = 0;
     for (BlockStateCall stateCall : blockStateCalls) {
       BlockSimulationResult result =
