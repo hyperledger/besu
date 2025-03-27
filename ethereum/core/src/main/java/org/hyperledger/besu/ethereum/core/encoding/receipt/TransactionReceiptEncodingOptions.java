@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding.receipt;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 public class TransactionReceiptEncodingOptions {
   public static final TransactionReceiptEncodingOptions NETWORK = new Builder().build();
 
@@ -40,7 +38,6 @@ public class TransactionReceiptEncodingOptions {
     this.withBloomFilter = builder.withBloomFilter;
   }
 
-  // Getters
   public boolean isWithRevertReason() {
     return withRevertReason;
   }
@@ -56,7 +53,6 @@ public class TransactionReceiptEncodingOptions {
   public boolean isWithBloomFilter() {
     return withBloomFilter;
   }
-
 
   @Override
   public String toString() {

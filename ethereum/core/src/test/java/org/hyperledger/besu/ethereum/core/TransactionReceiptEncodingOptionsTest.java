@@ -44,10 +44,10 @@ public class TransactionReceiptEncodingOptionsTest {
 
   private static Stream<Object[]> provider() {
     return Stream.of(
-        new Object[] {"network", NETWORK},
-        new Object[] {"storage_with_compaction", STORAGE_WITH_COMPACTION},
-        new Object[] {"storage_without_compaction", STORAGE_WITHOUT_COMPACTION},
-        new Object[] {"trie", TRIE_ROOT});
+        new Object[] {"NETWORK", NETWORK},
+        new Object[] {"STORAGE_WITH_COMPACTION", STORAGE_WITH_COMPACTION},
+        new Object[] {"STORAGE_WITHOUT_COMPACTION", STORAGE_WITHOUT_COMPACTION},
+        new Object[] {"TRIE_ROOT", TRIE_ROOT});
   }
 
   @ParameterizedTest(name = "{0}={1}")
