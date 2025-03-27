@@ -32,18 +32,12 @@ public class TransactionReceiptEncodingOptions {
   private final boolean withCompactedLogs;
   private final boolean withOpaqueBytes;
   private final boolean withBloomFilter;
-  private final boolean withFlatResponse;
 
   private TransactionReceiptEncodingOptions(final Builder builder) {
-    checkArgument(
-        !builder.withFlatResponse || !builder.withOpaqueBytes,
-        "Flat response encoding is not compatible with opaque bytes encoding");
-
     this.withRevertReason = builder.withRevertReason;
     this.withCompactedLogs = builder.withCompactedLogs;
     this.withOpaqueBytes = builder.withOpaqueBytes;
     this.withBloomFilter = builder.withBloomFilter;
-    this.withFlatResponse = builder.withFlatResponse;
   }
 
   // Getters
@@ -63,9 +57,6 @@ public class TransactionReceiptEncodingOptions {
     return withBloomFilter;
   }
 
-  public boolean isWithFlatResponse() {
-    return withFlatResponse;
-  }
 
   @Override
   public String toString() {
@@ -78,8 +69,6 @@ public class TransactionReceiptEncodingOptions {
         + withOpaqueBytes
         + ", withBloomFilter="
         + withBloomFilter
-        + ", withFlatResponse="
-        + withFlatResponse
         + '}';
   }
 
@@ -88,7 +77,6 @@ public class TransactionReceiptEncodingOptions {
     private boolean withCompactedLogs = false;
     private boolean withOpaqueBytes = true;
     private boolean withBloomFilter = true;
-    private boolean withFlatResponse = false;
 
     public Builder withRevertReason(final boolean withRevertReason) {
       this.withRevertReason = withRevertReason;
@@ -107,11 +95,6 @@ public class TransactionReceiptEncodingOptions {
 
     public Builder withBloomFilter(final boolean withBloomFilter) {
       this.withBloomFilter = withBloomFilter;
-      return this;
-    }
-
-    public Builder withFlatResponse(final boolean withFlatResponse) {
-      this.withFlatResponse = withFlatResponse;
       return this;
     }
 
