@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -28,7 +30,10 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt();
     final TransactionReceipt copy =
-        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToForNetwork)), false);
+        TransactionReceiptDecoder.readFrom(
+            RLP.input(
+                RLP.encode(output -> TransactionReceiptEncoder.writeToForNetwork(receipt, output))),
+            false);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -37,8 +42,12 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
-        TransactionReceipt.readFrom(
-            RLP.input(RLP.encode(rlpOut -> receipt.writeToForReceiptTrie(rlpOut, true, false))));
+        TransactionReceiptDecoder.readFrom(
+            RLP.input(
+                RLP.encode(
+                    rlpOut ->
+                        TransactionReceiptEncoder.writeToForReceiptTrie(
+                            receipt, rlpOut, true, false))));
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -47,8 +56,12 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
-        TransactionReceipt.readFrom(
-            RLP.input(RLP.encode(rlpOut -> receipt.writeToForReceiptTrie(rlpOut, false, true))));
+        TransactionReceiptDecoder.readFrom(
+            RLP.input(
+                RLP.encode(
+                    rlpOut ->
+                        TransactionReceiptEncoder.writeToForReceiptTrie(
+                            receipt, rlpOut, false, true))));
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -57,8 +70,12 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
-        TransactionReceipt.readFrom(
-            RLP.input(RLP.encode(rlpOut -> receipt.writeToForReceiptTrie(rlpOut, true, true))));
+        TransactionReceiptDecoder.readFrom(
+            RLP.input(
+                RLP.encode(
+                    rlpOut ->
+                        TransactionReceiptEncoder.writeToForReceiptTrie(
+                            receipt, rlpOut, true, true))));
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -67,10 +84,15 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final Bytes compactedReceipt =
-        RLP.encode(rlpOut -> receipt.writeToForReceiptTrie(rlpOut, false, true));
+        RLP.encode(
+            rlpOut ->
+                TransactionReceiptEncoder.writeToForReceiptTrie(receipt, rlpOut, false, true));
     final Bytes unCompactedReceipt =
-        RLP.encode(rlpOut -> receipt.writeToForReceiptTrie(rlpOut, false, false));
-    assertThat(TransactionReceipt.readFrom(RLP.input(compactedReceipt))).isEqualTo(receipt);
-    assertThat(TransactionReceipt.readFrom(RLP.input(unCompactedReceipt))).isEqualTo(receipt);
+        RLP.encode(
+            rlpOut ->
+                TransactionReceiptEncoder.writeToForReceiptTrie(receipt, rlpOut, false, false));
+    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(compactedReceipt))).isEqualTo(receipt);
+    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(unCompactedReceipt)))
+        .isEqualTo(receipt);
   }
 }
