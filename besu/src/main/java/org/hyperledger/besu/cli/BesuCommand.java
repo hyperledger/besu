@@ -2209,6 +2209,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return dataStorageConfiguration;
   }
 
+  /**
+   * Gets the network for this BesuCommand
+   *
+   * @return the network for this BesuCommand
+   */
+  public NetworkName getNetwork() {
+    return network;
+  }
+
   private void initMiningParametersMetrics(final MiningConfiguration miningConfiguration) {
     new MiningParametersMetrics(getMetricsSystem(), miningConfiguration);
   }
