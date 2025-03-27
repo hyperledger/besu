@@ -11,7 +11,6 @@
 | Ameziane Hamlat   | ahamlat         | ahamlat          |
 | Chaminda Divitotawela | cdivitotawela    | cdivitotawela    |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
-| Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
 | Gabriel Trintinalia | gabriel-trintinalia | gabrieltrintinalia |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
@@ -43,6 +42,7 @@
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
+| Diego López León | diega            | diega            |
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
 | Jiri Peinlich    | gezero           | JiriPeinlich     |
