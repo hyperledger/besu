@@ -19,16 +19,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class TransactionReceiptEncodingOptions {
   public static final TransactionReceiptEncodingOptions NETWORK = new Builder().build();
 
-  public static final TransactionReceiptEncodingOptions NETWORK_FLAT =
-      new Builder().withOpaqueBytes(false).withBloomFilter(false).withFlatResponse(true).build();
-
   public static final TransactionReceiptEncodingOptions STORAGE_WITH_COMPACTION =
       new Builder().withRevertReason(true).withCompactedLogs(true).withBloomFilter(false).build();
 
   public static final TransactionReceiptEncodingOptions STORAGE_WITHOUT_COMPACTION =
       new Builder().withRevertReason(true).build();
 
-  public static final TransactionReceiptEncodingOptions TRIE =
+  public static final TransactionReceiptEncodingOptions TRIE_ROOT =
       new Builder().withOpaqueBytes(false).build();
 
   private final boolean withRevertReason;

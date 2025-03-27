@@ -129,7 +129,7 @@ public final class BodyValidation {
                             TransactionReceiptEncoder.writeTo(
                                 receipts.get(i),
                                 rlpOutput,
-                                TransactionReceiptEncodingOptions.TRIE))));
+                                TransactionReceiptEncodingOptions.TRIE_ROOT))));
 
     return Hash.wrap(trie.getRootHash());
   }
