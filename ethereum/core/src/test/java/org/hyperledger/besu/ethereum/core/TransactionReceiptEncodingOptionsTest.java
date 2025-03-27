@@ -20,7 +20,6 @@ import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.NETWORK;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.STORAGE_WITHOUT_COMPACTION;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.STORAGE_WITH_COMPACTION;
-import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.TRIE_ROOT;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -46,8 +45,7 @@ public class TransactionReceiptEncodingOptionsTest {
     return Stream.of(
         new Object[] {"NETWORK", NETWORK},
         new Object[] {"STORAGE_WITH_COMPACTION", STORAGE_WITH_COMPACTION},
-        new Object[] {"STORAGE_WITHOUT_COMPACTION", STORAGE_WITHOUT_COMPACTION},
-        new Object[] {"TRIE_ROOT", TRIE_ROOT});
+        new Object[] {"STORAGE_WITHOUT_COMPACTION", STORAGE_WITHOUT_COMPACTION});
   }
 
   @ParameterizedTest(name = "{0}={1}")

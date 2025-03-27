@@ -42,10 +42,8 @@ public class TransactionReceiptEncoder {
       final RLPOutput rlpOutput,
       final TransactionReceiptEncodingOptions options) {
 
-    if (options.isWithOpaqueBytes()) {
-      if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
-        rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
-      }
+    if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
+      rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
     }
 
     rlpOutput.startList();
