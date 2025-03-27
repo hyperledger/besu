@@ -19,12 +19,17 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffe
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
 /**
- * Notify the synchronizer the transmitting peer must have the parent block to the received messages
- * target height.
+ * A Future message handler that updates the peers estimated height to be that of the parent block
+ * number of the received message.
  */
 public class FutureMessageSynchronizerHandler implements FutureMessageHandler {
   private final SynchronizerUpdater synchronizerUpdater;
 
+  /**
+   * Instantiates a new Future message synchronizer handler.
+   *
+   * @param synchronizerUpdater the synchronizer updater
+   */
   public FutureMessageSynchronizerHandler(final SynchronizerUpdater synchronizerUpdater) {
     this.synchronizerUpdater = synchronizerUpdater;
   }

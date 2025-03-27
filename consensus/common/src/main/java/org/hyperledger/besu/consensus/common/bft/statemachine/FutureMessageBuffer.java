@@ -42,7 +42,14 @@ public class FutureMessageBuffer {
   private final FutureMessageHandler futureMessageHandler;
   private long chainHeight;
 
+  /** Future message handler, which is called when a future message is added to the buffer. */
   public interface FutureMessageHandler {
+    /**
+     * Notify the handler of the future message being added to the buffer.
+     *
+     * @param msgChainHeight the msg chain height
+     * @param message the message
+     */
     void handleFutureMessage(long msgChainHeight, Message message);
   }
 
