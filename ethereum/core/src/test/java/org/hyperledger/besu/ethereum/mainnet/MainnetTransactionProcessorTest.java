@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -106,6 +107,7 @@ class MainnetTransactionProcessorTest {
     Address senderAddress = Address.fromHexString("0x5555555555555555555555555555555555555555");
     Address coinbaseAddress = Address.fromHexString("0x4242424242424242424242424242424242424242");
 
+    when(transaction.getType()).thenReturn(TransactionType.EIP1559);
     when(transaction.getHash()).thenReturn(Hash.EMPTY);
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
     when(transaction.getSender()).thenReturn(senderAddress);
@@ -167,6 +169,7 @@ class MainnetTransactionProcessorTest {
     Address senderAddress = Address.fromHexString("0x5555555555555555555555555555555555555555");
     Address coinbaseAddress = Address.fromHexString("0x4242424242424242424242424242424242424242");
 
+    when(transaction.getType()).thenReturn(TransactionType.EIP1559);
     when(transaction.getTo()).thenReturn(toAddress);
     when(transaction.getHash()).thenReturn(Hash.EMPTY);
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
