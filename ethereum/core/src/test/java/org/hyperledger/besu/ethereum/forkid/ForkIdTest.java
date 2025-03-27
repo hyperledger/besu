@@ -297,6 +297,15 @@ public class ForkIdTest {
             ForkIdTestUtil.wantForkId("0xf7f9bc08", 0L),
             Optional.of(ForkIds.SEPOLIA),
             empty()),
+        // Hoodi
+        Arguments.of(
+            "Hoodi // Prague",
+            Network.HOODI,
+            0L,
+            1742999832L,
+            ForkIdTestUtil.wantForkId("0x0929e24e", 0L),
+            Optional.of(ForkIds.HOODI),
+            empty()),
         // private
         Arguments.of(
             "Private // Unsynced",
