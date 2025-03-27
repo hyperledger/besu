@@ -29,6 +29,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -133,7 +135,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   }
 
   private List<TransactionReceipt> rlpDecodeTransactionReceipts(final Bytes bytes) {
-    return RLP.input(bytes).readList(TransactionReceipt::readFrom);
+    return RLP.input(bytes).readList(TransactionReceiptDecoder::readFrom);
   }
 
   private Hash bytesToHash(final Bytes bytes) {
@@ -375,7 +377,10 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
       return RLP.encode(
           o ->
               o.writeList(
-                  receipts, (r, rlpOutput) -> r.writeToForStorage(rlpOutput, receiptCompaction)));
+                  receipts,
+                  (r, rlpOutput) ->
+                      TransactionReceiptEncoder.writeToForStorage(
+                          r, rlpOutput, receiptCompaction)));
     }
 
     private void removeVariables() {
