@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.tracing;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.SStoreOperation;
 
@@ -23,7 +24,7 @@ public class EstimateGasOperationTracer implements OperationTracer {
 
   private int maxDepth = 0;
 
-  private long sStoreStipendNeeded = 0L;
+  private long sStoreStipendNeeded = FrontierGasCalculator.ADDITIONAL_CALL_STIPEND;
 
   /** Default constructor. */
   public EstimateGasOperationTracer() {}

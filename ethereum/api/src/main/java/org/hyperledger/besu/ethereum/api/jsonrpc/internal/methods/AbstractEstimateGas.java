@@ -45,7 +45,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
 
-  private static final double SUB_CALL_REMAINING_GAS_RATIO = 65D / 64D;
+  private static final double SUB_CALL_REMAINING_GAS_RATIO = 64D / 63D;
 
   protected final TransactionSimulator transactionSimulator;
 
@@ -160,13 +160,11 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
    */
   protected long processEstimateGas(
       final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
-    // no more than 63/64s of the remaining gas can be passed to the sub calls
-    final double subCallMultiplier =
-        Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getMaxDepth());
+    // no more than 64/63s of the remaining gas can be passed to the sub calls
     // and minimum gas remaining is necessary for some operation (additionalStipend)
     final long gasStipend = operationTracer.getStipendNeeded();
     final long gasUsedByTransaction = result.result().getEstimateGasUsedByTransaction();
-    return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
+    return ((long) ((gasUsedByTransaction + gasStipend) * SUB_CALL_REMAINING_GAS_RATIO));
   }
 
   protected JsonRpcErrorResponse errorResponse(

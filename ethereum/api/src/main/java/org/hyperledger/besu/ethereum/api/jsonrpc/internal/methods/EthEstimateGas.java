@@ -63,16 +63,21 @@ public class EthEstimateGas extends AbstractEstimateGas {
     }
 
     final var result = maybeResult.get();
-    long low = result.result().getEstimateGasUsedByTransaction();
-    final var lowResult =
-        simulationFunction.simulate(overrideGasLimit(callParams, low), operationTracer);
-
-    if (lowResult.isPresent() && lowResult.get().isSuccessful()) {
-      return Quantity.create(low);
-    }
-
-    long high = processEstimateGas(result, operationTracer);
+    long high = gasLimit;
     long mid;
+
+    long low = result.result().getEstimateGasUsedByTransaction();
+    var optimisticGasLimit = processEstimateGas(result, operationTracer);
+
+    final var optimisticResult =
+        simulationFunction.simulate(
+            overrideGasLimit(callParams, optimisticGasLimit), operationTracer);
+
+    if (optimisticResult.isPresent() && optimisticResult.get().isSuccessful()) {
+      high = optimisticGasLimit;
+    } else {
+      low = optimisticGasLimit;
+    }
 
     while (low + 1 < high) {
       mid = (low + high) / 2;
