@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -44,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
@@ -825,8 +825,7 @@ public class TransactionPool implements BlockAddedObserver {
                 .map(
                     ptx -> {
                       final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-                      TransactionEncoder.encodeRLP(
-                          ptx.getTransaction(), rlp, EncodingContext.POOLED_TRANSACTION);
+                      ptx.getTransaction().writeTo(rlp, EncodingContext.POOLED_TRANSACTION);
                       return ptx.getScore()
                           + (ptx.isReceivedFromLocalSource() ? "l" : "r")
                           + rlp.encoded().toBase64String();
@@ -881,7 +880,10 @@ public class TransactionPool implements BlockAddedObserver {
                           final boolean isLocal = line.charAt(scoreStr.length()) == 'l';
                           final Transaction tx =
                               Transaction.readFrom(
-                                  Bytes.fromBase64String(line.substring(scoreStr.length() + 1)));
+                                  RLP.input(
+                                      Bytes.fromBase64String(
+                                          line.substring(scoreStr.length() + 1))),
+                                  EncodingContext.POOLED_TRANSACTION);
 
                           final ValidationResult<TransactionInvalidReason> result =
                               addTransaction(tx, isLocal, score);
@@ -912,7 +914,7 @@ public class TransactionPool implements BlockAddedObserver {
               saveFile.delete();
             }
           } catch (IOException e) {
-            LOG.error("Error while saving txpool content to disk", e);
+            LOG.error("Error while loading txpool content from disk", e);
           }
         }
       }

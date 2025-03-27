@@ -140,6 +140,25 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
   @ValueSource(booleans = {true, false})
   public void localTransactionIsSavedAndRestored(final boolean noLocalPriority)
       throws ExecutionException, InterruptedException, TimeoutException, IOException {
+    transactionIsSavedAndRestored(
+        createTransaction(noLocalPriority ? 0 : 1), true, noLocalPriority);
+  }
+
+  @Test
+  public void remoteTransactionIsSavedAndRestored()
+      throws ExecutionException, InterruptedException, TimeoutException, IOException {
+    transactionIsSavedAndRestored(createTransaction(2), false, true);
+  }
+
+  @Test
+  public void blobTransactionIsSavedAndRestored()
+      throws ExecutionException, InterruptedException, TimeoutException, IOException {
+    transactionIsSavedAndRestored(createBlobTransaction(0), false, true);
+  }
+
+  private void transactionIsSavedAndRestored(
+      final Transaction transaction, final boolean isLocal, final boolean noLocalPriority)
+      throws ExecutionException, InterruptedException, TimeoutException, IOException {
     // create a txpool with save and restore enabled
     this.transactionPool =
         createTransactionPool(
@@ -148,11 +167,13 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
                     .enableSaveRestore(true)
                     .saveFile(saveFilePath.toFile()));
 
-    final Transaction transaction = createTransaction(noLocalPriority ? 0 : 1);
-
     givenTransactionIsValid(transaction);
 
-    addAndAssertTransactionViaApiValid(transaction, noLocalPriority);
+    if (isLocal) {
+      addAndAssertTransactionViaApiValid(transaction, noLocalPriority);
+    } else {
+      addAndAssertRemoteTransactionsValid(transaction);
+    }
 
     // disabling the txpool, forces a save to file
     transactionPool.setDisabled().get(10, TimeUnit.SECONDS);
@@ -162,7 +183,9 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
 
     final var savedContent = Files.readString(saveFilePath, StandardCharsets.US_ASCII);
 
-    assertThat(savedContent).isEqualToIgnoringNewLines("127l" + transaction2Base64(transaction));
+    assertThat(savedContent)
+        .isEqualToIgnoringNewLines(
+            "127" + ((isLocal) ? "l" : "r") + transaction2Base64(transaction));
 
     // re-enabling the txpool restores from file
     transactionPool.setEnabled().get(10, TimeUnit.SECONDS);
@@ -172,42 +195,8 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
     final var restoredPendingTx = transactionPool.getPendingTransactions().iterator().next();
 
     assertThat(restoredPendingTx.getTransaction()).isEqualTo(transaction);
-    assertThat(restoredPendingTx.isReceivedFromLocalSource()).isTrue();
+    assertThat(restoredPendingTx.isReceivedFromLocalSource()).isEqualTo(isLocal);
     assertThat(restoredPendingTx.hasPriority()).isNotEqualTo(noLocalPriority);
-  }
-
-  @Test
-  public void remoteTransactionIsSavedAndRestored()
-      throws ExecutionException, InterruptedException, TimeoutException, IOException {
-    // create a txpool with save and restore enabled
-    this.transactionPool =
-        createTransactionPool(b -> b.enableSaveRestore(true).saveFile(saveFilePath.toFile()));
-
-    final Transaction transaction = createTransaction(2);
-
-    givenTransactionIsValid(transaction);
-
-    addAndAssertRemoteTransactionsValid(transaction);
-
-    // disabling the txpool, forces a save to file
-    transactionPool.setDisabled().get(10, TimeUnit.SECONDS);
-
-    // after being disabled the txpool must be empty
-    assertThat(transactionPool.getPendingTransactions()).isEmpty();
-
-    final var savedContent = Files.readString(saveFilePath, StandardCharsets.US_ASCII);
-
-    assertThat(savedContent).isEqualToIgnoringNewLines("127r" + transaction2Base64(transaction));
-
-    // re-enabling the txpool restores from file
-    transactionPool.setEnabled().get(10, TimeUnit.SECONDS);
-
-    assertThat(transactionPool.getPendingTransactions()).size().isEqualTo(1);
-
-    final var restoredPendingTx = transactionPool.getPendingTransactions().iterator().next();
-
-    assertThat(restoredPendingTx.getTransaction()).isEqualTo(transaction);
-    assertThat(restoredPendingTx.isReceivedFromLocalSource()).isFalse();
   }
 
   @Test
