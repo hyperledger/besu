@@ -31,7 +31,6 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import java.util.Optional;
 
 import io.vertx.ext.auth.User;
-import org.apache.tuweni.bytes.Bytes;
 
 @Deprecated(since = "24.12.0")
 public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
@@ -84,6 +83,7 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
     // choose the highest of the two options
     return Math.max(
         privateTransaction.getGasLimit(),
-        gasCalculator.transactionIntrinsicGasCost(Bytes.fromBase64String(pmtPayload), false, 0));
+        gasCalculator.transactionIntrinsicGasCost(
+            (org.hyperledger.besu.datatypes.Transaction) privateTransaction, 0));
   }
 }

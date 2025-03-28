@@ -413,8 +413,7 @@ public class EvmToolCommand implements Runnable {
         final long intrinsicGasCost =
             protocolSpec
                 .getGasCalculator()
-                .transactionIntrinsicGasCost(
-                    tx.getPayload(), tx.isContractCreation(), accessListCost + delegateCodeCost);
+                .transactionIntrinsicGasCost(tx, accessListCost + delegateCodeCost);
         txGas -= intrinsicGasCost;
       }
 

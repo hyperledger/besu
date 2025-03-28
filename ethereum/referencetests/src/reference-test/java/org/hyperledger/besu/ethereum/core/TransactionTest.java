@@ -195,10 +195,7 @@ public class TransactionTest {
       final long baselineGas =
         transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L) +
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
-      final long intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(
-        transaction.getPayload(),
-        transaction.isContractCreation(),
-        baselineGas);
+      final long intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction, baselineGas);
       assertThat(intrinsicGasCost).isEqualTo(expected.getIntrinsicGas());
     } catch (final Exception e) {
       if (expected.isSucceeds()) {
