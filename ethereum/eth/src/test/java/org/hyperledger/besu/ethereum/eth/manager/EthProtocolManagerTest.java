@@ -399,7 +399,8 @@ public final class EthProtocolManagerTest {
       final long startBlock = 5L;
       final int blockCount = 10;
       final MessageData messageData =
-          GetBlockHeadersMessage.create(startBlock, blockCount, 0, false);
+          GetBlockHeadersMessage.create(startBlock, blockCount, 0, false)
+              .wrapMessageData(BigInteger.ONE);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
             if (message.getCode() == EthProtocolMessages.STATUS) {
@@ -407,7 +408,8 @@ public final class EthProtocolManagerTest {
               return;
             }
             assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_HEADERS);
-            final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
+            final BlockHeadersMessage headersMsg =
+                BlockHeadersMessage.readFrom(message.unwrapMessageData().getValue());
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
             assertThat(headers).hasSize(limit);
