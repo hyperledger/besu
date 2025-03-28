@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
@@ -110,7 +110,8 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
     assertThat(sentMessages)
         .hasSize(2)
-        .allMatch(message -> message.getCode() == EthPV65.NEW_POOLED_TRANSACTION_HASHES);
+        .allMatch(
+            message -> message.getCode() == EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES);
     final Set<Hash> firstBatch = getTransactionsFromMessage(sentMessages.get(0));
     final Set<Hash> secondBatch = getTransactionsFromMessage(sentMessages.get(1));
 
@@ -132,7 +133,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
           final Set<Hash> actualSentTransactions = getTransactionsFromMessage(message);
           final Set<Hash> expectedTransactions =
               newHashSet(toHashList(Arrays.asList(transactions)));
-          return message.getCode() == EthPV65.NEW_POOLED_TRANSACTION_HASHES
+          return message.getCode() == EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES
               && actualSentTransactions.equals(expectedTransactions);
         });
   }

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -124,7 +125,8 @@ public final class BodyValidation {
                     indexKey(i),
                     RLP.encode(
                         rlpOutput ->
-                            receipts.get(i).writeToForReceiptTrie(rlpOutput, false, false))));
+                            TransactionReceiptEncoder.writeToForReceiptTrie(
+                                receipts.get(i), rlpOutput, false, false))));
 
     return Hash.wrap(trie.getRootHash());
   }

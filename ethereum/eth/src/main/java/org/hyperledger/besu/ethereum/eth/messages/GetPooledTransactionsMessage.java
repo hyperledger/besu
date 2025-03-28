@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public final class GetPooledTransactionsMessage extends AbstractMessageData {
 
-  private static final int MESSAGE_CODE = EthPV65.GET_POOLED_TRANSACTIONS;
+  private static final int MESSAGE_CODE = EthProtocolMessages.GET_POOLED_TRANSACTIONS;
   private List<Hash> pooledTransactions;
 
   private GetPooledTransactionsMessage(final Bytes rlp) {

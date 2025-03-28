@@ -55,7 +55,8 @@ public final class NewBlockHashesMessageTest {
       oneBlock.skipNext();
     }
     final MessageData initialMessage = NewBlockHashesMessage.create(hashes);
-    final MessageData raw = new RawMessage(EthPV62.NEW_BLOCK_HASHES, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.NEW_BLOCK_HASHES, initialMessage.getData());
     final NewBlockHashesMessage message = NewBlockHashesMessage.readFrom(raw);
     final Iterator<NewBlockHashesMessage.NewBlockHash> readHeaders = message.getNewHashes();
     for (int i = 0; i < 50; ++i) {

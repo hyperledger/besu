@@ -55,7 +55,8 @@ public final class GetBlockBodiesMessageTest {
       oneBlock.skipNext();
     }
     final MessageData initialMessage = GetBlockBodiesMessage.create(hashes);
-    final MessageData raw = new RawMessage(EthPV62.GET_BLOCK_BODIES, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.GET_BLOCK_BODIES, initialMessage.getData());
     final GetBlockBodiesMessage message = GetBlockBodiesMessage.readFrom(raw);
     final Iterator<Hash> readHeaders = message.hashes().iterator();
     for (int i = 0; i < 50; ++i) {
