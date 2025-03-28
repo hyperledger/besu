@@ -236,7 +236,7 @@ public class RespondingEthPeer {
               unwrappedResponse = response;
             }*/
             ethProtocolManager.processMessage(
-                msg.capability, new DefaultMessage(peerConnection, msg.messageData));
+                msg.capability, new DefaultMessage(peerConnection, response));
           } else
             snapProtocolManager.ifPresent(
                 protocolManager ->
