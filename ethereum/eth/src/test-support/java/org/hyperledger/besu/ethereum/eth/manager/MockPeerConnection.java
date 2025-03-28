@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -66,7 +68,11 @@ public class MockPeerConnection implements PeerConnection {
     if (disconnected) {
       throw new PeerNotConnected("MockPeerConnection disconnected");
     }
-    onSend.exec(capability, message, this);
+    boolean supportsRequestId =
+      EthProtocol.isEth66Compatible(capability)
+        && EthProtocol.requestIdCompatible(message.getCode());
+    onSend.exec(
+        capability, supportsRequestId ? message.wrapMessageData(BigInteger.ONE) : message, this);
   }
 
   @Override

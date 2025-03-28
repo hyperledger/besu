@@ -218,25 +218,25 @@ public class RespondingEthPeer {
   }
 
   private void respondToMessage(final Responder responder, final OutgoingMessage msg) {
-    MessageData messageData;
-    if (EthProtocol.isEth66Compatible(msg.capability)) {
+    // MessageData messageData;
+    /*    if (EthProtocol.isEth66Compatible(msg.capability)) {
       messageData = msg.messageData.unwrapMessageData().getValue();
     } else {
       messageData = msg.messageData;
-    }
-    final Optional<MessageData> maybeResponse = responder.respond(msg.capability, messageData);
+    }*/
+    final Optional<MessageData> maybeResponse = responder.respond(msg.capability, msg.messageData);
     maybeResponse.ifPresent(
         (response) -> {
           if (ethProtocolManager.getSupportedCapabilities().contains(msg.capability)) {
-            MessageData unwrappedResponse;
-            if (EthProtocol.isEth66Compatible(msg.capability)) {
+            // MessageData unwrappedResponse;
+            /*            if (EthProtocol.isEth66Compatible(msg.capability)) {
               unwrappedResponse =
                   response.wrapMessageData(msg.messageData().unwrapMessageData().getKey());
             } else {
               unwrappedResponse = response;
-            }
+            }*/
             ethProtocolManager.processMessage(
-                msg.capability, new DefaultMessage(peerConnection, unwrappedResponse));
+                msg.capability, new DefaultMessage(peerConnection, msg.messageData));
           } else
             snapProtocolManager.ifPresent(
                 protocolManager ->
