@@ -25,6 +25,7 @@ import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDe
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -628,20 +629,20 @@ public class MainnetTransactionProcessor {
 
   private Code processCodeFromAccount(
       final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract) {
-    if (contract == null) {
+    if (contract == null || contract.getCodeHash().equals(Hash.EMPTY)) {
       return CodeV0.EMPTY_CODE;
     }
 
-    if (!hasCodeDelegation(contract.getCode())) {
-      return messageCallProcessor.getCodeFromEVM(contract.getCodeHash(), contract.getCode());
+    if (hasCodeDelegation(contract.getCode())) {
+      final CodeDelegationAccount targetAccount =
+          getTargetAccount(worldUpdater, gasCalculator, contract);
+      warmAddressList.add(targetAccount.getTargetAddress());
+
+      return messageCallProcessor.getCodeFromEVM(
+          targetAccount.getCodeHash(), targetAccount.getCode());
     }
 
-    final CodeDelegationAccount targetAccount =
-        getTargetAccount(worldUpdater, gasCalculator, contract);
-    warmAddressList.add(targetAccount.getTargetAddress());
-
-    return messageCallProcessor.getCodeFromEVM(
-        targetAccount.getCodeHash(), targetAccount.getCode());
+    return messageCallProcessor.getCodeFromEVM(contract.getCodeHash(), contract.getCode());
   }
 
   public static Builder builder() {
