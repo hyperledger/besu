@@ -200,7 +200,7 @@ public class FutureMessageBufferTest {
     verify(futureMessageHandler).handleFutureMessage(1, message);
 
     futureMsgBuffer.addMessage(2, message);
-    verify(futureMessageHandler).handleFutureMessage(1, message);
+    verify(futureMessageHandler).handleFutureMessage(2, message);
   }
 
   private DefaultMessage[] addMessages(final long height, final int count) {
