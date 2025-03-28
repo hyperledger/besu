@@ -361,9 +361,7 @@ public class MainnetTransactionProcessor {
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
       final long intrinsicGas =
           gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(),
-              transaction.isContractCreation(),
-              clampedAdd(accessListGas, codeDelegationGas));
+              transaction, clampedAdd(accessListGas, codeDelegationGas));
 
       final long gasAvailable = transaction.getGasLimit() - intrinsicGas;
       LOG.trace(

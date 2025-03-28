@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -99,7 +99,7 @@ public class Transaction
 
   private final SECPSignature signature;
 
-  private final Bytes payload;
+  private final Payload payload;
 
   private final Optional<List<AccessListEntry>> maybeAccessList;
 
@@ -255,7 +255,7 @@ public class Transaction
     this.to = to;
     this.value = value;
     this.signature = signature;
-    this.payload = payload;
+    this.payload = new Payload(payload);
     this.maybeAccessList = maybeAccessList;
     this.sender = sender;
     this.chainId = chainId;
@@ -399,7 +399,12 @@ public class Transaction
    */
   @Override
   public Bytes getPayload() {
-    return payload;
+    return payload.getPayload();
+  }
+
+  @Override
+  public long getPayloadZeroBytes() {
+    return payload.zeroBytes();
   }
 
   /**
@@ -409,7 +414,7 @@ public class Transaction
    */
   @Override
   public Optional<Bytes> getInit() {
-    return getTo().isPresent() ? Optional.empty() : Optional.of(payload);
+    return getTo().isPresent() ? Optional.empty() : Optional.of(payload.getPayload());
   }
 
   /**
@@ -419,7 +424,7 @@ public class Transaction
    */
   @Override
   public Optional<Bytes> getData() {
-    return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
+    return getTo().isPresent() ? Optional.of(payload.getPayload()) : Optional.empty();
   }
 
   @Override
@@ -491,7 +496,7 @@ public class Transaction
               gasLimit,
               to,
               value,
-              payload,
+              payload.getPayload(),
               maybeAccessList,
               versionedHashes.orElse(null),
               maybeCodeDelegationList,
@@ -598,11 +603,7 @@ public class Transaction
     size = bytes.size();
   }
 
-  /**
-   * Returns whether the transaction is a contract creation
-   *
-   * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
-   */
+  @Override
   public boolean isContractCreation() {
     return getTo().isEmpty();
   }
@@ -785,7 +786,7 @@ public class Transaction
         gasLimit,
         to,
         value,
-        payload,
+        payload.getPayload(),
         maybeAccessList,
         versionedHashes.orElse(null),
         maybeCodeDelegationList,
@@ -1198,7 +1199,7 @@ public class Transaction
             detachedTo,
             value,
             signature,
-            payload.copy(),
+            payload.getPayload().copy(),
             detachedAccessList,
             sender,
             chainId,
@@ -1296,7 +1297,7 @@ public class Transaction
       this.to = toCopy.to;
       this.value = toCopy.value;
       this.signature = toCopy.signature;
-      this.payload = toCopy.payload;
+      this.payload = toCopy.payload.getPayload();
       this.accessList = toCopy.maybeAccessList;
       this.sender = toCopy.sender;
       this.chainId = toCopy.chainId;
