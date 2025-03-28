@@ -435,8 +435,12 @@ public class EthPeersTest {
   private void freeUpCapacity(final EthPeer ethPeer) {
     MessageData message = NodeDataMessage.create(emptyList());
     boolean supportsRequestId =
-      EthProtocol.isEth66Compatible( Capability.create (EthProtocol.NAME, ethPeer.getLastProtocolVersion()));
-    ethPeers.dispatchMessage(ethPeer, new EthMessage(ethPeer, supportsRequestId ? message.wrapMessageData(BigInteger.ONE): message));
+        EthProtocol.isEth66Compatible(
+            Capability.create(EthProtocol.NAME, ethPeer.getLastProtocolVersion()));
+    ethPeers.dispatchMessage(
+        ethPeer,
+        new EthMessage(
+            ethPeer, supportsRequestId ? message.wrapMessageData(BigInteger.ONE) : message));
     assertThat(ethPeer.hasAvailableRequestCapacity()).isTrue();
   }
 

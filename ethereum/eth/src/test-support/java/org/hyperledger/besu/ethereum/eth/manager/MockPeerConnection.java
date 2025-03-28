@@ -69,8 +69,8 @@ public class MockPeerConnection implements PeerConnection {
       throw new PeerNotConnected("MockPeerConnection disconnected");
     }
     boolean supportsRequestId =
-      EthProtocol.isEth66Compatible(capability)
-        && EthProtocol.requestIdCompatible(message.getCode());
+        EthProtocol.isEth66Compatible(capability)
+            && EthProtocol.requestIdCompatible(message.getCode());
     onSend.exec(
         capability, supportsRequestId ? message.wrapMessageData(BigInteger.ONE) : message, this);
   }
