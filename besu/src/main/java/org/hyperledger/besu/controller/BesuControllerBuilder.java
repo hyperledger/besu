@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
@@ -39,6 +40,7 @@ import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.chain.PreMergeBlockPruningConfiguration;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -103,6 +105,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.services.PreMergeOnlineBlockDataPruner;
 
 import java.io.Closeable;
 import java.math.BigInteger;
@@ -117,6 +120,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -217,6 +221,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** When enabled, round changes on f+1 RC messages from higher rounds */
   protected boolean isEarlyRoundChangeEnabled = false;
+
+  /** The pre-merge block pruning configuration */
+  protected PreMergeBlockPruningConfiguration preMergeBlockPruningConfiguration =
+      PreMergeBlockPruningConfiguration.DEFAULT;
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -553,6 +561,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * Sets the pre-merge block pruning configuration
+   *
+   * @param preMergeBlockPruningConfiguration the configuration
+   * @return the besu controller
+   */
+  public BesuControllerBuilder preMergeBlockPruningConfiguration(
+      final PreMergeBlockPruningConfiguration preMergeBlockPruningConfiguration) {
+    this.preMergeBlockPruningConfiguration = preMergeBlockPruningConfiguration;
+    return this;
+  }
+
+  /**
    * Build besu controller.
    *
    * @return the besu controller
@@ -804,6 +824,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     closeables.add(storageProvider);
     if (privacyParameters.getPrivateStorageProvider() != null) {
       closeables.add(privacyParameters.getPrivateStorageProvider());
+    }
+    if (preMergeBlockPruningConfiguration.preMergeBlockPruningEnabled()) {
+      ethContext
+          .getScheduler()
+          .scheduleServiceTask(
+              new PreMergeOnlineBlockDataPruner(
+                  preMergeBlockPruningConfiguration.preMergeBlockPrunerRange(),
+                  preMergeBlockPruningConfiguration.preMergeBlockPrunerSleepTime(),
+                  Stream.of(NetworkName.values())
+                      .filter((nn) -> nn.getNetworkId().equals(networkId))
+                      .findAny()
+                      .get(),
+                  blockchainStorage));
     }
 
     return new BesuController(
