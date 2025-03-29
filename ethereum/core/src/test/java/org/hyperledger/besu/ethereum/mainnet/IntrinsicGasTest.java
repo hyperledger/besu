@@ -117,8 +117,7 @@ public class IntrinsicGasTest {
 
     Transaction t = Transaction.readFrom(RLP.input(rlp));
     Assertions.assertThat(
-            gasCalculator.transactionIntrinsicGasCost(
-                t.getPayload(), t.isContractCreation(), baselineGas(gasCalculator, t)))
+            gasCalculator.transactionIntrinsicGasCost(t, baselineGas(gasCalculator, t)))
         .isEqualTo(expectedGas);
   }
 
