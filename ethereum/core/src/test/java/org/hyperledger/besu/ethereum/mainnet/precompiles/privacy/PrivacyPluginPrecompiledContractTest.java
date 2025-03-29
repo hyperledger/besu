@@ -180,7 +180,7 @@ public class PrivacyPluginPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(payload, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
