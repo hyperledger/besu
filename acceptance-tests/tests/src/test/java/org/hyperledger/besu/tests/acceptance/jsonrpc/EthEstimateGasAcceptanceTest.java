@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
-import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthCallTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthEstimateGasTransaction;
 import org.hyperledger.besu.tests.web3j.generated.TestDepth;
@@ -40,12 +39,7 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
 
   @BeforeEach
   public void setUp() throws Exception {
-    node =
-        besu.createMinerNode(
-            "node1",
-            b ->
-                b.genesisConfigProvider(GenesisConfigurationFactory::createDevLondonGenesisConfig)
-                    .devMode(false));
+    node = besu.createQbftNode("node1");
 
     cluster.start(node);
     testDepth = node.execute(contractTransactions.createSmartContract(TestDepth.class));

@@ -52,7 +52,6 @@ public class PrivacyOptionsTest extends CommandTestAbstract {
 
     parseCommand(
         "--privacy-enabled",
-        "--miner-enabled",
         "--miner-coinbase=" + coinbaseStr,
         "--min-gas-price",
         "0",
@@ -80,7 +79,6 @@ public class PrivacyOptionsTest extends CommandTestAbstract {
         createTempFile(
             "toml",
             "privacy-enabled=true\n"
-                + "miner-enabled=true\n"
                 + "miner-coinbase=\""
                 + coinbaseStr
                 + "\"\n"

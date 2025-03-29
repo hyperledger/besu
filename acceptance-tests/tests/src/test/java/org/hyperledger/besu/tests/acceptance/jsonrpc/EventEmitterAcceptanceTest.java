@@ -40,7 +40,7 @@ public class EventEmitterAcceptanceTest extends AcceptanceTestBase {
 
   @BeforeEach
   public void setUp() throws Exception {
-    node = besu.createMinerNode("node1");
+    node = besu.createQbftNode("node1");
     cluster.start(node);
   }
 

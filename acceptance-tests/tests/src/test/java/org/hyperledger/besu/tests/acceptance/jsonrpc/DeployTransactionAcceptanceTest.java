@@ -30,7 +30,7 @@ public class DeployTransactionAcceptanceTest extends AcceptanceTestBase {
   @BeforeEach
   public void setUp() throws Exception {
     recipient = accounts.createAccount("recipient");
-    minerNode = besu.createMinerNode("node");
+    minerNode = besu.createQbftNode("node");
     cluster.start(minerNode);
   }
 

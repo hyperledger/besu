@@ -142,21 +142,6 @@ public abstract class MiningConfiguration {
   }
 
   @Value.Default
-  public boolean isStratumMiningEnabled() {
-    return false;
-  }
-
-  @Value.Default
-  public String getStratumNetworkInterface() {
-    return "0.0.0.0";
-  }
-
-  @Value.Default
-  public int getStratumPort() {
-    return 8008;
-  }
-
-  @Value.Default
   public PositiveNumber getNonPoaBlockTxsSelectionMaxTime() {
     return DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
   }

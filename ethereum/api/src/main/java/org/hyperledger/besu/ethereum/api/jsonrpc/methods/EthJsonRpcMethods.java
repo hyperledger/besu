@@ -37,8 +37,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetCode;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetFilterChanges;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetFilterLogs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetLogs;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetMinerDataByBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetMinerDataByBlockNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetProof;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetStorageAt;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetTransactionByBlockHashAndIndex;
@@ -50,8 +48,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetUncleByB
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetUncleByBlockNumberAndIndex;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetUncleCountByBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetUncleCountByBlockNumber;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetWork;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthHashrate;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthMaxPriorityFeePerGas;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthMining;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewBlockFilter;
@@ -60,8 +56,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewPendingT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendTransaction;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitHashRate;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitWork;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSyncing;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthUninstallFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -158,13 +152,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthCoinbase(miningCoordinator),
         new EthProtocolVersion(supportedCapabilities),
         new EthGasPrice(blockchainQueries, apiConfiguration),
-        new EthGetWork(miningCoordinator),
-        new EthSubmitWork(miningCoordinator),
-        new EthHashrate(miningCoordinator),
-        new EthSubmitHashRate(miningCoordinator),
         new EthChainId(protocolSchedule.getChainId()),
-        new EthGetMinerDataByBlockHash(blockchainQueries, protocolSchedule),
-        new EthGetMinerDataByBlockNumber(blockchainQueries, protocolSchedule),
         new EthBlobBaseFee(blockchainQueries.getBlockchain(), protocolSchedule),
         new EthMaxPriorityFeePerGas(blockchainQueries));
   }
