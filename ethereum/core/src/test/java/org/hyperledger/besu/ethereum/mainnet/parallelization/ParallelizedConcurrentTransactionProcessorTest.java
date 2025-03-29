@@ -167,7 +167,8 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 0,
                 ValidationResult.invalid(
                     TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE),
-                Optional.of(Bytes.EMPTY)));
+                Optional.of(Bytes.EMPTY),
+                Optional.empty()));
 
     processor.runTransaction(
         protocolContext,
