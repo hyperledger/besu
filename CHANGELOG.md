@@ -22,6 +22,7 @@
 ### Additions and Improvements
 - Add Hoodi discovery DNS [#8446](https://github.com/hyperledger/besu/pull/8446)
 - Decode deposit log data without Web3j [#8394](https://github.com/hyperledger/besu/issues/8394)
+- Tune layered txpool default configuration for upcoming gas limit and blob count increases [#8487](https://github.com/hyperledger/besu/pull/8487)
 
 #### Dependencies 
 - Replace tuweni libs with https://github.com/Consensys/tuweni [#8330](https://github.com/hyperledger/besu/pull/8330), [#8461](https://github.com/hyperledger/besu/pull/8461) 
