@@ -629,20 +629,31 @@ public class MainnetTransactionProcessor {
 
   private Code processCodeFromAccount(
       final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract) {
-    if (contract == null || contract.getCodeHash().equals(Hash.EMPTY)) {
+    if (contract == null) {
+      return CodeV0.EMPTY_CODE;
+    }
+
+    final Hash codeHash = contract.getCodeHash();
+    if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
       return CodeV0.EMPTY_CODE;
     }
 
     if (hasCodeDelegation(contract.getCode())) {
-      final CodeDelegationAccount targetAccount =
-          getTargetAccount(worldUpdater, gasCalculator, contract);
-      warmAddressList.add(targetAccount.getTargetAddress());
-
-      return messageCallProcessor.getCodeFromEVM(
-          targetAccount.getCodeHash(), targetAccount.getCode());
+      return delegationTargetCode(worldUpdater, warmAddressList, contract);
     }
 
     return messageCallProcessor.getCodeFromEVM(contract.getCodeHash(), contract.getCode());
+  }
+
+  private Code delegationTargetCode(
+      final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract) {
+    // we need to look up the target account and its code, but do NOT charge gas for it
+    final CodeDelegationAccount targetAccount =
+        getTargetAccount(worldUpdater, gasCalculator, contract);
+    warmAddressList.add(targetAccount.getTargetAddress());
+
+    return messageCallProcessor.getCodeFromEVM(
+        targetAccount.getCodeHash(), targetAccount.getCode());
   }
 
   public static Builder builder() {

@@ -181,6 +181,7 @@ class MainnetTransactionProcessorTest {
         .thenReturn(ValidationResult.valid());
     when(worldState.getOrCreateSenderAccount(senderAddress)).thenReturn(senderAccount);
     when(worldState.get(toAddress.get())).thenReturn(receiverAccount);
+    when(receiverAccount.getCodeHash()).thenReturn(Hash.fromHexStringLenient("0x1"));
     when(worldState.updater()).thenReturn(worldState);
     when(messageCallProcessor.getCodeFromEVM(any(), any())).thenReturn(CodeV0.EMPTY_CODE);
     // throw exception when processing the transaction
