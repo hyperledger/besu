@@ -81,10 +81,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     Supplier<Code> codeSupplier = Suppliers.memoize(() -> getInitCode(frame, evm));
 
-    final long cost = cost(frame, codeSupplier);
     if (frame.isStatic()) {
-      return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else if (frame.getRemainingGas() < cost) {
+      return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    }
+
+    final long cost = cost(frame, codeSupplier);
+    if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
     final Wei value = Wei.wrap(frame.getStackItem(0));
