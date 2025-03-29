@@ -67,6 +67,7 @@ have support in besu-native can run mainnet ethereum configurations.  Windows su
 #### Plugins
 - Allow plugins to propose transactions during block creation [#8268](https://github.com/hyperledger/besu/pull/8268)
 - Add support for transaction permissioning rules in Plugin API [#8365](https://github.com/hyperledger/besu/pull/8365)
+- Add the possibility for a plugin to validate a tx according to txpool rules [#8401](https://github.com/hyperledger/besu/pull/8401)
 #### Parallelization
 - Improve conflict detection by considering slots to reduce false positives [#7923](https://github.com/hyperledger/besu/pull/7923)
 #### Dependencies 

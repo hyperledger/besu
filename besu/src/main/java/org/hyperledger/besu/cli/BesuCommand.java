@@ -1253,6 +1253,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         besuController.getProtocolContext().getBlockchain(),
         besuController.getTransactionSimulator());
     rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
+    transactionValidatorServiceImpl.init(besuController.getTransactionPool());
 
     besuPluginContext.addService(
         BesuEvents.class,

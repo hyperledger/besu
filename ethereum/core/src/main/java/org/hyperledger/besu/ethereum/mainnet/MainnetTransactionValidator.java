@@ -284,24 +284,25 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final Transaction transaction,
       final Account sender,
       final TransactionValidationParams validationParams) {
-    Wei senderBalance = Account.DEFAULT_BALANCE;
     long senderNonce = Account.DEFAULT_NONCE;
     Hash codeHash = Hash.EMPTY;
 
     if (sender != null) {
-      senderBalance = sender.getBalance();
       senderNonce = sender.getNonce();
       if (sender.getCodeHash() != null) codeHash = sender.getCodeHash();
     }
 
-    final Wei upfrontCost =
-        transaction.getUpfrontCost(gasCalculator.blobGasCost(transaction.getBlobCount()));
-    if (upfrontCost.compareTo(senderBalance) > 0) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-          String.format(
-              "transaction up-front cost %s exceeds transaction sender account balance %s",
-              upfrontCost.toQuantityHexString(), senderBalance.toQuantityHexString()));
+    if (!validationParams.isAllowExceedingBalance()) {
+      final Wei senderBalance = sender == null ? Account.DEFAULT_BALANCE : sender.getBalance();
+      final Wei upfrontCost =
+          transaction.getUpfrontCost(gasCalculator.blobGasCost(transaction.getBlobCount()));
+      if (upfrontCost.compareTo(senderBalance) > 0) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
+            String.format(
+                "transaction up-front cost %s exceeds transaction sender account balance %s",
+                upfrontCost.toQuantityHexString(), senderBalance.toQuantityHexString()));
+      }
     }
 
     if (Long.compareUnsigned(transaction.getNonce(), senderNonce) < 0) {

@@ -259,7 +259,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
 
     final ValidationResultAndAccount validationResult =
-        validateTransaction(transaction, isLocal, hasPriority);
+        internalValidateTransaction(transaction, isLocal, hasPriority);
 
     if (validationResult.result.isValid()) {
       final TransactionAddedResult status =
@@ -409,7 +409,12 @@ public class TransactionPool implements BlockAddedObserver {
         .get();
   }
 
-  private ValidationResultAndAccount validateTransaction(
+  public ValidationResult<TransactionInvalidReason> validateTransaction(
+      final Transaction transaction, final boolean isLocal, final boolean hasPriority) {
+    return internalValidateTransaction(transaction, isLocal, hasPriority).result;
+  }
+
+  private ValidationResultAndAccount internalValidateTransaction(
       final Transaction transaction, final boolean isLocal, final boolean hasPriority) {
 
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader().orElse(null);

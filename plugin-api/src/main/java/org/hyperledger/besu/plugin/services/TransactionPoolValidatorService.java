@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.ValidationResult;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidator;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidatorFactory;
 
@@ -36,4 +38,15 @@ public interface TransactionPoolValidatorService extends BesuService {
    */
   void registerPluginTransactionValidatorFactory(
       PluginTransactionPoolValidatorFactory pluginTransactionPoolValidatorFactory);
+
+  /**
+   * Validate a transaction for txpool addition
+   *
+   * @param transaction the transaction
+   * @param isLocal if the transaction is from a local source
+   * @param hasPriority if the transaction has priority
+   * @return the result of the validation
+   */
+  ValidationResult validateTransaction(
+      Transaction transaction, boolean isLocal, boolean hasPriority);
 }

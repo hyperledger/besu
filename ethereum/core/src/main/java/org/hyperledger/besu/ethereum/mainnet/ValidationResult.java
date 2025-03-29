@@ -22,7 +22,8 @@ import java.util.function.Supplier;
 
 import com.google.common.base.MoreObjects;
 
-public final class ValidationResult<T> {
+public final class ValidationResult<T>
+    implements org.hyperledger.besu.plugin.data.ValidationResult {
 
   private final Optional<T> invalidReason;
   private final Optional<String> errorMessage;
@@ -32,6 +33,7 @@ public final class ValidationResult<T> {
     this.errorMessage = errorMessage;
   }
 
+  @Override
   public boolean isValid() {
     return invalidReason.isEmpty();
   }
@@ -40,6 +42,7 @@ public final class ValidationResult<T> {
     return invalidReason.get();
   }
 
+  @Override
   public String getErrorMessage() {
     return errorMessage.orElse(getInvalidReason().toString());
   }
