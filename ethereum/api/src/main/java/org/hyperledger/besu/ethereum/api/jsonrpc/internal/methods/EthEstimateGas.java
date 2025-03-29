@@ -51,8 +51,22 @@ public class EthEstimateGas extends AbstractEstimateGas {
       final TransactionSimulationFunction simulationFunction) {
 
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
-
     LOG.debug("Processing transaction with params: {}", callParams);
+
+    // If the transaction is a plain value transfer, try gasLimit 21_000. It is likely to succeed.
+    if (callParams.getPayload() == null || (callParams.getPayload().isEmpty())) {
+      if (callParams.getTo() != null) {
+        var maybeSimpleTransferResult =
+            simulationFunction.simulate(
+                overrideGasLimit(callParams, DEFAULT_BLOCK_GAS_USED), operationTracer);
+        // if succeeded, return 21_000
+        if (maybeSimpleTransferResult.isPresent()
+            && maybeSimpleTransferResult.get().isSuccessful()) {
+          return Quantity.create(DEFAULT_BLOCK_GAS_USED);
+        }
+      }
+    }
+
     final var maybeResult =
         simulationFunction.simulate(overrideGasLimit(callParams, gasLimit), operationTracer);
 
@@ -63,18 +77,27 @@ public class EthEstimateGas extends AbstractEstimateGas {
     }
 
     final var result = maybeResult.get();
-    long low = result.result().getEstimateGasUsedByTransaction();
-    final var lowResult =
-        simulationFunction.simulate(overrideGasLimit(callParams, low), operationTracer);
-
-    if (lowResult.isPresent() && lowResult.get().isSuccessful()) {
-      return Quantity.create(low);
-    }
-
-    long high = processEstimateGas(result, operationTracer);
+    long high = gasLimit;
     long mid;
 
+    long low = result.result().getEstimateGasUsedByTransaction() - 1;
+    var optimisticGasLimit = processEstimateGas(result, operationTracer);
+
+    final var optimisticResult =
+        simulationFunction.simulate(
+            overrideGasLimit(callParams, optimisticGasLimit), operationTracer);
+
+    if (optimisticResult.isPresent() && optimisticResult.get().isSuccessful()) {
+      high = optimisticGasLimit;
+    } else {
+      low = optimisticGasLimit;
+    }
+
     while (low + 1 < high) {
+      // check if we are close enough
+      if ((double) (high - low) / high < ESTIMATE_GAS_TOLERANCE_RATIO) {
+        break;
+      }
       mid = (low + high) / 2;
       var binarySearchResult =
           simulationFunction.simulate(overrideGasLimit(callParams, mid), operationTracer);
