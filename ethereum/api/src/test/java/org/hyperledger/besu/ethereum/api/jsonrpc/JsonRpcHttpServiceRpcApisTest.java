@@ -201,8 +201,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   private JsonRpcHttpService createJsonRpcHttpServiceWithRpcApis(final JsonRpcConfiguration config)
       throws Exception {
     final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.ETH62);
-    supportedCapabilities.add(EthProtocol.ETH63);
+    supportedCapabilities.add(EthProtocol.LATEST);
 
     final Map<String, JsonRpcMethod> rpcMethods =
         new JsonRpcMethodsFactory()
@@ -284,7 +283,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     when(genesisBlock.getHash()).thenReturn(Hash.ZERO);
     final P2PNetwork p2pNetwork =
         DefaultP2PNetwork.builder()
-            .supportedCapabilities(Capability.create("eth", 63))
+            .supportedCapabilities(EthProtocol.LATEST)
             .nodeKey(NodeKeyUtils.generate())
             .vertx(vertx)
             .config(config)
@@ -312,8 +311,7 @@ public class JsonRpcHttpServiceRpcApisTest {
       final MetricsConfiguration metricsConfiguration,
       final NatService natService) {
     final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.ETH62);
-    supportedCapabilities.add(EthProtocol.ETH63);
+    supportedCapabilities.add(EthProtocol.LATEST);
     jsonRpcConfiguration.setPort(0);
     webSocketConfiguration.setPort(0);
 

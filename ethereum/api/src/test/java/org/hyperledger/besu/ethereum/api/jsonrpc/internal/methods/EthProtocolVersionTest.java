@@ -36,25 +36,25 @@ public class EthProtocolVersionTest {
 
   @Test
   public void returnsCorrectMethodName() {
-    setupSupportedEthProtocols();
+    setupSupportedEthProtocols(EthProtocol.LATEST);
     assertThat(method.getName()).isEqualTo(ETH_METHOD);
   }
 
   @Test
-  public void shouldReturn63WhenMaxProtocolIsETH63() {
+  public void shouldReturn67WhenMaxProtocolIsETH67() {
 
-    setupSupportedEthProtocols();
-
+    Capability capability = EthProtocol.ETH67;
+    setupSupportedEthProtocols(capability);
+    String expectedVersion = "0x" + Integer.toHexString(capability.getVersion());
     final JsonRpcRequestContext request = requestWithParams();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getRequest().getId(), "0x3f");
+        new JsonRpcSuccessResponse(request.getRequest().getId(), expectedVersion);
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
   public void shouldReturnNullNoEthProtocolsSupported() {
-
     supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(Capability.create("istanbul", 64));
     method = new EthProtocolVersion(supportedCapabilities);
@@ -67,15 +67,16 @@ public class EthProtocolVersionTest {
   }
 
   @Test
-  public void shouldReturn63WhenMixedProtocolsSupported() {
-
-    setupSupportedEthProtocols();
+  public void shouldReturn67WhenMixedProtocolsSupported() {
+    Capability capability = EthProtocol.ETH67;
+    setupSupportedEthProtocols(capability);
+    String expectedVersion = "0x" + Integer.toHexString(capability.getVersion());
     supportedCapabilities.add(Capability.create("istanbul", 64));
     method = new EthProtocolVersion(supportedCapabilities);
 
     final JsonRpcRequestContext request = requestWithParams();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getRequest().getId(), "0x3f");
+        new JsonRpcSuccessResponse(request.getRequest().getId(), expectedVersion);
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
@@ -84,10 +85,9 @@ public class EthProtocolVersionTest {
     return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 
-  private void setupSupportedEthProtocols() {
+  private void setupSupportedEthProtocols(final Capability capability) {
     supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.ETH62);
-    supportedCapabilities.add(EthProtocol.ETH63);
+    supportedCapabilities.add(capability);
     method = new EthProtocolVersion(supportedCapabilities);
   }
 }

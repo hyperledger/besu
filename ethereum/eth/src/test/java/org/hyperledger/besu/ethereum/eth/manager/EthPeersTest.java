@@ -29,13 +29,17 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -429,7 +433,15 @@ public class EthPeersTest {
   }
 
   private void freeUpCapacity(final EthPeer ethPeer) {
-    ethPeers.dispatchMessage(ethPeer, new EthMessage(ethPeer, NodeDataMessage.create(emptyList())));
+    MessageData message = NodeDataMessage.create(emptyList());
+    boolean supportsRequestId =
+        EthProtocol.isEth66Compatible(
+            Capability.create(EthProtocol.NAME, ethPeer.getLastProtocolVersion()));
+    ethPeers.dispatchMessage(
+        ethPeer,
+        new EthMessage(
+            ethPeer, supportsRequestId ? message.wrapMessageData(BigInteger.ONE) : message));
+    assertThat(ethPeer.hasAvailableRequestCapacity()).isTrue();
   }
 
   private void useAllAvailableCapacity(final EthPeer peer) throws PeerNotConnected {

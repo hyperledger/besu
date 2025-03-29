@@ -524,7 +524,7 @@ public class EthPeerTest {
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
     final Set<Capability> caps =
-        new HashSet<>(Collections.singletonList(Capability.create("foo", 63)));
+        new HashSet<>(Collections.singletonList(Capability.create("foo", 68)));
 
     return new MockPeerConnection(caps, onSend);
   }

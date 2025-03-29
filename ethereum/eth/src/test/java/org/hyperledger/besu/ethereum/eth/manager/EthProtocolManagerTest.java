@@ -163,7 +163,7 @@ public final class EthProtocolManagerTest {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       assertThat(peer.isDisconnected()).isTrue();
     }
   }
@@ -183,7 +183,7 @@ public final class EthProtocolManagerTest {
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
       final MockPeerConnection peer =
           setupPeerWithoutStatusExchange(ethManager, (cap, msg, conn) -> {});
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       assertThat(peer.isDisconnected()).isTrue();
     }
   }
@@ -207,14 +207,14 @@ public final class EthProtocolManagerTest {
       // Send status message with wrong chain
       final StatusMessage statusMessage =
           StatusMessage.create(
-              EthProtocolVersion.V63,
+              EthProtocol.LATEST.getVersion(),
               BigInteger.valueOf(2222),
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
               blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, statusMessage));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, statusMessage));
 
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       assertThat(peer.isDisconnected()).isTrue();
     }
   }
@@ -237,7 +237,7 @@ public final class EthProtocolManagerTest {
 
       final StatusMessage workPeerStatus =
           StatusMessage.create(
-              EthProtocolVersion.V63,
+              EthProtocol.LATEST.getVersion(),
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty().add(20),
               blockchain.getChainHeadHash(),
@@ -245,13 +245,13 @@ public final class EthProtocolManagerTest {
 
       final StatusMessage stakePeerStatus =
           StatusMessage.create(
-              EthProtocolVersion.V63,
+              EthProtocol.LATEST.getVersion(),
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
               blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
 
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(stakePeer, stakePeerStatus));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(stakePeer, stakePeerStatus));
 
       mergePeerFilter.mergeStateChanged(
           true, Optional.empty(), Optional.of(blockchain.getChainHead().getTotalDifficulty()));
@@ -260,7 +260,7 @@ public final class EthProtocolManagerTest {
       mergePeerFilter.onNewUnverifiedForkchoice(
           new ForkchoiceEvent(Hash.EMPTY, Hash.EMPTY, Hash.hash(Bytes.of(2))));
 
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(workPeer, workPeerStatus));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(workPeer, workPeerStatus));
       assertThat(workPeer.isDisconnected()).isTrue();
       assertThat(workPeer.getDisconnectReason()).isPresent();
       assertThat(workPeer.getDisconnectReason())
@@ -285,7 +285,7 @@ public final class EthProtocolManagerTest {
       when(messageData.getCode()).thenReturn(EthProtocolMessages.TRANSACTIONS);
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
 
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       assertThat(peer.isDisconnected()).isFalse();
     }
   }
@@ -309,14 +309,14 @@ public final class EthProtocolManagerTest {
       // Send status message with wrong chain
       final StatusMessage statusMessage =
           StatusMessage.create(
-              EthProtocolVersion.V63,
+              EthProtocol.LATEST.getVersion(),
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               gen.hash(),
               blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, statusMessage));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, statusMessage));
 
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       assertThat(peer.isDisconnected()).isTrue();
     }
   }
@@ -335,7 +335,7 @@ public final class EthProtocolManagerTest {
       final MessageData messageData =
           GetBlockBodiesMessage.create(Collections.singletonList(gen.hash()));
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       final ConditionFactory waitDisconnect =
           Awaitility.await().catchUncaughtExceptions().atMost(200, TimeUnit.MILLISECONDS);
       assertThatThrownBy(() -> waitDisconnect.until(peer::isDisconnected))
@@ -376,7 +376,7 @@ public final class EthProtocolManagerTest {
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -399,7 +399,8 @@ public final class EthProtocolManagerTest {
       final long startBlock = 5L;
       final int blockCount = 10;
       final MessageData messageData =
-          GetBlockHeadersMessage.create(startBlock, blockCount, 0, false);
+          GetBlockHeadersMessage.create(startBlock, blockCount, 0, false)
+              .wrapMessageData(BigInteger.ONE);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
             if (message.getCode() == EthProtocolMessages.STATUS) {
@@ -407,7 +408,8 @@ public final class EthProtocolManagerTest {
               return;
             }
             assertThat(message.getCode()).isEqualTo(EthProtocolMessages.BLOCK_HEADERS);
-            final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
+            final BlockHeadersMessage headersMsg =
+                BlockHeadersMessage.readFrom(message.unwrapMessageData().getValue());
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
             assertThat(headers).hasSize(limit);
@@ -417,7 +419,7 @@ public final class EthProtocolManagerTest {
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -455,7 +457,7 @@ public final class EthProtocolManagerTest {
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -495,7 +497,7 @@ public final class EthProtocolManagerTest {
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -536,7 +538,7 @@ public final class EthProtocolManagerTest {
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -546,12 +548,13 @@ public final class EthProtocolManagerTest {
     final MockPeerConnection peerConnection = setupPeerWithoutStatusExchange(ethManager, onSend);
     final StatusMessage statusMessage =
         StatusMessage.create(
-            EthProtocolVersion.V63,
+            EthProtocol.LATEST.getVersion(),
             BigInteger.ONE,
             blockchain.getChainHead().getTotalDifficulty(),
             blockchain.getChainHeadHash(),
             blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
-    ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peerConnection, statusMessage));
+    ethManager.processMessage(
+        EthProtocol.LATEST, new DefaultMessage(peerConnection, statusMessage));
     final EthPeers ethPeers = ethManager.ethContext().getEthPeers();
     final EthPeer ethPeer = ethPeers.peer(peerConnection);
     ethPeers.addPeerToEthPeers(ethPeer);
@@ -560,7 +563,7 @@ public final class EthProtocolManagerTest {
 
   private MockPeerConnection setupPeerWithoutStatusExchange(
       final EthProtocolManager ethManager, final PeerSendHandler onSend) {
-    final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
+    final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.LATEST));
     final MockPeerConnection peer = new MockPeerConnection(caps, onSend);
     ethManager.handleNewConnection(peer);
     return peer;
@@ -600,7 +603,7 @@ public final class EthProtocolManagerTest {
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -636,7 +639,7 @@ public final class EthProtocolManagerTest {
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -687,7 +690,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -740,7 +743,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -784,7 +787,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -833,7 +836,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -885,7 +888,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -929,7 +932,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -981,7 +984,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -1030,9 +1033,9 @@ public final class EthProtocolManagerTest {
               messageSentCaptor.capture(),
               receivingPeerCaptor.capture());
 
-      // assert that all entries in capability param were Eth63
+      // assert that all entries in capability param were latest
       assertThat(capabilityCaptor.getAllValues().stream().distinct().collect(Collectors.toList()))
-          .isEqualTo(Collections.singletonList(EthProtocol.ETH63));
+          .isEqualTo(Collections.singletonList(EthProtocol.LATEST));
 
       // assert that all messages transmitted contain the expected block & total difficulty.
       final ProtocolSchedule protocolSchdeule = ProtocolScheduleFixture.MAINNET;
@@ -1092,19 +1095,19 @@ public final class EthProtocolManagerTest {
             done.complete(null);
           };
 
-      final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
+      final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.LATEST));
       final MockPeerConnection peer = new MockPeerConnection(caps, onSend);
       ethManager.handleNewConnection(peer);
       final StatusMessage statusMessage =
           StatusMessage.create(
-              EthProtocolVersion.V63,
+              EthProtocol.LATEST.getVersion(),
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
               blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
 
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, statusMessage));
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, statusMessage));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -1155,7 +1158,7 @@ public final class EthProtocolManagerTest {
 
       // Send just a transaction message.
       final PeerConnection peer = setupPeer(ethManager, (cap, msg, connection) -> {});
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, transactionMessage));
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, transactionMessage));
 
       // Verify the regular message executor and scheduled executor got nothing to execute.
       verifyNoInteractions(worker, scheduled);
@@ -1216,14 +1219,14 @@ public final class EthProtocolManagerTest {
   @Test
   public void shouldRespectFlagForMinCapability() {
 
-    // If min cap = v64, should not contain v63
+    // If min cap = v67, should not contain v66
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V64).build();
+        EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V67).build();
 
     final EthProtocolManager ethManager = createEthManager(SyncMode.SNAP, configuration);
 
-    assertThat(ethManager.getSupportedCapabilities()).contains(EthProtocol.ETH64);
-    assertThat(ethManager.getSupportedCapabilities()).doesNotContain(EthProtocol.ETH63);
+    assertThat(ethManager.getSupportedCapabilities()).contains(EthProtocol.ETH67);
+    assertThat(ethManager.getSupportedCapabilities()).doesNotContain(EthProtocol.ETH66);
   }
 
   @Test

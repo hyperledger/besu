@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -33,7 +34,7 @@ public class StatusMessageTest {
 
   @Test
   public void getters() {
-    final int version = EthProtocolVersion.V62;
+    final int version = EthProtocol.LATEST.getVersion();
     final BigInteger networkId = BigInteger.ONE;
     final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);
@@ -50,7 +51,7 @@ public class StatusMessageTest {
 
   @Test
   public void serializeDeserialize() {
-    final int version = EthProtocolVersion.V62;
+    final int version = EthProtocol.LATEST.getVersion();
     final BigInteger networkId = BigInteger.ONE;
     final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);

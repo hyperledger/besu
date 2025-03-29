@@ -110,7 +110,7 @@ public class EthProtocolManagerTestUtil {
       final RespondingEthPeer peer,
       final MessageData message) {
     ethProtocolManager.processMessage(
-        EthProtocol.ETH63, new DefaultMessage(peer.getPeerConnection(), message));
+        EthProtocol.LATEST, new DefaultMessage(peer.getPeerConnection(), message));
   }
 
   public static RespondingEthPeer.Builder peerBuilder() {

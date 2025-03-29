@@ -54,7 +54,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
@@ -379,7 +378,7 @@ public class FullSyncChainDownloaderTest {
         .until(() -> bestPeer.peekNextOutgoingRequest().isPresent());
     final Optional<MessageData> maybeNextMessage = bestPeer.peekNextOutgoingRequest();
     assertThat(maybeNextMessage).isPresent();
-    final MessageData nextMessage = maybeNextMessage.get();
+    final MessageData nextMessage = maybeNextMessage.get().unwrapMessageData().getValue();
     assertThat(nextMessage.getCode()).isEqualTo(EthProtocolMessages.GET_BLOCK_HEADERS);
     final GetBlockHeadersMessage headersMessage = GetBlockHeadersMessage.readFrom(nextMessage);
     assertThat(headersMessage.skip()).isGreaterThan(0);
@@ -477,7 +476,7 @@ public class FullSyncChainDownloaderTest {
       final long checkpointRequestsToOtherPeers =
           otherPeers.stream()
               .map(RespondingEthPeer::streamPendingOutgoingRequests)
-              .flatMap(Function.identity())
+              .flatMap(s -> s.map(messageData -> messageData.unwrapMessageData().getValue()))
               .filter(m -> m.getCode() == EthProtocolMessages.GET_BLOCK_HEADERS)
               .map(GetBlockHeadersMessage::readFrom)
               .filter(m -> m.skip() > 0)

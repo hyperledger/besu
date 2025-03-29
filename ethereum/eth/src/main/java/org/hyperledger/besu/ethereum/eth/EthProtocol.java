@@ -36,6 +36,9 @@ public class EthProtocol implements SubProtocol {
   public static final Capability ETH67 = Capability.create(NAME, EthProtocolVersion.V67);
   public static final Capability ETH68 = Capability.create(NAME, EthProtocolVersion.V68);
 
+  // Latest version of the Eth protocol
+  public static final Capability LATEST = ETH68;
+
   public static boolean requestIdCompatible(final int code) {
     return Set.of(
             EthProtocolMessages.GET_BLOCK_HEADERS,
