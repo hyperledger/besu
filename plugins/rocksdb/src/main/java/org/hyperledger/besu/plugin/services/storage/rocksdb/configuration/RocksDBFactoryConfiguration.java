@@ -21,6 +21,11 @@ public class RocksDBFactoryConfiguration {
   private final int backgroundThreadCount;
   private final long cacheCapacity;
   private final boolean isHighSpec;
+  private final int recycleLogFileNum;
+  private final int keepLogFileNum;
+  private final long logFileTimeToRoll;
+  private final long maxTotalWalSize;
+  private final long deleteObsoleteFilesPeriod;
 
   /**
    * Instantiates a new RocksDb factory configuration.
@@ -29,16 +34,31 @@ public class RocksDBFactoryConfiguration {
    * @param backgroundThreadCount the background thread count
    * @param cacheCapacity the cache capacity
    * @param isHighSpec the is high spec
+   * @param recycleLogFileNum the number of log files to recycle
+   * @param keepLogFileNum the number of log files to keep
+   * @param logFileTimeToRoll the time to roll log files in seconds
+   * @param maxTotalWalSize the maximum total WAL size in bytes
+   * @param deleteObsoleteFilesPeriod the period in microseconds to delete obsolete files
    */
   public RocksDBFactoryConfiguration(
       final int maxOpenFiles,
       final int backgroundThreadCount,
       final long cacheCapacity,
-      final boolean isHighSpec) {
+      final boolean isHighSpec,
+      final int recycleLogFileNum,
+      final int keepLogFileNum,
+      final long logFileTimeToRoll,
+      final long maxTotalWalSize,
+      final long deleteObsoleteFilesPeriod) {
     this.backgroundThreadCount = backgroundThreadCount;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
     this.isHighSpec = isHighSpec;
+    this.recycleLogFileNum = recycleLogFileNum;
+    this.keepLogFileNum = keepLogFileNum;
+    this.logFileTimeToRoll = logFileTimeToRoll;
+    this.maxTotalWalSize = maxTotalWalSize;
+    this.deleteObsoleteFilesPeriod = deleteObsoleteFilesPeriod;
   }
 
   /**
@@ -75,5 +95,50 @@ public class RocksDBFactoryConfiguration {
    */
   public boolean isHighSpec() {
     return isHighSpec;
+  }
+
+  /**
+   * Gets recycle log file num.
+   *
+   * @return the recycle log file num
+   */
+  public int getRecycleLogFileNum() {
+    return recycleLogFileNum;
+  }
+
+  /**
+   * Gets keep log file num.
+   *
+   * @return the keep log file num
+   */
+  public int getKeepLogFileNum() {
+    return keepLogFileNum;
+  }
+
+  /**
+   * Gets log file time to roll.
+   *
+   * @return the log file time to roll
+   */
+  public long getLogFileTimeToRoll() {
+    return logFileTimeToRoll;
+  }
+
+  /**
+   * Gets max total wal size.
+   *
+   * @return the max total wal size
+   */
+  public long getMaxTotalWalSize() {
+    return maxTotalWalSize;
+  }
+
+  /**
+   * Gets delete obsolete files period.
+   *
+   * @return the delete obsolete files period
+   */
+  public long getDeleteObsoleteFilesPeriod() {
+    return deleteObsoleteFilesPeriod;
   }
 }

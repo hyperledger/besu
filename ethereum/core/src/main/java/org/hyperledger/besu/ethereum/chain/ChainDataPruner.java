@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.plugin.services.storage.CompactableStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.Collection;
@@ -48,7 +49,7 @@ public class ChainDataPruner implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     final long blockNumber = event.getBlock().getHeader().getNumber();
-    final long storedPruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
+    final long storedPruningMark = prunerStorage.getPruningMark().orElse(1L);
     if (blockNumber < storedPruningMark) {
       LOG.warn(
           "Block added event: "
@@ -73,7 +74,9 @@ public class ChainDataPruner implements BlockAddedObserver {
           long currentPruningMark = storedPruningMark;
           final long newPruningMark = blockNumber - blocksToRetain;
           final long blocksToBePruned = newPruningMark - currentPruningMark;
-          if (event.isNewCanonicalHead() && blocksToBePruned >= pruningFrequency) {
+          final boolean pruningRequired =
+              (event.isNewCanonicalHead() && blocksToBePruned >= pruningFrequency);
+          if (pruningRequired) {
             long currentRetainedBlock = blockNumber - currentPruningMark + 1;
             while (currentRetainedBlock > blocksToRetain) {
               LOG.debug("Pruning chain data with block height of {}", currentPruningMark);
@@ -84,6 +87,12 @@ public class ChainDataPruner implements BlockAddedObserver {
           }
           prunerStorage.setPruningMark(pruningTransaction, currentPruningMark);
           pruningTransaction.commit();
+          if (pruningRequired) {
+            // After pruning data, compact storage to reclaim space
+            if (blockchainStorage instanceof CompactableStorage compactable) {
+              compactable.compact();
+            }
+          }
         });
   }
 

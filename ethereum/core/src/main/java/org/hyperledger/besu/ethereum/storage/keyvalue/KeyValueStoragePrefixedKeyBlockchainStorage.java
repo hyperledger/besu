@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.plugin.services.storage.CompactableStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
@@ -45,7 +46,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainStorage {
+public class KeyValueStoragePrefixedKeyBlockchainStorage
+    implements BlockchainStorage, CompactableStorage {
   private static final Logger LOG =
       LoggerFactory.getLogger(KeyValueStoragePrefixedKeyBlockchainStorage.class);
 
@@ -253,6 +255,13 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
         key);
     throw new IllegalStateException(
         key + " mismatch: blockchain storage value=" + bch + ", variables storage value=" + vch);
+  }
+
+  @Override
+  public void compact() {
+    if (blockchainStorage instanceof CompactableStorage) {
+      ((CompactableStorage) blockchainStorage).compact();
+    }
   }
 
   public static class Updater implements BlockchainStorage.Updater {
