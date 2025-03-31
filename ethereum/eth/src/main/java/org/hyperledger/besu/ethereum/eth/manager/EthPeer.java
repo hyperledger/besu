@@ -145,27 +145,24 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   private void initEthRequestManagers() {
-    final boolean supportsRequestId =
-        getAgreedCapabilities().stream().anyMatch(EthProtocol::isEth66Compatible);
     // eth protocol
     requestManagers.put(
         EthProtocol.NAME,
         Map.ofEntries(
             Map.entry(
                 EthProtocolMessages.GET_BLOCK_HEADERS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                new RequestManager(this, true, EthProtocol.NAME)),
             Map.entry(
                 EthProtocolMessages.GET_BLOCK_BODIES,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                new RequestManager(this, true, EthProtocol.NAME)),
             Map.entry(
-                EthProtocolMessages.GET_RECEIPTS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                EthProtocolMessages.GET_RECEIPTS, new RequestManager(this, true, EthProtocol.NAME)),
             Map.entry(
                 EthProtocolMessages.GET_NODE_DATA,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                new RequestManager(this, true, EthProtocol.NAME)),
             Map.entry(
                 EthProtocolMessages.GET_POOLED_TRANSACTIONS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME))));
+                new RequestManager(this, true, EthProtocol.NAME))));
   }
 
   private void initSnapRequestManagers() {
