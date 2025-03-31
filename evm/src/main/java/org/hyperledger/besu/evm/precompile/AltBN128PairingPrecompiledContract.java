@@ -51,7 +51,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       Caffeine.newBuilder()
           .maximumWeight(16_000_000)
           .weigher((k, v) -> ((PrecompileInputResultTuple) v).cachedInput().size())
-          .expireAfterWrite(15, TimeUnit.MINUTES)  // Evict 15 minutes after each entry is written
+          .expireAfterWrite(15, TimeUnit.MINUTES) // Evict 15 minutes after each entry is written
           .build();
 
   /** The constant FALSE. */
