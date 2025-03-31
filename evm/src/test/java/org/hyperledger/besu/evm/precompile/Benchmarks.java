@@ -41,9 +41,13 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("UnusedMethod")
 public class Benchmarks {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Benchmarks.class);
 
   static final Random random = new Random();
 
@@ -282,15 +286,15 @@ public class Benchmarks {
         new BigIntegerModularExponentiationPrecompiledContract(new BerlinGasCalculator());
 
     for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
-      final double gasSpent = runBenchmark(testCase.getValue(), contract);
+      final long timePerCallInNs = runBenchmark(testCase.getValue(), contract);
+      long gasRequirement = contract.gasRequirement(testCase.getValue());
 
-      long gasCost = contract.gasRequirement(testCase.getValue());
       System.out.printf(
-          "ModEXP %s for \t%,d gas. Charging %,d gas. \t@ %,.3f MGps%n",
+          "ModEXP %s for %,d gas.\tExecution time per call %,d ns. \t@ %,.2f MGps%n",
           testCase.getKey(),
-          (int) gasSpent,
-          gasCost,
-          gasCost / gasSpent * GAS_PER_SECOND_STANDARD / 1_000_000);
+          (int) gasRequirement,
+          timePerCallInNs,
+          getMgasPerS(timePerCallInNs, gasRequirement));
     }
 
     System.getProperties().forEach((k, v) -> System.out.println(k + " = " + v));
@@ -315,10 +319,12 @@ public class Benchmarks {
     final AltBN128AddPrecompiledContract contract =
         AltBN128AddPrecompiledContract.istanbul(new IstanbulGasCalculator());
 
-    final double gasSpent = runBenchmark(arg, contract);
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
 
     System.out.printf(
-        "BNADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+        "BNADD for %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
+        (int) gasRequirement, timePerCallInNs, getMgasPerS(timePerCallInNs, gasRequirement));
   }
 
   private static void benchBNMUL() {
@@ -335,10 +341,12 @@ public class Benchmarks {
     final AltBN128MulPrecompiledContract contract =
         AltBN128MulPrecompiledContract.istanbul(new IstanbulGasCalculator());
 
-    final double gasSpent = runBenchmark(arg, contract);
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
 
     System.out.printf(
-        "BNMUL for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+        "BNMUL for %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
+        (int) gasRequirement, timePerCallInNs, getMgasPerS(timePerCallInNs, gasRequirement));
   }
 
   private static void benchBNPairing() {
@@ -387,11 +395,15 @@ public class Benchmarks {
         AltBN128PairingPrecompiledContract.istanbul(new IstanbulGasCalculator());
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
 
       System.out.printf(
-          "BNPairings %d pairs for %,d gas. Charging %,d gas.%n",
-          i * 2 + 2, (int) gasSpent, contract.gasRequirement(args[i]));
+          "BNPairings %d for %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
+          i * 2 + 2,
+          (int) gasRequirement,
+          timePerCallInNs,
+          getMgasPerS(timePerCallInNs, gasRequirement));
     }
   }
 
@@ -405,10 +417,12 @@ public class Benchmarks {
 
     final BLS12G1AddPrecompiledContract contract = new BLS12G1AddPrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
 
     System.out.printf(
-        "G1ADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+        "G1ADD for %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
+        (int) gasRequirement, timePerCallInNs, getMgasPerS(timePerCallInNs, gasRequirement));
   }
 
   private static void benchBLS12G1MultiExp() {
@@ -453,11 +467,14 @@ public class Benchmarks {
     final BLS12G1MultiExpPrecompiledContract contract = new BLS12G1MultiExpPrecompiledContract();
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
-
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
       System.out.printf(
-          "G1MULTIEXP %d for %,d gas. Charging %,d gas.%n",
-          i + 1, (int) gasSpent, contract.gasRequirement(args[i]));
+          "G1MULTIEXP %d for %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
+          i + 1,
+          (int) gasRequirement,
+          timePerCallInNs,
+          getMgasPerS(timePerCallInNs, gasRequirement));
     }
   }
 
@@ -471,10 +488,12 @@ public class Benchmarks {
 
     final BLS12G2AddPrecompiledContract contract = new BLS12G2AddPrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
 
     System.out.printf(
-        "G2ADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+        "G2ADD for %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
+        (int) gasRequirement, timePerCallInNs, getMgasPerS(timePerCallInNs, gasRequirement));
   }
 
   private static void benchBLS12G2MultiExp() {
@@ -519,11 +538,15 @@ public class Benchmarks {
     final BLS12G2MultiExpPrecompiledContract contract = new BLS12G2MultiExpPrecompiledContract();
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
 
       System.out.printf(
-          "G2MULTIEXP %d for %,d gas. Charging %,d gas.%n",
-          i + 1, (int) gasSpent, contract.gasRequirement(args[i]));
+          "G2MULTIEXP %d for %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
+          i + 1,
+          (int) gasRequirement,
+          timePerCallInNs,
+          getMgasPerS(timePerCallInNs, gasRequirement));
     }
   }
 
@@ -560,11 +583,15 @@ public class Benchmarks {
     final BLS12PairingPrecompiledContract contract = new BLS12PairingPrecompiledContract();
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
 
       System.out.printf(
-          "BLS pairings %d pairs for %,d gas. Charging %,d gas.%n",
-          i * 2 + 2, (int) gasSpent, contract.gasRequirement(args[i]));
+          "BLS pairings %d pairs for %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
+          i * 2 + 2,
+          (int) gasRequirement,
+          timePerCallInNs,
+          getMgasPerS(timePerCallInNs, gasRequirement));
     }
   }
 
@@ -575,10 +602,12 @@ public class Benchmarks {
 
     final BLS12MapFpToG1PrecompiledContract contract = new BLS12MapFpToG1PrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
 
     System.out.printf(
-        "MAPFPTOG1 for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+        "MAPFPTOG1 for %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
+        (int) gasRequirement, timePerCallInNs, getMgasPerS(timePerCallInNs, gasRequirement));
   }
 
   private static void benchBLS12MapFP2TOG2() {
@@ -588,14 +617,15 @@ public class Benchmarks {
 
     final BLS12MapFp2ToG2PrecompiledContract contract = new BLS12MapFp2ToG2PrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
 
     System.out.printf(
-        "MAPFP2TOG2 for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(arg));
+        "MAPFP2TOG2 for\t %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
+        (int) gasRequirement, timePerCallInNs, getMgasPerS(timePerCallInNs, gasRequirement));
   }
 
-  private static double runBenchmark(final Bytes arg, final PrecompiledContract contract) {
+  private static long runBenchmark(final Bytes arg, final PrecompiledContract contract) {
     if (contract.computePrecompile(arg, fakeFrame).getOutput() == null) {
       throw new RuntimeException("Input is Invalid");
     }
@@ -609,16 +639,35 @@ public class Benchmarks {
     }
     timer.stop();
 
-    final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-    final double perCall = elapsed / MATH_ITERATIONS;
-    return perCall * GAS_PER_SECOND_STANDARD;
+    final long elapsed = timer.elapsed(TimeUnit.NANOSECONDS);
+    final long perCallInNs = elapsed / MATH_ITERATIONS;
+    return perCallInNs;
+  }
+
+  private static void benchKZGPointEval() {
+    final Bytes arg =
+        Bytes.fromHexString(
+            "010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e0000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+    KZGPointEvalPrecompiledContract.init();
+    final KZGPointEvalPrecompiledContract contract = new KZGPointEvalPrecompiledContract();
+
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+
+    System.out.printf(
+        "KZGPointEval for %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n ",
+        (int) gasRequirement, timePerCallInNs, getMgasPerS(timePerCallInNs, gasRequirement));
+  }
+
+  private static double getMgasPerS(final long timePerCallInNs, final long gasCost) {
+    return (double) (gasCost * 1_000) / timePerCallInNs;
   }
 
   public static void main(final String[] args) {
-    benchSecp256k1Recover();
-    benchSha256();
-    benchKeccak256();
-    benchRipeMD();
+    // benchSecp256k1Recover();
+    // benchSha256();
+    // benchKeccak256();
+    // benchRipeMD();
     benchBNADD();
     benchBNMUL();
     benchBNPairing();
@@ -630,5 +679,6 @@ public class Benchmarks {
     benchBLS12Pair();
     benchBLS12MapFPTOG1();
     benchBLS12MapFP2TOG2();
+    benchKZGPointEval();
   }
 }
