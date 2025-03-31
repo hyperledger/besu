@@ -249,9 +249,6 @@ Xsnapsync-server-enabled=true
 Xbonsai-full-flat-db-enabled=true
 Xpeertask-system-enabled=false
 
-# compatibility flags
-compatibility-eth64-forkid-enabled=false
-
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000
 
