@@ -27,26 +27,43 @@ class DefaultLocalNode implements MutableLocalNode {
   private final AtomicBoolean isReady = new AtomicBoolean(false);
   private final String clientId;
   private final int p2pVersion;
+  private final boolean p2pHostShareViaRlpx;
   private final List<Capability> supportedCapabilities;
   private volatile Optional<PeerInfo> peerInfo = Optional.empty();
   private volatile Optional<Peer> peer = Optional.empty();
 
   private DefaultLocalNode(
-      final String clientId, final int p2pVersion, final List<Capability> supportedCapabilities) {
+      final String clientId,
+      final int p2pVersion,
+      final List<Capability> supportedCapabilities,
+      final boolean p2pHostShareViaRlpx) {
     this.clientId = clientId;
     this.p2pVersion = p2pVersion;
     this.supportedCapabilities = supportedCapabilities;
+    this.p2pHostShareViaRlpx = p2pHostShareViaRlpx;
   }
 
   public static DefaultLocalNode create(
       final String clientId, final int p2pVersion, final List<Capability> supportedCapabilities) {
-    return new DefaultLocalNode(clientId, p2pVersion, supportedCapabilities);
+    return new DefaultLocalNode(clientId, p2pVersion, supportedCapabilities, false);
+  }
+
+  public static DefaultLocalNode create(
+      final String clientId,
+      final int p2pVersion,
+      final List<Capability> supportedCapabilities,
+      final boolean p2pHostShareViaRlpx) {
+    return new DefaultLocalNode(clientId, p2pVersion, supportedCapabilities, p2pHostShareViaRlpx);
   }
 
   @Override
   public void setEnode(final EnodeURL enode) throws NodeAlreadySetException {
     if (peer.isPresent()) {
       throw new NodeAlreadySetException("Attempt to set already initialized local node");
+    }
+    String advertisedAddress = enode.getHost();
+    if (!p2pHostShareViaRlpx) {
+      advertisedAddress = "";
     }
     this.peerInfo =
         Optional.of(
@@ -55,7 +72,8 @@ class DefaultLocalNode implements MutableLocalNode {
                 clientId,
                 supportedCapabilities,
                 enode.getListeningPortOrZero(),
-                enode.getNodeId()));
+                enode.getNodeId(),
+                advertisedAddress));
     this.peer = Optional.of(DefaultPeer.fromEnodeURL(enode));
     isReady.set(true);
   }

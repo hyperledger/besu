@@ -28,6 +28,7 @@ public class DiscoveryConfiguration {
   private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;
   private String advertisedHost = "127.0.0.1";
+  private boolean advertisedHostShareViaRlpx = false;
   private int bucketSize = 16;
   private List<EnodeURL> bootnodes = new ArrayList<>();
   private String dnsDiscoveryURL;
@@ -103,8 +104,17 @@ public class DiscoveryConfiguration {
     return advertisedHost;
   }
 
+  public boolean getAdvertisedHostShareViaRlpx() {
+    return advertisedHostShareViaRlpx;
+  }
+
   public DiscoveryConfiguration setAdvertisedHost(final String advertisedHost) {
     this.advertisedHost = advertisedHost;
+    return this;
+  }
+
+  public DiscoveryConfiguration setAdvertisedHostShareViaRlpx(final boolean share) {
+    this.advertisedHostShareViaRlpx = share;
     return this;
   }
 

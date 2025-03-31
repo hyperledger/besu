@@ -296,9 +296,9 @@ public class RlpxAgent {
         .whenComplete(
             (conn, err) -> {
               if (err != null) {
-                LOG.debug("Failed to connect to peer {}: {}", peer.getId(), err);
+                LOG.debug("Failed to connect to peer {}: {}", peer.getEnodeURLString(), err);
               } else {
-                LOG.debug("Outbound connection established to peer: {}", peer.getId());
+                LOG.debug("Outbound connection established to peer: {}", peer.getEnodeURLString());
               }
             });
   }
@@ -323,6 +323,8 @@ public class RlpxAgent {
       peerConnection.disconnect(DisconnectReason.UNKNOWN);
       return;
     }
+
+    LOG.debug("Inbound connection established to peer: {}", peer.getEnodeURLString());
 
     if (checkWhetherToConnect(peer, true)) {
       dispatchConnect(peerConnection);

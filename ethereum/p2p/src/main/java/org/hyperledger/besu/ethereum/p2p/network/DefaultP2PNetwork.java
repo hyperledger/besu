@@ -544,9 +544,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final PeerDenylistManager reputationManager =
           new PeerDenylistManager(misbehavingPeers, maintainedPeers);
       peerPermissions = PeerPermissions.combine(peerPermissions, misbehavingPeers);
+      final boolean p2pHostSharViaRlpx = config.getDiscovery().getAdvertisedHostShareViaRlpx();
 
       final MutableLocalNode localNode =
-          MutableLocalNode.create(config.getRlpx().getClientId(), 5, supportedCapabilities);
+          MutableLocalNode.create(
+              config.getRlpx().getClientId(), 5, supportedCapabilities, p2pHostSharViaRlpx);
       final PeerPrivileges peerPrivileges = new DefaultPeerPrivileges(maintainedPeers);
       peerTable = new PeerTable(nodeKey.getPublicKey().getEncodedBytes());
       rlpxAgent = rlpxAgent == null ? createRlpxAgent(localNode, peerPrivileges) : rlpxAgent;

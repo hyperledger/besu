@@ -28,6 +28,7 @@ public record P2PDiscoveryConfiguration(
     String p2pHost,
     String p2pInterface,
     Integer p2pPort,
+    Boolean p2pHostShareViaRlpxEnabled,
     Integer maxPeers,
     Boolean isLimitRemoteWireConnectionsEnabled,
     Percentage maxRemoteConnectionsPercentage,
