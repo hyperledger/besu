@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import java.util.Objects;
+
 import org.apache.tuweni.bytes.Bytes;
 
 class Payload {
@@ -38,6 +40,25 @@ class Payload {
       zeroBytes = computeZeroBytes();
     }
     return zeroBytes;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final Payload payload = (Payload) o;
+    return Objects.equals(payloadBytes, payload.payloadBytes);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(payloadBytes);
+  }
+
+  @Override
+  public String toString() {
+    return "Payload{" + "payloadBytes=" + payloadBytes + '}';
   }
 
   private long computeZeroBytes() {

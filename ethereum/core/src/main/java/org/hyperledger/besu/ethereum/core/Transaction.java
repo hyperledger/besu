@@ -1063,7 +1063,7 @@ public class Transaction
         gasLimit,
         to,
         value,
-        payload,
+        payload.getPayload(),
         signature,
         chainId);
   }
