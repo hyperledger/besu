@@ -259,3 +259,8 @@ Xevm-jumpdest-cache-weight-kb=32000
 Xplugins-external-enabled=true
 plugins=["none"]
 plugin-continue-on-error=false
+
+# pre-merge block pruner
+enable-pre-merge-block-pruning=false
+pre-merge-block-pruner-range=100
+pre-merge-block-pruner-sleep-time=1000

@@ -63,6 +63,7 @@ import org.hyperledger.besu.cli.options.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
 import org.hyperledger.besu.cli.options.PermissionsOptions;
 import org.hyperledger.besu.cli.options.PluginsConfigurationOptions;
+import org.hyperledger.besu.cli.options.PreMergeBlockPruningOptions;
 import org.hyperledger.besu.cli.options.PrivacyPluginOptions;
 import org.hyperledger.besu.cli.options.RPCOptions;
 import org.hyperledger.besu.cli.options.RpcWebsocketOptions;
@@ -309,6 +310,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
   private final LoggingLevelOption loggingLevelOption = LoggingLevelOption.create();
+  private final PreMergeBlockPruningOptions preMergeBlockPruningOptions =
+      PreMergeBlockPruningOptions.create();
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Common Options|@%n")
   final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
@@ -1153,6 +1156,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addMixin("Private key file", nodePrivateKeyFileOption);
     commandLine.addMixin("Logging level", loggingLevelOption);
     commandLine.addMixin("Data Storage Options", dataStorageOptions);
+    commandLine.addMixin("", preMergeBlockPruningOptions);
   }
 
   private void handleUnstableOptions() {
