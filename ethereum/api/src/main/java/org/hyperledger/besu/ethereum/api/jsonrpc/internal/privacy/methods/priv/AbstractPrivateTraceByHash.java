@@ -135,7 +135,7 @@ public abstract class AbstractPrivateTraceByHash implements JsonRpcMethod {
                     .trace(
                         mutableWorldState,
                         block,
-                        new DebugOperationTracer(new TraceOptions(false, false, true), false),
+                        new DebugOperationTracer(new TraceOptions(false, false, true, null), false),
                         enclaveKey,
                         privacyGroupId,
                         privateBlockMetadata)

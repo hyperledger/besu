@@ -52,7 +52,11 @@ public interface TransactionTraceParams {
     return false;
   }
 
+  @JsonProperty("tracer")
+  @Nullable
+  String tracer();
+
   default TraceOptions traceOptions() {
-    return new TraceOptions(!disableStorage(), !disableMemory(), !disableStack());
+    return new TraceOptions(!disableStorage(), !disableMemory(), !disableStack(), tracer());
   }
 }
