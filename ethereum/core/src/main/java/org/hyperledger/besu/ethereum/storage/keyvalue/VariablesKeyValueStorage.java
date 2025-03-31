@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.CHAIN_HEAD_HASH;
+import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.EARLIEST_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FINALIZED_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FORK_HEADS;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SAFE_BLOCK_HASH;
@@ -60,6 +61,11 @@ public class VariablesKeyValueStorage implements VariablesStorage {
   @Override
   public Optional<Hash> getSafeBlock() {
     return getVariable(SAFE_BLOCK_HASH).map(this::bytesToHash);
+  }
+
+  @Override
+  public Optional<Hash> getEarliest() {
+    return getVariable(EARLIEST_BLOCK_HASH).map(this::bytesToHash);
   }
 
   @Override
@@ -113,6 +119,11 @@ public class VariablesKeyValueStorage implements VariablesStorage {
     @Override
     public void setSafeBlock(final Hash blockHash) {
       setVariable(SAFE_BLOCK_HASH, blockHash);
+    }
+
+    @Override
+    public void setEarliest(final Hash blockHash) {
+      setVariable(EARLIEST_BLOCK_HASH, blockHash);
     }
 
     @Override
