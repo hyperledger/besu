@@ -951,8 +951,4 @@ public class DefaultBlockchain implements MutableBlockchain {
   public Optional<Cache<Hash, Difficulty>> getTotalDifficultyCache() {
     return totalDifficultyCache;
   }
-
-  public BlockchainStorage getBlockchainStorage() {
-    return blockchainStorage;
-  }
 }
