@@ -18,6 +18,8 @@
     - Fast Sync
 - Transaction indexing will be disabled by default in a future release for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries.
 - Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that in order to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
+- Removed support for Ethereum protocol versions `eth/62`, `eth/63`, `eth/64`, and `eth/65`. [#8492](https://github.com/hyperledger/besu/pull/8492)
+- `--compatibility-eth64-forkid-enabled` has been removed. [#8492](https://github.com/hyperledger/besu/pull/8492)
 
 ### Additions and Improvements
 - Add Hoodi discovery DNS [#8446](https://github.com/hyperledger/besu/pull/8446)
