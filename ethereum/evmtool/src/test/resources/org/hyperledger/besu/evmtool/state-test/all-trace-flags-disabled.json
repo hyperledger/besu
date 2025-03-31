@@ -6,6 +6,7 @@
     "--trace.nomemory",
     "--trace.nostack",
     "--trace.noreturndata",
+    "--trace.noeip-3155",
     "--notime"
   ],
   "stdin": {

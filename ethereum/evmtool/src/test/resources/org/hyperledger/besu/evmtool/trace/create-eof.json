@@ -1,6 +1,7 @@
 {
   "cli": [
     "--notime",
+    "--trace.noeip-3155",
     "--json",
     "--create",
     "--code",

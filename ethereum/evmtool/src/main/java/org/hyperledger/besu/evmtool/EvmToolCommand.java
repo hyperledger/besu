@@ -200,11 +200,11 @@ public class EvmToolCommand implements Runnable {
   final Boolean showJsonAlloc = false;
 
   @Option(
-      names = {"--eip-3155", "--trace.eip-3155"},
+      names = {"--eip-3155", "--trace.noeip-3155"},
       description = "Produce a trace with types strictly compatible with EIP-3155.",
       scope = INHERIT,
       negatable = true)
-  final Boolean eip3155strict = false;
+  final Boolean eip3155strict = true;
 
   @Option(
       names = {"--memory", "--trace.memory"},

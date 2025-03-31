@@ -135,8 +135,6 @@ public class TransactionTracer {
                             stackedUpdater,
                             transaction,
                             transactionProcessor,
-                            // FIXME // REVIEWME do we want to change the JSON
-                            // debug calls to use EIP-7756 values for gas and opcode?
                             new StandardJsonTracer(out, showMemory, true, true, false, true),
                             blobGasPrice);
                     out.println(
