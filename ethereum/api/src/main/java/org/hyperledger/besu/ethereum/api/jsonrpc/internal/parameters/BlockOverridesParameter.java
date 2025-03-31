@@ -43,7 +43,7 @@ public class BlockOverridesParameter extends BlockOverrides {
    * @param stateRoot the optional state root
    * @param difficulty the optional difficulty
    * @param extraData the optional extra data
-   * @param mixHashOrPrevRandao the optional mix hash or previous Randao
+   * @param mixHash the optional mix hash
    */
   @JsonCreator
   public BlockOverridesParameter(
@@ -54,16 +54,15 @@ public class BlockOverridesParameter extends BlockOverrides {
       @JsonProperty("gasLimit") final Optional<UnsignedLongParameter> gasLimit,
       @JsonProperty("feeRecipient") final Optional<Address> feeRecipient,
       @JsonProperty("baseFeePerGas") final Optional<Wei> baseFeePerGas,
-      @JsonProperty("blobBaseFee") final Optional<UnsignedLongParameter> blobBaseFee,
+      @JsonProperty("blobBaseFee") final Optional<Wei> blobBaseFee,
       @JsonProperty("stateRoot") final Optional<Hash> stateRoot,
       @JsonProperty("difficulty") final Optional<BigInteger> difficulty,
       @JsonProperty("extraData") final Optional<Bytes> extraData,
-      @JsonProperty("mixHashOrPrevRandao") final Optional<Hash> mixHashOrPrevRandao) {
+      @JsonProperty("mixHash") final Optional<Bytes32> mixHash) {
     super(
         timestamp,
         blockNumber,
         blockHash,
-        prevRandao,
         gasLimit,
         feeRecipient,
         baseFeePerGas,
@@ -71,6 +70,6 @@ public class BlockOverridesParameter extends BlockOverrides {
         stateRoot,
         difficulty,
         extraData,
-        mixHashOrPrevRandao);
+        mixHash.isPresent() ? mixHash : prevRandao);
   }
 }

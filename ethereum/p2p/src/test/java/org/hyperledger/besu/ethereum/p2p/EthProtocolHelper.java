@@ -12,10 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.transaction;
+package org.hyperledger.besu.ethereum.p2p;
 
-public class BlockSimulationException extends RuntimeException {
-  public BlockSimulationException(final String message) {
-    super(message);
-  }
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+
+public class EthProtocolHelper {
+  public static final Capability LATEST = Capability.create("eth", 68);
 }

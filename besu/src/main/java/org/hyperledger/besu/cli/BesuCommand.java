@@ -139,6 +139,8 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
+import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -695,6 +697,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfBlocksToCache = 0;
 
+  @CommandLine.Option(
+      names = {"--cache-precompiles"},
+      description = "Specifies whether to cache precompile results (default: ${DEFAULT-VALUE})")
+  private final Boolean enablePrecompileCaching = false;
+
   // Plugins Configuration Option Group
   @CommandLine.ArgGroup(validate = false)
   PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
@@ -976,6 +983,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
 
       configureNativeLibs(Optional.ofNullable(network));
+      if (enablePrecompileCaching) {
+        configurePrecompileCaching();
+      }
+
       besuController = buildController();
 
       besuPluginContext.beforeExternalServices();
@@ -999,6 +1010,32 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.debug("Startup failure cause", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
+  }
+
+  private void configurePrecompileCaching() {
+    // enable precompile caching:
+    AbstractPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+    // separately set KZG precompile caching, it does not extend AbstractPrecompiledContract:
+    KZGPointEvalPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+    // separately set BLS precompiles caching, they do not extend AbstractPrecompiledContract:
+    AbstractBLS12PrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+
+    // set a metric logger
+    final var precompileCounter =
+        getMetricsSystem()
+            .createLabelledCounter(
+                BesuMetricCategory.BLOCK_PROCESSING,
+                "precompile_cache",
+                "precompile cache labeled counter",
+                "precompile_name",
+                "event");
+
+    // set a cache event consumer which logs a metrics event
+    AbstractPrecompiledContract.setCacheEventConsumer(
+        cacheEvent ->
+            precompileCounter
+                .labels(cacheEvent.precompile(), cacheEvent.cacheMetric().name())
+                .inc());
   }
 
   private void checkPermissionsAndPrintPaths(final String userName) {
@@ -2207,6 +2244,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
     return dataStorageConfiguration;
+  }
+
+  /**
+   * Gets the network for this BesuCommand
+   *
+   * @return the network for this BesuCommand
+   */
+  public NetworkName getNetwork() {
+    return network;
   }
 
   private void initMiningParametersMetrics(final MiningConfiguration miningConfiguration) {

@@ -227,7 +227,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     return accountPreloader;
   }
 
-  protected Consumer<StorageSlotKey> getStoragePreloader() {
+  public Consumer<StorageSlotKey> getStoragePreloader() {
     return storagePreloader;
   }
 
