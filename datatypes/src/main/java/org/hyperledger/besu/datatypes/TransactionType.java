@@ -30,8 +30,9 @@ public enum TransactionType {
   BLOB(0x03),
   /** Eip7702 transaction type. */
   DELEGATE_CODE(0x04),
+  // Transaction Type 0x05 is reserved for delegate code magic, per EIP-7702
   /** EOF InitCode transaciton, EIP-7620 */
-  INITCODE(0X05);
+  INITCODE(0X06);
 
   private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
       Set.of(ACCESS_LIST, EIP1559, BLOB, DELEGATE_CODE, INITCODE);
