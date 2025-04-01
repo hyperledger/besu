@@ -19,6 +19,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +46,10 @@ public class NodeLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBa
     permissionedCluster.start(bootnode, allowedNode, forbiddenNode);
 
     permissionedNode =
-        permissionedNodeBuilder.nodesPermittedInConfig(bootnode, allowedNode).build();
+        permissionedNodeBuilder
+            .nodesPermittedInConfig(bootnode, allowedNode)
+            .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig)
+            .build();
 
     permissionedCluster.addNode(permissionedNode);
   }

@@ -830,20 +830,8 @@ public class BesuNodeFactory {
       final String genesisPath,
       final KeyPair keyPair,
       final List<Node> staticNodes) {
-
-    final List<String> enableRpcApis = new ArrayList<>(Arrays.asList());
-    enableRpcApis.addAll(List.of(QBFT.name(), ADMIN.name()));
-
     BesuNodeConfigurationBuilder builder =
         createConfigurationBuilderWithStaticNodes(name, staticNodes);
-
-    builder =
-        builder
-            .jsonRpcConfiguration(
-                node.createJsonRpcWithRpcApiEnabledConfig(enableRpcApis.toArray(String[]::new)))
-            .webSocketConfiguration(node.createWebSocketEnabledConfig())
-            .devMode(false)
-            .jsonRpcTxPool();
 
     final String genesisData = GenesisConfigurationFactory.readGenesisFile(genesisPath);
 

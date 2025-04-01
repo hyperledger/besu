@@ -129,7 +129,7 @@ task acceptanceTestNotPrivacy(type: Test) {
   exclude '**/privacy/**'
   exclude '**/permissioning/**'
   exclude '**/bftsoak/**'
-  exclude '**/acceptanceQbft/**'
+  exclude '**/acceptanceqbft/**'
 
   useJUnitPlatform {}
 
@@ -244,7 +244,7 @@ task acceptanceTestPermissioning(type: Test) {
 
 task acceptanceQbftTest(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
-  include '**/acceptanceQbft/**'
+  include '**/acceptanceqbft/**'
 
   useJUnitPlatform {}
 
