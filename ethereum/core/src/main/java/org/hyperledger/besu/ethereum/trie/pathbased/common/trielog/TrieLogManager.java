@@ -82,7 +82,7 @@ public class TrieLogManager {
         success = true;
       } finally {
         if (success) {
-          stateUpdater.commit();
+          stateUpdater.commitTrieLogOnly();
         } else {
           stateUpdater.rollback();
         }
