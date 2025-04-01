@@ -20,7 +20,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -409,7 +409,7 @@ public class FastSyncActionsTest {
   public void downloadPivotBlockHeaderShouldRetrievePivotBlockHash(
       final DataStorageFormat storageFormat) {
     setUp(storageFormat, false, Optional.of(1));
-    GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
+    GenesisConfiguration genesisConfig = mock(GenesisConfiguration.class);
     when(genesisConfig.getTerminalBlockNumber()).thenReturn(OptionalLong.of(10L));
 
     final Optional<ForkchoiceEvent> finalizedEvent =

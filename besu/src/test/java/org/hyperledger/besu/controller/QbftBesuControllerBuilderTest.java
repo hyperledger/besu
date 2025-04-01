@@ -51,7 +51,7 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
 
     // qbft prepForBuild setup
     lenient()
-        .when(genesisConfigOptions.getQbftConfigOptions())
+        .when(genesisConfiguration.getQbftConfigOptions())
         .thenReturn(new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT));
 
     final var jsonTransitions =
@@ -67,7 +67,7 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
                                 """);
 
     lenient()
-        .when(genesisConfigOptions.getTransitions())
+        .when(genesisConfiguration.getTransitions())
         .thenReturn(new TransitionsConfigOptions(jsonTransitions));
 
     lenient()

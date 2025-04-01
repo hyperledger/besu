@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.ForksScheduleFactory;
@@ -33,7 +33,7 @@ public class IbftForksSchedulesFactory {
    * @param genesisConfig the genesis config
    * @return the forks schedule
    */
-  public static ForksSchedule<BftConfigOptions> create(final GenesisConfigOptions genesisConfig) {
+  public static ForksSchedule<BftConfigOptions> create(final GenesisConfiguration genesisConfig) {
     return ForksScheduleFactory.create(
         genesisConfig.getBftConfigOptions(),
         genesisConfig.getTransitions().getIbftForks(),

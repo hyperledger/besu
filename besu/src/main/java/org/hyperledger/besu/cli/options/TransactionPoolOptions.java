@@ -25,7 +25,7 @@ import org.hyperledger.besu.cli.converter.DurationMillisConverter;
 import org.hyperledger.besu.cli.converter.FractionConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -366,10 +366,10 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
    * options are valid for the selected implementation.
    *
    * @param commandLine the full commandLine to check all the options specified by the user
-   * @param genesisConfigOptions the genesis config options
+   * @param genesisConfiguration the genesis config options
    */
   public void validate(
-      final CommandLine commandLine, final GenesisConfigOptions genesisConfigOptions) {
+      final CommandLine commandLine, final GenesisConfiguration genesisConfiguration) {
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "Could not use legacy or sequenced transaction pool options with layered implementation",
@@ -385,7 +385,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "Price bump option is not compatible with zero base fee market",
-        !genesisConfigOptions.isZeroBaseFee(),
+        !genesisConfiguration.isZeroBaseFee(),
         List.of(TX_POOL_PRICE_BUMP));
   }
 

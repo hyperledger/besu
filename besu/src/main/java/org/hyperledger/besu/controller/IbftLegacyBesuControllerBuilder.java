@@ -65,7 +65,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return IbftProtocolSchedule.create(
-        genesisConfigOptions, isRevertReasonEnabled, evmConfiguration);
+            genesisConfiguration, isRevertReasonEnabled, evmConfiguration);
   }
 
   @Override
@@ -73,7 +73,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    final IbftLegacyConfigOptions ibftConfig = genesisConfigOptions.getIbftLegacyConfigOptions();
+    final IbftLegacyConfigOptions ibftConfig = genesisConfiguration.getIbftLegacyConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
     final ValidatorProvider validatorProvider =
         BlockValidatorProvider.nonForkingValidatorProvider(

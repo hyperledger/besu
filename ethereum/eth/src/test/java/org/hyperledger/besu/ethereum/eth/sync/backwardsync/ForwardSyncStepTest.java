@@ -19,7 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -84,7 +84,7 @@ public class ForwardSyncStepTest {
 
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
-          new StubGenesisConfigOptions(),
+          new StubGenesisConfiguration(),
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,

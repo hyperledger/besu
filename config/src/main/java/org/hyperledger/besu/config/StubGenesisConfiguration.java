@@ -30,7 +30,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Stub genesis config options. */
-public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable {
+public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable {
 
   private OptionalLong homesteadBlockNumber = OptionalLong.empty();
   private OptionalLong daoForkBlock = OptionalLong.empty();
@@ -89,14 +89,14 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private boolean fixedBaseFee = false;
 
   /** Default constructor. */
-  public StubGenesisConfigOptions() {
+  public StubGenesisConfiguration() {
     // Explicit default constructor because of JavaDoc linting
   }
 
   @Override
-  public StubGenesisConfigOptions clone() {
+  public StubGenesisConfiguration clone() {
     try {
-      return (StubGenesisConfigOptions) super.clone();
+      return (StubGenesisConfiguration) super.clone();
     } catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
     }
@@ -522,7 +522,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions homesteadBlock(final long blockNumber) {
+  public StubGenesisConfiguration homesteadBlock(final long blockNumber) {
     homesteadBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -533,7 +533,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions daoForkBlock(final long blockNumber) {
+  public StubGenesisConfiguration daoForkBlock(final long blockNumber) {
     daoForkBlock = OptionalLong.of(blockNumber);
     return this;
   }
@@ -544,7 +544,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions eip150Block(final long blockNumber) {
+  public StubGenesisConfiguration eip150Block(final long blockNumber) {
     tangerineWhistleBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -555,7 +555,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions eip158Block(final long blockNumber) {
+  public StubGenesisConfiguration eip158Block(final long blockNumber) {
     spuriousDragonBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -566,7 +566,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions byzantiumBlock(final long blockNumber) {
+  public StubGenesisConfiguration byzantiumBlock(final long blockNumber) {
     byzantiumBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -577,7 +577,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions constantinopleBlock(final long blockNumber) {
+  public StubGenesisConfiguration constantinopleBlock(final long blockNumber) {
     constantinopleBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -588,7 +588,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions petersburgBlock(final long blockNumber) {
+  public StubGenesisConfiguration petersburgBlock(final long blockNumber) {
     petersburgBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -599,7 +599,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions istanbulBlock(final long blockNumber) {
+  public StubGenesisConfiguration istanbulBlock(final long blockNumber) {
     istanbulBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -610,7 +610,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions muirGlacierBlock(final long blockNumber) {
+  public StubGenesisConfiguration muirGlacierBlock(final long blockNumber) {
     muirGlacierBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -621,7 +621,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions berlinBlock(final long blockNumber) {
+  public StubGenesisConfiguration berlinBlock(final long blockNumber) {
     berlinBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -632,7 +632,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions londonBlock(final long blockNumber) {
+  public StubGenesisConfiguration londonBlock(final long blockNumber) {
     londonBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -643,7 +643,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions arrowGlacierBlock(final long blockNumber) {
+  public StubGenesisConfiguration arrowGlacierBlock(final long blockNumber) {
     arrowGlacierBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -654,7 +654,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions grayGlacierBlock(final long blockNumber) {
+  public StubGenesisConfiguration grayGlacierBlock(final long blockNumber) {
     grayGlacierBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -665,7 +665,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions mergeNetSplitBlock(final long blockNumber) {
+  public StubGenesisConfiguration mergeNetSplitBlock(final long blockNumber) {
     mergeNetSplitBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -676,7 +676,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param timestamp the timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions shanghaiTime(final long timestamp) {
+  public StubGenesisConfiguration shanghaiTime(final long timestamp) {
     shanghaiTime = OptionalLong.of(timestamp);
     return this;
   }
@@ -687,7 +687,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param timestamp the timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions cancunTime(final long timestamp) {
+  public StubGenesisConfiguration cancunTime(final long timestamp) {
     cancunTime = OptionalLong.of(timestamp);
     return this;
   }
@@ -698,7 +698,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param timestamp the timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions cancunEOFTime(final long timestamp) {
+  public StubGenesisConfiguration cancunEOFTime(final long timestamp) {
     cancunEOFTime = OptionalLong.of(timestamp);
     return this;
   }
@@ -709,7 +709,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param timestamp the timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions pragueTime(final long timestamp) {
+  public StubGenesisConfiguration pragueTime(final long timestamp) {
     pragueTime = OptionalLong.of(timestamp);
     return this;
   }
@@ -720,7 +720,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param timestamp the timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions osakaTime(final long timestamp) {
+  public StubGenesisConfiguration osakaTime(final long timestamp) {
     osakaTime = OptionalLong.of(timestamp);
     return this;
   }
@@ -786,7 +786,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param timestamp the block timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions futureEipsTime(final long timestamp) {
+  public StubGenesisConfiguration futureEipsTime(final long timestamp) {
     futureEipsTime = OptionalLong.of(timestamp);
     return this;
   }
@@ -797,7 +797,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param timestamp the block timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions experimentalEipsTime(final long timestamp) {
+  public StubGenesisConfiguration experimentalEipsTime(final long timestamp) {
     experimentalEipsTime = OptionalLong.of(timestamp);
     return this;
   }
@@ -808,7 +808,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param updatedTerminalTotalDifficulty the updated terminal total difficulty
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions terminalTotalDifficulty(
+  public StubGenesisConfiguration terminalTotalDifficulty(
       final UInt256 updatedTerminalTotalDifficulty) {
     terminalTotalDifficulty = Optional.of(updatedTerminalTotalDifficulty);
     return this;
@@ -820,7 +820,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions terminalBlockNumber(final long blockNumber) {
+  public StubGenesisConfiguration terminalBlockNumber(final long blockNumber) {
     terminalBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -831,7 +831,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockHash the block hash
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions terminalBlockHash(final Hash blockHash) {
+  public StubGenesisConfiguration terminalBlockHash(final Hash blockHash) {
     terminalBlockHash = Optional.of(blockHash);
     return this;
   }
@@ -842,7 +842,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param baseFeeOverride the base fee override
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions baseFeePerGas(final long baseFeeOverride) {
+  public StubGenesisConfiguration baseFeePerGas(final long baseFeeOverride) {
     baseFeePerGas = Optional.of(Wei.of(baseFeeOverride));
     return this;
   }
@@ -853,7 +853,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param zeroBaseFee the zero base fee override
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions zeroBaseFee(final boolean zeroBaseFee) {
+  public StubGenesisConfiguration zeroBaseFee(final boolean zeroBaseFee) {
     this.zeroBaseFee = zeroBaseFee;
     return this;
   }
@@ -864,7 +864,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param fixedBaseFee the zero base fee override
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions fixedBaseFee(final boolean fixedBaseFee) {
+  public StubGenesisConfiguration fixedBaseFee(final boolean fixedBaseFee) {
     this.fixedBaseFee = fixedBaseFee;
     return this;
   }
@@ -875,7 +875,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions classicForkBlock(final long blockNumber) {
+  public StubGenesisConfiguration classicForkBlock(final long blockNumber) {
     classicForkBlock = OptionalLong.of(blockNumber);
     return this;
   }
@@ -886,7 +886,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions ecip1015(final long blockNumber) {
+  public StubGenesisConfiguration ecip1015(final long blockNumber) {
     ecip1015BlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -897,7 +897,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions dieHard(final long blockNumber) {
+  public StubGenesisConfiguration dieHard(final long blockNumber) {
     diehardBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -908,7 +908,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions gotham(final long blockNumber) {
+  public StubGenesisConfiguration gotham(final long blockNumber) {
     gothamBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -919,7 +919,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions defuseDifficultyBomb(final long blockNumber) {
+  public StubGenesisConfiguration defuseDifficultyBomb(final long blockNumber) {
     defuseDifficultyBombBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -930,7 +930,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions atlantis(final long blockNumber) {
+  public StubGenesisConfiguration atlantis(final long blockNumber) {
     atlantisBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -941,7 +941,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions agharta(final long blockNumber) {
+  public StubGenesisConfiguration agharta(final long blockNumber) {
     aghartaBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -952,7 +952,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions phoenix(final long blockNumber) {
+  public StubGenesisConfiguration phoenix(final long blockNumber) {
     phoenixBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -963,7 +963,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions thanos(final long blockNumber) {
+  public StubGenesisConfiguration thanos(final long blockNumber) {
     thanosBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -974,7 +974,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions magneto(final long blockNumber) {
+  public StubGenesisConfiguration magneto(final long blockNumber) {
     magnetoBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -985,7 +985,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions mystique(final long blockNumber) {
+  public StubGenesisConfiguration mystique(final long blockNumber) {
     mystiqueBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -996,7 +996,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param blockNumber the block number
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions spiral(final long blockNumber) {
+  public StubGenesisConfiguration spiral(final long blockNumber) {
     spiralBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
@@ -1007,7 +1007,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param chainId the chain id
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions chainId(final BigInteger chainId) {
+  public StubGenesisConfiguration chainId(final BigInteger chainId) {
     this.chainId = Optional.ofNullable(chainId);
     return this;
   }
@@ -1018,7 +1018,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param contractSizeLimit the contract size limit
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions contractSizeLimit(final int contractSizeLimit) {
+  public StubGenesisConfiguration contractSizeLimit(final int contractSizeLimit) {
     this.contractSizeLimit = OptionalInt.of(contractSizeLimit);
     return this;
   }
@@ -1029,7 +1029,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param stackSizeLimit the stack size limit
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions stackSizeLimit(final int stackSizeLimit) {
+  public StubGenesisConfiguration stackSizeLimit(final int stackSizeLimit) {
     this.stackSizeLimit = OptionalInt.of(stackSizeLimit);
     return this;
   }
@@ -1040,7 +1040,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param ecCurve the ec curve
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions ecCurve(final Optional<String> ecCurve) {
+  public StubGenesisConfiguration ecCurve(final Optional<String> ecCurve) {
     this.ecCurve = ecCurve;
     return this;
   }
@@ -1051,7 +1051,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param qbftConfigOptions the qbft config options
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions qbftConfigOptions(final QbftConfigOptions qbftConfigOptions) {
+  public StubGenesisConfiguration qbftConfigOptions(final QbftConfigOptions qbftConfigOptions) {
     this.qbftConfigOptions = qbftConfigOptions;
     return this;
   }
@@ -1062,7 +1062,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param bftConfigOptions the bft config options
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions bftConfigOptions(final BftConfigOptions bftConfigOptions) {
+  public StubGenesisConfiguration bftConfigOptions(final BftConfigOptions bftConfigOptions) {
     this.bftConfigOptions = bftConfigOptions;
     return this;
   }
@@ -1073,7 +1073,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    * @param transitions the transitions
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions transitions(final TransitionsConfigOptions transitions) {
+  public StubGenesisConfiguration transitions(final TransitionsConfigOptions transitions) {
     this.transitions = transitions;
     return this;
   }

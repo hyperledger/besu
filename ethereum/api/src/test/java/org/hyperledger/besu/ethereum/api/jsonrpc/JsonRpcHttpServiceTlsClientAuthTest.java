@@ -22,7 +22,7 @@ import static org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration.B
 import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.Builder.aTlsConfiguration;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -123,12 +123,12 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                 CLIENT_VERSION,
                 CLIENT_COMMIT,
                 CHAIN_ID,
-                new StubGenesisConfigOptions(),
+                new StubGenesisConfiguration(),
                 peerDiscoveryMock,
                 blockchainQueries,
                 synchronizer,
                 MainnetProtocolSchedule.fromConfig(
-                    new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
+                    new StubGenesisConfiguration().constantinopleBlock(0).chainId(CHAIN_ID),
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,

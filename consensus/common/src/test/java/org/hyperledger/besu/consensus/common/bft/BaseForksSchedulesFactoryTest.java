@@ -19,7 +19,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -39,9 +39,9 @@ public abstract class BaseForksSchedulesFactoryTest<
   public void createsScheduleForJustGenesisConfig() {
     final C configOptions = createBftOptions();
     final ForkSpec<C> expectedForkSpec = new ForkSpec<>(0, createBftOptions());
-    final GenesisConfigOptions genesisConfigOptions = createGenesisConfig(configOptions);
+    final GenesisConfiguration genesisConfiguration = createGenesisConfig(configOptions);
 
-    final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfigOptions);
+    final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfiguration);
     assertThat(forksSchedule.getFork(0)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
     assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
     assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
@@ -64,9 +64,9 @@ public abstract class BaseForksSchedulesFactoryTest<
         JsonUtil.objectNodeFromMap(
             Map.of(BftFork.FORK_BLOCK_KEY, 2, BftFork.MINING_BENEFICIARY_KEY, ""));
 
-    final GenesisConfigOptions genesisConfigOptions =
+    final GenesisConfiguration genesisConfiguration =
         createGenesisConfig(qbftConfigOptions, forkWithBeneficiary, forkWithNoBeneficiary);
-    final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfigOptions);
+    final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfiguration);
 
     assertThat(forksSchedule.getFork(0).getValue().getMiningBeneficiary()).isEmpty();
     assertThat(forksSchedule.getFork(1).getValue().getMiningBeneficiary())
@@ -93,9 +93,9 @@ public abstract class BaseForksSchedulesFactoryTest<
                 BftFork.MINING_BENEFICIARY_KEY,
                 beneficiaryAddress2.toUnprefixedHexString()));
 
-    final GenesisConfigOptions genesisConfigOptions =
+    final GenesisConfiguration genesisConfiguration =
         createGenesisConfig(qbftConfigOptions, forkWithBeneficiary, forkWithNoBeneficiary);
-    final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfigOptions);
+    final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfiguration);
 
     assertThat(forksSchedule.getFork(0).getValue().getMiningBeneficiary())
         .contains(beneficiaryAddress);
@@ -132,8 +132,8 @@ public abstract class BaseForksSchedulesFactoryTest<
               beneficiaryAddress2.toUnprefixedHexString()))
     };
 
-    final GenesisConfigOptions genesisConfigOptions = createGenesisConfig(qbftConfigOptions, forks);
-    final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfigOptions);
+    final GenesisConfiguration genesisConfiguration = createGenesisConfig(qbftConfigOptions, forks);
+    final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfiguration);
 
     assertThat(forksSchedule.getFork(0).getValue().getMiningBeneficiary())
         .contains(initialBeneficiaryAddress);
@@ -159,10 +159,10 @@ public abstract class BaseForksSchedulesFactoryTest<
         JsonUtil.objectNodeFromMap(
             Map.of(BftFork.FORK_BLOCK_KEY, 1, BftFork.MINING_BENEFICIARY_KEY, "bla"));
 
-    final GenesisConfigOptions genesisConfigOptions =
+    final GenesisConfiguration genesisConfiguration =
         createGenesisConfig(qbftConfigOptions, invalidFork);
 
-    assertThatThrownBy(() -> createForkSchedule(genesisConfigOptions))
+    assertThatThrownBy(() -> createForkSchedule(genesisConfiguration))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
             "Mining beneficiary in transition config is not a valid ethereum address");
@@ -174,9 +174,9 @@ public abstract class BaseForksSchedulesFactoryTest<
     return createBftOptions(__ -> {});
   }
 
-  protected abstract GenesisConfigOptions createGenesisConfig(
+  protected abstract GenesisConfiguration createGenesisConfig(
       final C configOptions, final ObjectNode... forks);
 
   protected abstract ForksSchedule<C> createForkSchedule(
-      final GenesisConfigOptions genesisConfigOptions);
+      final GenesisConfiguration genesisConfiguration);
 }

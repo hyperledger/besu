@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.ibftlegacy;
 
 import static org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidatorBuilder;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.IbftLegacyConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.datatypes.Wei;
@@ -52,7 +52,7 @@ public class IbftProtocolSchedule {
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration) {
     final IbftLegacyConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();

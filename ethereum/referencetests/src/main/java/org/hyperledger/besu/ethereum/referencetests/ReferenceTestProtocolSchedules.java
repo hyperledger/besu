@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -54,10 +54,10 @@ public class ReferenceTestProtocolSchedules {
   }
 
   public static ReferenceTestProtocolSchedules create() {
-    return create(new StubGenesisConfigOptions());
+    return create(new StubGenesisConfiguration());
   }
 
-  public static ReferenceTestProtocolSchedules create(final StubGenesisConfigOptions genesisStub) {
+  public static ReferenceTestProtocolSchedules create(final StubGenesisConfiguration genesisStub) {
     // the following schedules activate EIP-1559, but may have non-default
     if (genesisStub.getBaseFeePerGas().isEmpty()) {
       genesisStub.baseFeePerGas(0x0a);
@@ -141,7 +141,7 @@ public class ReferenceTestProtocolSchedules {
     return schedule.getByBlockHeader(header);
   }
 
-  private static ProtocolSchedule createSchedule(final GenesisConfigOptions options) {
+  private static ProtocolSchedule createSchedule(final GenesisConfiguration options) {
     return new ProtocolScheduleBuilder(
             options,
             Optional.of(CHAIN_ID),

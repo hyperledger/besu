@@ -24,7 +24,7 @@ public class BlobScheduleOptionsTest {
   public void blobScheduleIsParsed() {
     final GenesisConfig genesisConfigFile =
         GenesisConfig.fromResource("/mainnet_with_blob_schedule.json");
-    final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
+    final GenesisConfiguration configOptions = genesisConfigFile.getConfigOptions();
 
     assertThat(configOptions.getBlobScheduleOptions()).isNotEmpty();
     final BlobScheduleOptions blobScheduleOptions = configOptions.getBlobScheduleOptions().get();

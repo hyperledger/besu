@@ -44,7 +44,7 @@ import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
@@ -572,7 +572,7 @@ public abstract class CommandTestAbstract {
     }
 
     @Override
-    public GenesisConfigOptions getGenesisConfigOptions() {
+    public GenesisConfiguration getGenesisConfigOptions() {
       return super.getGenesisConfigOptions();
     }
 

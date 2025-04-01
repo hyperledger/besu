@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -89,7 +89,8 @@ public class MergeBesuControllerBuilderTest {
   private static final NodeKey nodeKey = NodeKeyUtils.generate();
 
   @Mock GenesisConfig genesisConfig;
-  @Mock GenesisConfigOptions genesisConfigOptions;
+  @Mock
+  GenesisConfiguration genesisConfiguration;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
   @Mock CheckpointConfigOptions checkpointConfigOptions;
@@ -124,13 +125,13 @@ public class MergeBesuControllerBuilderTest {
     lenient().when(genesisConfig.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
     lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
     lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
-    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
-    lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
-    when(genesisConfigOptions.getTerminalTotalDifficulty())
+    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfiguration);
+    lenient().when(genesisConfiguration.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
+    when(genesisConfiguration.getTerminalTotalDifficulty())
         .thenReturn((Optional.of(UInt256.valueOf(100L))));
-    when(genesisConfigOptions.getThanosBlockNumber()).thenReturn(OptionalLong.empty());
-    when(genesisConfigOptions.getTerminalBlockHash()).thenReturn(Optional.of(Hash.ZERO));
-    lenient().when(genesisConfigOptions.getTerminalBlockNumber()).thenReturn(OptionalLong.of(1L));
+    when(genesisConfiguration.getThanosBlockNumber()).thenReturn(OptionalLong.empty());
+    when(genesisConfiguration.getTerminalBlockHash()).thenReturn(Optional.of(Hash.ZERO));
+    lenient().when(genesisConfiguration.getTerminalBlockNumber()).thenReturn(OptionalLong.of(1L));
     lenient()
         .when(storageProvider.createBlockchainStorage(any(), any(), any()))
         .thenReturn(
@@ -194,7 +195,7 @@ public class MergeBesuControllerBuilderTest {
 
   @Test
   public void assertTerminalTotalDifficultyInMergeContext() {
-    when(genesisConfigOptions.getTerminalTotalDifficulty())
+    when(genesisConfiguration.getTerminalTotalDifficulty())
         .thenReturn(Optional.of(UInt256.valueOf(1500L)));
 
     final Difficulty terminalTotalDifficulty =

@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -74,7 +74,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
 
   protected BesuControllerBuilder bftBesuControllerBuilder;
   @Mock protected GenesisConfig genesisConfig;
-  @Mock protected GenesisConfigOptions genesisConfigOptions;
+  @Mock protected GenesisConfiguration genesisConfiguration;
   @Mock private SynchronizerConfiguration synchronizerConfiguration;
   @Mock private EthProtocolConfiguration ethProtocolConfiguration;
   @Mock CheckpointConfigOptions checkpointConfigOptions;
@@ -102,8 +102,8 @@ public abstract class AbstractBftBesuControllerBuilderTest {
     lenient().when(genesisConfig.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
     lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
     lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
-    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
-    lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
+    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfiguration);
+    lenient().when(genesisConfiguration.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     lenient()
         .when(storageProvider.createBlockchainStorage(any(), any(), any()))
         .thenReturn(

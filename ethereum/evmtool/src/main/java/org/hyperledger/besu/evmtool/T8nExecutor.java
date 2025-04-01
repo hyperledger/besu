@@ -20,7 +20,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -336,7 +336,7 @@ public class T8nExecutor {
 
     final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
         ReferenceTestProtocolSchedules.create(
-            new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)));
+            new StubGenesisConfiguration().chainId(BigInteger.valueOf(chainId)));
 
     final BonsaiReferenceTestWorldState worldState =
         (BonsaiReferenceTestWorldState) initialWorldState.copy();

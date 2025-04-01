@@ -101,9 +101,9 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected void prepForBuild() {
-    bftConfig = genesisConfigOptions.getBftConfigOptions();
+    bftConfig = genesisConfiguration.getBftConfigOptions();
     bftEventQueue = new BftEventQueue(bftConfig.getMessageQueueLimit());
-    forksSchedule = IbftForksSchedulesFactory.create(genesisConfigOptions);
+    forksSchedule = IbftForksSchedulesFactory.create(genesisConfiguration);
     bftExtraDataCodec = new IbftExtraDataCodec();
     bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
   }
@@ -295,7 +295,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return IbftProtocolScheduleBuilder.create(
-        genesisConfigOptions,
+            genesisConfiguration,
         forksSchedule,
         isRevertReasonEnabled,
         bftExtraDataCodec,
@@ -320,11 +320,11 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    final BftConfigOptions ibftConfig = genesisConfigOptions.getBftConfigOptions();
+    final BftConfigOptions ibftConfig = genesisConfiguration.getBftConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
 
     final BftValidatorOverrides validatorOverrides =
-        convertIbftForks(genesisConfigOptions.getTransitions().getIbftForks());
+        convertIbftForks(genesisConfiguration.getTransitions().getIbftForks());
 
     return new BftContext(
         BlockValidatorProvider.forkingValidatorProvider(

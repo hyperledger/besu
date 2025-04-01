@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.clique;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.CliqueFork;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.ImmutableCliqueConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -34,7 +34,7 @@ public class CliqueForksSchedulesFactory {
    * @return the forks schedule
    */
   public static ForksSchedule<CliqueConfigOptions> create(
-      final GenesisConfigOptions genesisConfig) {
+      final GenesisConfiguration genesisConfig) {
     return ForksScheduleFactory.create(
         genesisConfig.getCliqueConfigOptions(),
         genesisConfig.getTransitions().getCliqueForks(),

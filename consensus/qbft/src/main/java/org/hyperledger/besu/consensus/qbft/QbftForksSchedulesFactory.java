@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
@@ -36,7 +36,7 @@ public class QbftForksSchedulesFactory {
    * @param genesisConfig the genesis config
    * @return the forks schedule
    */
-  public static ForksSchedule<QbftConfigOptions> create(final GenesisConfigOptions genesisConfig) {
+  public static ForksSchedule<QbftConfigOptions> create(final GenesisConfiguration genesisConfig) {
     return ForksScheduleFactory.create(
         genesisConfig.getQbftConfigOptions(),
         genesisConfig.getTransitions().getQbftForks(),

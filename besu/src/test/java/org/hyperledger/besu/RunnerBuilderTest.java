@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
@@ -134,10 +134,10 @@ public final class RunnerBuilderTest {
     when(besuController.getMiningCoordinator()).thenReturn(mock(MiningCoordinator.class));
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
     when(besuController.getEthPeers()).thenReturn(mock(EthPeers.class));
-    final GenesisConfigOptions genesisConfigOptions = mock(GenesisConfigOptions.class);
-    when(genesisConfigOptions.getForkBlockNumbers()).thenReturn(Collections.emptyList());
-    when(genesisConfigOptions.getForkBlockTimestamps()).thenReturn(Collections.emptyList());
-    when(besuController.getGenesisConfigOptions()).thenReturn(genesisConfigOptions);
+    final GenesisConfiguration genesisConfiguration = mock(GenesisConfiguration.class);
+    when(genesisConfiguration.getForkBlockNumbers()).thenReturn(Collections.emptyList());
+    when(genesisConfiguration.getForkBlockTimestamps()).thenReturn(Collections.emptyList());
+    when(besuController.getGenesisConfigOptions()).thenReturn(genesisConfiguration);
   }
 
   @Test

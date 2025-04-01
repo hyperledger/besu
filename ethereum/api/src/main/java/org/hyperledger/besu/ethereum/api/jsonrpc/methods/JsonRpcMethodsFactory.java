@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -60,7 +60,7 @@ public class JsonRpcMethodsFactory {
       final String clientVersion,
       final String commit,
       final BigInteger networkId,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final P2PNetwork p2pNetwork,
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
@@ -97,7 +97,7 @@ public class JsonRpcMethodsFactory {
               new AdminJsonRpcMethods(
                   clientNodeName,
                   networkId,
-                  genesisConfigOptions,
+                      genesisConfiguration,
                   p2pNetwork,
                   blockchainQueries,
                   namedPlugins,

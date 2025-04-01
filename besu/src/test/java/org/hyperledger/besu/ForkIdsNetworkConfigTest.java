@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
@@ -175,7 +175,7 @@ public class ForkIdsNetworkConfigTest {
 
   private static MilestoneStreamingTransitionProtocolSchedule createSchedule(
       final GenesisConfig genesisConfig) {
-    final GenesisConfigOptions configOptions = genesisConfig.getConfigOptions();
+    final GenesisConfiguration configOptions = genesisConfig.getConfigOptions();
     MilestoneStreamingProtocolSchedule preMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
             (DefaultProtocolSchedule)

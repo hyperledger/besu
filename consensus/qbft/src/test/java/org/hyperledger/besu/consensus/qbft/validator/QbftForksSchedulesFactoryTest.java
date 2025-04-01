@@ -18,13 +18,13 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -182,9 +182,9 @@ public class QbftForksSchedulesFactoryTest
   }
 
   @Override
-  protected GenesisConfigOptions createGenesisConfig(
+  protected GenesisConfiguration createGenesisConfig(
       final QbftConfigOptions configOptions, final ObjectNode... forks) {
-    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    final StubGenesisConfiguration genesisConfigOptions = new StubGenesisConfiguration();
     genesisConfigOptions.qbftConfigOptions(configOptions);
     genesisConfigOptions.transitions(
         new TransitionsConfigOptions(
@@ -194,8 +194,8 @@ public class QbftForksSchedulesFactoryTest
 
   @Override
   protected ForksSchedule<QbftConfigOptions> createForkSchedule(
-      final GenesisConfigOptions genesisConfigOptions) {
-    return QbftForksSchedulesFactory.create(genesisConfigOptions);
+      final GenesisConfiguration genesisConfiguration) {
+    return QbftForksSchedulesFactory.create(genesisConfiguration);
   }
 
   @Override

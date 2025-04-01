@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.difficulty.fixed;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 
 import java.math.BigInteger;
@@ -28,11 +28,11 @@ public class FixedDifficultyCalculators {
 
   public static final int DEFAULT_DIFFICULTY = 100;
 
-  public static boolean isFixedDifficultyInConfig(final GenesisConfigOptions config) {
+  public static boolean isFixedDifficultyInConfig(final GenesisConfiguration config) {
     return config.getEthashConfigOptions().getFixedDifficulty().isPresent();
   }
 
-  public static DifficultyCalculator calculator(final GenesisConfigOptions config) {
+  public static DifficultyCalculator calculator(final GenesisConfiguration config) {
     long difficulty = config.getEthashConfigOptions().getFixedDifficulty().getAsLong();
     return (time, parent) -> BigInteger.valueOf(difficulty);
   }

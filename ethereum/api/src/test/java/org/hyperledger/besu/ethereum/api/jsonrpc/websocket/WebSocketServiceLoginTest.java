@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -158,8 +158,8 @@ public class WebSocketServiceLoginTest {
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.LATEST);
-    final StubGenesisConfigOptions genesisConfigOptions =
-        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID);
+    final StubGenesisConfiguration genesisConfigOptions =
+        new StubGenesisConfiguration().constantinopleBlock(0).chainId(CHAIN_ID);
 
     final Map<String, JsonRpcMethod> websocketMethods =
         new WebSocketMethodsFactory(

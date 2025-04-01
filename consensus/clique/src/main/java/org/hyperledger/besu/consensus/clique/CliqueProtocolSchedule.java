@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.clique;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
@@ -67,7 +67,7 @@ public class CliqueProtocolSchedule {
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final ForksSchedule<CliqueConfigOptions> forksSchedule,
       final NodeKey nodeKey,
       final boolean isRevertReasonEnabled,

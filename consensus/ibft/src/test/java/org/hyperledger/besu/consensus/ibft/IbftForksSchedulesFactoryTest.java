@@ -18,10 +18,10 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -74,9 +74,9 @@ public class IbftForksSchedulesFactoryTest
   }
 
   @Override
-  protected GenesisConfigOptions createGenesisConfig(
+  protected GenesisConfiguration createGenesisConfig(
       final BftConfigOptions configOptions, final ObjectNode... fork) {
-    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    final StubGenesisConfiguration genesisConfigOptions = new StubGenesisConfiguration();
     genesisConfigOptions.bftConfigOptions(configOptions);
     genesisConfigOptions.transitions(
         new TransitionsConfigOptions(
@@ -86,8 +86,8 @@ public class IbftForksSchedulesFactoryTest
 
   @Override
   protected ForksSchedule<BftConfigOptions> createForkSchedule(
-      final GenesisConfigOptions genesisConfigOptions) {
-    return IbftForksSchedulesFactory.create(genesisConfigOptions);
+      final GenesisConfiguration genesisConfiguration) {
+    return IbftForksSchedulesFactory.create(genesisConfiguration);
   }
 
   @Override

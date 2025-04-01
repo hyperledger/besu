@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolScheduleBuilder;
@@ -108,7 +108,7 @@ public class BftBlockCreatorTest {
                 Duration.ofSeconds(5), Optional.empty());
           }
         };
-    final GenesisConfigOptions configOptions =
+    final GenesisConfiguration configOptions =
         GenesisConfig.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}").getConfigOptions();
     final ForksSchedule<BftConfigOptions> forksSchedule =
         new ForksSchedule<>(List.of(new ForkSpec<>(0, configOptions.getBftConfigOptions())));

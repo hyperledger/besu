@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.difficulty.fixed;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -32,7 +32,7 @@ import java.util.Optional;
 public class FixedDifficultyProtocolSchedule {
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
@@ -56,7 +56,7 @@ public class FixedDifficultyProtocolSchedule {
   }
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,

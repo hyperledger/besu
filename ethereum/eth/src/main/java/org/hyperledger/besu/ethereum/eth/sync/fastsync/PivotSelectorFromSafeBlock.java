@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -49,7 +49,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
-  private final GenesisConfigOptions genesisConfig;
+  private final GenesisConfiguration genesisConfig;
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier;
   private final Runnable cleanupAction;
@@ -67,7 +67,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final GenesisConfigOptions genesisConfig,
+      final GenesisConfiguration genesisConfig,
       final SynchronizerConfiguration synchronizerConfiguration,
       final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier,
       final Runnable cleanupAction) {

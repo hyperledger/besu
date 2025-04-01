@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.JsonGenesisConfigOptions;
+import org.hyperledger.besu.config.JsonGenesisConfiguration;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.common.ForkSpec;
@@ -111,7 +111,7 @@ public class IbftProtocolScheduleTest {
       final BftExtraDataCodec bftExtraDataCodec,
       final MutableBftConfigOptions arbitraryTransition) {
 
-    var genesisConfig = JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode());
+    var genesisConfig = JsonGenesisConfiguration.fromJsonObject(JsonUtil.createEmptyObjectNode());
     ForksSchedule<BftConfigOptions> forkSched =
         new ForksSchedule<>(
             List.of(

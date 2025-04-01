@@ -32,7 +32,7 @@ import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DE
 
 import org.hyperledger.besu.cli.converter.PositiveNumberConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
@@ -235,13 +235,13 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
    * options are valid for the selected implementation.
    *
    * @param commandLine the full commandLine to check all the options specified by the user
-   * @param genesisConfigOptions is EthHash?
+   * @param genesisConfiguration is EthHash?
    * @param isMergeEnabled is the Merge enabled?
    * @param logger the logger
    */
   public void validate(
       final CommandLine commandLine,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final boolean isMergeEnabled,
       final Logger logger) {
     if (Boolean.TRUE.equals(isMiningEnabled)) {
@@ -261,7 +261,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     }
 
     // Check that block producer options work
-    if (!isMergeEnabled && genesisConfigOptions.isEthHash()) {
+    if (!isMergeEnabled && genesisConfiguration.isEthHash()) {
       CommandLineUtils.checkOptionDependencies(
           logger,
           commandLine,
@@ -300,7 +300,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
           commandLine, "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
     }
 
-    if (genesisConfigOptions.isPoa()) {
+    if (genesisConfiguration.isPoa()) {
       CommandLineUtils.failIfOptionDoesntMeetRequirement(
           commandLine,
           "--block-txs-selection-max-time can't be used with PoA networks,"

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.cli.config;
 
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
@@ -68,9 +68,9 @@ public record EthNetworkConfig(
   public static EthNetworkConfig getNetworkConfig(final NetworkName networkName) {
     final URL genesisSource = jsonConfigSource(networkName.getGenesisFile());
     final GenesisConfig genesisConfig = GenesisConfig.fromSource(genesisSource);
-    final GenesisConfigOptions genesisConfigOptions = genesisConfig.getConfigOptions();
+    final GenesisConfiguration genesisConfiguration = genesisConfig.getConfigOptions();
     final Optional<List<String>> rawBootNodes =
-        genesisConfigOptions.getDiscoveryOptions().getBootNodes();
+        genesisConfiguration.getDiscoveryOptions().getBootNodes();
     final List<EnodeURL> bootNodes =
         rawBootNodes
             .map(
@@ -82,7 +82,7 @@ public record EthNetworkConfig(
         genesisConfig,
         networkName.getNetworkId(),
         bootNodes,
-        genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl().orElse(null));
+        genesisConfiguration.getDiscoveryOptions().getDiscoveryDnsUrl().orElse(null));
   }
 
   private static URL jsonConfigSource(final String resourceName) {

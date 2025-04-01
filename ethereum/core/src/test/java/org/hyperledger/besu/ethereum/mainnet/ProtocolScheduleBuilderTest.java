@@ -26,7 +26,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -52,7 +52,8 @@ import org.mockito.stubbing.Answer;
 @ExtendWith(MockitoExtension.class)
 class ProtocolScheduleBuilderTest {
   private final long PRE_SHANGHAI_TIMESTAMP = 1680488620L; // Mon, 03 Apr 2023 02:23:40 UTC
-  @Mock GenesisConfigOptions configOptions;
+  @Mock
+  GenesisConfiguration configOptions;
   @Mock private Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
   private static final BigInteger CHAIN_ID = BigInteger.ONE;
   private ProtocolScheduleBuilder builder;

@@ -158,7 +158,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         besuControllerBuilderSchedule.entrySet().stream()
             .map(e -> new ForkSpec<>(e.getKey(), e.getValue().createProtocolSchedule()))
             .collect(Collectors.toCollection(() -> new TreeSet<>(ForkSpec.COMPARATOR)));
-    final Optional<BigInteger> chainId = genesisConfigOptions.getChainId();
+    final Optional<BigInteger> chainId = genesisConfiguration.getChainId();
     return combinedProtocolScheduleFactory.apply(protocolScheduleSpecs, chainId);
   }
 

@@ -19,8 +19,8 @@ import static org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture.getGene
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
@@ -109,7 +109,7 @@ class JsonRpcMethodsFactoryTest {
                 CLIENT_VERSION,
                 CLIENT_COMMIT,
                 NETWORK_ID,
-                new StubGenesisConfigOptions(),
+                new StubGenesisConfiguration(),
                 mock(P2PNetwork.class),
                 blockchainQueries,
                 mock(Synchronizer.class),
@@ -143,7 +143,7 @@ class JsonRpcMethodsFactoryTest {
     assertThat(rpcMethods).containsKey("engine_newPayloadV4");
   }
 
-  private GenesisConfigOptions getPragueAllZeroMilestonesConfigOptions() {
+  private GenesisConfiguration getPragueAllZeroMilestonesConfigOptions() {
     return getGenesisConfigOptions("/prague_all_milestones_zero.json");
   }
 }

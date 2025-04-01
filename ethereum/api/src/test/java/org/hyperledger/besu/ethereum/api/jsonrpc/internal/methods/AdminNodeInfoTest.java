@@ -20,8 +20,8 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -78,8 +78,8 @@ public class AdminNodeInfoTest {
   private final Bytes nodeId =
       Bytes.fromHexString(
           "0x0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
-  private final GenesisConfigOptions genesisConfigOptions =
-      new StubGenesisConfigOptions().chainId(BigInteger.valueOf(2019));
+  private final GenesisConfiguration genesisConfiguration =
+      new StubGenesisConfiguration().chainId(BigInteger.valueOf(2019));
   private final DefaultPeer defaultPeer =
       DefaultPeer.fromEnodeURL(
           EnodeURLImpl.builder()
@@ -104,7 +104,7 @@ public class AdminNodeInfoTest {
         new AdminNodeInfo(
             "testnet/1.0/this/that",
             BigInteger.valueOf(2018),
-            genesisConfigOptions,
+                genesisConfiguration,
             p2pNetwork,
             blockchainQueries,
             natService,
@@ -135,7 +135,7 @@ public class AdminNodeInfoTest {
             "eth",
             ImmutableMap.of(
                 "config",
-                genesisConfigOptions.asMap(),
+                genesisConfiguration.asMap(),
                 "difficulty",
                 BigInteger.ONE,
                 "genesis",
@@ -187,7 +187,7 @@ public class AdminNodeInfoTest {
             "eth",
             ImmutableMap.of(
                 "config",
-                genesisConfigOptions.asMap(),
+                genesisConfiguration.asMap(),
                 "difficulty",
                 BigInteger.ONE,
                 "genesis",
@@ -233,7 +233,7 @@ public class AdminNodeInfoTest {
             "eth",
             ImmutableMap.of(
                 "config",
-                genesisConfigOptions.asMap(),
+                genesisConfiguration.asMap(),
                 "difficulty",
                 BigInteger.ONE,
                 "genesis",
@@ -280,7 +280,7 @@ public class AdminNodeInfoTest {
             "eth",
             ImmutableMap.of(
                 "config",
-                genesisConfigOptions.asMap(),
+                genesisConfiguration.asMap(),
                 "difficulty",
                 BigInteger.ONE,
                 "genesis",
@@ -328,7 +328,7 @@ public class AdminNodeInfoTest {
             "eth",
             ImmutableMap.of(
                 "config",
-                genesisConfigOptions.asMap(),
+                genesisConfiguration.asMap(),
                 "difficulty",
                 BigInteger.ONE,
                 "genesis",
@@ -377,8 +377,8 @@ public class AdminNodeInfoTest {
   public void returnsClassicForkBlocks() {
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(defaultPeer.getEnodeURL()));
-    final GenesisConfigOptions genesisClassicConfigOptions =
-        new StubGenesisConfigOptions()
+    final GenesisConfiguration genesisClassicConfigOptions =
+        new StubGenesisConfiguration()
             .chainId(BigInteger.valueOf(2019))
             .classicForkBlock(1)
             .ecip1015(2)

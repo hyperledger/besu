@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
 import org.junit.jupiter.api.Test;
 
-public class JsonGenesisConfigOptionsTest {
+public class JsonGenesisConfigurationTest {
 
   private ObjectNode loadCompleteDataSet() {
     try {
@@ -76,8 +76,8 @@ public class JsonGenesisConfigOptionsTest {
   public void ibftTransitionsDecodesCorrectlyFromFile() {
     final ObjectNode configNode = loadCompleteDataSet();
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
 
     assertThat(configOptions.getTransitions()).isNotNull();
     assertThat(configOptions.getTransitions().getIbftForks().size()).isEqualTo(2);
@@ -98,8 +98,8 @@ public class JsonGenesisConfigOptionsTest {
   public void qbftTransitionsDecodesCorrectlyFromFile() {
     final ObjectNode configNode = loadConfigWithQbftTransitions();
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
 
     assertThat(configOptions.getTransitions()).isNotNull();
     assertThat(configOptions.getTransitions().getQbftForks().size()).isEqualTo(2);
@@ -120,8 +120,8 @@ public class JsonGenesisConfigOptionsTest {
   public void configWithMissingTransitionsIsValid() {
     final ObjectNode configNode = loadConfigWithNoTransitions();
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
 
     assertThat(configOptions.getTransitions()).isNotNull();
     assertThat(configOptions.getTransitions().getIbftForks().size()).isZero();
@@ -132,8 +132,8 @@ public class JsonGenesisConfigOptionsTest {
   public void configWithNoIbft2ForksIsValid() {
     final ObjectNode configNode = loadConfigWithNoIbft2Forks();
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
 
     assertThat(configOptions.getTransitions()).isNotNull();
     assertThat(configOptions.getTransitions().getIbftForks().size()).isZero();
@@ -143,8 +143,8 @@ public class JsonGenesisConfigOptionsTest {
   public void configWithAnIbftWithNoValidatorsListedIsValid() {
     final ObjectNode configNode = loadConfigWithAnIbft2ForkWithMissingValidators();
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
 
     assertThat(configOptions.getTransitions().getIbftForks().get(0).getValidators().isPresent())
         .isFalse();
@@ -156,8 +156,8 @@ public class JsonGenesisConfigOptionsTest {
   public void configWithValidIbftBlockRewardIsParsable() {
     final ObjectNode configNode = loadConfigWithNoTransitions();
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
     assertThat(configOptions.getBftConfigOptions().getMiningBeneficiary().map(Address::toHexString))
         .contains("0x1234567890123456789012345678901234567890");
     assertThat(configOptions.getBftConfigOptions().getBlockRewardWei()).isEqualTo(21);
@@ -169,8 +169,8 @@ public class JsonGenesisConfigOptionsTest {
     final ObjectNode ibftNode = (ObjectNode) configNode.get("ibft2");
     ibftNode.remove("miningbeneficiary");
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
 
     assertThat(configOptions.getBftConfigOptions().getMiningBeneficiary()).isEmpty();
   }
@@ -181,8 +181,8 @@ public class JsonGenesisConfigOptionsTest {
     final ObjectNode ibftNode = (ObjectNode) configNode.get("ibft2");
     ibftNode.remove("blockreward");
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
 
     assertThat(configOptions.getBftConfigOptions().getBlockRewardWei()).isEqualTo(0);
   }
@@ -193,8 +193,8 @@ public class JsonGenesisConfigOptionsTest {
     final ObjectNode ibftNode = (ObjectNode) configNode.get("ibft2");
     ibftNode.put("blockreward", "12");
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
 
     assertThat(configOptions.getBftConfigOptions().getBlockRewardWei()).isEqualTo(12);
   }
@@ -203,8 +203,8 @@ public class JsonGenesisConfigOptionsTest {
   public void configWithoutEcCurveReturnsEmptyOptional() {
     final ObjectNode configNode = loadCompleteDataSet();
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
 
     assertThat(configOptions.getEcCurve().isEmpty()).isTrue();
   }
@@ -214,8 +214,8 @@ public class JsonGenesisConfigOptionsTest {
     final ObjectNode configNode = loadCompleteDataSet();
     configNode.put("eccurve", "secp256k1");
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
 
     assertThat(configOptions.getEcCurve().isPresent()).isTrue();
     assertThat(configOptions.getEcCurve().get()).isEqualTo("secp256k1");
@@ -225,8 +225,8 @@ public class JsonGenesisConfigOptionsTest {
   public void configWithMigrationFromIbft2ToQbft() {
     final ObjectNode configNode = loadConfigWithMigrationFromIbft2ToQbft();
 
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration configOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
 
     assertThat(configOptions.isIbft2()).isTrue();
     assertThat(configOptions.isQbft()).isTrue();

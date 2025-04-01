@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
@@ -54,7 +54,7 @@ public class MergeProtocolSchedule {
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final boolean isRevertReasonEnabled,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
@@ -111,7 +111,7 @@ public class MergeProtocolSchedule {
   }
 
   private static void unapplyModificationsFromShanghaiOnwards(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications) {
     // Any post-Paris fork can rely on the MainnetProtocolSpec definitions again
     // Must allow for config to skip Shanghai and go straight to a later fork.

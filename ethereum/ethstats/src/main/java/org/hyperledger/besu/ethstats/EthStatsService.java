@@ -29,7 +29,7 @@ import static org.hyperledger.besu.ethstats.request.EthStatsRequest.Type.PENDING
 import static org.hyperledger.besu.ethstats.request.EthStatsRequest.Type.READY;
 import static org.hyperledger.besu.ethstats.request.EthStatsRequest.Type.STATS;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMiningCoordinator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
@@ -99,7 +99,7 @@ public class EthStatsService {
   private final SyncState syncState;
   private final Vertx vertx;
   private final String clientVersion;
-  private final GenesisConfigOptions genesisConfigOptions;
+  private final GenesisConfiguration genesisConfiguration;
   private final P2PNetwork p2PNetwork;
   private final BlockchainQueries blockchainQueries;
   private final BlockResultFactory blockResultFactory;
@@ -122,7 +122,7 @@ public class EthStatsService {
    * @param syncState the SyncState
    * @param vertx the vertx instance
    * @param clientVersion the client version
-   * @param genesisConfigOptions the genesis config options
+   * @param genesisConfiguration the genesis config options
    * @param p2PNetwork the p2p network
    */
   public EthStatsService(
@@ -134,7 +134,7 @@ public class EthStatsService {
       final SyncState syncState,
       final Vertx vertx,
       final String clientVersion,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final P2PNetwork p2PNetwork) {
     this.ethStatsConnectOptions = ethStatsConnectOptions;
     this.blockchainQueries = blockchainQueries;
@@ -144,7 +144,7 @@ public class EthStatsService {
     this.vertx = vertx;
     this.syncState = syncState;
     this.clientVersion = clientVersion;
-    this.genesisConfigOptions = genesisConfigOptions;
+    this.genesisConfiguration = genesisConfiguration;
     this.p2PNetwork = p2PNetwork;
     this.blockResultFactory = new BlockResultFactory();
     this.webSocketClientOptions = buildWebSocketClientOptions(ethStatsConnectOptions);
@@ -281,7 +281,7 @@ public class EthStatsService {
   private void sendHello() {
     try {
       final Optional<Integer> port = enodeURL.getListeningPort();
-      final Optional<BigInteger> chainId = genesisConfigOptions.getChainId();
+      final Optional<BigInteger> chainId = genesisConfiguration.getChainId();
       if (port.isPresent() && chainId.isPresent()) {
         final String os = PlatformDetector.getOSType();
         final String arch = PlatformDetector.getArch();

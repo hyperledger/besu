@@ -16,7 +16,7 @@ package org.hyperledger.besu.chainimport;
 
 import org.hyperledger.besu.chainimport.internal.BlockData;
 import org.hyperledger.besu.chainimport.internal.ChainData;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Address;
@@ -114,8 +114,8 @@ public class JsonBlockImporter {
       final BlockHeader parentHeader,
       final List<Transaction> transactions) {
     final MiningCoordinator miner = controller.getMiningCoordinator();
-    final GenesisConfigOptions genesisConfigOptions = controller.getGenesisConfigOptions();
-    setOptionalFields(miner, blockData, genesisConfigOptions);
+    final GenesisConfiguration genesisConfiguration = controller.getGenesisConfigOptions();
+    setOptionalFields(miner, blockData, genesisConfiguration);
 
     // Some MiningCoordinator's (specific to consensus type) do not support block-level imports
     return miner
@@ -124,13 +124,13 @@ public class JsonBlockImporter {
             () ->
                 new IllegalArgumentException(
                     "Unable to create block using current consensus engine: "
-                        + genesisConfigOptions.getConsensusEngine()));
+                        + genesisConfiguration.getConsensusEngine()));
   }
 
   private void setOptionalFields(
       final MiningCoordinator miner,
       final BlockData blockData,
-      final GenesisConfigOptions genesisConfig) {
+      final GenesisConfiguration genesisConfig) {
     // Some fields can only be configured for ethash
     if (genesisConfig.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
       // For simplicity only set these for PoW consensus algorithms.

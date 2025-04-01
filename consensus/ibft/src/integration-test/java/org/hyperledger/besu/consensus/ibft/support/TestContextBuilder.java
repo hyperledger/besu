@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
@@ -322,7 +322,7 @@ public class TestContextBuilder {
                     .build())
             .build();
 
-    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    final StubGenesisConfiguration genesisConfigOptions = new StubGenesisConfiguration();
     genesisConfigOptions.byzantiumBlock(0);
     genesisConfigOptions.transitions(TestTransitions.createIbftTestTransitions(bftForks));
 

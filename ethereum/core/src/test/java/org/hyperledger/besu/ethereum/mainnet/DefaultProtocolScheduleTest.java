@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -40,7 +40,7 @@ public class DefaultProtocolScheduleTest {
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
   private static final EvmConfiguration evmConfiguration = EvmConfiguration.DEFAULT;
   private ProtocolScheduleBuilder builder;
-  private StubGenesisConfigOptions config;
+  private StubGenesisConfiguration config;
 
   private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier = Function.identity();
 
@@ -48,7 +48,7 @@ public class DefaultProtocolScheduleTest {
 
   @BeforeEach
   public void setup() {
-    config = new StubGenesisConfigOptions();
+    config = new StubGenesisConfiguration();
     config.chainId(DEFAULT_CHAIN_ID);
     boolean isRevertReasonEnabled = false;
     builder =

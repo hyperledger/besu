@@ -31,7 +31,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
@@ -180,7 +180,7 @@ public class IbftBlockHeightManagerTest {
 
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(
-            new StubGenesisConfigOptions(),
+            new StubGenesisConfiguration(),
             Optional.empty(),
             ProtocolSpecAdapters.create(0, Function.identity()),
             false,

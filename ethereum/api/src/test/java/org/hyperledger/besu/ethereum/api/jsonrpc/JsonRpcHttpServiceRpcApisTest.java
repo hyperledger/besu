@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -209,7 +209,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                 CLIENT_VERSION,
                 CLIENT_COMMIT,
                 NETWORK_ID,
-                new StubGenesisConfigOptions(),
+                new StubGenesisConfiguration(),
                 mock(P2PNetwork.class),
                 blockchainQueries,
                 mock(Synchronizer.class),
@@ -320,7 +320,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                 CLIENT_VERSION,
                 CLIENT_COMMIT,
                 NETWORK_ID,
-                new StubGenesisConfigOptions(),
+                new StubGenesisConfiguration(),
                 p2pNetwork,
                 blockchainQueries,
                 mock(Synchronizer.class),

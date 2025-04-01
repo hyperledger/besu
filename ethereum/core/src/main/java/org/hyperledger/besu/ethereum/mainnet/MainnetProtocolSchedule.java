@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyCalculators;
@@ -34,7 +34,7 @@ public class MainnetProtocolSchedule {
   /**
    * Create a Mainnet protocol schedule from a config object
    *
-   * @param config {@link GenesisConfigOptions} containing the config options for the milestone
+   * @param config {@link GenesisConfiguration} containing the config options for the milestone
    *     starting points
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
    * @param evmConfiguration how to configure the EVMs jumpdest cache
@@ -45,7 +45,7 @@ public class MainnetProtocolSchedule {
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final Optional<Boolean> isRevertReasonEnabled,
       final Optional<EvmConfiguration> evmConfiguration,
       final MiningConfiguration miningConfiguration,
@@ -78,7 +78,7 @@ public class MainnetProtocolSchedule {
   /**
    * Create a Mainnet protocol schedule from a config object
    *
-   * @param config {@link GenesisConfigOptions} containing the config options for the milestone
+   * @param config {@link GenesisConfiguration} containing the config options for the milestone
    *     starting points
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
    * @param evmConfiguration how to configure the EVMs jumpdest cache
@@ -88,7 +88,7 @@ public class MainnetProtocolSchedule {
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
@@ -108,7 +108,7 @@ public class MainnetProtocolSchedule {
   /**
    * Create a Mainnet protocol schedule from a config object
    *
-   * @param config {@link GenesisConfigOptions} containing the config options for the milestone
+   * @param config {@link GenesisConfiguration} containing the config options for the milestone
    *     starting points
    * @param evmConfiguration size of
    * @param miningConfiguration the mining parameters
@@ -117,7 +117,7 @@ public class MainnetProtocolSchedule {
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
@@ -136,7 +136,7 @@ public class MainnetProtocolSchedule {
   /**
    * Create a Mainnet protocol schedule from a config object
    *
-   * @param config {@link GenesisConfigOptions} containing the config options for the milestone
+   * @param config {@link GenesisConfiguration} containing the config options for the milestone
    *     starting points
    * @param miningConfiguration the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
@@ -144,7 +144,7 @@ public class MainnetProtocolSchedule {
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,

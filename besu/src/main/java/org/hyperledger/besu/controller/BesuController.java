@@ -16,7 +16,7 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.cryptoservices.NodeKey;
@@ -61,7 +61,7 @@ public class BesuController implements java.io.Closeable {
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthProtocolManager ethProtocolManager;
-  private final GenesisConfigOptions genesisConfigOptions;
+  private final GenesisConfiguration genesisConfiguration;
   private final SubProtocolConfiguration subProtocolConfiguration;
   private final NodeKey nodeKey;
   private final Synchronizer synchronizer;
@@ -83,7 +83,7 @@ public class BesuController implements java.io.Closeable {
    * @param protocolSchedule the protocol schedule
    * @param protocolContext the protocol context
    * @param ethProtocolManager the eth protocol manager
-   * @param genesisConfigOptions the genesis config options
+   * @param genesisConfiguration the genesis config options
    * @param subProtocolConfiguration the sub protocol configuration
    * @param synchronizer the synchronizer
    * @param syncState the sync state
@@ -103,7 +103,7 @@ public class BesuController implements java.io.Closeable {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthProtocolManager ethProtocolManager,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final SubProtocolConfiguration subProtocolConfiguration,
       final Synchronizer synchronizer,
       final SyncState syncState,
@@ -121,7 +121,7 @@ public class BesuController implements java.io.Closeable {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
-    this.genesisConfigOptions = genesisConfigOptions;
+    this.genesisConfiguration = genesisConfiguration;
     this.subProtocolConfiguration = subProtocolConfiguration;
     this.synchronizer = synchronizer;
     this.syncState = syncState;
@@ -170,8 +170,8 @@ public class BesuController implements java.io.Closeable {
    *
    * @return the genesis config options
    */
-  public GenesisConfigOptions getGenesisConfigOptions() {
-    return genesisConfigOptions;
+  public GenesisConfiguration getGenesisConfigOptions() {
+    return genesisConfiguration;
   }
 
   /**
@@ -410,7 +410,7 @@ public class BesuController implements java.io.Closeable {
       return startBlock;
     }
 
-    private boolean isCheckpointPoSBlock(final GenesisConfigOptions configOptions) {
+    private boolean isCheckpointPoSBlock(final GenesisConfiguration configOptions) {
       final UInt256 terminalTotalDifficulty = configOptions.getTerminalTotalDifficulty().get();
 
       return configOptions.getCheckpointOptions().isValid()

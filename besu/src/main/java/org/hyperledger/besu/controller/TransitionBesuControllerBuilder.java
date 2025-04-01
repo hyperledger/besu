@@ -242,7 +242,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             ethProtocolManager,
             pivotBlockSelector);
 
-    if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
+    if (genesisConfiguration.getTerminalTotalDifficulty().isPresent()) {
       LOG.info(
           "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
       protocolContext

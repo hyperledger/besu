@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -64,7 +64,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
    * @return the protocol schedule
    */
   public BftProtocolSchedule createProtocolSchedule(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final ForksSchedule<? extends BftConfigOptions> forksSchedule,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,

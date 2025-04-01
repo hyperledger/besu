@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -134,11 +134,11 @@ public class MainnetProtocolSpecFactory {
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder londonDefinition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder londonDefinition(final GenesisConfiguration genesisConfiguration) {
     return MainnetProtocolSpecs.londonDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+            genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -146,11 +146,11 @@ public class MainnetProtocolSpecFactory {
   }
 
   public ProtocolSpecBuilder arrowGlacierDefinition(
-      final GenesisConfigOptions genesisConfigOptions) {
+      final GenesisConfiguration genesisConfiguration) {
     return MainnetProtocolSpecs.arrowGlacierDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+            genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -158,77 +158,77 @@ public class MainnetProtocolSpecFactory {
   }
 
   public ProtocolSpecBuilder grayGlacierDefinition(
-      final GenesisConfigOptions genesisConfigOptions) {
+      final GenesisConfiguration genesisConfiguration) {
     return MainnetProtocolSpecs.grayGlacierDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+            genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder parisDefinition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder parisDefinition(final GenesisConfiguration genesisConfiguration) {
     return MainnetProtocolSpecs.parisDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+            genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder shanghaiDefinition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder shanghaiDefinition(final GenesisConfiguration genesisConfiguration) {
     return MainnetProtocolSpecs.shanghaiDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+            genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder cancunDefinition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder cancunDefinition(final GenesisConfiguration genesisConfiguration) {
     return MainnetProtocolSpecs.cancunDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+            genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder cancunEOFDefinition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder cancunEOFDefinition(final GenesisConfiguration genesisConfiguration) {
     return MainnetProtocolSpecs.cancunEOFDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+            genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder pragueDefinition(final GenesisConfiguration genesisConfiguration) {
     return MainnetProtocolSpecs.pragueDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+            genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder osakaDefinition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder osakaDefinition(final GenesisConfiguration genesisConfiguration) {
     return MainnetProtocolSpecs.osakaDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+            genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -298,14 +298,14 @@ public class MainnetProtocolSpecFactory {
    * <p>There is no guarantee of the contents of this fork across Besu releases and should be
    * considered unstable.
    *
-   * @param genesisConfigOptions the chain options from the genesis config
+   * @param genesisConfiguration the chain options from the genesis config
    * @return a protocol spec for the "Future" fork.
    */
-  public ProtocolSpecBuilder futureEipsDefinition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder futureEipsDefinition(final GenesisConfiguration genesisConfiguration) {
     return MainnetProtocolSpecs.futureEipsDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+            genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -319,15 +319,15 @@ public class MainnetProtocolSpecFactory {
    * <p>There is no guarantee of the contents of this fork across Besu releases and should be
    * considered unstable.
    *
-   * @param genesisConfigOptions the chain options from the genesis config
+   * @param genesisConfiguration the chain options from the genesis config
    * @return a protocol spec for the "Experimental" fork.
    */
   public ProtocolSpecBuilder experimentalEipsDefinition(
-      final GenesisConfigOptions genesisConfigOptions) {
+      final GenesisConfiguration genesisConfiguration) {
     return MainnetProtocolSpecs.experimentalEipsDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+            genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,

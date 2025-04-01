@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.ImmutableCliqueConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
@@ -79,7 +79,7 @@ public class CliqueBesuControllerBuilderTest {
   private BesuControllerBuilder cliqueBesuControllerBuilder;
 
   @Mock private GenesisConfig genesisConfig;
-  @Mock private GenesisConfigOptions genesisConfigOptions;
+  @Mock private GenesisConfiguration genesisConfiguration;
   @Mock private SynchronizerConfiguration synchronizerConfiguration;
   @Mock private EthProtocolConfiguration ethProtocolConfiguration;
   @Mock private CheckpointConfigOptions checkpointConfigOptions;
@@ -111,8 +111,8 @@ public class CliqueBesuControllerBuilderTest {
             "0x0000000000000000000000000000000000000000000000000000000000000000b9b81ee349c3807e46bc71aa2632203c5b4620340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
     lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
     lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
-    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
-    lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
+    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfiguration);
+    lenient().when(genesisConfiguration.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     lenient()
         .when(storageProvider.createBlockchainStorage(any(), any(), any()))
         .thenReturn(
@@ -146,7 +146,7 @@ public class CliqueBesuControllerBuilderTest {
 
     // clique prepForBuild setup
     lenient()
-        .when(genesisConfigOptions.getCliqueConfigOptions())
+        .when(genesisConfiguration.getCliqueConfigOptions())
         .thenReturn(
             ImmutableCliqueConfigOptions.builder()
                 .epochLength(30)
@@ -167,7 +167,7 @@ public class CliqueBesuControllerBuilderTest {
                     """);
 
     lenient()
-        .when(genesisConfigOptions.getTransitions())
+        .when(genesisConfiguration.getTransitions())
         .thenReturn(new TransitionsConfigOptions(jsonTransitions));
 
     cliqueBesuControllerBuilder =

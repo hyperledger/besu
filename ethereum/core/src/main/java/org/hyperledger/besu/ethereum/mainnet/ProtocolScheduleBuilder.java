@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 public class ProtocolScheduleBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProtocolScheduleBuilder.class);
-  private final GenesisConfigOptions config;
+  private final GenesisConfiguration config;
   private final Optional<BigInteger> defaultChainId;
   private final ProtocolSpecAdapters protocolSpecAdapters;
   private final boolean isRevertReasonEnabled;
@@ -53,7 +53,7 @@ public class ProtocolScheduleBuilder {
   private final MiningConfiguration miningConfiguration;
 
   public ProtocolScheduleBuilder(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final Optional<BigInteger> defaultChainId,
       final ProtocolSpecAdapters protocolSpecAdapters,
       final boolean isRevertReasonEnabled,

@@ -20,8 +20,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.JsonGenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.JsonGenesisConfiguration;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
@@ -243,8 +243,8 @@ class GenerateBlockchainConfig implements Runnable {
             .orElseThrow(
                 () -> new IllegalArgumentException("Missing config section in config file"));
 
-    final JsonGenesisConfigOptions genesisConfigOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
+    final JsonGenesisConfiguration genesisConfigOptions =
+        JsonGenesisConfiguration.fromJsonObject(configNode);
     if (genesisConfigOptions.isIbft2()) {
       LOG.info("Generating IBFT extra data.");
       final String extraData =
@@ -286,7 +286,7 @@ class GenerateBlockchainConfig implements Runnable {
 
   /** Sets the selected signature algorithm instance in SignatureAlgorithmFactory. */
   private void processEcCurve() {
-    GenesisConfigOptions options = GenesisConfig.fromConfig(genesisConfig).getConfigOptions();
+    GenesisConfiguration options = GenesisConfig.fromConfig(genesisConfig).getConfigOptions();
     Optional<String> ecCurve = options.getEcCurve();
 
     if (ecCurve.isEmpty()) {

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -44,7 +44,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
 
   private final String clientVersion;
   private final BigInteger networkId;
-  private final GenesisConfigOptions genesisConfigOptions;
+  private final GenesisConfiguration genesisConfiguration;
   private final P2PNetwork peerNetwork;
   private final BlockchainQueries blockchainQueries;
   private final NatService natService;
@@ -53,14 +53,14 @@ public class AdminNodeInfo implements JsonRpcMethod {
   public AdminNodeInfo(
       final String clientVersion,
       final BigInteger networkId,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final P2PNetwork peerNetwork,
       final BlockchainQueries blockchainQueries,
       final NatService natService,
       final ProtocolSchedule protocolSchedule) {
     this.peerNetwork = peerNetwork;
     this.clientVersion = clientVersion;
-    this.genesisConfigOptions = genesisConfigOptions;
+    this.genesisConfiguration = genesisConfiguration;
     this.blockchainQueries = blockchainQueries;
     this.networkId = networkId;
     this.natService = natService;
@@ -120,7 +120,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
             "eth",
             ImmutableMap.of(
                 "config",
-                genesisConfigOptions.asMap(),
+                genesisConfiguration.asMap(),
                 "difficulty",
                 chainHead.getTotalDifficulty().toBigInteger(),
                 "genesis",

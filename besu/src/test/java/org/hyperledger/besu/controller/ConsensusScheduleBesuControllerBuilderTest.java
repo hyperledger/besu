@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.MigratingConsensusContext;
@@ -97,7 +97,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     when(besuControllerBuilder2.createProtocolSchedule()).thenReturn(protocolSchedule2);
     when(besuControllerBuilder3.createProtocolSchedule()).thenReturn(protocolSchedule3);
 
-    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    final StubGenesisConfiguration genesisConfigOptions = new StubGenesisConfiguration();
     genesisConfigOptions.chainId(BigInteger.TEN);
 
     final ConsensusScheduleBesuControllerBuilder consensusScheduleBesuControllerBuilder =

@@ -111,11 +111,11 @@ public class GenesisConfig {
    *
    * @return the config options
    */
-  public GenesisConfigOptions getConfigOptions() {
+  public GenesisConfiguration getConfigOptions() {
     final ObjectNode config = loader.getConfig();
     // are there any overrides to apply?
     if (this.overrides == null) {
-      return JsonGenesisConfigOptions.fromJsonObject(config);
+      return JsonGenesisConfiguration.fromJsonObject(config);
     }
     // otherwise apply overrides
     Map<String, String> overridesRef = this.overrides;
@@ -128,7 +128,7 @@ public class GenesisConfig {
       overridesRef.put("baseFeePerGas", optBaseFee.get().toShortHexString());
     }
 
-    return JsonGenesisConfigOptions.fromJsonObjectWithOverrides(config, overridesRef);
+    return JsonGenesisConfiguration.fromJsonObjectWithOverrides(config, overridesRef);
   }
 
   /**

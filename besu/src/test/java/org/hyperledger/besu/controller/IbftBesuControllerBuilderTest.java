@@ -37,7 +37,7 @@ public class IbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
 
     // Ibft prepForBuild setup
     lenient()
-        .when(genesisConfigOptions.getBftConfigOptions())
+        .when(genesisConfiguration.getBftConfigOptions())
         .thenReturn(new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT));
 
     final var jsonTransitions =
@@ -53,7 +53,7 @@ public class IbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
                                 """);
 
     lenient()
-        .when(genesisConfigOptions.getTransitions())
+        .when(genesisConfiguration.getTransitions())
         .thenReturn(new TransitionsConfigOptions(jsonTransitions));
 
     when(genesisConfig.getExtraData())

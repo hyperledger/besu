@@ -20,7 +20,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
@@ -191,7 +191,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             CLIENT_VERSION,
             CLIENT_COMMIT,
             NETWORK_ID,
-            new StubGenesisConfigOptions(),
+            new StubGenesisConfiguration(),
             peerDiscoveryMock,
             blockchainQueries,
             synchronizerMock,

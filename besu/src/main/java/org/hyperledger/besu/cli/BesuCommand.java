@@ -85,7 +85,7 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -325,7 +325,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Set<Integer> allocatedPorts = new HashSet<>();
   private final Supplier<GenesisConfig> genesisConfigSupplier =
       Suppliers.memoize(this::readGenesisConfig);
-  private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
+  private final Supplier<GenesisConfiguration> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
   private final Supplier<MiningConfiguration> miningParametersSupplier =
       Suppliers.memoize(this::getMiningParameters);
@@ -1477,24 +1477,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     Long chainDataPruningBlocksRetained =
         unstableChainPruningOptions.getChainDataPruningBlocksRetained();
     if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
-      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+      final GenesisConfiguration genesisConfiguration = readGenesisConfigOptions();
       if (chainDataPruningBlocksRetained
           < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
         throw new ParameterException(
             this.commandLine,
             "--Xchain-pruning-blocks-retained must be >= "
                 + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
-      } else if (genesisConfigOptions.isPoa()) {
+      } else if (genesisConfiguration.isPoa()) {
         Long epochLength = 0L;
         String consensusMechanism = "";
-        if (genesisConfigOptions.isIbft2()) {
-          epochLength = genesisConfigOptions.getBftConfigOptions().getEpochLength();
+        if (genesisConfiguration.isIbft2()) {
+          epochLength = genesisConfiguration.getBftConfigOptions().getEpochLength();
           consensusMechanism = "IBFT2";
-        } else if (genesisConfigOptions.isQbft()) {
-          epochLength = genesisConfigOptions.getQbftConfigOptions().getEpochLength();
+        } else if (genesisConfiguration.isQbft()) {
+          epochLength = genesisConfiguration.getQbftConfigOptions().getEpochLength();
           consensusMechanism = "QBFT";
-        } else if (genesisConfigOptions.isClique()) {
-          epochLength = genesisConfigOptions.getCliqueConfigOptions().getEpochLength();
+        } else if (genesisConfiguration.isClique()) {
+          epochLength = genesisConfiguration.getCliqueConfigOptions().getEpochLength();
           consensusMechanism = "Clique";
         }
         if (chainDataPruningBlocksRetained < epochLength) {
@@ -1520,7 +1520,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
-  private GenesisConfigOptions readGenesisConfigOptions() {
+  private GenesisConfiguration readGenesisConfigOptions() {
     try {
       return genesisConfigSupplier.get().getConfigOptions();
     } catch (final Exception e) {
@@ -1955,17 +1955,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private OptionalInt getGenesisBlockPeriodSeconds(
-      final GenesisConfigOptions genesisConfigOptions) {
-    if (genesisConfigOptions.isClique()) {
-      return OptionalInt.of(genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds());
+      final GenesisConfiguration genesisConfiguration) {
+    if (genesisConfiguration.isClique()) {
+      return OptionalInt.of(genesisConfiguration.getCliqueConfigOptions().getBlockPeriodSeconds());
     }
 
-    if (genesisConfigOptions.isIbft2()) {
-      return OptionalInt.of(genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds());
+    if (genesisConfiguration.isIbft2()) {
+      return OptionalInt.of(genesisConfiguration.getBftConfigOptions().getBlockPeriodSeconds());
     }
 
-    if (genesisConfigOptions.isQbft()) {
-      return OptionalInt.of(genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds());
+    if (genesisConfiguration.isQbft()) {
+      return OptionalInt.of(genesisConfiguration.getQbftConfigOptions().getBlockPeriodSeconds());
     }
 
     return OptionalInt.empty();
@@ -2382,7 +2382,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    *
    * @return the genesis config options
    */
-  protected GenesisConfigOptions getGenesisConfigOptions() {
+  protected GenesisConfiguration getGenesisConfigOptions() {
     return genesisConfigOptionsSupplier.get();
   }
 

@@ -19,8 +19,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.JsonGenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.JsonGenesisConfiguration;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
@@ -87,7 +87,7 @@ public class QbftProtocolScheduleTest {
 
     final BftProtocolSchedule schedule =
         createProtocolSchedule(
-            JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
+            JsonGenesisConfiguration.fromJsonObject(JsonUtil.createEmptyObjectNode()),
             List.of(
                 new ForkSpec<>(0, qbftConfigOptions),
                 new ForkSpec<>(1, arbitraryTransition),
@@ -116,7 +116,7 @@ public class QbftProtocolScheduleTest {
 
     final BftProtocolSchedule schedule =
         createProtocolSchedule(
-            JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
+            JsonGenesisConfiguration.fromJsonObject(JsonUtil.createEmptyObjectNode()),
             List.of(
                 new ForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
                 new ForkSpec<>(1, arbitraryTransition),
@@ -129,7 +129,7 @@ public class QbftProtocolScheduleTest {
   }
 
   private BftProtocolSchedule createProtocolSchedule(
-      final GenesisConfigOptions genesisConfig, final List<ForkSpec<QbftConfigOptions>> forks) {
+          final GenesisConfiguration genesisConfig, final List<ForkSpec<QbftConfigOptions>> forks) {
     return QbftProtocolScheduleBuilder.create(
         genesisConfig,
         new ForksSchedule<>(forks),

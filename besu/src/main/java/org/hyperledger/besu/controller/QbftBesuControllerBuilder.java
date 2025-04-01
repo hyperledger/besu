@@ -127,9 +127,9 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected void prepForBuild() {
-    qbftConfig = genesisConfigOptions.getQbftConfigOptions();
+    qbftConfig = genesisConfiguration.getQbftConfigOptions();
     bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());
-    qbftForksSchedule = QbftForksSchedulesFactory.create(genesisConfigOptions);
+    qbftForksSchedule = QbftForksSchedulesFactory.create(genesisConfiguration);
     bftConfigOptions = qbftConfig;
     qbftExtraDataCodec = new QbftExtraDataCodec();
     bftBlockInterface = new BftBlockInterface(qbftExtraDataCodec);
@@ -357,7 +357,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return QbftProtocolScheduleBuilder.create(
-        genesisConfigOptions,
+            genesisConfiguration,
         qbftForksSchedule,
         isRevertReasonEnabled,
         qbftExtraDataCodec,
@@ -393,7 +393,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   private boolean isValidatorContractMode() {
-    return genesisConfigOptions.getQbftConfigOptions().isValidatorContractMode();
+    return genesisConfiguration.getQbftConfigOptions().isValidatorContractMode();
   }
 
   private boolean signersExistIn(final BlockHeader genesisBlockHeader) {
@@ -410,7 +410,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength(), startBlock);
 
     final BftValidatorOverrides validatorOverrides =
-        convertBftForks(genesisConfigOptions.getTransitions().getQbftForks());
+        convertBftForks(genesisConfiguration.getTransitions().getQbftForks());
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
             blockchain, epochManager, bftBlockInterface, validatorOverrides);

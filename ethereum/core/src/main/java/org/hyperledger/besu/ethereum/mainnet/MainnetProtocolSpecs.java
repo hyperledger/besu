@@ -18,7 +18,7 @@ import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsProc
 
 import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.config.BlobScheduleOptions;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -440,13 +440,13 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder londonDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber =
-        genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
+        genesisConfiguration.getLondonBlockNumber().orElse(Long.MAX_VALUE);
     return berlinDefinition(
             chainId,
             enableRevertReason,
@@ -456,8 +456,8 @@ public abstract class MainnetProtocolSpecs {
         .feeMarketBuilder(
             createFeeMarket(
                 londonForkBlockNumber,
-                genesisConfigOptions.isZeroBaseFee(),
-                genesisConfigOptions.isFixedBaseFee(),
+                genesisConfiguration.isZeroBaseFee(),
+                genesisConfiguration.isFixedBaseFee(),
                 miningConfiguration.getMinTransactionGasPrice(),
                 (blobSchedule) ->
                     FeeMarket.london(
@@ -524,7 +524,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder arrowGlacierDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -532,7 +532,7 @@ public abstract class MainnetProtocolSpecs {
     return londonDefinition(
             chainId,
             enableRevertReason,
-            genesisConfigOptions,
+            genesisConfiguration,
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
@@ -544,7 +544,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder grayGlacierDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -552,7 +552,7 @@ public abstract class MainnetProtocolSpecs {
     return arrowGlacierDefinition(
             chainId,
             enableRevertReason,
-            genesisConfigOptions,
+            genesisConfiguration,
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
@@ -564,7 +564,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder parisDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -573,7 +573,7 @@ public abstract class MainnetProtocolSpecs {
     return grayGlacierDefinition(
             chainId,
             enableRevertReason,
-            genesisConfigOptions,
+            genesisConfiguration,
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
@@ -592,7 +592,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder shanghaiDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -600,7 +600,7 @@ public abstract class MainnetProtocolSpecs {
     return parisDefinition(
             chainId,
             enableRevertReason,
-            genesisConfigOptions,
+            genesisConfiguration,
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
@@ -653,17 +653,17 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder cancunDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+    final long londonForkBlockNumber = genesisConfiguration.getLondonBlockNumber().orElse(0L);
 
     return shanghaiDefinition(
             chainId,
             enableRevertReason,
-            genesisConfigOptions,
+            genesisConfiguration,
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
@@ -671,16 +671,16 @@ public abstract class MainnetProtocolSpecs {
         .feeMarketBuilder(
             createFeeMarket(
                 londonForkBlockNumber,
-                genesisConfigOptions.isZeroBaseFee(),
-                genesisConfigOptions.isFixedBaseFee(),
+                genesisConfiguration.isZeroBaseFee(),
+                genesisConfiguration.isFixedBaseFee(),
                 miningConfiguration.getMinTransactionGasPrice(),
                 (blobSchedule) ->
                     FeeMarket.cancun(
                         londonForkBlockNumber,
-                        genesisConfigOptions.getBaseFeePerGas(),
+                            genesisConfiguration.getBaseFeePerGas(),
                         blobSchedule)))
         .blobSchedule(
-            genesisConfigOptions
+                genesisConfiguration
                 .getBlobScheduleOptions()
                 .flatMap(BlobScheduleOptions::getCancun)
                 .orElse(BlobSchedule.CANCUN_DEFAULT))
@@ -741,7 +741,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder cancunEOFDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -751,7 +751,7 @@ public abstract class MainnetProtocolSpecs {
         cancunDefinition(
             chainId,
             enableRevertReason,
-            genesisConfigOptions,
+                genesisConfiguration,
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
@@ -762,7 +762,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder pragueDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -771,13 +771,13 @@ public abstract class MainnetProtocolSpecs {
         cancunDefinition(
                 chainId,
                 enableRevertReason,
-                genesisConfigOptions,
+                genesisConfiguration,
                 evmConfiguration,
                 miningConfiguration,
                 isParallelTxProcessingEnabled,
                 metricsSystem)
             .blobSchedule(
-                genesisConfigOptions
+                    genesisConfiguration
                     .getBlobScheduleOptions()
                     .flatMap(BlobScheduleOptions::getPrague)
                     .orElse(BlobSchedule.PRAGUE_DEFAULT))
@@ -841,7 +841,7 @@ public abstract class MainnetProtocolSpecs {
             .name("Prague");
     try {
       RequestContractAddresses requestContractAddresses =
-          RequestContractAddresses.fromGenesis(genesisConfigOptions);
+          RequestContractAddresses.fromGenesis(genesisConfiguration);
 
       pragueSpecBuilder.requestProcessorCoordinator(
           pragueRequestsProcessors(requestContractAddresses));
@@ -856,7 +856,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder osakaDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -864,7 +864,7 @@ public abstract class MainnetProtocolSpecs {
     return pragueDefinition(
             chainId,
             enableRevertReason,
-            genesisConfigOptions,
+                genesisConfiguration,
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
@@ -1014,7 +1014,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -1023,7 +1023,7 @@ public abstract class MainnetProtocolSpecs {
         bpo5Definition(
                 chainId,
                 enableRevertReason,
-                genesisConfigOptions,
+                genesisConfiguration,
                 evmConfiguration,
                 miningConfiguration,
                 isParallelTxProcessingEnabled,
@@ -1037,7 +1037,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder experimentalEipsDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -1046,7 +1046,7 @@ public abstract class MainnetProtocolSpecs {
     return futureEipsDefinition(
             chainId,
             enableRevertReason,
-            genesisConfigOptions,
+            genesisConfiguration,
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,

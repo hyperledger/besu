@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
@@ -52,7 +52,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final ForksSchedule<BftConfigOptions> forksSchedule,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
@@ -89,7 +89,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final ForksSchedule<BftConfigOptions> forksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,

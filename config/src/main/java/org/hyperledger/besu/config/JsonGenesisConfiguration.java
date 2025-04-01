@@ -36,7 +36,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Json genesis config options. */
-public class JsonGenesisConfigOptions implements GenesisConfigOptions {
+public class JsonGenesisConfiguration implements GenesisConfiguration {
 
   private static final String ETHASH_CONFIG_KEY = "ethash";
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
@@ -66,7 +66,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
    * @param configRoot the config root
    * @return the json genesis config options
    */
-  public static JsonGenesisConfigOptions fromJsonObject(final ObjectNode configRoot) {
+  public static JsonGenesisConfiguration fromJsonObject(final ObjectNode configRoot) {
     return fromJsonObjectWithOverrides(configRoot, emptyMap());
   }
 
@@ -77,11 +77,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
    * @param configOverrides the config overrides
    * @return the json genesis config options
    */
-  static JsonGenesisConfigOptions fromJsonObjectWithOverrides(
+  static JsonGenesisConfiguration fromJsonObjectWithOverrides(
       final ObjectNode configRoot, final Map<String, String> configOverrides) {
     final TransitionsConfigOptions transitionsConfigOptions;
     transitionsConfigOptions = loadTransitionsFrom(configRoot);
-    return new JsonGenesisConfigOptions(configRoot, configOverrides, transitionsConfigOptions);
+    return new JsonGenesisConfiguration(configRoot, configOverrides, transitionsConfigOptions);
   }
 
   private static TransitionsConfigOptions loadTransitionsFrom(final ObjectNode parentNode) {
@@ -101,7 +101,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
    * @param configOverrides the config overrides map
    * @param transitionsConfig the transitions configuration
    */
-  JsonGenesisConfigOptions(
+  JsonGenesisConfiguration(
       final ObjectNode maybeConfig,
       final Map<String, String> configOverrides,
       final TransitionsConfigOptions transitionsConfig) {
@@ -705,7 +705,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final JsonGenesisConfigOptions that = (JsonGenesisConfigOptions) o;
+    final JsonGenesisConfiguration that = (JsonGenesisConfiguration) o;
     return Objects.equals(configRoot, that.configRoot)
         && Objects.equals(configOverrides, that.configOverrides);
   }

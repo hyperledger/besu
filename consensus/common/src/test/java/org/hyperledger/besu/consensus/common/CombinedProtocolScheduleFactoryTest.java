@@ -16,8 +16,8 @@ package org.hyperledger.besu.consensus.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
@@ -49,7 +49,7 @@ public class CombinedProtocolScheduleFactoryTest {
 
   @Test
   public void createsCombinedProtocolScheduleWithMilestonesFromSingleProtocolSchedule() {
-    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    final StubGenesisConfiguration genesisConfigOptions = new StubGenesisConfiguration();
     genesisConfigOptions.homesteadBlock(5L);
     genesisConfigOptions.constantinopleBlock(10L);
     genesisConfigOptions.chainId(BigInteger.TEN);
@@ -86,7 +86,7 @@ public class CombinedProtocolScheduleFactoryTest {
 
   @Test
   public void createsCombinedProtocolScheduleWithMilestonesFromMultipleSchedules() {
-    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    final StubGenesisConfiguration genesisConfigOptions = new StubGenesisConfiguration();
     genesisConfigOptions.homesteadBlock(5L);
     genesisConfigOptions.constantinopleBlock(105L);
     genesisConfigOptions.byzantiumBlock(10L);
@@ -167,10 +167,10 @@ public class CombinedProtocolScheduleFactoryTest {
   }
 
   private BftProtocolSchedule createProtocolSchedule(
-      final GenesisConfigOptions genesisConfigOptions) {
+      final GenesisConfiguration genesisConfiguration) {
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(
-            genesisConfigOptions,
+                genesisConfiguration,
             Optional.of(BigInteger.ONE),
             ProtocolSpecAdapters.create(0, Function.identity()),
             false,

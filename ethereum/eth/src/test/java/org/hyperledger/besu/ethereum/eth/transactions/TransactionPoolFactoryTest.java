@@ -27,7 +27,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -322,7 +322,7 @@ public class TransactionPoolFactoryTest {
   @Test
   public void
       createLegacyTransactionPool_shouldUseBaseFeePendingTransactionsSorter_whenLondonEnabled() {
-    setupScheduleWith(new StubGenesisConfigOptions().londonBlock(0));
+    setupScheduleWith(new StubGenesisConfiguration().londonBlock(0));
 
     final TransactionPool pool = createAndEnableTransactionPool(LEGACY, syncState);
 
@@ -333,7 +333,7 @@ public class TransactionPoolFactoryTest {
   @Test
   public void
       createLegacyTransactionPool_shouldUseGasPricePendingTransactionsSorter_whenLondonNotEnabled() {
-    setupScheduleWith(new StubGenesisConfigOptions().berlinBlock(0));
+    setupScheduleWith(new StubGenesisConfiguration().berlinBlock(0));
 
     final TransactionPool pool = createAndEnableTransactionPool(LEGACY, syncState);
 
@@ -344,7 +344,7 @@ public class TransactionPoolFactoryTest {
   @Test
   public void
       createLayeredTransactionPool_shouldUseBaseFeePendingTransactionsSorter_whenLondonEnabled() {
-    setupScheduleWith(new StubGenesisConfigOptions().londonBlock(0));
+    setupScheduleWith(new StubGenesisConfiguration().londonBlock(0));
 
     final TransactionPool pool = createAndEnableTransactionPool(LAYERED, syncState);
 
@@ -357,7 +357,7 @@ public class TransactionPoolFactoryTest {
   @Test
   public void
       createLayeredTransactionPool_shouldUseGasPricePendingTransactionsSorter_whenLondonNotEnabled() {
-    setupScheduleWith(new StubGenesisConfigOptions().berlinBlock(0));
+    setupScheduleWith(new StubGenesisConfiguration().berlinBlock(0));
 
     final TransactionPool pool = createAndEnableTransactionPool(LAYERED, syncState);
 
@@ -367,7 +367,7 @@ public class TransactionPoolFactoryTest {
     assertThat(pool.logStats()).startsWith("GasPrice Prioritized");
   }
 
-  private void setupScheduleWith(final StubGenesisConfigOptions config) {
+  private void setupScheduleWith(final StubGenesisConfiguration config) {
     schedule =
         new ProtocolScheduleBuilder(
                 config,

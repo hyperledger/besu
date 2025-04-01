@@ -62,11 +62,11 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected void prepForBuild() {
     localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final CliqueConfigOptions cliqueConfig = genesisConfigOptions.getCliqueConfigOptions();
+    final CliqueConfigOptions cliqueConfig = genesisConfiguration.getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
 
     epochManager = new EpochManager(blocksPerEpoch);
-    forksSchedule = CliqueForksSchedulesFactory.create(genesisConfigOptions);
+    forksSchedule = CliqueForksSchedulesFactory.create(genesisConfiguration);
   }
 
   @Override
@@ -128,7 +128,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
-        genesisConfigOptions,
+            genesisConfiguration,
         forksSchedule,
         nodeKey,
         isRevertReasonEnabled,

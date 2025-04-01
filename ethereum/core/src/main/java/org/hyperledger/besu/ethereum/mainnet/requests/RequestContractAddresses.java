@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.datatypes.Address;
 
 import java.util.NoSuchElementException;
@@ -34,16 +34,16 @@ public class RequestContractAddresses {
   }
 
   public static RequestContractAddresses fromGenesis(
-      final GenesisConfigOptions genesisConfigOptions) {
+      final GenesisConfiguration genesisConfiguration) {
     return new RequestContractAddresses(
-        genesisConfigOptions
+        genesisConfiguration
             .getWithdrawalRequestContractAddress()
             .orElseThrow(
                 () -> new NoSuchElementException("Withdrawal Request Contract Address not found")),
-        genesisConfigOptions
+        genesisConfiguration
             .getDepositContractAddress()
             .orElseThrow(() -> new NoSuchElementException("Deposit Contract Address not found")),
-        genesisConfigOptions
+        genesisConfiguration
             .getConsolidationRequestContractAddress()
             .orElseThrow(
                 () ->

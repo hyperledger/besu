@@ -21,7 +21,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -70,7 +70,7 @@ public class EthStatsServiceTest {
   @Mock private TransactionPool transactionPool;
   @Mock private MiningCoordinator miningCoordinator;
   @Mock private SyncState syncState;
-  @Mock private GenesisConfigOptions genesisConfigOptions;
+  @Mock private GenesisConfiguration genesisConfiguration;
   @Mock private P2PNetwork p2PNetwork;
   @Mock private EthContext ethContext;
   @Mock private EthScheduler ethScheduler;
@@ -103,7 +103,7 @@ public class EthStatsServiceTest {
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
     when(vertx.createWebSocketClient(any(WebSocketClientOptions.class)))
         .thenReturn(webSocketClient);
-    when(genesisConfigOptions.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
+    when(genesisConfiguration.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
     when(ethProtocolManager.getSupportedCapabilities())
         .thenReturn(List.of(Capability.create("eth64", 1)));
   }
@@ -120,7 +120,7 @@ public class EthStatsServiceTest {
             syncState,
             vertx,
             "clientVersion",
-            genesisConfigOptions,
+                genesisConfiguration,
             p2PNetwork);
     when(p2PNetwork.getLocalEnode()).thenThrow(new NoSuchElementException());
     ethStatsService.start();
@@ -139,7 +139,7 @@ public class EthStatsServiceTest {
             syncState,
             vertx,
             "clientVersion",
-            genesisConfigOptions,
+                genesisConfiguration,
             p2PNetwork);
     when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
 
@@ -172,7 +172,7 @@ public class EthStatsServiceTest {
             syncState,
             vertx,
             "clientVersion",
-            genesisConfigOptions,
+                genesisConfiguration,
             p2PNetwork);
     when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
 
@@ -204,7 +204,7 @@ public class EthStatsServiceTest {
             syncState,
             vertx,
             "clientVersion",
-            genesisConfigOptions,
+                genesisConfiguration,
             p2PNetwork);
     when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
 

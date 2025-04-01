@@ -21,7 +21,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 
@@ -40,12 +40,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class BesuControllerTest {
 
   @Mock GenesisConfig genesisConfig;
-  @Mock GenesisConfigOptions genesisConfigOptions;
+  @Mock
+  GenesisConfiguration genesisConfiguration;
   @Mock QbftConfigOptions qbftConfigOptions;
 
   @BeforeEach
   public void setUp() {
-    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
+    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfiguration);
   }
 
   @Test
@@ -68,7 +69,7 @@ public class BesuControllerTest {
 
   @Test
   public void invalidConsensusCombination() {
-    when(genesisConfigOptions.isConsensusMigration()).thenReturn(true);
+    when(genesisConfiguration.isConsensusMigration()).thenReturn(true);
     // explicitly not setting isIbft2() for genesisConfigOptions
 
     assertThatThrownBy(
@@ -121,24 +122,24 @@ public class BesuControllerTest {
 
   private void mockGenesisConfigForMigration(
       final String consensus, final OptionalLong startBlock) {
-    when(genesisConfigOptions.isConsensusMigration()).thenReturn(true);
+    when(genesisConfiguration.isConsensusMigration()).thenReturn(true);
 
     switch (consensus.toLowerCase(Locale.ROOT)) {
       case "ibft2":
         {
-          when(genesisConfigOptions.isIbft2()).thenReturn(true);
+          when(genesisConfiguration.isIbft2()).thenReturn(true);
           break;
         }
       case "ibftlegacy":
         {
-          when(genesisConfigOptions.isIbftLegacy()).thenReturn(true);
+          when(genesisConfiguration.isIbftLegacy()).thenReturn(true);
           break;
         }
       default:
         fail("Invalid consensus algorithm");
     }
 
-    when(genesisConfigOptions.getQbftConfigOptions()).thenReturn(qbftConfigOptions);
+    when(genesisConfiguration.getQbftConfigOptions()).thenReturn(qbftConfigOptions);
     when(qbftConfigOptions.getStartBlock()).thenReturn(startBlock);
   }
 

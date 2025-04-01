@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.core;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.JsonGenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.JsonGenesisConfiguration;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -43,11 +43,11 @@ public class ProtocolScheduleFixture {
           false,
           new NoOpMetricsSystem());
 
-  private static GenesisConfigOptions getMainnetConfigOptions() {
+  private static GenesisConfiguration getMainnetConfigOptions() {
     return getGenesisConfigOptions("/mainnet.json");
   }
 
-  public static GenesisConfigOptions getGenesisConfigOptions(final String genesisConfig) {
+  public static GenesisConfiguration getGenesisConfigOptions(final String genesisConfig) {
     // this method avoids reading all the alloc accounts when all we want is the "config" section
     try (final JsonParser jsonParser =
         new JsonFactory().createParser(GenesisConfig.class.getResource(genesisConfig))) {
@@ -55,7 +55,7 @@ public class ProtocolScheduleFixture {
       while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
         if ("config".equals(jsonParser.currentName())) {
           jsonParser.nextToken();
-          return JsonGenesisConfigOptions.fromJsonObject(
+          return JsonGenesisConfiguration.fromJsonObject(
               normalizeKeys(new ObjectMapper().readTree(jsonParser)));
         }
       }

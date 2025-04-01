@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
@@ -48,7 +48,7 @@ import org.junit.jupiter.api.Test;
 
 public class BaseBftProtocolScheduleBuilderTest {
 
-  private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
+  private final GenesisConfiguration genesisConfig = mock(GenesisConfiguration.class);
   private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
 
   @Test

@@ -17,7 +17,7 @@ package org.hyperledger.besu.evmtool;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -70,7 +70,7 @@ public class GenesisFileModule {
 
   @Singleton
   @Provides
-  GenesisConfigOptions provideGenesisConfigOptions(final GenesisConfig genesisConfig) {
+  GenesisConfiguration provideGenesisConfigOptions(final GenesisConfig genesisConfig) {
     return genesisConfig.getConfigOptions();
   }
 
@@ -78,7 +78,7 @@ public class GenesisFileModule {
   @Provides
   @SuppressWarnings("UnusedVariable")
   ProtocolSchedule provideProtocolSchedule(
-      final GenesisConfigOptions configOptions,
+      final GenesisConfiguration configOptions,
       @Named("Fork") final Optional<String> fork,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled,
       final EvmConfiguration evmConfiguration) {

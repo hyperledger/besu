@@ -15,7 +15,7 @@
 package org.hyperledger.besu.config.module;
 
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -38,7 +38,7 @@ public class GenesisModule {
 
   @Singleton
   @Provides
-  GenesisConfigOptions provideGenesisConfigOptions(final GenesisConfig genesisConfig) {
+  GenesisConfiguration provideGenesisConfigOptions(final GenesisConfig genesisConfig) {
     return genesisConfig.getConfigOptions();
   }
 }

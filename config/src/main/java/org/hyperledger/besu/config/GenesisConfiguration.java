@@ -28,7 +28,7 @@ import java.util.OptionalLong;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The interface Genesis config options. */
-public interface GenesisConfigOptions {
+public interface GenesisConfiguration {
 
   /**
    * Is eth hash boolean.

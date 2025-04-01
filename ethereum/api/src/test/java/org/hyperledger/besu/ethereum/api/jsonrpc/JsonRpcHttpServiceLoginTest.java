@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.list;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -128,8 +128,8 @@ public class JsonRpcHttpServiceLoginTest {
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.LATEST);
 
-    final StubGenesisConfigOptions genesisConfigOptions =
-        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID);
+    final StubGenesisConfiguration genesisConfigOptions =
+        new StubGenesisConfiguration().constantinopleBlock(0).chainId(CHAIN_ID);
 
     rpcMethods =
         new JsonRpcMethodsFactory()

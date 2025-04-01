@@ -186,7 +186,7 @@ class GenesisConfigTest {
 
   @Test
   void shouldOverrideConfigOptionsBaseFeeWhenSpecified() {
-    GenesisConfigOptions withOverrides =
+    GenesisConfiguration withOverrides =
         EMPTY_CONFIG
             .withOverrides(Map.of("baseFeePerGas", Wei.of(8).toString()))
             .getConfigOptions();
@@ -208,7 +208,7 @@ class GenesisConfigTest {
 
   @Test
   void assertSepoliaTerminalTotalDifficulty() {
-    GenesisConfigOptions sepoliaOptions =
+    GenesisConfiguration sepoliaOptions =
         GenesisConfig.fromResource("/sepolia.json").getConfigOptions();
 
     assertThat(sepoliaOptions.getTerminalTotalDifficulty()).isPresent();
@@ -218,7 +218,7 @@ class GenesisConfigTest {
 
   @Test
   void assertMainnetTerminalTotalDifficulty() {
-    GenesisConfigOptions mainnetOptions =
+    GenesisConfiguration mainnetOptions =
         GenesisConfig.fromResource("/mainnet.json").getConfigOptions();
 
     assertThat(mainnetOptions.getTerminalTotalDifficulty()).isPresent();
@@ -229,7 +229,7 @@ class GenesisConfigTest {
 
   @Test
   void assertTerminalTotalDifficultyOverride() {
-    GenesisConfigOptions sepoliaOverrideOptions =
+    GenesisConfiguration sepoliaOverrideOptions =
         GenesisConfig.fromResource("/sepolia.json")
             .withOverrides(Map.of("terminalTotalDifficulty", String.valueOf(Long.MAX_VALUE)))
             .getConfigOptions();
@@ -258,7 +258,7 @@ class GenesisConfigTest {
 
   @Test
   void assertMainnetDepositContractAddress() {
-    GenesisConfigOptions mainnetOptions =
+    GenesisConfiguration mainnetOptions =
         GenesisConfig.fromResource("/mainnet.json").getConfigOptions();
 
     assertThat(mainnetOptions.getDepositContractAddress()).isPresent();
@@ -268,7 +268,7 @@ class GenesisConfigTest {
 
   @Test
   void assertSepoliaDepositContractAddress() {
-    GenesisConfigOptions sepoliaOptions =
+    GenesisConfiguration sepoliaOptions =
         GenesisConfig.fromResource("/sepolia.json").getConfigOptions();
 
     assertThat(sepoliaOptions.getDepositContractAddress()).isPresent();
@@ -278,7 +278,7 @@ class GenesisConfigTest {
 
   @Test
   void assertHoleskyDepositContractAddress() {
-    GenesisConfigOptions holeskyOptions =
+    GenesisConfiguration holeskyOptions =
         GenesisConfig.fromResource("/holesky.json").getConfigOptions();
 
     assertThat(holeskyOptions.getDepositContractAddress()).isPresent();
@@ -288,7 +288,7 @@ class GenesisConfigTest {
 
   @Test
   void assertEphemeryDepositContractAddress() {
-    GenesisConfigOptions ephemeryOptions =
+    GenesisConfiguration ephemeryOptions =
         GenesisConfig.fromResource("/ephemery.json").getConfigOptions();
 
     assertThat(ephemeryOptions.getDepositContractAddress()).isPresent();

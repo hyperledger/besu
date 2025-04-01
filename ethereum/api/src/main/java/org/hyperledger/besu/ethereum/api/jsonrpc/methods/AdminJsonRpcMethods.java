@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminAddPeer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminChangeLogLevel;
@@ -42,7 +42,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final String clientVersion;
   private final BigInteger networkId;
-  private final GenesisConfigOptions genesisConfigOptions;
+  private final GenesisConfiguration genesisConfiguration;
   private final P2PNetwork p2pNetwork;
   private final BlockchainQueries blockchainQueries;
   private final NatService natService;
@@ -54,7 +54,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
   public AdminJsonRpcMethods(
       final String clientVersion,
       final BigInteger networkId,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfiguration,
       final P2PNetwork p2pNetwork,
       final BlockchainQueries blockchainQueries,
       final Map<String, BesuPlugin> namedPlugins,
@@ -64,7 +64,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final ProtocolSchedule protocolSchedule) {
     this.clientVersion = clientVersion;
     this.networkId = networkId;
-    this.genesisConfigOptions = genesisConfigOptions;
+    this.genesisConfiguration = genesisConfiguration;
     this.p2pNetwork = p2pNetwork;
     this.blockchainQueries = blockchainQueries;
     this.namedPlugins = namedPlugins;
@@ -87,7 +87,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new AdminNodeInfo(
             clientVersion,
             networkId,
-            genesisConfigOptions,
+                genesisConfiguration,
             p2pNetwork,
             blockchainQueries,
             natService,

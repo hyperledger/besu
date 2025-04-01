@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.qbft;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolScheduleBuilder;
@@ -56,7 +56,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
@@ -93,7 +93,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
@@ -128,7 +128,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
+      final GenesisConfiguration config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,

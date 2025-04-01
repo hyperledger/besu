@@ -108,7 +108,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
 
     var mergeBestPeerComparator =
         new TransitionBestPeerComparator(
-            genesisConfigOptions.getTerminalTotalDifficulty().map(Difficulty::of).orElseThrow());
+                genesisConfiguration.getTerminalTotalDifficulty().map(Difficulty::of).orElseThrow());
     ethPeers.setBestPeerComparator(mergeBestPeerComparator);
     mergeContext.observeNewIsPostMergeState(mergeBestPeerComparator);
 
@@ -161,7 +161,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     this.syncState.set(syncState);
 
     final Optional<Address> depositContractAddress =
-        genesisConfigOptions.getDepositContractAddress();
+        genesisConfiguration.getDepositContractAddress();
 
     return new MergeCoordinator(
         protocolContext,
@@ -176,7 +176,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return MergeProtocolSchedule.create(
-        genesisConfigOptions,
+            genesisConfiguration,
         isRevertReasonEnabled,
         miningConfiguration,
         badBlockManager,
@@ -190,18 +190,18 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
 
-    final OptionalLong terminalBlockNumber = genesisConfigOptions.getTerminalBlockNumber();
-    final Optional<Hash> terminalBlockHash = genesisConfigOptions.getTerminalBlockHash();
+    final OptionalLong terminalBlockNumber = genesisConfiguration.getTerminalBlockNumber();
+    final Optional<Hash> terminalBlockHash = genesisConfiguration.getTerminalBlockHash();
     final boolean isPostMergeAtGenesis =
-        genesisConfigOptions.getTerminalTotalDifficulty().isPresent()
-            && genesisConfigOptions.getTerminalTotalDifficulty().get().isZero()
+        genesisConfiguration.getTerminalTotalDifficulty().isPresent()
+            && genesisConfiguration.getTerminalTotalDifficulty().get().isZero()
             && blockchain.getGenesisBlockHeader().getDifficulty().isZero();
 
     final MergeContext mergeContext =
         postMergeContext
             .setSyncState(syncState.get())
             .setTerminalTotalDifficulty(
-                genesisConfigOptions
+                genesisConfiguration
                     .getTerminalTotalDifficulty()
                     .map(Difficulty::of)
                     .orElse(Difficulty.ZERO))
@@ -240,8 +240,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   protected List<PeerValidator> createPeerValidators(
       final ProtocolSchedule protocolSchedule, final PeerTaskExecutor peerTaskExecutor) {
     List<PeerValidator> retval = super.createPeerValidators(protocolSchedule, peerTaskExecutor);
-    final OptionalLong powTerminalBlockNumber = genesisConfigOptions.getTerminalBlockNumber();
-    final Optional<Hash> powTerminalBlockHash = genesisConfigOptions.getTerminalBlockHash();
+    final OptionalLong powTerminalBlockNumber = genesisConfiguration.getTerminalBlockNumber();
+    final Optional<Hash> powTerminalBlockHash = genesisConfiguration.getTerminalBlockHash();
     if (powTerminalBlockHash.isPresent() && powTerminalBlockNumber.isPresent()) {
       retval.add(
           new RequiredBlocksPeerValidator(
