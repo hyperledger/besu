@@ -33,14 +33,9 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("UnusedMethod")
 public class Benchmarks {
-
-  private static final Logger LOG = LoggerFactory.getLogger(Benchmarks.class);
-
   static final Random random = new Random();
 
   static final int MATH_WARMUP = 10_000;
