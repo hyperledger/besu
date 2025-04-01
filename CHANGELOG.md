@@ -33,6 +33,7 @@
 - `eth_getLogs` - empty topic is a wildcard match [#8420](https://github.com/hyperledger/besu/pull/8420)
 - Upgrade spring-security-crypto to address CVE-2025-22228 [#8448](https://github.com/hyperledger/besu/pull/8448)
 - Fix restoring txpool from disk when blob transactions are present [#8481](https://github.com/hyperledger/besu/pull/8481)
+- Do not use 0x for storage proof key if the key is 0x0 ie zero [#8499](https://github.com/hyperledger/besu/pull/8499)
 
 ## 25.3.0 
 
