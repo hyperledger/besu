@@ -695,14 +695,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
-    if (chainPrunerConfiguration.getChainPruningEnabled()) {
+    if (chainPrunerConfiguration.chainPruningEnabled()) {
       final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
       blockchain.observeBlockAdded(chainDataPruner);
       LOG.info(
           "Chain data pruning enabled with recent blocks retained to be: "
-              + chainPrunerConfiguration.getChainPruningBlocksRetained()
+              + chainPrunerConfiguration.chainPruningBlocksRetained()
               + " and frequency to be: "
-              + chainPrunerConfiguration.getChainPruningBlocksFrequency());
+              + chainPrunerConfiguration.blocksFrequency());
     }
 
     final TransactionPool transactionPool =
@@ -1165,8 +1165,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         new ChainDataPrunerStorage(
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
-        chainPrunerConfiguration.getChainPruningBlocksRetained(),
-        chainPrunerConfiguration.getChainPruningBlocksFrequency(),
+        chainPrunerConfiguration.chainPruningBlocksRetained(),
+        chainPrunerConfiguration.blocksFrequency(),
         MonitoredExecutors.newBoundedThreadPool(
             ChainDataPruner.class.getSimpleName(),
             1,
