@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
@@ -35,6 +37,8 @@ public class ChainDataPrunerTest {
 
   @Test
   public void singleChainPruning() {
+    int totalBlocks = 20;
+    int blocksToRetain = 10;
     final BlockDataGenerator gen = new BlockDataGenerator();
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
@@ -46,7 +50,7 @@ public class ChainDataPrunerTest {
         new ChainDataPruner(
             blockchainStorage,
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
-            512,
+            blocksToRetain,
             0,
             // completed
             new BlockingExecutor());
@@ -56,19 +60,20 @@ public class ChainDataPrunerTest {
             genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
     blockchain.observeBlockAdded(chainDataPruner);
 
-    // Generate & Import 1000 blocks
-    gen.blockSequence(genesisBlock, 1000)
+    gen.blockSequence(genesisBlock, totalBlocks)
         .forEach(
             blk -> {
               blockchain.appendBlock(blk, gen.receipts(blk));
               long number = blk.getHeader().getNumber();
-              if (number <= 512) {
+              if (number <= blocksToRetain) {
                 // No prune happened
                 assertThat(blockchain.getBlockHeader(1)).isPresent();
               } else {
-                // Prune number - 512 only
-                assertThat(blockchain.getBlockHeader(number - 512)).isEmpty();
-                assertThat(blockchain.getBlockHeader(number - 511)).isPresent();
+                assertThat(blockchain.getBlockHeader(number - blocksToRetain)).isEmpty();
+                Optional<BlockHeader> earliest =
+                    blockchain.getBlockHeader(number - blocksToRetain + 1);
+                assertThat(blockchainStorage.getEarliest().orElseThrow())
+                    .isEqualTo(earliest.orElseThrow().getHash());
               }
             });
   }

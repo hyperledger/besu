@@ -97,6 +97,11 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   }
 
   @Override
+  public Optional<Hash> getEarliest() {
+    return variablesStorage.getEarliest();
+  }
+
+  @Override
   public Optional<BlockHeader> getBlockHeader(final Hash blockHash) {
     return get(BLOCK_HEADER_PREFIX, blockHash)
         .map(b -> BlockHeader.readFrom(RLP.input(b), blockHeaderFunctions));
@@ -321,6 +326,11 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     @Override
     public void setSafeBlock(final Hash blockHash) {
       variablesUpdater.setSafeBlock(blockHash);
+    }
+
+    @Override
+    public void setEarliest(final Hash blockHash) {
+      variablesUpdater.setEarliest(blockHash);
     }
 
     @Override

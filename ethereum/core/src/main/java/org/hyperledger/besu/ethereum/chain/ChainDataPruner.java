@@ -51,13 +51,10 @@ public class ChainDataPruner implements BlockAddedObserver {
     final long storedPruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
     if (blockNumber < storedPruningMark) {
       LOG.warn(
-          "Block added event: "
-              + event
-              + " has a block number of "
-              + blockNumber
-              + " < pruning mark "
-              + storedPruningMark
-              + " which normally indicates chain-pruning-blocks-retained is too small");
+          "Block added event: {} has a block number of {} < pruning mark {} which normally indicates chain-pruning-blocks-retained is too small",
+          event,
+          blockNumber,
+          storedPruningMark);
       return;
     }
     final KeyValueStorageTransaction recordBlockHashesTransaction =
@@ -83,6 +80,14 @@ public class ChainDataPruner implements BlockAddedObserver {
             }
           }
           prunerStorage.setPruningMark(pruningTransaction, currentPruningMark);
+          blockchainStorage
+              .getBlockHash(currentPruningMark)
+              .ifPresent(
+                  blockHash -> {
+                    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+                    updater.setEarliest(blockHash);
+                    updater.commit();
+                  });
           pruningTransaction.commit();
         });
   }
