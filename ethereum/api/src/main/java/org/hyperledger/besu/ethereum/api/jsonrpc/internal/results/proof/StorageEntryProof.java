@@ -43,8 +43,6 @@ public class StorageEntryProof {
     if (key.isEmpty()) {
       return "0x";
     }
-
-//    Quantity.create takes care of making sure zero is 0x0 not 0x
     return Quantity.create(key);
   }
 
