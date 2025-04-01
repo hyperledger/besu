@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.worldstate;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -45,7 +46,16 @@ public class CodeDelegationGasCostHelper {
    */
   public static long codeDelegationGasCost(
       final MessageFrame frame, final GasCalculator gasCalculator, final Account account) {
-    if (account == null || !hasCodeDelegation(account.getCode())) {
+    if (account == null) {
+      return 0;
+    }
+
+    final Hash codeHash = account.getCodeHash();
+    if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
+      return 0;
+    }
+
+    if (!hasCodeDelegation(account.getCode())) {
       return 0;
     }
 

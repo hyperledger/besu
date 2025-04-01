@@ -19,6 +19,7 @@ import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTarget
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -198,9 +199,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Account contract = frame.getWorldUpdater().get(to);
 
-    final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
-    final Wei balance = account == null ? Wei.ZERO : account.getBalance();
-
     // code resolution gas must be deducted before we check for frame depth too deep to be spec
     // compliant
     try {
@@ -214,6 +212,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
           .log();
       return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
+
+    final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
+    final Wei balance = account == null ? Wei.ZERO : account.getBalance();
 
     // If the call is sending more value than the account has or the message frame is too deep
     // return a failed call
@@ -385,6 +386,11 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    */
   protected static Code getCode(final EVM evm, final MessageFrame frame, final Account account) {
     if (account == null) {
+      return CodeV0.EMPTY_CODE;
+    }
+
+    final Hash codeHash = account.getCodeHash();
+    if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
       return CodeV0.EMPTY_CODE;
     }
 
