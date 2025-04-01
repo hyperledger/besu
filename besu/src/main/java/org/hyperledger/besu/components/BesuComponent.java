@@ -15,6 +15,7 @@
 package org.hyperledger.besu.components;
 
 import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.config.module.GenesisModule;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
@@ -37,7 +38,8 @@ import org.slf4j.Logger;
       MetricsSystemModule.class,
       BonsaiCachedMerkleTrieLoaderModule.class,
       BesuPluginContextModule.class,
-      BlobCacheModule.class
+      BlobCacheModule.class,
+      GenesisModule.class
     })
 public interface BesuComponent {
 
