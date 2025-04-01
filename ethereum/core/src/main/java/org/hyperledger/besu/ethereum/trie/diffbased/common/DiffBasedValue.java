@@ -20,9 +20,9 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class DiffBasedValue<T> implements TrieLog.LogTuple<T> {
-  private T prior;
-  private T updated;
-  private boolean lastStepCleared;
+  protected T prior;
+  protected T updated;
+  protected boolean lastStepCleared;
 
   private boolean clearedAtLeastOnce;
 

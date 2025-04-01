@@ -80,7 +80,7 @@ public class LeafBuilder {
     nonStorageKeyValuesForUpdate.put(basicDataKey, basicDataValue);
   }
 
-  public void generateCodeSizeKeyValueForUpdate(final Address address, final int size) {
+  public void generateCodeSizeKeyValueForUpdate(final Address address, final long size) {
     Bytes32 basicDataKey = trieKeyFactory.basicDataKey(address);
     Bytes32 basicDataValue;
     if ((basicDataValue = nonStorageKeyValuesForUpdate.get(basicDataKey)) == null) {

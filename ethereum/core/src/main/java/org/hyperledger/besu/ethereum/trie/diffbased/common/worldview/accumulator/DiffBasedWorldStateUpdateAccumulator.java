@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.AccountConsumingMap;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.CodeConsumingMap;
@@ -127,53 +126,81 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
    */
   public void importStateChangesFromSource(
       final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+
     source
         .getAccountsToUpdate()
         .forEach(
-            (address, diffBasedValue) -> {
-              ACCOUNT copyPrior =
-                  diffBasedValue.getPrior() != null
-                      ? copyAccount(diffBasedValue.getPrior(), this, false)
-                      : null;
-              ACCOUNT copyUpdated =
-                  diffBasedValue.getUpdated() != null
-                      ? copyAccount(diffBasedValue.getUpdated(), this, true)
-                      : null;
-              accountsToUpdate.put(
+            (address, sourceValue) -> {
+              accountsToUpdate.compute(
                   address,
-                  new DiffBasedValue<>(copyPrior, copyUpdated, diffBasedValue.isLastStepCleared()));
+                  (addr, existing) -> {
+                    ACCOUNT copyUpdated =
+                        sourceValue.getUpdated() != null
+                            ? copyAccount(sourceValue.getUpdated(), this, true)
+                            : null;
+                    if (existing != null) {
+                      existing.setUpdated(copyUpdated);
+                      return existing;
+                    } else {
+                      ACCOUNT copyPrior =
+                          sourceValue.getPrior() != null
+                              ? copyAccount(sourceValue.getPrior(), this, false)
+                              : null;
+                      return new DiffBasedValue<>(
+                          copyPrior, copyUpdated, sourceValue.isLastStepCleared());
+                    }
+                  });
             });
+
+    // 2. Code
     source
         .getCodeToUpdate()
         .forEach(
-            (address, diffBasedValue) -> {
-              codeToUpdate.put(
+            (address, sourceValue) -> {
+              codeToUpdate.compute(
                   address,
-                  new DiffBasedValue<>(
-                      diffBasedValue.getPrior(),
-                      diffBasedValue.getUpdated(),
-                      diffBasedValue.isLastStepCleared()));
+                  (addr, existing) -> {
+                    if (existing != null) {
+                      existing.setUpdated(sourceValue.getUpdated());
+                      return existing;
+                    } else {
+                      return new DiffBasedValue<>(
+                          sourceValue.getPrior(),
+                          sourceValue.getUpdated(),
+                          sourceValue.isLastStepCleared());
+                    }
+                  });
             });
+
     source
         .getStorageToUpdate()
         .forEach(
             (address, slots) -> {
-              StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageConsumingMap =
+              StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> targetMap =
                   storageToUpdate.computeIfAbsent(
                       address,
                       k ->
                           new StorageConsumingMap<>(
                               address, new ConcurrentHashMap<>(), storagePreloader));
+
               slots.forEach(
-                  (storageSlotKey, uInt256DiffBasedValue) -> {
-                    storageConsumingMap.put(
-                        storageSlotKey,
-                        new DiffBasedValue<>(
-                            uInt256DiffBasedValue.getPrior(),
-                            uInt256DiffBasedValue.getUpdated(),
-                            uInt256DiffBasedValue.isLastStepCleared()));
+                  (slotKey, sourceValue) -> {
+                    targetMap.compute(
+                        slotKey,
+                        (key, existing) -> {
+                          if (existing != null) {
+                            existing.setUpdated(sourceValue.getUpdated());
+                            return existing;
+                          } else {
+                            return new DiffBasedValue<>(
+                                sourceValue.getPrior(),
+                                sourceValue.getUpdated(),
+                                sourceValue.isLastStepCleared());
+                          }
+                        });
                   });
             });
+
     storageToClear.addAll(source.storageToClear);
     storageKeyHashLookup.putAll(source.storageKeyHashLookup);
 
@@ -556,9 +583,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     }
     try {
       final Optional<UInt256> valueUInt =
-          (wrappedWorldView() instanceof DiffBasedWorldState worldState)
-              ? worldState.getStorageValueByStorageSlotKey(address, storageSlotKey)
-              : wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
+          wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
       storageToUpdate
           .computeIfAbsent(
               address,
@@ -797,6 +822,12 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
         codeValue.setUpdated(replacementCode);
       }
     }
+  }
+
+  public Map<StorageSlotKey, DiffBasedValue<UInt256>> maybeCreateStorageMap(final Address address) {
+    final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageMap =
+        storageToUpdate.get(address);
+    return maybeCreateStorageMap(storageMap, address);
   }
 
   private Map<StorageSlotKey, DiffBasedValue<UInt256>> maybeCreateStorageMap(

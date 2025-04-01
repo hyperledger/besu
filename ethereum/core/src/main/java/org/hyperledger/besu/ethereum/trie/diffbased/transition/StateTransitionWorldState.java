@@ -88,24 +88,35 @@ public class StateTransitionWorldState implements MutableWorldState, DiffBasedWo
   public Account get(final Address address) {
     if (isVerkleActive) {
       Account account = verkleWorldState.get(address);
-
       // If the account is not found in Verkle but migration is ongoing, check in Bonsai
       if (account == null && migrationProgress.isMigrationInProgress()) {
         account = bonsaiWorldState.get(address);
-
         // Convert Bonsai account to Verkle format if necessary
         if (account instanceof BonsaiAccount bonsaiAccount) {
-          return new VerkleAccount(
-              getAccumulator(),
-              address,
-              address.addressHash(),
-              bonsaiAccount.getNonce(),
-              bonsaiAccount.getBalance(),
-              bonsaiAccount.getCodeSize().orElse(0L),
-              bonsaiAccount.getCodeHash(),
-              true);
+          VerkleAccount verkleAccount =
+              new VerkleAccount(
+                  getAccumulator(),
+                  address,
+                  address.addressHash(),
+                  bonsaiAccount.getNonce(),
+                  bonsaiAccount.getBalance(),
+                  bonsaiAccount.getCodeSize().orElse(0L),
+                  bonsaiAccount.getCode(),
+                  bonsaiAccount.getCodeHash(),
+                  true);
+          // notify verkle accumulator that the value was not found in verkle by creating a state
+          // transition diff based value
+          verkleWorldState
+              .getAccumulator()
+              .getAccountsToUpdate()
+              .put(
+                  address,
+                  new StateTransitionDiffBasedValue<>(
+                      new VerkleAccount(verkleAccount), verkleAccount));
+          return verkleAccount;
         }
       }
+
       return account;
     } else {
       // If Verkle is not active, retrieve the account from Bonsai
@@ -128,14 +139,24 @@ public class StateTransitionWorldState implements MutableWorldState, DiffBasedWo
       final Address address, final StorageSlotKey storageSlotKey) {
 
     if (isVerkleActive) {
-      Optional<UInt256> slot =
+      Optional<UInt256> maybeSlot =
           verkleWorldState.getStorageValueByStorageSlotKey(address, storageSlotKey);
 
       // If not found in Verkle and migration is ongoing, check in Bonsai
-      if (slot.isEmpty() && migrationProgress.isMigrationInProgress()) {
-        slot = bonsaiWorldState.getStorageValueByStorageSlotKey(address, storageSlotKey);
+      if (maybeSlot.isEmpty() && migrationProgress.isMigrationInProgress()) {
+        // read bonsai worldstate
+        maybeSlot = bonsaiWorldState.getStorageValueByStorageSlotKey(address, storageSlotKey);
+        // notify verkle accumulator that the value was not found in verkle by creating a state
+        // transition diff based value
+        maybeSlot.ifPresent(
+            slot -> {
+              verkleWorldState
+                  .getAccumulator()
+                  .maybeCreateStorageMap(address)
+                  .put(storageSlotKey, new StateTransitionDiffBasedValue<>(slot, slot));
+            });
       }
-      return slot;
+      return maybeSlot;
     } else {
       // If Verkle is not active, retrieve the storage value from Bonsai
       return bonsaiWorldState.getStorageValueByStorageSlotKey(address, storageSlotKey);

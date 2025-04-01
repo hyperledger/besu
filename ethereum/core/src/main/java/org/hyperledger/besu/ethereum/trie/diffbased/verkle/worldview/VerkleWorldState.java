@@ -237,9 +237,13 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final VerkleWorldStateUpdateAccumulator worldStateUpdater) {
     var accountUpdate = worldStateUpdater.getAccountsToUpdate().get(accountKey);
-    if (accountUpdate == null || accountUpdate.isUnchanged()) {
+    if (accountUpdate == null
+        || (accountUpdate.isUnchanged()
+            && !worldStateUpdater.getStorageToUpdate().containsKey(accountKey)
+            && !worldStateUpdater.getCodeToUpdate().containsKey(accountKey))) {
       return;
     }
+
     if (accountUpdate.getUpdated() == null) {
       leafBuilder.generateAccountKeyForRemoval(accountKey);
       final Hash addressHash = hashAndSavePreImage(accountKey);
@@ -250,13 +254,13 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
     handleCoupledCodeAccountUpdates(accountKey, leafBuilder, accountUpdate, worldStateUpdater);
 
-    final VerkleAccount updatedAcount = accountUpdate.getUpdated();
+    final VerkleAccount updatedAccount = accountUpdate.getUpdated();
     leafBuilder.generateAccountKeyValueForUpdate(
-        accountKey, updatedAcount.getNonce(), updatedAcount.getBalance());
+        accountKey, updatedAccount.getNonce(), updatedAccount.getBalance());
     maybeStateUpdater.ifPresent(
         verkleUpdater ->
             verkleUpdater.putAccountInfoState(
-                hashAndSavePreImage(accountKey), updatedAcount.serializeAccount()));
+                hashAndSavePreImage(accountKey), updatedAccount.serializeAccount()));
   }
 
   private void handleCoupledCodeAccountUpdates(
@@ -268,6 +272,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
     final VerkleAccount updatedAccount = accountUpdate.getUpdated();
     if (priorAccount == null) {
       leafBuilder.generateCodeHashKeyValueForUpdate(accountKey, updatedAccount.getCodeHash());
+      leafBuilder.generateCodeSizeKeyValueForUpdate(accountKey, updatedAccount.getCodeSize().get());
       return;
     }
     Optional<Bytes> currentCode =
@@ -382,6 +387,11 @@ public class VerkleWorldState extends DiffBasedWorldState {
               if (storageAccountUpdate == null) {
                 return;
               }
+              System.out.println(accountKey + " ");
+              storageAccountUpdate.forEach(
+                  (slotKey, value) -> {
+                    System.out.println(slotKey + " " + value);
+                  });
               System.out.println(
                   "add storage key " + pair.getFirst() + "  value " + pair.getSecond());
               Optional<DiffBasedValue<UInt256>> storageUpdate =

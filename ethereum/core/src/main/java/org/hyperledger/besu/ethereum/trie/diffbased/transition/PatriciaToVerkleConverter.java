@@ -27,7 +27,9 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorld
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 import org.hyperledger.besu.plugin.services.trielogs.StateMigrationLog;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -36,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
@@ -45,6 +48,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class PatriciaToVerkleConverter {
 
   private static final Map<Bytes, Bytes> PRE_IMAGES = new HashMap<>();
+
+  private static final List<Address> migratedAccount = new ArrayList<>();
 
   public static void addPreImage(final Bytes hash, final Bytes key) {
     PRE_IMAGES.put(hash, key);
@@ -67,6 +72,14 @@ public class PatriciaToVerkleConverter {
         verkleWorldState.getAccumulator();
     final AtomicInteger convertedEntriesCount = new AtomicInteger(0);
 
+    /*verkleUpdateAccumulator.getAccountsToUpdate().forEach((address, verkleAccountDiffBasedValue) -> {
+        if(!verkleAccountDiffBasedValue.isUnchanged() && verkleAccountDiffBasedValue.getPrior()==null){
+            final VerkleAccount updated = verkleAccountDiffBasedValue.getUpdated();
+            if(updated.hasCode()) {
+                verkleUpdateAccumulator.getCodeToUpdate().computeIfAbsent(updated.getAddress(), add -> new DiffBasedValue<>(null, updated.getCode()));
+            }
+        }
+    });*/
     bonsaiWorldState
         .getWorldStateStorage()
         .streamFlatAccounts(
@@ -101,6 +114,8 @@ public class PatriciaToVerkleConverter {
 
     if (!migrationProgress.hasNextAccount()) {
       migrationProgress.markAccountsFullyMigrated();
+
+      PatriciaToVerkleConverter.migratedAccount.clear();
     }
   }
 
@@ -124,7 +139,6 @@ public class PatriciaToVerkleConverter {
       final StateMigrationLog migrationProgress,
       final AtomicInteger convertedEntriesCount,
       final Hash accountHash) {
-
     final NavigableMap<Bytes32, Bytes> storages =
         bonsaiWorldState
             .getWorldStateStorage()
@@ -135,7 +149,15 @@ public class PatriciaToVerkleConverter {
                   if (convertedEntriesCount.get() >= migrationProgress.getMaxToConvert()) {
                     migrationProgress.setNextStorageKey(storage.getFirst());
                     return false;
-                  }
+                  } /*final Hash slotHash = Hash.wrap(storage.getFirst());
+                    final StorageSlotKey storageSlotKey =
+                            new StorageSlotKey(
+                                    slotHash, Optional.of(UInt256.fromBytes(PRE_IMAGES.get(storage.getFirst()))));
+                    if (verkleWorldState
+                            .getStorageValueByStorageSlotKey(merkleAccount.getAddress(), storageSlotKey)
+                            .isEmpty()) {
+                        convertedEntriesCount.incrementAndGet();
+                    }*/
                   convertedEntriesCount.incrementAndGet();
                   return true;
                 });
@@ -161,8 +183,11 @@ public class PatriciaToVerkleConverter {
           if (verkleWorldState
               .getStorageValueByStorageSlotKey(merkleAccount.getAddress(), storageSlotKey)
               .isEmpty()) {
+            System.out.println(
+                "migrate storage " + merkleAccount.getAddress() + " " + key + " " + value);
             storageMap.putIfAbsent(
-                storageSlotKey, new DiffBasedValue<>(null, UInt256.fromBytes(value)));
+                storageSlotKey,
+                new DiffBasedValue<>(null, UInt256.fromBytes(RLP.decodeValue(value))));
           }
         });
   }
@@ -189,9 +214,10 @@ public class PatriciaToVerkleConverter {
 
     if (convertedEntriesCount.get() < migrationProgress.getMaxToConvert()) {
       migrationProgress.clearNextStorageKey();
-
-      if (verkleWorldState.get(merkleAccount.getAddress()) == null) {
-        final VerkleAccount verkleAccount =
+      VerkleAccount verkleAccount =
+          (VerkleAccount) verkleWorldState.get(merkleAccount.getAddress());
+      if (verkleAccount == null) {
+        verkleAccount =
             new VerkleAccount(
                 verkleUpdateAccumulator,
                 merkleAccount.getAddress(),
@@ -203,11 +229,17 @@ public class PatriciaToVerkleConverter {
                 merkleAccount.getCodeHash(),
                 false);
 
+        System.out.println("migrate " + merkleAccount.getAddress());
         verkleUpdateAccumulator
             .getAccountsToUpdate()
             .putIfAbsent(verkleAccount.getAddress(), new DiffBasedValue<>(null, verkleAccount));
-
-        // Handle migration of account's contract code, if present
+      } else {
+        verkleUpdateAccumulator
+            .getAccountsToUpdate()
+            .putIfAbsent(
+                verkleAccount.getAddress(), new DiffBasedValue<>(verkleAccount, verkleAccount));
+      }
+      if (!migratedAccount.contains(merkleAccount.getAddress())) {
         if (verkleAccount.hasCode()) {
           verkleUpdateAccumulator
               .getCodeToUpdate()
@@ -217,6 +249,7 @@ public class PatriciaToVerkleConverter {
           // Adjust conversion count based on the code chunkification process
           convertedEntriesCount.addAndGet(
               TrieKeyUtils.chunkifyCode(verkleAccount.getCode()).size());
+          migratedAccount.add(verkleAccount.getAddress());
         }
       }
 

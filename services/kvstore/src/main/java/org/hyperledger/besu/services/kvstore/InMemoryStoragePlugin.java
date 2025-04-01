@@ -28,7 +28,13 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +103,7 @@ public class InMemoryStoragePlugin implements BesuPlugin {
   public static class InMemoryKeyValueStorageFactory implements KeyValueStorageFactory {
 
     private final String name;
-    private final Map<List<SegmentIdentifier>, SegmentedInMemoryKeyValueStorage> storageMap =
+    private final Map<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>> storageMap =
         new HashMap<>();
 
     /**
@@ -120,10 +126,12 @@ public class InMemoryStoragePlugin implements BesuPlugin {
         final BesuConfiguration configuration,
         final MetricsSystem metricsSystem)
         throws StorageException {
-      var kvStorage =
-          storageMap.computeIfAbsent(
-              List.of(segment), seg -> new SegmentedInMemoryKeyValueStorage(seg));
-      return new SegmentedKeyValueStorageAdapter(segment, kvStorage);
+      return new SegmentedKeyValueStorageAdapter(
+          segment,
+          new SegmentedInMemoryKeyValueStorage(
+              segment,
+              storageMap.computeIfAbsent(
+                  segment, seg -> SegmentedInMemoryKeyValueStorage.newSegmentMap())));
     }
 
     @Override
@@ -132,9 +140,16 @@ public class InMemoryStoragePlugin implements BesuPlugin {
         final BesuConfiguration configuration,
         final MetricsSystem metricsSystem)
         throws StorageException {
-      var kvStorage =
-          storageMap.computeIfAbsent(segments, __ -> new SegmentedInMemoryKeyValueStorage());
-      return kvStorage;
+      final ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>> hashValueStore =
+          segments.stream()
+              .collect(
+                  Collectors.toConcurrentMap(
+                      Function.identity(),
+                      segmentIdentifier ->
+                          storageMap.computeIfAbsent(
+                              segmentIdentifier,
+                              __ -> SegmentedInMemoryKeyValueStorage.newSegmentMap())));
+      return new SegmentedInMemoryKeyValueStorage(hashValueStore);
     }
 
     @Override
