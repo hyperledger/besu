@@ -57,16 +57,10 @@ public class EthProtocol implements SubProtocol {
 
   @Override
   public int messageSpace(final int protocolVersion) {
-    switch (protocolVersion) {
-      case EthProtocolVersion.V66:
-      case EthProtocolVersion.V67:
-      case EthProtocolVersion.V68:
-        // same number of messages in each range, eth65 defines messages in the middle of the
-        // range defined by eth63 and eth64 defines no new ranges.
-        return 17;
-      default:
-        return 0;
-    }
+    return switch (protocolVersion) {
+      case EthProtocolVersion.V66, EthProtocolVersion.V67, EthProtocolVersion.V68 -> 17;
+      default -> 0;
+    };
   }
 
   @Override

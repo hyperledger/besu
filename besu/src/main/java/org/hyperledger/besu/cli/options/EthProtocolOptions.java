@@ -88,6 +88,15 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private PositiveNumber maxGetPooledTransactions =
       PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS);
 
+  @SuppressWarnings("UnusedVariable")
+  @Deprecated(forRemoval = true)
+  @CommandLine.Option(
+      hidden = true,
+      names = "--compatibility-eth64-forkid-enabled",
+      paramLabel = "<Boolean>",
+      description = "This option is deprecated and will be removed in a future release.")
+  private Boolean legacyEth64ForkIdEnabled = false;
+
   @CommandLine.Option(
       hidden = true,
       names = {MAX_CAPABILITY},
