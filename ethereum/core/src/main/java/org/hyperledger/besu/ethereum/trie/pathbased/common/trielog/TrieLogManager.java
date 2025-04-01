@@ -179,7 +179,7 @@ public class TrieLogManager {
         updater
             .getTrieLogStorageTransaction()
             .put(blockHash.toArrayUnsafe(), trieLog.toArrayUnsafe());
-        updater.commit();
+        updater.commitTrieLogOnly();
         // TODO maybe find a way to have a clean and complete trielog for observers
         trieLogObservers.forEach(
             o ->
