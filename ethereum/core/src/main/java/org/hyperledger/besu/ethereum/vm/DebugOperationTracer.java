@@ -90,7 +90,8 @@ public class DebugOperationTracer implements OperationTracer {
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = captureMemory(frame);
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
-    final Optional<List<AccessEvent<?>>> statelessWitness = captureStatelessWitness(frame);
+    final Optional<List<AccessEvent<?>>> statelessAccessWitness =
+        captureStatelessAccessWitness(frame);
 
     if (lastFrame != null) {
       lastFrame.setGasRemainingPostExecution(gasRemaining);
@@ -120,7 +121,7 @@ public class DebugOperationTracer implements OperationTracer {
             preExecutionStack,
             memory,
             storage,
-            statelessWitness,
+            statelessAccessWitness,
             worldUpdater,
             frame.getRevertReason(),
             maybeRefunds,
@@ -258,9 +259,9 @@ public class DebugOperationTracer implements OperationTracer {
     return Optional.of(stackContents);
   }
 
-  private Optional<List<AccessEvent<?>>> captureStatelessWitness(final MessageFrame frame) {
+  private Optional<List<AccessEvent<?>>> captureStatelessAccessWitness(final MessageFrame frame) {
     List<AccessEvent<?>> leafAccesses = frame.getAccessWitness().getLeafAccesses();
-    if (!options.traceStatelessWitness() || leafAccesses.isEmpty()) {
+    if (!options.traceStatelessAccessWitness() || leafAccesses.isEmpty()) {
       return Optional.empty();
     }
 

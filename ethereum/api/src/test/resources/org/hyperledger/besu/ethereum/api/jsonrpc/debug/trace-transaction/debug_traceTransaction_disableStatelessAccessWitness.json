@@ -6,7 +6,7 @@
     "params": [
       "0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310",
       {
-        "disableStatelessWitness":true
+        "disableStatelessAccessWitness":true
       }
     ]
   },

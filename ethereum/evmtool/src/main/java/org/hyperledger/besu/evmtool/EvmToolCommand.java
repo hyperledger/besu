@@ -231,12 +231,12 @@ public class EvmToolCommand implements Runnable {
   final Boolean showStorage = false;
 
   @Option(
-      names = {"--trace.statelesswitness"},
+      names = {"--trace.statelessaccesswitness"},
       description =
           "Show the state of the access witness for stateless. Default is to not show stateless witness.",
       scope = INHERIT,
       negatable = true)
-  final Boolean showWitness = false;
+  final Boolean showStatelessAccessWitness = false;
 
   @Option(
       names = {"--notime"},
@@ -453,7 +453,12 @@ public class EvmToolCommand implements Runnable {
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
                 ? new StandardJsonTracer(
-                    out, showMemory, !hideStack, showReturnData, showStorage, showWitness)
+                    out,
+                    showMemory,
+                    !hideStack,
+                    showReturnData,
+                    showStorage,
+                    showStatelessAccessWitness)
                 : OperationTracer.NO_TRACING;
 
         WorldUpdater updater = component.getWorldUpdater();

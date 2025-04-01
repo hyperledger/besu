@@ -182,7 +182,7 @@ class DebugOperationTracerTest {
             new BranchAccessEvent(frame.getSenderAddress(), UInt256.ZERO), UInt256.ZERO);
     final TraceFrame traceFrame =
         traceFrame(frame, new TraceOptions(false, false, false, true), false);
-    assertThat(traceFrame.getStatelessWitness()).hasValue(List.of(expectedLeafKey));
+    assertThat(traceFrame.getStatelessAccessWitness()).hasValue(List.of(expectedLeafKey));
   }
 
   @Test
@@ -192,7 +192,7 @@ class DebugOperationTracerTest {
     accessWitness.touchAddressAndChargeRead(frame.getSenderAddress(), UInt256.ZERO, Long.MAX_VALUE);
     final TraceFrame traceFrame =
         traceFrame(validMessageFrame(), new TraceOptions(false, false, false, false), false);
-    assertThat(traceFrame.getStatelessWitness()).isEmpty();
+    assertThat(traceFrame.getStatelessAccessWitness()).isEmpty();
   }
 
   @Test

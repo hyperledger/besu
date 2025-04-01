@@ -18,7 +18,11 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.AccessEvent;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
+import org.hyperledger.besu.evm.gascalculator.stateless.BranchAccessEvent;
+import org.hyperledger.besu.evm.gascalculator.stateless.LeafAccessEvent;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -66,6 +70,13 @@ public class StructLogTest {
             "0x01", "0x2233333",
             "0x02", "0x4455667");
     final String reason = "0x0001";
+    final AccessEvent<?>[] statelessAccessWitness =
+        new LeafAccessEvent[] {
+          new LeafAccessEvent(
+              new BranchAccessEvent(Address.fromHexString("0x01"), UInt256.ZERO), UInt256.ZERO),
+          new LeafAccessEvent(
+              new BranchAccessEvent(Address.fromHexString("0x01"), UInt256.ZERO), UInt256.ONE),
+        };
 
     // Mock TraceFrame behaviors
     when(traceFrame.getDepth()).thenReturn(depth);
@@ -92,6 +103,8 @@ public class StructLogTest {
     }
     when(traceFrame.getStorage()).thenReturn(Optional.of(storageMap));
     when(traceFrame.getRevertReason()).thenReturn(Optional.of(Bytes.fromHexString(reason)));
+    when(traceFrame.getStatelessAccessWitness())
+        .thenReturn(Optional.of(Arrays.stream(statelessAccessWitness).toList()));
 
     // When
     structLog = new StructLog(traceFrame);
@@ -111,6 +124,12 @@ public class StructLogTest {
                 "1", "2233333",
                 "2", "4455667"));
     assertThat(structLog.reason()).isEqualTo("0x1");
+    assertThat(structLog.statelessAccessWitness())
+        .isEqualTo(
+            new String[] {
+              "{\"addr\": \"0x0000000000000000000000000000000000000001\",\"treeIndex\": \"0x0\",\"subIndex\": \"0x0\"}",
+              "{\"addr\": \"0x0000000000000000000000000000000000000001\",\"treeIndex\": \"0x0\",\"subIndex\": \"0x1\"}"
+            });
   }
 
   @Test

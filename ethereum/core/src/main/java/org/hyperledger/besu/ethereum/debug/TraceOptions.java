@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.debug;
 
 public record TraceOptions(
-    boolean traceStorage, boolean traceMemory, boolean traceStack, boolean traceStatelessWitness) {
-  public static final TraceOptions DEFAULT = new TraceOptions(true, false, true, true);
+    boolean traceStorage,
+    boolean traceMemory,
+    boolean traceStack,
+    boolean traceStatelessAccessWitness) {
+  public static final TraceOptions DEFAULT = new TraceOptions(true, false, true, false);
 }

@@ -128,7 +128,7 @@ public class TraceTransactionIntegrationTest {
 
     // Now call the transaction to execute the SSTORE.
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(new TraceOptions(true, true, true, true), false);
+        new DebugOperationTracer(new TraceOptions(true, true, true, false), false);
     final Transaction executeTransaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)

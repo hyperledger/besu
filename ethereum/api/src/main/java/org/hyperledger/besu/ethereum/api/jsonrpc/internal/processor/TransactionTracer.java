@@ -100,6 +100,11 @@ public class TransactionTracer {
             .map(TransactionTraceParams::traceOptions)
             .map(TraceOptions::traceMemory)
             .orElse(true);
+    final boolean showStatelessAccessWitness =
+        transactionTraceParams
+            .map(TransactionTraceParams::traceOptions)
+            .map(TraceOptions::traceStatelessAccessWitness)
+            .orElse(false);
 
     if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
       throw new RuntimeException(
@@ -135,7 +140,8 @@ public class TransactionTracer {
                             stackedUpdater,
                             transaction,
                             transactionProcessor,
-                            new StandardJsonTracer(out, showMemory, true, true, false, true),
+                            new StandardJsonTracer(
+                                out, showMemory, true, true, false, showStatelessAccessWitness),
                             blobGasPrice);
                     out.println(
                         summaryTrace(

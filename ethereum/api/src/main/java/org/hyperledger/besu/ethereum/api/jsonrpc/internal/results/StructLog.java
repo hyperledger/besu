@@ -37,7 +37,7 @@ import org.apache.tuweni.units.bigints.UInt256;
   "stack",
   "memory",
   "storage",
-  "statelessWitness"
+  "statelessAccessWitness"
 })
 public class StructLog {
 
@@ -50,7 +50,7 @@ public class StructLog {
   private final int pc;
   private final String[] stack;
   private final Object storage;
-  private final String[] statelessWitness;
+  private final String[] statelessAccessWitness;
   private final String reason;
 
   public StructLog(final TraceFrame traceFrame) {
@@ -64,9 +64,9 @@ public class StructLog {
                 a ->
                     Arrays.stream(a).map(bytes -> toCompactHex(bytes, true)).toArray(String[]::new))
             .orElse(null);
-    statelessWitness =
+    statelessAccessWitness =
         traceFrame
-            .getStatelessWitness()
+            .getStatelessAccessWitness()
             .map(list -> list.stream().map(AccessEvent::toJsonObject).toArray(String[]::new))
             .orElse(null);
     op = traceFrame.getOpcode();
@@ -133,10 +133,10 @@ public class StructLog {
     return storage;
   }
 
-  @JsonGetter("statelessWitness")
+  @JsonGetter("statelessAccessWitness")
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  public String[] statelessWitness() {
-    return statelessWitness;
+  public String[] statelessAccessWitness() {
+    return statelessAccessWitness;
   }
 
   @JsonGetter("reason")
@@ -162,7 +162,7 @@ public class StructLog {
         && Objects.equals(op, structLog.op)
         && Arrays.equals(stack, structLog.stack)
         && Objects.equals(storage, structLog.storage)
-        && Arrays.equals(statelessWitness, structLog.statelessWitness);
+        && Arrays.equals(statelessAccessWitness, structLog.statelessAccessWitness);
   }
 
   @Override
@@ -170,7 +170,7 @@ public class StructLog {
     int result = Objects.hash(depth, gas, gasCost, op, pc, storage);
     result = 31 * result + Arrays.hashCode(memory);
     result = 31 * result + Arrays.hashCode(stack);
-    result = 31 * result + Arrays.hashCode(statelessWitness);
+    result = 31 * result + Arrays.hashCode(statelessAccessWitness);
     return result;
   }
 

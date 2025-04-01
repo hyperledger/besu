@@ -63,7 +63,7 @@ public final class LeafAccessEvent extends AccessEvent<AccessEvent<Address>> {
     return String.format(
         "{\"addr\": \"%s\",\"treeIndex\": \"%s\",\"subIndex\": \"%s\"}",
         getBranchEvent().getKey(),
-        getBranchEvent().getIndex().toShortHexString(),
-        getIndex().toShortHexString());
+        getBranchEvent().getIndex().toQuantityHexString(),
+        getIndex().toQuantityHexString());
   }
 }

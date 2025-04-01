@@ -12,7 +12,7 @@
         "disableMemory": true,
         "disableStack": true,
         "disableStorage": true,
-		"disableStatelessWitness": true
+		"disableStatelessAccessWitness": true
       }
     ],
     "id": 1

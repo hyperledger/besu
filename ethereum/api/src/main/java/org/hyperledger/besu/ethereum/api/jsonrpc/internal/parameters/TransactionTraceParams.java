@@ -52,14 +52,14 @@ public interface TransactionTraceParams {
     return false;
   }
 
-  @JsonProperty(value = "disableStatelessWitness")
+  @JsonProperty(value = "disableStatelessAccessWitness")
   @Value.Default
-  default boolean disableStatelessWitness() {
+  default boolean disableStatelessAccessWitness() {
     return false;
   }
 
   default TraceOptions traceOptions() {
     return new TraceOptions(
-        !disableStorage(), !disableMemory(), !disableStack(), !disableStatelessWitness());
+        !disableStorage(), !disableMemory(), !disableStack(), !disableStatelessAccessWitness());
   }
 }

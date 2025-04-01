@@ -209,7 +209,7 @@ public class StateTestSubCommand implements Runnable {
                 !parentCommand.hideStack,
                 parentCommand.showReturnData,
                 parentCommand.showStorage,
-                parentCommand.showWitness)
+                parentCommand.showStatelessAccessWitness)
             : OperationTracer.NO_TRACING;
 
     final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
