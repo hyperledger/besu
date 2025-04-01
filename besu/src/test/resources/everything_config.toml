@@ -94,6 +94,7 @@ rpc-http-max-request-content-length = 5242880
 rpc-max-logs-range=100
 json-pretty-print-enabled=false
 cache-last-blocks=512
+cache-precompiles=true
 rpc-gas-cap = 50000000
 rpc-max-trace-filter-range=100
 
@@ -248,9 +249,6 @@ Xaltbn128-native-enabled=false
 Xsnapsync-server-enabled=true
 Xbonsai-full-flat-db-enabled=true
 Xpeertask-system-enabled=false
-
-# compatibility flags
-compatibility-eth64-forkid-enabled=false
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000

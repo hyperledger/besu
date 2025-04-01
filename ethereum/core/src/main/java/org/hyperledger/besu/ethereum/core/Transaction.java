@@ -136,8 +136,25 @@ public class Transaction
     return readFrom(RLP.input(rlpBytes));
   }
 
+  /**
+   * Recreate a transaction from RLP serialized in the block body format
+   *
+   * @param rlpInput the RLP input in block body format
+   * @return the transaction
+   */
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
+    return readFrom(rlpInput, EncodingContext.BLOCK_BODY);
+  }
+
+  /**
+   * Recreate a transaction from RLP serialized according to the specified format
+   *
+   * @param rlpInput the RLP input in block body format
+   * @param context specify in which format the RLP was serialized
+   * @return the transaction
+   */
+  public static Transaction readFrom(final RLPInput rlpInput, final EncodingContext context) {
+    return TransactionDecoder.decodeRLP(rlpInput, context);
   }
 
   /**
@@ -484,12 +501,22 @@ public class Transaction
   }
 
   /**
-   * Writes the transaction to RLP
+   * Writes the transaction to RLP using the block body format
    *
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY);
+    writeTo(out, EncodingContext.BLOCK_BODY);
+  }
+
+  /**
+   * Writes the transaction to RLP using the specified format
+   *
+   * @param out the output to write the transaction to
+   * @param context the serialization format to use
+   */
+  public void writeTo(final RLPOutput out, final EncodingContext context) {
+    TransactionEncoder.encodeRLP(this, out, context);
   }
 
   @Override

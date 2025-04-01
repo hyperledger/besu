@@ -58,6 +58,7 @@ import org.hyperledger.besu.consensus.common.bft.inttest.TestTransitions;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.FutureMessageSynchronizerHandler;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
@@ -552,7 +553,8 @@ public class TestContextBuilder {
         new FutureMessageBuffer(
             FUTURE_MESSAGES_MAX_DISTANCE,
             FUTURE_MESSAGES_LIMIT,
-            blockChain.getChainHeadBlockNumber());
+            blockChain.getChainHeadBlockNumber(),
+            new FutureMessageSynchronizerHandler(synchronizerUpdater));
     final QbftValidatorModeTransitionLoggerAdaptor validatorModeTransitionLogger =
         new QbftValidatorModeTransitionLoggerAdaptor(
             new ValidatorModeTransitionLogger(forksSchedule));
@@ -577,7 +579,6 @@ public class TestContextBuilder {
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,
-            synchronizerUpdater,
             blockEncoder);
 
     final EventMultiplexer eventMultiplexer =
