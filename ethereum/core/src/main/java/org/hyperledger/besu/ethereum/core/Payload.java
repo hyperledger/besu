@@ -18,20 +18,20 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class Payload {
+public class Payload {
   private final Bytes payloadBytes;
 
   private Long zeroBytes = null;
 
-  Payload(final Bytes payloadBytes) {
+  public Payload(final Bytes payloadBytes) {
     this.payloadBytes = payloadBytes;
   }
 
-  Bytes getPayload() {
+  public Bytes getPayload() {
     return payloadBytes;
   }
 
-  long zeroBytes() {
+  public long zeroBytes() {
     if (payloadBytes == null) {
       return 0L;
     }
