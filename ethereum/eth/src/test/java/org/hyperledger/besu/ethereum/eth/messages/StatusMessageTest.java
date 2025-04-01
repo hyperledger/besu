@@ -39,39 +39,22 @@ public class StatusMessageTest {
     final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);
     final Hash genesisHash = randHash(2L);
+    final ForkId forkId = new ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
 
-    final StatusMessage msg = StatusMessage.create(version, networkId, td, bestHash, genesisHash);
+    final StatusMessage msg =
+        StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
 
     assertThat(msg.protocolVersion()).isEqualTo(version);
     assertThat(msg.networkId()).isEqualTo(networkId);
     assertThat(msg.totalDifficulty()).isEqualTo(td);
     assertThat(msg.bestHash()).isEqualTo(bestHash);
     assertThat(msg.genesisHash()).isEqualTo(genesisHash);
+    assertThat(msg.forkId()).isEqualTo(forkId);
   }
 
   @Test
   public void serializeDeserialize() {
-    final int version = EthProtocol.LATEST.getVersion();
-    final BigInteger networkId = BigInteger.ONE;
-    final Difficulty td = Difficulty.of(1000L);
-    final Hash bestHash = randHash(1L);
-    final Hash genesisHash = randHash(2L);
-
-    final MessageData msg = StatusMessage.create(version, networkId, td, bestHash, genesisHash);
-
-    // Make a message copy from serialized data and check deserialized results
-    final StatusMessage copy = new StatusMessage(msg.getData());
-
-    assertThat(copy.protocolVersion()).isEqualTo(version);
-    assertThat(copy.networkId()).isEqualTo(networkId);
-    assertThat(copy.totalDifficulty()).isEqualTo(td);
-    assertThat(copy.bestHash()).isEqualTo(bestHash);
-    assertThat(copy.genesisHash()).isEqualTo(genesisHash);
-  }
-
-  @Test
-  public void serializeDeserializeWithForkId() {
-    final int version = EthProtocolVersion.V64;
+    final int version = EthProtocolVersion.V68;
     final BigInteger networkId = BigInteger.ONE;
     final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);
@@ -93,7 +76,7 @@ public class StatusMessageTest {
 
   @Test
   public void toStringDecodedHasExpectedInfo() {
-    final int version = EthProtocolVersion.V64;
+    final int version = EthProtocolVersion.V68;
     final BigInteger networkId = BigInteger.ONE;
     final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);
