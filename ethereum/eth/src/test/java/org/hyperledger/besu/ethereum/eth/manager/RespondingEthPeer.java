@@ -218,9 +218,7 @@ public class RespondingEthPeer {
   }
 
   private void respondToMessage(final Responder responder, final OutgoingMessage msg) {
-    boolean supportsRequestId =
-        EthProtocol.isEth66Compatible(msg.capability)
-            && EthProtocol.requestIdCompatible(msg.messageData.getCode());
+    boolean supportsRequestId = EthProtocol.requestIdCompatible(msg.messageData.getCode());
     final Optional<MessageData> maybeResponse =
         responder.respond(
             msg.capability,
