@@ -11,7 +11,8 @@
       {
         "disableMemory": true,
         "disableStack": true,
-        "disableStorage": true
+        "disableStorage": true,
+		"disableStatelessAccessWitness": true
       }
     ],
     "id": 1

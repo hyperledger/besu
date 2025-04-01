@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
@@ -89,6 +90,8 @@ public class DebugOperationTracer implements OperationTracer {
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = captureMemory(frame);
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
+    final Optional<List<AccessEvent<?>>> statelessAccessWitness =
+        captureStatelessAccessWitness(frame);
 
     if (lastFrame != null) {
       lastFrame.setGasRemainingPostExecution(gasRemaining);
@@ -118,6 +121,7 @@ public class DebugOperationTracer implements OperationTracer {
             preExecutionStack,
             memory,
             storage,
+            statelessAccessWitness,
             worldUpdater,
             frame.getRevertReason(),
             maybeRefunds,
@@ -149,6 +153,7 @@ public class DebugOperationTracer implements OperationTracer {
               frame.getValue(),
               frame.getInputData().copy(),
               frame.getOutputData(),
+              Optional.empty(),
               Optional.empty(),
               Optional.empty(),
               Optional.empty(),
@@ -199,6 +204,7 @@ public class DebugOperationTracer implements OperationTracer {
                     Optional.empty(),
                     Optional.empty(),
                     Optional.empty(),
+                    Optional.empty(),
                     frame.getWorldUpdater(),
                     Optional.empty(),
                     Optional.ofNullable(frame.getRefunds()),
@@ -214,7 +220,7 @@ public class DebugOperationTracer implements OperationTracer {
   }
 
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {
-    if (!options.isStorageEnabled()) {
+    if (!options.traceStorage()) {
       return Optional.empty();
     }
     try {
@@ -230,7 +236,7 @@ public class DebugOperationTracer implements OperationTracer {
   }
 
   private Optional<Bytes[]> captureMemory(final MessageFrame frame) {
-    if (!options.isMemoryEnabled() || frame.memoryWordSize() == 0) {
+    if (!options.traceMemory() || frame.memoryWordSize() == 0) {
       return Optional.empty();
     }
     final Bytes[] memoryContents = new Bytes[frame.memoryWordSize()];
@@ -241,7 +247,7 @@ public class DebugOperationTracer implements OperationTracer {
   }
 
   private Optional<Bytes[]> captureStack(final MessageFrame frame) {
-    if (!options.isStackEnabled()) {
+    if (!options.traceStack()) {
       return Optional.empty();
     }
 
@@ -251,6 +257,15 @@ public class DebugOperationTracer implements OperationTracer {
       stackContents[i] = frame.getStackItem(stackContents.length - i - 1);
     }
     return Optional.of(stackContents);
+  }
+
+  private Optional<List<AccessEvent<?>>> captureStatelessAccessWitness(final MessageFrame frame) {
+    List<AccessEvent<?>> leafAccesses = frame.getAccessWitness().getLeafAccesses();
+    if (!options.traceStatelessAccessWitness() || leafAccesses.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(leafAccesses);
   }
 
   public List<TraceFrame> getTraceFrames() {

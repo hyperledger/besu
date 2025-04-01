@@ -123,6 +123,7 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
     return new TraceOptions(
         traceTypes.contains(TraceType.STATE_DIFF),
         false,
+        traceTypes.contains(TraceType.TRACE) || traceTypes.contains(TraceType.VM_TRACE),
         traceTypes.contains(TraceType.TRACE) || traceTypes.contains(TraceType.VM_TRACE));
   }
 }
