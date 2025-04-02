@@ -12,49 +12,36 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.encoding;
+package org.hyperledger.besu.ethereum.core.encoding.receipt;
 
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import com.google.common.annotations.VisibleForTesting;
-
 public class TransactionReceiptEncoder {
-  /**
-   * Write an RLP representation.
-   *
-   * @param out The RLP output to write to
-   */
-  public static void writeToForNetwork(final TransactionReceipt receipt, final RLPOutput out) {
-    writeTo(receipt, out, false, false);
-  }
 
-  public static void writeToForStorage(
-      final TransactionReceipt receipt, final RLPOutput out, final boolean compacted) {
-    writeTo(receipt, out, true, compacted);
-  }
-
-  @VisibleForTesting
-  static void writeTo(
+  public static void writeTo(
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
-      final boolean withRevertReason,
-      final boolean compacted) {
-    if (receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
-      writeToForReceiptTrie(receipt, rlpOutput, withRevertReason, compacted);
+      final TransactionReceiptEncodingConfiguration options) {
+
+    if (options.isWithOpaqueBytes()) {
+      if (receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
+        write(receipt, rlpOutput, options);
+      } else {
+        rlpOutput.writeBytes(RLP.encode(out -> write(receipt, out, options)));
+      }
     } else {
-      rlpOutput.writeBytes(
-          RLP.encode(out -> writeToForReceiptTrie(receipt, out, withRevertReason, compacted)));
+      write(receipt, rlpOutput, options);
     }
   }
 
-  public static void writeToForReceiptTrie(
+  private static void write(
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
-      final boolean withRevertReason,
-      final boolean compacted) {
+      final TransactionReceiptEncodingConfiguration options) {
+
     if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
       rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
     }
@@ -69,12 +56,13 @@ public class TransactionReceiptEncoder {
       rlpOutput.writeLongScalar(receipt.getStatus());
     }
     rlpOutput.writeLongScalar(receipt.getCumulativeGasUsed());
-    if (!compacted) {
+    if (options.isWithBloomFilter()) {
       rlpOutput.writeBytes(receipt.getBloomFilter());
     }
     rlpOutput.writeList(
-        receipt.getLogsList(), (log, logOutput) -> log.writeTo(logOutput, compacted));
-    if (withRevertReason && receipt.getRevertReason().isPresent()) {
+        receipt.getLogsList(),
+        (log, logOutput) -> log.writeTo(logOutput, options.isWithCompactedLogs()));
+    if (options.isWithRevertReason() && receipt.getRevertReason().isPresent()) {
       rlpOutput.writeBytes(receipt.getRevertReason().get());
     }
     rlpOutput.endList();

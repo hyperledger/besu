@@ -94,7 +94,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.zip.CRC32;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -115,6 +114,7 @@ public final class EthProtocolManagerTest {
   private static BlockDataGenerator gen;
   private static ProtocolContext protocolContext;
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private static final ForkId forkId = new ForkId(Hash.ZERO, 0);
 
   @BeforeAll
   public static void setup() {
@@ -211,7 +211,8 @@ public final class EthProtocolManagerTest {
               BigInteger.valueOf(2222),
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
-              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash(),
+              forkId);
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, statusMessage));
 
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
@@ -241,7 +242,8 @@ public final class EthProtocolManagerTest {
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty().add(20),
               blockchain.getChainHeadHash(),
-              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash(),
+              forkId);
 
       final StatusMessage stakePeerStatus =
           StatusMessage.create(
@@ -249,7 +251,8 @@ public final class EthProtocolManagerTest {
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
-              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash(),
+              forkId);
 
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(stakePeer, stakePeerStatus));
 
@@ -313,7 +316,8 @@ public final class EthProtocolManagerTest {
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               gen.hash(),
-              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash(),
+              forkId);
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, statusMessage));
 
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
@@ -562,7 +566,8 @@ public final class EthProtocolManagerTest {
             BigInteger.ONE,
             blockchain.getChainHead().getTotalDifficulty(),
             blockchain.getChainHeadHash(),
-            blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+            blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash(),
+            forkId);
     ethManager.processMessage(
         EthProtocol.LATEST, new DefaultMessage(peerConnection, statusMessage));
     final EthPeers ethPeers = ethManager.ethContext().getEthPeers();
@@ -1134,7 +1139,8 @@ public final class EthProtocolManagerTest {
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
-              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash(),
+              forkId);
 
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, statusMessage));
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
@@ -1198,32 +1204,6 @@ public final class EthProtocolManagerTest {
   }
 
   @Test
-  public void forkIdForChainHeadLegacyNoForksNotEmpty() {
-    final EthScheduler ethScheduler = mock(EthScheduler.class);
-    try (final EthProtocolManager ethManager =
-        EthProtocolManagerTestBuilder.builder()
-            .setProtocolSchedule(protocolSchedule)
-            .setBlockchain(blockchain)
-            .setEthScheduler(ethScheduler)
-            .setWorldStateArchive(protocolContext.getWorldStateArchive())
-            .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-            .setForkIdManager(
-                new ForkIdManager(
-                    blockchain, Collections.emptyList(), Collections.emptyList(), true))
-            .build()) {
-
-      assertThat(ethManager.getForkIdAsBytesList()).isNotEmpty();
-      final CRC32 genesisHashCRC = new CRC32();
-      genesisHashCRC.update(blockchain.getGenesisBlock().getHash().toArray());
-      assertThat(ethManager.getForkIdAsBytesList())
-          .isEqualTo(
-              new ForkId(Bytes.ofUnsignedInt(genesisHashCRC.getValue()), 0L)
-                  .getForkIdAsBytesList());
-    }
-  }
-
-  @Test
   public void shouldUseRightCapabilityDependingOnSyncMode() {
     assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH68);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68);
@@ -1237,13 +1217,13 @@ public final class EthProtocolManagerTest {
 
     // Test with max capability = 65. should respect flag
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V65).build();
+        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V67).build();
 
-    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH65, configuration);
-    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH65, configuration);
-    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH65, configuration);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH67, configuration);
+    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH67, configuration);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH67, configuration);
     /* Eth67 does not support fast sync, see EIP-4938 */
-    assertHighestCapability(SyncMode.FAST, EthProtocol.ETH65, configuration);
+    assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66, configuration);
   }
 
   @Test

@@ -15,8 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -48,7 +49,10 @@ public final class ReceiptsMessage extends AbstractMessageData {
     receipts.forEach(
         (receiptSet) -> {
           tmp.startList();
-          receiptSet.forEach(r -> TransactionReceiptEncoder.writeToForNetwork(r, tmp));
+          receiptSet.forEach(
+              r ->
+                  TransactionReceiptEncoder.writeTo(
+                      r, tmp, TransactionReceiptEncodingConfiguration.NETWORK));
           tmp.endList();
         });
     tmp.endList();
