@@ -534,7 +534,7 @@ public class RlpxAgentTest {
   public void subscribeMessage()
       throws ExecutionException, InterruptedException, PeerConnection.PeerNotConnected {
     final Peer peer = createPeer();
-    final Capability cap = Capability.create("eth", 63);
+    final Capability cap = Capability.create("eth", 68);
     startAgent();
 
     final AtomicBoolean eventFired = new AtomicBoolean(false);
@@ -542,7 +542,7 @@ public class RlpxAgentTest {
 
     final PeerConnection connection = agent.connect(peer).get();
     peerConnectionEvents.dispatchMessage(
-        Capability.create("eth", 63), connection, PingMessage.get());
+        Capability.create("eth", 68), connection, PingMessage.get());
 
     assertThat(eventFired).isTrue();
   }
