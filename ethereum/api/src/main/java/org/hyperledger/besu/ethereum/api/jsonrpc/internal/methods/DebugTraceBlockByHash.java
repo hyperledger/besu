@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -60,9 +61,21 @@ public class DebugTraceBlockByHash extends AbstractDebugTraceBlock {
 
     TraceOptions traceOptions = getTraceOptions(requestContext);
     Optional<Block> maybeBlock = getBlockchainQueries().getBlockchain().getBlockByHash(blockHash);
-
-    final Collection<DebugTraceTransactionResult> results =
-        getTraces(requestContext, traceOptions, maybeBlock);
+    // enhanced switch
+    final Collection<?> results;
+    String tracer = traceOptions.tracer();
+    if (tracer == null) {
+      // default tracer opcode/struct
+     results =
+              getTraces(requestContext, traceOptions, maybeBlock);
+    } else if (tracer.equals("callTracer")) {
+      // TODO: Get Tracers with callTracer and return that
+        results =
+                getTraces(requestContext, traceOptions, maybeBlock);
+    } else {
+      // return error
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), RpcErrorType.PARSE_ERROR);
+    }
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
   }
 }
