@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,14 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.debug;
 
-public record TraceOptions<T extends TracerConfig>(TracerType tracerType, T config) {
-  @SuppressWarnings("MethodInputParametersMustBeFinal")
-  public TraceOptions {
-    if (!tracerType.getConfigClass().isInstance(config)) {
-      throw new IllegalArgumentException("Invalid config type for tracer type: " + tracerType);
-    }
-  }
-
-  public static final TraceOptions<OpcodeTracerConfig> DEFAULT =
-      new TraceOptions<>(TracerType.DEFAULT, new OpcodeTracerConfig(true, false, true));
-}
+/**
+ * Configuration for the call tracer.
+ *
+ * @param onlyTopCall If true, only the top-level call is traced.
+ * @param withLog If true, logs are included in the trace.
+ */
+public record CallTracerConfig(boolean onlyTopCall, boolean withLog) implements TracerConfig {}

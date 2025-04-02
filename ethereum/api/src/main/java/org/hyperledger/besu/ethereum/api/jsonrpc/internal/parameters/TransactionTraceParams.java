@@ -14,11 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.ethereum.debug.CallTracerConfig;
+import org.hyperledger.besu.ethereum.debug.OpcodeTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerConfig;
+import org.hyperledger.besu.ethereum.debug.TracerType;
 
+import java.util.LinkedHashMap;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -53,10 +59,41 @@ public interface TransactionTraceParams {
   }
 
   @JsonProperty("tracer")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   @Nullable
   String tracer();
 
-  default TraceOptions traceOptions() {
-    return new TraceOptions(!disableStorage(), !disableMemory(), !disableStack(), tracer());
+  @JsonProperty("tracerConfig")
+  @Nullable
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @SuppressWarnings("NonApiType") // to allow for LinkedHashMap instead of default Guava Map
+  LinkedHashMap<String, Boolean> tracerConfig();
+
+  /**
+   * Convert JSON-RPC parameters to a {@link TraceOptions} object.
+   *
+   * @return TraceOptions object containing the tracer type and configuration.
+   */
+  default TraceOptions<? extends TracerConfig> traceOptions() {
+    var tracerType = TracerType.fromString(tracer());
+    var tracerConfig =
+        switch (tracerType) {
+          case DEFAULT ->
+              new OpcodeTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
+          case CALL_TRACER, FLAT_CALL_TRACER -> {
+            var tracerConfigMap = tracerConfig();
+            if (tracerConfigMap == null) {
+              // TODO: Confirm geth defaults
+              yield new CallTracerConfig(true, true);
+            } else {
+              var onlyTopCall = tracerConfigMap.getOrDefault("onlyTopCall", true);
+              var withLog = tracerConfigMap.getOrDefault("withLog", true);
+
+              yield new CallTracerConfig(
+                  onlyTopCall != null ? onlyTopCall : true, withLog != null ? withLog : true);
+            }
+          }
+        };
+    return new TraceOptions<>(tracerType, tracerConfig);
   }
 }

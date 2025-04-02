@@ -15,17 +15,22 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTracerResult;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class DebugTraceTransactionStep
-    implements Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> {
+    implements Function<
+        TransactionTrace, CompletableFuture<DebugTraceTransactionResult<DebugTracerResult>>> {
 
   @Override
-  public CompletableFuture<DebugTraceTransactionResult> apply(
+  public CompletableFuture<DebugTraceTransactionResult<DebugTracerResult>> apply(
       final TransactionTrace transactionTrace) {
-    return CompletableFuture.completedFuture(new DebugTraceTransactionResult(transactionTrace));
+    var result = new DebugTraceTransactionDetails(transactionTrace);
+    return CompletableFuture.completedFuture(
+        new DebugTraceTransactionResult<>(transactionTrace, result));
   }
 }

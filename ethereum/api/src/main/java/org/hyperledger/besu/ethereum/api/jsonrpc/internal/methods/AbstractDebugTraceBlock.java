@@ -24,9 +24,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTracerResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -76,8 +78,9 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
     return blockchainQueriesSupplier.get();
   }
 
-  protected TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext) {
-    final TraceOptions traceOptions;
+  protected TraceOptions<? extends TracerConfig> getTraceOptions(
+      final JsonRpcRequestContext requestContext) {
+    final TraceOptions<? extends TracerConfig> traceOptions;
     try {
       traceOptions =
           requestContext
@@ -93,9 +96,9 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
     return traceOptions;
   }
 
-  protected Collection<DebugTraceTransactionResult> getTraces(
+  protected Collection<DebugTraceTransactionResult<? extends DebugTracerResult>> getTraces(
       final JsonRpcRequestContext requestContext,
-      final TraceOptions traceOptions,
+      final TraceOptions<? extends TracerConfig> traceOptions,
       final Optional<Block> maybeBlock) {
     return maybeBlock
         .flatMap(
@@ -104,7 +107,7 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                     getBlockchainQueries(),
                     Optional.of(block.getHeader()),
                     traceableState -> {
-                      List<DebugTraceTransactionResult> tracesList =
+                      List<DebugTraceTransactionResult<? extends DebugTracerResult>> tracesList =
                           Collections.synchronizedList(new ArrayList<>());
                       final ProtocolSpec protocolSpec =
                           protocolSchedule.getByBlockHeader(block.getHeader());
@@ -124,8 +127,19 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                               debugOperationTracer,
                               protocolSpec,
                               block);
+
                       DebugTraceTransactionStep debugTraceTransactionStep =
                           new DebugTraceTransactionStep();
+
+                      // TODO:
+                      //                      CallTracerTransactionStep callTracerTransactionStep =
+                      //                          new CallTracerTransactionStep(
+                      //                              protocolSpec.getWorldUpdaterFactory(),
+                      //                              transactionProcessor,
+                      //                              getBlockchainQueries().getBlockchain(),
+                      //                              debugOperationTracer,
+                      //                              protocolSpec,
+                      //                              block);
                       Pipeline<TransactionTrace> traceBlockPipeline =
                           createPipelineFrom(
                                   "getTransactions",

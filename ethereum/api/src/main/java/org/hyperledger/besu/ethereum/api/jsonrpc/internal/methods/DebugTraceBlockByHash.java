@@ -19,14 +19,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTracerResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -59,23 +60,11 @@ public class DebugTraceBlockByHash extends AbstractDebugTraceBlock {
           "Invalid block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_HASH_PARAMS, e);
     }
 
-    TraceOptions traceOptions = getTraceOptions(requestContext);
+    TraceOptions<? extends TracerConfig> traceOptions = getTraceOptions(requestContext);
     Optional<Block> maybeBlock = getBlockchainQueries().getBlockchain().getBlockByHash(blockHash);
-    // enhanced switch
-    final Collection<?> results;
-    String tracer = traceOptions.tracer();
-    if (tracer == null) {
-      // default tracer opcode/struct
-     results =
-              getTraces(requestContext, traceOptions, maybeBlock);
-    } else if (tracer.equals("callTracer")) {
-      // TODO: Get Tracers with callTracer and return that
-        results =
-                getTraces(requestContext, traceOptions, maybeBlock);
-    } else {
-      // return error
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), RpcErrorType.PARSE_ERROR);
-    }
+
+    final Collection<DebugTraceTransactionResult<? extends DebugTracerResult>> results =
+        getTraces(requestContext, traceOptions, maybeBlock);
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
   }
 }

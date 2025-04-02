@@ -20,13 +20,12 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"gas", "failed", "returnValue", "structLogs"})
-public class DebugTraceTransactionDetails {
+public class DebugTraceTransactionDetails implements DebugTracerResult {
 
   private final List<StructLog> structLogs;
   private final String returnValue;
@@ -43,9 +42,9 @@ public class DebugTraceTransactionDetails {
     failed = !transactionTrace.getResult().isSuccessful();
   }
 
-  public static Collection<DebugTraceTransactionResult> of(
+  public static Collection<DebugTraceTransactionResult<DebugTraceTransactionDetails>> of(
       final Collection<TransactionTrace> traces) {
-    return traces.stream().map(DebugTraceTransactionResult::new).collect(Collectors.toList());
+    return DebugTraceTransactionResult.of(traces, DebugTraceTransactionDetails::new);
   }
 
   private static StructLog createStructLog(final TraceFrame frame) {

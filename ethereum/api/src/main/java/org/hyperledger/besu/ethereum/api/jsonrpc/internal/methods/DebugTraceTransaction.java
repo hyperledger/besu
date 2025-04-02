@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
@@ -63,7 +64,7 @@ public class DebugTraceTransaction implements JsonRpcMethod {
     final Optional<TransactionWithMetadata> transactionWithMetadata =
         blockchain.transactionByHash(hash);
     if (transactionWithMetadata.isPresent()) {
-      final TraceOptions traceOptions;
+      final TraceOptions<? extends TracerConfig> traceOptions;
       try {
         traceOptions =
             requestContext
@@ -89,7 +90,7 @@ public class DebugTraceTransaction implements JsonRpcMethod {
   private DebugTraceTransactionDetails debugTraceTransactionResult(
       final Hash hash,
       final TransactionWithMetadata transactionWithMetadata,
-      final TraceOptions traceOptions) {
+      final TraceOptions<? extends TracerConfig> traceOptions) {
     final Hash blockHash = transactionWithMetadata.getBlockHash().get();
 
     final DebugOperationTracer execTracer = new DebugOperationTracer(traceOptions, true);
