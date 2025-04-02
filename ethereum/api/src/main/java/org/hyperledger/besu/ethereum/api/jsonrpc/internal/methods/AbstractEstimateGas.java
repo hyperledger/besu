@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
@@ -55,7 +54,8 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   //            .getByBlockHeader(block.getHeader())
   //            .getGasCalculator()
   //            .getAdditionalCallStipend();
-  private static final long ADDITIONAL_CALL_STIPEND = FrontierGasCalculator.ADDITIONAL_CALL_STIPEND;
+  //  private static final long ADDITIONAL_CALL_STIPEND =
+  // FrontierGasCalculator.ADDITIONAL_CALL_STIPEND;
 
   protected final TransactionSimulator transactionSimulator;
 
@@ -173,8 +173,13 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final long gasUsedByTransaction = result.result().getEstimateGasUsedByTransaction();
     // minimum gas remaining is necessary for some operation (additionalStipend)
     // no more than 64/63 of the remaining gas can be passed to the sub calls
-    return ((long)
-        ((gasUsedByTransaction + ADDITIONAL_CALL_STIPEND) * SUB_CALL_REMAINING_GAS_RATIO));
+
+    final double subCallMultiplier =
+        Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getMaxDepth());
+    // and minimum gas remaining is necessary for some operation (additionalStipend)
+    final long gasStipend = operationTracer.getStipendNeeded();
+
+    return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
   }
 
   protected JsonRpcErrorResponse errorResponse(
