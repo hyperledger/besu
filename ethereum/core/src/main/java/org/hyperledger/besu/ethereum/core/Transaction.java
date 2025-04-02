@@ -194,7 +194,7 @@ public class Transaction
       final Optional<Address> to,
       final Wei value,
       final SECPSignature signature,
-      final Bytes payload,
+      final Payload payload,
       final Optional<List<AccessListEntry>> maybeAccessList,
       final Address sender,
       final Optional<BigInteger> chainId,
@@ -255,7 +255,7 @@ public class Transaction
     this.to = to;
     this.value = value;
     this.signature = signature;
-    this.payload = new Payload(payload);
+    this.payload = payload;
     this.maybeAccessList = maybeAccessList;
     this.sender = sender;
     this.chainId = chainId;
@@ -496,7 +496,7 @@ public class Transaction
               gasLimit,
               to,
               value,
-              payload.getPayload(),
+              payload,
               maybeAccessList,
               versionedHashes.orElse(null),
               maybeCodeDelegationList,
@@ -747,7 +747,7 @@ public class Transaction
       final long gasLimit,
       final Optional<Address> to,
       final Wei value,
-      final Bytes payload,
+      final Payload payload,
       final Optional<List<AccessListEntry>> accessList,
       final List<VersionedHash> versionedHashes,
       final Optional<List<CodeDelegation>> codeDelegationList,
@@ -766,7 +766,7 @@ public class Transaction
             gasLimit,
             to,
             value,
-            payload,
+            payload.getPayload(),
             accessList,
             versionedHashes,
             codeDelegationList,
@@ -1199,7 +1199,7 @@ public class Transaction
             detachedTo,
             value,
             signature,
-            payload.getPayload().copy(),
+            payload,
             detachedAccessList,
             sender,
             chainId,
@@ -1273,7 +1273,7 @@ public class Transaction
 
     protected SECPSignature signature;
 
-    protected Bytes payload;
+    protected Payload payload;
 
     protected Optional<List<AccessListEntry>> accessList = Optional.empty();
 
@@ -1297,7 +1297,7 @@ public class Transaction
       this.to = toCopy.to;
       this.value = toCopy.value;
       this.signature = toCopy.signature;
-      this.payload = toCopy.payload.getPayload();
+      this.payload = toCopy.payload;
       this.accessList = toCopy.maybeAccessList;
       this.sender = toCopy.sender;
       this.chainId = toCopy.chainId;
@@ -1363,7 +1363,7 @@ public class Transaction
     }
 
     public Builder payload(final Bytes payload) {
-      this.payload = payload;
+      this.payload = new Payload(payload);
       return this;
     }
 
