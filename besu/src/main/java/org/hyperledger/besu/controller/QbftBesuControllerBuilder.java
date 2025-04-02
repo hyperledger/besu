@@ -357,7 +357,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return QbftProtocolScheduleBuilder.create(
-            genesisConfiguration,
+        genesisConfiguration,
         qbftForksSchedule,
         isRevertReasonEnabled,
         qbftExtraDataCodec,

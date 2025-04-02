@@ -21,8 +21,8 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -73,7 +73,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public abstract class AbstractBftBesuControllerBuilderTest {
 
   protected BesuControllerBuilder bftBesuControllerBuilder;
-  @Mock protected GenesisConfig genesisConfig;
+  @Mock protected GenesisFile genesisConfig;
   @Mock protected GenesisConfiguration genesisConfiguration;
   @Mock private SynchronizerConfiguration synchronizerConfiguration;
   @Mock private EthProtocolConfiguration ethProtocolConfiguration;

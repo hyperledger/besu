@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisAccount;
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -104,13 +104,13 @@ public abstract class AbstractIsolationTests {
               .createKeyPair(SECPPrivateKey.create(key, "ECDSA"));
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
-          GenesisConfig.fromResource("/dev.json").getConfigOptions(),
+          GenesisFile.fromResource("/dev.json").getConfigOptions(),
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
           new NoOpMetricsSystem());
   protected final GenesisState genesisState =
-      GenesisState.fromConfig(GenesisConfig.fromResource("/dev.json"), protocolSchedule);
+      GenesisState.fromConfig(GenesisFile.fromResource("/dev.json"), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
   protected final TransactionPoolConfiguration poolConfiguration =
@@ -143,7 +143,7 @@ public abstract class AbstractIsolationTests {
           ethScheduler);
 
   protected final List<GenesisAccount> accounts =
-      GenesisConfig.fromResource("/dev.json")
+      GenesisFile.fromResource("/dev.json")
           .streamAllocations()
           .filter(ga -> ga.privateKey() != null)
           .toList();

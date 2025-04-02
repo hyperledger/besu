@@ -170,7 +170,7 @@ public class CombinedProtocolScheduleFactoryTest {
       final GenesisConfiguration genesisConfiguration) {
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(
-                genesisConfiguration,
+            genesisConfiguration,
             Optional.of(BigInteger.ONE),
             ProtocolSpecAdapters.create(0, Function.identity()),
             false,

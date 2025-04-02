@@ -52,8 +52,7 @@ import org.mockito.stubbing.Answer;
 @ExtendWith(MockitoExtension.class)
 class ProtocolScheduleBuilderTest {
   private final long PRE_SHANGHAI_TIMESTAMP = 1680488620L; // Mon, 03 Apr 2023 02:23:40 UTC
-  @Mock
-  GenesisConfiguration configOptions;
+  @Mock GenesisConfiguration configOptions;
   @Mock private Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
   private static final BigInteger CHAIN_ID = BigInteger.ONE;
   private ProtocolScheduleBuilder builder;

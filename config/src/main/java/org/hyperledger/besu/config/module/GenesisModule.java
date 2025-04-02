@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.config.module;
 
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisFile;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -32,13 +32,13 @@ public class GenesisModule {
 
   @Singleton
   @Provides
-  GenesisConfig providesGenesisConfig(final @Named("genesisConfigJson") String genesisConfigJson) {
-    return GenesisConfig.fromConfig(genesisConfigJson);
+  GenesisFile providesGenesisConfig(final @Named("genesisConfigJson") String genesisConfigJson) {
+    return GenesisFile.fromConfig(genesisConfigJson);
   }
 
   @Singleton
   @Provides
-  GenesisConfiguration provideGenesisConfigOptions(final GenesisConfig genesisConfig) {
+  GenesisConfiguration provideGenesisConfigOptions(final GenesisFile genesisConfig) {
     return genesisConfig.getConfigOptions();
   }
 }

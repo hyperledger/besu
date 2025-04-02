@@ -18,8 +18,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
 import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
@@ -128,7 +128,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   /** The genesis file */
-  protected GenesisConfig genesisConfig;
+  protected GenesisFile genesisConfig;
 
   /** The genesis config options; */
   protected GenesisConfiguration genesisConfiguration;
@@ -248,7 +248,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param genesisConfig the genesis config
    * @return the besu controller builder
    */
-  public BesuControllerBuilder genesisConfig(final GenesisConfig genesisConfig) {
+  public BesuControllerBuilder genesisConfig(final GenesisFile genesisConfig) {
     this.genesisConfig = genesisConfig;
     this.genesisConfiguration = genesisConfig.getConfigOptions();
     return this;
@@ -811,7 +811,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         protocolSchedule,
         protocolContext,
         ethProtocolManager,
-            genesisConfiguration,
+        genesisConfiguration,
         subProtocolConfiguration,
         synchronizer,
         syncState,
@@ -945,7 +945,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           protocolSchedule,
           ethContext,
           metricsSystem,
-              genesisConfiguration,
+          genesisConfiguration,
           syncConfig,
           unverifiedForkchoiceSupplier,
           unsubscribeForkchoiceListener);

@@ -19,8 +19,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.util.VersionProvider;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.JsonGenesisConfiguration;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
@@ -286,7 +286,7 @@ class GenerateBlockchainConfig implements Runnable {
 
   /** Sets the selected signature algorithm instance in SignatureAlgorithmFactory. */
   private void processEcCurve() {
-    GenesisConfiguration options = GenesisConfig.fromConfig(genesisConfig).getConfigOptions();
+    GenesisConfiguration options = GenesisFile.fromConfig(genesisConfig).getConfigOptions();
     Optional<String> ecCurve = options.getEcCurve();
 
     if (ecCurve.isEmpty()) {

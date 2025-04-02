@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
@@ -79,7 +79,7 @@ public class DebugTraceBlockTest {
     // protocolSchedule (and ProtocolSpec)
     // to be able to get the hash of the block
     final var genesisConfig =
-        GenesisConfig.fromResource(
+        GenesisFile.fromResource(
             "/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data/genesis.json");
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(

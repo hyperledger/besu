@@ -128,7 +128,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
-            genesisConfiguration,
+        genesisConfiguration,
         forksSchedule,
         nodeKey,
         isRevertReasonEnabled,

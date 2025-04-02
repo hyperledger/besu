@@ -37,7 +37,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
@@ -133,7 +133,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected static final BigInteger CHAIN_ID = BigInteger.valueOf(42L);
 
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-  protected GenesisConfig genesisConfig;
+  protected GenesisFile genesisConfig;
   protected MutableBlockchain blockchain;
   protected TransactionPool transactionPool;
   protected MutableWorldState worldState;
@@ -200,7 +200,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             });
   }
 
-  protected abstract GenesisConfig getGenesisConfig();
+  protected abstract GenesisFile getGenesisConfig();
 
   protected abstract ProtocolSchedule createProtocolSchedule();
 
@@ -234,7 +234,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   public void emptyPendingTransactionsResultsInEmptyVettingResult() {
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfig.fromResource("/dev.json").getConfigOptions(),
+            GenesisFile.fromResource("/dev.json").getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),

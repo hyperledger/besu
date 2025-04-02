@@ -78,6 +78,6 @@ public class CliqueConfigOptionsTest {
     final ObjectNode options = JsonUtil.objectNodeFromMap(cliqueConfigOptions);
     configNode.set("clique", options);
     rootNode.set("config", configNode);
-    return GenesisConfig.fromConfig(rootNode).getConfigOptions().getCliqueConfigOptions();
+    return GenesisFile.fromConfig(rootNode).getConfigOptions().getCliqueConfigOptions();
   }
 }

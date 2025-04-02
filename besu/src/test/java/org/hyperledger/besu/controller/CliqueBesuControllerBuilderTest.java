@@ -22,8 +22,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.ImmutableCliqueConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
@@ -78,7 +78,7 @@ public class CliqueBesuControllerBuilderTest {
 
   private BesuControllerBuilder cliqueBesuControllerBuilder;
 
-  @Mock private GenesisConfig genesisConfig;
+  @Mock private GenesisFile genesisConfig;
   @Mock private GenesisConfiguration genesisConfiguration;
   @Mock private SynchronizerConfiguration synchronizerConfiguration;
   @Mock private EthProtocolConfiguration ethProtocolConfiguration;

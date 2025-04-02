@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.cli.config;
 
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  * @param dnsDiscoveryUrl DNS Discovery URL
  */
 public record EthNetworkConfig(
-    GenesisConfig genesisConfig,
+    GenesisFile genesisConfig,
     BigInteger networkId,
     List<EnodeURL> bootNodes,
     String dnsDiscoveryUrl) {
@@ -67,7 +67,7 @@ public record EthNetworkConfig(
    */
   public static EthNetworkConfig getNetworkConfig(final NetworkName networkName) {
     final URL genesisSource = jsonConfigSource(networkName.getGenesisFile());
-    final GenesisConfig genesisConfig = GenesisConfig.fromSource(genesisSource);
+    final GenesisFile genesisConfig = GenesisFile.fromSource(genesisSource);
     final GenesisConfiguration genesisConfiguration = genesisConfig.getConfigOptions();
     final Optional<List<String>> rawBootNodes =
         genesisConfiguration.getDiscoveryOptions().getBootNodes();
@@ -108,7 +108,7 @@ public record EthNetworkConfig(
   public static class Builder {
 
     private String dnsDiscoveryUrl;
-    private GenesisConfig genesisConfig;
+    private GenesisFile genesisConfig;
     private BigInteger networkId;
     private List<EnodeURL> bootNodes;
 
@@ -130,7 +130,7 @@ public record EthNetworkConfig(
      * @param genesisConfig the genesis config
      * @return this builder
      */
-    public Builder setGenesisConfig(final GenesisConfig genesisConfig) {
+    public Builder setGenesisConfig(final GenesisFile genesisConfig) {
       this.genesisConfig = genesisConfig;
       return this;
     }

@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
@@ -48,7 +48,7 @@ public class EthProtocolManagerTestBuilder {
   private static final ProtocolSchedule DEFAULT_PROTOCOL_SCHEDULE = ProtocolScheduleFixture.MAINNET;
 
   private ProtocolSchedule protocolSchedule;
-  private GenesisConfig genesisConfig;
+  private GenesisFile genesisConfig;
   private GenesisState genesisState;
   private Blockchain blockchain;
   private BigInteger networkId;
@@ -76,7 +76,7 @@ public class EthProtocolManagerTestBuilder {
     return this;
   }
 
-  public EthProtocolManagerTestBuilder setGenesisConfigFile(final GenesisConfig genesisConfig) {
+  public EthProtocolManagerTestBuilder setGenesisConfigFile(final GenesisFile genesisConfig) {
     this.genesisConfig = genesisConfig;
     return this;
   }
@@ -171,7 +171,7 @@ public class EthProtocolManagerTestBuilder {
       protocolSchedule = DEFAULT_PROTOCOL_SCHEDULE;
     }
     if (genesisConfig == null) {
-      genesisConfig = GenesisConfig.mainnet();
+      genesisConfig = GenesisFile.mainnet();
     }
     if (genesisState == null) {
       genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);

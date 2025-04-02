@@ -97,7 +97,7 @@ public class JsonRpcMethodsFactory {
               new AdminJsonRpcMethods(
                   clientNodeName,
                   networkId,
-                      genesisConfiguration,
+                  genesisConfiguration,
                   p2pNetwork,
                   blockchainQueries,
                   namedPlugins,

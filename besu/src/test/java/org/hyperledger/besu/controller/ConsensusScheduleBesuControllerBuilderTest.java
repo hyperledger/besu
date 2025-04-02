@@ -20,7 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.StubGenesisConfiguration;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -60,7 +60,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
   private @Mock BiFunction<
           NavigableSet<ForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
       combinedProtocolScheduleFactory;
-  private @Mock GenesisConfig genesisConfig;
+  private @Mock GenesisFile genesisConfig;
   private @Mock BesuControllerBuilder besuControllerBuilder1;
   private @Mock BesuControllerBuilder besuControllerBuilder2;
   private @Mock BesuControllerBuilder besuControllerBuilder3;

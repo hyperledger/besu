@@ -295,7 +295,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return IbftProtocolScheduleBuilder.create(
-            genesisConfiguration,
+        genesisConfiguration,
         forksSchedule,
         isRevertReasonEnabled,
         bftExtraDataCodec,

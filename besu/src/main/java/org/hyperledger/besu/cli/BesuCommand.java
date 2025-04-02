@@ -84,8 +84,8 @@ import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -323,7 +323,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
-  private final Supplier<GenesisConfig> genesisConfigSupplier =
+  private final Supplier<GenesisFile> genesisConfigSupplier =
       Suppliers.memoize(this::readGenesisConfig);
   private final Supplier<GenesisConfiguration> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
@@ -1508,14 +1508,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private GenesisConfig readGenesisConfig() {
-    GenesisConfig effectiveGenesisFile;
+  private GenesisFile readGenesisConfig() {
+    GenesisFile effectiveGenesisFile;
     effectiveGenesisFile =
         network.equals(EPHEMERY)
             ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
             : genesisFile != null
-                ? GenesisConfig.fromSource(genesisConfigSource(genesisFile))
-                : GenesisConfig.fromResource(
+                ? GenesisFile.fromSource(genesisConfigSource(genesisFile))
+                : GenesisFile.fromResource(
                     Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }

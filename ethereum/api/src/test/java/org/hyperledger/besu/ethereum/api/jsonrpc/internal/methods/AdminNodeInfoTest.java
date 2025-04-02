@@ -104,7 +104,7 @@ public class AdminNodeInfoTest {
         new AdminNodeInfo(
             "testnet/1.0/this/that",
             BigInteger.valueOf(2018),
-                genesisConfiguration,
+            genesisConfiguration,
             p2pNetwork,
             blockchainQueries,
             natService,

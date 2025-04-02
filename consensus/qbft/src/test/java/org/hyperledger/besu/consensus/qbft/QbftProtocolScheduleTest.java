@@ -129,7 +129,7 @@ public class QbftProtocolScheduleTest {
   }
 
   private BftProtocolSchedule createProtocolSchedule(
-          final GenesisConfiguration genesisConfig, final List<ForkSpec<QbftConfigOptions>> forks) {
+      final GenesisConfiguration genesisConfig, final List<ForkSpec<QbftConfigOptions>> forks) {
     return QbftProtocolScheduleBuilder.create(
         genesisConfig,
         new ForksSchedule<>(forks),

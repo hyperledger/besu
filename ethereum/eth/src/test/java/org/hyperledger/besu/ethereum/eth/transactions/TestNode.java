@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -116,10 +116,10 @@ public class TestNode implements Closeable {
                     .setBindPort(listenPort)
                     .setSupportedProtocols(EthProtocol.get()));
 
-    final GenesisConfig genesisConfig = GenesisConfig.fromResource("/dev.json");
+    final GenesisFile genesisConfig = GenesisFile.fromResource("/dev.json");
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfig.fromResource("/dev.json").getConfigOptions(),
+            GenesisFile.fromResource("/dev.json").getConfigOptions(),
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,

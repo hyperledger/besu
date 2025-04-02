@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 
@@ -39,9 +39,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class BesuControllerTest {
 
-  @Mock GenesisConfig genesisConfig;
-  @Mock
-  GenesisConfiguration genesisConfiguration;
+  @Mock GenesisFile genesisConfig;
+  @Mock GenesisConfiguration genesisConfiguration;
   @Mock QbftConfigOptions qbftConfigOptions;
 
   @BeforeEach
@@ -145,8 +144,8 @@ public class BesuControllerTest {
 
   @Test
   public void postMergeCheckpointSyncUsesMergeControllerBuilder() {
-    final GenesisConfig postMergeGenesisFile =
-        GenesisConfig.fromResource("/valid_post_merge_near_head_checkpoint.json");
+    final GenesisFile postMergeGenesisFile =
+        GenesisFile.fromResource("/valid_post_merge_near_head_checkpoint.json");
 
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder().fromGenesisFile(postMergeGenesisFile, SyncMode.CHECKPOINT);
@@ -165,8 +164,8 @@ public class BesuControllerTest {
   @Test
   public void postMergeCheckpointSyncWithTotalDifficultyEqualsTTDUsesTransitionControllerBuilder()
       throws IOException {
-    final GenesisConfig mergeAtGenesisFile =
-        GenesisConfig.fromResource(
+    final GenesisFile mergeAtGenesisFile =
+        GenesisFile.fromResource(
             "/invalid_post_merge_checkpoint_total_difficulty_same_as_TTD.json");
 
     final BesuControllerBuilder besuControllerBuilder =
@@ -180,7 +179,7 @@ public class BesuControllerTest {
     final GenesisConfig checkpointPreMerge =
         GenesisConfig.fromResource("/valid_pre_merge_checkpoint.json");
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisFile(checkpointPreMerge, SyncMode.CHECKPOINT);
+        new BesuController.Builder().fromGenesisFile(GenesisFile.mainnet(), SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
@@ -188,7 +187,7 @@ public class BesuControllerTest {
   @Test
   public void nonCheckpointSyncUsesTransitionControllerBuild() {
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisFile(GenesisConfig.mainnet(), SyncMode.SNAP);
+        new BesuController.Builder().fromGenesisFile(GenesisFile.mainnet(), SyncMode.SNAP);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }

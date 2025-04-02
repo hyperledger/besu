@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -52,7 +52,7 @@ public class ExecutionContextTestFixture {
   private final ProtocolContext protocolContext;
 
   private ExecutionContextTestFixture(
-      final GenesisConfig genesisConfig,
+      final GenesisFile genesisConfig,
       final ProtocolSchedule protocolSchedule,
       final KeyValueStorage blockchainKeyValueStorage,
       final KeyValueStorage variablesKeyValueStorage,
@@ -85,10 +85,10 @@ public class ExecutionContextTestFixture {
   }
 
   public static ExecutionContextTestFixture create() {
-    return new Builder(GenesisConfig.mainnet()).build();
+    return new Builder(GenesisFile.mainnet()).build();
   }
 
-  public static Builder builder(final GenesisConfig genesisConfig) {
+  public static Builder builder(final GenesisFile genesisConfig) {
     return new Builder(genesisConfig);
   }
 
@@ -121,13 +121,13 @@ public class ExecutionContextTestFixture {
   }
 
   public static class Builder {
-    private final GenesisConfig genesisConfig;
+    private final GenesisFile genesisConfig;
     private KeyValueStorage variablesKeyValueStorage;
     private KeyValueStorage blockchainKeyValueStorage;
     private ProtocolSchedule protocolSchedule;
     private Optional<DataStorageFormat> dataStorageFormat = Optional.empty();
 
-    public Builder(final GenesisConfig genesisConfig) {
+    public Builder(final GenesisFile genesisConfig) {
       this.genesisConfig = genesisConfig;
     }
 

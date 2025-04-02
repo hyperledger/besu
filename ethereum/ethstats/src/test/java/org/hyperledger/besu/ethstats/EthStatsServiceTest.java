@@ -120,7 +120,7 @@ public class EthStatsServiceTest {
             syncState,
             vertx,
             "clientVersion",
-                genesisConfiguration,
+            genesisConfiguration,
             p2PNetwork);
     when(p2PNetwork.getLocalEnode()).thenThrow(new NoSuchElementException());
     ethStatsService.start();
@@ -139,7 +139,7 @@ public class EthStatsServiceTest {
             syncState,
             vertx,
             "clientVersion",
-                genesisConfiguration,
+            genesisConfiguration,
             p2PNetwork);
     when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
 
@@ -172,7 +172,7 @@ public class EthStatsServiceTest {
             syncState,
             vertx,
             "clientVersion",
-                genesisConfiguration,
+            genesisConfiguration,
             p2PNetwork);
     when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
 
@@ -204,7 +204,7 @@ public class EthStatsServiceTest {
             syncState,
             vertx,
             "clientVersion",
-                genesisConfiguration,
+            genesisConfiguration,
             p2PNetwork);
     when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
 

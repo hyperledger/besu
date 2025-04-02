@@ -87,7 +87,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new AdminNodeInfo(
             clientVersion,
             networkId,
-                genesisConfiguration,
+            genesisConfiguration,
             p2pNetwork,
             blockchainQueries,
             natService,

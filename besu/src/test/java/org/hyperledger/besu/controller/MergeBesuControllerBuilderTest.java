@@ -25,8 +25,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -88,9 +88,8 @@ public class MergeBesuControllerBuilderTest {
   private MergeBesuControllerBuilder besuControllerBuilder;
   private static final NodeKey nodeKey = NodeKeyUtils.generate();
 
-  @Mock GenesisConfig genesisConfig;
-  @Mock
-  GenesisConfiguration genesisConfiguration;
+  @Mock GenesisFile genesisConfig;
+  @Mock GenesisConfiguration genesisConfiguration;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
   @Mock CheckpointConfigOptions checkpointConfigOptions;

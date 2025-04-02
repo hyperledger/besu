@@ -26,7 +26,7 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
@@ -179,7 +179,7 @@ public final class RunnerTest {
   }
 
   private void syncFromGenesis(
-      final SyncMode mode, final GenesisConfig genesisConfig, final boolean isPeerTaskSystemEnabled)
+      final SyncMode mode, final GenesisFile genesisConfig, final boolean isPeerTaskSystemEnabled)
       throws Exception {
     final Path dataDirAhead = Files.createTempDirectory(temp, "db-ahead");
     final Path dbAhead = dataDirAhead.resolve("database");
@@ -266,7 +266,7 @@ public final class RunnerTest {
       final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
-              GenesisConfig.fromResource(DEV.getGenesisFile()),
+              GenesisFile.fromResource(DEV.getGenesisFile()),
               DEV.getNetworkId(),
               Collections.singletonList(aheadEnode),
               null);
@@ -391,10 +391,10 @@ public final class RunnerTest {
         .build();
   }
 
-  private GenesisConfig getFastSyncGenesis() throws IOException {
+  private GenesisFile getFastSyncGenesis() throws IOException {
     final ObjectNode jsonNode =
         (ObjectNode)
-            new ObjectMapper().readTree(GenesisConfig.class.getResource(MAINNET.getGenesisFile()));
+            new ObjectMapper().readTree(GenesisFile.class.getResource(MAINNET.getGenesisFile()));
     final Optional<ObjectNode> configNode = JsonUtil.getObjectNode(jsonNode, "config");
     configNode.ifPresent(
         (node) -> {
@@ -403,7 +403,7 @@ public final class RunnerTest {
           // remove merge terminal difficulty for fast sync in the absence of a CL mock
           node.remove("terminalTotalDifficulty");
         });
-    return GenesisConfig.fromConfig(jsonNode);
+    return GenesisFile.fromConfig(jsonNode);
   }
 
   private StorageProvider createKeyValueStorageProvider(
@@ -480,7 +480,7 @@ public final class RunnerTest {
   }
 
   private BesuController getController(
-      final GenesisConfig genesisConfig,
+      final GenesisFile genesisConfig,
       final SynchronizerConfiguration syncConfig,
       final Path dataDir,
       final NodeKey nodeKey,

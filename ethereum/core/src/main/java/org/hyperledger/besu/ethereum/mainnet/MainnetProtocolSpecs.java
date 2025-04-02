@@ -751,7 +751,7 @@ public abstract class MainnetProtocolSpecs {
         cancunDefinition(
             chainId,
             enableRevertReason,
-                genesisConfiguration,
+            genesisConfiguration,
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
@@ -864,7 +864,7 @@ public abstract class MainnetProtocolSpecs {
     return pragueDefinition(
             chainId,
             enableRevertReason,
-                genesisConfiguration,
+            genesisConfiguration,
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,

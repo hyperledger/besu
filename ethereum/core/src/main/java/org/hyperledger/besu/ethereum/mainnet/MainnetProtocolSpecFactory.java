@@ -138,7 +138,7 @@ public class MainnetProtocolSpecFactory {
     return MainnetProtocolSpecs.londonDefinition(
         chainId,
         isRevertReasonEnabled,
-            genesisConfiguration,
+        genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -150,7 +150,7 @@ public class MainnetProtocolSpecFactory {
     return MainnetProtocolSpecs.arrowGlacierDefinition(
         chainId,
         isRevertReasonEnabled,
-            genesisConfiguration,
+        genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -162,7 +162,7 @@ public class MainnetProtocolSpecFactory {
     return MainnetProtocolSpecs.grayGlacierDefinition(
         chainId,
         isRevertReasonEnabled,
-            genesisConfiguration,
+        genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -173,7 +173,7 @@ public class MainnetProtocolSpecFactory {
     return MainnetProtocolSpecs.parisDefinition(
         chainId,
         isRevertReasonEnabled,
-            genesisConfiguration,
+        genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -184,7 +184,7 @@ public class MainnetProtocolSpecFactory {
     return MainnetProtocolSpecs.shanghaiDefinition(
         chainId,
         isRevertReasonEnabled,
-            genesisConfiguration,
+        genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -195,7 +195,7 @@ public class MainnetProtocolSpecFactory {
     return MainnetProtocolSpecs.cancunDefinition(
         chainId,
         isRevertReasonEnabled,
-            genesisConfiguration,
+        genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -206,7 +206,7 @@ public class MainnetProtocolSpecFactory {
     return MainnetProtocolSpecs.cancunEOFDefinition(
         chainId,
         isRevertReasonEnabled,
-            genesisConfiguration,
+        genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -217,7 +217,7 @@ public class MainnetProtocolSpecFactory {
     return MainnetProtocolSpecs.pragueDefinition(
         chainId,
         isRevertReasonEnabled,
-            genesisConfiguration,
+        genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -228,7 +228,7 @@ public class MainnetProtocolSpecFactory {
     return MainnetProtocolSpecs.osakaDefinition(
         chainId,
         isRevertReasonEnabled,
-            genesisConfiguration,
+        genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -305,7 +305,7 @@ public class MainnetProtocolSpecFactory {
     return MainnetProtocolSpecs.futureEipsDefinition(
         chainId,
         isRevertReasonEnabled,
-            genesisConfiguration,
+        genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -327,7 +327,7 @@ public class MainnetProtocolSpecFactory {
     return MainnetProtocolSpecs.experimentalEipsDefinition(
         chainId,
         isRevertReasonEnabled,
-            genesisConfiguration,
+        genesisConfiguration,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,

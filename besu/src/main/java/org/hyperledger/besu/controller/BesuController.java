@@ -15,8 +15,8 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.cryptoservices.NodeKey;
@@ -332,7 +332,7 @@ public class BesuController implements java.io.Closeable {
      * @return the besu controller builder
      */
     public BesuControllerBuilder fromGenesisFile(
-        final GenesisConfig genesisConfig, final SyncMode syncMode) {
+        final GenesisFile genesisConfig, final SyncMode syncMode) {
       final BesuControllerBuilder builder;
       final var configOptions = genesisConfig.getConfigOptions();
 
@@ -372,7 +372,7 @@ public class BesuController implements java.io.Closeable {
     }
 
     private BesuControllerBuilder createConsensusScheduleBesuControllerBuilder(
-        final GenesisConfig genesisConfig) {
+        final GenesisFile genesisConfig) {
       final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new HashMap<>();
       final var configOptions = genesisConfig.getConfigOptions();
 

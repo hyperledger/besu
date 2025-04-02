@@ -260,7 +260,7 @@ class GenesisConfigurationTest {
 
   @Test
   void shouldSupportEmptyGenesisConfig() {
-    final GenesisConfiguration config = GenesisConfig.fromConfig("{}").getConfigOptions();
+    final GenesisConfiguration config = GenesisFile.fromConfig("{}").getConfigOptions();
     assertThat(config.isEthHash()).isFalse();
     assertThat(config.isClique()).isFalse();
     assertThat(config.isPoa()).isFalse();
@@ -291,7 +291,7 @@ class GenesisConfigurationTest {
 
   @Test
   void isZeroBaseFeeShouldDefaultToFalse() {
-    final GenesisConfiguration config = GenesisConfig.fromConfig("{}").getConfigOptions();
+    final GenesisConfiguration config = GenesisFile.fromConfig("{}").getConfigOptions();
 
     assertThat(config.isZeroBaseFee()).isFalse();
   }
@@ -312,7 +312,7 @@ class GenesisConfigurationTest {
 
   @Test
   void isFixedBaseFeeShouldDefaultToFalse() {
-    final GenesisConfiguration config = GenesisConfig.fromConfig("{}").getConfigOptions();
+    final GenesisConfiguration config = GenesisFile.fromConfig("{}").getConfigOptions();
 
     assertThat(config.isFixedBaseFee()).isFalse();
   }
@@ -411,7 +411,7 @@ class GenesisConfigurationTest {
   @Test
   void asMapIncludesBlobFeeSchedule() {
     final GenesisConfiguration config =
-        GenesisConfig.fromConfig(
+        GenesisFile.fromConfig(
                 "{\n"
                     + "  \"config\": {\n"
                     + "    \"blobSchedule\": {\n"
@@ -454,6 +454,6 @@ class GenesisConfigurationTest {
     final ObjectNode rootNode = JsonUtil.createEmptyObjectNode();
     final ObjectNode options = JsonUtil.objectNodeFromMap(configOptions);
     rootNode.set("config", options);
-    return GenesisConfig.fromConfig(rootNode).getConfigOptions();
+    return GenesisFile.fromConfig(rootNode).getConfigOptions();
   }
 }

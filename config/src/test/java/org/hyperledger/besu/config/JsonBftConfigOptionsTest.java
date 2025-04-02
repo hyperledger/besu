@@ -254,6 +254,6 @@ public class JsonBftConfigOptionsTest {
     final ObjectNode options = JsonUtil.objectNodeFromMap(ibftConfigOptions);
     configNode.set("ibft2", options);
     rootNode.set("config", configNode);
-    return GenesisConfig.fromConfig(rootNode).getConfigOptions().getBftConfigOptions();
+    return GenesisFile.fromConfig(rootNode).getConfigOptions().getBftConfigOptions();
   }
 }

@@ -20,7 +20,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -161,8 +161,7 @@ public class BlockchainSetupUtil {
         serviceManager);
   }
 
-  private static ProtocolSchedule mainnetProtocolScheduleProvider(
-      final GenesisConfig genesisConfig) {
+  private static ProtocolSchedule mainnetProtocolScheduleProvider(final GenesisFile genesisConfig) {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfig.getConfigOptions(),
         EvmConfiguration.DEFAULT,
@@ -189,7 +188,7 @@ public class BlockchainSetupUtil {
       final EthScheduler scheduler,
       final ServiceManager serviceManager) {
     try {
-      final GenesisConfig genesisConfig = GenesisConfig.fromSource(chainResources.getGenesisURL());
+      final GenesisFile genesisConfig = GenesisFile.fromSource(chainResources.getGenesisURL());
       final ProtocolSchedule protocolSchedule = protocolScheduleProvider.get(genesisConfig);
 
       final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
@@ -284,7 +283,7 @@ public class BlockchainSetupUtil {
   }
 
   private interface ProtocolScheduleProvider {
-    ProtocolSchedule get(GenesisConfig genesisConfig);
+    ProtocolSchedule get(GenesisFile genesisConfig);
   }
 
   private interface ProtocolContextProvider {

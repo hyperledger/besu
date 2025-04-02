@@ -19,7 +19,7 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
@@ -51,8 +51,8 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 
   @Override
-  protected GenesisConfig getGenesisConfig() {
-    return GenesisConfig.fromResource("/block-transaction-selector/gas-price-genesis.json");
+  protected GenesisFile getGenesisConfig() {
+    return GenesisFile.fromResource("/block-transaction-selector/gas-price-genesis.json");
   }
 
   @Override
