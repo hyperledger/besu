@@ -154,11 +154,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         mergePeerFilter,
         synchronizerConfiguration,
         scheduler,
-        new ForkIdManager(
-            blockchain,
-            Collections.emptyList(),
-            Collections.emptyList(),
-            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
+        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList()));
   }
 
   public EthContext ethContext() {
@@ -178,13 +174,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final SynchronizerConfiguration synchronizerConfiguration,
       final EthProtocolConfiguration ethProtocolConfiguration) {
     final List<Capability> capabilities = new ArrayList<>();
-
-    if (SyncMode.isFullSync(synchronizerConfiguration.getSyncMode())) {
-      capabilities.add(EthProtocol.ETH62);
-    }
-    capabilities.add(EthProtocol.ETH63);
-    capabilities.add(EthProtocol.ETH64);
-    capabilities.add(EthProtocol.ETH65);
     capabilities.add(EthProtocol.ETH66);
 
     // Version 67 removes the GetNodeData and NodeData
@@ -302,7 +291,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     // This will handle requests
     Optional<MessageData> maybeResponseData = Optional.empty();
     try {
-      if (EthProtocol.isEth66Compatible(cap) && EthProtocol.requestIdCompatible(code)) {
+      if (EthProtocol.requestIdCompatible(code)) {
         final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
             ethMessage.getData().unwrapMessageData();
         maybeResponseData =
@@ -338,8 +327,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     ethPeers.registerNewConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
     final Capability cap = connection.capability(getSupportedProtocol());
-    final ForkId latestForkId =
-        cap.getVersion() >= 64 ? forkIdManager.getForkIdForChainHead() : null;
+    final ForkId latestForkId = forkIdManager.getForkIdForChainHead();
     final StatusMessage status =
         StatusMessage.create(
             cap.getVersion(),
@@ -392,7 +380,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             .addArgument(() -> getPeerOrPeerId(peer))
             .log();
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_MISMATCHED_NETWORK);
-      } else if (!forkIdManager.peerCheck(forkId) && status.protocolVersion() > 63) {
+      } else if (!forkIdManager.peerCheck(forkId)) {
         LOG.atDebug()
             .setMessage("{} has matching network id ({}), but non-matching fork id: {}")
             .addArgument(() -> getPeerOrPeerId(peer))

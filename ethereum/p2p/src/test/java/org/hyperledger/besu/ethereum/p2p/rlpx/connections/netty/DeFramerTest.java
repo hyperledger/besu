@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.BreachOfProtocolException;
@@ -99,7 +100,7 @@ public class DeFramerTest {
   private final int p2pVersion = 5;
   private final String clientId = "abc";
   private final int port = 30303;
-  private final List<Capability> capabilities = Arrays.asList(Capability.create("eth", 63));
+  private final List<Capability> capabilities = Arrays.asList(EthProtocolHelper.LATEST);
   private final EnodeURL localEnode =
       EnodeURLImpl.builder()
           .ipAddress("127.0.0.1")
