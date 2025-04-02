@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
@@ -117,6 +118,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,6 +126,9 @@ import org.slf4j.LoggerFactory;
 /** The Besu controller builder that builds Besu Controller. */
 public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
+
+  private static final long MAINNET_MERGE_BLOCK_NUMBER = 15_537_393;
+  private static final long SEPOLIA_MERGE_BLOCK_NUMBER = 1_735_371;
 
   /** The genesis file */
   protected GenesisConfig genesisConfig;
@@ -695,14 +700,23 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
-    if (chainPrunerConfiguration.chainPruningEnabled()) {
+    if (chainPrunerConfiguration.chainPruningEnabled()
+        || chainPrunerConfiguration.preMergePruningEnabled()) {
       final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
       blockchain.observeBlockAdded(chainDataPruner);
-      LOG.info(
-          "Chain data pruning enabled with recent blocks retained to be: "
-              + chainPrunerConfiguration.chainPruningBlocksRetained()
-              + " and frequency to be: "
-              + chainPrunerConfiguration.blocksFrequency());
+      if (chainPrunerConfiguration.chainPruningEnabled()) {
+        LOG.info(
+            "Chain data pruning enabled with recent blocks retained to be: "
+                + chainPrunerConfiguration.chainPruningBlocksRetained()
+                + " and frequency to be: "
+                + chainPrunerConfiguration.blocksFrequency());
+      } else if (chainPrunerConfiguration.preMergePruningEnabled()) {
+        LOG.info(
+            "Pre-merge block pruning enabled with frequency: "
+                + chainPrunerConfiguration.blocksFrequency()
+                + " and quantity: "
+                + chainPrunerConfiguration.preMergePruningBlocksQuantity());
+      }
     }
 
     final TransactionPool transactionPool =
@@ -1160,13 +1174,29 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private ChainDataPruner createChainPruner(final BlockchainStorage blockchainStorage) {
+    NetworkName network =
+        Stream.of(NetworkName.values())
+            .filter((n) -> n.getNetworkId().equals(networkId))
+            .findAny()
+            .orElseThrow(() -> new RuntimeException("Unrecognised network"));
     return new ChainDataPruner(
         blockchainStorage,
         new ChainDataPrunerStorage(
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
+        switch (network) {
+          case MAINNET -> MAINNET_MERGE_BLOCK_NUMBER;
+          case SEPOLIA -> SEPOLIA_MERGE_BLOCK_NUMBER;
+          default -> 0;
+        },
+        chainPrunerConfiguration.chainPruningEnabled()
+            ? ChainDataPruner.Mode.CHAIN_PRUNING
+            : (chainPrunerConfiguration.preMergePruningEnabled()
+                ? ChainDataPruner.Mode.PRE_MERGE_PRUNING
+                : null),
         chainPrunerConfiguration.chainPruningBlocksRetained(),
         chainPrunerConfiguration.blocksFrequency(),
+        chainPrunerConfiguration.preMergePruningBlocksQuantity(),
         MonitoredExecutors.newBoundedThreadPool(
             ChainDataPruner.class.getSimpleName(),
             1,

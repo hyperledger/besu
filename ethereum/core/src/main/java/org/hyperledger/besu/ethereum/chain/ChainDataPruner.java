@@ -24,29 +24,47 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ChainDataPruner implements BlockAddedObserver {
-  public static final int MAX_PRUNING_THREAD_QUEUE_SIZE = 16;
   private static final Logger LOG = LoggerFactory.getLogger(ChainDataPruner.class);
+
+  public static final int MAX_PRUNING_THREAD_QUEUE_SIZE = 16;
+
   private final BlockchainStorage blockchainStorage;
   private final ChainDataPrunerStorage prunerStorage;
+  private final long mergeBlock;
+  private final Mode mode;
   private final long blocksToRetain;
   private final long pruningFrequency;
+  private final long pruningQuantity;
   private final ExecutorService pruningExecutor;
 
   public ChainDataPruner(
       final BlockchainStorage blockchainStorage,
       final ChainDataPrunerStorage prunerStorage,
+      final long mergeBlock,
+      final Mode mode,
       final long blocksToRetain,
       final long pruningFrequency,
+      final long pruningQuantity,
       final ExecutorService pruningExecutor) {
     this.blockchainStorage = blockchainStorage;
     this.prunerStorage = prunerStorage;
+    this.mergeBlock = mergeBlock;
+    this.mode = mode;
     this.blocksToRetain = blocksToRetain;
     this.pruningFrequency = pruningFrequency;
     this.pruningExecutor = pruningExecutor;
+    this.pruningQuantity = pruningQuantity;
   }
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
+    switch (mode) {
+      case CHAIN_PRUNING -> chainPrunerAction(event);
+      case PRE_MERGE_PRUNING -> preMergePruningAction();
+    }
+  }
+
+  private void chainPrunerAction(final BlockAddedEvent event) {
     final long blockNumber = event.getBlock().getHeader().getNumber();
     final long storedPruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
     if (blockNumber < storedPruningMark) {
@@ -77,7 +95,7 @@ public class ChainDataPruner implements BlockAddedObserver {
             long currentRetainedBlock = blockNumber - currentPruningMark + 1;
             while (currentRetainedBlock > blocksToRetain) {
               LOG.debug("Pruning chain data with block height of {}", currentPruningMark);
-              pruneChainDataAtBlock(pruningTransaction, currentPruningMark);
+              pruneChainDataAtBlock(pruningTransaction, currentPruningMark, true);
               currentPruningMark++;
               currentRetainedBlock = blockNumber - currentPruningMark;
             }
@@ -87,11 +105,31 @@ public class ChainDataPruner implements BlockAddedObserver {
         });
   }
 
-  private void pruneChainDataAtBlock(final KeyValueStorageTransaction tx, final long blockNumber) {
+  private void preMergePruningAction() {
+    pruningExecutor.submit(
+        () -> {
+          final long storedPruningMark = prunerStorage.getPruningMark().orElse(1L);
+          final long expectedNewPruningMark =
+              Math.min(storedPruningMark + pruningQuantity, mergeBlock);
+          final KeyValueStorageTransaction pruningTransaction = prunerStorage.startTransaction();
+          for (long blockNumber = storedPruningMark;
+              blockNumber < expectedNewPruningMark;
+              blockNumber++) {
+            pruneChainDataAtBlock(pruningTransaction, blockNumber, false);
+          }
+          prunerStorage.setPruningMark(pruningTransaction, expectedNewPruningMark);
+          pruningTransaction.commit();
+        });
+  }
+
+  private void pruneChainDataAtBlock(
+      final KeyValueStorageTransaction tx, final long blockNumber, final boolean pruneHeaders) {
     final Collection<Hash> oldForkBlocks = prunerStorage.getForkBlocks(blockNumber);
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
     for (final Hash toPrune : oldForkBlocks) {
-      updater.removeBlockHeader(toPrune);
+      if (pruneHeaders) {
+        updater.removeBlockHeader(toPrune);
+      }
       updater.removeBlockBody(toPrune);
       updater.removeTransactionReceipts(toPrune);
       updater.removeTotalDifficulty(toPrune);
@@ -106,5 +144,10 @@ public class ChainDataPruner implements BlockAddedObserver {
     updater.removeBlockHash(blockNumber);
     updater.commit();
     prunerStorage.removeForkBlocks(tx, blockNumber);
+  }
+
+  public enum Mode {
+    CHAIN_PRUNING,
+    PRE_MERGE_PRUNING
   }
 }
