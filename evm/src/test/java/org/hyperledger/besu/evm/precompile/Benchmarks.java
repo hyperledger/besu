@@ -561,7 +561,7 @@ public class Benchmarks {
     return (long) ((timePerCallInNs * GAS_PER_SECOND_STANDARD) / 1.0e9D);
   }
 
-  public static void logPerformance(String label, long gasCost, long timeNs) {
+  public static void logPerformance(final String label, final long gasCost, final long timeNs) {
     double derivedGas = (timeNs / 1_000_000_000.0) * GAS_PER_SECOND_STANDARD;
     double mgps = (gasCost * 1000.0) / timeNs;
 
