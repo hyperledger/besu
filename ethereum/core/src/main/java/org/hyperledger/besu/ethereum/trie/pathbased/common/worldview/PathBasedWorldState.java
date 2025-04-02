@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedLayeredWorldStateKeyValueStorage;
@@ -245,11 +246,7 @@ public abstract class PathBasedWorldState
 
   protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
     if (!worldStateConfig.isTrieDisabled() && !calculatedStateRoot.equals(header.getStateRoot())) {
-      throw new RuntimeException(
-          "World State Root does not match expected value, header "
-              + header.getStateRoot().toHexString()
-              + " calculated "
-              + calculatedStateRoot.toHexString());
+      throw new StateRootMismatchException(header.getStateRoot(), calculatedStateRoot);
     }
   }
 
