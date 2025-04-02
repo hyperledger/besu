@@ -19,25 +19,15 @@ import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDe
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.account.MutableCodeDelegationDelegationAccount;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /** A service that manages the code injection of delegated code. */
 public class CodeDelegationService {
-
-  private final GasCalculator gasCalculator;
-
-  /**
-   * Creates a new CodeDelegationService.
-   *
-   * @param gasCalculator the gas calculator to check for pre compiles.
-   */
-  public CodeDelegationService(final GasCalculator gasCalculator) {
-    this.gasCalculator = gasCalculator;
+  /** Creates a new CodeDelegationService. */
+  public CodeDelegationService() {
+    // empty
   }
 
   /**
@@ -65,45 +55,6 @@ public class CodeDelegationService {
    * @return {@code true} if the account can set delegated code, {@code false} otherwise.
    */
   public boolean canSetCodeDelegation(final Account account) {
-    return account.getCode().isEmpty() || hasCodeDelegation(account.getCode());
-  }
-
-  /**
-   * Processes the provided account, resolving the code if delegated.
-   *
-   * @param worldUpdater the world updater to retrieve the delegated code.
-   * @param account the account to process.
-   * @return the processed account, containing the delegated code if set, the unmodified account
-   *     otherwise.
-   */
-  public Account processAccount(final WorldUpdater worldUpdater, final Account account) {
-    if (account == null || !hasCodeDelegation(account.getCode())) {
-      return account;
-    }
-
-    return new CodeDelegationAccount(
-        worldUpdater, account, resolveDelegatedAddress(account.getCode()), gasCalculator);
-  }
-
-  /**
-   * Processes the provided mutable account, resolving the code if delegated.
-   *
-   * @param worldUpdater the world updater to retrieve the delegated code.
-   * @param account the mutable account to process.
-   * @return the processed mutable account, containing the delegated code if set, the unmodified
-   *     mutable account otherwise.
-   */
-  public MutableAccount processMutableAccount(
-      final WorldUpdater worldUpdater, final MutableAccount account) {
-    if (account == null || !hasCodeDelegation(account.getCode())) {
-      return account;
-    }
-
-    return new MutableCodeDelegationDelegationAccount(
-        worldUpdater, account, resolveDelegatedAddress(account.getCode()), gasCalculator);
-  }
-
-  private Address resolveDelegatedAddress(final Bytes code) {
-    return Address.wrap(code.slice(CODE_DELEGATION_PREFIX.size()));
+    return account != null && (account.getCode().isEmpty() || hasCodeDelegation(account.getCode()));
   }
 }
