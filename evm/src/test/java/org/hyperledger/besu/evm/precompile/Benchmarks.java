@@ -76,14 +76,7 @@ public class Benchmarks {
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
       final long timePerCallInNs = runBenchmark(testCase.getValue(), contract);
       long gasRequirement = contract.gasRequirement(testCase.getValue());
-
-      System.out.printf(
-          "Secp256k1 signature recovery %s for %,d gas. \tDerived gas %,d gas.\tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-          testCase.getKey(),
-          (int) gasRequirement,
-          getDerivedGasFromExecutionTime(timePerCallInNs),
-          timePerCallInNs,
-          getMgasPerS(timePerCallInNs, gasRequirement));
+      logPerformance("Secp256k1 signature recovery", gasRequirement, timePerCallInNs);
     }
   }
 
@@ -98,14 +91,7 @@ public class Benchmarks {
 
       final long timePerCallInNs = runBenchmark(bytes, contract);
       long gasRequirement = contract.gasRequirement(bytes);
-
-      System.out.printf(
-          "Sha256 %,d bytes for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-          len,
-          (int) gasRequirement,
-          getDerivedGasFromExecutionTime(timePerCallInNs),
-          timePerCallInNs,
-          getMgasPerS(timePerCallInNs, gasRequirement));
+      logPerformance(String.format("Sha256 %,d bytes", len), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -129,14 +115,7 @@ public class Benchmarks {
       final long elapsed = timer.elapsed(TimeUnit.NANOSECONDS);
       final long timePerCallInNs = elapsed / MATH_ITERATIONS;
       long gasRequirement = istanbulGasCalculator.keccak256OperationGasCost(fakeFrame, 0, len);
-
-      System.out.printf(
-          "Keccak256 %,d bytes for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-          len,
-          (int) gasRequirement,
-          getDerivedGasFromExecutionTime(timePerCallInNs),
-          timePerCallInNs,
-          getMgasPerS(timePerCallInNs, gasRequirement));
+      logPerformance(String.format("Keccak256 %,d bytes", len), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -150,14 +129,7 @@ public class Benchmarks {
       final Bytes bytes = Bytes.wrap(data);
       final long timePerCallInNs = runBenchmark(bytes, contract);
       long gasRequirement = contract.gasRequirement(bytes);
-
-      System.out.printf(
-          "ripemd %,d bytes for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-          len,
-          (int) gasRequirement,
-          getDerivedGasFromExecutionTime(timePerCallInNs),
-          timePerCallInNs,
-          getMgasPerS(timePerCallInNs, gasRequirement));
+      logPerformance(String.format("RIPMD %,d bytes", len), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -260,17 +232,9 @@ public class Benchmarks {
     for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
       final long timePerCallInNs = runBenchmark(testCase.getValue(), contract);
       long gasRequirement = contract.gasRequirement(testCase.getValue());
-
-      System.out.printf(
-          "ModEXP %s for %,d gas. \tDerived gas %,d gas.\tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-          testCase.getKey(),
-          (int) gasRequirement,
-          getDerivedGasFromExecutionTime(timePerCallInNs),
-          timePerCallInNs,
-          getMgasPerS(timePerCallInNs, gasRequirement));
+      logPerformance(
+          String.format("ModEXP %s", testCase.getKey()), gasRequirement, timePerCallInNs);
     }
-
-    System.getProperties().forEach((k, v) -> System.out.println(k + " = " + v));
   }
 
   private static void benchBNADD() {
@@ -294,13 +258,7 @@ public class Benchmarks {
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
-
-    System.out.printf(
-        "BNADD for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-        (int) gasRequirement,
-        getDerivedGasFromExecutionTime(timePerCallInNs),
-        timePerCallInNs,
-        getMgasPerS(timePerCallInNs, gasRequirement));
+    logPerformance("BNADD", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBNMUL() {
@@ -319,13 +277,7 @@ public class Benchmarks {
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
-
-    System.out.printf(
-        "BNMUL for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-        (int) gasRequirement,
-        getDerivedGasFromExecutionTime(timePerCallInNs),
-        timePerCallInNs,
-        getMgasPerS(timePerCallInNs, gasRequirement));
+    logPerformance("BNMUL", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBNPairing() {
@@ -376,14 +328,7 @@ public class Benchmarks {
     for (int i = 0; i < args.length; i++) {
       final long timePerCallInNs = runBenchmark(args[i], contract);
       long gasRequirement = contract.gasRequirement(args[i]);
-
-      System.out.printf(
-          "BNPairings %d for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-          i * 2 + 2,
-          (int) gasRequirement,
-          getDerivedGasFromExecutionTime(timePerCallInNs),
-          timePerCallInNs,
-          getMgasPerS(timePerCallInNs, gasRequirement));
+      logPerformance(String.format("BNPairings %,d", i * 2 + 2), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -399,13 +344,7 @@ public class Benchmarks {
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
-
-    System.out.printf(
-        "G1ADD for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-        (int) gasRequirement,
-        getDerivedGasFromExecutionTime(timePerCallInNs),
-        timePerCallInNs,
-        getMgasPerS(timePerCallInNs, gasRequirement));
+    logPerformance("G1ADD", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBLS12G1MultiExp() {
@@ -452,13 +391,7 @@ public class Benchmarks {
     for (int i = 0; i < args.length; i++) {
       final long timePerCallInNs = runBenchmark(args[i], contract);
       long gasRequirement = contract.gasRequirement(args[i]);
-      System.out.printf(
-          "G1MULTIEXP %d for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-          i + 1,
-          getDerivedGasFromExecutionTime(timePerCallInNs),
-          (int) gasRequirement,
-          timePerCallInNs,
-          getMgasPerS(timePerCallInNs, gasRequirement));
+      logPerformance(String.format("G1MULTIEXP %,d", i + 1), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -474,13 +407,7 @@ public class Benchmarks {
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
-
-    System.out.printf(
-        "G2ADD for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-        (int) gasRequirement,
-        getDerivedGasFromExecutionTime(timePerCallInNs),
-        timePerCallInNs,
-        getMgasPerS(timePerCallInNs, gasRequirement));
+    logPerformance("G2ADD", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBLS12G2MultiExp() {
@@ -527,14 +454,7 @@ public class Benchmarks {
     for (int i = 0; i < args.length; i++) {
       final long timePerCallInNs = runBenchmark(args[i], contract);
       long gasRequirement = contract.gasRequirement(args[i]);
-
-      System.out.printf(
-          "G2MULTIEXP %d for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-          i + 1,
-          (int) gasRequirement,
-          getDerivedGasFromExecutionTime(timePerCallInNs),
-          timePerCallInNs,
-          getMgasPerS(timePerCallInNs, gasRequirement));
+      logPerformance(String.format("G2MULTIEXP %,d", i + 1), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -573,14 +493,8 @@ public class Benchmarks {
     for (int i = 0; i < args.length; i++) {
       final long timePerCallInNs = runBenchmark(args[i], contract);
       long gasRequirement = contract.gasRequirement(args[i]);
-
-      System.out.printf(
-          "BLS pairings %d pairs for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-          i * 2 + 2,
-          (int) gasRequirement,
-          getDerivedGasFromExecutionTime(timePerCallInNs),
-          timePerCallInNs,
-          getMgasPerS(timePerCallInNs, gasRequirement));
+      logPerformance(
+          String.format("BLS pairings %d pairs", i * 2 + 2), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -593,13 +507,7 @@ public class Benchmarks {
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
-
-    System.out.printf(
-        "MAPFPTOG1 for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-        (int) gasRequirement,
-        getDerivedGasFromExecutionTime(timePerCallInNs),
-        timePerCallInNs,
-        getMgasPerS(timePerCallInNs, gasRequirement));
+    logPerformance("MAPFPTOG1", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBLS12MapFP2TOG2() {
@@ -611,13 +519,7 @@ public class Benchmarks {
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
-
-    System.out.printf(
-        "MAPFP2TOG2 for\t %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n",
-        (int) gasRequirement,
-        getDerivedGasFromExecutionTime(timePerCallInNs),
-        timePerCallInNs,
-        getMgasPerS(timePerCallInNs, gasRequirement));
+    logPerformance("MAPFP2TOG2", gasRequirement, timePerCallInNs);
   }
 
   private static long runBenchmark(final Bytes arg, final PrecompiledContract contract) {
@@ -648,13 +550,7 @@ public class Benchmarks {
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
-
-    System.out.printf(
-        "KZGPointEval for %,d gas. \tDerived gas %,d gas. \tExecution time per call %,d ns. \t@ %,.2f MGps%n ",
-        (int) gasRequirement,
-        getDerivedGasFromExecutionTime(timePerCallInNs),
-        timePerCallInNs,
-        getMgasPerS(timePerCallInNs, gasRequirement));
+    logPerformance("KZGPointEval", gasRequirement, timePerCallInNs);
   }
 
   private static double getMgasPerS(final long timePerCallInNs, final long gasCost) {
@@ -665,7 +561,61 @@ public class Benchmarks {
     return (long) ((timePerCallInNs * GAS_PER_SECOND_STANDARD) / 1.0e9D);
   }
 
+  public static void logPerformance(String label, long gasCost, long timeNs) {
+    double derivedGas = (timeNs / 1_000_000_000.0) * GAS_PER_SECOND_STANDARD;
+    double mgps = (gasCost * 1000.0) / timeNs;
+
+    System.out.printf(
+        "%-30s | %,7d gas cost | %,7.0f calculated gas for execution time per call %,9d ns | %7.2f MGps%n",
+        label, gasCost, derivedGas, timeNs, mgps);
+  }
+
+  public static void logHeader() {
+    long executionTimeExampleNs = 247_914L;
+    long gasPerSecond = GAS_PER_SECOND_STANDARD;
+    long derivedGas = (executionTimeExampleNs * gasPerSecond) / 1_000_000_000L;
+
+    System.out.println(
+        "**** Calculate the derived gas from execution time with a target of 100 mgas/s *****");
+    System.out.println(
+        "*                                                                                  *");
+    System.out.println(
+        "*   If "
+            + String.format("%,d", executionTimeExampleNs)
+            + " ns is the execution time of the precompile call, so this is how     *");
+    System.out.println(
+        "*                the derived gas is calculated                                     *");
+    System.out.println(
+        "*                                                                                  *");
+    System.out.println(
+        "*   "
+            + String.format("%,d", gasPerSecond)
+            + " gas    -------> 1 second (1_000_000_000 ns)                        *");
+    System.out.println(
+        "*   x           gas    -------> "
+            + String.format("%,d", executionTimeExampleNs)
+            + " ns                                         *");
+    System.out.println(
+        "*                                                                                  *");
+    System.out.println(
+        "*\tx = ("
+            + String.format("%,d", executionTimeExampleNs)
+            + " * "
+            + String.format("%,d", gasPerSecond)
+            + ") / 1_000_000_000 = "
+            + String.format("%,d", derivedGas)
+            + " gas"
+            + "                       *");
+    System.out.println(
+        "************************************************************************************");
+    System.out.println();
+    System.out.println("** System Properties **");
+    System.out.println();
+    System.getProperties().forEach((k, v) -> System.out.println(k + " = " + v));
+  }
+
   public static void main(final String[] args) {
+    logHeader();
     benchSecp256k1Recover();
     benchSha256();
     benchKeccak256();
