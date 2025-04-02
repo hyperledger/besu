@@ -167,7 +167,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contractSpy.computePrecompile(privateTransactionLookupId, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
@@ -199,7 +199,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contractSpy.computePrecompile(privateTransactionLookupId64, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
@@ -213,7 +213,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(privateTransactionLookupId, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
@@ -225,7 +225,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(null, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
@@ -237,7 +237,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(privateTransactionLookupId.slice(10), messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
@@ -249,7 +249,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(privateTransactionLookupId64.slice(40), messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
@@ -299,7 +299,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(privateTransactionLookupId, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
@@ -369,7 +369,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contractSpy.computePrecompile(privateTransactionLookupId, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
@@ -409,7 +409,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contractSpy.computePrecompile(privateTransactionLookupId, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }

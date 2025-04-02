@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth;
 
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
@@ -30,26 +28,25 @@ import java.util.Set;
 public class EthProtocol implements SubProtocol {
   public static final String NAME = "eth";
   private static final EthProtocol INSTANCE = new EthProtocol();
-  public static final Capability ETH62 = Capability.create(NAME, EthProtocolVersion.V62);
-  public static final Capability ETH63 = Capability.create(NAME, EthProtocolVersion.V63);
-  public static final Capability ETH64 = Capability.create(NAME, EthProtocolVersion.V64);
-  public static final Capability ETH65 = Capability.create(NAME, EthProtocolVersion.V65);
   public static final Capability ETH66 = Capability.create(NAME, EthProtocolVersion.V66);
   public static final Capability ETH67 = Capability.create(NAME, EthProtocolVersion.V67);
   public static final Capability ETH68 = Capability.create(NAME, EthProtocolVersion.V68);
 
+  // Latest version of the Eth protocol
+  public static final Capability LATEST = ETH68;
+
   public static boolean requestIdCompatible(final int code) {
     return Set.of(
-            EthPV62.GET_BLOCK_HEADERS,
-            EthPV62.BLOCK_HEADERS,
-            EthPV62.GET_BLOCK_BODIES,
-            EthPV62.BLOCK_BODIES,
-            EthPV65.GET_POOLED_TRANSACTIONS,
-            EthPV65.POOLED_TRANSACTIONS,
-            EthPV63.GET_NODE_DATA,
-            EthPV63.NODE_DATA,
-            EthPV63.GET_RECEIPTS,
-            EthPV63.RECEIPTS)
+            EthProtocolMessages.GET_BLOCK_HEADERS,
+            EthProtocolMessages.BLOCK_HEADERS,
+            EthProtocolMessages.GET_BLOCK_BODIES,
+            EthProtocolMessages.BLOCK_BODIES,
+            EthProtocolMessages.GET_POOLED_TRANSACTIONS,
+            EthProtocolMessages.POOLED_TRANSACTIONS,
+            EthProtocolMessages.GET_NODE_DATA,
+            EthProtocolMessages.NODE_DATA,
+            EthProtocolMessages.GET_RECEIPTS,
+            EthProtocolMessages.RECEIPTS)
         .contains(code);
   }
 
@@ -60,21 +57,10 @@ public class EthProtocol implements SubProtocol {
 
   @Override
   public int messageSpace(final int protocolVersion) {
-    switch (protocolVersion) {
-      case EthProtocolVersion.V62:
-        return 8;
-      case EthProtocolVersion.V63:
-      case EthProtocolVersion.V64:
-      case EthProtocolVersion.V65:
-      case EthProtocolVersion.V66:
-      case EthProtocolVersion.V67:
-      case EthProtocolVersion.V68:
-        // same number of messages in each range, eth65 defines messages in the middle of the
-        // range defined by eth63 and eth64 defines no new ranges.
-        return 17;
-      default:
-        return 0;
-    }
+    return switch (protocolVersion) {
+      case EthProtocolVersion.V66, EthProtocolVersion.V67, EthProtocolVersion.V68 -> 17;
+      default -> 0;
+    };
   }
 
   @Override
@@ -85,35 +71,35 @@ public class EthProtocol implements SubProtocol {
   @Override
   public String messageName(final int protocolVersion, final int code) {
     switch (code) {
-      case EthPV62.STATUS:
+      case EthProtocolMessages.STATUS:
         return "Status";
-      case EthPV62.NEW_BLOCK_HASHES:
+      case EthProtocolMessages.NEW_BLOCK_HASHES:
         return "NewBlockHashes";
-      case EthPV62.TRANSACTIONS:
+      case EthProtocolMessages.TRANSACTIONS:
         return "Transactions";
-      case EthPV62.GET_BLOCK_HEADERS:
+      case EthProtocolMessages.GET_BLOCK_HEADERS:
         return "GetBlockHeaders";
-      case EthPV62.BLOCK_HEADERS:
+      case EthProtocolMessages.BLOCK_HEADERS:
         return "BlockHeaders";
-      case EthPV62.GET_BLOCK_BODIES:
+      case EthProtocolMessages.GET_BLOCK_BODIES:
         return "GetBlockBodies";
-      case EthPV62.BLOCK_BODIES:
+      case EthProtocolMessages.BLOCK_BODIES:
         return "BlockBodies";
-      case EthPV62.NEW_BLOCK:
+      case EthProtocolMessages.NEW_BLOCK:
         return "NewBlock";
-      case EthPV65.NEW_POOLED_TRANSACTION_HASHES:
+      case EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES:
         return "NewPooledTransactionHashes";
-      case EthPV65.GET_POOLED_TRANSACTIONS:
+      case EthProtocolMessages.GET_POOLED_TRANSACTIONS:
         return "GetPooledTransactions";
-      case EthPV65.POOLED_TRANSACTIONS:
+      case EthProtocolMessages.POOLED_TRANSACTIONS:
         return "PooledTransactions";
-      case EthPV63.GET_NODE_DATA:
+      case EthProtocolMessages.GET_NODE_DATA:
         return "GetNodeData";
-      case EthPV63.NODE_DATA:
+      case EthProtocolMessages.NODE_DATA:
         return "NodeData";
-      case EthPV63.GET_RECEIPTS:
+      case EthProtocolMessages.GET_RECEIPTS:
         return "GetReceipts";
-      case EthPV63.RECEIPTS:
+      case EthProtocolMessages.RECEIPTS:
         return "Receipts";
       default:
         return INVALID_MESSAGE_NAME;
@@ -122,9 +108,5 @@ public class EthProtocol implements SubProtocol {
 
   public static EthProtocol get() {
     return INSTANCE;
-  }
-
-  public static boolean isEth66Compatible(final Capability capability) {
-    return NAME.equals(capability.getName()) && capability.getVersion() >= ETH66.getVersion();
   }
 }
