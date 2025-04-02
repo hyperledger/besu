@@ -181,6 +181,7 @@ public abstract class PathBasedWorldState
     final PathBasedWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
+    Runnable cacheWorldState = () -> {};
 
     try {
       final Hash calculatedRootHash;
@@ -205,11 +206,9 @@ public abstract class PathBasedWorldState
         saveTrieLog =
             () -> {
               trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
-              // not save a frozen state in the cache
-              if (!isStorageFrozen) {
-                cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
-              }
             };
+        cacheWorldState =
+            () -> cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
 
         stateUpdater
             .getWorldStateTransaction()
@@ -227,9 +226,16 @@ public abstract class PathBasedWorldState
       success = true;
     } finally {
       if (success) {
-        stateUpdater.commit();
-        accumulator.reset();
+        // commit the trielog transaction ahead of the state, in case of an abnormal shutdown:
         saveTrieLog.run();
+        // commit only the composed worldstate, as trielog transaction is already complete:
+        stateUpdater.commitComposedOnly();
+        if (!isStorageFrozen) {
+          // optionally save the committed worldstate state in the cache
+          cacheWorldState.run();
+        }
+
+        accumulator.reset();
       } else {
         stateUpdater.rollback();
         accumulator.reset();
