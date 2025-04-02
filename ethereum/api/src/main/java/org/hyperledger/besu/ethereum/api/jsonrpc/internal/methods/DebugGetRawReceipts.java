@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.List;
@@ -70,7 +70,7 @@ public class DebugGetRawReceipts extends AbstractBlockParameterOrBlockHashMethod
                 RLP.encode(
                         output ->
                             TransactionReceiptEncoder.writeTo(
-                                receipt, output, TransactionReceiptEncodingOptions.NETWORK))
+                                receipt, output, TransactionReceiptEncodingConfiguration.NETWORK))
                     .toHexString())
         .toArray(String[]::new);
   }

@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
@@ -129,7 +129,7 @@ public final class BodyValidation {
                             TransactionReceiptEncoder.writeTo(
                                 receipts.get(i),
                                 rlpOutput,
-                                TransactionReceiptEncodingOptions.TRIE_ROOT))));
+                                TransactionReceiptEncodingConfiguration.TRIE_ROOT))));
 
     return Hash.wrap(trie.getRootHash());
   }

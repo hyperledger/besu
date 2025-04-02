@@ -17,15 +17,15 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.datatypes.TransactionType.EIP1559;
 import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
-import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.NETWORK;
-import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.STORAGE_WITHOUT_COMPACTION;
-import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions.STORAGE_WITH_COMPACTION;
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.NETWORK;
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.STORAGE_WITHOUT_COMPACTION;
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.STORAGE_WITH_COMPACTION;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class TransactionReceiptEncodingOptionsTest {
+public class TransactionReceiptEncodingConfigurationTest {
 
   private static final Bytes REVERT_REASON = Bytes.fromHexString("0x1122334455667788");
 
@@ -51,7 +51,7 @@ public class TransactionReceiptEncodingOptionsTest {
   @ParameterizedTest(name = "{0}={1}")
   @MethodSource("provider")
   public void toFromRlpLegacyTransactionSuccessfulStatus(
-      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+      final String ignored, final TransactionReceiptEncodingConfiguration encodingOptions) {
     final TransactionReceipt receipt = createTransactionReceiptStatus(FRONTIER, 1);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
@@ -62,7 +62,7 @@ public class TransactionReceiptEncodingOptionsTest {
   @ParameterizedTest(name = "{0}={1}")
   @MethodSource("provider")
   public void toFromRlpLegacyTransactionFailedStatus(
-      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+      final String ignored, final TransactionReceiptEncodingConfiguration encodingOptions) {
     final TransactionReceipt receipt = createTransactionReceiptStatus(FRONTIER, 0);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
@@ -73,7 +73,7 @@ public class TransactionReceiptEncodingOptionsTest {
   @ParameterizedTest(name = "{0}={1}")
   @MethodSource("provider")
   public void toFromRlpLegacyTransactionStateRoot(
-      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+      final String ignored, final TransactionReceiptEncodingConfiguration encodingOptions) {
     final TransactionReceipt receipt = createTransactionReceiptStateRoot(FRONTIER);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
@@ -84,7 +84,7 @@ public class TransactionReceiptEncodingOptionsTest {
   @ParameterizedTest(name = "{0}={1}")
   @MethodSource("provider")
   public void toFrom1559TransactionSuccessfulStatus(
-      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+      final String ignored, final TransactionReceiptEncodingConfiguration encodingOptions) {
 
     final TransactionReceipt receipt = createTransactionReceiptStatus(EIP1559, 1);
     Bytes encoded =
@@ -96,7 +96,7 @@ public class TransactionReceiptEncodingOptionsTest {
   @ParameterizedTest(name = "{0}={1}")
   @MethodSource("provider")
   public void toFrom1559TransactionFailedStatus(
-      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+      final String ignored, final TransactionReceiptEncodingConfiguration encodingOptions) {
     final TransactionReceipt receipt = createTransactionReceiptStatus(EIP1559, 0);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
@@ -107,7 +107,7 @@ public class TransactionReceiptEncodingOptionsTest {
   @ParameterizedTest(name = "{0}={1}")
   @MethodSource("provider")
   public void toFrom1559TransactionStateRoot(
-      final String ignored, final TransactionReceiptEncodingOptions encodingOptions) {
+      final String ignored, final TransactionReceiptEncodingConfiguration encodingOptions) {
     final TransactionReceipt receipt = createTransactionReceiptStateRoot(EIP1559);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));

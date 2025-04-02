@@ -14,16 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding.receipt;
 
-public class TransactionReceiptEncodingOptions {
-  public static final TransactionReceiptEncodingOptions NETWORK = new Builder().build();
+public class TransactionReceiptEncodingConfiguration {
+  public static final TransactionReceiptEncodingConfiguration NETWORK = new Builder().build();
 
-  public static final TransactionReceiptEncodingOptions STORAGE_WITH_COMPACTION =
+  public static final TransactionReceiptEncodingConfiguration STORAGE_WITH_COMPACTION =
       new Builder().withRevertReason(true).withCompactedLogs(true).withBloomFilter(false).build();
 
-  public static final TransactionReceiptEncodingOptions STORAGE_WITHOUT_COMPACTION =
-      new Builder().withRevertReason(true).build();
+  public static final TransactionReceiptEncodingConfiguration STORAGE_WITHOUT_COMPACTION =
+      new Builder().withRevertReason(true).withCompactedLogs(false).withBloomFilter(true).build();
 
-  public static final TransactionReceiptEncodingOptions TRIE_ROOT =
+  public static final TransactionReceiptEncodingConfiguration TRIE_ROOT =
       new Builder().withOpaqueBytes(false).build();
 
   private final boolean withRevertReason;
@@ -31,11 +31,15 @@ public class TransactionReceiptEncodingOptions {
   private final boolean withOpaqueBytes;
   private final boolean withBloomFilter;
 
-  private TransactionReceiptEncodingOptions(final Builder builder) {
-    this.withRevertReason = builder.withRevertReason;
-    this.withCompactedLogs = builder.withCompactedLogs;
-    this.withOpaqueBytes = builder.withOpaqueBytes;
-    this.withBloomFilter = builder.withBloomFilter;
+  private TransactionReceiptEncodingConfiguration(
+      final boolean withRevertReason,
+      final boolean withCompactedLogs,
+      final boolean withOpaqueBytes,
+      final boolean withBloomFilter) {
+    this.withRevertReason = withRevertReason;
+    this.withCompactedLogs = withCompactedLogs;
+    this.withOpaqueBytes = withOpaqueBytes;
+    this.withBloomFilter = withBloomFilter;
   }
 
   public boolean isWithRevertReason() {
@@ -94,8 +98,9 @@ public class TransactionReceiptEncodingOptions {
       return this;
     }
 
-    public TransactionReceiptEncodingOptions build() {
-      return new TransactionReceiptEncodingOptions(this);
+    public TransactionReceiptEncodingConfiguration build() {
+      return new TransactionReceiptEncodingConfiguration(
+          withRevertReason, withCompactedLogs, withOpaqueBytes, withBloomFilter);
     }
   }
 }

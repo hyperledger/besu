@@ -24,7 +24,7 @@ public class TransactionReceiptEncoder {
   public static void writeTo(
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
-      final TransactionReceiptEncodingOptions options) {
+      final TransactionReceiptEncodingConfiguration options) {
 
     if (options.isWithOpaqueBytes()) {
       if (receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
@@ -40,7 +40,7 @@ public class TransactionReceiptEncoder {
   private static void write(
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
-      final TransactionReceiptEncodingOptions options) {
+      final TransactionReceiptEncodingConfiguration options) {
 
     if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
       rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
