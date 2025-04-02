@@ -158,10 +158,7 @@ public class ForkIdsNetworkConfigTest {
 
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            mockBlockchain,
-            genesisConfig.getForkBlockNumbers(),
-            genesisConfig.getForkTimestamps(),
-            false);
+            mockBlockchain, genesisConfig.getForkBlockNumbers(), genesisConfig.getForkTimestamps());
 
     final List<ForkId> actualForkIds =
         Streams.concat(schedule.streamMilestoneBlocks(), Stream.of(Long.MAX_VALUE))

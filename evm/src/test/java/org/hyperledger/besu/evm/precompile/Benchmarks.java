@@ -596,7 +596,7 @@ public class Benchmarks {
   }
 
   private static double runBenchmark(final Bytes arg, final PrecompiledContract contract) {
-    if (contract.computePrecompile(arg, fakeFrame).getOutput() == null) {
+    if (contract.computePrecompile(arg, fakeFrame).output() == null) {
       throw new RuntimeException("Input is Invalid");
     }
 

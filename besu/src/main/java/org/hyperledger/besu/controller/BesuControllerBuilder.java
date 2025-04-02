@@ -647,8 +647,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         new ForkIdManager(
             blockchain,
             genesisConfigOptions.getForkBlockNumbers(),
-            genesisConfigOptions.getForkBlockTimestamps(),
-            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled());
+            genesisConfigOptions.getForkBlockTimestamps());
     final EthPeers ethPeers =
         new EthPeers(
             currentProtocolSpecSupplier,

@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import java.io.IOException;
 import java.util.Optional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentelemetry.api.trace.Tracer;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
@@ -34,18 +33,7 @@ import org.slf4j.LoggerFactory;
 public class JsonRpcExecutorHandler {
   private static final Logger LOG = LoggerFactory.getLogger(JsonRpcExecutorHandler.class);
 
-  // Default timeout for RPC calls in seconds
-  private static final long DEFAULT_TIMEOUT_MILLISECONDS = 30_000L;
-
   private JsonRpcExecutorHandler() {}
-
-  public static Handler<RoutingContext> handler(
-      final ObjectMapper jsonObjectMapper,
-      final JsonRpcExecutor jsonRpcExecutor,
-      final Tracer tracer,
-      final JsonRpcConfiguration jsonRpcConfiguration) {
-    return handler(jsonRpcExecutor, tracer, jsonRpcConfiguration);
-  }
 
   public static Handler<RoutingContext> handler(
       final JsonRpcExecutor jsonRpcExecutor,
@@ -55,7 +43,7 @@ public class JsonRpcExecutorHandler {
       final long timerId =
           ctx.vertx()
               .setTimer(
-                  DEFAULT_TIMEOUT_MILLISECONDS,
+                  jsonRpcConfiguration.getHttpTimeoutSec() * 1000,
                   id -> {
                     final String method =
                         ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
