@@ -211,7 +211,7 @@ public class EthCreateAccessListTest {
     // Create a 1559 call without access lists
     final JsonRpcRequestContext request =
         ethCreateAccessListRequest(eip1559TransactionCallParameter());
-    // Create a list with one access list entry
+    // Generate a random list with one access list entry
     final List<AccessListEntry> expectedAccessList = generateRandomAccessList();
 
     // expect a list with the mocked access list
@@ -230,7 +230,7 @@ public class EthCreateAccessListTest {
 
   @Test
   public void shouldReturnEmptyAccessListIfNoAccessedStorage() {
-    // Create a list with one enter
+    // Generate a random list with one access list entry
     final List<AccessListEntry> accessListParam = generateRandomAccessList();
     // expect empty list
     final JsonRpcResponse expectedResponse =
@@ -248,9 +248,9 @@ public class EthCreateAccessListTest {
 
   @Test
   public void shouldReturnAccessListIfParameterAndSameAccessedStorage() {
-    // Create a list with one access list entry
+    // Generate a random list with one access list entry
     final List<AccessListEntry> expectedAccessList = generateRandomAccessList();
-    // Create a 1559 call with the expected access lists
+    // Create a 1559 call with the expected access list
     final JsonRpcRequestContext request =
         ethCreateAccessListRequest(eip1559TransactionCallParameter(expectedAccessList));
 
@@ -297,7 +297,7 @@ public class EthCreateAccessListTest {
   public void shouldReturnAccessListWhenBlockTagParamIsPresent() {
     final JsonRpcRequestContext request =
         ethCreateAccessListRequest(eip1559TransactionCallParameter(), "finalized");
-    // Create a list with one access list entry
+    // Generate a random list with one access list entry
     final List<AccessListEntry> expectedAccessList = generateRandomAccessList();
 
     // expect a list with the mocked access list
@@ -318,7 +318,7 @@ public class EthCreateAccessListTest {
   public void shouldReturnAccessListWhenBlockNumberParamIsPresent() {
     final JsonRpcRequestContext request =
         ethCreateAccessListRequest(eip1559TransactionCallParameter(), "0x0");
-    // Create a list with one access list entry
+    // Generate a random list with one access list entry
     final List<AccessListEntry> expectedAccessList = generateRandomAccessList();
 
     // expect a list with the mocked access list
