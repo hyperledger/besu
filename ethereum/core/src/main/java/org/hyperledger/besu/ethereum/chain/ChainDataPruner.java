@@ -119,6 +119,7 @@ public class ChainDataPruner implements BlockAddedObserver {
           }
           prunerStorage.setPruningMark(pruningTransaction, expectedNewPruningMark);
           pruningTransaction.commit();
+          LOG.info("Pruned blocks {} to {}", storedPruningMark, expectedNewPruningMark);
         });
   }
 
