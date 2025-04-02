@@ -36,21 +36,21 @@ public class PayOperation extends AbstractOperation {
       return InvalidOperation.INVALID_RESULT;
     }
 
-    final Bytes toAddressBytes = frame.getStackItem(1);
-    if (toAddressBytes.size() > 20
-      && toAddressBytes.numberOfLeadingZeroBytes() < 12) {
+    final Bytes toAddressBytes = frame.getStackItem(0);
+    final int numberOfLowBytes = toAddressBytes.size() - toAddressBytes.numberOfLeadingZeroBytes();
+    if (numberOfLowBytes > 20) {
       return new OperationResult(0, ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
     }
 
     final Address to = Words.toAddress(toAddressBytes);
-    final Wei value = Wei.wrap(frame.getStackItem(0));
+    final Wei value = Wei.wrap(frame.getStackItem(1));
     final boolean hasValue = value.greaterThan(Wei.ZERO);
     final Account recipient = frame.getWorldUpdater().get(to);
 
     final boolean accountIsWarm = frame.warmUpAddress(to);
 
-    if (frame.isStatic() && hasValue && !Objects.equals(frame.getSenderAddress(), to)) {
-      return new OperationResult(cost(to, true, recipient, true), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    if (frame.isStatic()) {
+      return new OperationResult(cost(to, hasValue, recipient, accountIsWarm), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
 
     final long cost = cost(to, hasValue, recipient, accountIsWarm);

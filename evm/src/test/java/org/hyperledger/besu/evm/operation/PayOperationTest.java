@@ -50,7 +50,7 @@ public class PayOperationTest {
         99,
         100,
         ExceptionalHaltReason.INSUFFICIENT_GAS,
-        Wei.of(0),
+        RECIPIENT_ADDRESS,
         true),
       Arguments.of(
         "enough gas",
@@ -110,8 +110,8 @@ public class PayOperationTest {
         .code(SIMPLE_EOF)
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(Bytes.EMPTY)
-        .pushStackItem(recipientAddress)
         .pushStackItem(Wei.ZERO)
+        .pushStackItem(recipientAddress)
         .worldUpdater(worldUpdater)
         .build();
     if (warmAddress) {
@@ -140,7 +140,7 @@ public class PayOperationTest {
         5000,
         9100,
         ExceptionalHaltReason.INSUFFICIENT_GAS,
-        Wei.of(1000),
+        RECIPIENT_ADDRESS,
         Wei.of(1000),
         Wei.of(2000),
         Wei.of(2000),
@@ -256,12 +256,10 @@ public class PayOperationTest {
         .sender(senderAddress)
         .initialGas(initialGas)
         .code(SIMPLE_EOF)
-        .pushStackItem(recipientAddress) // canary for non-returning
+        .pushStackItem(Bytes.EMPTY)
+        .pushStackItem(Bytes.EMPTY)
         .pushStackItem(valueSent)
-        .pushStackItem(Bytes.EMPTY)
-        .pushStackItem(Bytes.EMPTY)
         .pushStackItem(recipientAddress)
-        .pushStackItem(valueSent)
         .worldUpdater(worldUpdater)
         .build();
     if (warmAddress) {
@@ -293,8 +291,8 @@ public class PayOperationTest {
         SENDER_ADDRESS,
         101,
         100,
-        null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
+        RECIPIENT_ADDRESS,
         Wei.of(0),
         Wei.of(2000),
         Wei.of(2000),
@@ -306,8 +304,8 @@ public class PayOperationTest {
         RECIPIENT_ADDRESS,
         10000,
         9100,
-        null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
+        RECIPIENT_ADDRESS,
         Wei.of(1000),
         Wei.of(2000),
         Wei.of(2000),
@@ -320,7 +318,7 @@ public class PayOperationTest {
         9200,
         9100,
         ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
-        Wei.of(1000),
+        RECIPIENT_ADDRESS,
         Wei.of(1000),
         Wei.of(2000),
         Wei.of(2000),
@@ -333,7 +331,7 @@ public class PayOperationTest {
         9000,
         9100,
         ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
-        Wei.of(1),
+        RECIPIENT_ADDRESS,
         Wei.of(1),
         Wei.of(2000),
         Wei.of(2000),
@@ -380,8 +378,8 @@ public class PayOperationTest {
         .code(SIMPLE_EOF)
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(Bytes.EMPTY)
-        .pushStackItem(RECIPIENT_ADDRESS)
         .pushStackItem(valueSent)
+        .pushStackItem(RECIPIENT_ADDRESS)
         .worldUpdater(worldUpdater)
         .isStatic(isStatic)
         .build();
@@ -419,10 +417,16 @@ public class PayOperationTest {
         AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
         36600L),
       Arguments.of(
-        "exact 22 bytes address",
-        Bytes.fromHexString("0x341a2e456a2c23ca9a8c7d765521bcee2188d66a76ad"),
+        "21 byte address with leading zero",
+        Bytes.fromHexString("0x00341a2e456a2c23ca9a8c7d765521bcee2188d66a"),
+        null,
+        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        36600L),
+      Arguments.of(
+        "exact 21 bytes address",
+        Bytes.fromHexString("0x341a2e456a2c23ca9a8c7d765521bcee2188d66a76"),
         ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE,
-        Wei.of(1000),
+        Bytes.fromHexString("0x341a2e456a2c23ca9a8c7d765521bcee2188d66a76"),
         0),
       Arguments.of(
         "20 bytes address padded to 32 bytes",
@@ -434,7 +438,7 @@ public class PayOperationTest {
         "22 byte address size padded to 32 bytes",
         Bytes.fromHexString("0x341a2e456a2c23ca9a8c7d765521bcee2188d66a76ad", 32),
         ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE,
-        Wei.of(1000),
+        Bytes.fromHexString("0x341a2e456a2c23ca9a8c7d765521bcee2188d66a76ad", 32),
         0));
   }
 
@@ -455,8 +459,8 @@ public class PayOperationTest {
         .code(SIMPLE_EOF)
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(Bytes.EMPTY)
-        .pushStackItem(recipient)
         .pushStackItem(Wei.of(1000))
+        .pushStackItem(recipient)
         .worldUpdater(worldUpdater)
         .build();
 
@@ -479,12 +483,10 @@ public class PayOperationTest {
       new TestMessageFrameBuilder()
         .initialGas(400000)
         .code(LEGACY_CODE)
-        .pushStackItem(RECIPIENT_ADDRESS) // canary for non-returning
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(Bytes.EMPTY)
-        .pushStackItem(Bytes.EMPTY)
-        .pushStackItem(RECIPIENT_ADDRESS)
         .pushStackItem(Wei.ZERO)
+        .pushStackItem(RECIPIENT_ADDRESS)
         .worldUpdater(worldUpdater)
         .build();
     messageFrame.warmUpAddress(RECIPIENT_ADDRESS);
