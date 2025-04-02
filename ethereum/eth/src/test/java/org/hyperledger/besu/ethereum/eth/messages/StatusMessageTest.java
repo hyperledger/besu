@@ -64,7 +64,7 @@ public class StatusMessageTest {
     final MessageData msg =
         StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
 
-    final StatusMessage copy = new StatusMessage(msg.getData());
+    final StatusMessage copy = StatusMessage.create(msg.getData());
 
     assertThat(copy.protocolVersion()).isEqualTo(version);
     assertThat(copy.networkId()).isEqualTo(networkId);
@@ -86,7 +86,7 @@ public class StatusMessageTest {
     final MessageData msg =
         StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
 
-    final StatusMessage copy = new StatusMessage(msg.getData());
+    final StatusMessage copy = StatusMessage.create(msg.getData());
     final String copyToStringDecoded = copy.toStringDecoded();
 
     assertThat(copyToStringDecoded).contains("bestHash=" + bestHash);

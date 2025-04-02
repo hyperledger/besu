@@ -56,7 +56,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -328,6 +327,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final EthPeer peer = ethPeers.peer(connection);
     final Capability cap = connection.capability(getSupportedProtocol());
     final ForkId latestForkId = forkIdManager.getForkIdForChainHead();
+
     final StatusMessage status =
         StatusMessage.create(
             cap.getVersion(),
@@ -335,7 +335,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             blockchain.getChainHead().getTotalDifficulty(),
             blockchain.getChainHeadHash(),
             genesisHash,
-            latestForkId);
+            latestForkId,
+            EthProtocol.isEth69Compatible(cap) ? createBlockRange() : null);
+
     try {
       LOG.atTrace()
           .setMessage("Sending status message to {} for connection {}.")
@@ -404,6 +406,17 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             .log();
         handleDisconnect(
             peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY, false);
+      } else if (EthProtocol.isEth69Compatible(peer.getConnection().capability(EthProtocol.NAME))
+          && status.blockRange().isEmpty()) {
+        LOG.atDebug()
+            .setMessage("{} sent eth/69 without block range {}")
+            .addArgument(peer::toString)
+            .addArgument(message::getConnection)
+            .log();
+        handleDisconnect(
+            peer.getConnection(),
+            DisconnectReason.SUBPROTOCOL_TRIGGERED_INVALID_STATUS_MESSAGE,
+            false);
       } else {
         LOG.atDebug()
             .setMessage("Received status message from {}: {} with connection {}")
@@ -446,10 +459,19 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     blockBroadcaster.propagate(block, totalDifficulty);
   }
 
-  public List<Bytes> getForkIdAsBytesList() {
-    final ForkId chainHeadForkId = forkIdManager.getForkIdForChainHead();
-    return chainHeadForkId == null
-        ? Collections.emptyList()
-        : chainHeadForkId.getForkIdAsBytesList();
+  private StatusMessage.BlockRange createBlockRange() {
+    return new StatusMessage.BlockRange(
+        blockchain
+            .getEarliest()
+            .map(
+                hash ->
+                    blockchain
+                        .getBlockHeader(hash)
+                        .orElseThrow(
+                            () ->
+                                new IllegalStateException(
+                                    "Unable to get earliest block header from blockchain."))
+                        .getNumber())
+            .orElse(0L));
   }
 }

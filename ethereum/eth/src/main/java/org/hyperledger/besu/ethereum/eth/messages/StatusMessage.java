@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -33,8 +34,12 @@ public final class StatusMessage extends AbstractMessageData {
 
   private EthStatus status;
 
-  public StatusMessage(final Bytes data) {
+  private StatusMessage(final Bytes data) {
     super(data);
+  }
+
+  public static StatusMessage create(final Bytes data) {
+    return new StatusMessage(data);
   }
 
   public static StatusMessage create(
@@ -44,8 +49,20 @@ public final class StatusMessage extends AbstractMessageData {
       final Hash bestHash,
       final Hash genesisHash,
       final ForkId forkId) {
+    return create(protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId, null);
+  }
+
+  public static StatusMessage create(
+      final int protocolVersion,
+      final BigInteger networkId,
+      final Difficulty totalDifficulty,
+      final Hash bestHash,
+      final Hash genesisHash,
+      final ForkId forkId,
+      final BlockRange blockRange) {
     final EthStatus status =
-        new EthStatus(protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId);
+        new EthStatus(
+            protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId, blockRange);
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     status.writeTo(out);
 
@@ -123,6 +140,10 @@ public final class StatusMessage extends AbstractMessageData {
     return status().forkId;
   }
 
+  public Optional<BlockRange> blockRange() {
+    return Optional.ofNullable(status().range);
+  }
+
   private EthStatus status() {
     if (status == null) {
       final RLPInput input = RLP.input(data);
@@ -138,6 +159,7 @@ public final class StatusMessage extends AbstractMessageData {
     private final Hash bestHash;
     private final Hash genesisHash;
     private final ForkId forkId;
+    private final BlockRange range;
 
     EthStatus(
         final int protocolVersion,
@@ -145,13 +167,15 @@ public final class StatusMessage extends AbstractMessageData {
         final Difficulty totalDifficulty,
         final Hash bestHash,
         final Hash genesisHash,
-        final ForkId forkHash) {
+        final ForkId forkHash,
+        final BlockRange range) {
       this.protocolVersion = protocolVersion;
       this.networkId = networkId;
       this.totalDifficulty = totalDifficulty;
       this.bestHash = bestHash;
       this.genesisHash = genesisHash;
       this.forkId = forkHash;
+      this.range = range;
     }
 
     public void writeTo(final RLPOutput out) {
@@ -164,6 +188,9 @@ public final class StatusMessage extends AbstractMessageData {
       out.writeBytes(genesisHash);
 
       forkId.writeTo(out);
+      if (range != null) {
+        out.writeLongScalar(range.getEarliestBlock());
+      }
 
       out.endList();
     }
@@ -177,10 +204,14 @@ public final class StatusMessage extends AbstractMessageData {
       final Hash bestHash = Hash.wrap(in.readBytes32());
       final Hash genesisHash = Hash.wrap(in.readBytes32());
       final ForkId forkId = ForkId.readFrom(in);
+      BlockRange blockRange = null;
+      if (!in.isEndOfCurrentList()) {
+        blockRange = new BlockRange(in.readLongScalar());
+      }
       in.leaveList();
 
       return new EthStatus(
-          protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId);
+          protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId, blockRange);
     }
 
     @Override
@@ -198,6 +229,8 @@ public final class StatusMessage extends AbstractMessageData {
           + genesisHash
           + ", forkId="
           + forkId
+          + ", blockRange="
+          + range
           + '}';
     }
   }
@@ -205,5 +238,22 @@ public final class StatusMessage extends AbstractMessageData {
   @Override
   public String toStringDecoded() {
     return status().toString();
+  }
+
+  public static class BlockRange {
+    private final long earliestBlock;
+
+    public BlockRange(final long earliestBlock) {
+      this.earliestBlock = earliestBlock;
+    }
+
+    long getEarliestBlock() {
+      return earliestBlock;
+    }
+
+    @Override
+    public String toString() {
+      return "{" + "earliestBlock=" + earliestBlock + '}';
+    }
   }
 }
