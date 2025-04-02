@@ -168,7 +168,7 @@ public class PrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(privateTransactionLookupId, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
@@ -182,7 +182,7 @@ public class PrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(privateTransactionLookupId, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
@@ -228,7 +228,8 @@ public class PrivacyPrecompiledContractTest {
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, senderKey);
     when(enclave.receive(eq(privateTransactionLookupId.toBase64String()))).thenReturn(response);
 
-    final Bytes expected = contract.compute(privateTransactionLookupId, messageFrame);
+    final Bytes expected =
+        contract.computePrecompile(privateTransactionLookupId, messageFrame).output();
     assertThat(expected).isEqualTo(Bytes.EMPTY);
   }
 
@@ -247,7 +248,7 @@ public class PrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(privateTransactionLookupId, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
@@ -279,7 +280,7 @@ public class PrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(privateTransactionLookupId, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
@@ -321,7 +322,7 @@ public class PrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(privateTransactionLookupId, messageFrame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
@@ -337,7 +338,7 @@ public class PrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         emptyContract.computePrecompile(null, frame);
-    final Bytes actual = result.getOutput();
+    final Bytes actual = result.output();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
