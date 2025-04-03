@@ -39,7 +39,7 @@ public class Benchmarks {
   static final Random random = new Random();
   static final long GAS_PER_SECOND_STANDARD = 100_000_000L;
 
-  static final int MATH_WARMUP = 10_000;
+  static final int MATH_WARMUP = 15_000;
   static final int MATH_ITERATIONS = 1_000;
   static final MessageFrame fakeFrame =
       MessageFrame.builder()
