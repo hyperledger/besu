@@ -40,7 +40,7 @@ public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
     return getByBlockHeader(nextBlockHeader);
   }
 
-  Optional<ProtocolSpec> getNextProtocolSpec(final ProtocolSpec currentProtocolSpec);
+  Optional<ScheduledProtocolSpec> getNextProtocolSpec(final long currentTime);
 
   Optional<BigInteger> getChainId();
 

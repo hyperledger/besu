@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.Hardfork;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.evm.EvmSpecVersion;
@@ -61,9 +62,9 @@ public class EthConfig implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     BlockHeader header = blockchain.getBlockchain().getChainHeadHeader();
-    ProtocolSpec current =
-        protocolSchedule.getForNextBlockHeader(header, System.currentTimeMillis() / 1000);
-    Optional<ProtocolSpec> next = protocolSchedule.getNextProtocolSpec(current);
+    long currentTime = System.currentTimeMillis() / 1000;
+    ProtocolSpec current = protocolSchedule.getForNextBlockHeader(header, currentTime);
+    Optional<ScheduledProtocolSpec> next = protocolSchedule.getNextProtocolSpec(currentTime);
 
     ObjectNode result = mapperSupplier.get().createObjectNode();
     ObjectNode currentNode = result.putObject("current");
@@ -81,9 +82,15 @@ public class EthConfig implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
-  void generateConfig(final ObjectNode result, final ProtocolSpec spec) {
-    Hardfork forkId = protocolSchedule.hardforkFor(x -> x.spec() == spec).orElseThrow();
+  void generateConfig(final ObjectNode result, final ScheduledProtocolSpec scheduledSpec) {
+    generateConfig(result, scheduledSpec.fork(), scheduledSpec.spec());
+  }
 
+  void generateConfig(final ObjectNode result, final ProtocolSpec spec) {
+    generateConfig(result, protocolSchedule.hardforkFor(x -> x.spec() == spec).orElseThrow(), spec);
+  }
+
+  void generateConfig(final ObjectNode result, final Hardfork forkId, final ProtocolSpec spec) {
     result.put("activationTime", forkId.milestone());
 
     ObjectNode blobs = result.putObject("blobSchedule");

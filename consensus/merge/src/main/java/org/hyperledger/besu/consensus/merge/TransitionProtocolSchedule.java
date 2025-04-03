@@ -246,7 +246,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public Optional<ProtocolSpec> getNextProtocolSpec(final ProtocolSpec currentProtocolSpec) {
-    return getPostMergeSchedule().getNextProtocolSpec(currentProtocolSpec);
+  public Optional<ScheduledProtocolSpec> getNextProtocolSpec(final long currentTime) {
+    return getPostMergeSchedule().getNextProtocolSpec(currentTime);
   }
 }
