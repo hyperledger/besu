@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.datatypes.TransactionType.EIP1559;
 import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT;
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.NETWORK_FLAT_RECEIPT;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.STORAGE_WITHOUT_COMPACTION;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.STORAGE_WITH_COMPACTION;
 
@@ -44,7 +45,7 @@ public class TransactionReceiptEncodingConfigurationTest {
   private static Stream<Object[]> provider() {
     return Stream.of(
         new Object[] {"NETWORK", NETWORK_DEFAULT},
-        new Object[] {"NETWORK", NETWORK_DEFAULT},
+        new Object[] {"NETWORK_FLAT_RECEIPT", NETWORK_FLAT_RECEIPT},
         new Object[] {"STORAGE_WITH_COMPACTION", STORAGE_WITH_COMPACTION},
         new Object[] {"STORAGE_WITHOUT_COMPACTION", STORAGE_WITHOUT_COMPACTION});
   }
