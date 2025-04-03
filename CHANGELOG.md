@@ -1,7 +1,13 @@
 # Changelog
-
 ## Unreleased
 ### Breaking Changes
+
+### Upcoming Breaking Changes
+### Additions and Improvements
+#### Dependencies
+### Bug fixes
+
+## 25.4.0
 
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
