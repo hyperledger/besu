@@ -509,8 +509,8 @@ public class Transaction
               maybeAccessList,
               versionedHashes.orElse(null),
               maybeCodeDelegationList,
-              initcodes,
-              chainId);
+              chainId,
+              initcodes);
     }
     return hashNoSignature;
   }
@@ -770,8 +770,8 @@ public class Transaction
       final Optional<List<AccessListEntry>> accessList,
       final List<VersionedHash> versionedHashes,
       final Optional<List<CodeDelegation>> codeDelegationList,
-      final Optional<List<Bytes>> initcodes,
-      final Optional<BigInteger> chainId) {
+      final Optional<BigInteger> chainId,
+      final Optional<List<Bytes>> initcodes) {
     if (transactionType.requiresChainId()) {
       checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
     }
@@ -790,7 +790,8 @@ public class Transaction
             accessList,
             versionedHashes,
             codeDelegationList,
-            chainId);
+            chainId,
+            initcodes);
     return keccak256(preimage);
   }
 
@@ -810,7 +811,8 @@ public class Transaction
         maybeAccessList,
         versionedHashes.orElse(null),
         maybeCodeDelegationList,
-        chainId);
+        chainId,
+        initcodes);
   }
 
   private static Bytes getPreimage(
@@ -827,7 +829,8 @@ public class Transaction
       final Optional<List<AccessListEntry>> accessList,
       final List<VersionedHash> versionedHashes,
       final Optional<List<CodeDelegation>> codeDelegationList,
-      final Optional<BigInteger> chainId) {
+      final Optional<BigInteger> chainId,
+      final Optional<List<Bytes>> initcodes) {
     final Bytes preimage =
         switch (transactionType) {
           case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
@@ -1544,8 +1547,8 @@ public class Transaction
                   accessList,
                   versionedHashes,
                   codeDelegationAuthorizations,
-                  initcodes,
-                  chainId),
+                  chainId,
+                  initcodes),
               keys);
     }
 
