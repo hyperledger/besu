@@ -59,7 +59,7 @@ dependencies {
   implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'io.consensys.tuweni:tuweni-rlp'
-  implementation 'org.rocksdb:rocksdbjni'
+  implementation 'io.github.mirgee:rocksdbjni'
   implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.dagger:dagger'
   annotationProcessor 'com.google.dagger:dagger-compiler'
