@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecodingOptions.REVERT_REASON_NOT_ALLOWED;
 
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
@@ -40,7 +39,7 @@ public class TransactionReceiptTest {
                             receipt,
                             output,
                             TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT))),
-            REVERT_REASON_NOT_ALLOWED);
+            false);
     assertThat(copy).isEqualTo(receipt);
   }
 

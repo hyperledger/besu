@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecodingOptions;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
@@ -89,8 +88,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
       final int setSize = input.enterList();
       final List<TransactionReceipt> receiptSet = new ArrayList<>(setSize);
       for (int i = 0; i < setSize; i++) {
-        receiptSet.add(
-            TransactionReceiptDecoder.readFrom(input, TransactionReceiptDecodingOptions.DEFAULT));
+        receiptSet.add(TransactionReceiptDecoder.readFrom(input, true));
       }
       input.leaveList();
       receipts.add(receiptSet);

@@ -37,18 +37,18 @@ public class TransactionReceiptDecoder {
    * @return the transaction receipt
    */
   public static TransactionReceipt readFrom(final RLPInput input) {
-    return readFrom(input, TransactionReceiptDecodingOptions.DEFAULT);
+    return readFrom(input, true);
   }
 
   /**
    * Creates a transaction receipt for the given RLP
    *
    * @param rlpInput the RLP-encoded transaction receipt
-   * @param decodingOptions the decoding options
+   * @param revertReasonAllowed whether the rlp input is allowed to have a revert reason
    * @return the transaction receipt
    */
   public static TransactionReceipt readFrom(
-      final RLPInput rlpInput, final TransactionReceiptDecodingOptions decodingOptions) {
+      final RLPInput rlpInput, final boolean revertReasonAllowed) {
     RLPInput input = rlpInput;
     TransactionType transactionType = TransactionType.FRONTIER;
     boolean isTypedReceipt = false;
@@ -101,7 +101,7 @@ public class TransactionReceiptDecoder {
     if (input.isEndOfCurrentList()) {
       revertReason = Optional.empty();
     } else {
-      if (!decodingOptions.isRevertReasonAllowed()) {
+      if (!revertReasonAllowed) {
         throw new RLPException("Unexpected value at end of TransactionReceipt");
       }
       revertReason = Optional.of(input.readBytes());
