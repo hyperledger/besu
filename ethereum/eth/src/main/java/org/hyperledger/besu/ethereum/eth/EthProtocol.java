@@ -31,7 +31,7 @@ public class EthProtocol implements SubProtocol {
   public static final Capability ETH66 = Capability.create(NAME, EthProtocolVersion.V66);
   public static final Capability ETH67 = Capability.create(NAME, EthProtocolVersion.V67);
   public static final Capability ETH68 = Capability.create(NAME, EthProtocolVersion.V68);
-  public static final Capability ETH69 = Capability.create(NAME, EthProtocolVersion.V68);
+  public static final Capability ETH69 = Capability.create(NAME, EthProtocolVersion.V69);
 
   // Latest version of the Eth protocol
   public static final Capability LATEST = ETH68;

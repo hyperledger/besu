@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT;
+import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.NETWORK_FLAT_RECEIPT;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -23,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
@@ -238,15 +240,14 @@ class EthServer {
       }
       final BytesValueRLPOutput encodedReceipts = new BytesValueRLPOutput();
       encodedReceipts.startList();
-      TransactionReceiptEncodingConfiguration encodingOptions;
-      if (EthProtocol.isEth69Compatible(cap)) {
-        encodingOptions = TransactionReceiptEncodingConfiguration.NETWORK_ETH69;
-      } else {
-        encodingOptions = TransactionReceiptEncodingConfiguration.NETWORK;
-      }
       maybeReceipts
           .get()
-          .forEach(r -> TransactionReceiptEncoder.writeTo(r, encodedReceipts, encodingOptions));
+          .forEach(
+              r ->
+                  TransactionReceiptEncoder.writeTo(
+                      r,
+                      encodedReceipts,
+                      EthProtocol.isEth69Compatible(cap) ? NETWORK_FLAT_RECEIPT : NETWORK_DEFAULT));
       encodedReceipts.endList();
       final int encodedSize = encodedReceipts.encodedSize();
       if (responseSizeEstimate + encodedSize > maxMessageSize) {

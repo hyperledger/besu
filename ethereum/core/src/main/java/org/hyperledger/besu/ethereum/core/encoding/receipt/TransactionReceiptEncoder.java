@@ -28,55 +28,100 @@ public class TransactionReceiptEncoder {
 
     // Network Eth69
     if (options.isWithFlatReceipt()) {
-      write(receipt, rlpOutput, options);
+      writeFlatReceipt(receipt, rlpOutput, options);
       return;
     }
-
-    if (options.isWithOpaqueBytes()) {
-      if (receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
-        write(receipt, rlpOutput, options);
-      } else {
-        rlpOutput.writeBytes(RLP.encode(out -> write(receipt, out, options)));
-      }
-    } else {
-      write(receipt, rlpOutput, options);
+    if (shouldEncodeOpaqueBytes(receipt, options)) {
+      rlpOutput.writeBytes(RLP.encode(out -> write(receipt, out, options)));
+      return;
     }
+    write(receipt, rlpOutput, options);
   }
 
+  private static boolean shouldEncodeOpaqueBytes(
+      final TransactionReceipt receipt, final TransactionReceiptEncodingConfiguration options) {
+    // Check if the transaction type is not FRONTIER and if the encoding options require opaque
+    // bytes
+    return options.isWithOpaqueBytes()
+        && !receipt.getTransactionType().equals(TransactionType.FRONTIER);
+  }
+
+  /**
+   * Writes the transaction receipt to the output.
+   *
+   * @param receipt the transaction receipt
+   * @param rlpOutput the RLP output
+   * @param options the encoding options
+   */
   private static void write(
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
       final TransactionReceiptEncodingConfiguration options) {
-
-    if (!options.isWithFlatReceipt()) {
-      if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
-        rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
-      }
-
-      rlpOutput.startList();
-
-      if (options.isWithFlatReceipt()) {
-        rlpOutput.writeIntScalar(receipt.getTransactionType().getEthSerializedType());
-      }
-
-      // Determine whether it's a state root-encoded transaction receipt
-      // or is a status code-encoded transaction receipt.
-      if (receipt.getStateRoot() != null) {
-        rlpOutput.writeBytes(receipt.getStateRoot());
-      } else {
-        rlpOutput.writeLongScalar(receipt.getStatus());
-      }
-      rlpOutput.writeLongScalar(receipt.getCumulativeGasUsed());
-      if (options.isWithBloomFilter()) {
-        rlpOutput.writeBytes(receipt.getBloomFilter());
-      }
-      rlpOutput.writeList(
-          receipt.getLogsList(),
-          (log, logOutput) -> log.writeTo(logOutput, options.isWithCompactedLogs()));
-      if (options.isWithRevertReason() && receipt.getRevertReason().isPresent()) {
-        rlpOutput.writeBytes(receipt.getRevertReason().get());
-      }
-      rlpOutput.endList();
+    if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
+      rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
     }
+    rlpOutput.startList();
+    writeStatusOrStateRoot(receipt, rlpOutput);
+    rlpOutput.writeLongScalar(receipt.getCumulativeGasUsed());
+    if (options.isWithBloomFilter()) {
+      rlpOutput.writeBytes(receipt.getBloomFilter());
+    }
+    writeLogs(receipt, rlpOutput, options);
+    if (options.isWithRevertReason() && receipt.getRevertReason().isPresent()) {
+      rlpOutput.writeBytes(receipt.getRevertReason().get());
+    }
+    rlpOutput.endList();
+  }
+
+  /**
+   * Writes the logs of the transaction receipt to the output.
+   *
+   * @param receipt the transaction receipt
+   * @param rlpOutput the RLP output
+   * @param options the encoding options
+   */
+  private static void writeLogs(
+      final TransactionReceipt receipt,
+      final RLPOutput rlpOutput,
+      final TransactionReceiptEncodingConfiguration options) {
+    rlpOutput.writeList(
+        receipt.getLogsList(),
+        (log, logOutput) -> log.writeTo(logOutput, options.isWithCompactedLogs()));
+  }
+
+  /**
+   * Writes the status or state root of the transaction receipt to the output.
+   *
+   * @param receipt the transaction receipt
+   * @param output the RLP output
+   */
+  private static void writeStatusOrStateRoot(
+      final TransactionReceipt receipt, final RLPOutput output) {
+    // Determine whether it's a state root-encoded transaction receipt
+    // or is a status code-encoded transaction receipt.
+    if (receipt.getStateRoot() != null) {
+      output.writeBytes(receipt.getStateRoot());
+    } else {
+      output.writeLongScalar(receipt.getStatus());
+    }
+  }
+
+  /**
+   * Writes a flat receipt to the output. Eth69 uses a flat receipt format. See EIP-7642
+   *
+   * @param receipt the transaction receipt
+   * @param output the RLP output
+   * @param options the encoding options
+   */
+  private static void writeFlatReceipt(
+      final TransactionReceipt receipt,
+      final RLPOutput output,
+      final TransactionReceiptEncodingConfiguration options) {
+    output.startList();
+    output.writeIntScalar(receipt.getTransactionType().getSerializedType());
+    writeStatusOrStateRoot(receipt, output);
+    output.writeLongScalar(receipt.getCumulativeGasUsed());
+    writeLogs(receipt, output, options);
+    output.endList();
   }
 }

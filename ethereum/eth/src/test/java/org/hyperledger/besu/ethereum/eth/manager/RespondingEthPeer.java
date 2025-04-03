@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
@@ -366,7 +367,9 @@ public class RespondingEthPeer {
               Lists.newArrayList(receiptsMessage.receipts());
           final List<List<TransactionReceipt>> partialReceipts =
               originalReceipts.subList(0, (int) (originalReceipts.size() * portion));
-          partialResponse = ReceiptsMessage.create(partialReceipts);
+          partialResponse =
+              ReceiptsMessage.create(
+                  partialReceipts, TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
           break;
         case EthProtocolMessages.GET_NODE_DATA:
           final NodeDataMessage nodeDataMessage = NodeDataMessage.readFrom(originalResponse);
@@ -400,7 +403,9 @@ public class RespondingEthPeer {
           response = BlockBodiesMessage.create(Collections.emptyList());
           break;
         case EthProtocolMessages.GET_RECEIPTS:
-          response = ReceiptsMessage.create(Collections.emptyList());
+          response =
+              ReceiptsMessage.create(
+                  Collections.emptyList(), TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
           break;
         case EthProtocolMessages.GET_NODE_DATA:
           response = NodeDataMessage.create(Collections.emptyList());

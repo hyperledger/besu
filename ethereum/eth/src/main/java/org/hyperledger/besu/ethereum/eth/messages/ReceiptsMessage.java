@@ -46,16 +46,15 @@ public final class ReceiptsMessage extends AbstractMessageData {
   }
 
   @VisibleForTesting
-  public static ReceiptsMessage create(final List<List<TransactionReceipt>> receipts) {
+  public static ReceiptsMessage create(
+      final List<List<TransactionReceipt>> receipts,
+      final TransactionReceiptEncodingConfiguration encodingConfiguration) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     receipts.forEach(
         (receiptSet) -> {
           tmp.startList();
-          receiptSet.forEach(
-              r ->
-                  TransactionReceiptEncoder.writeTo(
-                      r, tmp, TransactionReceiptEncodingConfiguration.NETWORK));
+          receiptSet.forEach(r -> TransactionReceiptEncoder.writeTo(r, tmp, encodingConfiguration));
           tmp.endList();
         });
     tmp.endList();

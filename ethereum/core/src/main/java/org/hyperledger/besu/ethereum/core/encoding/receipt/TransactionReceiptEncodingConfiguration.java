@@ -15,9 +15,10 @@
 package org.hyperledger.besu.ethereum.core.encoding.receipt;
 
 public class TransactionReceiptEncodingConfiguration {
-  public static final TransactionReceiptEncodingConfiguration NETWORK = new Builder().build();
+  public static final TransactionReceiptEncodingConfiguration NETWORK_DEFAULT =
+      new Builder().build();
 
-  public static final TransactionReceiptEncodingConfiguration NETWORK_ETH69 =
+  public static final TransactionReceiptEncodingConfiguration NETWORK_FLAT_RECEIPT =
       new Builder()
           .withBloomFilter(true)
           .withCompactedLogs(false)

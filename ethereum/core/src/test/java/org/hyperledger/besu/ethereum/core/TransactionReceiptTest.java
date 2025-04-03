@@ -37,8 +37,10 @@ public class TransactionReceiptTest {
                 RLP.encode(
                     output ->
                         TransactionReceiptEncoder.writeTo(
-                            receipt, output, TransactionReceiptEncodingConfiguration.NETWORK))),
-          REVERT_REASON_NOT_ALLOWED);
+                            receipt,
+                            output,
+                            TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT))),
+            REVERT_REASON_NOT_ALLOWED);
     assertThat(copy).isEqualTo(receipt);
   }
 
