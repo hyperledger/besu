@@ -18,10 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.datatypes.TransactionType.EIP1559;
 import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.NETWORK;
-import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.NETWORK_ETH69;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.STORAGE_WITHOUT_COMPACTION;
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.STORAGE_WITH_COMPACTION;
-import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.TRIE_ROOT;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -39,17 +37,15 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class TransactionReceiptEncodingOptionTest {
+public class TransactionReceiptEncodingConfigurationTest {
 
   private static final Bytes REVERT_REASON = Bytes.fromHexString("0x1122334455667788");
 
   private static Stream<Object[]> provider() {
     return Stream.of(
         new Object[] {"NETWORK", NETWORK},
-        new Object[] {"NETWORK_ETH69", NETWORK_ETH69},
         new Object[] {"STORAGE_WITH_COMPACTION", STORAGE_WITH_COMPACTION},
-        new Object[] {"STORAGE_WITHOUT_COMPACTION", STORAGE_WITHOUT_COMPACTION},
-        new Object[] {"TRIE_ROOT", TRIE_ROOT});
+        new Object[] {"STORAGE_WITHOUT_COMPACTION", STORAGE_WITHOUT_COMPACTION});
   }
 
   @ParameterizedTest(name = "{0}={1}")

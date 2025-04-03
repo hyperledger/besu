@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingOptions;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
@@ -238,11 +238,11 @@ class EthServer {
       }
       final BytesValueRLPOutput encodedReceipts = new BytesValueRLPOutput();
       encodedReceipts.startList();
-      TransactionReceiptEncodingOptions encodingOptions;
+      TransactionReceiptEncodingConfiguration encodingOptions;
       if (EthProtocol.isEth69Compatible(cap)) {
-        encodingOptions = TransactionReceiptEncodingOptions.NETWORK_ETH69;
+        encodingOptions = TransactionReceiptEncodingConfiguration.NETWORK_ETH69;
       } else {
-        encodingOptions = TransactionReceiptEncodingOptions.NETWORK;
+        encodingOptions = TransactionReceiptEncodingConfiguration.NETWORK;
       }
       maybeReceipts
           .get()

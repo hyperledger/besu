@@ -17,18 +17,14 @@ package org.hyperledger.besu.ethereum.core.encoding.receipt;
 public class TransactionReceiptDecodingOptions {
   public static final TransactionReceiptDecodingOptions DEFAULT = new Builder().build();
 
-  public static final TransactionReceiptDecodingOptions NO_REVERT_REASON =
+  public static final TransactionReceiptDecodingOptions REVERT_REASON_NOT_ALLOWED =
       new Builder().withRevertReason(false).build();
 
-  public static final TransactionReceiptDecodingOptions NETWORK_FLAT =
-      new Builder().withRevertReason(false).withFlatResponse(true).build();
 
   private final boolean withRevertReason;
-  private final boolean withFlatResponse;
 
   private TransactionReceiptDecodingOptions(final Builder builder) {
     this.withRevertReason = builder.withRevertReason;
-    this.withFlatResponse = builder.withFlatResponse;
   }
 
   // Getters
@@ -36,25 +32,15 @@ public class TransactionReceiptDecodingOptions {
     return withRevertReason;
   }
 
-  public boolean isWithFlatResponse() {
-    return withFlatResponse;
-  }
-
   public boolean isRevertReasonAllowed() {
-    return withRevertReason && !withFlatResponse;
+    return withRevertReason;
   }
 
   public static class Builder {
     private boolean withRevertReason = true;
-    private boolean withFlatResponse = false;
 
     public Builder withRevertReason(final boolean withRevertReason) {
       this.withRevertReason = withRevertReason;
-      return this;
-    }
-
-    public Builder withFlatResponse(final boolean withFlatResponse) {
-      this.withFlatResponse = withFlatResponse;
       return this;
     }
 

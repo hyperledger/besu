@@ -24,60 +24,59 @@ public class TransactionReceiptEncoder {
   public static void writeTo(
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
-      final TransactionReceiptEncodingOptions options) {
+      final TransactionReceiptEncodingConfiguration options) {
 
     // Network Eth69
-    if (options.isWithFlatResponse()) {
-      writeInner(receipt, rlpOutput, options);
+    if (options.isWithFlatReceipt()) {
+      write(receipt, rlpOutput, options);
       return;
     }
 
-    if (isOpaqueBytes(options, receipt)) {
-      rlpOutput.writeBytes(RLP.encode(out -> writeInner(receipt, out, options)));
-      return;
+    if (options.isWithOpaqueBytes()) {
+      if (receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
+        write(receipt, rlpOutput, options);
+      } else {
+        rlpOutput.writeBytes(RLP.encode(out -> write(receipt, out, options)));
+      }
+    } else {
+      write(receipt, rlpOutput, options);
     }
-
-    writeInner(receipt, rlpOutput, options);
   }
 
-  private static boolean isOpaqueBytes(
-      final TransactionReceiptEncodingOptions options, final TransactionReceipt receipt) {
-    return options.isWithOpaqueBytes()
-        && !receipt.getTransactionType().equals(TransactionType.FRONTIER);
-  }
-
-  private static void writeInner(
+  private static void write(
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
-      final TransactionReceiptEncodingOptions options) {
-    if (options.isWithOpaqueBytes()) {
-      if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)
-          && !options.isWithFlatResponse()) {
+      final TransactionReceiptEncodingConfiguration options) {
+
+    if (!options.isWithFlatReceipt()) {
+      if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
         rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
       }
-    }
-    rlpOutput.startList();
-    if (options.isWithFlatResponse()) {
-      rlpOutput.writeIntScalar(receipt.getTransactionType().getEthSerializedType());
-    }
-    // Determine whether it's a state root-encoded transaction receipt
-    // or is a status code-encoded transaction receipt.
-    if (receipt.getStateRoot() != null) {
-      rlpOutput.writeBytes(receipt.getStateRoot());
-    } else {
-      rlpOutput.writeLongScalar(receipt.getStatus());
-    }
-    rlpOutput.writeLongScalar(receipt.getCumulativeGasUsed());
-    if (options.isWithBloomFilter()) {
-      rlpOutput.writeBytes(receipt.getBloomFilter());
-    }
-    rlpOutput.writeList(
-        receipt.getLogsList(),
-        (log, logOutput) -> log.writeTo(logOutput, options.isWithCompactedLogs()));
-    if (options.isWithRevertReason() && receipt.getRevertReason().isPresent()) {
-      rlpOutput.writeBytes(receipt.getRevertReason().get());
-    }
 
-    rlpOutput.endList();
+      rlpOutput.startList();
+
+      if (options.isWithFlatReceipt()) {
+        rlpOutput.writeIntScalar(receipt.getTransactionType().getEthSerializedType());
+      }
+
+      // Determine whether it's a state root-encoded transaction receipt
+      // or is a status code-encoded transaction receipt.
+      if (receipt.getStateRoot() != null) {
+        rlpOutput.writeBytes(receipt.getStateRoot());
+      } else {
+        rlpOutput.writeLongScalar(receipt.getStatus());
+      }
+      rlpOutput.writeLongScalar(receipt.getCumulativeGasUsed());
+      if (options.isWithBloomFilter()) {
+        rlpOutput.writeBytes(receipt.getBloomFilter());
+      }
+      rlpOutput.writeList(
+          receipt.getLogsList(),
+          (log, logOutput) -> log.writeTo(logOutput, options.isWithCompactedLogs()));
+      if (options.isWithRevertReason() && receipt.getRevertReason().isPresent()) {
+        rlpOutput.writeBytes(receipt.getRevertReason().get());
+      }
+      rlpOutput.endList();
+    }
   }
 }

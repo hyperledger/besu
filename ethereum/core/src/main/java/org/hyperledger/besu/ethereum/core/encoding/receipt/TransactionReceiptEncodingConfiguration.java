@@ -14,42 +14,46 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding.receipt;
 
-import static com.google.common.base.Preconditions.checkArgument;
+public class TransactionReceiptEncodingConfiguration {
+  public static final TransactionReceiptEncodingConfiguration NETWORK = new Builder().build();
 
-public class TransactionReceiptEncodingOptions {
-  public static final TransactionReceiptEncodingOptions NETWORK = new Builder().build();
+  public static final TransactionReceiptEncodingConfiguration NETWORK_ETH69 =
+      new Builder()
+          .withBloomFilter(true)
+          .withCompactedLogs(false)
+          .withRevertReason(false)
+          .withOpaqueBytes(false)
+          .withFlatReceipt(true)
+          .build();
 
-  public static final TransactionReceiptEncodingOptions NETWORK_ETH69 =
-      new Builder().withOpaqueBytes(false).withBloomFilter(false).withFlatResponse(true).build();
-
-  public static final TransactionReceiptEncodingOptions STORAGE_WITH_COMPACTION =
+  public static final TransactionReceiptEncodingConfiguration STORAGE_WITH_COMPACTION =
       new Builder().withRevertReason(true).withCompactedLogs(true).withBloomFilter(false).build();
 
-  public static final TransactionReceiptEncodingOptions STORAGE_WITHOUT_COMPACTION =
-      new Builder().withRevertReason(true).build();
+  public static final TransactionReceiptEncodingConfiguration STORAGE_WITHOUT_COMPACTION =
+      new Builder().withRevertReason(true).withCompactedLogs(false).withBloomFilter(true).build();
 
-  public static final TransactionReceiptEncodingOptions TRIE_ROOT =
+  public static final TransactionReceiptEncodingConfiguration TRIE_ROOT =
       new Builder().withOpaqueBytes(false).build();
 
   private final boolean withRevertReason;
   private final boolean withCompactedLogs;
   private final boolean withOpaqueBytes;
   private final boolean withBloomFilter;
-  private final boolean withFlatResponse;
+  private final boolean withFlatReceipt;
 
-  private TransactionReceiptEncodingOptions(final Builder builder) {
-    checkArgument(
-        !builder.withFlatResponse || !builder.withOpaqueBytes,
-        "Flat response encoding is not compatible with opaque bytes encoding");
-
-    this.withRevertReason = builder.withRevertReason;
-    this.withCompactedLogs = builder.withCompactedLogs;
-    this.withOpaqueBytes = builder.withOpaqueBytes;
-    this.withBloomFilter = builder.withBloomFilter;
-    this.withFlatResponse = builder.withFlatResponse;
+  private TransactionReceiptEncodingConfiguration(
+      final boolean withRevertReason,
+      final boolean withCompactedLogs,
+      final boolean withOpaqueBytes,
+      final boolean withBloomFilter,
+      final boolean withFlatReceipt) {
+    this.withRevertReason = withRevertReason;
+    this.withCompactedLogs = withCompactedLogs;
+    this.withOpaqueBytes = withOpaqueBytes;
+    this.withBloomFilter = withBloomFilter;
+    this.withFlatReceipt = withFlatReceipt;
   }
 
-  // Getters
   public boolean isWithRevertReason() {
     return withRevertReason;
   }
@@ -66,8 +70,8 @@ public class TransactionReceiptEncodingOptions {
     return withBloomFilter;
   }
 
-  public boolean isWithFlatResponse() {
-    return withFlatResponse;
+  public boolean isWithFlatReceipt() {
+    return withFlatReceipt;
   }
 
   @Override
@@ -81,8 +85,8 @@ public class TransactionReceiptEncodingOptions {
         + withOpaqueBytes
         + ", withBloomFilter="
         + withBloomFilter
-        + ", withFlatResponse="
-        + withFlatResponse
+        + ", withFlatReceipt="
+        + withFlatReceipt
         + '}';
   }
 
@@ -91,7 +95,7 @@ public class TransactionReceiptEncodingOptions {
     private boolean withCompactedLogs = false;
     private boolean withOpaqueBytes = true;
     private boolean withBloomFilter = true;
-    private boolean withFlatResponse = false;
+    private boolean withFlatReceipt = false;
 
     public Builder withRevertReason(final boolean withRevertReason) {
       this.withRevertReason = withRevertReason;
@@ -113,13 +117,14 @@ public class TransactionReceiptEncodingOptions {
       return this;
     }
 
-    public Builder withFlatResponse(final boolean withFlatResponse) {
-      this.withFlatResponse = withFlatResponse;
+    public Builder withFlatReceipt(final boolean withFlatReceipt) {
+      this.withFlatReceipt = withFlatReceipt;
       return this;
     }
 
-    public TransactionReceiptEncodingOptions build() {
-      return new TransactionReceiptEncodingOptions(this);
+    public TransactionReceiptEncodingConfiguration build() {
+      return new TransactionReceiptEncodingConfiguration(
+          withRevertReason, withCompactedLogs, withOpaqueBytes, withBloomFilter, withFlatReceipt);
     }
   }
 }
