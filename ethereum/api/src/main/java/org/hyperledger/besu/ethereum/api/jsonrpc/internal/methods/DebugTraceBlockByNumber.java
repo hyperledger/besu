@@ -133,8 +133,7 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                               debugOperationTracer,
                               protocolSpec,
                               block);
-                      DebugTraceTransactionStep debugTraceTransactionStep =
-                          new DebugTraceTransactionStep();
+
                       Pipeline<TransactionTrace> traceBlockPipeline =
                           createPipelineFrom(
                                   "getTransactions",
@@ -145,7 +144,10 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                                   "debug_trace_block_by_number")
                               .thenProcess("executeTransaction", executeTransactionStep)
                               .thenProcessAsyncOrdered(
-                                  "debugTraceTransactionStep", debugTraceTransactionStep, 4)
+                                  "debugTraceTransactionStep",
+                                  DebugTraceTransactionStepFactory.create(
+                                      traceOptions.tracerType()),
+                                  4)
                               .andFinishWith("collect_results", tracesList::add);
 
                       try {

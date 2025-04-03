@@ -25,26 +25,26 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"gas", "failed", "returnValue", "structLogs"})
-public class DebugTraceTransactionDetails implements DebugTracerResult {
+public class DebugStructLoggerTracerResult implements DebugTracerResult {
 
   private final List<StructLog> structLogs;
   private final String returnValue;
   private final long gas;
   private final boolean failed;
 
-  public DebugTraceTransactionDetails(final TransactionTrace transactionTrace) {
+  public DebugStructLoggerTracerResult(final TransactionTrace transactionTrace) {
     gas = transactionTrace.getGas();
     returnValue = transactionTrace.getResult().getOutput().toString().substring(2);
     structLogs = new ArrayList<>(transactionTrace.getTraceFrames().size());
     transactionTrace.getTraceFrames().parallelStream()
-        .map(DebugTraceTransactionDetails::createStructLog)
+        .map(DebugStructLoggerTracerResult::createStructLog)
         .forEachOrdered(structLogs::add);
     failed = !transactionTrace.getResult().isSuccessful();
   }
 
-  public static Collection<DebugTraceTransactionResult<DebugTraceTransactionDetails>> of(
+  public static Collection<DebugTraceTransactionResult<DebugStructLoggerTracerResult>> of(
       final Collection<TransactionTrace> traces) {
-    return DebugTraceTransactionResult.of(traces, DebugTraceTransactionDetails::new);
+    return DebugTraceTransactionResult.of(traces, DebugStructLoggerTracerResult::new);
   }
 
   private static StructLog createStructLog(final TraceFrame frame) {

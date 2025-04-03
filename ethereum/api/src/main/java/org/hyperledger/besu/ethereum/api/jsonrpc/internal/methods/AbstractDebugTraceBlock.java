@@ -128,18 +128,6 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                               protocolSpec,
                               block);
 
-                      DebugTraceTransactionStep debugTraceTransactionStep =
-                          new DebugTraceTransactionStep();
-
-                      // TODO:
-                      //                      CallTracerTransactionStep callTracerTransactionStep =
-                      //                          new CallTracerTransactionStep(
-                      //                              protocolSpec.getWorldUpdaterFactory(),
-                      //                              transactionProcessor,
-                      //                              getBlockchainQueries().getBlockchain(),
-                      //                              debugOperationTracer,
-                      //                              protocolSpec,
-                      //                              block);
                       Pipeline<TransactionTrace> traceBlockPipeline =
                           createPipelineFrom(
                                   "getTransactions",
@@ -150,7 +138,10 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                                   "debug_trace_block")
                               .thenProcess("executeTransaction", executeTransactionStep)
                               .thenProcessAsyncOrdered(
-                                  "debugTraceTransactionStep", debugTraceTransactionStep, 4)
+                                  "debugTraceTransactionStep",
+                                  DebugTraceTransactionStepFactory.create(
+                                      traceOptions.tracerType()),
+                                  4)
                               .andFinishWith("collect_results", tracesList::add);
 
                       try {
