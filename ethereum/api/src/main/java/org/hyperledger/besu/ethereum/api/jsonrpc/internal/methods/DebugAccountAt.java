@@ -123,7 +123,8 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
                           blockHash,
                           new DebugOperationTracer(
                               new TraceOptions<>(
-                                  TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, true, true)),
+                                  TracerType.DEFAULT_TRACER,
+                                  new StructLogTracerConfig(false, true, true)),
                               false))
                       .map(BlockTrace::getTransactionTraces)
                       .orElse(Collections.emptyList())

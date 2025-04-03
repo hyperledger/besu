@@ -139,7 +139,8 @@ public abstract class AbstractPrivateTraceByHash implements JsonRpcMethod {
                         block,
                         new DebugOperationTracer(
                             new TraceOptions<>(
-                                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, true)),
+                                TracerType.DEFAULT_TRACER,
+                                new StructLogTracerConfig(false, false, true)),
                             false),
                         enclaveKey,
                         privacyGroupId,
