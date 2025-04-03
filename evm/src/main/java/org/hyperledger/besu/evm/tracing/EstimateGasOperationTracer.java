@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.operation.SStoreOperation;
 public class EstimateGasOperationTracer implements OperationTracer {
 
   private int maxDepth = 1;
-  private long sStoreStipendNeeded = 23_000L;
+  private long sStoreStipendNeeded = 2_300L;
 
   /** Default constructor. */
   public EstimateGasOperationTracer() {}
