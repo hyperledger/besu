@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog.toCompactHex;
+
 @JsonPropertyOrder({
   "type",
   "from",
@@ -45,7 +47,13 @@ public class DebugCallTracerResult implements DebugTracerResult {
   private String error;
   private String revertReason;
 
-  public DebugCallTracerResult(final TransactionTrace transactionTrace) {}
+  public DebugCallTracerResult(final TransactionTrace transactionTrace) {
+    transactionTrace.getTraceFrames().stream().findFirst().ifPresent(traceFrame -> {
+        type = traceFrame.getOpcode();
+        revertReason  = traceFrame.getRevertReason().map(bytes -> toCompactHex(bytes, true)).orElse(null);
+
+    });
+  }
 
   @JsonGetter("type")
   public String getType() {
