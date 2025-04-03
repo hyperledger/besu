@@ -50,8 +50,7 @@ public class BlockProcessingResult extends BlockValidationResult {
   public BlockProcessingResult(
       final Optional<BlockProcessingOutputs> yield,
       final Optional<Integer> nbParallelizedTransactions) {
-    this.yield = yield;
-    this.isPartial = false;
+    this(yield, false);
     this.nbParallelizedTransactions = nbParallelizedTransactions;
   }
 
@@ -75,9 +74,7 @@ public class BlockProcessingResult extends BlockValidationResult {
    */
   public BlockProcessingResult(
       final Optional<BlockProcessingOutputs> yield, final String errorMessage) {
-    super(errorMessage);
-    this.yield = yield;
-    this.isPartial = false;
+    this(yield, errorMessage, false);
   }
 
   /**
