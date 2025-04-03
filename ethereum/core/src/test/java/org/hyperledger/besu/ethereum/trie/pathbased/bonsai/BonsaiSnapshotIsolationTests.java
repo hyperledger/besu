@@ -33,7 +33,6 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
 
   @Test
   public void ensureTruncateDoesNotCauseSegfault() {
-
     var preTruncatedWorldState =
         archive.getWorldState(
             withBlockHeaderAndNoUpdateNodeHead(genesisState.getBlock().getHeader()));

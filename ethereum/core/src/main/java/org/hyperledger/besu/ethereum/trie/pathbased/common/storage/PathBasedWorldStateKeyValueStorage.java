@@ -250,6 +250,10 @@ public abstract class PathBasedWorldStateKeyValueStorage
     @Override
     void commit();
 
+    void commitTrieLogOnly();
+
+    void commitComposedOnly();
+
     void rollback();
   }
 }
