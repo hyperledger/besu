@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.debug.OpcodeTracerConfig;
+import org.hyperledger.besu.ethereum.debug.StructLogTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -123,7 +123,7 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
                           blockHash,
                           new DebugOperationTracer(
                               new TraceOptions<>(
-                                  TracerType.DEFAULT, new OpcodeTracerConfig(false, true, true)),
+                                  TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, true, true)),
                               false))
                       .map(BlockTrace::getTransactionTraces)
                       .orElse(Collections.emptyList())

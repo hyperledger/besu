@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.OpcodeTracerConfig;
+import org.hyperledger.besu.ethereum.debug.StructLogTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.debug.TracerType;
@@ -166,8 +166,8 @@ public class TransactionTracer {
 
   private boolean isDefaultTracerAndMemoryEnabled(
       final TraceOptions<? extends TracerConfig> options) {
-    return options.tracerType() == TracerType.DEFAULT
-        && ((OpcodeTracerConfig) options.config()).memoryEnabled();
+    return options.tracerType() == TracerType.DEFAULT_TRACER
+        && ((StructLogTracerConfig) options.config()).traceMemory();
   }
 
   private File generateTraceFile(

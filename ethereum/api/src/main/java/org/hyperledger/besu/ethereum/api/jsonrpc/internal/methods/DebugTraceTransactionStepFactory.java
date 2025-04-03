@@ -48,7 +48,7 @@ public class DebugTraceTransactionStepFactory {
           TransactionTrace, CompletableFuture<DebugTraceTransactionResult<DebugTracerResult>>>
       create(final TracerType tracerType) {
     return switch (tracerType) {
-      case DEFAULT ->
+      case DEFAULT_TRACER ->
           transactionTrace -> {
             var result = new DebugStructLoggerTracerResult(transactionTrace);
             return CompletableFuture.completedFuture(

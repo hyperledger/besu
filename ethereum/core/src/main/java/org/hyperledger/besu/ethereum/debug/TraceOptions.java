@@ -22,6 +22,6 @@ public record TraceOptions<T extends TracerConfig>(TracerType tracerType, T conf
     }
   }
 
-  public static final TraceOptions<OpcodeTracerConfig> DEFAULT =
-      new TraceOptions<>(TracerType.DEFAULT, new OpcodeTracerConfig(true, false, true));
+  public static final TraceOptions<StructLogTracerConfig> DEFAULT =
+      new TraceOptions<>(TracerType.DEFAULT_TRACER, new StructLogTracerConfig(true, false, true));
 }

@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.debug;
 /**
  * Configuration for the default struct/opcode tracer.
  *
- * @param storageEnabled Used by opcode tracer to enable storage capture
- * @param memoryEnabled Used by opcode tracer to enable memory capture
- * @param stackEnabled Used by opcode tracer to enable stack capture
+ * @param traceStorage Used by opcode tracer to enable storage capture
+ * @param traceMemory Used by opcode tracer to enable memory capture
+ * @param traceStack Used by opcode tracer to enable stack capture
  */
-public record OpcodeTracerConfig(
-    boolean storageEnabled, boolean memoryEnabled, boolean stackEnabled) implements TracerConfig {}
+public record StructLogTracerConfig(boolean traceStorage, boolean traceMemory, boolean traceStack)
+    implements TracerConfig {}

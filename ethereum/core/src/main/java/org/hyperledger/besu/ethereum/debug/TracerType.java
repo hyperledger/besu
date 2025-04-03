@@ -20,7 +20,7 @@ package org.hyperledger.besu.ethereum.debug;
  * <p>The default tracer is used when no specific tracer is provided.
  */
 public enum TracerType {
-  DEFAULT(null, OpcodeTracerConfig.class),
+  DEFAULT_TRACER(null, StructLogTracerConfig.class),
   CALL_TRACER("callTracer", CallTracerConfig.class),
   FLAT_CALL_TRACER("flatCallTracer", CallTracerConfig.class);
 
@@ -42,7 +42,7 @@ public enum TracerType {
 
   public static TracerType fromString(final String tracerName) {
     if (tracerName == null) {
-      return DEFAULT;
+      return DEFAULT_TRACER;
     }
 
     for (TracerType tracerType : values()) {

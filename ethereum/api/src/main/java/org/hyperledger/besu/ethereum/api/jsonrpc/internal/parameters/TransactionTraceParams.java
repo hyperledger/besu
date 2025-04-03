@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.debug.CallTracerConfig;
-import org.hyperledger.besu.ethereum.debug.OpcodeTracerConfig;
+import org.hyperledger.besu.ethereum.debug.StructLogTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.debug.TracerType;
@@ -75,11 +75,12 @@ public interface TransactionTraceParams {
    * @return TraceOptions object containing the tracer type and configuration.
    */
   default TraceOptions<? extends TracerConfig> traceOptions() {
+    // TODO: Validate how does invalid tracer name is handled
     var tracerType = TracerType.fromString(tracer());
     var tracerConfig =
         switch (tracerType) {
-          case DEFAULT ->
-              new OpcodeTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
+          case DEFAULT_TRACER ->
+              new StructLogTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
           case CALL_TRACER, FLAT_CALL_TRACER -> {
             var tracerConfigMap = tracerConfig();
             if (tracerConfigMap == null) {
