@@ -208,10 +208,10 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(201));
 
     // Upgrade the chain from berlin to london in 120 blocks time
-    upgradeToLondon(
-        minerNode1, minerNode2, minerNode3, minerNode4, lastChainHeight.intValue() + 120);
+    int londonBlockNumber = lastChainHeight.intValue() + 120;
+    upgradeToLondon(minerNode1, minerNode2, minerNode3, minerNode4, londonBlockNumber);
 
-    cluster.verify(blockchain.reachesHeight(minerNode4, 1, 180));
+    minerNode4.verify(blockchain.minimumHeight(londonBlockNumber, 180));
 
     previousStepEndTime = Instant.now();
 
@@ -238,10 +238,20 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(301));
 
     // Upgrade the chain to shanghai in 120 seconds. Then try to deploy a shanghai contract
+    Instant shanghaiUpgradeStartTime = Instant.now();
     upgradeToShanghai(
-        minerNode1, minerNode2, minerNode3, minerNode4, Instant.now().getEpochSecond() + 120);
+        minerNode1,
+        minerNode2,
+        minerNode3,
+        minerNode4,
+        shanghaiUpgradeStartTime.getEpochSecond() + 120);
 
     cluster.verify(blockchain.reachesHeight(minerNode4, 1, 180));
+
+    // Check if has been 120 seconds since the upgrade and wait otherwise
+    while (Instant.now().getEpochSecond() < shanghaiUpgradeStartTime.getEpochSecond() + 130) {
+      Thread.sleep(TEN_SECONDS);
+    }
 
     SimpleStorageShanghai simpleStorageContractShanghai =
         minerNode1.execute(contractTransactions.createSmartContract(SimpleStorageShanghai.class));

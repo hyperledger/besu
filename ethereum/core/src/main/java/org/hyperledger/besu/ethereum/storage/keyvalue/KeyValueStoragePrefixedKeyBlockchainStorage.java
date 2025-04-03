@@ -29,8 +29,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -378,9 +379,13 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
           o ->
               o.writeList(
                   receipts,
-                  (r, rlpOutput) ->
-                      TransactionReceiptEncoder.writeToForStorage(
-                          r, rlpOutput, receiptCompaction)));
+                  (r, rlpOutput) -> {
+                    var options =
+                        receiptCompaction
+                            ? TransactionReceiptEncodingConfiguration.STORAGE_WITH_COMPACTION
+                            : TransactionReceiptEncodingConfiguration.STORAGE_WITHOUT_COMPACTION;
+                    TransactionReceiptEncoder.writeTo(r, rlpOutput, options);
+                  }));
     }
 
     private void removeVariables() {
