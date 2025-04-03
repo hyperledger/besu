@@ -727,15 +727,16 @@ public record EOFLayout(
       out.print(prefix);
       out.printf("  %04x # max stack:  %1$d%n", cs.getMaxStackHeight());
     }
+    byte[] byteCode = container.toArray();
     for (int i = 0; i < codeSections.length; i++) {
       CodeSection cs = getCodeSection(i);
       out.print(prefix);
       out.printf(
           "       # Code section %d - in=%d out=%s height=%d%n",
           i, cs.inputs, cs.isReturning() ? cs.outputs : "non-returning", cs.maxStackHeight);
-      byte[] byteCode = container.slice(cs.getEntryPoint(), cs.getLength()).toArray();
-      int pc = 0;
-      while (pc < byteCode.length) {
+      int pc = cs.getEntryPoint();
+      int endPc = pc + cs.getLength();
+      while (pc < endPc) {
         out.print(prefix);
         OpcodeInfo ci = V1_OPCODES[byteCode[pc] & 0xff];
 
@@ -818,7 +819,7 @@ public record EOFLayout(
             for (int j = 1; j < advance && (pc + j) < byteCode.length; j++) {
               out.printf("%02x", byteCode[pc + j]);
             }
-            if ((pc + advance) >= byteCode.length) {
+            if ((pc + advance) > byteCode.length) {
               out.print(" <truncated immediate>");
             }
             out.print(")");
