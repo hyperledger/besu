@@ -53,14 +53,12 @@ public class EOFCreateOperation extends AbstractCreateOperation {
     final long inputSize = getInputSize(frame);
     return clampedAdd(
         gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputSize),
-        clampedAdd(
-            gasCalculator().txCreateCost(),
-            gasCalculator().createKeccakCost(codeSupplier.get().getSize())));
+        gasCalculator().txCreateCost());
   }
 
   @Override
   public Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
-    final Address sender = frame.getRecipientAddress();
+    final Bytes32 sender = Bytes32.leftPad(frame.getRecipientAddress());
     final Bytes32 salt = getSalt(frame);
     final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt));
     return Address.extract(hash);
