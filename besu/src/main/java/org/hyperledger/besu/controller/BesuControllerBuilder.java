@@ -702,6 +702,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     if (chainPrunerConfiguration.chainPruningEnabled()
         || chainPrunerConfiguration.preMergePruningEnabled()) {
+      LOG.info("Adding ChainDataPruner to observe block added events");
       final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
       blockchain.observeBlockAdded(chainDataPruner);
       if (chainPrunerConfiguration.chainPruningEnabled()) {

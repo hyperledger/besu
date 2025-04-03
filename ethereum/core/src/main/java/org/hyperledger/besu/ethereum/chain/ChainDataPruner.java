@@ -106,8 +106,10 @@ public class ChainDataPruner implements BlockAddedObserver {
   }
 
   private void preMergePruningAction() {
+      LOG.info("preMergePruningAction() is scheduling a task");
     pruningExecutor.submit(
         () -> {
+            LOG.info("preMergePruningAction() task is starting");
           final long storedPruningMark = prunerStorage.getPruningMark().orElse(1L);
           final long expectedNewPruningMark =
               Math.min(storedPruningMark + pruningQuantity, mergeBlock);
