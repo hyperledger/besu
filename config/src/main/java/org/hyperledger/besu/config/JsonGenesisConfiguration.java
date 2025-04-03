@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.config;
 
-import static java.util.Collections.emptyMap;
+import static java.lang.Long.parseLong;
 import static java.util.Objects.isNull;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -44,7 +44,7 @@ public class JsonGenesisConfiguration implements GenesisConfiguration {
   private static final String QBFT_CONFIG_KEY = "qbft";
   private static final String CLIQUE_CONFIG_KEY = "clique";
   private static final String EC_CURVE_CONFIG_KEY = "eccurve";
-  private static final String TRANSITIONS_CONFIG_KEY = "transitions";
+  static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private static final String DISCOVERY_CONFIG_KEY = "discovery";
   private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
   private static final String BLOB_SCHEDULE_CONFIG_KEY = "blobschedule";
@@ -55,44 +55,13 @@ public class JsonGenesisConfiguration implements GenesisConfiguration {
   private static final String DEPOSIT_CONTRACT_ADDRESS_KEY = "depositcontractaddress";
   private static final String CONSOLIDATION_REQUEST_CONTRACT_ADDRESS_KEY =
       "consolidationrequestcontractaddress";
+  /** The constant BASEFEE_AT_GENESIS_DEFAULT_VALUE. */
 
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
   private final TransitionsConfigOptions transitions;
 
-  /**
-   * From json object json genesis config options.
-   *
-   * @param configRoot the config root
-   * @return the json genesis config options
-   */
-  public static JsonGenesisConfiguration fromJsonObject(final ObjectNode configRoot) {
-    return fromJsonObjectWithOverrides(configRoot, emptyMap());
-  }
 
-  /**
-   * From json object with overrides json genesis config options.
-   *
-   * @param configRoot the config root
-   * @param configOverrides the config overrides
-   * @return the json genesis config options
-   */
-  static JsonGenesisConfiguration fromJsonObjectWithOverrides(
-      final ObjectNode configRoot, final Map<String, String> configOverrides) {
-    final TransitionsConfigOptions transitionsConfigOptions;
-    transitionsConfigOptions = loadTransitionsFrom(configRoot);
-    return new JsonGenesisConfiguration(configRoot, configOverrides, transitionsConfigOptions);
-  }
-
-  private static TransitionsConfigOptions loadTransitionsFrom(final ObjectNode parentNode) {
-    final Optional<ObjectNode> transitionsNode =
-        JsonUtil.getObjectNode(parentNode, TRANSITIONS_CONFIG_KEY);
-    if (transitionsNode.isEmpty()) {
-      return new TransitionsConfigOptions(JsonUtil.createEmptyObjectNode());
-    }
-
-    return new TransitionsConfigOptions(transitionsNode.get());
-  }
 
   /**
    * Instantiates a new Json genesis config options.
@@ -104,7 +73,7 @@ public class JsonGenesisConfiguration implements GenesisConfiguration {
   JsonGenesisConfiguration(
       final ObjectNode maybeConfig,
       final Map<String, String> configOverrides,
-      final TransitionsConfigOptions transitionsConfig) {
+      final TransitionsConfigOptions transitionsConfig) { //TODO: aren't these optional?
     this.configRoot = isNull(maybeConfig) ? JsonUtil.createEmptyObjectNode() : maybeConfig;
     if (configOverrides != null) {
       this.configOverrides.putAll(configOverrides);
@@ -218,6 +187,15 @@ public class JsonGenesisConfiguration implements GenesisConfiguration {
   @Override
   public TransitionsConfigOptions getTransitions() {
     return transitions;
+  }
+
+  @Override
+  public long getTimestamp() {
+    if (configOverrides != null && configOverrides.containsKey("timestamp")) {
+      return parseLong(configOverrides.get("timestamp"));
+    } else {
+      return parseLong(JsonUtil.getValueAsString(configRoot, "timestamp", "0x0"));
+    }
   }
 
   @Override
@@ -366,6 +344,26 @@ public class JsonGenesisConfiguration implements GenesisConfiguration {
   @Override
   public Optional<Wei> getBaseFeePerGas() {
     return Optional.ofNullable(configOverrides.get("baseFeePerGas")).map(Wei::fromHexString);
+  }
+
+  /**
+   * Gets genesis base fee per gas.
+   *
+   * @return the genesis base fee per gas
+   */
+  @Override
+  public Optional<Wei> getGenesisBaseFeePerGas() {
+    if (getBaseFeePerGas().isPresent()) {
+      // always use specified basefee if present
+      return getBaseFeePerGas();
+    } else if (getLondonBlockNumber().orElse(-1L) == 0) {
+      // if not specified, and we specify london at block zero use a default fee
+      // this is needed for testing.
+      return Optional.of(BASEFEE_AT_GENESIS_DEFAULT_VALUE);
+    } else {
+      // no explicit base fee and no london block zero means no basefee at genesis
+      return Optional.empty();
+    }
   }
 
   @Override

@@ -128,7 +128,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   /** The genesis file */
-  protected GenesisFile genesisConfig;
+  protected GenesisFile genesisFile;
 
   /** The genesis config options; */
   protected GenesisConfiguration genesisConfiguration;
@@ -249,8 +249,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the besu controller builder
    */
   public BesuControllerBuilder genesisConfig(final GenesisFile genesisConfig) {
-    this.genesisConfig = genesisConfig;
-    this.genesisConfiguration = genesisConfig.getConfigOptions();
+    this.genesisFile = genesisConfig;
+    this.genesisConfiguration = besuComponent.get().getGenesisConfig();
     return this;
   }
 
@@ -546,7 +546,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the besu controller
    */
   public BesuController build() {
-    checkNotNull(genesisConfig, "Missing genesis config file");
+    checkNotNull(genesisFile, "Missing genesis config file");
     checkNotNull(genesisConfiguration, "Missing genesis config options");
     checkNotNull(syncConfig, "Missing sync config");
     checkNotNull(ethereumWireProtocolConfiguration, "Missing ethereum protocol configuration");
@@ -839,10 +839,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return maybeGenesisStateRoot
         .map(
             genesisStateRoot ->
-                GenesisState.fromStorage(genesisStateRoot, genesisConfig, protocolSchedule))
+                GenesisState.fromStorage(genesisStateRoot, genesisFile, protocolSchedule, besuComponent.get().getGenesisConfig()))
         .orElseGet(
             () ->
-                GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule));
+                GenesisState.fromConfig(dataStorageConfiguration, genesisFile, protocolSchedule, besuComponent.get().getGenesisConfig()));
   }
 
   private TrieLogPruner createTrieLogPruner(

@@ -87,7 +87,7 @@ public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable
   private static final DiscoveryOptions DISCOVERY_OPTIONS = DiscoveryOptions.DEFAULT;
   private boolean zeroBaseFee = false;
   private boolean fixedBaseFee = false;
-
+  private Long timestamp = 0L;
   /** Default constructor. */
   public StubGenesisConfiguration() {
     // Explicit default constructor because of JavaDoc linting
@@ -170,6 +170,11 @@ public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable
   @Override
   public EthashConfigOptions getEthashConfigOptions() {
     return EthashConfigOptions.DEFAULT;
+  }
+
+  @Override
+  public long getTimestamp() {
+    return timestamp;
   }
 
   @Override
@@ -479,6 +484,14 @@ public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable
   @Override
   public boolean isZeroBaseFee() {
     return zeroBaseFee;
+  }
+
+  @Override
+  public Optional<Wei> getGenesisBaseFeePerGas() {
+    if(londonBlockNumber.isPresent() && londonBlockNumber.getAsLong() == 0) {
+      return Optional.of(BASEFEE_AT_GENESIS_DEFAULT_VALUE);
+    }
+    return Optional.empty();
   }
 
   @Override
@@ -1075,6 +1088,16 @@ public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable
    */
   public StubGenesisConfiguration transitions(final TransitionsConfigOptions transitions) {
     this.transitions = transitions;
+    return this;
+  }
+
+  /**
+   * Sets the timestamp of this genesis configuration, used by ephemeral chains.
+   * @param timestamp of genesis
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfiguration timestamp(final long timestamp) {
+    this.timestamp = timestamp;
     return this;
   }
 }

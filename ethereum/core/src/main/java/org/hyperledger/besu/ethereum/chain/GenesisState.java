@@ -18,6 +18,7 @@ import static java.util.Collections.emptyList;
 import static org.hyperledger.besu.ethereum.trie.common.GenesisWorldStateProvider.createGenesisWorldState;
 
 import org.hyperledger.besu.config.GenesisAccount;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
@@ -52,11 +53,11 @@ import org.apache.tuweni.bytes.Bytes32;
 public final class GenesisState {
 
   private final Block block;
-  private final GenesisFile genesisConfig;
+  private final GenesisFile genesisFile;
 
-  private GenesisState(final Block block, final GenesisFile genesisConfig) {
+  private GenesisState(final Block block, final GenesisFile genesisFile) {
     this.block = block;
-    this.genesisConfig = genesisConfig;
+    this.genesisFile = genesisFile;
   }
 
   /**
@@ -66,8 +67,8 @@ public final class GenesisState {
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
-  public static GenesisState fromJson(final String json, final ProtocolSchedule protocolSchedule) {
-    return fromConfig(GenesisFile.fromConfig(json), protocolSchedule);
+  public static GenesisState fromJson(final String json, final ProtocolSchedule protocolSchedule, final GenesisConfiguration genesisConfiguration) {
+    return fromConfig(GenesisFile.fromConfig(json), protocolSchedule, genesisConfiguration);
   }
 
   /**
@@ -83,9 +84,10 @@ public final class GenesisState {
   static GenesisState fromJsonSource(
       final DataStorageConfiguration dataStorageConfiguration,
       final URL jsonSource,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final GenesisConfiguration genesisConfiguration) {
     return fromConfig(
-        dataStorageConfiguration, GenesisFile.fromConfig(jsonSource), protocolSchedule);
+        dataStorageConfiguration, GenesisFile.fromConfig(jsonSource), protocolSchedule, genesisConfiguration);
   }
 
   /**
@@ -96,8 +98,8 @@ public final class GenesisState {
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
-      final GenesisFile config, final ProtocolSchedule protocolSchedule) {
-    return fromConfig(DataStorageConfiguration.DEFAULT_CONFIG, config, protocolSchedule);
+      final GenesisFile config, final ProtocolSchedule protocolSchedule, final GenesisConfiguration genesisConfiguration) {
+    return fromConfig(DataStorageConfiguration.DEFAULT_CONFIG, config, protocolSchedule, genesisConfiguration);
   }
 
   /**
@@ -105,44 +107,47 @@ public final class GenesisState {
    *
    * @param dataStorageConfiguration A {@link DataStorageConfiguration} describing the storage
    *     configuration
-   * @param genesisConfig A {@link GenesisFile} describing the genesis block.
+   * @param genesisFile A {@link GenesisFile} describing the network initial state
    * @param protocolSchedule A protocol Schedule associated with
+   * @param genesisConfiguration A {@link GenesisConfiguration} including any user specified overrides
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
       final DataStorageConfiguration dataStorageConfiguration,
-      final GenesisFile genesisConfig,
-      final ProtocolSchedule protocolSchedule) {
-    final var genesisStateRoot = calculateGenesisStateRoot(dataStorageConfiguration, genesisConfig);
+      final GenesisFile genesisFile,
+      final ProtocolSchedule protocolSchedule,
+      final GenesisConfiguration genesisConfiguration) {
+    final var genesisStateRoot = calculateGenesisStateRoot(dataStorageConfiguration, genesisFile);
     final Block block =
         new Block(
-            buildHeader(genesisConfig, genesisStateRoot, protocolSchedule),
-            buildBody(genesisConfig));
-    return new GenesisState(block, genesisConfig);
+            buildHeader(genesisFile, genesisStateRoot, protocolSchedule, genesisConfiguration),
+            buildBody(genesisConfiguration));
+    return new GenesisState(block, genesisFile);
   }
 
   /**
    * Construct a {@link GenesisState} from a JSON object.
    *
    * @param genesisStateRoot The root of the genesis state.
-   * @param genesisConfig A {@link GenesisFile} describing the genesis block.
+   * @param genesisFile A {@link GenesisFile} describing the genesis block.
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromStorage(
       final Hash genesisStateRoot,
-      final GenesisFile genesisConfig,
-      final ProtocolSchedule protocolSchedule) {
+      final GenesisFile genesisFile,
+      final ProtocolSchedule protocolSchedule,
+      final GenesisConfiguration genesisConfiguration) {
     final Block block =
         new Block(
-            buildHeader(genesisConfig, genesisStateRoot, protocolSchedule),
-            buildBody(genesisConfig));
-    return new GenesisState(block, genesisConfig);
+            buildHeader(genesisFile, genesisStateRoot, protocolSchedule, genesisConfiguration),
+            buildBody(genesisConfiguration));
+    return new GenesisState(block, genesisFile);
   }
 
-  private static BlockBody buildBody(final GenesisFile config) {
+  private static BlockBody buildBody(final GenesisConfiguration config) {
     final Optional<List<Withdrawal>> withdrawals =
-        isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
+        config.isShanghaiAtGenesis() ? Optional.of(emptyList()) : Optional.empty();
 
     return new BlockBody(emptyList(), emptyList(), withdrawals);
   }
@@ -157,7 +162,7 @@ public final class GenesisState {
    * @param target WorldView to write genesis state to
    */
   public void writeStateTo(final MutableWorldState target) {
-    writeAccountsTo(target, genesisConfig.streamAllocations(), block.getHeader());
+    writeAccountsTo(target, genesisFile.streamAllocations(), block.getHeader());
   }
 
   private static void writeAccountsTo(
@@ -188,34 +193,35 @@ public final class GenesisState {
   }
 
   private static BlockHeader buildHeader(
-      final GenesisFile genesis,
+      final GenesisFile genesisFile,
       final Hash genesisRootHash,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final GenesisConfiguration genesisConfig) {
 
     return BlockHeaderBuilder.create()
-        .parentHash(parseParentHash(genesis))
+        .parentHash(parseParentHash(genesisFile))
         .ommersHash(Hash.EMPTY_LIST_HASH)
-        .coinbase(parseCoinbase(genesis))
+        .coinbase(parseCoinbase(genesisFile))
         .stateRoot(genesisRootHash)
         .transactionsRoot(Hash.EMPTY_TRIE_HASH)
         .receiptsRoot(Hash.EMPTY_TRIE_HASH)
         .logsBloom(LogsBloomFilter.empty())
-        .difficulty(parseDifficulty(genesis))
+        .difficulty(parseDifficulty(genesisFile))
         .number(BlockHeader.GENESIS_BLOCK_NUMBER)
-        .gasLimit(genesis.getGasLimit())
+        .gasLimit(genesisFile.getGasLimit())
         .gasUsed(0L)
-        .timestamp(genesis.getTimestamp())
-        .extraData(parseExtraData(genesis))
-        .mixHash(parseMixHash(genesis))
-        .nonce(parseNonce(genesis))
+        .timestamp(genesisFile.getTimestamp())
+        .extraData(parseExtraData(genesisFile))
+        .mixHash(parseMixHash(genesisFile))
+        .nonce(parseNonce(genesisFile))
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
-        .baseFee(genesis.getGenesisBaseFeePerGas().orElse(null))
-        .withdrawalsRoot(isShanghaiAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
-        .blobGasUsed(isCancunAtGenesis(genesis) ? parseBlobGasUsed(genesis) : null)
-        .excessBlobGas(isCancunAtGenesis(genesis) ? parseExcessBlobGas(genesis) : null)
+        .baseFee(genesisConfig.getGenesisBaseFeePerGas().orElse(null))
+        .withdrawalsRoot(genesisConfig.isShanghaiAtGenesis() ? Hash.EMPTY_TRIE_HASH : null)
+        .blobGasUsed(genesisConfig.isCancunAtGenesis() ? parseBlobGasUsed(genesisFile) : null)
+        .excessBlobGas(genesisConfig.isCancunAtGenesis() ? parseExcessBlobGas(genesisFile) : null)
         .parentBeaconBlockRoot(
-            (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
-        .requestsHash(isPragueAtGenesis(genesis) ? Hash.EMPTY_REQUESTS_HASH : null)
+            (genesisConfig.isCancunAtGenesis() ? parseParentBeaconBlockRoot(genesisFile) : null))
+        .requestsHash(genesisConfig.isPragueAtGenesis() ? Hash.EMPTY_REQUESTS_HASH : null)
         .buildBlockHeader();
   }
 
@@ -286,61 +292,7 @@ public final class GenesisState {
     return Long.parseUnsignedLong(v, 16);
   }
 
-  private static boolean isShanghaiAtGenesis(final GenesisFile genesis) {
-    final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTime();
-    if (shanghaiTimestamp.isPresent()) {
-      return genesis.getTimestamp() >= shanghaiTimestamp.getAsLong();
-    }
-    return isCancunAtGenesis(genesis);
-  }
 
-  private static boolean isCancunAtGenesis(final GenesisFile genesis) {
-    final OptionalLong cancunTimestamp = genesis.getConfigOptions().getCancunTime();
-    if (cancunTimestamp.isPresent()) {
-      return genesis.getTimestamp() >= cancunTimestamp.getAsLong();
-    }
-    return isPragueAtGenesis(genesis) || isCancunEOFAtGenesis(genesis);
-  }
-
-  private static boolean isCancunEOFAtGenesis(final GenesisFile genesis) {
-    final OptionalLong cancunEOFTimestamp = genesis.getConfigOptions().getCancunEOFTime();
-    if (cancunEOFTimestamp.isPresent()) {
-      return genesis.getTimestamp() >= cancunEOFTimestamp.getAsLong();
-    }
-    return false;
-  }
-
-  private static boolean isPragueAtGenesis(final GenesisFile genesis) {
-    final OptionalLong pragueTimestamp = genesis.getConfigOptions().getPragueTime();
-    if (pragueTimestamp.isPresent()) {
-      return genesis.getTimestamp() >= pragueTimestamp.getAsLong();
-    }
-    return isOsakaAtGenesis(genesis);
-  }
-
-  private static boolean isOsakaAtGenesis(final GenesisFile genesis) {
-    final OptionalLong osakaTimestamp = genesis.getConfigOptions().getOsakaTime();
-    if (osakaTimestamp.isPresent()) {
-      return genesis.getTimestamp() >= osakaTimestamp.getAsLong();
-    }
-    return isFutureEipsTimeAtGenesis(genesis);
-  }
-
-  private static boolean isFutureEipsTimeAtGenesis(final GenesisFile genesis) {
-    final OptionalLong futureEipsTime = genesis.getConfigOptions().getFutureEipsTime();
-    if (futureEipsTime.isPresent()) {
-      return genesis.getTimestamp() >= futureEipsTime.getAsLong();
-    }
-    return isExperimentalEipsTimeAtGenesis(genesis);
-  }
-
-  private static boolean isExperimentalEipsTimeAtGenesis(final GenesisFile genesis) {
-    final OptionalLong experimentalEipsTime = genesis.getConfigOptions().getExperimentalEipsTime();
-    if (experimentalEipsTime.isPresent()) {
-      return genesis.getTimestamp() >= experimentalEipsTime.getAsLong();
-    }
-    return false;
-  }
 
   @Override
   public String toString() {

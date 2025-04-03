@@ -15,7 +15,8 @@
 package org.hyperledger.besu.components;
 
 import org.hyperledger.besu.cli.BesuCommand;
-import org.hyperledger.besu.config.module.GenesisModule;
+import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisModule;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
@@ -85,4 +86,10 @@ public interface BesuComponent {
    * @return BlobCache
    */
   BlobCache getBlobCache();
+
+  /**
+   *
+   * @return
+   */
+  GenesisConfiguration getGenesisConfig();
 }

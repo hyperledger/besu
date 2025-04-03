@@ -30,6 +30,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** The interface Genesis config options. */
 public interface GenesisConfiguration {
 
+  public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1_000_000_000L);
+
   /**
    * Is eth hash boolean.
    *
@@ -136,6 +138,8 @@ public interface GenesisConfiguration {
    * @return the ethash config options
    */
   EthashConfigOptions getEthashConfigOptions();
+
+  long getTimestamp();
 
   /**
    * Gets homestead block number.
@@ -560,6 +564,12 @@ public interface GenesisConfiguration {
    */
   boolean isZeroBaseFee();
 
+    /**
+     * The genesis base fee per gas, used when London is active at genesis
+     *
+     * @return the base fee per gas
+     */
+  Optional<Wei> getGenesisBaseFeePerGas();
   /**
    * Force a Base Fee as Gas Price network to used with London/EIP-1559.
    *
@@ -595,4 +605,61 @@ public interface GenesisConfiguration {
    * @return the blob schedule
    */
   Optional<BlobScheduleOptions> getBlobScheduleOptions();
+
+  default boolean isShanghaiAtGenesis() {
+    final OptionalLong shanghaiTimestamp = getShanghaiTime();
+    if (shanghaiTimestamp.isPresent()) {
+      return getTimestamp() >= shanghaiTimestamp.getAsLong();
+    }
+    return isCancunAtGenesis();
+  }
+
+  default boolean isCancunAtGenesis() {
+    final OptionalLong cancunTimestamp = getCancunTime();
+    if (cancunTimestamp.isPresent()) {
+      return getTimestamp() >= cancunTimestamp.getAsLong();
+    }
+    return isPragueAtGenesis() || isCancunEOFAtGenesis();
+  }
+
+  default boolean isCancunEOFAtGenesis() {
+    final OptionalLong cancunEOFTimestamp = getCancunEOFTime();
+    if (cancunEOFTimestamp.isPresent()) {
+      return getTimestamp() >= cancunEOFTimestamp.getAsLong();
+    }
+    return false;
+  }
+
+  default boolean isPragueAtGenesis() {
+    final OptionalLong pragueTimestamp = getPragueTime();
+    if (pragueTimestamp.isPresent()) {
+      return getTimestamp() >= pragueTimestamp.getAsLong();
+    }
+    return isOsakaAtGenesis();
+  }
+
+  default boolean isOsakaAtGenesis() {
+    final OptionalLong osakaTimestamp = getOsakaTime();
+    if (osakaTimestamp.isPresent()) {
+      return getTimestamp() >= osakaTimestamp.getAsLong();
+    }
+    return isFutureEipsTimeAtGenesis();
+  }
+
+  default boolean isFutureEipsTimeAtGenesis() {
+    final OptionalLong futureEipsTime = getFutureEipsTime();
+    if (futureEipsTime.isPresent()) {
+      return getTimestamp() >= futureEipsTime.getAsLong();
+    }
+    return isExperimentalEipsTimeAtGenesis();
+  }
+
+  default boolean isExperimentalEipsTimeAtGenesis() {
+    final OptionalLong experimentalEipsTime = getExperimentalEipsTime();
+    if (experimentalEipsTime.isPresent()) {
+      return getTimestamp() >= experimentalEipsTime.getAsLong();
+    }
+    return false;
+  }
+
 }

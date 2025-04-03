@@ -23,6 +23,8 @@ import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
 import org.hyperledger.besu.cli.options.RPCOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -34,6 +36,9 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import org.slf4j.Logger;
+
+import java.net.URL;
+import java.util.Map;
 
 /**
  * A dagger module that know how to create the BesuCommand, which collects all configuration
@@ -90,5 +95,17 @@ public class BesuCommandModule {
   @Singleton
   BesuPluginContextImpl provideBesuPluginContextImpl(final BesuCommand provideFrom) {
     return provideFrom.getBesuPluginContext();
+  }
+
+  @Provides
+  @Singleton
+  Map<String, String> provideGenesisOverrides(final BesuCommand provideFrom) {
+    return provideFrom.genesisConfigOverrides;
+  }
+
+  @Provides
+  @Singleton
+  URL provideGenesisFile(final BesuCommand provideFrom) {
+    return provideFrom.readGenesisConfig();
   }
 }

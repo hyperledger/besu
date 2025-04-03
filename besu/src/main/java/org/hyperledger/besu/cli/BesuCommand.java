@@ -323,9 +323,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
-  private final Supplier<GenesisFile> genesisConfigSupplier =
+  private final Supplier<GenesisFile> genesisFileSupplier =
       Suppliers.memoize(this::readGenesisConfig);
-  private final Supplier<GenesisConfiguration> genesisConfigOptionsSupplier =
+  private final Supplier<GenesisConfiguration> genesisConfigSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
   private final Supplier<MiningConfiguration> miningParametersSupplier =
       Suppliers.memoize(this::getMiningParameters);
@@ -567,7 +567,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "*",
       hidden = true,
       split = ",")
-  private final Map<String, String> genesisConfigOverrides =
+  public final Map<String, String> genesisConfigOverrides =
       new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
   @CommandLine.Option(
@@ -1305,11 +1305,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Using the Java implementation of the blake2bf algorithm");
     }
 
-    if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getCancunEOFTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getOsakaTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getFutureEipsTime().isPresent()) {
+    if (genesisConfigSupplier.get().getCancunTime().isPresent()
+        || genesisConfigSupplier.get().getCancunEOFTime().isPresent()
+        || genesisConfigSupplier.get().getPragueTime().isPresent()
+        || genesisConfigSupplier.get().getOsakaTime().isPresent()
+        || genesisConfigSupplier.get().getFutureEipsTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -1380,7 +1380,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateTransactionPoolOptions() {
-    transactionPoolOptions.validate(commandLine, genesisConfigOptionsSupplier.get());
+    transactionPoolOptions.validate(commandLine, genesisConfigSupplier.get());
   }
 
   private void validateDataStorageOptions() {
@@ -1389,7 +1389,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateMiningParams() {
     miningOptions.validate(
-        commandLine, genesisConfigOptionsSupplier.get(), isMergeEnabled(), logger);
+        commandLine, genesisConfigSupplier.get(), isMergeEnabled(), logger);
   }
 
   private void validateP2POptions() {
@@ -1508,7 +1508,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private GenesisFile readGenesisConfig() {
+  public GenesisFile readGenesisConfig() {
     GenesisFile effectiveGenesisFile;
     effectiveGenesisFile =
         network.equals(EPHEMERY)
@@ -1520,9 +1520,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
-  private GenesisConfiguration readGenesisConfigOptions() {
+  public GenesisConfiguration readGenesisConfigOptions() {
     try {
-      return genesisConfigSupplier.get().getConfigOptions();
+      return genesisFileSupplier.get().getConfigOptions();
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine, "Unable to load genesis file. " + e.getCause());
@@ -1847,7 +1847,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .from(txPoolConf)
             .saveFile((dataPath.resolve(txPoolConf.getSaveFile().getPath()).toFile()));
 
-    if (genesisConfigOptionsSupplier.get().isZeroBaseFee()) {
+    if (genesisConfigSupplier.get().isZeroBaseFee()) {
       logger.warn(
           "Forcing price bump for transaction replacement to 0, since we are on a zero basefee network");
       txPoolConfBuilder.priceBump(Percentage.ZERO);
@@ -1886,7 +1886,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private MiningConfiguration getMiningParameters() {
     miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
     final var miningParameters = miningOptions.toDomainObject();
-    getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
+    getGenesisBlockPeriodSeconds(genesisConfigSupplier.get())
         .ifPresent(miningParameters::setBlockPeriodSeconds);
     initMiningParametersMetrics(miningParameters);
 
@@ -2090,7 +2090,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         // If no chain id is found in the genesis, use mainnet network id
         try {
           builder.setNetworkId(
-              genesisConfigOptionsSupplier
+              genesisConfigSupplier
                   .get()
                   .getChainId()
                   .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).networkId()));
@@ -2111,7 +2111,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setDnsDiscoveryUrl(null);
     }
 
-    builder.setGenesisConfig(genesisConfigSupplier.get());
+    builder.setGenesisConfig(genesisFileSupplier.get());
 
     if (networkId != null) {
       builder.setNetworkId(networkId);
@@ -2125,7 +2125,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setDnsDiscoveryUrl(p2PDiscoveryOptions.discoveryDnsUrl);
     } else {
       final Optional<String> discoveryDnsUrlFromGenesis =
-          genesisConfigOptionsSupplier.get().getDiscoveryOptions().getDiscoveryDnsUrl();
+          genesisConfigSupplier.get().getDiscoveryOptions().getDiscoveryDnsUrl();
       discoveryDnsUrlFromGenesis.ifPresent(builder::setDnsDiscoveryUrl);
     }
 
@@ -2138,7 +2138,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     } else {
       final Optional<List<String>> bootNodesFromGenesis =
-          genesisConfigOptionsSupplier.get().getDiscoveryOptions().getBootNodes();
+          genesisConfigSupplier.get().getDiscoveryOptions().getBootNodes();
       if (bootNodesFromGenesis.isPresent()) {
         listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
       }
@@ -2374,7 +2374,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (genesisFile == null) {
       return Optional.empty();
     }
-    return genesisConfigOptionsSupplier.get().getEcCurve();
+    return genesisConfigSupplier.get().getEcCurve();
   }
 
   /**
@@ -2383,12 +2383,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return the genesis config options
    */
   protected GenesisConfiguration getGenesisConfigOptions() {
-    return genesisConfigOptionsSupplier.get();
+    return genesisConfigSupplier.get();
   }
 
   private void setMergeConfigOptions() {
     MergeConfiguration.setMergeEnabled(
-        genesisConfigOptionsSupplier.get().getTerminalTotalDifficulty().isPresent());
+        genesisConfigSupplier.get().getTerminalTotalDifficulty().isPresent());
   }
 
   /** Set ignorable segments in RocksDB Storage Provider plugin. */
@@ -2403,9 +2403,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final SynchronizerConfiguration synchronizerConfiguration =
         unstableSynchronizerOptions.toDomainObject().build();
     final Optional<UInt256> terminalTotalDifficulty =
-        genesisConfigOptionsSupplier.get().getTerminalTotalDifficulty();
+        genesisConfigSupplier.get().getTerminalTotalDifficulty();
     final CheckpointConfigOptions checkpointConfigOptions =
-        genesisConfigOptionsSupplier.get().getCheckpointOptions();
+        genesisConfigSupplier.get().getCheckpointOptions();
     if (synchronizerConfiguration.isCheckpointPostMergeEnabled()) {
       if (!checkpointConfigOptions.isValid()) {
         throw new InvalidConfigurationException(

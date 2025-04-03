@@ -35,12 +35,10 @@ public class GenesisFile {
   public static final GenesisFile DEFAULT =
       new GenesisFile(new GenesisReader.FromObjectNode(JsonUtil.createEmptyObjectNode()));
 
-  /** The constant BASEFEE_AT_GENESIS_DEFAULT_VALUE. */
-  public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1_000_000_000L);
 
   private final GenesisReader loader;
   private final ObjectNode genesisRoot;
-  private Map<String, String> overrides;
+  //private Map<String, String> overrides;
 
   private GenesisFile(final GenesisReader loader) {
     this.loader = loader;
@@ -106,42 +104,6 @@ public class GenesisFile {
     return new GenesisFile(new GenesisReader.FromObjectNode(config));
   }
 
-  /**
-   * Gets config options, including any overrides.
-   *
-   * @return the config options
-   */
-  public GenesisConfiguration getConfigOptions() {
-    final ObjectNode config = loader.getConfig();
-    // are there any overrides to apply?
-    if (this.overrides == null) {
-      return JsonGenesisConfiguration.fromJsonObject(config);
-    }
-    // otherwise apply overrides
-    Map<String, String> overridesRef = this.overrides;
-
-    // if baseFeePerGas has been explicitly configured, pass it as an override:
-    final var optBaseFee = getBaseFeePerGas();
-    if (optBaseFee.isPresent()) {
-      // streams and maps cannot handle null values.
-      overridesRef = new HashMap<>(this.overrides);
-      overridesRef.put("baseFeePerGas", optBaseFee.get().toShortHexString());
-    }
-
-    return JsonGenesisConfiguration.fromJsonObjectWithOverrides(config, overridesRef);
-  }
-
-  /**
-   * Sets overrides for genesis options.
-   *
-   * @param overrides the overrides
-   * @return the config options
-   */
-  public GenesisFile withOverrides(final Map<String, String> overrides) {
-
-    this.overrides = overrides;
-    return this;
-  }
 
   /**
    * Stream allocations stream.
@@ -198,24 +160,7 @@ public class GenesisFile {
         .map(baseFeeStr -> Wei.of(parseLong("baseFeePerGas", baseFeeStr)));
   }
 
-  /**
-   * Gets genesis base fee per gas.
-   *
-   * @return the genesis base fee per gas
-   */
-  public Optional<Wei> getGenesisBaseFeePerGas() {
-    if (getBaseFeePerGas().isPresent()) {
-      // always use specified basefee if present
-      return getBaseFeePerGas();
-    } else if (getConfigOptions().getLondonBlockNumber().orElse(-1L) == 0) {
-      // if not specified, and we specify london at block zero use a default fee
-      // this is needed for testing.
-      return Optional.of(BASEFEE_AT_GENESIS_DEFAULT_VALUE);
-    } else {
-      // no explicit base fee and no london block zero means no basefee at genesis
-      return Optional.empty();
-    }
-  }
+
 
   /**
    * Gets mix hash.
@@ -280,9 +225,6 @@ public class GenesisFile {
    * @return the timestamp
    */
   public long getTimestamp() {
-    if (overrides != null && overrides.containsKey("timestamp")) {
-      return Long.parseLong(overrides.get("timestamp"));
-    }
     return parseLong("timestamp", JsonUtil.getValueAsString(genesisRoot, "timestamp", "0x0"));
   }
 
@@ -317,23 +259,6 @@ public class GenesisFile {
     }
   }
 
-  /**
-   * Get Fork Block numbers
-   *
-   * @return list of fork block numbers
-   */
-  public List<Long> getForkBlockNumbers() {
-    return getConfigOptions().getForkBlockNumbers();
-  }
-
-  /**
-   * Get fork time stamps
-   *
-   * @return list of fork time stamps
-   */
-  public List<Long> getForkTimestamps() {
-    return getConfigOptions().getForkBlockTimestamps();
-  }
 
   @Override
   public boolean equals(final Object o) {
