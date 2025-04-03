@@ -40,5 +40,5 @@ dependencies {
   implementation project(':metrics:core')
   implementation project(':plugin-api')
 
-  implementation 'org.rocksdb:rocksdbjni'
+  implementation 'io.github.mirgee:rocksdbjni'
 }
