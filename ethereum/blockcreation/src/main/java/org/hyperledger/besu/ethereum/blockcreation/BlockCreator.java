@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelect
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.List;
 import java.util.Optional;
@@ -56,14 +57,15 @@ public interface BlockCreator {
       final long timestamp, final BlockHeader parentHeader);
 
   BlockCreationResult createBlock(
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final long timestamp,
-      final BlockHeader parentHeader);
-
-  BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp,
       final BlockHeader parentHeader);
+
+  BlockCreationResult createBlock(
+    final Optional<List<Transaction>> maybeTransactions,
+    final Optional<List<BlockHeader>> maybeOmmers,
+    final Optional<List<Withdrawal>> maybeWithdrawals,
+    final long timestamp,
+    final BlockHeader parentHeader);
 }

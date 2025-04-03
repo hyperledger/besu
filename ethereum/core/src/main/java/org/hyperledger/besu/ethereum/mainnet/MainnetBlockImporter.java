@@ -64,7 +64,10 @@ public class MainnetBlockImporter implements BlockImporter {
               });
     }
 
-    return new BlockImportResult(result.isSuccessful());
+    final BlockImportResult blockImportResult = new BlockImportResult(result.isSuccessful());
+    blockImportResult.setMessage(result.errorMessage.orElse(""));
+    return blockImportResult;
+
   }
 
   @Override

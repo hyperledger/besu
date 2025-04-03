@@ -12,7 +12,7 @@
       "nonce" : "0x1E"
     }, "latest",
     {
-      "disableStatelessAccessWitness": true
+      "enableStatelessAccessWitness": true
     } ],
     "id" : 1
   },

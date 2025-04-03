@@ -130,15 +130,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   @Override
   public BlockCreationResult createBlock(
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final long timestamp,
-      final BlockHeader parentHeader) {
-    return createBlock(Optional.of(transactions), Optional.of(ommers), timestamp, parentHeader);
-  }
-
-  @Override
-  public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp,
@@ -160,6 +151,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     throw new UnsupportedOperationException("Only used by BFT block creators");
   }
 
+  @Override
   public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,

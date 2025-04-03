@@ -28,7 +28,7 @@ public class DebugTraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTe
   @Override
   @BeforeEach
   public void setup() throws Exception {
-    setupBonsaiBlockchain();
+    setupVerkleBlockchain();
     startService();
   }
 

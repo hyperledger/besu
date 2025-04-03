@@ -140,8 +140,8 @@ public class JsonBlockImporter {
     } else if (blockData.getCoinbase().isPresent() || blockData.getExtraData().isPresent()) {
       // Fail if these fields are set for non-ethash chains
       final Stream.Builder<String> fields = Stream.builder();
-      blockData.getCoinbase().map((c) -> "coinbase").ifPresent(fields::add);
-      blockData.getExtraData().map((e) -> "extraData").ifPresent(fields::add);
+      blockData.getCoinbase().map(c -> "coinbase").ifPresent(fields::add);
+      blockData.getExtraData().map(e -> "extraData").ifPresent(fields::add);
       final String fieldsList = fields.build().collect(Collectors.joining(", "));
       throw new IllegalArgumentException(
           "Some fields ("
@@ -164,7 +164,7 @@ public class JsonBlockImporter {
           block.getHash());
     } else {
       throw new IllegalStateException(
-          "Newly created block " + block.getHeader().getNumber() + " failed validation.");
+          "Newly created block " + block.getHeader().getNumber() + " failed validation. Reason: " + importResult.getMessage());
     }
   }
 

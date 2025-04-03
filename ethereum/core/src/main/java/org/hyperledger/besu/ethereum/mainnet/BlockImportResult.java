@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 /** The result of a block import. */
 public class BlockImportResult {
   private final BlockImportStatus status;
+  private String message;
 
   public enum BlockImportStatus {
     IMPORTED,
@@ -44,5 +45,13 @@ public class BlockImportResult {
 
   public BlockImportStatus getStatus() {
     return status;
+  }
+
+  public void setMessage(final String message) {
+    this.message = message;
+  }
+
+  public String getMessage() {
+    return message;
   }
 }
