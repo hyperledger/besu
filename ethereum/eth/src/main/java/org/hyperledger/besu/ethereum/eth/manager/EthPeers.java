@@ -31,10 +31,13 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerClientType;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -114,7 +117,6 @@ public class EthPeers implements PeerSelector {
   private RlpxAgent rlpxAgent;
 
   private final Counter connectedPeersCounter;
-  //  private List<ProtocolManager> protocolManagers;
   private ChainHeadTracker tracker;
   private SnapServerChecker snapServerChecker;
   private boolean snapServerPeersNeeded = false;
@@ -173,6 +175,26 @@ public class EthPeers implements PeerSelector {
     connectedPeersCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.PEERS, "connected_total", "Total number of peers connected");
+
+    final LabelledSuppliedMetric peerClientLabelledGauge =
+        metricsSystem.createLabelledSuppliedGauge(
+            BesuMetricCategory.PEERS,
+            "peer_count_by_type",
+            "The number of clients connected by client type",
+            "client");
+
+    for (final var clientType : PeerClientType.values()) {
+      peerClientLabelledGauge.labels(
+          () -> countConnectedPeersOfType(clientType), clientType.getDisplayName());
+    }
+  }
+
+  private double countConnectedPeersOfType(final PeerClientType clientType) {
+    return streamAllActiveConnections()
+        .map(PeerConnection::getPeerInfo)
+        .map(PeerInfo::getClientType)
+        .filter(clientType::equals)
+        .count();
   }
 
   public void registerNewConnection(
