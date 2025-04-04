@@ -130,10 +130,8 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long transactionIntrinsicGasCost(
-      final Bytes payload, final boolean isContractCreation, final long baselineGas) {
-    final long dynamicIntrinsicGasCost =
-        dynamicIntrinsicGasCost(payload, isContractCreation, baselineGas);
+  public long transactionIntrinsicGasCost(final Transaction transaction, final long baselineGas) {
+    final long dynamicIntrinsicGasCost = dynamicIntrinsicGasCost(transaction, baselineGas);
 
     if (dynamicIntrinsicGasCost == Long.MIN_VALUE || dynamicIntrinsicGasCost == Long.MAX_VALUE) {
       return dynamicIntrinsicGasCost;
@@ -144,22 +142,21 @@ public class FrontierGasCalculator implements GasCalculator {
   /**
    * Calculates the dynamic part of the intrinsic gas cost
    *
-   * @param payload the call data payload
-   * @param isContractCreation whether the transaction is a contract creation
+   * @param transaction the transaction
    * @param baselineGas how much gas is used by access lists and code delegations
    * @return the dynamic part of the intrinsic gas cost
    */
-  protected long dynamicIntrinsicGasCost(
-      final Bytes payload, final boolean isContractCreation, final long baselineGas) {
-    final int payloadSize = payload.size();
-    final long zeroBytes = zeroBytes(payload);
-    long cost = clampedAdd(callDataCost(payloadSize, zeroBytes), baselineGas);
+  protected long dynamicIntrinsicGasCost(final Transaction transaction, final long baselineGas) {
+    final int payloadSize = transaction.getPayload().size();
+
+    long cost =
+        clampedAdd(callDataCost(payloadSize, transaction.getPayloadZeroBytes()), baselineGas);
 
     if (cost == Long.MIN_VALUE || cost == Long.MAX_VALUE) {
       return cost;
     }
 
-    if (isContractCreation) {
+    if (transaction.isContractCreation()) {
       cost = clampedAdd(cost, contractCreationCost(payloadSize));
 
       if (cost == Long.MIN_VALUE || cost == Long.MAX_VALUE) {
@@ -183,22 +180,6 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   /**
-   * Counts the zero bytes in the payload
-   *
-   * @param payload the payload
-   * @return the number of zero bytes in the payload
-   */
-  protected static long zeroBytes(final Bytes payload) {
-    int zeros = 0;
-    for (int i = 0; i < payload.size(); i++) {
-      if (payload.get(i) == 0) {
-        zeros += 1;
-      }
-    }
-    return zeros;
-  }
-
-  /**
    * Returns the gas cost for contract creation transactions
    *
    * @param ignored the size of the contract creation code (ignored in Frontier)
@@ -218,7 +199,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long transactionFloorCost(final Bytes payload) {
+  public long transactionFloorCost(final Bytes payload, final long payloadZeroBytes) {
     return 0L;
   }
 

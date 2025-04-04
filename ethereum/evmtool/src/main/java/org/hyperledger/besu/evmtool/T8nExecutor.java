@@ -449,9 +449,7 @@ public class T8nExecutor {
       long transactionGasUsed = transaction.getGasLimit() - result.getGasRemaining();
 
       gasUsed += transactionGasUsed;
-      long intrinsicGas =
-          gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(), transaction.getTo().isEmpty(), 0);
+      long intrinsicGas = gasCalculator.transactionIntrinsicGasCost(transaction, 0);
       TransactionReceipt receipt =
           protocolSpec
               .getTransactionReceiptFactory()
