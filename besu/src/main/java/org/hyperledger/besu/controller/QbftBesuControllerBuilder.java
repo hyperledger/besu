@@ -44,6 +44,7 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.FutureMessageSynchronizerHandler;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
@@ -267,11 +268,14 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             blockLogger(transactionPool, localAddress)
                 .blockMined(BlockUtil.toBesuBlock(qbftBlock)));
 
+    final EthSynchronizerUpdater synchronizerUpdater =
+        new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers());
     final FutureMessageBuffer futureMessageBuffer =
         new FutureMessageBuffer(
             qbftConfig.getFutureMessagesMaxDistance(),
             qbftConfig.getFutureMessagesLimit(),
-            blockchain.getChainHeadBlockNumber());
+            blockchain.getChainHeadBlockNumber(),
+            new FutureMessageSynchronizerHandler(synchronizerUpdater));
     final MessageTracker duplicateMessageTracker =
         new MessageTracker(qbftConfig.getDuplicateMessageLimit());
 
@@ -305,7 +309,6 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,
-            new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers()),
             blockEncoder);
     final BftEventHandler bftEventHandler = new BftEventHandlerAdaptor(qbftController);
 
