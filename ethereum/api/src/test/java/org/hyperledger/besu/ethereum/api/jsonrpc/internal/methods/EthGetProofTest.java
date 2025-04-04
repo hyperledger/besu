@@ -83,7 +83,7 @@ class EthGetProofTest {
   private final UInt256 storageKey =
       UInt256.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
   private final String storageKeyShortened =
-      "0x1"; // shortened form of storageKey used in json output
+      "0x01"; // shortened form of storageKey used in json output
   private final long blockNumber = 1;
 
   @BeforeEach

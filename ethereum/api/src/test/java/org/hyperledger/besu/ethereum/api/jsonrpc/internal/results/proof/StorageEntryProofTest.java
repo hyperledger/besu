@@ -25,16 +25,21 @@ class StorageEntryProofTest {
 
   @Test
   public void testKey() {
+    // zero
     testKey(UInt256.ZERO, "0x0");
     testKey(UInt256.fromHexString("0x00"), "0x0");
+
+    // no leading zeros
     testKey(UInt256.fromHexString("0x10"), "0x10");
+
     // single leading zero, expect it to remain
     testKey(UInt256.fromHexString("0x0aa0"), "0x0aa0");
     testKey(UInt256.fromHexString("0x01"), "0x01");
+    testKey(UInt256.ONE, "0x01");
+
     // multiple leading zeros, they should not
     testKey(UInt256.fromHexString("0x00a2"), "0xa2");
     testKey(UInt256.fromHexString("0x00a200"), "0xa200");
-    testKey(UInt256.ONE, "0x01");
   }
 
   void testKey(final UInt256 key, final String expected) {
