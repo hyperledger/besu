@@ -28,9 +28,17 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public final class ReceiptsMessageTest {
+  @Test
+  public void testReceiptsMessageEth68() {
+    roundTripTest(TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
+  }
 
   @Test
-  public void roundTripTest() {
+  public void testReceiptsMessageEth69() {
+    roundTripTest(TransactionReceiptEncodingConfiguration.NETWORK_FLAT_RECEIPT);
+  }
+
+  public void roundTripTest(final TransactionReceiptEncodingConfiguration encodingConfiguration) {
     // Generate some data
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final List<List<TransactionReceipt>> receipts = new ArrayList<>();
@@ -46,8 +54,7 @@ public final class ReceiptsMessageTest {
 
     // Perform round-trip transformation
     // Create specific message, copy it to a generic message, then read back into a specific format
-    final MessageData initialMessage =
-        ReceiptsMessage.create(receipts, TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
+    final MessageData initialMessage = ReceiptsMessage.create(receipts, encodingConfiguration);
     final MessageData raw = new RawMessage(EthProtocolMessages.RECEIPTS, initialMessage.getData());
     final ReceiptsMessage message = ReceiptsMessage.readFrom(raw);
 
