@@ -46,7 +46,6 @@ import org.apache.tuweni.bytes.Bytes32;
   "receiptsRoot",
   "miner",
   "difficulty",
-  "totalDifficulty",
   "extraData",
   "baseFeePerGas",
   "size",
@@ -73,7 +72,6 @@ public class BlockResult implements JsonRpcResult {
   private final String receiptsRoot;
   private final String miner;
   private final String difficulty;
-  private final String totalDifficulty;
   private final String extraData;
   private final String baseFeePerGas;
   private final String size;
@@ -133,7 +131,6 @@ public class BlockResult implements JsonRpcResult {
     this.receiptsRoot = header.getReceiptsRoot().toString();
     this.miner = header.getCoinbase().toString();
     this.difficulty = Quantity.create(header.getDifficulty());
-    this.totalDifficulty = Quantity.create(totalDifficulty);
     this.extraData = header.getExtraData().toString();
     this.baseFeePerGas = header.getBaseFee().map(Quantity::create).orElse(null);
     this.size = Quantity.create(size);
@@ -215,11 +212,6 @@ public class BlockResult implements JsonRpcResult {
   @JsonGetter(value = "difficulty")
   public String getDifficulty() {
     return difficulty;
-  }
-
-  @JsonGetter(value = "totalDifficulty")
-  public String getTotalDifficulty() {
-    return totalDifficulty;
   }
 
   @JsonGetter(value = "extraData")
