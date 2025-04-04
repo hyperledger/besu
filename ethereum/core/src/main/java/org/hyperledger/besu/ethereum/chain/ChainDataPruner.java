@@ -80,14 +80,6 @@ public class ChainDataPruner implements BlockAddedObserver {
             }
           }
           prunerStorage.setPruningMark(pruningTransaction, currentPruningMark);
-          blockchainStorage
-              .getBlockHash(currentPruningMark)
-              .ifPresent(
-                  blockHash -> {
-                    final BlockchainStorage.Updater updater = blockchainStorage.updater();
-                    updater.setEarliest(blockHash);
-                    updater.commit();
-                  });
           pruningTransaction.commit();
         });
   }
