@@ -32,12 +32,11 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -49,14 +48,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import org.assertj.core.util.Lists;
 
 public class PermissionedNodeBuilder {
 
   private String name;
-  private String genesisFile;
-
+  private GenesisConfigurationProvider genesisConfigProvider;
   private boolean localConfigNodesPermissioningEnabled = false;
   private Path localConfigNodesPermissioningFile = null;
   private Collection<URI> localConfigPermittedNodes = null;
@@ -159,14 +156,9 @@ public class PermissionedNodeBuilder {
     return this;
   }
 
-  @SuppressWarnings("UnstableApiUsage")
-  public PermissionedNodeBuilder genesisFile(final String path) {
-    try {
-      URI uri = this.getClass().getResource(path).toURI();
-      this.genesisFile = Resources.toString(uri.toURL(), Charset.defaultCharset());
-    } catch (final URISyntaxException | IOException e) {
-      throw new IllegalStateException("Unable to read genesis file from: " + path, e);
-    }
+  public PermissionedNodeBuilder genesisConfigProvider(
+      final GenesisConfigurationProvider genesisConfigProvider) {
+    this.genesisConfigProvider = genesisConfigProvider;
     return this;
   }
 
@@ -205,8 +197,8 @@ public class PermissionedNodeBuilder {
 
     builder.dnsEnabled(isDnsEnabled);
 
-    if (genesisFile != null) {
-      builder.genesisConfigProvider((a) -> Optional.of(genesisFile));
+    if (genesisConfigProvider != null) {
+      builder.genesisConfigProvider(genesisConfigProvider);
       builder.devMode(false);
     }
 
