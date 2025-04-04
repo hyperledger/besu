@@ -123,6 +123,15 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   }
 
   /**
+   * Gets pre-merge pruning enabled
+   *
+   * @return the pre-merge pruning enabled
+   */
+  public Boolean getPreMergePruningEnabled() {
+    return preMergePruningEnabled;
+  }
+
+  /**
    * Gets chain data pruning blocks retained.
    *
    * @return the chain data pruning blocks retained
