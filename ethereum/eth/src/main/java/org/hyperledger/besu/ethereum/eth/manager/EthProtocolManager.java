@@ -418,10 +418,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             .addArgument(peer::toString)
             .addArgument(message::getConnection)
             .log();
-        handleDisconnect(
-            peer.getConnection(),
-            DisconnectReason.SUBPROTOCOL_TRIGGERED_INVALID_STATUS_MESSAGE,
-            false);
+        peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_INVALID_STATUS_MESSAGE);
       } else {
         LOG.atDebug()
             .setMessage("Received status message from {}: {} with connection {}")
@@ -431,7 +428,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             .log();
         peer.registerStatusReceived(
             status.bestHash(),
-            status.totalDifficulty(),
+            status.totalDifficulty().orElse(Difficulty.ZERO),
             status.protocolVersion(),
             message.getConnection());
       }

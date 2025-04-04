@@ -280,6 +280,40 @@ public final class EthProtocolManagerTest {
   }
 
   @Test
+  public void disconnectOnMissingBlockRangeWhenEth69() {
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(protocolSchedule)
+            .setBlockchain(blockchain)
+            .setEthScheduler(new DeterministicEthScheduler(() -> false))
+            .setWorldStateArchive(protocolContext.getWorldStateArchive())
+            .setTransactionPool(transactionPool)
+            .setEthereumWireProtocolConfiguration(
+                EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V69).build())
+            .build()) {
+
+      final MockPeerConnection peer =
+          setupPeerWithoutStatusExchange(ethManager, (cap, msg, conn) -> {}, EthProtocol.ETH69);
+      StatusMessage statusMessage =
+          StatusMessage.builder()
+              .protocolVersion(EthProtocolVersion.V68)
+              .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
+              .networkId(BigInteger.ONE)
+              .bestHash(blockchain.getChainHeadHash())
+              .genesisHash(
+                  blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash())
+              .forkId(forkId)
+              .build();
+
+      ethManager.processMessage(EthProtocol.ETH69, new DefaultMessage(peer, statusMessage));
+      assertThat(peer.getDisconnectReason()).isPresent();
+      assertThat(peer.getDisconnectReason())
+          .hasValue(DisconnectReason.SUBPROTOCOL_TRIGGERED_INVALID_STATUS_MESSAGE);
+      assertThat(peer.isDisconnected()).isTrue();
+    }
+  }
+
+  @Test
   public void doNotDisconnectOnLargeMessageWithinLimits() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestBuilder.builder()
@@ -568,20 +602,33 @@ public final class EthProtocolManagerTest {
 
   private MockPeerConnection setupPeer(
       final EthProtocolManager ethManager, final PeerSendHandler onSend) {
-    final MockPeerConnection peerConnection = setupPeerWithoutStatusExchange(ethManager, onSend);
+    return setupPeer(ethManager, onSend, EthProtocol.LATEST);
+  }
+
+  private MockPeerConnection setupPeer(
+      final EthProtocolManager ethManager,
+      final PeerSendHandler onSend,
+      final Capability capability) {
+    final MockPeerConnection peerConnection =
+        setupPeerWithoutStatusExchange(ethManager, onSend, capability);
     final StatusMessage statusMessage =
         StatusMessage.builder()
-            .protocolVersion(EthProtocol.LATEST.getVersion())
+            .protocolVersion(capability.getVersion())
             .networkId(BigInteger.ONE)
-            .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
             .bestHash(blockchain.getChainHeadHash())
             .genesisHash(
                 blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash())
             .forkId(forkId)
+            .apply(
+                builder -> {
+                  if (EthProtocol.isEth69Compatible(capability)) {
+                    builder.blockRange(new StatusMessage.BlockRange(10L));
+                  } else {
+                    builder.totalDifficulty(blockchain.getChainHead().getTotalDifficulty());
+                  }
+                })
             .build();
-
-    ethManager.processMessage(
-        EthProtocol.LATEST, new DefaultMessage(peerConnection, statusMessage));
+    ethManager.processMessage(capability, new DefaultMessage(peerConnection, statusMessage));
     final EthPeers ethPeers = ethManager.ethContext().getEthPeers();
     final EthPeer ethPeer = ethPeers.peer(peerConnection);
     ethPeers.addPeerToEthPeers(ethPeer);
@@ -590,7 +637,14 @@ public final class EthProtocolManagerTest {
 
   private MockPeerConnection setupPeerWithoutStatusExchange(
       final EthProtocolManager ethManager, final PeerSendHandler onSend) {
-    final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.LATEST));
+    return setupPeerWithoutStatusExchange(ethManager, onSend, EthProtocol.LATEST);
+  }
+
+  private MockPeerConnection setupPeerWithoutStatusExchange(
+      final EthProtocolManager ethManager,
+      final PeerSendHandler onSend,
+      final Capability capability) {
+    final Set<Capability> caps = new HashSet<>(Collections.singletonList(capability));
     final MockPeerConnection peer = new MockPeerConnection(caps, onSend);
     ethManager.handleNewConnection(peer);
     return peer;

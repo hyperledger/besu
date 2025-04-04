@@ -96,8 +96,8 @@ public final class StatusMessage extends AbstractMessageData {
    *
    * @return The total difficulty of the head of the associated node's local blockchain.
    */
-  public Difficulty totalDifficulty() {
-    return status().totalDifficulty;
+  public Optional<Difficulty> totalDifficulty() {
+    return Optional.ofNullable(status().totalDifficulty);
   }
 
   /**
@@ -278,9 +278,22 @@ public final class StatusMessage extends AbstractMessageData {
 
       final int protocolVersion = in.readIntScalar();
       final BigInteger networkId = in.readBigIntegerScalar();
-      final Difficulty totalDifficulty = Difficulty.of(in.readUInt256Scalar());
-      final Hash bestHash = Hash.wrap(in.readBytes32());
-      final Hash genesisHash = Hash.wrap(in.readBytes32());
+
+      final RLPInput firstElement = in.readAsRlp();
+      final RLPInput secondElement = in.readAsRlp();
+
+      Hash bestHash;
+      Difficulty totalDifficulty = null;
+      final Hash genesisHash;
+      if (in.nextIsList()) {
+        bestHash = Hash.wrap(firstElement.readBytes32());
+        genesisHash = Hash.wrap(secondElement.readBytes32());
+      } else {
+        totalDifficulty =
+            org.hyperledger.besu.ethereum.core.Difficulty.of(firstElement.readUInt256Scalar());
+        bestHash = Hash.wrap(secondElement.readBytes32());
+        genesisHash = Hash.wrap(in.readBytes32());
+      }
       final ForkId forkId = ForkId.readFrom(in);
       BlockRange blockRange = null;
       if (!in.isEndOfCurrentList()) {
