@@ -326,19 +326,22 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     ethPeers.registerNewConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
     final Capability cap = connection.capability(getSupportedProtocol());
-    StatusMessage.Builder statusMessageBuilder =
+    StatusMessage status =
         StatusMessage.builder()
             .protocolVersion(cap.getVersion())
             .networkId(networkId)
             .bestHash(blockchain.getChainHeadHash())
             .genesisHash(genesisHash)
-            .forkId(forkIdManager.getForkIdForChainHead());
-    if (EthProtocol.isEth69Compatible(cap)) {
-      statusMessageBuilder.blockRange(createBlockRange());
-    } else {
-      statusMessageBuilder.totalDifficulty(blockchain.getChainHead().getTotalDifficulty());
-    }
-    final StatusMessage status = statusMessageBuilder.build();
+            .forkId(forkIdManager.getForkIdForChainHead())
+            .apply(
+                builder -> {
+                  if (EthProtocol.isEth69Compatible(cap)) {
+                    builder.blockRange(createBlockRange());
+                  } else {
+                    builder.totalDifficulty(blockchain.getChainHead().getTotalDifficulty());
+                  }
+                })
+            .build();
     try {
       LOG.atTrace()
           .setMessage("Sending status message to {} for connection {}.")

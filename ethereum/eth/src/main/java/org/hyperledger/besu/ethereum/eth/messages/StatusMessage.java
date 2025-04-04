@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -191,6 +192,11 @@ public final class StatusMessage extends AbstractMessageData {
       return this;
     }
 
+    public Builder apply(final Consumer<Builder> consumer) {
+      consumer.accept(this);
+      return this;
+    }
+
     public StatusMessage build() {
       checkNotNull(protocolVersion, "protocolVersion must be set");
       checkNotNull(networkId, "networkId must be set");
@@ -201,8 +207,15 @@ public final class StatusMessage extends AbstractMessageData {
           blockRange == null || protocolVersion >= EthProtocolVersion.V69,
           "blockRange is only supported for protocol version >= 69");
       checkState(
+          blockRange != null || protocolVersion <= EthProtocolVersion.V68,
+          "blockRange must be present for protocol version >= 69");
+      checkState(
           totalDifficulty == null || protocolVersion <= EthProtocolVersion.V68,
+          "totalDifficulty must be not present for protocol version >= 69");
+      checkState(
+          totalDifficulty != null || protocolVersion >= EthProtocolVersion.V69,
           "totalDifficulty must be present for protocol version <= 68");
+
       final EthStatus status =
           new EthStatus(
               protocolVersion,
