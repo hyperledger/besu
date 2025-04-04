@@ -32,6 +32,8 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   /** this.getBlobGasPerBlob() * 3 blobs = 131072 * 6 = 393216 = 0x60000 */
   private final long targetBlobGasPerBlock;
 
+  private final int targetBlobsPerBlock;
+
   /** Instantiates a new Cancun Gas Calculator. */
   public CancunGasCalculator() {
     this(KZG_POINT_EVAL.toArrayUnsafe()[19], DEFAULT_TARGET_BLOBS_PER_BLOCK_CANCUN);
@@ -54,6 +56,7 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
    */
   protected CancunGasCalculator(final int maxPrecompile, final int targetBlobsPerBlock) {
     super(maxPrecompile);
+    this.targetBlobsPerBlock = targetBlobsPerBlock;
     this.targetBlobGasPerBlock = getBlobGasPerBlob() * targetBlobsPerBlock;
   }
 
@@ -85,6 +88,11 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   @Override
   public long getBlobGasPerBlob() {
     return BLOB_GAS_PER_BLOB;
+  }
+
+  @Override
+  public int getBlobTarget() {
+    return targetBlobsPerBlock;
   }
 
   /**

@@ -627,6 +627,15 @@ public interface GasCalculator {
   }
 
   /**
+   * Returns the number of blobs that are the "target" for neutral price action
+   *
+   * @return the target blob count
+   */
+  default int getBlobTarget() {
+    return 0;
+  }
+
+  /**
    * Return the gas cost given the number of blobs
    *
    * @param blobCount the number of blobs
