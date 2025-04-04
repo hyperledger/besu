@@ -56,6 +56,7 @@ import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -201,13 +202,13 @@ public class EthPeer implements Comparable<EthPeer> {
     chainHeadState.removeEstimatedHeightListener(listenerId);
   }
 
-  public void recordRequestTimeout(final int requestCode) {
+  public void recordRequestTimeout(final String protocolName, final int requestCode) {
     LOG.atDebug()
         .setMessage("Timed out while waiting for response from peer {}")
         .addArgument(this::getLoggableId)
         .log();
     LOG.trace("Timed out while waiting for response from peer {}", this);
-    reputation.recordRequestTimeout(requestCode, this).ifPresent(this::disconnect);
+    reputation.recordRequestTimeout(protocolName, requestCode, this).ifPresent(this::disconnect);
   }
 
   public void recordUselessResponse(final String requestType) {
@@ -436,7 +437,7 @@ public class EthPeer implements Comparable<EthPeer> {
     checkArgument(
         ethMessage.getPeer().equals(this), "Mismatched Eth message sent to peer for dispatch");
     final int messageCode = ethMessage.getData().getCode();
-    reputation.resetTimeoutCount(messageCode);
+    reputation.resetTimeoutCount(protocolName, messageCode);
 
     Optional<RequestManager> requestManager = getRequestManager(protocolName, messageCode);
     requestManager.ifPresentOrElse(
@@ -481,7 +482,7 @@ public class EthPeer implements Comparable<EthPeer> {
     return Optional.empty();
   }
 
-  public Map<Integer, AtomicInteger> timeoutCounts() {
+  public Map<ImmutablePair<String, Integer>, AtomicInteger> timeoutCounts() {
     return reputation.timeoutCounts();
   }
 

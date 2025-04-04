@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -52,7 +53,7 @@ public abstract class AbstractGetHeadersFromPeerTask
       final int skip,
       final boolean reverse,
       final MetricsSystem metricsSystem) {
-    super(ethContext, EthProtocolMessages.GET_BLOCK_HEADERS, metricsSystem);
+    super(ethContext, EthProtocol.NAME, EthProtocolMessages.GET_BLOCK_HEADERS, metricsSystem);
     checkArgument(count > 0);
     this.protocolSchedule = protocolSchedule;
     this.count = count;

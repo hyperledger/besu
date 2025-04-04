@@ -39,12 +39,17 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
   private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
   private Duration timeout = DEFAULT_TIMEOUT;
+  private final String protocolName;
   private final int requestCode;
   private volatile PendingPeerRequest responseStream;
 
   protected AbstractPeerRequestTask(
-      final EthContext ethContext, final int requestCode, final MetricsSystem metricsSystem) {
+      final EthContext ethContext,
+      final String protocolName,
+      final int requestCode,
+      final MetricsSystem metricsSystem) {
     super(ethContext, metricsSystem);
+    this.protocolName = protocolName;
     this.requestCode = requestCode;
   }
 
@@ -75,7 +80,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
           if (t != null) {
             t = ExceptionUtils.rootCause(t);
             if (t instanceof TimeoutException && responseStream.isPresent()) {
-              responseStream.get().getPeer().recordRequestTimeout(requestCode);
+              responseStream.get().getPeer().recordRequestTimeout(protocolName, requestCode);
             }
             result.completeExceptionally(t);
           } else if (r != null) {
