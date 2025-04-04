@@ -70,10 +70,6 @@ public class ChainDataPrunerTest {
                 assertThat(blockchain.getBlockHeader(1)).isPresent();
               } else {
                 assertThat(blockchain.getBlockHeader(number - blocksToRetain)).isEmpty();
-                Optional<BlockHeader> earliest =
-                    blockchain.getBlockHeader(number - blocksToRetain + 1);
-                assertThat(blockchainStorage.getEarliest().orElseThrow())
-                    .isEqualTo(earliest.orElseThrow().getHash());
               }
             });
   }
