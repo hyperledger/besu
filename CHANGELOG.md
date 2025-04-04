@@ -6,6 +6,7 @@
 ### Additions and Improvements
 #### Dependencies
 ### Bug fixes
+- Fix for storage proof key - if the key is zero use `0x0` not `0x` [#8499](https://github.com/hyperledger/besu/pull/8499)
 
 ## 25.4.0
 
