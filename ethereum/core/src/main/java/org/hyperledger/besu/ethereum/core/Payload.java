@@ -27,11 +27,11 @@ public class Payload {
     this.payloadBytes = payloadBytes;
   }
 
-  public Bytes getPayload() {
+  public Bytes getPayloadBytes() {
     return payloadBytes;
   }
 
-  public long zeroBytes() {
+  public long getZeroBytesCount() {
     if (payloadBytes == null) {
       return 0L;
     }

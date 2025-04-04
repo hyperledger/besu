@@ -399,12 +399,12 @@ public class Transaction
    */
   @Override
   public Bytes getPayload() {
-    return payload.getPayload();
+    return payload.getPayloadBytes();
   }
 
   @Override
   public long getPayloadZeroBytes() {
-    return payload.zeroBytes();
+    return payload.getZeroBytesCount();
   }
 
   /**
@@ -414,7 +414,7 @@ public class Transaction
    */
   @Override
   public Optional<Bytes> getInit() {
-    return getTo().isPresent() ? Optional.empty() : Optional.of(payload.getPayload());
+    return getTo().isPresent() ? Optional.empty() : Optional.of(payload.getPayloadBytes());
   }
 
   /**
@@ -424,7 +424,7 @@ public class Transaction
    */
   @Override
   public Optional<Bytes> getData() {
-    return getTo().isPresent() ? Optional.of(payload.getPayload()) : Optional.empty();
+    return getTo().isPresent() ? Optional.of(payload.getPayloadBytes()) : Optional.empty();
   }
 
   @Override
@@ -766,7 +766,7 @@ public class Transaction
             gasLimit,
             to,
             value,
-            payload.getPayload(),
+            payload.getPayloadBytes(),
             accessList,
             versionedHashes,
             codeDelegationList,
@@ -786,7 +786,7 @@ public class Transaction
         gasLimit,
         to,
         value,
-        payload.getPayload(),
+        payload.getPayloadBytes(),
         maybeAccessList,
         versionedHashes.orElse(null),
         maybeCodeDelegationList,
@@ -1063,7 +1063,7 @@ public class Transaction
         gasLimit,
         to,
         value,
-        payload.getPayload(),
+        payload.getPayloadBytes(),
         signature,
         chainId);
   }

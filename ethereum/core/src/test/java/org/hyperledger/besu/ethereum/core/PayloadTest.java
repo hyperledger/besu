@@ -26,21 +26,21 @@ class PayloadTest {
     final Bytes input = Bytes.random(20);
 
     Payload payload = new Payload(input);
-    assertThat(payload.getPayload()).isSameAs(input);
+    assertThat(payload.getPayloadBytes()).isSameAs(input);
   }
 
   @Test
   void shouldReturnZeroWhenPayloadIsNull() {
     Payload payload = new Payload(null);
-    assertThat(payload.zeroBytes()).isZero();
+    assertThat(payload.getZeroBytesCount()).isZero();
   }
 
   @Test
-  void shouldCountZeroBytesCorrectly() {
+  void shouldCountGetZeroBytesCountCorrectly() {
     final Bytes input = Bytes.fromHexString("0x0001000200");
 
     Payload payload = new Payload(input);
-    long zeroCount = payload.zeroBytes();
+    long zeroCount = payload.getZeroBytesCount();
 
     assertThat(zeroCount).isEqualTo(3);
   }
