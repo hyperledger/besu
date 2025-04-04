@@ -4,8 +4,10 @@
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
+- Add support for `eth_simulateV1`. [#8406](https://github.com/hyperledger/besu/pull/8406) 
 #### Dependencies
 ### Bug fixes
+- Fix for storage proof key - if the key is zero use `0x0` not `0x` [#8499](https://github.com/hyperledger/besu/pull/8499)
 
 ## 25.4.0
 
