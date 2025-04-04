@@ -42,7 +42,14 @@ public class StatusMessageTest {
     final ForkId forkId = new ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
 
     final StatusMessage msg =
-        StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
+        StatusMessage.builder()
+            .protocolVersion(version)
+            .networkId(networkId)
+            .totalDifficulty(td)
+            .bestHash(bestHash)
+            .genesisHash(genesisHash)
+            .forkId(forkId)
+            .build();
 
     assertThat(msg.protocolVersion()).isEqualTo(version);
     assertThat(msg.networkId()).isEqualTo(networkId);
@@ -62,7 +69,14 @@ public class StatusMessageTest {
     final ForkId forkId = new ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
 
     final MessageData msg =
-        StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
+        StatusMessage.builder()
+            .protocolVersion(version)
+            .networkId(networkId)
+            .totalDifficulty(td)
+            .bestHash(bestHash)
+            .genesisHash(genesisHash)
+            .forkId(forkId)
+            .build();
 
     final StatusMessage copy = StatusMessage.create(msg.getData());
 
@@ -84,7 +98,40 @@ public class StatusMessageTest {
     final ForkId forkId = new ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
 
     final MessageData msg =
-        StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
+        StatusMessage.builder()
+            .protocolVersion(version)
+            .networkId(networkId)
+            .totalDifficulty(td)
+            .bestHash(bestHash)
+            .genesisHash(genesisHash)
+            .forkId(forkId)
+            .build();
+
+    final StatusMessage copy = StatusMessage.create(msg.getData());
+    final String copyToStringDecoded = copy.toStringDecoded();
+
+    assertThat(copyToStringDecoded).contains("bestHash=" + bestHash);
+    assertThat(copyToStringDecoded).contains("genesisHash=" + genesisHash);
+  }
+
+  @Test
+  public void toStringDecodedHasExpectedInfo_WithRequestRange() {
+    final int version = EthProtocolVersion.V68;
+    final BigInteger networkId = BigInteger.ONE;
+    final Difficulty td = Difficulty.of(1000L);
+    final Hash bestHash = randHash(1L);
+    final Hash genesisHash = randHash(2L);
+    final ForkId forkId = new ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
+
+    final MessageData msg =
+        StatusMessage.builder()
+            .protocolVersion(version)
+            .networkId(networkId)
+            .totalDifficulty(td)
+            .bestHash(bestHash)
+            .genesisHash(genesisHash)
+            .forkId(forkId)
+            .build();
 
     final StatusMessage copy = StatusMessage.create(msg.getData());
     final String copyToStringDecoded = copy.toStringDecoded();
