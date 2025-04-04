@@ -501,6 +501,7 @@ public class MainnetTransactionProcessor {
               ValidationResult.invalid(
                   TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
                   "transaction price must be greater than base fee"),
+              Optional.empty(),
               Optional.empty());
         }
         coinbaseCalculator = coinbaseFeePriceCalculator;
@@ -554,7 +555,11 @@ public class MainnetTransactionProcessor {
               initialFrame.getRevertReason().get());
         }
         return TransactionProcessingResult.failed(
-            gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
+            gasUsedByTransaction,
+            refundedGas,
+            validationResult,
+            initialFrame.getRevertReason(),
+            initialFrame.getExceptionalHaltReason());
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(

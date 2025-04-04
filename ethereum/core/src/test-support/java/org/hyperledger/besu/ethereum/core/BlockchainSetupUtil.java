@@ -121,7 +121,7 @@ public class BlockchainSetupUtil {
   }
 
   public static BlockchainSetupUtil forMainnet() {
-    return createForEthashChain(BlockTestUtil.getMainnetResources(), DataStorageFormat.FOREST);
+    return createForEthashChain(BlockTestUtil.getMainnetResources(), DataStorageFormat.BONSAI);
   }
 
   public static BlockchainSetupUtil forOutdatedFork() {
