@@ -54,7 +54,7 @@ public class StatusMessageTest {
 
     assertThat(msg.protocolVersion()).isEqualTo(version);
     assertThat(msg.networkId()).isEqualTo(networkId);
-    assertThat(msg.totalDifficulty()).isEqualTo(td);
+    assertThat(msg.totalDifficulty().get()).isEqualTo(td);
     assertThat(msg.bestHash()).isEqualTo(bestHash);
     assertThat(msg.genesisHash()).isEqualTo(genesisHash);
     assertThat(msg.forkId()).isEqualTo(forkId);
@@ -68,7 +68,7 @@ public class StatusMessageTest {
 
     assertThat(copy.protocolVersion()).isEqualTo(version);
     assertThat(copy.networkId()).isEqualTo(networkId);
-    assertThat(copy.totalDifficulty()).isEqualTo(td);
+    assertThat(copy.totalDifficulty().get()).isEqualTo(td);
     assertThat(copy.bestHash()).isEqualTo(bestHash);
     assertThat(copy.genesisHash()).isEqualTo(genesisHash);
     assertThat(copy.forkId()).isEqualTo(forkId);
