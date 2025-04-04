@@ -23,7 +23,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNodeRunner;
-import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.ThreadBesuNodeRunner;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
@@ -37,7 +36,7 @@ import org.junit.jupiter.api.Test;
 
 public class ClusterThreadNodeRunnerAcceptanceTest extends AcceptanceTestBase {
 
-  private Node miner;
+  private BesuNode miner;
   private Cluster noDiscoveryCluster;
 
   @BeforeEach
@@ -46,10 +45,9 @@ public class ClusterThreadNodeRunnerAcceptanceTest extends AcceptanceTestBase {
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     final BesuNodeRunner besuNodeRunner = new ThreadBesuNodeRunner();
     noDiscoveryCluster = new Cluster(clusterConfiguration, net, besuNodeRunner);
-    final BesuNode noDiscoveryNode = besu.createNodeWithNoDiscovery("noDiscovery");
     miner =
-        besu.createMinerNode(
-            "miner",
+        besu.createQbftNode(
+            "minerNode",
             (builder) -> {
               KeyValueStorageFactory persistentStorageFactory =
                   new RocksDBKeyValueStorageFactory(
@@ -59,13 +57,24 @@ public class ClusterThreadNodeRunnerAcceptanceTest extends AcceptanceTestBase {
               builder.storageImplementation(persistentStorageFactory);
               return builder;
             });
-    noDiscoveryCluster.start(noDiscoveryNode, miner);
+    noDiscoveryCluster.start(miner);
+    final BesuNode noDiscoveryNode =
+        besu.createQbftNode(
+            "noDiscoveryNode",
+            (builder) -> {
+              builder
+                  .discoveryEnabled(false)
+                  .engineRpcEnabled(false)
+                  .staticNodes(List.of(miner.enodeUrl().toString()));
+              return builder;
+            });
+    noDiscoveryCluster.addNode(noDiscoveryNode);
   }
 
   @Test
   public void shouldVerifySomething() {
     // we don't care what verifies, just that it gets to the point something can verify
-    miner.verify(net.awaitPeerCount(0));
+    miner.verify(net.awaitPeerCount(1));
   }
 
   @Test

@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -165,7 +165,6 @@ public class JsonRpcTestMethodsFactory {
     final EthPeers ethPeers = mock(EthPeers.class);
     final TransactionPool transactionPool = mock(TransactionPool.class);
     final MiningConfiguration miningConfiguration = mock(MiningConfiguration.class);
-    final PoWMiningCoordinator miningCoordinator = mock(PoWMiningCoordinator.class);
     final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
     final Optional<AccountLocalConfigPermissioningController> accountWhitelistController =
         Optional.of(mock(AccountLocalConfigPermissioningController.class));
@@ -211,7 +210,7 @@ public class JsonRpcTestMethodsFactory {
             filterManager,
             transactionPool,
             miningConfiguration,
-            miningCoordinator,
+            new NoopMiningCoordinator(miningConfiguration),
             metricsSystem,
             new HashSet<>(),
             accountWhitelistController,

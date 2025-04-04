@@ -2619,10 +2619,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addPortIfEnabled(effectivePorts, engineRPCConfig.engineRpcPort(), isEngineApiEnabled());
     addPortIfEnabled(
         effectivePorts, metricsOptions.getMetricsPort(), metricsOptions.getMetricsEnabled());
-    addPortIfEnabled(
-        effectivePorts,
-        miningParametersSupplier.get().getStratumPort(),
-        miningParametersSupplier.get().isStratumMiningEnabled());
     return effectivePorts;
   }
 

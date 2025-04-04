@@ -31,7 +31,7 @@ public class RevertReasonAcceptanceTest extends AcceptanceTestBase {
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode = besu.createMinerNodeWithRevertReasonEnabled("miner-node-withRevertReason");
+    minerNode = besu.createQbftNodeWithRevertReasonEnabled("qbft-node-withRevertReason");
     cluster.start(minerNode);
   }
 

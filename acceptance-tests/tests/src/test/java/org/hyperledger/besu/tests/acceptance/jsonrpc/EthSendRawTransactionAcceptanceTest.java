@@ -28,7 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
-  private static final long CHAIN_ID = 20211;
+  private static final long CHAIN_ID = 4;
 
   private Account sender;
 
@@ -40,9 +40,9 @@ public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
   public void setUp() throws Exception {
     sender = accounts.getPrimaryBenefactor();
 
-    lenientNode = besu.createArchiveNode("lenientNode", configureNode((false)));
-    strictNode = besu.createArchiveNode("strictNode", configureNode((true)));
-    miningNode = besu.createMinerNode("strictMiningNode", configureNode((true)));
+    lenientNode = besu.createQbftNode("lenientNode", configureNode((false)));
+    strictNode = besu.createQbftNode("strictNode", configureNode((true)));
+    miningNode = besu.createQbftNode("strictMiningNode", configureNode((true)));
     cluster.start(lenientNode, strictNode, miningNode);
 
     // verify nodes are fully connected otherwise tx could not be propagated
@@ -127,7 +127,7 @@ public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
   private UnaryOperator<BesuNodeConfigurationBuilder> configureNode(
       final boolean enableStrictReplayProtection) {
     return b ->
-        b.genesisConfigProvider(GenesisConfigurationFactory::createDevLondonGenesisConfig)
+        b.genesisConfigProvider(GenesisConfigurationFactory::createQbftLondonGenesisConfig)
             .strictTxReplayProtectionEnabled(enableStrictReplayProtection)
             .devMode(false);
   }

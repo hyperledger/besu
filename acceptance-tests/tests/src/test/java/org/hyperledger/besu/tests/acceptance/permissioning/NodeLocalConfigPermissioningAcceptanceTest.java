@@ -38,9 +38,9 @@ public class NodeLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBa
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
 
     permissionedCluster = new Cluster(clusterConfiguration, net);
-    bootnode = besu.createArchiveNode("bootnode");
-    forbiddenNode = besu.createArchiveNodeThatMustNotBeTheBootnode("forbidden-node");
-    allowedNode = besu.createArchiveNode("allowed-node");
+    bootnode = besu.createQbftNode("bootnode");
+    forbiddenNode = besu.createQbftNodeThatMustNotBeTheBootnode("forbidden-node");
+    allowedNode = besu.createQbftNode("allowed-node");
 
     permissionedCluster.start(bootnode, allowedNode, forbiddenNode);
 

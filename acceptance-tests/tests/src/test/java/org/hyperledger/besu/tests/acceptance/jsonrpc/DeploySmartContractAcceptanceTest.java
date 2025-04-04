@@ -27,7 +27,7 @@ public class DeploySmartContractAcceptanceTest extends AcceptanceTestBase {
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode = besu.createMinerNode("miner-node");
+    minerNode = besu.createQbftNode("miner-node");
     cluster.start(minerNode);
   }
 
@@ -38,6 +38,8 @@ public class DeploySmartContractAcceptanceTest extends AcceptanceTestBase {
 
     final SimpleStorage simpleStorageContract =
         minerNode.execute(contractTransactions.createSmartContract(SimpleStorage.class));
+
+    cluster.verify(blockchain.reachesHeight(minerNode, 2));
 
     contractVerifier.validTransactionReceipt(contractAddress).verify(simpleStorageContract);
   }

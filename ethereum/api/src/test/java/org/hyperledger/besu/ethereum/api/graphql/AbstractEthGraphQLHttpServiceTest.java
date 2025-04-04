@@ -23,7 +23,8 @@ import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
@@ -89,7 +90,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final SyncStatus status = new DefaultSyncStatus(1, 2, 3, Optional.of(4L), Optional.of(5L));
     when(synchronizerMock.getSyncStatus()).thenReturn(Optional.of(status));
 
-    final PoWMiningCoordinator miningCoordinatorMock = mock(PoWMiningCoordinator.class);
+    final MiningCoordinator miningCoordinatorMock = mock(NoopMiningCoordinator.class);
 
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
 
