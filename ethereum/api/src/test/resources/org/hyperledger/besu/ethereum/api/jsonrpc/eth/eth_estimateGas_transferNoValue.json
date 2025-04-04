@@ -5,17 +5,15 @@
     "method": "eth_estimateGas",
     "params": [
       {
-        "to": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-        "from": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
-        "data": "0x123456"
-      },
-      "0x1"
+        "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "to": "0x8888f1f195afa192cfee860698584c030f4c9db1"
+      }
     ]
   },
   "response": {
     "jsonrpc": "2.0",
     "id": 3,
-    "result": "0x537a"
+    "result": "0x5208"
   },
   "statusCode": 200
 }

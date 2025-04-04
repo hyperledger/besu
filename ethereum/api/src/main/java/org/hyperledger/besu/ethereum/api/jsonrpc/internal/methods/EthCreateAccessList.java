@@ -50,6 +50,12 @@ public class EthCreateAccessList extends AbstractEstimateGas {
       final TransactionSimulationFunction simulationFunction) {
 
     final AccessListOperationTracer tracer = AccessListOperationTracer.create();
+    // if it's a value transfer, the result is fixed. No storage or addresses accessed.
+    if ((callParams.getPayload() == null || (callParams.getPayload().isEmpty()))
+        && callParams.getTo() != null) {
+      return new CreateAccessListResult(tracer.getAccessList(), DEFAULT_BLOCK_GAS_USED);
+    }
+    // Otherwise, do the calculation with the provided gasLimit
     final Optional<TransactionSimulatorResult> firstResult =
         simulationFunction.simulate(overrideGasLimit(callParams, gasLimit), tracer);
 

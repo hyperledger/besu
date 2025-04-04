@@ -21,9 +21,8 @@ import org.hyperledger.besu.evm.operation.SStoreOperation;
 /** The Estimate gas operation tracer. */
 public class EstimateGasOperationTracer implements OperationTracer {
 
-  private int maxDepth = 0;
-
-  private long sStoreStipendNeeded = 0L;
+  private int maxDepth = 1;
+  private long sStoreStipendNeeded = 2_300L;
 
   /** Default constructor. */
   public EstimateGasOperationTracer() {}
@@ -54,6 +53,7 @@ public class EstimateGasOperationTracer implements OperationTracer {
    * @return the stipend needed
    */
   public long getStipendNeeded() {
+    // TODO is this needed?
     return sStoreStipendNeeded;
   }
 }
