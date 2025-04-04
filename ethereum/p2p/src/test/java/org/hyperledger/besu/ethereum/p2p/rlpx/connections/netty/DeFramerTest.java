@@ -269,6 +269,61 @@ public class DeFramerTest {
   }
 
   @Test
+  public void decode_handlesHelloFromPeerWithAdvertisedHost()
+      throws ExecutionException, InterruptedException {
+    final ChannelFuture future = NettyMocks.channelFuture(false);
+    when(channel.closeFuture()).thenReturn(future);
+
+    final Peer peer = createRemotePeer();
+    final PeerInfo remotePeerInfo =
+        new PeerInfo(
+            p2pVersion,
+            clientId,
+            capabilities,
+            peer.getEnodeURL().getListeningPortOrZero(),
+            peer.getId(),
+            peer.getEnodeURL().getHost());
+    final DeFramer deFramer = createDeFramer(null, Optional.empty());
+
+    final HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
+    final ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
+    when(framer.deframe(eq(data)))
+        .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
+        .thenReturn(null);
+    final List<Object> out = new ArrayList<>();
+    deFramer.decode(ctx, data, out);
+
+    assertThat(connectFuture).isDone();
+    assertThat(connectFuture).isNotCompletedExceptionally();
+    final PeerConnection peerConnection = connectFuture.get();
+    assertThat(peerConnection.getPeerInfo()).isEqualTo(remotePeerInfo);
+    assertThat(out).isEmpty();
+
+    final EnodeURL expectedEnode =
+        EnodeURLImpl.builder()
+            .ipAddress(peer.getEnodeURL().getHost())
+            .nodeId(peer.getId())
+            .listeningPort(peer.getEnodeURL().getListeningPort())
+            // Discovery port is unknown
+            .disableDiscovery()
+            .build();
+    assertThat(peerConnection.getPeer().getEnodeURL()).isEqualTo(expectedEnode);
+
+    // Next phase of pipeline should be setup
+    verify(pipeline, times(1)).addLast(any(ChannelHandler[].class));
+
+    // Next message should be pushed out
+    final PingMessage nextMessage = PingMessage.get();
+    final ByteBuf nextData = Unpooled.wrappedBuffer(nextMessage.getData().toArray());
+    when(framer.deframe(eq(nextData)))
+        .thenReturn(new RawMessage(nextMessage.getCode(), nextMessage.getData()))
+        .thenReturn(null);
+    verify(pipeline, times(1)).addLast(any(ChannelHandler[].class));
+    deFramer.decode(ctx, nextData, out);
+    assertThat(out.size()).isEqualTo(1);
+  }
+
+  @Test
   public void decode_duringHandshakeFindsPeerInPeerTable()
       throws ExecutionException, InterruptedException {
     final ChannelFuture future = NettyMocks.channelFuture(false);

@@ -45,6 +45,7 @@ public class PeerInfo implements Comparable<PeerInfo> {
   private final int port;
   private final Bytes nodeId;
   private Address address = null;
+  private String advertisedAddress = "";
 
   public PeerInfo(
       final int version,
@@ -59,6 +60,21 @@ public class PeerInfo implements Comparable<PeerInfo> {
     this.nodeId = nodeId;
   }
 
+  public PeerInfo(
+      final int version,
+      final String clientId,
+      final List<Capability> capabilities,
+      final int port,
+      final Bytes nodeId,
+      final String advertisedAddress) {
+    this.version = version;
+    this.clientId = clientId;
+    this.capabilities = capabilities;
+    this.port = port;
+    this.nodeId = nodeId;
+    this.advertisedAddress = advertisedAddress;
+  }
+
   public static PeerInfo readFrom(final RLPInput in) {
     in.enterList();
     final int version = in.readUnsignedByte();
@@ -67,8 +83,12 @@ public class PeerInfo implements Comparable<PeerInfo> {
         in.nextIsNull() ? Collections.emptyList() : in.readList(Capability::readFrom);
     final int port = in.readIntScalar();
     final Bytes nodeId = in.readBytes();
+    String advertisedAddress = "";
+    if (!in.isEndOfCurrentList()) {
+      advertisedAddress = new String(in.readBytes().toArrayUnsafe(), StandardCharsets.UTF_8);
+    }
     in.leaveListLenient();
-    return new PeerInfo(version, clientId, caps, port, nodeId);
+    return new PeerInfo(version, clientId, caps, port, nodeId, advertisedAddress);
   }
 
   public int getVersion() {
@@ -98,6 +118,10 @@ public class PeerInfo implements Comparable<PeerInfo> {
     return nodeId;
   }
 
+  public String getAdvertisedAddress() {
+    return advertisedAddress;
+  }
+
   public Address getAddress() {
     if (address == null) {
       final SECPPublicKey remotePublicKey =
@@ -114,6 +138,9 @@ public class PeerInfo implements Comparable<PeerInfo> {
     out.writeList(getCapabilities(), Capability::writeTo);
     out.writeIntScalar(getPort());
     out.writeBytes(getNodeId());
+    if (!advertisedAddress.isEmpty()) {
+      out.writeBytes(wrap(getAdvertisedAddress().getBytes(StandardCharsets.UTF_8)));
+    }
     out.endList();
   }
 
@@ -126,6 +153,7 @@ public class PeerInfo implements Comparable<PeerInfo> {
     sb.append(", capabilities=").append(capabilities);
     sb.append(", port=").append(port);
     sb.append(", nodeId=").append(nodeId);
+    sb.append(", ip=").append(advertisedAddress);
     sb.append('}');
     return sb.toString();
   }

@@ -101,6 +101,14 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       arity = "1")
   public String p2pHost = autoDiscoverDefaultIP().getHostAddress();
 
+  /** Enables node to share its p2p-host during rlpx handshake. */
+  @CommandLine.Option(
+      names = {"--p2p-host-share-via-rlpx-enabled"},
+      description =
+          "Enables node to share its p2p-host during rlpx handshake (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  public final Boolean p2pHostShareViaRlpxEnabled = false;
+
   /** The network interface address on which this node listens for P2P communication. */
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
@@ -225,6 +233,7 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
         p2pHost,
         p2pInterface,
         p2pPort,
+        p2pHostShareViaRlpxEnabled,
         maxPeers,
         isLimitRemoteWireConnectionsEnabled,
         maxRemoteConnectionsPercentage,

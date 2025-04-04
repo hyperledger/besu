@@ -43,7 +43,9 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -233,8 +235,23 @@ final class DeFramer extends ByteToMessageDecoder {
   }
 
   private Optional<Peer> createPeer(final PeerInfo peerInfo, final ChannelHandlerContext ctx) {
-    final InetSocketAddress remoteAddress = ((InetSocketAddress) ctx.channel().remoteAddress());
-    if (remoteAddress == null) {
+    Optional<InetAddress> remoteAddress = Optional.empty();
+    String advertisedAddress = peerInfo.getAdvertisedAddress();
+    if (!advertisedAddress.isEmpty()) {
+      try {
+        remoteAddress = Optional.of(InetAddress.getByName(advertisedAddress));
+      } catch (UnknownHostException e) {
+        LOG.debug("unrecognised advertised address {}", advertisedAddress);
+      }
+    }
+
+    if (remoteAddress.isEmpty()) {
+      InetSocketAddress senderAddress = ((InetSocketAddress) ctx.channel().remoteAddress());
+      if (senderAddress != null) {
+        remoteAddress = Optional.of(senderAddress.getAddress());
+      }
+    }
+    if (remoteAddress.isEmpty()) {
       return Optional.empty();
     }
     final int port = peerInfo.getPort();
@@ -242,7 +259,7 @@ final class DeFramer extends ByteToMessageDecoder {
         DefaultPeer.fromEnodeURL(
             EnodeURLImpl.builder()
                 .nodeId(peerInfo.getNodeId())
-                .ipAddress(remoteAddress.getAddress())
+                .ipAddress(remoteAddress.get())
                 .listeningPort(port)
                 // Discovery information is unknown, so disable it
                 .disableDiscovery()

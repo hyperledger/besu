@@ -165,6 +165,7 @@ public class RunnerBuilder {
   private boolean p2pEnabled = true;
   private boolean discoveryEnabled;
   private String p2pAdvertisedHost;
+  private boolean p2pAdvertisedHostShareViaRlpx = false;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
   private NatMethod natMethod = NatMethod.AUTO;
@@ -272,6 +273,17 @@ public class RunnerBuilder {
    */
   public RunnerBuilder p2pAdvertisedHost(final String p2pAdvertisedHost) {
     this.p2pAdvertisedHost = p2pAdvertisedHost;
+    return this;
+  }
+
+  /**
+   * Defines whether to share its p2p-host value during Rlpx handshake
+   *
+   * @param p2pAdvertisedHostShareViaRlpx the P2P advertised host
+   * @return the runner builder
+   */
+  public RunnerBuilder p2pAdvertisedHostShareViaRlpx(final boolean p2pAdvertisedHostShareViaRlpx) {
+    this.p2pAdvertisedHostShareViaRlpx = p2pAdvertisedHostShareViaRlpx;
     return this;
   }
 
@@ -602,7 +614,8 @@ public class RunnerBuilder {
         DiscoveryConfiguration.create()
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
-            .setAdvertisedHost(p2pAdvertisedHost);
+            .setAdvertisedHost(p2pAdvertisedHost)
+            .setAdvertisedHostShareViaRlpx(p2pAdvertisedHostShareViaRlpx);
     if (discoveryEnabled) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {

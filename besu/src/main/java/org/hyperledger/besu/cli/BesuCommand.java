@@ -1268,6 +1268,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         p2PDiscoveryConfig.peerDiscoveryEnabled(),
         ethNetworkConfig,
         p2PDiscoveryConfig.p2pHost(),
+        p2PDiscoveryConfig.p2pHostShareViaRlpxEnabled(),
         p2PDiscoveryConfig.p2pInterface(),
         p2PDiscoveryConfig.p2pPort(),
         graphQLConfiguration,
@@ -2283,6 +2284,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
       final String p2pAdvertisedHost,
+      final boolean p2pAdvertisedHostShareViaRlpx,
       final String p2pListenInterface,
       final int p2pListenPort,
       final GraphQLConfiguration graphQLConfiguration,
@@ -2310,6 +2312,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .ethNetworkConfig(ethNetworkConfig)
             .permissioningConfiguration(permissioningConfiguration)
             .p2pAdvertisedHost(p2pAdvertisedHost)
+            .p2pAdvertisedHostShareViaRlpx(p2pAdvertisedHostShareViaRlpx)
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
