@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.CompactableStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
@@ -33,7 +34,7 @@ import org.rocksdb.WriteOptions;
 
 /** Optimistic RocksDB Columnar key value storage */
 public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage
-    implements SnappableKeyValueStorage {
+    implements SnappableKeyValueStorage, CompactableStorage {
   private final OptimisticTransactionDB db;
 
   /**
@@ -99,5 +100,20 @@ public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKey
   public RocksDBColumnarKeyValueSnapshot takeSnapshot() throws StorageException {
     throwIfClosed();
     return new RocksDBColumnarKeyValueSnapshot(db, this::safeColumnHandle, metrics);
+  }
+
+  /**
+   * Compact the storage to reclaim space and optimize data organization.
+   *
+   * @throws StorageException the storage exception
+   */
+  @Override
+  public void compact() {
+    throwIfClosed();
+    try {
+      db.compactRange();
+    } catch (RocksDBException e) {
+      throw new StorageException(e);
+    }
   }
 }
