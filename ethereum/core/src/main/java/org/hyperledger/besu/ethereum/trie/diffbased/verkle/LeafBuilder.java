@@ -49,9 +49,12 @@ public class LeafBuilder {
     keysForRemoval.add(trieKeyFactory.basicDataKey(address));
   }
 
-  public void generateCodeKeysForRemoval(final Address address, final Bytes code) {
-    keysForRemoval.add(trieKeyFactory.basicDataKey(address));
+  public void generateCodeHashKeyForRemoval(final Address address) {
     keysForRemoval.add(trieKeyFactory.codeHashKey(address));
+  }
+
+  public void generateCodeKeysForRemoval(final Address address, final Bytes code) {
+    generateCodeHashKeyForRemoval(address);
     List<UInt256> codeChunks = TrieKeyUtils.chunkifyCode(code);
     for (int i = 0; i < codeChunks.size(); i++) {
       keysForRemoval.add(trieKeyFactory.codeChunkKey(address, UInt256.valueOf(i)));
