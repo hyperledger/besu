@@ -39,11 +39,16 @@ public class StorageEntryProof {
 
   @JsonGetter(value = "key")
   public String getKey() {
-    // should never have empty key, but to be safe, check first
+    // Bytes.EMPTY is the storage root
     if (key.isEmpty()) {
       return "0x";
     }
-    return Quantity.create(key);
+    // for ZERO we want 0x0
+    if (UInt256.ZERO.equals(key)) {
+      return Quantity.create(key);
+    }
+    // otherwise
+    return key.trimLeadingZeros().toHexString();
   }
 
   @JsonGetter(value = "value")
