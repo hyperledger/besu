@@ -338,7 +338,7 @@ public final class StatusMessage extends AbstractMessageData {
       this.earliestBlock = earliestBlock;
     }
 
-    long getEarliestBlock() {
+    public long getEarliestBlock() {
       return earliestBlock;
     }
 
