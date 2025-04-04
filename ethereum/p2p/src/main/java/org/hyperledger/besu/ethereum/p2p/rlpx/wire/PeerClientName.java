@@ -18,7 +18,7 @@ import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
 
-public enum PeerClientType {
+public enum PeerClientName {
   BESU("besu"),
   ERIGON("erigon"),
   GETH("Geth"),
@@ -30,7 +30,7 @@ public enum PeerClientType {
   private final String agentName;
   private final String displayName;
 
-  PeerClientType(final String agentName) {
+  PeerClientName(final String agentName) {
     this.agentName = agentName;
     this.displayName = StringUtils.capitalize(name().toLowerCase(Locale.ENGLISH));
   }
@@ -39,8 +39,8 @@ public enum PeerClientType {
     return displayName;
   }
 
-  public static PeerClientType fromAgentName(final String agentName) {
-    for (final var type : PeerClientType.values()) {
+  public static PeerClientName fromAgentName(final String agentName) {
+    for (final var type : PeerClientName.values()) {
       if (type != UNKNOWN && type.agentName.equals(agentName)) {
         return type;
       }

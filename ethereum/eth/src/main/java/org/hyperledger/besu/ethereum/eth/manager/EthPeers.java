@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerClientType;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerClientName;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -179,21 +179,21 @@ public class EthPeers implements PeerSelector {
     final LabelledSuppliedMetric peerClientLabelledGauge =
         metricsSystem.createLabelledSuppliedGauge(
             BesuMetricCategory.PEERS,
-            "peer_count_by_type",
-            "The number of clients connected by client type",
+            "peer_count_by_client",
+            "The number of clients connected by client",
             "client");
 
-    for (final var clientType : PeerClientType.values()) {
+    for (final var clientName : PeerClientName.values()) {
       peerClientLabelledGauge.labels(
-          () -> countConnectedPeersOfType(clientType), clientType.getDisplayName());
+          () -> countConnectedPeersByClientName(clientName), clientName.getDisplayName());
     }
   }
 
-  private double countConnectedPeersOfType(final PeerClientType clientType) {
+  private double countConnectedPeersByClientName(final PeerClientName clientName) {
     return streamAllActiveConnections()
         .map(PeerConnection::getPeerInfo)
-        .map(PeerInfo::getClientType)
-        .filter(clientType::equals)
+        .map(PeerInfo::getClientName)
+        .filter(clientName::equals)
         .count();
   }
 
