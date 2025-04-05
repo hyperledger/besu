@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -40,14 +42,47 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
   private static final int STORAGE_CACHE_SIZE = 200_000;
+
   private final Cache<Bytes, Bytes> accountNodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(ACCOUNT_CACHE_SIZE).build();
   private final Cache<Bytes, Bytes> storageNodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(STORAGE_CACHE_SIZE).build();
 
+  private final OperationTimer accountPreloadTimer;
+  private final OperationTimer storagePreloadTimer;
+
+  private final Counter accountCacheMissCounter;
+  private final Counter storageCacheMissCounter;
+
   public BonsaiCachedMerkleTrieLoader(final ObservableMetricsSystem metricsSystem) {
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "accountsNodes", accountNodes);
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "storageNodes", storageNodes);
+
+    accountPreloadTimer =
+        metricsSystem
+            .createLabelledTimer(
+                BLOCKCHAIN,
+                "account_preload_latency_seconds",
+                "Latency for preloading account nodes",
+                "database")
+            .labels("besu");
+    storagePreloadTimer =
+        metricsSystem
+            .createLabelledTimer(
+                BLOCKCHAIN,
+                "storage_preload_latency_seconds",
+                "Latency for preloading storage nodes",
+                "database")
+            .labels("besu");
+
+    accountCacheMissCounter =
+        metricsSystem.createCounter(
+            BLOCKCHAIN, "account_cache_miss_count", "Counter for account state trie cache misses");
+    storageCacheMissCounter =
+        metricsSystem.createCounter(
+            BLOCKCHAIN,
+            "storage_cache_miss_count",
+            "Counter for account storage trie cache misses");
   }
 
   public void preLoadAccount(
@@ -63,6 +98,7 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Hash worldStateRootHash,
       final Address account) {
+    final OperationTimer.TimingContext timingContext = accountPreloadTimer.startTimer();
     final long storageSubscriberId = worldStateKeyValueStorage.subscribe(this);
     try {
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
@@ -77,10 +113,9 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
               Function.identity(),
               Function.identity());
       accountTrie.get(account.addressHash());
-    } catch (MerkleTrieException e) {
-      // ignore exception for the cache
     } finally {
       worldStateKeyValueStorage.unSubscribe(storageSubscriberId);
+      timingContext.close();
     }
   }
 
@@ -97,6 +132,7 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Address account,
       final StorageSlotKey slotKey) {
+    final OperationTimer.TimingContext timingContext = storagePreloadTimer.startTimer();
     final Hash accountHash = account.addressHash();
     final long storageSubscriberId = worldStateKeyValueStorage.subscribe(this);
     try {
@@ -124,6 +160,7 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
               });
     } finally {
       worldStateKeyValueStorage.unSubscribe(storageSubscriberId);
+      timingContext.close();
     }
   }
 
@@ -135,7 +172,11 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       return Optional.ofNullable(accountNodes.getIfPresent(nodeHash))
-          .or(() -> worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash));
+          .or(
+              () -> {
+                accountCacheMissCounter.inc();
+                return worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash);
+              });
     }
   }
 
@@ -149,9 +190,11 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
     } else {
       return Optional.ofNullable(storageNodes.getIfPresent(nodeHash))
           .or(
-              () ->
-                  worldStateKeyValueStorage.getAccountStorageTrieNode(
-                      accountHash, location, nodeHash));
+              () -> {
+                storageCacheMissCounter.inc();
+                return worldStateKeyValueStorage.getAccountStorageTrieNode(
+                    accountHash, location, nodeHash);
+              });
     }
   }
 }
