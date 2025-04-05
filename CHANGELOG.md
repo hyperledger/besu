@@ -4,7 +4,8 @@
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
-- Add support for `eth_simulateV1`. [#8406](https://github.com/hyperledger/besu/pull/8406) 
+- Add support for `eth_simulateV1`. [#8406](https://github.com/hyperledger/besu/pull/8406)
+- New metric `besu_peers_peer_count_by_client` to report the count of peers by client name [#8515](https://github.com/hyperledger/besu/pull/8515)
 #### Dependencies
 ### Bug fixes
 - Fix for storage proof key - if the key is zero use `0x0` not `0x` [#8499](https://github.com/hyperledger/besu/pull/8499)
