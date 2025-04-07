@@ -43,9 +43,9 @@ import org.apache.tuweni.bytes.Bytes;
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DebugCallTracerResult implements DebugTracerResult {
-  private String type;
+  private final String type;
   private String from;
-  private String to;
+  private final String to;
   private String value;
   private String gas;
   private String gasUsed;
