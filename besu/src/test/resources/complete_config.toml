@@ -30,7 +30,7 @@ metrics-port=309
 genesis-file="/opt/besu/genesis.json" # Path
 network-id=42
 sync-mode="full"
-fast-sync-min-peers=13
+sync-min-peers=13
 
 #mining
 miner-coinbase="0x0000000000000000000000000000000000000002"
