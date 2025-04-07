@@ -42,7 +42,7 @@ public class Create2Operation extends AbstractCreateOperation {
    * @param gasCalculator the gas calculator
    */
   public Create2Operation(final GasCalculator gasCalculator) {
-    super(0xF5, "CREATE2", 4, 1, gasCalculator, 0);
+    super(0xF5, "CREATE2", 4, 1, gasCalculator, 0, 0);
   }
 
   @Override

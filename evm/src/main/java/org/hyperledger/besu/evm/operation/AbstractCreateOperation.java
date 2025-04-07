@@ -43,8 +43,11 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected static final OperationResult INVALID_OPERATION =
       new OperationResult(0L, ExceptionalHaltReason.INVALID_OPERATION);
 
-  /** The EOF Version this create operation requires initcode to be in */
-  protected final int eofVersion;
+  /** The minimum EOF Version this create operation requires initcode to be in */
+  protected final int minEofVersion;
+
+  /** The maximum EOF Version this create operation requires initcode to be in */
+  protected final int maxEofVersion;
 
   /**
    * Instantiates a new Abstract create operation.
@@ -54,7 +57,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param stackItemsConsumed the stack items consumed
    * @param stackItemsProduced the stack items produced
    * @param gasCalculator the gas calculator
-   * @param eofVersion the EOF version this create operation is valid in
+   * @param minEofVersion the mimimum EOF version this create operation is valid in
+   * @param maxEofVersion the maximum EOF version this create operation is valid in
    */
   protected AbstractCreateOperation(
       final int opcode,
@@ -62,14 +66,17 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       final int stackItemsConsumed,
       final int stackItemsProduced,
       final GasCalculator gasCalculator,
-      final int eofVersion) {
+      final int minEofVersion,
+      final int maxEofVersion) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
-    this.eofVersion = eofVersion;
+    this.minEofVersion = minEofVersion;
+    this.maxEofVersion = maxEofVersion;
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getCode().getEofVersion() != eofVersion) {
+    int eofVersion = frame.getCode().getEofVersion();
+    if (eofVersion < minEofVersion || eofVersion > maxEofVersion) {
       return INVALID_OPERATION;
     }
 

@@ -44,7 +44,7 @@ public class TxCreateOperation extends AbstractCreateOperation {
    * @param gasCalculator the gas calculator
    */
   public TxCreateOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "TXCREATE", 5, 1, gasCalculator, 1);
+    super(OPCODE, "TXCREATE", 5, 1, gasCalculator, 0, 1);
   }
 
   @Override

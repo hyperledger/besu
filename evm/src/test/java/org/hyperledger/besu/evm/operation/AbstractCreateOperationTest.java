@@ -102,7 +102,7 @@ class AbstractCreateOperationTest {
      * @param gasCalculator the gas calculator
      */
     public FakeCreateOperation(final GasCalculator gasCalculator) {
-      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, 0);
+      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, 0, 0);
     }
 
     @Override
