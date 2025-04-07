@@ -28,6 +28,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -657,6 +658,17 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
       return Optional.of(Address.contractAddress(getSender(), getNonce()));
     }
     return Optional.empty();
+  }
+
+  public Transaction toUnsignedTransaction(final Bytes realPayload) {
+    return Transaction.builder()
+        .nonce(nonce)
+        .gasPrice(gasPrice)
+        .gasLimit(gasLimit)
+        .to(to.orElse(Address.ZERO))
+        .value(value)
+        .payload(realPayload)
+        .build();
   }
 
   public static class Builder {
