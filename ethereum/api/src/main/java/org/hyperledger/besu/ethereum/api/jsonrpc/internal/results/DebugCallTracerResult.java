@@ -14,13 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog.toCompactHex;
-
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.debug.TraceFrame;
+import org.hyperledger.besu.evm.operation.ReturnOperation;
+import org.hyperledger.besu.evm.operation.RevertOperation;
+
+import java.util.Optional;
+import java.util.OptionalLong;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
   "type",
@@ -48,15 +55,46 @@ public class DebugCallTracerResult implements DebugTracerResult {
   private String revertReason;
 
   public DebugCallTracerResult(final TransactionTrace transactionTrace) {
-    transactionTrace.getTraceFrames().stream()
-        .findFirst()
-        .ifPresent(
-            traceFrame -> {
-              type = traceFrame.getOpcode();
-              revertReason =
-                  traceFrame.getRevertReason().map(bytes -> toCompactHex(bytes, true)).orElse(null);
-            });
-  }
+    final Transaction tx = transactionTrace.getTransaction();
+    final Optional<String> smartContractCode =
+        tx.getInit().map(__ -> transactionTrace.getResult().getOutput().toString());
+    final Optional<String> smartContractAddress =
+        smartContractCode.map(
+            __ -> Address.contractAddress(tx.getSender(), tx.getNonce()).toHexString());
+    final Optional<Bytes> revertReason = transactionTrace.getResult().getRevertReason();
+
+    // set to, input and type fields if not a smart contract
+    if (tx.getTo().isPresent()) {
+      final Bytes payload = tx.getPayload();
+      this.to = tx.getTo().map(Bytes::toHexString).orElse(null);
+      this.type = "CALL";
+      this.input = payload == null ? "0x" : payload.toHexString();
+
+      // check and set revert error and reason
+      if (!transactionTrace.getTraceFrames().isEmpty()
+          && hasRevertInSubCall(transactionTrace, transactionTrace.getTraceFrames().getFirst())) {
+        this.error = "REVERTED";
+      }
+      revertReason.ifPresent(r -> this.revertReason = r.toHexString());
+
+    } else {
+      this.type = "CREATE";
+      this.to = smartContractAddress.orElse(null);
+      // TODO: Input field for smart contract? Should it be the code?
+    }
+
+    // set gasUsed
+    if (!transactionTrace.getTraceFrames().isEmpty()) {
+      final OptionalLong precompiledGasCost =
+          transactionTrace.getTraceFrames().getFirst().getPrecompiledGasCost();
+      if (precompiledGasCost.isPresent()) {
+        this.gasUsed = "0x" + Long.toHexString(precompiledGasCost.getAsLong());
+      }
+    }
+
+    // TODO: Handle TraceFrames
+
+  } // end of constructor
 
   @JsonGetter("type")
   public String getType() {
@@ -106,5 +144,22 @@ public class DebugCallTracerResult implements DebugTracerResult {
   @JsonGetter("revertReason")
   public String getRevertReason() {
     return revertReason;
+  }
+
+  private static boolean hasRevertInSubCall(
+      final TransactionTrace transactionTrace, final TraceFrame callFrame) {
+    for (int i = 0; i < transactionTrace.getTraceFrames().size(); i++) {
+      if (i + 1 < transactionTrace.getTraceFrames().size()) {
+        final TraceFrame next = transactionTrace.getTraceFrames().get(i + 1);
+        if (next.getDepth() == callFrame.getDepth()) {
+          if (next.getOpcodeNumber() == RevertOperation.OPCODE) {
+            return true;
+          } else if (next.getOpcodeNumber() == ReturnOperation.OPCODE) {
+            return false;
+          }
+        }
+      }
+    }
+    return false;
   }
 }
