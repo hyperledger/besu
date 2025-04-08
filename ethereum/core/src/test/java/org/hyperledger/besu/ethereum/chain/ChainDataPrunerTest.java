@@ -45,6 +45,7 @@ public class ChainDataPrunerTest {
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,
+            () -> {},
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
             0,
             ChainDataPruner.Mode.CHAIN_PRUNING,
@@ -88,6 +89,7 @@ public class ChainDataPrunerTest {
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,
+            () -> {},
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
             0,
             ChainDataPruner.Mode.CHAIN_PRUNING,

@@ -116,6 +116,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -703,8 +704,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (chainPrunerConfiguration.chainPruningEnabled()
         || chainPrunerConfiguration.preMergePruningEnabled()) {
       LOG.info("Adding ChainDataPruner to observe block added events");
-      final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
-      blockchain.observeBlockAdded(chainDataPruner);
+      final AtomicLong chainDataPrunerObserverId = new AtomicLong();
+      final ChainDataPruner chainDataPruner =
+          createChainPruner(
+              blockchainStorage, () -> blockchain.removeObserver(chainDataPrunerObserverId.get()));
+      chainDataPrunerObserverId.set(blockchain.observeBlockAdded(chainDataPruner));
       if (chainPrunerConfiguration.chainPruningEnabled()) {
         LOG.info(
             "Chain data pruning enabled with recent blocks retained to be: "
@@ -1174,7 +1178,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     };
   }
 
-  private ChainDataPruner createChainPruner(final BlockchainStorage blockchainStorage) {
+  private ChainDataPruner createChainPruner(
+      final BlockchainStorage blockchainStorage, final Runnable unsubscribeRunnable) {
     NetworkName network =
         Stream.of(NetworkName.values())
             .filter((n) -> n.getNetworkId().equals(networkId))
@@ -1182,6 +1187,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             .orElseThrow(() -> new RuntimeException("Unrecognised network"));
     return new ChainDataPruner(
         blockchainStorage,
+        unsubscribeRunnable,
         new ChainDataPrunerStorage(
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),

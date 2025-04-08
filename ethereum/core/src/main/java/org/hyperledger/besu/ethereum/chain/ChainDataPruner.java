@@ -29,6 +29,7 @@ public class ChainDataPruner implements BlockAddedObserver {
   public static final int MAX_PRUNING_THREAD_QUEUE_SIZE = 16;
 
   private final BlockchainStorage blockchainStorage;
+  private final Runnable unsubscribeRunnable;
   private final ChainDataPrunerStorage prunerStorage;
   private final long mergeBlock;
   private final Mode mode;
@@ -39,6 +40,7 @@ public class ChainDataPruner implements BlockAddedObserver {
 
   public ChainDataPruner(
       final BlockchainStorage blockchainStorage,
+      final Runnable unsubscribeRunnable,
       final ChainDataPrunerStorage prunerStorage,
       final long mergeBlock,
       final Mode mode,
@@ -47,6 +49,7 @@ public class ChainDataPruner implements BlockAddedObserver {
       final long pruningQuantity,
       final ExecutorService pruningExecutor) {
     this.blockchainStorage = blockchainStorage;
+    this.unsubscribeRunnable = unsubscribeRunnable;
     this.prunerStorage = prunerStorage;
     this.mergeBlock = mergeBlock;
     this.mode = mode;
@@ -120,6 +123,11 @@ public class ChainDataPruner implements BlockAddedObserver {
           prunerStorage.setPruningMark(pruningTransaction, expectedNewPruningMark);
           pruningTransaction.commit();
           LOG.info("Pruned blocks {} to {}", storedPruningMark, expectedNewPruningMark);
+          if (expectedNewPruningMark == mergeBlock) {
+            LOG.info(
+                "Done pruning pre-merge blocks. Unsubscribing from block added event observation");
+            unsubscribeRunnable.run();
+          }
         });
   }
 
