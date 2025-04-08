@@ -16,6 +16,8 @@ package org.hyperledger.besu.plugin;
 
 import org.hyperledger.besu.plugin.services.BesuService;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /** Adds and accesses BesuServices for plugins to provide or use. */
@@ -52,4 +54,19 @@ public interface ServiceManager {
    *     is unavailable
    */
   <T extends BesuService> Optional<T> getService(Class<T> serviceType);
+
+  /** A toy implementation of ServiceManager, suitable for test and mocks. */
+  class SimpleServiceManager implements ServiceManager {
+    private final Map<Class<? extends BesuService>, BesuService> services = new HashMap<>();
+
+    @Override
+    public <T extends BesuService> void addService(final Class<T> serviceType, final T service) {
+      services.put(serviceType, service);
+    }
+
+    @Override
+    public <T extends BesuService> Optional<T> getService(final Class<T> serviceType) {
+      return Optional.ofNullable(serviceType.cast(services.get(serviceType)));
+    }
+  }
 }

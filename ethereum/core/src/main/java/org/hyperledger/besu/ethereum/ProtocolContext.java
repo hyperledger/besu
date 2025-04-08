@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.ServiceManager;
 
 import java.util.Optional;
 
@@ -30,6 +31,7 @@ public class ProtocolContext {
   private final WorldStateArchive worldStateArchive;
   private final ConsensusContext consensusContext;
   private final BadBlockManager badBlockManager;
+  private final ServiceManager serviceManager;
 
   /**
    * Constructs a new ProtocolContext with the given blockchain, world state archive, consensus
@@ -44,11 +46,13 @@ public class ProtocolContext {
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ConsensusContext consensusContext,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final ServiceManager serviceManager) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusContext = consensusContext;
     this.badBlockManager = badBlockManager;
+    this.serviceManager = serviceManager;
   }
 
   /**
@@ -76,6 +80,15 @@ public class ProtocolContext {
    */
   public BadBlockManager getBadBlockManager() {
     return badBlockManager;
+  }
+
+  /**
+   * Gets the plugin service manager from protocol context.
+   *
+   * @return the serviceManager manager from protocol context
+   */
+  public ServiceManager getPluginServiceManager() {
+    return serviceManager;
   }
 
   /**

@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.ServiceManager;
 
 import java.util.List;
 import java.util.Map;
@@ -113,7 +114,8 @@ public class BlockchainReferenceTestCaseSpec {
             this.blockchain,
             this.worldStateArchive,
             new ConsensusContextFixture(),
-            new BadBlockManager());
+            new BadBlockManager(),
+            new ServiceManager.SimpleServiceManager());
   }
 
   public String getNetwork() {

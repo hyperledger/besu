@@ -100,9 +100,11 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import java.io.Closeable;
 import java.math.BigInteger;
@@ -634,7 +636,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createConsensusContext(blockchain, worldStateArchive, protocolSchedule);
 
     final ProtocolContext protocolContext =
-        createProtocolContext(blockchain, worldStateArchive, consensusContext);
+        createProtocolContext(
+            blockchain,
+            worldStateArchive,
+            consensusContext,
+            besuComponent
+                .map(BesuComponent::getBesuPluginContext)
+                // TODO: can we orElseThrow here and not break tests?
+                // plugin context should be present at runtime, only absent in test cases
+                .orElse(new BesuPluginContextImpl()));
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
@@ -1104,8 +1114,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ConsensusContext consensusContext) {
-    return new ProtocolContext(blockchain, worldStateArchive, consensusContext, badBlockManager);
+      final ConsensusContext consensusContext,
+      final ServiceManager serviceManager) {
+    return new ProtocolContext(
+        blockchain, worldStateArchive, consensusContext, badBlockManager, serviceManager);
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(

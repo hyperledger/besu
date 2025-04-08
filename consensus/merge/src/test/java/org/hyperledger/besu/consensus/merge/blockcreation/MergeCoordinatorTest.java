@@ -79,6 +79,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
@@ -190,6 +191,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   private final BadBlockManager badBlockManager = spy(new BadBlockManager());
 
+  private final ServiceManager simpleServiceManager = new ServiceManager.SimpleServiceManager();
+
   @BeforeEach
   public void setUp() {
     when(mergeContext.as(MergeContext.class)).thenReturn(mergeContext);
@@ -197,7 +200,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .thenReturn(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
 
     protocolContext =
-        new ProtocolContext(blockchain, worldStateArchive, mergeContext, badBlockManager);
+        new ProtocolContext(
+            blockchain, worldStateArchive, mergeContext, badBlockManager, simpleServiceManager);
     var mutable = worldStateArchive.getWorldState();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
