@@ -42,6 +42,7 @@ public class IDPrecompiledContract extends AbstractPrecompiledContract {
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
+    //TODO: Postpone copy of input until this memory is written to
     return PrecompileContractResult.success(input.copy());
   }
 }

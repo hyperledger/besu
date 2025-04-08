@@ -63,7 +63,7 @@ public class CreateOperation extends AbstractCreateOperation {
   protected Code getInitCode(final MessageFrame frame, final EVM evm) {
     final long inputOffset = clampedToLong(frame.getStackItem(1));
     final long inputSize = clampedToLong(frame.getStackItem(2));
-    final Bytes inputData = frame.readMemory(inputOffset, inputSize);
+    final Bytes inputData = frame.readMutableMemory(inputOffset, inputSize);
     // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
     // addresses disk loading delay, and we already have the code.
     return evm.getCodeUncached(inputData);
