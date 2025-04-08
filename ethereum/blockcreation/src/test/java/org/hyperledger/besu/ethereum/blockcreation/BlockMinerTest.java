@@ -22,11 +22,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -38,7 +36,6 @@ import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
@@ -51,13 +48,7 @@ import org.junit.jupiter.api.Test;
 
 public class BlockMinerTest {
 
-  final ProtocolContext protocolContext =
-      new ProtocolContext(
-          null,
-          null,
-          mock(ConsensusContext.class),
-          new BadBlockManager(),
-          new ServiceManager.SimpleServiceManager());
+  final ProtocolContext protocolContext = new ProtocolContext.Builder().build();
 
   @Test
   public void blockCreatedIsAddedToBlockChain() throws InterruptedException {

@@ -26,11 +26,10 @@ public interface ConsensusTestBase {
       final MutableBlockchain blockchain,
       final WorldStateArchive archive,
       final ConsensusContext bftContext) {
-    return new ProtocolContext(
-        blockchain,
-        archive,
-        bftContext,
-        new BadBlockManager(),
-        new ServiceManager.SimpleServiceManager());
+    return new ProtocolContext.Builder()
+        .withBlockchain(blockchain)
+        .withWorldStateArchive(archive)
+        .withConsensusContext(bftContext)
+        .build();
   }
 }

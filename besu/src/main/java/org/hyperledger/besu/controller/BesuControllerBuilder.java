@@ -1116,8 +1116,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final WorldStateArchive worldStateArchive,
       final ConsensusContext consensusContext,
       final ServiceManager serviceManager) {
-    return new ProtocolContext(
-        blockchain, worldStateArchive, consensusContext, badBlockManager, serviceManager);
+    return new ProtocolContext.Builder()
+        .withBlockchain(blockchain)
+        .withWorldStateArchive(worldStateArchive)
+        .withConsensusContext(consensusContext)
+        .withBadBlockManager(badBlockManager)
+        .withServiceManager(serviceManager)
+        .build();
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
