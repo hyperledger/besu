@@ -25,54 +25,12 @@ import java.util.List;
  * (ETH)</a>}
  */
 public class EthProtocolVersion {
-  public static final int V62 = 62;
-  public static final int V63 = 63;
-  public static final int V64 = 64;
-  public static final int V65 = 65;
   public static final int V66 = 66;
   public static final int V67 = 67;
   public static final int V68 = 68;
 
-  /** eth/62 (2015) */
-  private static final List<Integer> eth62Messages =
-      List.of(
-          EthProtocolMessages.STATUS,
-          EthProtocolMessages.NEW_BLOCK_HASHES,
-          EthProtocolMessages.TRANSACTIONS,
-          EthProtocolMessages.GET_BLOCK_HEADERS,
-          EthProtocolMessages.BLOCK_HEADERS,
-          EthProtocolMessages.GET_BLOCK_BODIES,
-          EthProtocolMessages.BLOCK_BODIES,
-          EthProtocolMessages.NEW_BLOCK);
-
-  /**
-   * eth/63 (2016)
-   *
-   * <p>Version 63 added the GetNodeData, NodeData, GetReceipts and Receipts messages which allow
-   * synchronizing transaction execution results.
-   */
-  private static final List<Integer> eth63Messages =
-      List.of(
-          EthProtocolMessages.STATUS,
-          EthProtocolMessages.NEW_BLOCK_HASHES,
-          EthProtocolMessages.TRANSACTIONS,
-          EthProtocolMessages.GET_BLOCK_HEADERS,
-          EthProtocolMessages.BLOCK_HEADERS,
-          EthProtocolMessages.GET_BLOCK_BODIES,
-          EthProtocolMessages.BLOCK_BODIES,
-          EthProtocolMessages.NEW_BLOCK,
-          EthProtocolMessages.GET_NODE_DATA,
-          EthProtocolMessages.NODE_DATA,
-          EthProtocolMessages.GET_RECEIPTS,
-          EthProtocolMessages.RECEIPTS);
-
-  /**
-   * eth/65 (EIP-2464, January 2020)
-   *
-   * <p>Version 65 improved transaction exchange, introducing three additional messages:
-   * NewPooledTransactionHashes, GetPooledTransactions, and PooledTransactions.
-   */
-  private static final List<Integer> eth65Messages =
+  /** eth/66 */
+  private static final List<Integer> eth66Messages =
       List.of(
           EthProtocolMessages.STATUS,
           EthProtocolMessages.NEW_BLOCK_HASHES,
@@ -119,14 +77,8 @@ public class EthProtocolVersion {
    */
   public static List<Integer> getSupportedMessages(final int protocolVersion) {
     switch (protocolVersion) {
-      case EthProtocolVersion.V62:
-        return eth62Messages;
-      case EthProtocolVersion.V63:
-      case EthProtocolVersion.V64:
-        return eth63Messages;
-      case EthProtocolVersion.V65:
       case EthProtocolVersion.V66:
-        return eth65Messages;
+        return eth66Messages;
       case EthProtocolVersion.V67:
       case EthProtocolVersion.V68:
         return eth67Messages;

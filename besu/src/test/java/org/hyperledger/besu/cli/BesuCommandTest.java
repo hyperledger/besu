@@ -2261,49 +2261,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void compatibilityEth64ForkIdEnabledMustBeUsed() {
-    parseCommand("--compatibility-eth64-forkid-enabled");
-    verify(mockControllerBuilder)
-        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
-    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
-        .isTrue();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void compatibilityEth64ForkIdNotEnabledMustBeUsed() {
-    parseCommand("--compatibility-eth64-forkid-enabled=false");
-    verify(mockControllerBuilder)
-        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
-    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
-        .isFalse();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void assertThatCompatibilityEth64ForkIdIsNotEnabledByDefault() {
-    parseCommand();
-    verify(mockControllerBuilder)
-        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
-    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
-        .isFalse();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void assertThatCompatibilityEth64ForkIdIsPresentInHelpMessage() {
-    parseCommand("--help");
-    assertThat(commandOutput.toString(UTF_8))
-        .contains(
-            "--compatibility-eth64-forkid-enabled",
-            "Enable the legacy Eth/64 fork id. (default: false)");
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void assertThatCheckPortClashRejectsAsExpectedForEngineApi() throws Exception {
     // use WS port for HTTP
     final int port = 8545;
