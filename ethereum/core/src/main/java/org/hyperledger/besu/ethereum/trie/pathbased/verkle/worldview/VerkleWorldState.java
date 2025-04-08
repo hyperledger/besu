@@ -231,6 +231,7 @@ public class VerkleWorldState extends PathBasedWorldState {
     }
     if (accountUpdate.getUpdated() == null) {
       leafBuilder.generateAccountKeyForRemoval(accountKey);
+      leafBuilder.generateCodeHashKeyForRemoval(accountKey);
       final Hash addressHash = hashAndSavePreImage(accountKey);
       maybeStateUpdater.ifPresent(
           verkleUpdater -> verkleUpdater.removeAccountInfoState(addressHash));
@@ -255,6 +256,8 @@ public class VerkleWorldState extends PathBasedWorldState {
       final VerkleWorldStateUpdateAccumulator worldStateUpdater) {
     final VerkleAccount priorAccount = accountUpdate.getPrior();
     final VerkleAccount updatedAccount = accountUpdate.getUpdated();
+
+    // creating new account adds in codehash as well
     if (priorAccount == null) {
       leafBuilder.generateCodeHashKeyValueForUpdate(accountKey, updatedAccount.getCodeHash());
       return;
