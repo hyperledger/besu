@@ -229,7 +229,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
     if (segment.containsStaticData()) {
       options
           .setEnableBlobFiles(true)
-          .setEnableBlobGarbageCollection(segment.isStaticDataGarbageCollectionEnabled())
+          .setEnableBlobGarbageCollection(true)
           .setMinBlobSize(100)
           .setBlobCompressionType(CompressionType.LZ4_COMPRESSION);
     }
