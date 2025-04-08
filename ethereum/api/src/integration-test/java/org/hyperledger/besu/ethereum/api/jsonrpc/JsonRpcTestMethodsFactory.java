@@ -51,6 +51,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.math.BigInteger;
@@ -88,7 +89,11 @@ public class JsonRpcTestMethodsFactory {
     this.importer.getGenesisState().writeStateTo(stateArchive.getWorldState());
     this.context =
         new ProtocolContext(
-            blockchain, stateArchive, mock(ConsensusContext.class), new BadBlockManager());
+            blockchain,
+            stateArchive,
+            mock(ConsensusContext.class),
+            new BadBlockManager(),
+            new ServiceManager.SimpleServiceManager());
 
     this.protocolSchedule = importer.getProtocolSchedule();
     this.synchronizer = mock(Synchronizer.class);

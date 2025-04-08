@@ -61,6 +61,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.TestClock;
@@ -109,7 +110,8 @@ public abstract class AbstractBlockPropagationManagerTest {
             blockchain,
             tempProtocolContext.getWorldStateArchive(),
             tempProtocolContext.getConsensusContext(ConsensusContext.class),
-            new BadBlockManager());
+            new BadBlockManager(),
+            new ServiceManager.SimpleServiceManager());
     ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)

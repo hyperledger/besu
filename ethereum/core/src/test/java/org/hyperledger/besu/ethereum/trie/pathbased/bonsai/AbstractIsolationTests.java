@@ -73,6 +73,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
@@ -175,7 +176,11 @@ public abstract class AbstractIsolationTests {
     genesisState.writeStateTo(ws);
     protocolContext =
         new ProtocolContext(
-            blockchain, archive, mock(ConsensusContext.class), new BadBlockManager());
+            blockchain,
+            archive,
+            mock(ConsensusContext.class),
+            new BadBlockManager(),
+            new ServiceManager.SimpleServiceManager());
     ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     transactionPool =

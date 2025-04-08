@@ -31,6 +31,7 @@ import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
@@ -80,7 +81,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class CliqueBlockCreatorTest {
+public class CliqueBlockCreatorTest implements ConsensusTestBase {
 
   private final NodeKey proposerNodeKey = NodeKeyUtils.generate();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
@@ -127,8 +128,7 @@ public class CliqueBlockCreatorTest {
     final Block genesis =
         GenesisState.fromConfig(GenesisConfig.mainnet(), protocolSchedule).getBlock();
     blockchain = createInMemoryBlockchain(genesis);
-    protocolContext =
-        new ProtocolContext(blockchain, stateArchive, cliqueContext, new BadBlockManager());
+    protocolContext = forConsensusContext(blockchain, stateArchive, cliqueContext);
     epochManager = new EpochManager(10);
 
     // Add a block above the genesis

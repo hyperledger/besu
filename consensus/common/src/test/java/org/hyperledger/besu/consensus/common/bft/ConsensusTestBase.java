@@ -21,8 +21,8 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.ServiceManager;
 
-public class ConsensusTestBase {
-  public ProtocolContext forConsensusContext(
+public interface ConsensusTestBase {
+  default ProtocolContext forConsensusContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive archive,
       final ConsensusContext bftContext) {

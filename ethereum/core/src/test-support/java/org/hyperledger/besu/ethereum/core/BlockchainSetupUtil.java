@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
@@ -160,7 +161,11 @@ public class BlockchainSetupUtil {
   private static ProtocolContext mainnetProtocolContextProvider(
       final MutableBlockchain blockchain, final WorldStateArchive worldStateArchive) {
     return new ProtocolContext(
-        blockchain, worldStateArchive, new ConsensusContextFixture(), new BadBlockManager());
+        blockchain,
+        worldStateArchive,
+        new ConsensusContextFixture(),
+        new BadBlockManager(),
+        new ServiceManager.SimpleServiceManager());
   }
 
   private static BlockchainSetupUtil create(

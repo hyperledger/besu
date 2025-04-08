@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -77,7 +78,11 @@ public class ExecutionContextTestFixture {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext =
         new ProtocolContext(
-            blockchain, stateArchive, new ConsensusContextFixture(), new BadBlockManager());
+            blockchain,
+            stateArchive,
+            new ConsensusContextFixture(),
+            new BadBlockManager(),
+            new ServiceManager.SimpleServiceManager());
     genesisState.writeStateTo(stateArchive.getWorldState());
   }
 

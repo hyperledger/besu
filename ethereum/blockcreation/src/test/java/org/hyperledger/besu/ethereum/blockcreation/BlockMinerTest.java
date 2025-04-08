@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
@@ -50,6 +51,14 @@ import org.junit.jupiter.api.Test;
 
 public class BlockMinerTest {
 
+  final ProtocolContext protocolContext =
+      new ProtocolContext(
+          null,
+          null,
+          mock(ConsensusContext.class),
+          new BadBlockManager(),
+          new ServiceManager.SimpleServiceManager());
+
   @Test
   public void blockCreatedIsAddedToBlockChain() throws InterruptedException {
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
@@ -57,9 +66,6 @@ public class BlockMinerTest {
     final Block blockToCreate =
         new Block(
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
-
-    final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, mock(ConsensusContext.class), new BadBlockManager());
 
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
@@ -101,9 +107,6 @@ public class BlockMinerTest {
     final Block blockToCreate =
         new Block(
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
-
-    final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, mock(ConsensusContext.class), new BadBlockManager());
 
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
@@ -149,9 +152,6 @@ public class BlockMinerTest {
     final Block blockToCreate =
         new Block(
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
-
-    final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, mock(ConsensusContext.class), new BadBlockManager());
 
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =

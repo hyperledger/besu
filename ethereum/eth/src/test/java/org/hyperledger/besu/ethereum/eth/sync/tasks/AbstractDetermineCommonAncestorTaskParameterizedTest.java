@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
@@ -159,7 +160,8 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
             localBlockchain,
             worldStateArchive,
             mock(ConsensusContext.class),
-            new BadBlockManager());
+            new BadBlockManager(),
+            new ServiceManager.SimpleServiceManager());
 
     final EthTask<BlockHeader> task =
         DetermineCommonAncestorTask.create(

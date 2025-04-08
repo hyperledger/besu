@@ -29,6 +29,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
@@ -41,7 +42,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -60,7 +60,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class MessageValidatorTest {
+public class MessageValidatorTest implements ConsensusTestBase {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
@@ -101,11 +101,8 @@ public class MessageValidatorTest {
     lenient().when(mockBftCtx.as(Mockito.any())).thenReturn(mockBftCtx);
 
     protocolContext =
-        new ProtocolContext(
-            mock(MutableBlockchain.class),
-            mock(WorldStateArchive.class),
-            mockBftCtx,
-            new BadBlockManager());
+        forConsensusContext(
+            mock(MutableBlockchain.class), mock(WorldStateArchive.class), mockBftCtx);
 
     lenient()
         .when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))

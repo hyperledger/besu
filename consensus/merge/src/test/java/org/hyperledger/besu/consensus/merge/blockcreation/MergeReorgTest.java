@@ -20,13 +20,13 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.util.LogConfigurator;
 
@@ -62,7 +61,7 @@ import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class MergeReorgTest implements MergeGenesisConfigHelper {
+public class MergeReorgTest implements MergeGenesisConfigHelper, ConsensusTestBase {
 
   @Mock TransactionPool mockTransactionPool;
 
@@ -77,12 +76,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
   private final EthScheduler ethScheduler = new DeterministicEthScheduler();
   private final ProtocolContext protocolContext =
-      new ProtocolContext(
-          blockchain,
-          worldStateArchive,
-          mergeContext,
-          new BadBlockManager(),
-          new ServiceManager.SimpleServiceManager());
+      forConsensusContext(blockchain, worldStateArchive, mergeContext);
 
   private final Address coinbase = genesisAllocations(getPowGenesisConfig()).findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();

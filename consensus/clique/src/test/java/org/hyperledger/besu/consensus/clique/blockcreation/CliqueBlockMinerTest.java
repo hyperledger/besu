@@ -28,6 +28,7 @@ import org.hyperledger.besu.config.JsonCliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -62,7 +62,7 @@ import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class CliqueBlockMinerTest {
+class CliqueBlockMinerTest implements ConsensusTestBase {
 
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
 
@@ -85,8 +85,7 @@ class CliqueBlockMinerTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(List.of(Address.ZERO));
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
-    final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
+    final ProtocolContext protocolContext = forConsensusContext(null, null, cliqueContext);
 
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =
@@ -141,8 +140,7 @@ class CliqueBlockMinerTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(List.of(Address.ZERO));
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
-    final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
+    final ProtocolContext protocolContext = forConsensusContext(null, null, cliqueContext);
 
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =

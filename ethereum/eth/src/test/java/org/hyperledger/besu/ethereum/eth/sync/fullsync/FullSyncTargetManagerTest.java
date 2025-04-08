@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.concurrent.CompletableFuture;
@@ -80,7 +81,11 @@ public class FullSyncTargetManagerTest {
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     final ProtocolContext protocolContext =
         new ProtocolContext(
-            localBlockchain, localWorldState, mock(ConsensusContext.class), new BadBlockManager());
+            localBlockchain,
+            localWorldState,
+            mock(ConsensusContext.class),
+            new BadBlockManager(),
+            new ServiceManager.SimpleServiceManager());
     ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)

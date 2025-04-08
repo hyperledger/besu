@@ -22,6 +22,7 @@ import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupC
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
+import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -46,14 +46,11 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-public class IbftBlockHeaderValidationRulesetFactoryTest {
+public class IbftBlockHeaderValidationRulesetFactoryTest implements ConsensusTestBase {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
-    return new ProtocolContext(
-        null,
-        null,
-        setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()),
-        new BadBlockManager());
+    return forConsensusContext(
+        null, null, setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()));
   }
 
   @Test

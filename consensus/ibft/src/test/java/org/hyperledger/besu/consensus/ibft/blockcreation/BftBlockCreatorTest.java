@@ -30,6 +30,7 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
@@ -74,7 +75,7 @@ import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-public class BftBlockCreatorTest {
+public class BftBlockCreatorTest implements ConsensusTestBase {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
@@ -126,11 +127,10 @@ public class BftBlockCreatorTest {
             false,
             new NoOpMetricsSystem());
     final ProtocolContext protContext =
-        new ProtocolContext(
+        forConsensusContext(
             blockchain,
             createInMemoryWorldStateArchive(),
-            setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
-            new BadBlockManager());
+            setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder));
 
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();

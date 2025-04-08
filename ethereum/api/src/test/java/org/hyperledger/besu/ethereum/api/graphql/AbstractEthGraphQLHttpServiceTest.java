@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -116,7 +117,8 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
             blockchain,
             blockchainSetupUtil.getWorldArchive(),
             mock(ConsensusContext.class),
-            new BadBlockManager());
+            new BadBlockManager(),
+            new ServiceManager.SimpleServiceManager());
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             blockchainSetupUtil.getProtocolSchedule(),

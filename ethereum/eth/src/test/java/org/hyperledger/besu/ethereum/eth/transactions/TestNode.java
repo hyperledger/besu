@@ -66,6 +66,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
@@ -137,7 +138,11 @@ public class TestNode implements Closeable {
     genesisState.writeStateTo(worldStateArchive.getWorldState());
     final ProtocolContext protocolContext =
         new ProtocolContext(
-            blockchain, worldStateArchive, mock(ConsensusContext.class), new BadBlockManager());
+            blockchain,
+            worldStateArchive,
+            mock(ConsensusContext.class),
+            new BadBlockManager(),
+            new ServiceManager.SimpleServiceManager());
 
     final SyncState syncState = mock(SyncState.class);
     final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);

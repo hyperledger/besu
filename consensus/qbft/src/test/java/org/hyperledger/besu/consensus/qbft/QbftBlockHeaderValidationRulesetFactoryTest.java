@@ -20,13 +20,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -41,14 +41,14 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
-public class QbftBlockHeaderValidationRulesetFactoryTest {
+public class QbftBlockHeaderValidationRulesetFactoryTest implements ConsensusTestBase {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
-    return new ProtocolContext(
+    return forConsensusContext(
         null,
         null,
-        setupContextWithBftExtraDataEncoder(BftContext.class, validators, new QbftExtraDataCodec()),
-        new BadBlockManager());
+        setupContextWithBftExtraDataEncoder(
+            BftContext.class, validators, new QbftExtraDataCodec()));
   }
 
   @Test

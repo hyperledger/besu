@@ -34,6 +34,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
@@ -50,7 +51,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -79,7 +79,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class IbftRoundTest {
+public class IbftRoundTest implements ConsensusTestBase {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
@@ -112,11 +112,10 @@ public class IbftRoundTest {
   @BeforeEach
   public void setup() {
     protocolContext =
-        new ProtocolContext(
+        forConsensusContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()),
-            new BadBlockManager());
+            setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()));
 
     lenient().when(messageValidator.validateProposal(any())).thenReturn(true);
     lenient().when(messageValidator.validatePrepare(any())).thenReturn(true);

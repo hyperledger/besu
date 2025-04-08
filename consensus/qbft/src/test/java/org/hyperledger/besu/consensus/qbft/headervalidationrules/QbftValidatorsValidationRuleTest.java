@@ -21,10 +21,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -35,7 +35,7 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
 
-public class QbftValidatorsValidationRuleTest {
+public class QbftValidatorsValidationRuleTest implements ConsensusTestBase {
   private final BftExtraData bftExtraData = mock(BftExtraData.class);
   private final BlockHeader blockHeader = mock(BlockHeader.class);
 
@@ -44,11 +44,10 @@ public class QbftValidatorsValidationRuleTest {
     final QbftValidatorsValidationRule qbftValidatorsValidationRule =
         new QbftValidatorsValidationRule(true);
     final ProtocolContext context =
-        new ProtocolContext(
+        forConsensusContext(
             null,
             null,
-            setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData),
-            new BadBlockManager());
+            setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData));
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.empty());
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -63,11 +62,8 @@ public class QbftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(
-            null,
-            null,
-            setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
-            new BadBlockManager());
+        forConsensusContext(
+            null, null, setupContextWithBftExtraData(BftContext.class, validators, bftExtraData));
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isTrue();
   }
@@ -81,11 +77,8 @@ public class QbftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(
-            null,
-            null,
-            setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
-            new BadBlockManager());
+        forConsensusContext(
+            null, null, setupContextWithBftExtraData(BftContext.class, validators, bftExtraData));
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isFalse();
   }
@@ -95,11 +88,10 @@ public class QbftValidatorsValidationRuleTest {
     final QbftValidatorsValidationRule qbftValidatorsValidationRule =
         new QbftValidatorsValidationRule(true);
     final ProtocolContext context =
-        new ProtocolContext(
+        forConsensusContext(
             null,
             null,
-            setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData),
-            new BadBlockManager());
+            setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData));
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.of(mock(Vote.class)));
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isFalse();
