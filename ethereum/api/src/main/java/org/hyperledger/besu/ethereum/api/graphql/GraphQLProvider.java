@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 import com.google.common.io.Resources;
 import graphql.GraphQL;
