@@ -211,7 +211,7 @@ class DebugOperationTracerTest {
             validCallFrame(),
             new TraceOptions<>(
                 TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, false)),
-            false);
+            true);
     assertThat(traceFrame.getGasCost()).isEqualTo(OptionalLong.of(1020L));
   }
 
