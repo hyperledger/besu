@@ -42,20 +42,6 @@ public final class StatusMessage extends AbstractMessageData {
       final BigInteger networkId,
       final Difficulty totalDifficulty,
       final Hash bestHash,
-      final Hash genesisHash) {
-    final EthStatus status =
-        new EthStatus(protocolVersion, networkId, totalDifficulty, bestHash, genesisHash);
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    status.writeTo(out);
-
-    return new StatusMessage(out.encoded());
-  }
-
-  public static StatusMessage create(
-      final int protocolVersion,
-      final BigInteger networkId,
-      final Difficulty totalDifficulty,
-      final Hash bestHash,
       final Hash genesisHash,
       final ForkId forkId) {
     final EthStatus status =
@@ -71,7 +57,7 @@ public final class StatusMessage extends AbstractMessageData {
       return (StatusMessage) message;
     }
     final int code = message.getCode();
-    if (code != EthPV62.STATUS) {
+    if (code != EthProtocolMessages.STATUS) {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a StatusMessage.", code));
     }
@@ -80,7 +66,7 @@ public final class StatusMessage extends AbstractMessageData {
 
   @Override
   public int getCode() {
-    return EthPV62.STATUS;
+    return EthProtocolMessages.STATUS;
   }
 
   /**
@@ -158,20 +144,6 @@ public final class StatusMessage extends AbstractMessageData {
         final BigInteger networkId,
         final Difficulty totalDifficulty,
         final Hash bestHash,
-        final Hash genesisHash) {
-      this.protocolVersion = protocolVersion;
-      this.networkId = networkId;
-      this.totalDifficulty = totalDifficulty;
-      this.bestHash = bestHash;
-      this.genesisHash = genesisHash;
-      this.forkId = null;
-    }
-
-    EthStatus(
-        final int protocolVersion,
-        final BigInteger networkId,
-        final Difficulty totalDifficulty,
-        final Hash bestHash,
         final Hash genesisHash,
         final ForkId forkHash) {
       this.protocolVersion = protocolVersion;
@@ -190,9 +162,9 @@ public final class StatusMessage extends AbstractMessageData {
       out.writeUInt256Scalar(totalDifficulty);
       out.writeBytes(bestHash);
       out.writeBytes(genesisHash);
-      if (forkId != null) {
-        forkId.writeTo(out);
-      }
+
+      forkId.writeTo(out);
+
       out.endList();
     }
 
@@ -204,12 +176,7 @@ public final class StatusMessage extends AbstractMessageData {
       final Difficulty totalDifficulty = Difficulty.of(in.readUInt256Scalar());
       final Hash bestHash = Hash.wrap(in.readBytes32());
       final Hash genesisHash = Hash.wrap(in.readBytes32());
-      final ForkId forkId;
-      if (in.nextIsList()) {
-        forkId = ForkId.readFrom(in);
-      } else {
-        forkId = null;
-      }
+      final ForkId forkId = ForkId.readFrom(in);
       in.leaveList();
 
       return new EthStatus(

@@ -45,8 +45,8 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')

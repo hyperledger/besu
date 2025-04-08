@@ -19,11 +19,10 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator.SubsequentMessageValidator;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 
 import java.util.Collection;
 
@@ -32,52 +31,26 @@ public class MessageValidatorFactory {
 
   private final ProposerSelector proposerSelector;
   private final QbftProtocolSchedule protocolSchedule;
-  private final ProtocolContext protocolContext;
+  private final QbftValidatorProvider validatorProvider;
+  private final QbftBlockInterface blockInterface;
 
   /**
    * Instantiates a new Message validator factory.
    *
    * @param proposerSelector the proposer selector
    * @param protocolSchedule the protocol schedule
-   * @param protocolContext the protocol context
+   * @param validatorProvider the validator provider
+   * @param blockInterface the block interface
    */
   public MessageValidatorFactory(
       final ProposerSelector proposerSelector,
       final QbftProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext) {
+      final QbftValidatorProvider validatorProvider,
+      final QbftBlockInterface blockInterface) {
     this.proposerSelector = proposerSelector;
     this.protocolSchedule = protocolSchedule;
-    this.protocolContext = protocolContext;
-  }
-
-  /**
-   * Get the list of validators that are applicable after the given block
-   *
-   * @param protocolContext the protocol context
-   * @param parentHeader the parent header
-   * @return the list of validators
-   */
-  public static Collection<Address> getValidatorsAfterBlock(
-      final ProtocolContext protocolContext, final QbftBlockHeader parentHeader) {
-    return protocolContext
-        .getConsensusContext(QbftContext.class)
-        .validatorProvider()
-        .getValidatorsAfterBlock(parentHeader);
-  }
-
-  /**
-   * Get the list of validators that are applicable for the given block
-   *
-   * @param protocolContext the protocol context
-   * @param parentHeader the parent header
-   * @return the list of validators
-   */
-  public static Collection<Address> getValidatorsForBlock(
-      final ProtocolContext protocolContext, final QbftBlockHeader parentHeader) {
-    return protocolContext
-        .getConsensusContext(QbftContext.class)
-        .validatorProvider()
-        .getValidatorsForBlock(parentHeader);
+    this.validatorProvider = validatorProvider;
+    this.blockInterface = blockInterface;
   }
 
   /**
@@ -91,7 +64,7 @@ public class MessageValidatorFactory {
       final long chainHeight, final QbftBlockHeader parentHeader) {
 
     final Collection<Address> validatorsForHeight =
-        getValidatorsAfterBlock(protocolContext, parentHeader);
+        validatorProvider.getValidatorsAfterBlock(parentHeader);
 
     final RoundChangePayloadValidator roundChangePayloadValidator =
         new RoundChangePayloadValidator(validatorsForHeight, chainHeight);
@@ -114,19 +87,17 @@ public class MessageValidatorFactory {
   public MessageValidator createMessageValidator(
       final ConsensusRoundIdentifier roundIdentifier, final QbftBlockHeader parentHeader) {
     final Collection<Address> validatorsForHeight =
-        getValidatorsAfterBlock(protocolContext, parentHeader);
+        validatorProvider.getValidatorsAfterBlock(parentHeader);
 
     final ProposalValidator proposalValidator =
         new ProposalValidator(
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             BftHelpers.calculateRequiredValidatorQuorum(validatorsForHeight.size()),
             validatorsForHeight,
             roundIdentifier,
             proposerSelector.selectProposerForRound(roundIdentifier));
 
-    final QbftBlockInterface blockInterface =
-        protocolContext.getConsensusContext(QbftContext.class).blockInterface();
     return new MessageValidator(
         block ->
             new SubsequentMessageValidator(

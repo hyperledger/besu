@@ -31,6 +31,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
@@ -49,7 +50,8 @@ public class AccountPermissioningControllerFactoryTest {
   @Test
   public void createWithNullPermissioningConfigShouldReturnEmpty() {
     Optional<AccountPermissioningController> controller =
-        AccountPermissioningControllerFactory.create(null, transactionSimulator, metricsSystem);
+        AccountPermissioningControllerFactory.create(
+            null, transactionSimulator, metricsSystem, Collections.emptyList());
 
     Assertions.assertThat(controller).isEmpty();
   }
@@ -64,7 +66,10 @@ public class AccountPermissioningControllerFactoryTest {
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration,
+            transactionSimulator,
+            metricsSystem,
+            Collections.emptyList());
 
     Assertions.assertThat(controller).isEmpty();
   }
@@ -79,7 +84,10 @@ public class AccountPermissioningControllerFactoryTest {
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration,
+            transactionSimulator,
+            metricsSystem,
+            Collections.emptyList());
 
     Assertions.assertThat(controller).isNotEmpty();
     assertThat(controller.get().getAccountLocalConfigPermissioningController()).isNotEmpty();
@@ -97,7 +105,10 @@ public class AccountPermissioningControllerFactoryTest {
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration,
+            transactionSimulator,
+            metricsSystem,
+            Collections.emptyList());
 
     Assertions.assertThat(controller).isEmpty();
   }
@@ -112,7 +123,10 @@ public class AccountPermissioningControllerFactoryTest {
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration,
+            transactionSimulator,
+            metricsSystem,
+            Collections.emptyList());
 
     Assertions.assertThat(controller).isNotEmpty();
     assertThat(controller.get().getAccountLocalConfigPermissioningController()).isEmpty();
@@ -133,7 +147,10 @@ public class AccountPermissioningControllerFactoryTest {
         catchThrowable(
             () ->
                 AccountPermissioningControllerFactory.create(
-                    permissioningConfiguration, transactionSimulator, metricsSystem));
+                    permissioningConfiguration,
+                    transactionSimulator,
+                    metricsSystem,
+                    Collections.emptyList()));
 
     assertThat(thrown)
         .isInstanceOf(IllegalStateException.class)
@@ -153,7 +170,10 @@ public class AccountPermissioningControllerFactoryTest {
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration,
+            transactionSimulator,
+            metricsSystem,
+            Collections.emptyList());
 
     Assertions.assertThat(controller).isNotEmpty();
     assertThat(controller.get().getAccountLocalConfigPermissioningController()).isNotEmpty();

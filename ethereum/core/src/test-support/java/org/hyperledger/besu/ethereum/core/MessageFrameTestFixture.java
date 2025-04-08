@@ -36,7 +36,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class MessageFrameTestFixture {
 
-  public static final Address DEFAUT_ADDRESS = AddressHelpers.ofValue(244259721);
+  public static final Address DEFAULT_ADDRESS = AddressHelpers.ofValue(244259721);
   private static final int maxStackSize = DEFAULT_MAX_STACK_SIZE;
 
   private MessageFrame parentFrame;
@@ -45,10 +45,10 @@ public class MessageFrameTestFixture {
   private Optional<Blockchain> blockchain = Optional.empty();
   private Optional<WorldUpdater> worldUpdater = Optional.empty();
   private long initialGas = Long.MAX_VALUE;
-  private Address address = DEFAUT_ADDRESS;
-  private Address sender = DEFAUT_ADDRESS;
-  private Address originator = DEFAUT_ADDRESS;
-  private Address contract = DEFAUT_ADDRESS;
+  private Address address = DEFAULT_ADDRESS;
+  private Address sender = DEFAULT_ADDRESS;
+  private Address originator = DEFAULT_ADDRESS;
+  private Address contract = DEFAULT_ADDRESS;
   private Wei gasPrice = Wei.ZERO;
   private Wei blobGasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;

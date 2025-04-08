@@ -46,7 +46,7 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.opentelemetry:opentelemetry-api'
-  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'org.rocksdb:rocksdbjni'
   implementation project(path: ':ethereum:core')
 

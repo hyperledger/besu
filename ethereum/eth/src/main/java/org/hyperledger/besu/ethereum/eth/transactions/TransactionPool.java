@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -41,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
@@ -190,7 +193,7 @@ public class TransactionPool implements BlockAddedObserver {
   public ValidationResult<TransactionInvalidReason> addTransactionViaApi(
       final Transaction transaction) {
 
-    final var result = addTransaction(transaction, true);
+    final var result = addTransaction(transaction, true, MAX_SCORE);
     if (result.isValid()) {
       localSenders.add(transaction.getSender());
       transactionBroadcaster.onTransactionsAdded(List.of(transaction));
@@ -211,7 +214,7 @@ public class TransactionPool implements BlockAddedObserver {
                 Collectors.toMap(
                     Transaction::getHash,
                     transaction -> {
-                      final var result = addTransaction(transaction, false);
+                      final var result = addTransaction(transaction, false, MAX_SCORE);
                       if (result.isValid()) {
                         addedTransactions.add(transaction);
                       }
@@ -241,7 +244,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private ValidationResult<TransactionInvalidReason> addTransaction(
-      final Transaction transaction, final boolean isLocal) {
+      final Transaction transaction, final boolean isLocal, final byte score) {
 
     final boolean hasPriority = isPriorityTransaction(transaction, isLocal);
 
@@ -261,7 +264,7 @@ public class TransactionPool implements BlockAddedObserver {
     if (validationResult.result.isValid()) {
       final TransactionAddedResult status =
           pendingTransactions.addTransaction(
-              PendingTransaction.newPendingTransaction(transaction, isLocal, hasPriority),
+              PendingTransaction.newPendingTransaction(transaction, isLocal, hasPriority, score),
               validationResult.maybeAccount);
       if (status.isSuccess()) {
         LOG.atTrace()
@@ -822,8 +825,9 @@ public class TransactionPool implements BlockAddedObserver {
                 .map(
                     ptx -> {
                       final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-                      ptx.getTransaction().writeTo(rlp);
-                      return (ptx.isReceivedFromLocalSource() ? "l" : "r")
+                      ptx.getTransaction().writeTo(rlp, EncodingContext.POOLED_TRANSACTION);
+                      return ptx.getScore()
+                          + (ptx.isReceivedFromLocalSource() ? "l" : "r")
                           + rlp.encoded().toBase64String();
                     })
                 .mapToInt(
@@ -870,12 +874,19 @@ public class TransactionPool implements BlockAddedObserver {
                     .takeWhile(unused -> !isCancelled.get())
                     .map(
                         line -> {
-                          final boolean isLocal = line.charAt(0) == 'l';
+                          final var scoreStr = parseScore(line);
+                          final byte score =
+                              scoreStr.isEmpty() ? MAX_SCORE : Byte.parseByte(scoreStr);
+                          final boolean isLocal = line.charAt(scoreStr.length()) == 'l';
                           final Transaction tx =
-                              Transaction.readFrom(Bytes.fromBase64String(line.substring(1)));
+                              Transaction.readFrom(
+                                  RLP.input(
+                                      Bytes.fromBase64String(
+                                          line.substring(scoreStr.length() + 1))),
+                                  EncodingContext.POOLED_TRANSACTION);
 
                           final ValidationResult<TransactionInvalidReason> result =
-                              addTransaction(tx, isLocal);
+                              addTransaction(tx, isLocal, score);
                           return result.isValid() ? "OK" : result.getInvalidReason().name();
                         })
                     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
@@ -903,10 +914,19 @@ public class TransactionPool implements BlockAddedObserver {
               saveFile.delete();
             }
           } catch (IOException e) {
-            LOG.error("Error while saving txpool content to disk", e);
+            LOG.error("Error while loading txpool content from disk", e);
           }
         }
       }
+    }
+
+    private String parseScore(final String line) {
+      int i = 0;
+      final var sbScore = new StringBuilder();
+      while ("1234567890-".indexOf(line.charAt(i)) >= 0) {
+        sbScore.append(line.charAt(i++));
+      }
+      return sbScore.toString();
     }
 
     private void removeProcessedLines(final File saveFile, final long processedLines)

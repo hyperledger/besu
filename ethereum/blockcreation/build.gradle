@@ -25,8 +25,8 @@ dependencies {
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
 
   testImplementation project(':besu')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')

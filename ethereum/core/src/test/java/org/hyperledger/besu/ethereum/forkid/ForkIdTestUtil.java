@@ -64,6 +64,8 @@ public class ForkIdTestUtil {
         "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
     public static final String SEPOLIA =
         "0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9";
+    public static final String HOODI =
+        "0xbbe312868b376a3001692a646dd2d7d1e4406380dfd86b98aa8a34d1557c971b";
     public static final String PRIVATE =
         "0x0000000000000000000000000000000000000000000000000000000000000000";
   }
@@ -75,8 +77,11 @@ public class ForkIdTestUtil {
             9069000L, 9200000L, 12244000L, 12965000L, 13773000L, 15050000L);
     public static final List<Long> SEPOLIA_BLOCKNUMBERS =
         Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 1735371L);
+    public static final List<Long> HOODI_BLOCKNUMBERS =
+        Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
 
     public static final List<Long> SEPOLIA_TIMESTAMPS = Arrays.asList(1677557088L);
+    public static final List<Long> HOODI_TIMESTAMPS = Arrays.asList(1742999832L);
 
     public static final List<Long> PRIVATE = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
 
@@ -108,6 +113,10 @@ public class ForkIdTestUtil {
             new ForkId(Bytes.fromHexString("0xfe3366e7"), 1735371L),
             new ForkId(Bytes.fromHexString("0xb96cbd13"), 1677557088L),
             new ForkId(Bytes.fromHexString("0xf7f9bc08"), 0L)); // First Shanghai block (timestamp)
+    public static final List<ForkId> HOODI =
+        List.of(
+            new ForkId(Bytes.fromHexString("0xbef71d30"), 1742999832L),
+            new ForkId(Bytes.fromHexString("0x0929e24e"), 0L));
 
     public static final List<ForkId> WITHDRAWALS =
         Arrays.asList(
@@ -134,6 +143,8 @@ public class ForkIdTestUtil {
     public static final Network MAINNET = network(GenesisHash.MAINNET, Forks.MAINNET, emptyList());
     public static final Network SEPOLIA =
         network(GenesisHash.SEPOLIA, Forks.SEPOLIA_BLOCKNUMBERS, Forks.SEPOLIA_TIMESTAMPS);
+    public static final Network HOODI =
+        network(GenesisHash.HOODI, Forks.HOODI_BLOCKNUMBERS, Forks.HOODI_TIMESTAMPS);
     public static final Network PRIVATE = network(GenesisHash.PRIVATE, Forks.PRIVATE, emptyList());
 
     public static final Network MAINNET_WITH_SHANGHAI =

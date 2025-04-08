@@ -40,7 +40,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
@@ -356,7 +356,7 @@ class FastWorldStateDownloaderTest {
     // Check that known code was not requested
     final List<Bytes32> requestedHashes =
         sentMessages.stream()
-            .filter(m -> m.getCode() == EthPV63.GET_NODE_DATA)
+            .filter(m -> m.getCode() == EthProtocolMessages.GET_NODE_DATA)
             .map(GetNodeDataMessage::readFrom)
             .flatMap(m -> StreamSupport.stream(m.hashes().spliterator(), true))
             .collect(Collectors.toList());
@@ -534,7 +534,7 @@ class FastWorldStateDownloaderTest {
     // Check that unknown trie nodes were requested
     final List<Bytes32> requestedHashes =
         sentMessages.stream()
-            .filter(m -> m.getCode() == EthPV63.GET_NODE_DATA)
+            .filter(m -> m.getCode() == EthProtocolMessages.GET_NODE_DATA)
             .map(GetNodeDataMessage::readFrom)
             .flatMap(m -> StreamSupport.stream(m.hashes().spliterator(), true))
             .collect(Collectors.toList());
@@ -643,7 +643,7 @@ class FastWorldStateDownloaderTest {
     // Check that unknown trie nodes were requested
     final List<Bytes32> requestedHashes =
         sentMessages.stream()
-            .filter(m -> m.getCode() == EthPV63.GET_NODE_DATA)
+            .filter(m -> m.getCode() == EthProtocolMessages.GET_NODE_DATA)
             .map(GetNodeDataMessage::readFrom)
             .flatMap(m -> StreamSupport.stream(m.hashes().spliterator(), true))
             .collect(Collectors.toList());
@@ -791,7 +791,7 @@ class FastWorldStateDownloaderTest {
     // Check that already enqueued trie nodes were requested
     final List<Bytes32> requestedHashes =
         sentMessages.stream()
-            .filter(m -> m.getCode() == EthPV63.GET_NODE_DATA)
+            .filter(m -> m.getCode() == EthProtocolMessages.GET_NODE_DATA)
             .map(GetNodeDataMessage::readFrom)
             .flatMap(m -> StreamSupport.stream(m.hashes().spliterator(), true))
             .collect(Collectors.toList());

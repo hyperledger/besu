@@ -221,7 +221,7 @@ dependencies {
   implementation project(':evm')
   implementation project(':services:kvstore')
 
-  implementation 'io.tmio:tuweni-rlp'
+  implementation 'io.consensys.tuweni:tuweni-rlp'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'com.google.dagger:dagger'
@@ -241,8 +241,8 @@ dependencies {
   referenceTestImplementation project(path: ':util')
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
-  referenceTestImplementation 'io.tmio:tuweni-bytes'
-  referenceTestImplementation 'io.tmio:tuweni-units'
+  referenceTestImplementation 'io.consensys.tuweni:tuweni-bytes'
+  referenceTestImplementation 'io.consensys.tuweni:tuweni-units'
   referenceTestImplementation 'org.assertj:assertj-core'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-params'
@@ -250,7 +250,7 @@ dependencies {
   // the following will be resolved via custom ivy repository declared in root build.gradle
   executionRefTestImplementation dependencies.create('ethereum:execution-spec-tests') {
     version {
-      strictly 'v4.0.0'
+      strictly 'v4.1.0'
     }
     artifact {
       name = 'fixtures'
@@ -291,7 +291,7 @@ tasks.register('validateReferenceTestSubmodule') {
     def expectedHash = '9201075490807f58811078e9bb5ec895b4ac01a5'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
-      providers.exec {
+      exec {
         commandLine 'git', 'submodule', 'status', submodulePath
         standardOutput = result
         errorOutput = result

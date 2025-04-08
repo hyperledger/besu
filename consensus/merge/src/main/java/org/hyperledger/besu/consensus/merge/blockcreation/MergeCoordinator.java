@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static java.util.stream.Collectors.joining;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
@@ -88,6 +88,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       List.of(
           BigInteger.valueOf(11155111), // Sepolia
           BigInteger.valueOf(17000), // Holesky
+          BigInteger.valueOf(560048), // Hoodi
           BigInteger.valueOf(39438135) // Ephemery
           );
 

@@ -612,7 +612,7 @@ public class EthEstimateGasTest {
     return new JsonCallParameter.JsonCallParameterBuilder()
         .withFrom(Address.fromHexString("0x0"))
         .withTo(Address.fromHexString("0x0"))
-        .withGasPrice(maybeGasPrice.orElse(null))
+        .withGasPrice(maybeGasPrice.orElse(Wei.ZERO))
         .withMaxPriorityFeePerGas(Wei.fromHexString("0x10"))
         .withMaxFeePerGas(Wei.fromHexString("0x10"))
         .withValue(Wei.ZERO)

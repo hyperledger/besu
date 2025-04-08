@@ -22,7 +22,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -51,8 +50,7 @@ class QbftBlockInterfaceAdaptorTest {
     QbftBlock block = new QbftBlockAdaptor(besuBlock);
 
     QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
-    QbftBlock updatedBlock =
-        qbftBlockInterface.replaceRoundInBlock(block, 1, QbftHashMode.COMMITTED_SEAL);
+    QbftBlock updatedBlock = qbftBlockInterface.replaceRoundInBlock(block, 1);
     BftExtraData extraData =
         qbftExtraDataCodec.decode(BlockUtil.toBesuBlockHeader(updatedBlock.getHeader()));
     assertThat(extraData.getRound()).isEqualTo(1);

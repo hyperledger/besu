@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
@@ -52,7 +52,7 @@ public abstract class AbstractGetHeadersFromPeerTask
       final int skip,
       final boolean reverse,
       final MetricsSystem metricsSystem) {
-    super(ethContext, EthPV62.GET_BLOCK_HEADERS, metricsSystem);
+    super(ethContext, EthProtocolMessages.GET_BLOCK_HEADERS, metricsSystem);
     checkArgument(count > 0);
     this.protocolSchedule = protocolSchedule;
     this.count = count;

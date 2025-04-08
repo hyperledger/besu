@@ -15,12 +15,16 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetAccount;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -29,6 +33,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A skeleton class for implementing call operations.
@@ -37,6 +43,8 @@ import org.apache.tuweni.bytes.Bytes;
  * execute, and then updates the current message context based on its execution.
  */
 public abstract class AbstractCallOperation extends AbstractOperation {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractCallOperation.class);
 
   /** The constant UNDERFLOW_RESPONSE. */
   protected static final OperationResult UNDERFLOW_RESPONSE =
@@ -191,29 +199,24 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Account contract = frame.getWorldUpdater().get(to);
 
-    if (contract != null && contract.hasDelegatedCode()) {
-      if (contract.getCodeDelegationTargetCode().isEmpty()) {
-        throw new RuntimeException("A delegated code account must have delegated code");
-      }
-
-      if (contract.getCodeDelegationTargetHash().isEmpty()) {
-        throw new RuntimeException("A delegated code account must have a delegated code hash");
-      }
-
-      final long codeDelegationResolutionGas =
-          CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract);
-
-      if (frame.getRemainingGas() < codeDelegationResolutionGas) {
-        return new Operation.OperationResult(
-            codeDelegationResolutionGas, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      }
-
-      frame.decrementRemainingGas(codeDelegationResolutionGas);
+    // code resolution gas must be deducted before we check for frame depth too deep to be spec
+    // compliant
+    try {
+      deductGasForCodeDelegationResolution(frame, contract);
+    } catch (InsufficientGasException e) {
+      LOG.atDebug()
+          .setMessage(
+              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
+          .addArgument(frame.getRemainingGas())
+          .addArgument(e.getGasCost())
+          .log();
+      return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
-    // If the call is sending more value than the account has or the message frame is to deep
+
+    // If the call is sending more value than the account has or the message frame is too deep
     // return a failed call
     if (value(frame).compareTo(balance) > 0 || frame.getDepth() >= 1024) {
       frame.expandMemory(inputDataOffset(frame), inputDataLength(frame));
@@ -228,7 +231,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Bytes inputData = frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));
 
-    final Code code = getCode(evm, contract);
+    final Code code = getCode(evm, frame, contract);
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
@@ -255,6 +258,34 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
     return new OperationResult(cost, null, 0);
+  }
+
+  /**
+   * Deducts the gas cost for delegated code resolution.
+   *
+   * @param frame the message frame
+   * @param contract the account
+   * @throws InsufficientGasException if there is insufficient gas to resolve delegated code
+   */
+  protected void deductGasForCodeDelegationResolution(
+      final MessageFrame frame, final Account contract) throws InsufficientGasException {
+    if (contract == null || !hasCodeDelegation(contract.getCode())) {
+      return;
+    }
+
+    final long codeDelegationResolutionGas =
+        CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract);
+
+    if (frame.getRemainingGas() < codeDelegationResolutionGas) {
+      throw new InsufficientGasException(
+          codeDelegationResolutionGas,
+          "Insufficient gas to resolve delegated code. Gas required: "
+              + codeDelegationResolutionGas
+              + ", Gas available: "
+              + frame.getRemainingGas());
+    }
+
+    frame.decrementRemainingGas(codeDelegationResolutionGas);
   }
 
   /**
@@ -350,19 +381,27 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * Gets the code from the contract or EOA with delegated code.
    *
    * @param evm the evm
-   * @param account the account which needs to be retrieved
+   * @param frame the message frame
+   * @param account the account which codes needs to be retrieved
    * @return the code
    */
-  protected static Code getCode(final EVM evm, final Account account) {
+  protected static Code getCode(final EVM evm, final MessageFrame frame, final Account account) {
     if (account == null) {
       return CodeV0.EMPTY_CODE;
     }
 
-    if (account.hasDelegatedCode()) {
-      return evm.getCode(
-          account.getCodeDelegationTargetHash().get(), account.getCodeDelegationTargetCode().get());
+    final Hash codeHash = account.getCodeHash();
+    if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
+      return CodeV0.EMPTY_CODE;
     }
 
-    return evm.getCode(account.getCodeHash(), account.getCode());
+    if (!hasCodeDelegation(account.getCode())) {
+      return evm.getCode(account.getCodeHash(), account.getCode());
+    }
+
+    final CodeDelegationAccount targetAccount =
+        getTargetAccount(frame.getWorldUpdater(), evm.getGasCalculator(), account);
+
+    return evm.getCode(targetAccount.getCodeHash(), targetAccount.getCode());
   }
 }

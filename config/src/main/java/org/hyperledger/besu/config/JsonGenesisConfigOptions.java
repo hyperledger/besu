@@ -118,6 +118,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
       return ETHASH_CONFIG_KEY;
     } else if (isIbft2()) {
       return IBFT2_CONFIG_KEY;
+    } else if (isIbftLegacy()) {
+      return IBFT_LEGACY_CONFIG_KEY;
     } else if (isQbft()) {
       return QBFT_CONFIG_KEY;
     } else if (isClique()) {
@@ -155,6 +157,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isPoa() {
     return isQbft() || isClique() || isIbft2() || isIbftLegacy();
+  }
+
+  @Override
+  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
+    return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
+        .map(IbftLegacyConfigOptions::new)
+        .orElse(IbftLegacyConfigOptions.DEFAULT);
   }
 
   @Override
@@ -534,6 +543,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());
+    }
+    if (isIbftLegacy()) {
+      builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
     if (isIbft2()) {
       builder.put("ibft2", getBftConfigOptions().asMap());

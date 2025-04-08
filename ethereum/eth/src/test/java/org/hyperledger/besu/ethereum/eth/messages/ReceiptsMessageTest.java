@@ -46,7 +46,7 @@ public final class ReceiptsMessageTest {
     // Perform round-trip transformation
     // Create specific message, copy it to a generic message, then read back into a specific format
     final MessageData initialMessage = ReceiptsMessage.create(receipts);
-    final MessageData raw = new RawMessage(EthPV63.RECEIPTS, initialMessage.getData());
+    final MessageData raw = new RawMessage(EthProtocolMessages.RECEIPTS, initialMessage.getData());
     final ReceiptsMessage message = ReceiptsMessage.readFrom(raw);
 
     // Read data back out after round trip and check they match originals.

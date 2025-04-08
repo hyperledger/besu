@@ -34,9 +34,9 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.DiffBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.BesuEvents;
@@ -155,7 +155,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 .map(ProtocolContext::getWorldStateArchive)
                 .map(BonsaiWorldStateProvider.class::cast);
         var cachedStorageManagerOpt =
-            bonsaiArchive.map(DiffBasedWorldStateProvider::getCachedWorldStorageManager);
+            bonsaiArchive.map(PathBasedWorldStateProvider::getCachedWorldStorageManager);
 
         if (cachedStorageManagerOpt.isPresent()) {
           var cachedStorageManager = cachedStorageManagerOpt.get();

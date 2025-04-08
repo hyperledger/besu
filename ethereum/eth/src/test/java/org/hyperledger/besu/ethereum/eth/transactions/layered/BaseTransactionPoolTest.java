@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.TransactionTestFixture.createSignedCodeDelegation;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -253,7 +254,7 @@ public class BaseTransactionPoolTest {
 
   protected PendingTransaction createRemotePendingTransaction(
       final Transaction transaction, final boolean hasPriority) {
-    return PendingTransaction.newPendingTransaction(transaction, false, hasPriority);
+    return PendingTransaction.newPendingTransaction(transaction, false, hasPriority, MAX_SCORE);
   }
 
   protected PendingTransaction createLocalPendingTransaction(final Transaction transaction) {

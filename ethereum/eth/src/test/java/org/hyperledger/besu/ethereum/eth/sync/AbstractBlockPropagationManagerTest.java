@@ -50,7 +50,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.eth.sync.BlockPropagationManager.ProcessingBlocksManager;
@@ -653,8 +653,7 @@ public abstract class AbstractBlockPropagationManagerTest {
                 25,
                 false,
                 SyncMode.SNAP,
-                new ForkIdManager(
-                    blockchain, Collections.emptyList(), Collections.emptyList(), false)),
+                new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList())),
             new EthMessages(),
             ethScheduler,
             null);
@@ -795,8 +794,7 @@ public abstract class AbstractBlockPropagationManagerTest {
                 25,
                 false,
                 SyncMode.SNAP,
-                new ForkIdManager(
-                    blockchain, Collections.emptyList(), Collections.emptyList(), false)),
+                new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList())),
             new EthMessages(),
             ethScheduler,
             null);
@@ -900,7 +898,7 @@ public abstract class AbstractBlockPropagationManagerTest {
         new ForkchoiceEvent(null, null, this.finalizedHash));
     assertThat(blockPropagationManager.isRunning()).isFalse();
     assertThat(ethProtocolManager.ethContext().getEthMessages().messageCodesHandled())
-        .doesNotContain(EthPV62.NEW_BLOCK_HASHES, EthPV62.NEW_BLOCK);
+        .doesNotContain(EthProtocolMessages.NEW_BLOCK_HASHES, EthProtocolMessages.NEW_BLOCK);
   }
 
   @Test

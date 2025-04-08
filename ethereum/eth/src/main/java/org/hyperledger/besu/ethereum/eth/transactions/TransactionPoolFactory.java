@@ -20,8 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.AbstractPrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.BaseFeePrioritizedTransactions;
@@ -231,10 +230,13 @@ public class TransactionPoolFactory {
       final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
     ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
-    ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
     ethContext
         .getEthMessages()
-        .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
+        .subscribe(EthProtocolMessages.TRANSACTIONS, transactionsMessageHandler);
+    ethContext
+        .getEthMessages()
+        .subscribe(
+            EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
   }
 
   private static PendingTransactions createPendingTransactions(

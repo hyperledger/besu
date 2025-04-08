@@ -71,4 +71,39 @@ public class LogsQueryTest {
                     List.of(ERC20_TRANSFER_EVENT, SECOND_ADDRESS_TOPIC, FIRST_ADDRESS_TOPIC))))
         .isTrue();
   }
+
+  @Test
+  public void testWildcardMatches() {
+    final LogsQuery query =
+        new LogsQuery(
+            List.of(),
+            List.of(
+                List.of(), // wildcard match in first spot
+                List.of(SECOND_ADDRESS_TOPIC)));
+
+    assertThat(query.matches(new Log(FIRST_ADDRESS, Bytes.EMPTY, List.of()))).isFalse();
+    assertThat(query.matches(new Log(FIRST_ADDRESS, Bytes.EMPTY, List.of(ERC20_TRANSFER_EVENT))))
+        .isFalse();
+    assertThat(
+            query.matches(
+                new Log(
+                    FIRST_ADDRESS,
+                    Bytes.EMPTY,
+                    List.of(ERC20_TRANSFER_EVENT, FIRST_ADDRESS_TOPIC))))
+        .isFalse();
+    assertThat(
+            query.matches(
+                new Log(
+                    FIRST_ADDRESS,
+                    Bytes.EMPTY,
+                    List.of(ERC20_TRANSFER_EVENT, SECOND_ADDRESS_TOPIC))))
+        .isTrue();
+    assertThat(
+            query.matches(
+                new Log(
+                    FIRST_ADDRESS,
+                    Bytes.EMPTY,
+                    List.of(ERC20_TRANSFER_EVENT, SECOND_ADDRESS_TOPIC, FIRST_ADDRESS_TOPIC))))
+        .isTrue();
+  }
 }

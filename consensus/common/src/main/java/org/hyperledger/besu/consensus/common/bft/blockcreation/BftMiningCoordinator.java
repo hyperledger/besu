@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +67,8 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
   private long blockAddedObserverId;
   private final AtomicReference<State> state = new AtomicReference<>(State.PAUSED);
 
+  private SyncState syncState;
+
   /**
    * Instantiates a new Bft mining coordinator.
    *
@@ -91,6 +95,35 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
     this.blockchain = blockchain;
   }
 
+  /**
+   * Instantiates a new Bft mining coordinator.
+   *
+   * @param bftExecutors the bft executors
+   * @param eventHandler the event handler
+   * @param bftProcessor the bft processor
+   * @param blockCreatorFactory the block creator factory
+   * @param blockchain the blockchain
+   * @param eventQueue the event queue
+   * @param syncState the sync state
+   */
+  public BftMiningCoordinator(
+      final BftExecutors bftExecutors,
+      final BftEventHandler eventHandler,
+      final BftProcessor bftProcessor,
+      final BftBlockCreatorFactory<?> blockCreatorFactory,
+      final Blockchain blockchain,
+      final BftEventQueue eventQueue,
+      final SyncState syncState) {
+    this.bftExecutors = bftExecutors;
+    this.eventHandler = eventHandler;
+    this.bftProcessor = bftProcessor;
+    this.blockCreatorFactory = blockCreatorFactory;
+    this.eventQueue = eventQueue;
+
+    this.blockchain = blockchain;
+    this.syncState = syncState;
+  }
+
   @Override
   public void start() {
     if (state.compareAndSet(State.IDLE, State.RUNNING)
@@ -115,8 +148,44 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
         LOG.debug("Interrupted while waiting for BftProcessor to stop.", e);
         Thread.currentThread().interrupt();
       }
+      eventHandler.stop();
       bftExecutors.stop();
     }
+  }
+
+  @Override
+  public void subscribe() {
+    if (syncState == null) {
+      return;
+    }
+    syncState.subscribeSyncStatus(
+        syncStatus -> {
+          if (syncState.syncTarget().isPresent()) {
+            // We're syncing so stop doing other stuff
+            LOG.info("Stopping BFT mining coordinator while we are syncing");
+            stop();
+          } else {
+            LOG.info("Starting BFT mining coordinator following sync");
+            enable();
+            start();
+          }
+        });
+
+    syncState.subscribeCompletionReached(
+        new BesuEvents.InitialSyncCompletionListener() {
+          @Override
+          public void onInitialSyncCompleted() {
+            LOG.info("Starting BFT mining coordinator following initial sync");
+            enable();
+            start();
+          }
+
+          @Override
+          public void onInitialSyncRestart() {
+            // Nothing to do. The mining coordinator won't be started until
+            // sync has completed.
+          }
+        });
   }
 
   @Override

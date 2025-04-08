@@ -14,33 +14,35 @@
  */
 package org.hyperledger.besu.cli.config;
 
+import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
+
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 
 /** The enum Network name. */
 public enum NetworkName {
   /** Mainnet network name. */
-  MAINNET("/mainnet.json", BigInteger.valueOf(1)),
+  MAINNET("/mainnet.json", BigInteger.valueOf(1), true, NativeRequirement.MAINNET),
   /** Sepolia network name. */
-  SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
+  SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111), true, NativeRequirement.MAINNET),
   /** Holešky network name. */
-  HOLESKY("/holesky.json", BigInteger.valueOf(17000)),
-
-  /** LUKSO mainnet network name. */
-  LUKSO("/lukso.json", BigInteger.valueOf(42)),
+  HOLESKY("/holesky.json", BigInteger.valueOf(17000), true, NativeRequirement.MAINNET),
+  /** Hoodi network name. */
+  HOODI("/hoodi.json", BigInteger.valueOf(560048), true, NativeRequirement.MAINNET),
 
   /**
    * EPHEMERY network name. The actual networkId used is calculated based on this default value and
    * the current time. https://ephemery.dev/
    */
-  EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135)),
-
-  /** Verkle kaustinen testnet */
-  KAUSTINEN("/kaustinen.json", BigInteger.valueOf(69420)),
-
+  EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135), true, NativeRequirement.MAINNET),
+  /** LUKSO mainnet network name. */
+  LUKSO("/lukso.json", BigInteger.valueOf(42)),
   /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),
   /** Future EIPs network name. */
@@ -50,23 +52,36 @@ public enum NetworkName {
   /** Classic network name. */
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
   /** Mordor network name. */
-  MORDOR("/mordor.json", BigInteger.valueOf(7));
+  MORDOR("/mordor.json", BigInteger.valueOf(7)),
+
+  /** Verkle kaustinen testnet */
+  KAUSTINEN("/kaustinen.json", BigInteger.valueOf(69420));
 
   private final String genesisFile;
   private final BigInteger networkId;
   private final boolean canSnapSync;
   private final String deprecationDate;
+  private final Supplier<List<NativeRequirementResult>> nativeRequirements;
 
   NetworkName(final String genesisFile, final BigInteger networkId) {
     this(genesisFile, networkId, true);
   }
 
   NetworkName(final String genesisFile, final BigInteger networkId, final boolean canSnapSync) {
+    this(genesisFile, networkId, canSnapSync, Collections::emptyList);
+  }
+
+  NetworkName(
+      final String genesisFile,
+      final BigInteger networkId,
+      final boolean canSnapSync,
+      final Supplier<List<NativeRequirementResult>> nativeRequirements) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
     this.canSnapSync = canSnapSync;
     // no deprecations planned
     this.deprecationDate = null;
+    this.nativeRequirements = nativeRequirements;
   }
 
   /**
@@ -121,5 +136,14 @@ public enum NetworkName {
    */
   public Optional<String> getDeprecationDate() {
     return Optional.ofNullable(deprecationDate);
+  }
+
+  /**
+   * Gets native requirements for this network.
+   *
+   * @return result of native library requirements defined for this network, as a list.
+   */
+  public List<NativeRequirementResult> getNativeRequirements() {
+    return this.nativeRequirements.get();
   }
 }

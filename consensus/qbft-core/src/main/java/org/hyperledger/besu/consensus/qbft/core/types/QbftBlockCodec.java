@@ -20,13 +20,12 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 /** Block encoding and decoding to and from RLP */
 public interface QbftBlockCodec {
   /**
-   * Read a block from RLP
+   * Read a block from RLP using the committed seal hash
    *
    * @param rlpInput RLP input
-   * @param hashMode Hash mode to ensure the block hash is calculated correctly
    * @return The block
    */
-  QbftBlock readFrom(RLPInput rlpInput, QbftHashMode hashMode);
+  QbftBlock readFrom(RLPInput rlpInput);
 
   /**
    * Write a block to RLP

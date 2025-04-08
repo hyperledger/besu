@@ -126,7 +126,6 @@ public abstract class AbstractTransactionPoolTestBase {
   protected MutableBlockchain blockchain;
   protected TransactionBroadcaster transactionBroadcaster;
 
-  protected PendingTransactions transactions;
   protected final Transaction transaction0 = createTransaction(0);
   protected final Transaction transaction1 = createTransaction(1);
   protected final Transaction transactionWithBlobs = createBlobTransaction(2);
@@ -270,11 +269,9 @@ public abstract class AbstractTransactionPoolTestBase {
             transactionReplacementHandler.shouldReplace(
                 t1, t2, protocolContext.getBlockchain().getChainHeadHeader());
 
-    transactions = spy(createPendingTransactions(poolConfig, transactionReplacementTester));
-
     final TransactionPool txPool =
         new TransactionPool(
-            () -> transactions,
+            () -> createPendingTransactions(poolConfig, transactionReplacementTester),
             protocolSchedule,
             protocolContext,
             transactionBroadcaster,
@@ -310,7 +307,7 @@ public abstract class AbstractTransactionPoolTestBase {
   }
 
   protected void assertTransactionNotPending(final Transaction transaction) {
-    assertThat(transactions.getTransactionByHash(transaction.getHash())).isEmpty();
+    assertThat(transactionPool.getTransactionByHash(transaction.getHash())).isEmpty();
   }
 
   protected void addAndAssertRemoteTransactionInvalid(final Transaction tx) {
@@ -321,7 +318,7 @@ public abstract class AbstractTransactionPoolTestBase {
   }
 
   protected void assertTransactionPending(final Transaction t) {
-    assertThat(transactions.getTransactionByHash(t.getHash())).contains(t);
+    assertThat(transactionPool.getTransactionByHash(t.getHash())).contains(t);
   }
 
   protected void addAndAssertRemoteTransactionsValid(final Transaction... txs) {
@@ -340,9 +337,9 @@ public abstract class AbstractTransactionPoolTestBase {
         .onTransactionsAdded(
             argThat(btxs -> btxs.size() == txs.length && btxs.containsAll(List.of(txs))));
     Arrays.stream(txs).forEach(this::assertTransactionPending);
-    assertThat(transactions.getLocalTransactions()).doesNotContain(txs);
+    assertThat(getLocalTransactions()).doesNotContain(txs);
     if (hasPriority) {
-      assertThat(transactions.getPriorityTransactions()).contains(txs);
+      assertThat(getPriorityTransactions()).contains(txs);
     }
   }
 
@@ -354,11 +351,11 @@ public abstract class AbstractTransactionPoolTestBase {
     assertThat(result.isValid()).isTrue();
     assertTransactionPending(tx);
     verify(transactionBroadcaster).onTransactionsAdded(singletonList(tx));
-    assertThat(transactions.getLocalTransactions()).contains(tx);
+    assertThat(getLocalTransactions()).contains(tx);
     if (disableLocalPriority) {
-      assertThat(transactions.getPriorityTransactions()).doesNotContain(tx);
+      assertThat(getPriorityTransactions()).doesNotContain(tx);
     } else {
-      assertThat(transactions.getPriorityTransactions()).contains(tx);
+      assertThat(getPriorityTransactions()).contains(tx);
     }
   }
 
@@ -383,6 +380,18 @@ public abstract class AbstractTransactionPoolTestBase {
             .get()
             .validateForSender(
                 eq(transaction), nullable(Account.class), any(TransactionValidationParams.class)))
+        .thenReturn(valid());
+  }
+
+  protected void givenAllTransactionsAreValid() {
+    when(transactionValidatorFactory
+            .get()
+            .validate(any(), any(Optional.class), any(Optional.class), any()))
+        .thenReturn(valid());
+    when(transactionValidatorFactory
+            .get()
+            .validateForSender(
+                any(), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
   }
 
@@ -539,7 +548,7 @@ public abstract class AbstractTransactionPoolTestBase {
       transactionPool.addRemoteTransactions(List.of(transaction));
     }
 
-    return transactions.size();
+    return transactionPool.count();
   }
 
   protected Block appendBlockGasPriceMarket(
@@ -585,5 +594,19 @@ public abstract class AbstractTransactionPoolTestBase {
             .collect(toList());
     blockchain.appendBlock(block, transactionReceipts);
     return block;
+  }
+
+  protected List<Transaction> getPriorityTransactions() {
+    return transactionPool.getPendingTransactions().stream()
+        .filter(PendingTransaction::hasPriority)
+        .map(PendingTransaction::getTransaction)
+        .toList();
+  }
+
+  protected List<Transaction> getLocalTransactions() {
+    return transactionPool.getPendingTransactions().stream()
+        .filter(PendingTransaction::isReceivedFromLocalSource)
+        .map(PendingTransaction::getTransaction)
+        .toList();
   }
 }

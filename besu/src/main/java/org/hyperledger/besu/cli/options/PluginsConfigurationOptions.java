@@ -40,9 +40,8 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
 
   @CommandLine.Option(
       names = {DEFAULT_PLUGINS_OPTION_NAME},
-      description = "Comma-separated list of plugin names",
+      description = "Comma-separated list of plugin names to load",
       split = ",",
-      hidden = true,
       converter = PluginInfoConverter.class,
       arity = "1")
   private List<PluginInfo> plugins;

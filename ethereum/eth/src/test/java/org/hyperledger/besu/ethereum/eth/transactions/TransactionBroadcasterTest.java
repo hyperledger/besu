@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,15 +75,15 @@ public class TransactionBroadcasterTest {
 
   @BeforeEach
   public void setUp() {
-    when(ethPeerNoEth65.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES))
+    when(ethPeerNoEth65.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.FALSE);
-    when(ethPeerNoEth65_2.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES))
+    when(ethPeerNoEth65_2.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.FALSE);
-    when(ethPeerWithEth65.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES))
+    when(ethPeerWithEth65.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.TRUE);
-    when(ethPeerWithEth65_2.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES))
+    when(ethPeerWithEth65_2.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.TRUE);
-    when(ethPeerWithEth65_3.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES))
+    when(ethPeerWithEth65_3.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.TRUE);
 
     sendTaskCapture = ArgumentCaptor.forClass(Runnable.class);

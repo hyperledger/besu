@@ -66,7 +66,7 @@ import io.opentelemetry.sdk.metrics.data.PointData;
 import io.opentelemetry.sdk.metrics.data.SummaryPointData;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
-import io.opentelemetry.semconv.ResourceAttributes;
+import io.opentelemetry.semconv.incubating.ServiceIncubatingAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,7 +115,9 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
         Resource.getDefault()
             .merge(
                 Resource.create(
-                    Attributes.builder().put(ResourceAttributes.SERVICE_NAME, jobName).build()));
+                    Attributes.builder()
+                        .put(ServiceIncubatingAttributes.SERVICE_NAME, jobName)
+                        .build()));
     AutoConfiguredOpenTelemetrySdkBuilder autoSdkBuilder =
         AutoConfiguredOpenTelemetrySdk.builder()
             .addMeterProviderCustomizer(

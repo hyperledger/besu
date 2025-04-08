@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -49,7 +49,7 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, B
       final Collection<Hash> hashes,
       final long pivotBlockNumber,
       final MetricsSystem metricsSystem) {
-    super(ethContext, EthPV63.GET_NODE_DATA, metricsSystem);
+    super(ethContext, EthProtocolMessages.GET_NODE_DATA, metricsSystem);
     this.hashes = new HashSet<>(hashes);
     this.pivotBlockNumber = pivotBlockNumber;
   }

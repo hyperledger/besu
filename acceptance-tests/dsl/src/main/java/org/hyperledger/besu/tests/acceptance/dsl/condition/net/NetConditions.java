@@ -47,6 +47,11 @@ public class NetConditions {
     return new AwaitNetPeerCount(transactions.peerCount(), BigInteger.valueOf(awaitPeerCount));
   }
 
+  public Condition awaitPeerCount(final int awaitPeerCount, final int timeout) {
+    return new AwaitNetPeerCount(
+        transactions.peerCount(), BigInteger.valueOf(awaitPeerCount), timeout);
+  }
+
   public Condition netVersionExceptional(final String expectedMessage) {
     return new ExpectNetVersionConnectionException(transactions.netVersion(), expectedMessage);
   }

@@ -29,6 +29,7 @@
       }
     },
     "ethash":{},
+    "depositContractAddress": "0x7f02c3e3c98b133055b8b348b2ac625669ed295d",
     "discovery": {
       "dns": "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.sepolia.ethdisco.net",
       "bootnodes": [

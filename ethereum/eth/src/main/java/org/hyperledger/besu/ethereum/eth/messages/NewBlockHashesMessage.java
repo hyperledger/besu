@@ -33,7 +33,7 @@ public final class NewBlockHashesMessage extends AbstractMessageData {
       return (NewBlockHashesMessage) message;
     }
     final int code = message.getCode();
-    if (code != EthPV62.NEW_BLOCK_HASHES) {
+    if (code != EthProtocolMessages.NEW_BLOCK_HASHES) {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a NewBlockHashesMessage.", code));
     }
@@ -60,7 +60,7 @@ public final class NewBlockHashesMessage extends AbstractMessageData {
 
   @Override
   public int getCode() {
-    return EthPV62.NEW_BLOCK_HASHES;
+    return EthProtocolMessages.NEW_BLOCK_HASHES;
   }
 
   public Iterator<NewBlockHashesMessage.NewBlockHash> getNewHashes() {

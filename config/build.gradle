@@ -38,8 +38,8 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'com.google.dagger:dagger'
   implementation 'info.picocli:picocli'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
   implementation "org.immutables:value-annotations"
   annotationProcessor "org.immutables:value"
   annotationProcessor 'com.google.dagger:dagger-compiler'

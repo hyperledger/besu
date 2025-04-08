@@ -46,9 +46,9 @@ import java.util.Optional;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.WebSocket;
+import io.vertx.core.http.WebSocketClient;
+import io.vertx.core.http.WebSocketClientOptions;
 import io.vertx.core.http.WebSocketConnectOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,7 +74,7 @@ public class EthStatsServiceTest {
   @Mock private P2PNetwork p2PNetwork;
   @Mock private EthContext ethContext;
   @Mock private EthScheduler ethScheduler;
-  @Mock private HttpClient httpClient;
+  @Mock private WebSocketClient webSocketClient;
   @Mock private WebSocket webSocket;
 
   final EthStatsConnectOptions ethStatsConnectOptions =
@@ -101,7 +101,8 @@ public class EthStatsServiceTest {
   public void initMocks() {
     when(ethProtocolManager.ethContext()).thenReturn(ethContext);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    when(vertx.createHttpClient(any(HttpClientOptions.class))).thenReturn(httpClient);
+    when(vertx.createWebSocketClient(any(WebSocketClientOptions.class)))
+        .thenReturn(webSocketClient);
     when(genesisConfigOptions.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
     when(ethProtocolManager.getSupportedCapabilities())
         .thenReturn(List.of(Capability.create("eth64", 1)));
@@ -147,8 +148,8 @@ public class EthStatsServiceTest {
 
     ethStatsService.start();
 
-    verify(httpClient, times(1))
-        .webSocket(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
     webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
 
     final ArgumentCaptor<String> helloMessageCaptor = ArgumentCaptor.forClass(String.class);
@@ -179,8 +180,8 @@ public class EthStatsServiceTest {
 
     final ArgumentCaptor<Handler<AsyncResult<WebSocket>>> webSocketCaptor =
         ArgumentCaptor.forClass(Handler.class);
-    verify(httpClient, times(1))
-        .webSocket(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
     webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
 
     final ArgumentCaptor<Handler<AsyncResult<Void>>> helloMessageCaptor =
@@ -212,8 +213,8 @@ public class EthStatsServiceTest {
 
     ethStatsService.start();
 
-    verify(httpClient, times(1))
-        .webSocket(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
     webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
 
     final ArgumentCaptor<Handler<String>> textMessageHandlerCaptor =

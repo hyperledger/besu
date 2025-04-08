@@ -17,12 +17,18 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.cluster;
 public class ClusterConfiguration {
 
   private final boolean awaitPeerDiscovery;
+  private final int peerDiscoveryTimeoutSeconds;
 
-  ClusterConfiguration(final boolean awaitPeerDiscovery) {
+  ClusterConfiguration(final boolean awaitPeerDiscovery, final int peerDiscoveryTimeoutSeconds) {
     this.awaitPeerDiscovery = awaitPeerDiscovery;
+    this.peerDiscoveryTimeoutSeconds = peerDiscoveryTimeoutSeconds;
   }
 
   public boolean isAwaitPeerDiscovery() {
     return awaitPeerDiscovery;
+  }
+
+  public int getPeerDiscoveryTimeoutSeconds() {
+    return peerDiscoveryTimeoutSeconds;
   }
 }

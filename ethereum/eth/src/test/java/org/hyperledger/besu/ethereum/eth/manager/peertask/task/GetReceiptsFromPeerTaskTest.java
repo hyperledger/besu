@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -75,7 +75,7 @@ public class GetReceiptsFromPeerTaskTest {
     MessageData messageData = task.getRequestMessage();
     GetReceiptsMessage getReceiptsMessage = GetReceiptsMessage.readFrom(messageData);
 
-    Assertions.assertEquals(EthPV63.GET_RECEIPTS, getReceiptsMessage.getCode());
+    Assertions.assertEquals(EthProtocolMessages.GET_RECEIPTS, getReceiptsMessage.getCode());
     Iterable<Hash> hashesInMessage = getReceiptsMessage.hashes();
     List<Hash> expectedHashes =
         List.of(

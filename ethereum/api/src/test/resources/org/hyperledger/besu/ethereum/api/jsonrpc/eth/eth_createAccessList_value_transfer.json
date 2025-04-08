@@ -1,0 +1,24 @@
+{
+  "request": {
+    "id": 28,
+    "jsonrpc": "2.0",
+    "method": "eth_createAccessList",
+    "params": [
+      {
+        "from":"0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "to":"0x0100000000000000000000000000000000000000",
+        "value":"0xa"
+      },
+      "latest"
+    ]
+  },
+  "response": {
+    "jsonrpc" : "2.0",
+    "id" : 28,
+    "result" : {
+      "gasUsed": "0x5208",
+      "accessList": []
+    }
+  },
+  "statusCode": 200
+}

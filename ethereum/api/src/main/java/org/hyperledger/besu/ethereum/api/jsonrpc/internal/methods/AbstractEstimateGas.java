@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonCallParameterUtil.validateAndGetCallParams;
 
 import org.hyperledger.besu.datatypes.StateOverrideMap;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -140,7 +139,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
         callParams.getFrom(),
         callParams.getTo(),
         gasLimit,
-        Optional.ofNullable(callParams.getGasPrice()).orElse(Wei.ZERO),
+        callParams.getGasPrice(),
         callParams.getMaxPriorityFeePerGas(),
         callParams.getMaxFeePerGas(),
         callParams.getValue(),

@@ -37,6 +37,7 @@ dependencies {
   implementation project(':consensus:clique')
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
+  implementation project(':consensus:ibftlegacy')
   implementation project(':consensus:merge')
   implementation project(':consensus:qbft')
   implementation project(':consensus:qbft-core')
@@ -71,17 +72,17 @@ dependencies {
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-config'
-  implementation 'io.tmio:tuweni-toml'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-config'
+  implementation 'io.consensys.tuweni:tuweni-toml'
+  implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'org.hibernate.validator:hibernate-validator'
   implementation 'org.rocksdb:rocksdbjni'
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
-  implementation 'tech.pegasys:jc-kzg-4844'
+  implementation 'io.consensys.protocols:jc-kzg-4844'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-jul'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
@@ -97,8 +98,8 @@ dependencies {
   testImplementation 'io.opentelemetry:opentelemetry-api'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.apache.commons:commons-text'
-  testImplementation 'io.tmio:tuweni-bytes'
-  testImplementation 'io.tmio:tuweni-units'
+  testImplementation 'io.consensys.tuweni:tuweni-bytes'
+  testImplementation 'io.consensys.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'

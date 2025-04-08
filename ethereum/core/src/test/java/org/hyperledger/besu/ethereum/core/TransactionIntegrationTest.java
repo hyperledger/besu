@@ -16,17 +16,28 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
+import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 public class TransactionIntegrationTest {
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   @Test
   public void
@@ -69,5 +80,28 @@ public class TransactionIntegrationTest {
         .isEqualTo(Address.fromHexString("0xdf664d0d2270ef97b48f222e3187bd14c8ca9428"));
     assertThat(transaction.getTo())
         .contains(Address.fromHexString("0xd30c3d13b07029deba00de1da369cd69a02c2056"));
+  }
+
+  @Test
+  public void shouldReturnEncodedPreimageCorrectly() {
+    final var tx =
+        new TransactionTestFixture()
+            .type(TransactionType.EIP1559)
+            .chainId(Optional.of(BigInteger.ONE))
+            .nonce(2)
+            .gasLimit(23456)
+            .to(Optional.of(Address.fromHexString("0x1234000000000000000000000000000000004321")))
+            .value(Wei.of(2048))
+            .payload(Bytes.fromHexString("0xabcd"))
+            .maxFeePerGas(Optional.of(Wei.of(12345)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(6789)))
+            .createTransaction(senderKeys);
+
+    final var encodedPreimage = tx.encodedPreimage();
+
+    final var expectedEncodedPreimage =
+        "0x02e70102821a85823039825ba094123400000000000000000000000000000000432182080082abcdc0";
+
+    assertThat(encodedPreimage.toString()).isEqualTo(expectedEncodedPreimage);
   }
 }

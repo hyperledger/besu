@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
-      - uses: gradle/wrapper-validation-action@56b90f209b02bf6d1deae490e9ef18b21a389cd4
+      - uses: gradle/actions/wrapper-validation@94baf225fe0a508e581a564467443d0e2379123b
   spotless:
     runs-on: ubuntu-22.04
     steps:

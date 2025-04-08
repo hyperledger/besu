@@ -59,7 +59,8 @@ public final class BlockHeadersMessageTest {
       oneBlock.skipNext();
     }
     final MessageData initialMessage = BlockHeadersMessage.create(headers);
-    final MessageData raw = new RawMessage(EthPV62.BLOCK_HEADERS, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.BLOCK_HEADERS, initialMessage.getData());
     final BlockHeadersMessage message = BlockHeadersMessage.readFrom(raw);
     final List<BlockHeader> readHeaders =
         message.getHeaders(

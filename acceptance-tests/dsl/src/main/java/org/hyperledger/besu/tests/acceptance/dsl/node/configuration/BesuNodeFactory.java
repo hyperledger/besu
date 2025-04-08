@@ -490,6 +490,39 @@ public class BesuNodeFactory {
     return create(builder.build());
   }
 
+  public BesuNode createQbftMigrationNode(
+      final String name, final boolean fixedPort, final DataStorageFormat storageFormat)
+      throws IOException {
+    JsonRpcConfiguration rpcConfig = node.createJsonRpcWithQbftEnabledConfig(false);
+    rpcConfig.addRpcApi("ADMIN,TXPOOL");
+    if (fixedPort) {
+      rpcConfig.setPort(
+          Math.abs(name.hashCode() % 60000)
+              + 1024); // Generate a consistent port for p2p based on node name
+    }
+
+    BesuNodeConfigurationBuilder builder =
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(rpcConfig)
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .dataStorageConfiguration(
+                storageFormat == DataStorageFormat.FOREST
+                    ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
+                    : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+            .genesisConfigProvider(GenesisConfigurationFactory::createQbftMigrationGenesisConfig);
+    if (fixedPort) {
+      builder.p2pPort(
+          Math.abs(name.hashCode() % 60000)
+              + 1024
+              + 500); // Generate a consistent port for p2p based on node name (+ 500 to avoid
+      // clashing with RPC port or other nodes with a similar name)
+    }
+    return create(builder.build());
+  }
+
   public BesuNode createCustomGenesisNode(
       final String name, final String genesisPath, final boolean canBeBootnode) throws IOException {
     return createCustomGenesisNode(name, genesisPath, canBeBootnode, false);
@@ -539,6 +572,12 @@ public class BesuNodeFactory {
 
   public BesuNode createCliqueNodeWithValidators(final String name, final String... validators)
       throws IOException {
+    return createCliqueNodeWithValidators(name, CliqueOptions.DEFAULT, validators);
+  }
+
+  public BesuNode createCliqueNodeWithValidators(
+      final String name, final CliqueOptions cliqueOptions, final String... validators)
+      throws IOException {
 
     return create(
         new BesuNodeConfigurationBuilder()
@@ -553,7 +592,9 @@ public class BesuNodeFactory {
                     node.createGenesisConfigForValidators(
                         asList(validators),
                         nodes,
-                        GenesisConfigurationFactory::createCliqueGenesisConfig))
+                        vs ->
+                            GenesisConfigurationFactory.createCliqueGenesisConfig(
+                                vs, cliqueOptions)))
             .build());
   }
 

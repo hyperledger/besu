@@ -21,7 +21,6 @@ import org.hyperledger.besu.consensus.qbft.core.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -122,7 +121,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
       rlpIn.skipNext();
       block = Optional.empty();
     } else {
-      block = Optional.of(blockEncoder.readFrom(rlpIn, QbftHashMode.COMMITTED_SEAL));
+      block = Optional.of(blockEncoder.readFrom(rlpIn));
     }
 
     final List<SignedData<PreparePayload>> prepares =

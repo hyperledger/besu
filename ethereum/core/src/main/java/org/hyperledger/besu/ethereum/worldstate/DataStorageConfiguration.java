@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DiffBasedUnstable;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.PathBasedUnstable;
 import org.hyperledger.besu.ethereum.worldstate.VerkleSubStorageConfiguration.VerkleUnstable;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -29,7 +29,7 @@ public interface DataStorageConfiguration {
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.BONSAI)
-          .diffBasedSubStorageConfiguration(DiffBasedSubStorageConfiguration.DEFAULT)
+          .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DEFAULT)
           .build();
 
   DataStorageConfiguration DEFAULT_BONSAI_CONFIG = DEFAULT_CONFIG;
@@ -37,29 +37,29 @@ public interface DataStorageConfiguration {
   DataStorageConfiguration DEFAULT_BONSAI_PARTIAL_DB_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.BONSAI)
-          .diffBasedSubStorageConfiguration(
-              ImmutableDiffBasedSubStorageConfiguration.builder()
-                  .unstable(DiffBasedUnstable.PARTIAL_MODE)
+          .pathBasedExtraStorageConfiguration(
+              ImmutablePathBasedExtraStorageConfiguration.builder()
+                  .unstable(PathBasedUnstable.PARTIAL_MODE)
                   .build())
           .build();
 
   DataStorageConfiguration DEFAULT_FOREST_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.FOREST)
-          .diffBasedSubStorageConfiguration(DiffBasedSubStorageConfiguration.DISABLED)
+          .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DISABLED)
           .build();
 
   DataStorageConfiguration DEFAULT_VERKLE_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.VERKLE)
-          .diffBasedSubStorageConfiguration(DiffBasedSubStorageConfiguration.DEFAULT)
+          .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DEFAULT)
           .verkleSubStorageConfiguration(VerkleSubStorageConfiguration.DEFAULT)
           .build();
 
   DataStorageConfiguration DEFAULT_VERKLE_STEM_DB_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.VERKLE)
-          .diffBasedSubStorageConfiguration(DiffBasedSubStorageConfiguration.DEFAULT)
+          .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DEFAULT)
           .verkleSubStorageConfiguration(
               ImmutableVerkleSubStorageConfiguration.builder()
                   .unstable(VerkleUnstable.STEM_MODE)
@@ -69,8 +69,8 @@ public interface DataStorageConfiguration {
   DataStorageFormat getDataStorageFormat();
 
   @Value.Default
-  default DiffBasedSubStorageConfiguration getDiffBasedSubStorageConfiguration() {
-    return DiffBasedSubStorageConfiguration.DEFAULT;
+  default PathBasedExtraStorageConfiguration getPathBasedExtraStorageConfiguration() {
+    return PathBasedExtraStorageConfiguration.DEFAULT;
   }
 
   @Value.Default

@@ -194,7 +194,7 @@ public class EthProtocolManagerTestBuilder {
     }
     if (forkIdManager == null) {
       forkIdManager =
-          new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false);
+          new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList());
     }
     if (ethPeers == null) {
       ethPeers =

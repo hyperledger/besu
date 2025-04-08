@@ -29,7 +29,6 @@ public class EthProtocolConfiguration {
   public static final int DEFAULT_MAX_GET_RECEIPTS = 256;
   public static final int DEFAULT_MAX_GET_NODE_DATA = 384;
   public static final int DEFAULT_MAX_GET_POOLED_TRANSACTIONS = 256;
-  public static final boolean DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED = false;
   public static final int DEFAULT_MAX_CAPABILITY = Integer.MAX_VALUE;
   public static final int DEFAULT_MIN_CAPABILITY = 0;
   // Limit the size of p2p messages (in bytes)
@@ -42,7 +41,6 @@ public class EthProtocolConfiguration {
   private final int maxGetReceipts;
   private final int maxGetNodeData;
   private final int maxGetPooledTransactions;
-  private final boolean legacyEth64ForkIdEnabled;
   private final int maxEthCapability;
   private final int minEthCapability;
 
@@ -53,7 +51,6 @@ public class EthProtocolConfiguration {
       final int maxGetReceipts,
       final int maxGetNodeData,
       final int maxGetPooledTransactions,
-      final boolean legacyEth64ForkIdEnabled,
       final int maxEthCapability,
       final int minEthCapability) {
     this.maxMessageSize = maxMessageSize;
@@ -62,7 +59,6 @@ public class EthProtocolConfiguration {
     this.maxGetReceipts = maxGetReceipts;
     this.maxGetNodeData = maxGetNodeData;
     this.maxGetPooledTransactions = maxGetPooledTransactions;
-    this.legacyEth64ForkIdEnabled = legacyEth64ForkIdEnabled;
     this.maxEthCapability = maxEthCapability;
     this.minEthCapability = minEthCapability;
   }
@@ -97,10 +93,6 @@ public class EthProtocolConfiguration {
 
   public int getMaxGetPooledTransactions() {
     return maxGetPooledTransactions;
-  }
-
-  public boolean isLegacyEth64ForkIdEnabled() {
-    return legacyEth64ForkIdEnabled;
   }
 
   public int getMaxEthCapability() {
@@ -161,9 +153,6 @@ public class EthProtocolConfiguration {
 
     private PositiveNumber maxGetPooledTransactions =
         PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS);
-
-    private boolean legacyEth64ForkIdEnabled =
-        EthProtocolConfiguration.DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED;
 
     private int maxEthCapability = EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY;
 
@@ -229,11 +218,6 @@ public class EthProtocolConfiguration {
       return this;
     }
 
-    public Builder legacyEth64ForkIdEnabled(final boolean legacyEth64ForkIdEnabled) {
-      this.legacyEth64ForkIdEnabled = legacyEth64ForkIdEnabled;
-      return this;
-    }
-
     public Builder maxEthCapability(final int maxEthCapability) {
       this.maxEthCapability = maxEthCapability;
       return this;
@@ -252,7 +236,6 @@ public class EthProtocolConfiguration {
           maxGetReceipts.getValue(),
           maxGetNodeData.getValue(),
           maxGetPooledTransactions.getValue(),
-          legacyEth64ForkIdEnabled,
           maxEthCapability,
           minEthCapability);
     }

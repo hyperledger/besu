@@ -257,7 +257,10 @@ public class BlockHeader extends SealableBlockHeader
   public static BlockHeader readFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     final RLPInput headerRlp = input.readAsRlp();
-    headerRlp.enterList();
+    if (headerRlp.enterList() == 0) {
+      return null;
+    }
+
     final Hash parentHash = Hash.wrap(headerRlp.readBytes32());
     final Hash ommersHash = Hash.wrap(headerRlp.readBytes32());
     final Address coinbase = Address.readFrom(headerRlp);

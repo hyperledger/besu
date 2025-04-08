@@ -136,8 +136,25 @@ public class Transaction
     return readFrom(RLP.input(rlpBytes));
   }
 
+  /**
+   * Recreate a transaction from RLP serialized in the block body format
+   *
+   * @param rlpInput the RLP input in block body format
+   * @return the transaction
+   */
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
+    return readFrom(rlpInput, EncodingContext.BLOCK_BODY);
+  }
+
+  /**
+   * Recreate a transaction from RLP serialized according to the specified format
+   *
+   * @param rlpInput the RLP input in block body format
+   * @param context specify in which format the RLP was serialized
+   * @return the transaction
+   */
+  public static Transaction readFrom(final RLPInput rlpInput, final EncodingContext context) {
+    return TransactionDecoder.decodeRLP(rlpInput, context);
   }
 
   /**
@@ -484,12 +501,22 @@ public class Transaction
   }
 
   /**
-   * Writes the transaction to RLP
+   * Writes the transaction to RLP using the block body format
    *
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY);
+    writeTo(out, EncodingContext.BLOCK_BODY);
+  }
+
+  /**
+   * Writes the transaction to RLP using the specified format
+   *
+   * @param out the output to write the transaction to
+   * @param context the serialization format to use
+   */
+  public void writeTo(final RLPOutput out, final EncodingContext context) {
+    TransactionEncoder.encodeRLP(this, out, context);
   }
 
   @Override
@@ -728,6 +755,59 @@ public class Transaction
       checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
     }
     final Bytes preimage =
+        getPreimage(
+            transactionType,
+            nonce,
+            gasPrice,
+            maxPriorityFeePerGas,
+            maxFeePerGas,
+            maxFeePerBlobGas,
+            gasLimit,
+            to,
+            value,
+            payload,
+            accessList,
+            versionedHashes,
+            codeDelegationList,
+            chainId);
+    return keccak256(preimage);
+  }
+
+  @Override
+  public Bytes encodedPreimage() {
+    return getPreimage(
+        transactionType,
+        nonce,
+        gasPrice.orElse(null),
+        maxPriorityFeePerGas.orElse(null),
+        maxFeePerGas.orElse(null),
+        maxFeePerBlobGas.orElse(null),
+        gasLimit,
+        to,
+        value,
+        payload,
+        maybeAccessList,
+        versionedHashes.orElse(null),
+        maybeCodeDelegationList,
+        chainId);
+  }
+
+  private static Bytes getPreimage(
+      final TransactionType transactionType,
+      final long nonce,
+      final Wei gasPrice,
+      final Wei maxPriorityFeePerGas,
+      final Wei maxFeePerGas,
+      final Wei maxFeePerBlobGas,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final Optional<List<AccessListEntry>> accessList,
+      final List<VersionedHash> versionedHashes,
+      final Optional<List<CodeDelegation>> codeDelegationList,
+      final Optional<BigInteger> chainId) {
+    final Bytes preimage =
         switch (transactionType) {
           case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
           case EIP1559 ->
@@ -783,7 +863,7 @@ public class Transaction
                           new IllegalStateException(
                               "Developer error: the transaction should be guaranteed to have a code delegations here")));
         };
-    return keccak256(preimage);
+    return preimage;
   }
 
   private static Bytes frontierPreimage(

@@ -39,7 +39,7 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
       return (GetBlockHeadersMessage) message;
     }
     final int code = message.getCode();
-    if (code != EthPV62.GET_BLOCK_HEADERS) {
+    if (code != EthProtocolMessages.GET_BLOCK_HEADERS) {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a GetBlockHeadersMessage.", code));
     }
@@ -70,7 +70,7 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
 
   @Override
   public int getCode() {
-    return EthPV62.GET_BLOCK_HEADERS;
+    return EthProtocolMessages.GET_BLOCK_HEADERS;
   }
 
   /**

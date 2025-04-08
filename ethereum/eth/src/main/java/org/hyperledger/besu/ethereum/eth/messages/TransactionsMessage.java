@@ -31,7 +31,7 @@ public class TransactionsMessage extends AbstractMessageData {
       return (TransactionsMessage) message;
     }
     final int code = message.getCode();
-    if (code != EthPV62.TRANSACTIONS) {
+    if (code != EthProtocolMessages.TRANSACTIONS) {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a TransactionsMessage.", code));
     }
@@ -54,7 +54,7 @@ public class TransactionsMessage extends AbstractMessageData {
 
   @Override
   public int getCode() {
-    return EthPV62.TRANSACTIONS;
+    return EthProtocolMessages.TRANSACTIONS;
   }
 
   public List<Transaction> transactions() {

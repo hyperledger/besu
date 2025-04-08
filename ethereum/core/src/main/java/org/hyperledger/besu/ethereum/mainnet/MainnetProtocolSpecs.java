@@ -75,6 +75,7 @@ import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -750,9 +751,6 @@ public abstract class MainnetProtocolSpecs {
                     .maxStackSize(evmConfiguration.evmStackSize())
                     .feeMarket(feeMarket)
                     .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
-                    .codeDelegationProcessor(
-                        new CodeDelegationProcessor(
-                            chainId, SIGNATURE_ALGORITHM.get().getHalfCurveOrder()))
                     .build())
         // change to check for max blob gas per block for EIP-4844
         .transactionValidatorFactoryBuilder(
@@ -897,6 +895,29 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.BLOB,
                         TransactionType.DELEGATE_CODE),
                     evm.getMaxInitcodeSize()))
+        // CodeDelegationProcessor
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidator)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccountStrategy(new ClearEmptyAccount())
+                    .warmCoinbase(true)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
+                    .codeDelegationProcessor(
+                        new CodeDelegationProcessor(
+                            chainId,
+                            SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+                            new CodeDelegationService()))
+                    .build())
 
         // TODO SLD EIP-7840 Can we dynamically wire in the appropriate GasCalculator instead of
         // overriding

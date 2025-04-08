@@ -41,7 +41,8 @@ public final class GetNodeDataMessageTest {
     // Perform round-trip transformation
     // Create GetNodeData, copy it to a generic message, then read back into a GetNodeData message
     final MessageData initialMessage = GetNodeDataMessage.create(hashes);
-    final MessageData raw = new RawMessage(EthPV63.GET_NODE_DATA, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.GET_NODE_DATA, initialMessage.getData());
     final GetNodeDataMessage message = GetNodeDataMessage.readFrom(raw);
 
     // Read hashes back out after round trip and check they match originals.

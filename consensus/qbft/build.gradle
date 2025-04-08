@@ -32,6 +32,7 @@ dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
   implementation project(':consensus:qbft-core')
+  implementation project(':consensus:ibftlegacy')
   implementation project(':crypto:services')
   implementation project(':datatypes')
   implementation project(':ethereum:api')
@@ -45,8 +46,8 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'org.web3j:abi'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')

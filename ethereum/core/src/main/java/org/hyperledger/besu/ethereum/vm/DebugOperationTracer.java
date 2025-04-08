@@ -214,7 +214,7 @@ public class DebugOperationTracer implements OperationTracer {
   }
 
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {
-    if (!options.isStorageEnabled()) {
+    if (!options.traceStorage()) {
       return Optional.empty();
     }
     try {
@@ -230,7 +230,7 @@ public class DebugOperationTracer implements OperationTracer {
   }
 
   private Optional<Bytes[]> captureMemory(final MessageFrame frame) {
-    if (!options.isMemoryEnabled() || frame.memoryWordSize() == 0) {
+    if (!options.traceMemory() || frame.memoryWordSize() == 0) {
       return Optional.empty();
     }
     final Bytes[] memoryContents = new Bytes[frame.memoryWordSize()];
@@ -241,7 +241,7 @@ public class DebugOperationTracer implements OperationTracer {
   }
 
   private Optional<Bytes[]> captureStack(final MessageFrame frame) {
-    if (!options.isStackEnabled()) {
+    if (!options.traceStack()) {
       return Optional.empty();
     }
 

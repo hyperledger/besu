@@ -14,14 +14,11 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
-import static org.hyperledger.besu.consensus.qbft.adaptor.BlockHeaderFunctionsUtil.getBlockHeaderFunctions;
-
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -40,10 +37,9 @@ public class QbftBlockCodecAdaptor implements QbftBlockCodec {
   }
 
   @Override
-  public QbftBlock readFrom(final RLPInput rlpInput, final QbftHashMode hashMode) {
-    final BlockHeaderFunctions blockHeaderFunctions =
-        getBlockHeaderFunctions(qbftExtraDataCodec, hashMode);
-    Block besuBlock = Block.readFrom(rlpInput, blockHeaderFunctions);
+  public QbftBlock readFrom(final RLPInput rlpInput) {
+    Block besuBlock =
+        Block.readFrom(rlpInput, BftBlockHeaderFunctions.forCommittedSeal(qbftExtraDataCodec));
     return new QbftBlockAdaptor(besuBlock);
   }
 

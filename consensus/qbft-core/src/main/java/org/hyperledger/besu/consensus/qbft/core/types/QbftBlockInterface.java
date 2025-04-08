@@ -18,12 +18,12 @@ package org.hyperledger.besu.consensus.qbft.core.types;
 public interface QbftBlockInterface {
 
   /**
-   * Create a new block using the supplied block with round number replaced.
+   * Create a new block using the supplied block with round number replaced. The hash must be for
+   * the committed seal.
    *
    * @param proposalBlock the proposal block
    * @param roundNumber the round number
-   * @param hashMode the hash mode
    * @return the new qbft block with updated round number
    */
-  QbftBlock replaceRoundInBlock(QbftBlock proposalBlock, int roundNumber, QbftHashMode hashMode);
+  QbftBlock replaceRoundInBlock(QbftBlock proposalBlock, int roundNumber);
 }

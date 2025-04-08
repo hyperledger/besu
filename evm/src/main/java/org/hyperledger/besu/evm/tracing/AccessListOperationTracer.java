@@ -53,7 +53,10 @@ public class AccessListOperationTracer extends EstimateGasOperationTracer {
           .rowMap()
           .forEach(
               (address, storageKeys) ->
-                  list.add(new AccessListEntry(address, new ArrayList<>(storageKeys.keySet()))));
+                  list.add(
+                      new AccessListEntry(
+                          address,
+                          new ArrayList<>(storageKeys.keySet().stream().sorted().toList()))));
       return list;
     }
     return List.of();

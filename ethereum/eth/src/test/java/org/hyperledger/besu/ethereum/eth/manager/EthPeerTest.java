@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.PingMessage;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -220,11 +221,20 @@ public class EthPeerTest {
     // Setup peer and messages
     final EthPeer peer = createPeer();
     final EthMessage headersMessage =
-        new EthMessage(peer, BlockHeadersMessage.create(asList(gen.header(), gen.header())));
+        new EthMessage(
+            peer,
+            BlockHeadersMessage.create(asList(gen.header(), gen.header()))
+                .wrapMessageData(BigInteger.ONE));
     final EthMessage bodiesMessage =
-        new EthMessage(peer, BlockBodiesMessage.create(asList(gen.body(), gen.body())));
+        new EthMessage(
+            peer,
+            BlockBodiesMessage.create(asList(gen.body(), gen.body()))
+                .wrapMessageData(BigInteger.ONE));
     final EthMessage otherMessage =
-        new EthMessage(peer, ReceiptsMessage.create(singletonList(gen.receipts(gen.block()))));
+        new EthMessage(
+            peer,
+            ReceiptsMessage.create(singletonList(gen.receipts(gen.block())))
+                .wrapMessageData(BigInteger.ONE));
 
     // Set up stream for headers
     final AtomicInteger headersMessageCount = new AtomicInteger(0);
@@ -385,6 +395,7 @@ public class EthPeerTest {
     // Setup peer and ask for stream
     final EthPeer peer = createPeer();
     final AtomicInteger messageCount = new AtomicInteger(0);
+    int requestIdCounter = 1;
     final AtomicInteger closedCount = new AtomicInteger(0);
     final int targetCode = targetMessage.getCode();
     final RequestManager.ResponseCallback responseHandler =
@@ -400,11 +411,15 @@ public class EthPeerTest {
     // Set up 1 stream
     getStream.get(peer).then(responseHandler);
 
-    final EthMessage targetEthMessage = new EthMessage(peer, targetMessage);
+    EthMessage targetEthMessage =
+        new EthMessage(peer, targetMessage.wrapMessageData(BigInteger.valueOf(requestIdCounter++)));
     // Dispatch message and check that stream processes messages
     peer.dispatch(targetEthMessage);
     assertThat(messageCount.get()).isEqualTo(1);
     assertThat(closedCount.get()).isEqualTo(1);
+
+    targetEthMessage =
+        new EthMessage(peer, targetMessage.wrapMessageData(BigInteger.valueOf(requestIdCounter++)));
 
     // Check that no new messages are delivered
     getStream.get(peer);
@@ -420,28 +435,38 @@ public class EthPeerTest {
     messageCount.set(0);
     closedCount.set(0);
 
+    targetEthMessage =
+        new EthMessage(peer, targetMessage.wrapMessageData(BigInteger.valueOf(requestIdCounter++)));
+
     // Dispatch message and check that stream processes messages
     peer.dispatch(targetEthMessage);
-    assertThat(messageCount.get()).isEqualTo(2);
+    assertThat(messageCount.get()).isEqualTo(1);
     assertThat(closedCount.get()).isEqualTo(0);
 
     // Dispatch unrelated message and check that it is not process
-    final EthMessage otherEthMessage = new EthMessage(peer, otherMessage);
+    EthMessage otherEthMessage =
+        new EthMessage(peer, otherMessage.wrapMessageData(BigInteger.valueOf(requestIdCounter++)));
     peer.dispatch(otherEthMessage);
-    assertThat(messageCount.get()).isEqualTo(2);
+    assertThat(messageCount.get()).isEqualTo(1);
     assertThat(closedCount.get()).isEqualTo(0);
 
+    targetEthMessage =
+        new EthMessage(peer, targetMessage.wrapMessageData(BigInteger.valueOf(requestIdCounter++)));
     // Dispatch last outstanding message and check that streams are closed
     peer.dispatch(targetEthMessage);
-    assertThat(messageCount.get()).isEqualTo(4);
+    assertThat(messageCount.get()).isEqualTo(1);
     assertThat(closedCount.get()).isEqualTo(2);
 
+    targetEthMessage =
+        new EthMessage(peer, targetMessage.wrapMessageData(BigInteger.valueOf(requestIdCounter++)));
     // Check that no new messages are delivered
     getStream.get(peer);
     peer.dispatch(targetEthMessage);
-    assertThat(messageCount.get()).isEqualTo(4);
+    assertThat(messageCount.get()).isEqualTo(1);
     assertThat(closedCount.get()).isEqualTo(2);
 
+    targetEthMessage =
+        new EthMessage(peer, targetMessage.wrapMessageData(BigInteger.valueOf(requestIdCounter)));
     // Open stream, then close it and check no messages are processed
     final RequestManager.ResponseStream stream = getStream.get(peer).then(responseHandler);
     // Reset counters
@@ -524,7 +549,7 @@ public class EthPeerTest {
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
     final Set<Capability> caps =
-        new HashSet<>(Collections.singletonList(Capability.create("foo", 63)));
+        new HashSet<>(Collections.singletonList(Capability.create("foo", 68)));
 
     return new MockPeerConnection(caps, onSend);
   }

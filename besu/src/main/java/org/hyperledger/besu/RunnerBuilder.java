@@ -190,7 +190,6 @@ public class RunnerBuilder {
   private StorageProvider storageProvider;
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
-  private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
   private List<SubnetInfo> allowedSubnets = new ArrayList<>();
   private boolean poaDiscoveryRetryBootnodes = true;
@@ -685,7 +684,6 @@ public class RunnerBuilder {
               .vertx(vertx)
               .nodeKey(nodeKey)
               .config(networkingConfiguration)
-              .legacyForkIdEnabled(legacyForkIdEnabled)
               .peerPermissions(peerPermissions)
               .metricsSystem(metricsSystem)
               .supportedCapabilities(caps)
@@ -1177,10 +1175,17 @@ public class RunnerBuilder {
       final BesuController besuController,
       final TransactionSimulator transactionSimulator) {
 
-    if (permissioningConfiguration.isPresent()) {
+    if (permissioningConfiguration.isPresent()
+        || permissioningService.getTransactionPermissioningProviders().size() > 0) {
+      final PermissioningConfiguration configuration =
+          permissioningConfiguration.orElse(
+              new PermissioningConfiguration(Optional.empty(), Optional.empty()));
       final Optional<AccountPermissioningController> accountPermissioningController =
           AccountPermissioningControllerFactory.create(
-              permissioningConfiguration.get(), transactionSimulator, metricsSystem);
+              configuration,
+              transactionSimulator,
+              metricsSystem,
+              permissioningService.getTransactionPermissioningProviders());
 
       accountPermissioningController.ifPresent(
           permissioningController ->
@@ -1437,16 +1442,5 @@ public class RunnerBuilder {
 
   private Optional<MetricsService> createMetricsService(final MetricsConfiguration configuration) {
     return MetricsService.create(configuration, metricsSystem);
-  }
-
-  /**
-   * Add Legacy fork id.
-   *
-   * @param legacyEth64ForkIdEnabled the legacy eth64 fork id enabled
-   * @return the runner builder
-   */
-  public RunnerBuilder legacyForkId(final boolean legacyEth64ForkIdEnabled) {
-    this.legacyForkIdEnabled = legacyEth64ForkIdEnabled;
-    return this;
   }
 }

@@ -139,7 +139,7 @@ public class DataStoreModule {
         return rocksDBFactory.get().create(segment, commonConfiguration, metricsSystem);
       default:
         System.err.println("Unknown key, continuing as though 'memory' was specified");
-        // fall through
+      // fall through
       case "memory":
         return new InMemoryKeyValueStorage();
     }

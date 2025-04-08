@@ -45,6 +45,10 @@ public class Blockchain {
     return new ExpectBlockNumberAbove(eth, BigInteger.valueOf(blockNumber));
   }
 
+  public Condition minimumHeight(final long blockNumber, final int timeout) {
+    return new ExpectBlockNumberAbove(eth, BigInteger.valueOf(blockNumber), timeout);
+  }
+
   public Condition reachesHeight(final BesuNode node, final int blocksAheadOfLatest) {
     return new ExpectBlockNumberAbove(eth, futureHeight(node, blocksAheadOfLatest));
   }

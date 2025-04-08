@@ -14,23 +14,12 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.consensus.common.validator.VoteProvider;
-import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collection;
-import java.util.Optional;
 
 /** The interface Validator provider. */
 public interface QbftValidatorProvider {
-
-  /**
-   * Gets validators at head.
-   *
-   * @return the validators at head
-   */
-  Collection<Address> getValidatorsAtHead();
 
   /**
    * Gets validators after block.
@@ -47,36 +36,4 @@ public interface QbftValidatorProvider {
    * @return the validators for block
    */
   Collection<Address> getValidatorsForBlock(QbftBlockHeader header);
-
-  /**
-   * Gets vote provider at head.
-   *
-   * @return the vote provider at head
-   */
-  Optional<VoteProvider> getVoteProviderAtHead();
-
-  /**
-   * Gets vote provider after block.
-   *
-   * @param header the header
-   * @return the vote provider after block
-   */
-  /*
-   * ForkingValidatorProvider has a specific implementation but we don't want the client code to
-   * know it's using a ForkingValidatorProvider. ForkingValidatorProvider's voteProvider can be
-   * different per block. Other ValidatorProviders yield the same voteProvider at every block.
-   */
-  default Optional<VoteProvider> getVoteProviderAfterBlock(final QbftBlockHeader header) {
-    return getVoteProviderAtHead();
-  }
-
-  /**
-   * Determines if this node is a validator
-   *
-   * @param nodekey our node key
-   * @return true if this node is a validator
-   */
-  default boolean nodeIsValidator(final NodeKey nodekey) {
-    return this.getValidatorsAtHead().contains(Util.publicKeyToAddress(nodekey.getPublicKey()));
-  }
 }

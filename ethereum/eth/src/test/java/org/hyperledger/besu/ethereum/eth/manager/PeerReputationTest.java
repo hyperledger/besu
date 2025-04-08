@@ -19,7 +19,7 @@ import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMes
 import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -38,30 +38,34 @@ public class PeerReputationTest {
 
   @Test
   public void shouldOnlyDisconnectWhenTimeoutLimitReached() {
-    sendRequestTimeouts(EthPV62.GET_BLOCK_HEADERS, PeerReputation.TIMEOUT_THRESHOLD - 1);
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS, mockEthPeer))
+    sendRequestTimeouts(
+        EthProtocolMessages.GET_BLOCK_HEADERS, PeerReputation.TIMEOUT_THRESHOLD - 1);
+    assertThat(reputation.recordRequestTimeout(EthProtocolMessages.GET_BLOCK_HEADERS, mockEthPeer))
         .contains(TIMEOUT);
   }
 
   @Test
   public void shouldTrackTimeoutsSeparatelyForDifferentRequestTypes() {
-    sendRequestTimeouts(EthPV62.GET_BLOCK_HEADERS, PeerReputation.TIMEOUT_THRESHOLD - 1);
-    sendRequestTimeouts(EthPV62.GET_BLOCK_BODIES, PeerReputation.TIMEOUT_THRESHOLD - 1);
+    sendRequestTimeouts(
+        EthProtocolMessages.GET_BLOCK_HEADERS, PeerReputation.TIMEOUT_THRESHOLD - 1);
+    sendRequestTimeouts(EthProtocolMessages.GET_BLOCK_BODIES, PeerReputation.TIMEOUT_THRESHOLD - 1);
 
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS, mockEthPeer))
+    assertThat(reputation.recordRequestTimeout(EthProtocolMessages.GET_BLOCK_HEADERS, mockEthPeer))
         .contains(TIMEOUT);
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES, mockEthPeer))
+    assertThat(reputation.recordRequestTimeout(EthProtocolMessages.GET_BLOCK_BODIES, mockEthPeer))
         .contains(TIMEOUT);
   }
 
   @Test
   public void shouldResetTimeoutCountForRequestType() {
-    sendRequestTimeouts(EthPV62.GET_BLOCK_HEADERS, PeerReputation.TIMEOUT_THRESHOLD - 1);
-    sendRequestTimeouts(EthPV62.GET_BLOCK_BODIES, PeerReputation.TIMEOUT_THRESHOLD - 1);
+    sendRequestTimeouts(
+        EthProtocolMessages.GET_BLOCK_HEADERS, PeerReputation.TIMEOUT_THRESHOLD - 1);
+    sendRequestTimeouts(EthProtocolMessages.GET_BLOCK_BODIES, PeerReputation.TIMEOUT_THRESHOLD - 1);
 
-    reputation.resetTimeoutCount(EthPV62.GET_BLOCK_HEADERS);
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS, mockEthPeer)).isEmpty();
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES, mockEthPeer))
+    reputation.resetTimeoutCount(EthProtocolMessages.GET_BLOCK_HEADERS);
+    assertThat(reputation.recordRequestTimeout(EthProtocolMessages.GET_BLOCK_HEADERS, mockEthPeer))
+        .isEmpty();
+    assertThat(reputation.recordRequestTimeout(EthProtocolMessages.GET_BLOCK_BODIES, mockEthPeer))
         .contains(TIMEOUT);
   }
 

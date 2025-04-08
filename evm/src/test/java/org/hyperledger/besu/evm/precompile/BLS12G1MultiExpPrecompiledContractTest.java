@@ -69,7 +69,7 @@ class BLS12G1MultiExpPrecompiledContractTest {
         expectedResult == null ? null : Bytes.fromHexString(expectedResult);
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(input, messageFrame);
-    Bytes actualComputation = result.getOutput();
+    Bytes actualComputation = result.output();
     if (actualComputation == null) {
       final ArgumentCaptor<Bytes> revertReason = ArgumentCaptor.forClass(Bytes.class);
       verify(messageFrame).setRevertReason(revertReason.capture());

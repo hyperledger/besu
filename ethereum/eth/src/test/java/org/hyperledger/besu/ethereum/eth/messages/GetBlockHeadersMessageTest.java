@@ -34,7 +34,8 @@ public final class GetBlockHeadersMessageTest {
       final int maxHeaders = 128;
       final GetBlockHeadersMessage initialMessage =
           GetBlockHeadersMessage.create(hash, maxHeaders, skip, reverse);
-      final MessageData raw = new RawMessage(EthPV62.GET_BLOCK_HEADERS, initialMessage.getData());
+      final MessageData raw =
+          new RawMessage(EthProtocolMessages.GET_BLOCK_HEADERS, initialMessage.getData());
       final GetBlockHeadersMessage message = GetBlockHeadersMessage.readFrom(raw);
       Assertions.assertThat(message.blockNumber()).isEmpty();
       Assertions.assertThat(message.hash().get()).isEqualTo(hash);
@@ -52,7 +53,8 @@ public final class GetBlockHeadersMessageTest {
       final int maxHeaders = 128;
       final GetBlockHeadersMessage initialMessage =
           GetBlockHeadersMessage.create(blockNum, maxHeaders, skip, reverse);
-      final MessageData raw = new RawMessage(EthPV62.GET_BLOCK_HEADERS, initialMessage.getData());
+      final MessageData raw =
+          new RawMessage(EthProtocolMessages.GET_BLOCK_HEADERS, initialMessage.getData());
       final GetBlockHeadersMessage message = GetBlockHeadersMessage.readFrom(raw);
       Assertions.assertThat(message.blockNumber().getAsLong()).isEqualTo(blockNum);
       Assertions.assertThat(message.hash()).isEmpty();

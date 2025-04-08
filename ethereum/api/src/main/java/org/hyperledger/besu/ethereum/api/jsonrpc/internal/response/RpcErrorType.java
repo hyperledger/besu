@@ -36,7 +36,7 @@ public enum RpcErrorType implements RpcMethodError {
       "Invalid blob count (blob transactions must have at least one blob)"),
   INVALID_BLOB_GAS_USED_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid blob gas used param (missing or invalid)"),
-  INVALID_BLOCK_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block, unable to parse RLP"),
+  INVALID_BLOCK_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block param (block not found)"),
   INVALID_BLOCK_COUNT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block count params"),
   INVALID_BLOCK_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block hash params"),
   INVALID_BLOCK_INDEX_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block index params"),

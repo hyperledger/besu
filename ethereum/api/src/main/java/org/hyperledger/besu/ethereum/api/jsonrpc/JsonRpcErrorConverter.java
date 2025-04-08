@@ -44,7 +44,7 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.REPLAY_PROTECTED_SIGNATURE_REQUIRED;
       case TX_SENDER_NOT_AUTHORIZED:
         return RpcErrorType.TX_SENDER_NOT_AUTHORIZED;
-        // Private Transaction Invalid Reasons
+      // Private Transaction Invalid Reasons
       case PRIVATE_TRANSACTION_INVALID:
         return RpcErrorType.PRIVATE_TRANSACTION_INVALID;
       case PRIVATE_TRANSACTION_FAILED:

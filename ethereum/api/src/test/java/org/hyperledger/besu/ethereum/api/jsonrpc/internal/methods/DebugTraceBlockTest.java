@@ -208,6 +208,6 @@ public class DebugTraceBlockTest {
     assertThat(jsonRpcResponse).isInstanceOf(JsonRpcErrorResponse.class);
     final JsonRpcErrorResponse response = (JsonRpcErrorResponse) debugTraceBlock.response(request);
 
-    assertThat(response.getError().getMessage()).contains("Invalid block, unable to parse RLP");
+    assertThat(response.getError().getMessage()).contains("Invalid block param (block not found)");
   }
 }

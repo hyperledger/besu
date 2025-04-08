@@ -333,12 +333,12 @@ class GenesisConfigOptionsTest {
 
   @Test
   void shouldGetWithdrawalRequestContractAddress() {
+
+    final String address = "0x0000000000000000111111119cbe0530deadbeef";
     final GenesisConfigOptions config =
-        fromConfigOptions(
-            singletonMap(
-                "withdrawalRequestContractAddress", "0x00000000219ab540356cbb839cbe05303d7705fa"));
+        fromConfigOptions(singletonMap("withdrawalRequestContractAddress", address));
     assertThat(config.getWithdrawalRequestContractAddress())
-        .hasValue(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
+        .hasValue(Address.fromHexString(address));
   }
 
   @Test
@@ -359,11 +359,10 @@ class GenesisConfigOptionsTest {
 
   @Test
   void shouldGetDepositContractAddress() {
+    final String address = "0x00000000deadbeefdeadbeef0000000011111111";
     final GenesisConfigOptions config =
-        fromConfigOptions(
-            singletonMap("depositContractAddress", "0x00000000219ab540356cbb839cbe05303d7705fa"));
-    assertThat(config.getDepositContractAddress())
-        .hasValue(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
+        fromConfigOptions(singletonMap("depositContractAddress", address));
+    assertThat(config.getDepositContractAddress()).hasValue(Address.fromHexString(address));
   }
 
   @Test

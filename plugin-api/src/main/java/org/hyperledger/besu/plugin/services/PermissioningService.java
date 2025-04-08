@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 
 /**
  * This service allows plugins to decide who you should connect to and what you should send them.
@@ -37,6 +38,13 @@ public interface PermissioningService extends BesuService {
    * @param provider The provider to register
    */
   void registerNodePermissioningProvider(NodeConnectionPermissioningProvider provider);
+
+  /**
+   * Registers a callback for transaction permission.
+   *
+   * @param provider The provider to register
+   */
+  void registerTransactionPermissioningProvider(final TransactionPermissioningProvider provider);
 
   /**
    * Registers a callback to allow the interception of a devp2p message sending request

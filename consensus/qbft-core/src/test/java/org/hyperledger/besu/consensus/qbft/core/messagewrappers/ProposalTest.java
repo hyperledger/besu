@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.qbft.core.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -29,7 +28,6 @@ import org.hyperledger.besu.consensus.qbft.core.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -51,7 +49,7 @@ public class ProposalTest {
 
   @Test
   public void canRoundTripProposalMessage() {
-    when(blockEncoder.readFrom(any(), eq(QbftHashMode.COMMITTED_SEAL))).thenReturn(BLOCK);
+    when(blockEncoder.readFrom(any())).thenReturn(BLOCK);
 
     final NodeKey nodeKey = NodeKeyUtils.generate();
     final Address addr = Util.publicKeyToAddress(nodeKey.getPublicKey());
