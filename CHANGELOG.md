@@ -6,6 +6,7 @@
 ### Additions and Improvements
 - Add support for `eth_simulateV1`. [#8406](https://github.com/hyperledger/besu/pull/8406)
 - New metric `besu_peers_peer_count_by_client` to report the count of peers by client name [#8515](https://github.com/hyperledger/besu/pull/8515)
+- Refine gas estimation algorithm for `eth_estimateGas` and `eth_createAccessList` [#8478](https://github.com/hyperledger/besu/pull/8478)
 #### Dependencies
 ### Bug fixes
 - Fix for storage proof key - if the key is zero use `0x0` not `0x` [#8499](https://github.com/hyperledger/besu/pull/8499)
@@ -34,7 +35,6 @@
 - Decode deposit log data without Web3j [#8394](https://github.com/hyperledger/besu/issues/8394)
 - Tune layered txpool default configuration for upcoming gas limit and blob count increases [#8487](https://github.com/hyperledger/besu/pull/8487)
 - Remove support for Ethereum protocol versions `eth/62`, `eth/63`, `eth/64`, and `eth/65`. [#8492](https://github.com/hyperledger/besu/pull/8492)
-- Refine gas estimation algorithm for `eth_estimateGas` and `eth_createAccessList` [#8478](https://github.com/hyperledger/besu/pull/8478) 
 
 #### Dependencies 
 - Replace tuweni libs with https://github.com/Consensys/tuweni [#8330](https://github.com/hyperledger/besu/pull/8330), [#8461](https://github.com/hyperledger/besu/pull/8461) 
