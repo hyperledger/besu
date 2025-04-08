@@ -19,5 +19,7 @@ public enum BlockImportFormat {
   /** RLP block import format. */
   RLP,
   /** Json block import format. */
-  JSON
+  JSON,
+  /** Era1 block import format. */
+  ERA1,
 }

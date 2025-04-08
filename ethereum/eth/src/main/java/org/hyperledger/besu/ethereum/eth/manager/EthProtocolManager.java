@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidatorRunner;
@@ -154,11 +154,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         mergePeerFilter,
         synchronizerConfiguration,
         scheduler,
-        new ForkIdManager(
-            blockchain,
-            Collections.emptyList(),
-            Collections.emptyList(),
-            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
+        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList()));
   }
 
   public EthContext ethContext() {
@@ -178,13 +174,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final SynchronizerConfiguration synchronizerConfiguration,
       final EthProtocolConfiguration ethProtocolConfiguration) {
     final List<Capability> capabilities = new ArrayList<>();
-
-    if (SyncMode.isFullSync(synchronizerConfiguration.getSyncMode())) {
-      capabilities.add(EthProtocol.ETH62);
-    }
-    capabilities.add(EthProtocol.ETH63);
-    capabilities.add(EthProtocol.ETH64);
-    capabilities.add(EthProtocol.ETH65);
     capabilities.add(EthProtocol.ETH66);
 
     // Version 67 removes the GetNodeData and NodeData
@@ -256,7 +245,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     }
 
     // Handle STATUS processing
-    if (code == EthPV62.STATUS) {
+    if (code == EthProtocolMessages.STATUS) {
       handleStatusMessage(ethPeer, message);
       return;
     } else if (!ethPeer.statusHasBeenReceived()) {
@@ -265,7 +254,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           .setMessage(
               "{} requires a Status ({}) message to be sent first.  Instead, received message {} (BREACH_OF_PROTOCOL).  Disconnecting from {}.")
           .addArgument(() -> this.getClass().getSimpleName())
-          .addArgument(EthPV62.STATUS)
+          .addArgument(EthProtocolMessages.STATUS)
           .addArgument(code)
           .addArgument(ethPeer::toString)
           .log();
@@ -302,7 +291,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     // This will handle requests
     Optional<MessageData> maybeResponseData = Optional.empty();
     try {
-      if (EthProtocol.isEth66Compatible(cap) && EthProtocol.requestIdCompatible(code)) {
+      if (EthProtocol.requestIdCompatible(code)) {
         final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
             ethMessage.getData().unwrapMessageData();
         maybeResponseData =
@@ -338,8 +327,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     ethPeers.registerNewConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
     final Capability cap = connection.capability(getSupportedProtocol());
-    final ForkId latestForkId =
-        cap.getVersion() >= 64 ? forkIdManager.getForkIdForChainHead() : null;
+    final ForkId latestForkId = forkIdManager.getForkIdForChainHead();
     final StatusMessage status =
         StatusMessage.create(
             cap.getVersion(),
@@ -392,7 +380,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             .addArgument(() -> getPeerOrPeerId(peer))
             .log();
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_MISMATCHED_NETWORK);
-      } else if (!forkIdManager.peerCheck(forkId) && status.protocolVersion() > 63) {
+      } else if (!forkIdManager.peerCheck(forkId)) {
         LOG.atDebug()
             .setMessage("{} has matching network id ({}), but non-matching fork id: {}")
             .addArgument(() -> getPeerOrPeerId(peer))

@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli.subcommands.storage;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
@@ -30,12 +30,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.BonsaiTrieLogFactoryImpl;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.BonsaiTrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.FileNotFoundException;
@@ -135,8 +135,8 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedSubStorageConfiguration(
-                ImmutableDiffBasedSubStorageConfiguration.builder()
+            .pathBasedExtraStorageConfiguration(
+                ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(3L)
                     .limitTrieLogsEnabled(true)
                     .build())
@@ -176,8 +176,8 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedSubStorageConfiguration(
-                ImmutableDiffBasedSubStorageConfiguration.builder()
+            .pathBasedExtraStorageConfiguration(
+                ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(2L)
                     .limitTrieLogsEnabled(true)
                     .build())
@@ -199,8 +199,8 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedSubStorageConfiguration(
-                ImmutableDiffBasedSubStorageConfiguration.builder()
+            .pathBasedExtraStorageConfiguration(
+                ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(10L)
                     .limitTrieLogsEnabled(true)
                     .build())
@@ -222,8 +222,8 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedSubStorageConfiguration(
-                ImmutableDiffBasedSubStorageConfiguration.builder()
+            .pathBasedExtraStorageConfiguration(
+                ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(2L)
                     .limitTrieLogsEnabled(true)
                     .build())
@@ -246,8 +246,8 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedSubStorageConfiguration(
-                ImmutableDiffBasedSubStorageConfiguration.builder()
+            .pathBasedExtraStorageConfiguration(
+                ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(6L)
                     .limitTrieLogsEnabled(true)
                     .build())
@@ -271,8 +271,8 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedSubStorageConfiguration(
-                ImmutableDiffBasedSubStorageConfiguration.builder()
+            .pathBasedExtraStorageConfiguration(
+                ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(3L)
                     .limitTrieLogsEnabled(true)
                     .build())
@@ -303,8 +303,8 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedSubStorageConfiguration(
-                ImmutableDiffBasedSubStorageConfiguration.builder()
+            .pathBasedExtraStorageConfiguration(
+                ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(511L)
                     .limitTrieLogsEnabled(true)
                     .build())
@@ -324,8 +324,8 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedSubStorageConfiguration(
-                ImmutableDiffBasedSubStorageConfiguration.builder()
+            .pathBasedExtraStorageConfiguration(
+                ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(512L)
                     .limitTrieLogsEnabled(true)
                     .trieLogPruningWindowSize(0)
@@ -345,8 +345,8 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedSubStorageConfiguration(
-                ImmutableDiffBasedSubStorageConfiguration.builder()
+            .pathBasedExtraStorageConfiguration(
+                ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(512L)
                     .limitTrieLogsEnabled(true)
                     .trieLogPruningWindowSize(512)
@@ -368,8 +368,8 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .diffBasedSubStorageConfiguration(
-                ImmutableDiffBasedSubStorageConfiguration.builder()
+            .pathBasedExtraStorageConfiguration(
+                ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(3L)
                     .limitTrieLogsEnabled(true)
                     .build())

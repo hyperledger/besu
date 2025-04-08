@@ -41,7 +41,7 @@ public final class NodeDataMessageTest {
     // Perform round-trip transformation
     // Create specific message, copy it to a generic message, then read back into a specific format
     final MessageData initialMessage = NodeDataMessage.create(nodeData);
-    final MessageData raw = new RawMessage(EthPV63.NODE_DATA, initialMessage.getData());
+    final MessageData raw = new RawMessage(EthProtocolMessages.NODE_DATA, initialMessage.getData());
     final NodeDataMessage message = NodeDataMessage.readFrom(raw);
 
     // Read data back out after round trip and check they match originals.

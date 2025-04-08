@@ -14,19 +14,17 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.util.Subscribers;
 
 /** The Qbft round factory. */
@@ -34,44 +32,36 @@ public class QbftRoundFactory {
 
   private final QbftFinalState finalState;
   private final QbftBlockCreatorFactory blockCreatorFactory;
-  private final ProtocolContext protocolContext;
+  private final QbftBlockInterface blockInterface;
   private final QbftProtocolSchedule protocolSchedule;
   private final Subscribers<QbftMinedBlockObserver> minedBlockObservers;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
-  private final BftExtraDataCodec bftExtraDataCodec;
-  private final QbftExtraDataProvider qbftExtraDataProvider;
 
   /**
    * Instantiates a new Qbft round factory.
    *
    * @param finalState the final state
-   * @param protocolContext the protocol context
+   * @param blockInterface the block interface
    * @param protocolSchedule the protocol schedule
    * @param minedBlockObservers the mined block observers
    * @param messageValidatorFactory the message validator factory
    * @param messageFactory the message factory
-   * @param bftExtraDataCodec the bft extra data codec
-   * @param qbftExtraDataProvider the bft extra data codec
    */
   public QbftRoundFactory(
       final QbftFinalState finalState,
-      final ProtocolContext protocolContext,
+      final QbftBlockInterface blockInterface,
       final QbftProtocolSchedule protocolSchedule,
       final Subscribers<QbftMinedBlockObserver> minedBlockObservers,
       final MessageValidatorFactory messageValidatorFactory,
-      final MessageFactory messageFactory,
-      final BftExtraDataCodec bftExtraDataCodec,
-      final QbftExtraDataProvider qbftExtraDataProvider) {
+      final MessageFactory messageFactory) {
     this.finalState = finalState;
     this.blockCreatorFactory = finalState.getBlockCreatorFactory();
-    this.protocolContext = protocolContext;
+    this.blockInterface = blockInterface;
     this.protocolSchedule = protocolSchedule;
     this.minedBlockObservers = minedBlockObservers;
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
-    this.bftExtraDataCodec = bftExtraDataCodec;
-    this.qbftExtraDataProvider = qbftExtraDataProvider;
   }
 
   /**
@@ -114,15 +104,13 @@ public class QbftRoundFactory {
     return new QbftRound(
         roundState,
         blockCreator,
-        protocolContext,
+        blockInterface,
         protocolSchedule,
         minedBlockObservers,
         finalState.getNodeKey(),
         messageFactory,
         messageTransmitter,
         finalState.getRoundTimer(),
-        bftExtraDataCodec,
-        qbftExtraDataProvider,
         parentHeader);
   }
 }
