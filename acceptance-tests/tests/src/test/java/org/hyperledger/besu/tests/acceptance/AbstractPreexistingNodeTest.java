@@ -33,7 +33,6 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -75,7 +74,7 @@ public class AbstractPreexistingNodeTest extends AcceptanceTestBase {
   private String getGenesisConfiguration() {
     try {
       return Resources.toString(
-          hostDataPath.resolve("genesis.json").toUri().toURL(), Charsets.UTF_8);
+          hostDataPath.resolve("genesis.json").toUri().toURL(), StandardCharsets.UTF_8);
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

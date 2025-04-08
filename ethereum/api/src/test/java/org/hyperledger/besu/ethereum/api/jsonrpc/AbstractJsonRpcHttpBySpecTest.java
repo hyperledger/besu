@@ -39,7 +39,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -115,7 +114,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
   }
 
   private void jsonRPCCall(final URL specFile) throws IOException {
-    final String json = Resources.toString(specFile, Charsets.UTF_8);
+    final String json = Resources.toString(specFile, StandardCharsets.UTF_8);
     final ObjectNode specNode = (ObjectNode) objectMapper.readTree(json);
     final String rawRequestBody = specNode.get("request").toString();
 
