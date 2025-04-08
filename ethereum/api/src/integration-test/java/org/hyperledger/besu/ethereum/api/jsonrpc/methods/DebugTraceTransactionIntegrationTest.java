@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import com.google.common.io.Resources;

@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import com.google.common.io.Resources;

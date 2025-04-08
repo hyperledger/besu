@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import com.google.common.io.Resources;
