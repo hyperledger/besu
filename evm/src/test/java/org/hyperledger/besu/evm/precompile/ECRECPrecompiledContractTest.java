@@ -354,7 +354,7 @@ class ECRECPrecompiledContractTest {
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expected =
         expectedResult == null ? Bytes.EMPTY : Bytes32.fromHexString(expectedResult);
-    assertThat(contract.computePrecompile(input, messageFrame).getOutput()).isEqualTo(expected);
+    assertThat(contract.computePrecompile(input, messageFrame).output()).isEqualTo(expected);
   }
 
   @ParameterizedTest
@@ -364,7 +364,7 @@ class ECRECPrecompiledContractTest {
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expected =
         expectedResult == null ? Bytes.EMPTY : Bytes32.fromHexString(expectedResult);
-    assertThat(contract.computePrecompile(input, messageFrame).getOutput()).isEqualTo(expected);
+    assertThat(contract.computePrecompile(input, messageFrame).output()).isEqualTo(expected);
   }
 
   @Test

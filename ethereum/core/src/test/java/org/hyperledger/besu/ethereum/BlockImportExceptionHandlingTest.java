@@ -120,8 +120,7 @@ class BlockImportExceptionHandlingTest {
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
     when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
     mainnetBlockValidator =
-        new MainnetBlockValidator(
-            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+        new MainnetBlockValidator(blockHeaderValidator, blockBodyValidator, blockProcessor);
   }
 
   @Test

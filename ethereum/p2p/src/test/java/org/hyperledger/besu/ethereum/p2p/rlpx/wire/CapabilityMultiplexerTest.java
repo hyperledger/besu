@@ -31,9 +31,9 @@ public class CapabilityMultiplexerTest {
   @Test
   public void multiplexer() {
     // Set up some capabilities
-    final Capability eth61 = Capability.create("eth", 61);
-    final Capability eth62 = Capability.create("eth", 62);
-    final Capability eth63 = Capability.create("eth", 63);
+    final Capability eth66 = Capability.create("eth", 66);
+    final Capability eth67 = Capability.create("eth", 67);
+    final Capability eth68 = Capability.create("eth", 68);
     final Capability shh1 = Capability.create("shh", 1);
     final Capability shh2 = Capability.create("shh", 2);
     final Capability bzz1 = Capability.create("bzz", 1);
@@ -42,20 +42,20 @@ public class CapabilityMultiplexerTest {
     // Define protocols with message spaces
     final List<SubProtocol> subProtocols =
         Arrays.asList(
-            MockSubProtocol.create(eth61.getName(), 8),
+            MockSubProtocol.create(eth66.getName(), 8),
             MockSubProtocol.create(shh1.getName(), 11),
             MockSubProtocol.create(bzz1.getName(), 25));
 
     // Calculate capabilities
-    final List<Capability> capSetA = Arrays.asList(eth61, eth62, bzz1, shh2);
-    final List<Capability> capSetB = Arrays.asList(eth61, eth62, eth63, bzz1, shh1, fake);
+    final List<Capability> capSetA = Arrays.asList(eth66, eth67, bzz1, shh2);
+    final List<Capability> capSetB = Arrays.asList(eth66, eth67, eth68, bzz1, shh1, fake);
     final CapabilityMultiplexer multiplexerA =
         new CapabilityMultiplexer(subProtocols, capSetA, capSetB);
     final CapabilityMultiplexer multiplexerB =
         new CapabilityMultiplexer(subProtocols, capSetB, capSetA);
 
     // Check expected overlap
-    final Set<Capability> expectedCaps = new HashSet<>(Arrays.asList(eth62, bzz1));
+    final Set<Capability> expectedCaps = new HashSet<>(Arrays.asList(eth67, bzz1));
     assertThat(multiplexerA.getAgreedCapabilities()).isEqualTo(expectedCaps);
     assertThat(multiplexerB.getAgreedCapabilities()).isEqualTo(expectedCaps);
 
@@ -65,12 +65,12 @@ public class CapabilityMultiplexerTest {
     final MessageData ethMessage = new RawMessage(ethCode, ethData);
     // Check offset
     final int expectedOffset = CapabilityMultiplexer.WIRE_PROTOCOL_MESSAGE_SPACE + 25;
-    assertThat(multiplexerA.multiplex(eth62, ethMessage).getCode())
+    assertThat(multiplexerA.multiplex(eth67, ethMessage).getCode())
         .isEqualTo(ethCode + expectedOffset);
-    assertThat(multiplexerB.multiplex(eth62, ethMessage).getCode())
+    assertThat(multiplexerB.multiplex(eth67, ethMessage).getCode())
         .isEqualTo(ethCode + expectedOffset);
     // Check data is unchanged
-    final Bytes multiplexedData = multiplexerA.multiplex(eth62, ethMessage).getData();
+    final Bytes multiplexedData = multiplexerA.multiplex(eth67, ethMessage).getData();
     assertThat(multiplexedData).isEqualTo(ethData);
 
     // Demultiplex and check value
@@ -79,11 +79,11 @@ public class CapabilityMultiplexerTest {
     final Bytes demultiplexedData = ethMessage.getData();
     // Check returned result
     assertThat(demultiplexed.getMessage().getCode()).isEqualTo(ethCode);
-    assertThat(demultiplexed.getCapability()).isEqualTo(eth62);
+    assertThat(demultiplexed.getCapability()).isEqualTo(eth67);
     assertThat(demultiplexedData).isEqualTo(ethData);
     demultiplexed = multiplexerB.demultiplex(multiplexedEthMessage);
     assertThat(demultiplexed.getMessage().getCode()).isEqualTo(ethCode);
-    assertThat(demultiplexed.getCapability()).isEqualTo(eth62);
+    assertThat(demultiplexed.getCapability()).isEqualTo(eth67);
     assertThat(demultiplexedData).isEqualTo(ethData);
   }
 }
