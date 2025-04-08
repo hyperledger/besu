@@ -30,16 +30,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
-  "type",
   "from",
-  "to",
-  "value",
   "gas",
   "gasUsed",
+  "to",
   "input",
   "output",
+  "value",
   "error",
-  "revertReason"
+  "revertReason",
+  "type"
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DebugCallTracerResult implements DebugTracerResult {
@@ -69,6 +69,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
       this.to = tx.getTo().map(Bytes::toHexString).orElse(null);
       this.type = "CALL";
       this.input = payload == null ? "0x" : payload.toHexString();
+      this.from = tx.getSender().toHexString();
 
       // check and set revert error and reason
       if (!transactionTrace.getTraceFrames().isEmpty()
