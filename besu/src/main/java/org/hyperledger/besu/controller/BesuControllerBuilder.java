@@ -642,8 +642,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             consensusContext,
             besuComponent
                 .map(BesuComponent::getBesuPluginContext)
-                // TODO: can we orElseThrow here and not break tests?
-                // plugin context should be present at runtime, only absent in test cases
                 .orElse(new BesuPluginContextImpl()));
     validateContext(protocolContext);
 
