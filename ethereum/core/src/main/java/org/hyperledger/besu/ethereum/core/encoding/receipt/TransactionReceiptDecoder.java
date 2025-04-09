@@ -51,27 +51,47 @@ public class TransactionReceiptDecoder {
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
     RLPInput input = rlpInput;
     TransactionType transactionType = TransactionType.FRONTIER;
+    boolean isTypedReceipt = false;
     if (!rlpInput.nextIsList()) {
       final Bytes typedTransactionReceiptBytes = input.readBytes();
       transactionType = TransactionType.of(typedTransactionReceiptBytes.get(0));
       input = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
+      // if the first byte is transaction type, then it is not EIP-7642 receipt
+      isTypedReceipt = true;
     }
 
     input.enterList();
-    // Get the first element to check later to determine the
-    // correct transaction receipt encoding to use.
+
     final RLPInput firstElement = input.readAsRlp();
-    final long cumulativeGas = input.readLongScalar();
+    final RLPInput secondElement = input.readAsRlp();
 
     LogsBloomFilter bloomFilter = null;
-
-    final boolean hasLogs = !input.nextIsList() && input.nextSize() == LogsBloomFilter.BYTE_SIZE;
-    if (hasLogs) {
+    final boolean hasBloomFilter =
+        !input.nextIsList() && input.nextSize() == LogsBloomFilter.BYTE_SIZE;
+    if (hasBloomFilter) {
       // The logs below will populate the bloom filter upon construction.
       bloomFilter = LogsBloomFilter.readFrom(input);
     }
+
+    final long cumulativeGas;
+    final RLPInput statusOrStateRoot;
+    boolean isEip7642Receipt = !hasBloomFilter && !input.nextIsList();
+    if (isEip7642Receipt) {
+      if (isTypedReceipt) {
+        throw new RLPException("Receipt is EIP-7642 but has transaction type");
+      }
+      int transactionByte = firstElement.readIntScalar();
+      transactionType =
+          transactionByte == 0x00 ? TransactionType.FRONTIER : TransactionType.of(transactionByte);
+      statusOrStateRoot = secondElement;
+      cumulativeGas = input.readLongScalar();
+    } else {
+      statusOrStateRoot = firstElement;
+      cumulativeGas = secondElement.readLongScalar();
+    }
+
     // TODO consider validating that the logs and bloom filter match.
-    final boolean compacted = !hasLogs;
+    final boolean compacted = !hasBloomFilter && !isEip7642Receipt;
     final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, compacted));
     if (compacted) {
       bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
@@ -87,16 +107,16 @@ public class TransactionReceiptDecoder {
       revertReason = Optional.of(input.readBytes());
     }
 
-    // Status code-encoded transaction receipts have a single
-    // byte for success (0x01) or failure (0x80).
-    if (firstElement.raw().size() == 1) {
-      final int status = firstElement.readIntScalar();
-      input.leaveList();
+    input.leaveList();
+
+    // Status code-encoded transaction receipts have a single byte for success (0x01) or failure
+    // (0x80).
+    if (statusOrStateRoot.raw().size() == 1) {
+      final int status = statusOrStateRoot.readIntScalar();
       return new TransactionReceipt(
           transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
     } else {
-      final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
-      input.leaveList();
+      final Hash stateRoot = Hash.wrap(statusOrStateRoot.readBytes32());
       return new TransactionReceipt(
           transactionType, stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
     }

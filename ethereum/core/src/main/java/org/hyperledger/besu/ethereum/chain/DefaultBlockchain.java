@@ -301,6 +301,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public Optional<Hash> getEarliest() {
+    return blockchainStorage.getEarliest();
+  }
+
+  @Override
   public Hash getChainHeadHash() {
     return chainHeader.getHash();
   }
@@ -788,6 +793,12 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.commit();
   }
 
+  public void setEarliest(final Hash blockHash) {
+    final var updater = blockchainStorage.updater();
+    updater.setEarliest(blockHash);
+    updater.commit();
+  }
+
   private long getFinalizedBlockNumber() {
     return this.getFinalized().flatMap(this::getBlockHeader).map(BlockHeader::getNumber).orElse(0L);
   }
@@ -833,6 +844,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       // Initialize blockchain store with genesis block.
       final BlockchainStorage.Updater updater = blockchainStorage.updater();
       final Hash hash = genesisBlock.getHash();
+      updater.setEarliest(hash);
       updater.putBlockHeader(hash, genesisBlock.getHeader());
       updater.putBlockBody(hash, genesisBlock.getBody());
       updater.putTransactionReceipts(hash, emptyList());
