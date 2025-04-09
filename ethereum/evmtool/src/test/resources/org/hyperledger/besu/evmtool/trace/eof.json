@@ -11,7 +11,7 @@
   ],
   "stdin": "",
   "stdout": [
-    {"pc":0,"section":0,"op":0,"gas":"0x2540be400","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"STOP"},
+    {"pc":19,"section":0,"op":0,"gas":"0x2540be400","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"functionDepth":1,"refund":0,"opName":"STOP"},
     {"stateRoot":"0x6545b5395cd8c5a67c953e264f70a11220fe5a87f4e9af92ae65891d99ae68c6","output":"0x","gasUsed":"0x0","pass":true,"fork":"Osaka"}
   ]
 }

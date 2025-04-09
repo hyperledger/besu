@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -99,7 +99,7 @@ public class Transaction
 
   private final SECPSignature signature;
 
-  private final Bytes payload;
+  private final Payload payload;
 
   private final Optional<List<AccessListEntry>> maybeAccessList;
 
@@ -195,7 +195,7 @@ public class Transaction
       final Optional<Address> to,
       final Wei value,
       final SECPSignature signature,
-      final Bytes payload,
+      final Payload payload,
       final Optional<List<AccessListEntry>> maybeAccessList,
       final Address sender,
       final Optional<BigInteger> chainId,
@@ -413,7 +413,12 @@ public class Transaction
    */
   @Override
   public Bytes getPayload() {
-    return payload;
+    return payload.getPayloadBytes();
+  }
+
+  @Override
+  public long getPayloadZeroBytes() {
+    return payload.getZeroBytesCount();
   }
 
   /**
@@ -423,7 +428,7 @@ public class Transaction
    */
   @Override
   public Optional<Bytes> getInit() {
-    return getTo().isPresent() ? Optional.empty() : Optional.of(payload);
+    return getTo().isPresent() ? Optional.empty() : Optional.of(payload.getPayloadBytes());
   }
 
   /**
@@ -433,7 +438,7 @@ public class Transaction
    */
   @Override
   public Optional<Bytes> getData() {
-    return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
+    return getTo().isPresent() ? Optional.of(payload.getPayloadBytes()) : Optional.empty();
   }
 
   @Override
@@ -613,11 +618,7 @@ public class Transaction
     size = bytes.size();
   }
 
-  /**
-   * Returns whether the transaction is a contract creation
-   *
-   * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
-   */
+  @Override
   public boolean isContractCreation() {
     return getTo().isEmpty();
   }
@@ -766,7 +767,7 @@ public class Transaction
       final long gasLimit,
       final Optional<Address> to,
       final Wei value,
-      final Bytes payload,
+      final Payload payload,
       final Optional<List<AccessListEntry>> accessList,
       final List<VersionedHash> versionedHashes,
       final Optional<List<CodeDelegation>> codeDelegationList,
@@ -786,7 +787,7 @@ public class Transaction
             gasLimit,
             to,
             value,
-            payload,
+            payload.getPayloadBytes(),
             accessList,
             versionedHashes,
             codeDelegationList,
@@ -807,7 +808,7 @@ public class Transaction
         gasLimit,
         to,
         value,
-        payload,
+        payload.getPayloadBytes(),
         maybeAccessList,
         versionedHashes.orElse(null),
         maybeCodeDelegationList,
@@ -1131,7 +1132,7 @@ public class Transaction
         gasLimit,
         to,
         value,
-        payload,
+        payload.getPayloadBytes(),
         signature,
         chainId);
   }
@@ -1272,7 +1273,7 @@ public class Transaction
             detachedTo,
             value,
             signature,
-            payload.copy(),
+            payload,
             detachedAccessList,
             sender,
             chainId,
@@ -1347,7 +1348,7 @@ public class Transaction
 
     protected SECPSignature signature;
 
-    protected Bytes payload;
+    protected Payload payload;
 
     protected Optional<List<AccessListEntry>> accessList = Optional.empty();
 
@@ -1439,7 +1440,7 @@ public class Transaction
     }
 
     public Builder payload(final Bytes payload) {
-      this.payload = payload;
+      this.payload = new Payload(payload);
       return this;
     }
 

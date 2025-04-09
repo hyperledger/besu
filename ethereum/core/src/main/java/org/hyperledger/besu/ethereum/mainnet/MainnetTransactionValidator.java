@@ -265,9 +265,9 @@ public class MainnetTransactionValidator implements TransactionValidator {
             gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize()));
     final long intrinsicGasCostOrFloor =
         Math.max(
-            gasCalculator.transactionIntrinsicGasCost(
-                transaction.getPayload(), transaction.isContractCreation(), baselineGas),
-            gasCalculator.transactionFloorCost(transaction.getPayload()));
+            gasCalculator.transactionIntrinsicGasCost(transaction, baselineGas),
+            gasCalculator.transactionFloorCost(
+                transaction.getPayload(), transaction.getPayloadZeroBytes()));
 
     if (Long.compareUnsigned(intrinsicGasCostOrFloor, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
