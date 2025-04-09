@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -44,6 +45,8 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -96,6 +99,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.protocolSchedule = protocolSchedule;
   }
 
+  private OperationTracer getBlockImportTracer(
+      final ServiceManager pluginContext, final ProcessableBlockHeader header) {
+
+    // if we have a BlockImportTracerProvider from pluginContext, use it.
+    return pluginContext
+        .getService(BlockImportTracerProvider.class)
+        .map(z -> z.getBlockImportTracer(header))
+        // otherwise return NO_TRACING
+        .orElse(OperationTracer.NO_TRACING);
+  }
+
   @Override
   public BlockProcessingResult processBlock(
       final ProtocolContext protocolContext,
@@ -138,7 +152,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader);
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
-            blockHeader, worldState, protocolSpec, blockHashLookup, OperationTracer.NO_TRACING);
+            blockHeader,
+            worldState,
+            protocolSpec,
+            blockHashLookup,
+            getBlockImportTracer(protocolContext.getPluginServiceManager(), blockHeader));
     protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
