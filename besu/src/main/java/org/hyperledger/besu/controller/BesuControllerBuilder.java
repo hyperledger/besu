@@ -1109,6 +1109,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
    * @param consensusContext the consensus context
+   * @param serviceManager plugin service manager
    * @return the protocol context
    */
   protected ProtocolContext createProtocolContext(

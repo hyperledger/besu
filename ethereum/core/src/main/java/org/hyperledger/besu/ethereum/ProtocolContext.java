@@ -41,6 +41,7 @@ public class ProtocolContext {
    * @param worldStateArchive the world state archive of the protocol context
    * @param consensusContext the consensus context
    * @param badBlockManager the bad block manager of the protocol context
+   * @param serviceManager plugin service manager
    */
   protected ProtocolContext(
       final MutableBlockchain blockchain,
@@ -151,6 +152,9 @@ public class ProtocolContext {
     private ConsensusContext consensusContext;
     private BadBlockManager badBlockManager = new BadBlockManager();
     private ServiceManager serviceManager = new ServiceManager.SimpleServiceManager();
+
+    /** Default constructor. linter requires javadoc. */
+    public Builder() {}
 
     /**
      * Sets the {@link MutableBlockchain} for the {@link ProtocolContext}.

@@ -59,6 +59,9 @@ public interface ServiceManager {
   class SimpleServiceManager implements ServiceManager {
     private final Map<Class<? extends BesuService>, BesuService> services = new HashMap<>();
 
+    /** default constructor. commented here to appease the linter. */
+    public SimpleServiceManager() {}
+
     @Override
     public <T extends BesuService> void addService(final Class<T> serviceType, final T service) {
       services.put(serviceType, service);
