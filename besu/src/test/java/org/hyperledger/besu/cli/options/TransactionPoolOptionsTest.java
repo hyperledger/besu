@@ -30,6 +30,7 @@ import org.hyperledger.besu.util.number.Percentage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -452,6 +453,40 @@ public class TransactionPoolOptionsTest
         "Invalid value for option '--tx-pool-min-score': '" + overflowMinScore + "' is not a byte",
         "--tx-pool-min-score",
         overflowMinScore);
+  }
+
+  @Test
+  public void defaultForgetEvictedTxsWithSequencedIsTrue() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isTrue(),
+        "--tx-pool",
+        SEQUENCED.name().toLowerCase(Locale.ROOT));
+  }
+
+  @Test
+  public void explicitlyDisablingForgetEvictedTxsWithSequenced() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isFalse(),
+        "--tx-pool",
+        SEQUENCED.name().toLowerCase(Locale.ROOT),
+        "--Xpeer-tracker-forget-evicted-txs=false");
+  }
+
+  @Test
+  public void defaultForgetEvictedTxsWithLayeredIsFalse() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isFalse(),
+        "--tx-pool",
+        LAYERED.name().toLowerCase(Locale.ROOT));
+  }
+
+  @Test
+  public void explicitlyEnablingForgetEvictedTxsWithLayered() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isTrue(),
+        "--tx-pool",
+        LAYERED.name().toLowerCase(Locale.ROOT),
+        "--Xpeer-tracker-forget-evicted-txs=true");
   }
 
   @Override
