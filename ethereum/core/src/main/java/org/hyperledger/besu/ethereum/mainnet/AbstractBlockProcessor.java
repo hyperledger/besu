@@ -47,6 +47,7 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -99,7 +100,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.protocolSchedule = protocolSchedule;
   }
 
-  private OperationTracer getBlockImportTracer(
+  private BlockAwareOperationTracer getBlockImportTracer(
       final ServiceManager pluginContext, final ProcessableBlockHeader header) {
 
     // if we have a BlockImportTracerProvider from pluginContext, use it.
@@ -107,7 +108,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         .flatMap(serviceManager -> serviceManager.getService(BlockImportTracerProvider.class))
         .map(z -> z.getBlockImportTracer(header))
         // otherwise return NO_TRACING
-        .orElse(OperationTracer.NO_TRACING);
+        .orElse(BlockAwareOperationTracer.NO_TRACING);
   }
 
   @Override
