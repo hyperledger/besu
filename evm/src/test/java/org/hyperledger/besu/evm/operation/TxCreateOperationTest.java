@@ -62,7 +62,7 @@ class TxCreateOperationTest {
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
   public static final Address SENDER_ADDRESS = Address.fromHexString(SENDER);
   public static final Address CONTRACT_ZERO_ADDRESS =
-      TxCreateOperation.calculateEOFAddress(SENDER_ADDRESS, Bytes32.ZERO);
+      EOFCreateOperation.calculateEOFAddress(SENDER_ADDRESS, Bytes32.ZERO);
 
   //  private static final int SHANGHAI_CREATE_GAS = 41240;
 
@@ -248,7 +248,7 @@ class TxCreateOperationTest {
 
   private MessageFrame testMemoryFrame(
       final Code code, final Bytes initData, final Bytes... txInitCode) {
-    Address contractAddress = TxCreateOperation.calculateEOFAddress(SENDER_ADDRESS, Bytes32.ZERO);
+    Address contractAddress = EOFCreateOperation.calculateEOFAddress(SENDER_ADDRESS, Bytes32.ZERO);
     return MessageFrame.builder()
         .type(MessageFrame.Type.MESSAGE_CALL)
         .contract(contractAddress)

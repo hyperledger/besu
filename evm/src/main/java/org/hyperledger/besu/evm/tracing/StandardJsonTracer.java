@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
-import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.code.OpcodeInfo;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;

@@ -58,9 +58,20 @@ public class EOFCreateOperation extends AbstractCreateOperation {
 
   @Override
   public Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
-    final Bytes32 sender = Bytes32.leftPad(frame.getRecipientAddress());
-    final Bytes32 salt = getSalt(frame);
-    final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt));
+    return calculateEOFAddress(frame.getRecipientAddress(), getSalt(frame));
+  }
+
+  /**
+   * Calculates the address for TXCREATE and EOFCREATE. `keccak256(0xff || address32 || salt)` or,
+   * with 20 byte address `keccak256(0xff000000000000000000000000 || address || salt)`
+   *
+   * @param sender the sender address
+   * @param salt the salt
+   * @return the contract address
+   */
+  public static Address calculateEOFAddress(final Address sender, final Bytes32 salt) {
+    final Bytes32 senderASE = Bytes32.leftPad(sender);
+    final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, senderASE, salt));
     return Address.extract(hash);
   }
 

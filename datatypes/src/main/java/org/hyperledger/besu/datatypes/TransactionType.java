@@ -89,7 +89,8 @@ public enum TransactionType {
               TransactionType.ACCESS_LIST,
               TransactionType.EIP1559,
               TransactionType.BLOB,
-              TransactionType.DELEGATE_CODE
+              TransactionType.DELEGATE_CODE,
+              TransactionType.INITCODE,
             })
         .filter(transactionType -> transactionType.typeValue == serializedTypeValue)
         .findFirst()

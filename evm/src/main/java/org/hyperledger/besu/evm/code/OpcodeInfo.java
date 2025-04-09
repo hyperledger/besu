@@ -583,7 +583,7 @@ public record OpcodeInfo(
     OpcodeInfo.unallocatedOpcode(0xea),
     OpcodeInfo.unallocatedOpcode(0xeb),
     OpcodeInfo.unallocatedOpcode(0xec),
-    OpcodeInfo.unallocatedOpcode(0xed),
+    OpcodeInfo.validOpcode("TXCREATE", 0xed, 5, 1, 1),
     OpcodeInfo.unallocatedOpcode(0xee),
     OpcodeInfo.unallocatedOpcode(0xef),
     OpcodeInfo.validOpcode("CREATE", 0xf0, 3, 1, 1),

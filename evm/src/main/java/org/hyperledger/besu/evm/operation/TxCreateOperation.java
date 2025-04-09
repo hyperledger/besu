@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
@@ -35,8 +34,6 @@ public class TxCreateOperation extends AbstractCreateOperation {
 
   /** Opcode 0xEC for operation TXCREATE */
   public static final int OPCODE = 0xed;
-
-  private static final Bytes PREFIX = Bytes.fromHexString("0xFF");
 
   /**
    * Instantiates a new TXCreate operation.
@@ -68,23 +65,7 @@ public class TxCreateOperation extends AbstractCreateOperation {
 
   @Override
   public Address generateTargetContractAddress(final MessageFrame frame, final Code _code) {
-    final Address sender = frame.getRecipientAddress();
-    final Bytes32 salt = getSalt(frame);
-    final Address address = calculateEOFAddress(sender, salt);
-    frame.warmUpAddress(address);
-    return address;
-  }
-
-  /**
-   * Calculates the address for TXCREATE and EOFCREATE. `keccak256(0xff || address || salt)`
-   *
-   * @param sender the sender address
-   * @param salt the salt
-   * @return the contract address
-   */
-  public static Address calculateEOFAddress(final Address sender, final Bytes32 salt) {
-    final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt));
-    return Address.extract(hash);
+    return EOFCreateOperation.calculateEOFAddress(frame.getRecipientAddress(), getSalt(frame));
   }
 
   @Override
@@ -107,11 +88,6 @@ public class TxCreateOperation extends AbstractCreateOperation {
     final long inputOffset = getInputOffset(frame);
     final long inputSize = getInputSize(frame);
     return frame.readMemory(inputOffset, inputSize);
-  }
-
-  @Override
-  protected int getPcIncrement() {
-    return 2;
   }
 
   @Override

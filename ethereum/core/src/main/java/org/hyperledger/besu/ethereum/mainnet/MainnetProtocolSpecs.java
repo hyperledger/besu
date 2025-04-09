@@ -84,9 +84,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonArray;
@@ -972,6 +972,24 @@ public abstract class MainnetProtocolSpecs {
     final java.util.function.Supplier<GasCalculator> osakaGasCalcSupplier =
         () -> new OsakaGasCalculator(targetBlobsPerBlock);
     return protocolSpecBuilder
+        // EIP-7873 InitcodeTransaction type
+        .transactionValidatorFactoryBuilder(
+            (evm, gasLimitCalculator, feeMarket) ->
+                new TransactionValidatorFactory(
+                    evm.getGasCalculator(),
+                    gasLimitCalculator,
+                    feeMarket,
+                    true,
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559,
+                        TransactionType.BLOB,
+                        TransactionType.DELEGATE_CODE,
+                        TransactionType.INITCODE),
+                    evm.getMaxInitcodeSize()))
+
         // EIP-7692 EOF v1 Gas calculator
         .gasCalculator(osakaGasCalcSupplier)
         .gasLimitCalculatorBuilder(
