@@ -6,6 +6,7 @@
     "--trace.memory",
     "--trace.stack",
     "--trace.returndata",
+    "--trace.noeip-3155",
     "--notime"
   ],
   "stdin": {
@@ -64,19 +65,19 @@
     }
   },
   "stdout": [
-    {"pc":0,"op":96,"gas":"0x79bff8","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
-    {"pc":2,"op":64,"gas":"0x79bff5","gasCost":"0x14","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"BLOCKHASH"},
-    {"pc":3,"op":96,"gas":"0x79bfe1","gasCost":"0x3","memSize":0,"stack":["0x44852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d"],"depth":1,"refund":0,"opName":"PUSH1"},
-    {"pc":5,"op":85,"gas":"0x79bfde","gasCost":"0x5654","memSize":0,"stack":["0x44852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d","0x0"],"depth":1,"refund":0,"opName":"SSTORE"},
-    {"pc":6,"op":96,"gas":"0x79698a","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
-    {"pc":8,"op":64,"gas":"0x796987","gasCost":"0x14","memSize":0,"stack":["0x1"],"depth":1,"refund":0,"opName":"BLOCKHASH"},
-    {"pc":9,"op":96,"gas":"0x796973","gasCost":"0x3","memSize":0,"stack":["0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6"],"depth":1,"refund":0,"opName":"PUSH1"},
-    {"pc":11,"op":85,"gas":"0x796970","gasCost":"0x5654","memSize":0,"stack":["0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6","0x1"],"depth":1,"refund":0,"opName":"SSTORE"},
-    {"pc":12,"op":67,"gas":"0x79131c","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"NUMBER"},
-    {"pc":13,"op":64,"gas":"0x79131a","gasCost":"0x14","memSize":0,"stack":["0x2"],"depth":1,"refund":0,"opName":"BLOCKHASH"},
-    {"pc":14,"op":96,"gas":"0x791306","gasCost":"0x3","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH1"},
-    {"pc":16,"op":85,"gas":"0x791303","gasCost":"0x898","memSize":0,"stack":["0x0","0x2"],"depth":1,"refund":0,"opName":"SSTORE"},
-    {"pc":17,"op":0,"gas":"0x790a6b","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"STOP"},
-    {"output":"","gasUsed":"0x10795","test":"shanghai-blockhash","fork":"Shanghai","d":0,"g":0,"v":0,"postHash":"0xb3967c897314312cf275055d754c6742d351a2a4bcf0121ed2f896971bf56563","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
+    {"pc":0,"op":"0x60","gas":7979000,"gasCost":3,"memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":2,"op":"0x40","gas":7978997,"gasCost":20,"memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"BLOCKHASH"},
+    {"pc":3,"op":"0x60","gas":7978977,"gasCost":3,"memSize":0,"stack":["0x44852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":5,"op":"0x55","gas":7978974,"gasCost":22100,"memSize":0,"stack":["0x44852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d","0x0"],"depth":1,"refund":0,"opName":"SSTORE"},
+    {"pc":6,"op":"0x60","gas":7956874,"gasCost":3,"memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":8,"op":"0x40","gas":7956871,"gasCost":20,"memSize":0,"stack":["0x1"],"depth":1,"refund":0,"opName":"BLOCKHASH"},
+    {"pc":9,"op":"0x60","gas":7956851,"gasCost":3,"memSize":0,"stack":["0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":11,"op":"0x55","gas":7956848,"gasCost":22100,"memSize":0,"stack":["0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6","0x1"],"depth":1,"refund":0,"opName":"SSTORE"},
+    {"pc":12,"op":"0x43","gas":7934748,"gasCost":2,"memSize":0,"stack":[],"depth":1,"refund":0,"opName":"NUMBER"},
+    {"pc":13,"op":"0x40","gas":7934746,"gasCost":20,"memSize":0,"stack":["0x2"],"depth":1,"refund":0,"opName":"BLOCKHASH"},
+    {"pc":14,"op":"0x60","gas":7934726,"gasCost":3,"memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":16,"op":"0x55","gas":7934723,"gasCost":2200,"memSize":0,"stack":["0x0","0x2"],"depth":1,"refund":0,"opName":"SSTORE"},
+    {"pc":17,"op":"0x00","gas":7932523,"gasCost":0,"memSize":0,"stack":[],"depth":1,"refund":0,"opName":"STOP"},
+    {"output":"","gasUsed":67477,"test":"shanghai-blockhash","fork":"Shanghai","d":0,"g":0,"v":0,"stateRoot":"0xb3967c897314312cf275055d754c6742d351a2a4bcf0121ed2f896971bf56563","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
   ]
 }
