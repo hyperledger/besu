@@ -155,7 +155,7 @@ class EVMExecutorTest {
   void giantExecuteStack() {
     SimpleWorld simpleWorld = createSimpleWorld();
 
-    var tracer = new StandardJsonTracer(System.out, false, true, true, false);
+    var tracer = new StandardJsonTracer(System.out, false, true, true, false, false);
     var result =
         EVMExecutor.evm(EvmSpecVersion.SHANGHAI)
             .messageFrameType(MessageFrame.Type.CONTRACT_CREATION)
