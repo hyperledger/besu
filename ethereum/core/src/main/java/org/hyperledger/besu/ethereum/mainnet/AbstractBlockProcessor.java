@@ -103,8 +103,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final ServiceManager pluginContext, final ProcessableBlockHeader header) {
 
     // if we have a BlockImportTracerProvider from pluginContext, use it.
-    return pluginContext
-        .getService(BlockImportTracerProvider.class)
+    return Optional.ofNullable(pluginContext)
+        .flatMap(serviceManager -> serviceManager.getService(BlockImportTracerProvider.class))
         .map(z -> z.getBlockImportTracer(header))
         // otherwise return NO_TRACING
         .orElse(OperationTracer.NO_TRACING);
