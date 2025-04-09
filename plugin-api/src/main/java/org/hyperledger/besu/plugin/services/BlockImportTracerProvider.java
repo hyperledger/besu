@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services;
 
-import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 /** The Block import tracer provider. */
@@ -26,5 +26,5 @@ public interface BlockImportTracerProvider extends BesuService {
    * @param blockHeader header of the block which will be imported
    * @return the block aware operation tracer
    */
-  BlockAwareOperationTracer getBlockImportTracer(ProcessableBlockHeader blockHeader);
+  BlockAwareOperationTracer getBlockImportTracer(BlockHeader blockHeader);
 }

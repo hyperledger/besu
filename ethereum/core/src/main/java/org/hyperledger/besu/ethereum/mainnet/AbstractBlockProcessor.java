@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -101,7 +100,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
-      final ServiceManager pluginContext, final ProcessableBlockHeader header) {
+      final ServiceManager pluginContext, final BlockHeader header) {
 
     // if we have a BlockImportTracerProvider from pluginContext, use it.
     return Optional.ofNullable(pluginContext)
