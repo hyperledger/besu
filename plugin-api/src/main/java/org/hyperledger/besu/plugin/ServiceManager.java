@@ -55,7 +55,7 @@ public interface ServiceManager {
    */
   <T extends BesuService> Optional<T> getService(Class<T> serviceType);
 
-  /** A toy implementation of ServiceManager, suitable for test and mocks. */
+  /** A basic implementation of ServiceManager, suitable for tests. */
   class SimpleServiceManager implements ServiceManager {
     private final Map<Class<? extends BesuService>, BesuService> services = new HashMap<>();
 
