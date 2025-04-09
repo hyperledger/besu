@@ -21,14 +21,13 @@ import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupC
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-public class BftVanityDataValidationRuleTest implements ConsensusTestBase {
+public class BftVanityDataValidationRuleTest {
   private final BftVanityDataValidationRule validationRule = new BftVanityDataValidationRule();
   private final BlockHeader blockHeader = mock(BlockHeader.class);
 
@@ -45,7 +44,9 @@ public class BftVanityDataValidationRuleTest implements ConsensusTestBase {
         new BftExtraData(Bytes.wrap(new byte[extraDataSize]), emptyList(), empty(), 0, emptyList());
 
     final ProtocolContext context =
-        forConsensusContext(null, null, setupContextWithBftExtraData(emptyList(), extraData));
+        new ProtocolContext.Builder()
+            .withConsensusContext(setupContextWithBftExtraData(emptyList(), extraData))
+            .build();
     return validationRule.validate(blockHeader, null, context);
   }
 }

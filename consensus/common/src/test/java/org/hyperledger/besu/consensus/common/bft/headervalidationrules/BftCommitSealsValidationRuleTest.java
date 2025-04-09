@@ -23,7 +23,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -40,7 +39,7 @@ import java.util.stream.IntStream;
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
 
-public class BftCommitSealsValidationRuleTest implements ConsensusTestBase {
+public class BftCommitSealsValidationRuleTest {
 
   private final BlockHeader blockHeader = mock(BlockHeader.class);
   private final BftCommitSealsValidationRule commitSealsValidationRule =
@@ -58,7 +57,8 @@ public class BftCommitSealsValidationRuleTest implements ConsensusTestBase {
             .collect(Collectors.toList());
 
     final BftContext bftContext = setupContextWithValidators(committerAddresses);
-    final ProtocolContext context = forConsensusContext(null, null, bftContext);
+    final ProtocolContext context =
+        new ProtocolContext.Builder().withConsensusContext(bftContext).build();
     when(bftContext.getBlockInterface().getCommitters(any())).thenReturn(committerAddresses);
 
     assertThat(commitSealsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -72,7 +72,8 @@ public class BftCommitSealsValidationRuleTest implements ConsensusTestBase {
 
     final List<Address> validators = singletonList(committerAddress);
     final BftContext bftContext = setupContextWithValidators(validators);
-    final ProtocolContext context = forConsensusContext(null, null, bftContext);
+    final ProtocolContext context =
+        new ProtocolContext.Builder().withConsensusContext(bftContext).build();
     when(bftContext.getBlockInterface().getCommitters(any())).thenReturn(emptyList());
 
     assertThat(commitSealsValidationRule.validate(blockHeader, null, context)).isFalse();
@@ -89,7 +90,8 @@ public class BftCommitSealsValidationRuleTest implements ConsensusTestBase {
     final NodeKey nonValidatorNodeKey = NodeKeyUtils.generate();
 
     final BftContext bftContext = setupContextWithValidators(validators);
-    final ProtocolContext context = forConsensusContext(null, null, bftContext);
+    final ProtocolContext context =
+        new ProtocolContext.Builder().withConsensusContext(bftContext).build();
     when(bftContext.getBlockInterface().getCommitters(any()))
         .thenReturn(singletonList(Util.publicKeyToAddress(nonValidatorNodeKey.getPublicKey())));
 
@@ -136,7 +138,8 @@ public class BftCommitSealsValidationRuleTest implements ConsensusTestBase {
     final List<Address> validators = singletonList(committerAddress);
 
     final BftContext bftContext = setupContextWithValidators(validators);
-    final ProtocolContext context = forConsensusContext(null, null, bftContext);
+    final ProtocolContext context =
+        new ProtocolContext.Builder().withConsensusContext(bftContext).build();
     when(bftContext.getBlockInterface().getCommitters(any()))
         .thenReturn(List.of(committerAddress, committerAddress));
 
@@ -155,7 +158,8 @@ public class BftCommitSealsValidationRuleTest implements ConsensusTestBase {
     Collections.sort(validators);
 
     final BftContext bftContext = setupContextWithValidators(validators);
-    final ProtocolContext context = forConsensusContext(null, null, bftContext);
+    final ProtocolContext context =
+        new ProtocolContext.Builder().withConsensusContext(bftContext).build();
     when(bftContext.getBlockInterface().getCommitters(any()))
         .thenReturn(validators.subList(0, committerCount));
 

@@ -28,7 +28,6 @@ import org.hyperledger.besu.config.JsonCliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -62,7 +61,7 @@ import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class CliqueBlockMinerTest implements ConsensusTestBase {
+class CliqueBlockMinerTest {
 
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
 
@@ -85,7 +84,8 @@ class CliqueBlockMinerTest implements ConsensusTestBase {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(List.of(Address.ZERO));
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
-    final ProtocolContext protocolContext = forConsensusContext(null, null, cliqueContext);
+    final ProtocolContext protocolContext =
+        new ProtocolContext.Builder().withConsensusContext(cliqueContext).build();
 
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =
@@ -140,7 +140,8 @@ class CliqueBlockMinerTest implements ConsensusTestBase {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(List.of(Address.ZERO));
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
-    final ProtocolContext protocolContext = forConsensusContext(null, null, cliqueContext);
+    final ProtocolContext protocolContext =
+        new ProtocolContext.Builder().withConsensusContext(cliqueContext).build();
 
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =

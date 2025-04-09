@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -41,7 +40,7 @@ import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class CliqueDifficultyValidationRuleTest implements ConsensusTestBase {
+public class CliqueDifficultyValidationRuleTest {
 
   private final KeyPair proposerKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private final List<Address> validatorList = Lists.newArrayList();
@@ -60,7 +59,8 @@ public class CliqueDifficultyValidationRuleTest implements ConsensusTestBase {
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     CliqueHelpers.setCliqueContext(cliqueContext);
-    cliqueProtocolContext = forConsensusContext(null, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext.Builder().withConsensusContext(cliqueContext).build();
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 

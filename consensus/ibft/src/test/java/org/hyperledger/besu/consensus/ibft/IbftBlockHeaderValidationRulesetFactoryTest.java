@@ -22,7 +22,6 @@ import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupC
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -46,11 +45,13 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-public class IbftBlockHeaderValidationRulesetFactoryTest implements ConsensusTestBase {
+public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
-    return forConsensusContext(
-        null, null, setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()));
+    return new ProtocolContext.Builder()
+        .withConsensusContext(
+            setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()))
+        .build();
   }
 
   @Test

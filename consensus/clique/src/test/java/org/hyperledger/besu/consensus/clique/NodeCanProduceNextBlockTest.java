@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -43,7 +42,7 @@ import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class NodeCanProduceNextBlockTest implements ConsensusTestBase {
+public class NodeCanProduceNextBlockTest {
 
   private final KeyPair proposerKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private Address localAddress;
@@ -80,7 +79,11 @@ public class NodeCanProduceNextBlockTest implements ConsensusTestBase {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = forConsensusContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withConsensusContext(cliqueContext)
+            .build();
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -104,7 +107,11 @@ public class NodeCanProduceNextBlockTest implements ConsensusTestBase {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = forConsensusContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withConsensusContext(cliqueContext)
+            .build();
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -137,7 +144,11 @@ public class NodeCanProduceNextBlockTest implements ConsensusTestBase {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = forConsensusContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withConsensusContext(cliqueContext)
+            .build();
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -166,7 +177,11 @@ public class NodeCanProduceNextBlockTest implements ConsensusTestBase {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = forConsensusContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withConsensusContext(cliqueContext)
+            .build();
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -210,7 +225,11 @@ public class NodeCanProduceNextBlockTest implements ConsensusTestBase {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = forConsensusContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withConsensusContext(cliqueContext)
+            .build();
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(otherNodeKeyPair);
@@ -238,7 +257,11 @@ public class NodeCanProduceNextBlockTest implements ConsensusTestBase {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = forConsensusContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withConsensusContext(cliqueContext)
+            .build();
 
     headerBuilder.parentHash(Hash.ZERO).number(3);
     final BlockHeader parentHeader =
@@ -261,7 +284,11 @@ public class NodeCanProduceNextBlockTest implements ConsensusTestBase {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = forConsensusContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withConsensusContext(cliqueContext)
+            .build();
 
     headerBuilder.parentHash(Hash.ZERO).number(3);
     final BlockHeader parentHeader = headerBuilder.buildHeader();

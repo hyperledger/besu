@@ -37,7 +37,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
@@ -102,7 +101,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class IbftBlockHeightManagerTest implements ConsensusTestBase {
+public class IbftBlockHeightManagerTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
@@ -174,7 +173,11 @@ public class IbftBlockHeightManagerTest implements ConsensusTestBase {
         .when(messageValidatorFactory.createMessageValidator(any(), any()))
         .thenReturn(messageValidator);
 
-    protocolContext = forConsensusContext(blockchain, null, setupContextWithValidators(validators));
+    protocolContext =
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withConsensusContext(setupContextWithValidators(validators))
+            .build();
 
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(

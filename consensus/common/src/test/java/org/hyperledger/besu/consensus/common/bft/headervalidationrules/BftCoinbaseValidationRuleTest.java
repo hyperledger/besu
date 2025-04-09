@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -32,7 +31,7 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
 
-public class BftCoinbaseValidationRuleTest implements ConsensusTestBase {
+public class BftCoinbaseValidationRuleTest {
 
   public static BlockHeader createProposedBlockHeader(final NodeKey proposerNodeKey) {
 
@@ -51,7 +50,9 @@ public class BftCoinbaseValidationRuleTest implements ConsensusTestBase {
     final List<Address> validators = Lists.newArrayList(proposerAddress);
 
     final ProtocolContext context =
-        forConsensusContext(null, null, setupContextWithValidators(validators));
+        new ProtocolContext.Builder()
+            .withConsensusContext(setupContextWithValidators(validators))
+            .build();
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
@@ -71,7 +72,9 @@ public class BftCoinbaseValidationRuleTest implements ConsensusTestBase {
     final List<Address> validators = Lists.newArrayList(otherValidatorNodeAddress);
 
     final ProtocolContext context =
-        forConsensusContext(null, null, setupContextWithValidators(validators));
+        new ProtocolContext.Builder()
+            .withConsensusContext(setupContextWithValidators(validators))
+            .build();
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 

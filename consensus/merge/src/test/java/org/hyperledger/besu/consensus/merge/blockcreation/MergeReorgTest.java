@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.MergeConfiguration;
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.datatypes.Address;
@@ -61,7 +60,7 @@ import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class MergeReorgTest implements MergeGenesisConfigHelper, ConsensusTestBase {
+public class MergeReorgTest implements MergeGenesisConfigHelper {
 
   @Mock TransactionPool mockTransactionPool;
 
@@ -76,7 +75,11 @@ public class MergeReorgTest implements MergeGenesisConfigHelper, ConsensusTestBa
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
   private final EthScheduler ethScheduler = new DeterministicEthScheduler();
   private final ProtocolContext protocolContext =
-      forConsensusContext(blockchain, worldStateArchive, mergeContext);
+      new ProtocolContext.Builder()
+          .withBlockchain(blockchain)
+          .withWorldStateArchive(worldStateArchive)
+          .withConsensusContext(mergeContext)
+          .build();
 
   private final Address coinbase = genesisAllocations(getPowGenesisConfig()).findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();

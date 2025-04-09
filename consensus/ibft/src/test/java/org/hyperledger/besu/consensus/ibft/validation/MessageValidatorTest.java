@@ -29,7 +29,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
@@ -42,11 +41,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +57,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class MessageValidatorTest implements ConsensusTestBase {
+public class MessageValidatorTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
@@ -100,9 +97,7 @@ public class MessageValidatorTest implements ConsensusTestBase {
     BftContext mockBftCtx = mock(BftContext.class);
     lenient().when(mockBftCtx.as(Mockito.any())).thenReturn(mockBftCtx);
 
-    protocolContext =
-        forConsensusContext(
-            mock(MutableBlockchain.class), mock(WorldStateArchive.class), mockBftCtx);
+    protocolContext = new ProtocolContext.Builder().withConsensusContext(mockBftCtx).build();
 
     lenient()
         .when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))

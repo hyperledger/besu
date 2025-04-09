@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -41,14 +40,14 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
-public class QbftBlockHeaderValidationRulesetFactoryTest implements ConsensusTestBase {
+public class QbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
-    return forConsensusContext(
-        null,
-        null,
-        setupContextWithBftExtraDataEncoder(
-            BftContext.class, validators, new QbftExtraDataCodec()));
+    return new ProtocolContext.Builder()
+        .withConsensusContext(
+            setupContextWithBftExtraDataEncoder(
+                BftContext.class, validators, new QbftExtraDataCodec()))
+        .build();
   }
 
   @Test

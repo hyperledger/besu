@@ -31,7 +31,6 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
-import org.hyperledger.besu.consensus.common.bft.ConsensusTestBase;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -135,7 +134,7 @@ public class IbftProtocolScheduleTest {
   }
 
   @Module
-  static class IbftProtocolScheduleModule implements ConsensusTestBase {
+  static class IbftProtocolScheduleModule {
     @Provides
     @Singleton
     NodeKey nodeKey() {
@@ -169,10 +168,10 @@ public class IbftProtocolScheduleTest {
     @Provides
     ProtocolContext protocolContext(
         final List<Address> validators, final BftExtraDataCodec bftExtraDataCodec) {
-      return forConsensusContext(
-          null,
-          null,
-          setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec));
+      return new ProtocolContext.Builder()
+          .withConsensusContext(
+              setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec))
+          .build();
     }
   }
 
