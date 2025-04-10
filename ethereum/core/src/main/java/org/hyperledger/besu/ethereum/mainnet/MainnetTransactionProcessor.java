@@ -361,9 +361,7 @@ public class MainnetTransactionProcessor {
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
       final long intrinsicGas =
           gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(),
-              transaction.isContractCreation(),
-              clampedAdd(accessListGas, codeDelegationGas));
+              transaction, clampedAdd(accessListGas, codeDelegationGas));
 
       final long gasAvailable = transaction.getGasLimit() - intrinsicGas;
       LOG.trace(
@@ -503,6 +501,7 @@ public class MainnetTransactionProcessor {
               ValidationResult.invalid(
                   TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
                   "transaction price must be greater than base fee"),
+              Optional.empty(),
               Optional.empty());
         }
         coinbaseCalculator = coinbaseFeePriceCalculator;
@@ -556,7 +555,11 @@ public class MainnetTransactionProcessor {
               initialFrame.getRevertReason().get());
         }
         return TransactionProcessingResult.failed(
-            gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
+            gasUsedByTransaction,
+            refundedGas,
+            validationResult,
+            initialFrame.getRevertReason(),
+            initialFrame.getExceptionalHaltReason());
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(
