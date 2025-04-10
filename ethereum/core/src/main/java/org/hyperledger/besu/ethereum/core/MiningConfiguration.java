@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
@@ -213,7 +214,24 @@ public abstract class MiningConfiguration {
 
   @Value.Immutable
   public interface MutableInitValues {
-    Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
+    // Obtain the raw short version from BesuInfo,
+    String RAW_SHORT_VERSION = BesuInfo.shortVersion();
+    // Strip everything from the first '-' or '+' onward 
+    // (handles both e.g. "v23.1.1-dev-ac23d311" or "v23.1.1+commit.abcd1234").
+    String SANITIZED_VERSION = RAW_SHORT_VERSION.replaceFirst("[-+].*", "");
+    // Build the extra-data string, e.g. "besu v25.4.0"
+    String VERSION_STRING = "besu " + SANITIZED_VERSION;
+    // Convert to UTF-8 bytes and cap at 32 bytes
+    byte[] VERSION_BYTES_ARR = VERSION_STRING.getBytes(UTF_8);
+    // If the byte array is longer than 32, truncate.
+    // We assume the first of version will be ASCII so partial characters won't be an issue
+    byte[] TRUNCATED_VERSION_BYTES = VERSION_BYTES_ARR.length > 32 
+        ? java.util.Arrays.copyOf(VERSION_BYTES_ARR, 32)
+        : VERSION_BYTES_ARR;
+
+    // This is the final default extra data, capped at 32 bytes.
+    Bytes DEFAULT_EXTRA_DATA = Bytes.wrap(TRUNCATED_VERSION_BYTES);
+
     Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
     Wei DEFAULT_MIN_PRIORITY_FEE_PER_GAS = Wei.ZERO;
     double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
