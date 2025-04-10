@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.util.stream.Stream;
 
@@ -38,7 +38,8 @@ public class VersionProvider implements CommandLine.IVersionProvider {
   public String[] getVersion() {
     // the PluginVersionsProvider has registered plugins and their versions by this time.
     return Stream.concat(
-            Stream.of(BesuInfo.version()), pluginVersionsProvider.getPluginVersions().stream())
+            Stream.of(BesuVersionUtils.version()),
+            pluginVersionsProvider.getPluginVersions().stream())
         .toArray(String[]::new);
   }
 }

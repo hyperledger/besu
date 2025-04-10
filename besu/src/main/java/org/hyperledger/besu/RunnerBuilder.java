@@ -124,6 +124,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
@@ -644,7 +645,7 @@ public class RunnerBuilder {
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
             .setSupportedProtocols(subProtocols)
-            .setClientId(BesuInfo.nodeName(identityString));
+            .setClientId(BesuVersionUtils.nodeName(identityString));
     networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
 
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
@@ -1010,7 +1011,7 @@ public class RunnerBuilder {
                   miningCoordinator,
                   besuController.getSyncState(),
                   vertx,
-                  BesuInfo.nodeName(identityString),
+                  BesuVersionUtils.nodeName(identityString),
                   besuController.getGenesisConfigOptions(),
                   network));
     } else {
@@ -1265,9 +1266,9 @@ public class RunnerBuilder {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
-                BesuInfo.nodeName(identityString),
-                BesuInfo.shortVersion(),
-                BesuInfo.commit(),
+                BesuVersionUtils.nodeName(identityString),
+                BesuVersionUtils.shortVersion(),
+                BesuVersionUtils.commit(),
                 ethNetworkConfig.networkId(),
                 besuController.getGenesisConfigOptions(),
                 network,

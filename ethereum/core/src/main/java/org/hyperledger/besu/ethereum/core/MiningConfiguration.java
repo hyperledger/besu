@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.txselection.BlockTransactionSelectio
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.time.Duration;
@@ -34,8 +35,6 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.immutables.value.Value;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Value.Immutable
 @Value.Enclosing
@@ -215,23 +214,8 @@ public abstract class MiningConfiguration {
 
   @Value.Immutable
   public interface MutableInitValues {
-    // Obtain the raw short version
-    String RAW_SHORT_VERSION = MutableInitValues.class.getPackage().getImplementationVersion();;
-    // Strip everything from the first '-' or '+' onward 
-    // (handles both e.g. "v23.1.1-dev-ac23d311" or "v23.1.1+commit.abcd1234").
-    String SANITIZED_VERSION = RAW_SHORT_VERSION.replaceFirst("[-+].*", "");
-    // Build the extra-data string, e.g. "besu v25.4.0"
-    String VERSION_STRING = "besu " + SANITIZED_VERSION;
-    // Convert to UTF-8 bytes and cap at 32 bytes
-    byte[] VERSION_BYTES_ARR = VERSION_STRING.getBytes(UTF_8);
-    // If the byte array is longer than 32, truncate.
-    // We assume the first of version will be ASCII so partial characters won't be an issue
-    byte[] TRUNCATED_VERSION_BYTES = VERSION_BYTES_ARR.length > 32 
-        ? java.util.Arrays.copyOf(VERSION_BYTES_ARR, 32)
-        : VERSION_BYTES_ARR;
-
-    // This is the final default extra data, capped at 32 bytes.
-    Bytes DEFAULT_EXTRA_DATA = Bytes.wrap(TRUNCATED_VERSION_BYTES);
+    // This is the default extra data containing version info, capped at 32 bytes.
+    Bytes DEFAULT_EXTRA_DATA = BesuVersionUtils.versionForExtraData();
 
     Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
     Wei DEFAULT_MIN_PRIORITY_FEE_PER_GAS = Wei.ZERO;
