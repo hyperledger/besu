@@ -45,6 +45,14 @@ public class RocksDBCLIOptions {
   /** The constant IS_HIGH_SPEC. */
   public static final String IS_HIGH_SPEC = "--Xplugin-rocksdb-high-spec-enabled";
 
+  /** Key name for configuring blob_garbage_collection_age_cutoff */
+  public static final String BLOB_GARBAGE_COLLECTION_AGE_CUTOFF =
+      "--Xplugin-rocksdb-blob-garbage-collection-age-cutoff";
+
+  /** Key name for configuring blob_garbage_collection_force_threshold */
+  public static final String BLOB_GARBAGE_COLLECTION_FORCE_THRESHOLD =
+      "--Xplugin-rocksdb-blob-garbage-collection-force-threshold";
+
   /** The Max open files. */
   @CommandLine.Option(
       names = {MAX_OPEN_FILES_FLAG},
@@ -81,6 +89,24 @@ public class RocksDBCLIOptions {
           "Use this flag to boost Besu performance if you have a 16 GiB RAM hardware or more (default: ${DEFAULT-VALUE})")
   boolean isHighSpec;
 
+  /** The Blob garbage collection age cutoff. */
+  @CommandLine.Option(
+      names = {BLOB_GARBAGE_COLLECTION_AGE_CUTOFF},
+      hidden = true,
+      defaultValue = "0.25",
+      paramLabel = "<DOUBLE>",
+      description = "Blob garbage collection age cutoff (default: ${DEFAULT-VALUE})")
+  double blobGarbageCollectionAgeCutoff;
+
+  /** The Blob garbage collection force threshold. */
+  @CommandLine.Option(
+      names = {BLOB_GARBAGE_COLLECTION_FORCE_THRESHOLD},
+      hidden = true,
+      defaultValue = "1.0",
+      paramLabel = "<DOUBLE>",
+      description = "Blob garbage collection force threshold (default: ${DEFAULT-VALUE})")
+  double blobGarbageCollectionForceThreshold;
+
   private RocksDBCLIOptions() {}
 
   /**
@@ -104,6 +130,8 @@ public class RocksDBCLIOptions {
     options.cacheCapacity = config.getCacheCapacity();
     options.backgroundThreadCount = config.getBackgroundThreadCount();
     options.isHighSpec = config.isHighSpec();
+    options.blobGarbageCollectionAgeCutoff = config.getBlobGarbageCollectionAgeCutoff();
+    options.blobGarbageCollectionForceThreshold = config.getBlobGarbageCollectionForceThreshold();
     return options;
   }
 
@@ -114,7 +142,12 @@ public class RocksDBCLIOptions {
    */
   public RocksDBFactoryConfiguration toDomainObject() {
     return new RocksDBFactoryConfiguration(
-        maxOpenFiles, backgroundThreadCount, cacheCapacity, isHighSpec);
+        maxOpenFiles,
+        backgroundThreadCount,
+        cacheCapacity,
+        isHighSpec,
+        blobGarbageCollectionAgeCutoff,
+        blobGarbageCollectionForceThreshold);
   }
 
   /**
@@ -133,6 +166,8 @@ public class RocksDBCLIOptions {
         .add("cacheCapacity", cacheCapacity)
         .add("backgroundThreadCount", backgroundThreadCount)
         .add("isHighSpec", isHighSpec)
+        .add("blobGarbageCollectionAgeCutoff", blobGarbageCollectionAgeCutoff)
+        .add("blobGarbageCollectionForceThreshold", blobGarbageCollectionForceThreshold)
         .toString();
   }
 }

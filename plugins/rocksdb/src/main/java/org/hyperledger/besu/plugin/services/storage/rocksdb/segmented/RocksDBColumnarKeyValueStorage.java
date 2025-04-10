@@ -230,6 +230,14 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
       options
           .setEnableBlobFiles(true)
           .setEnableBlobGarbageCollection(segment.isStaticDataGarbageCollectionEnabled())
+          // fraction of file age to be considered eligible for GC;
+          // 0.25 = oldest 25% of files eligible;
+          // 1 = all files eligible
+          .setBlobGarbageCollectionAgeCutoff(configuration.getBlobGarbageCollectionAgeCutoff())
+          // fraction of garbage in eligible blob files to trigger GC;
+          // 0 = trigger for all eligible files
+          .setBlobGarbageCollectionForceThreshold(
+              configuration.getBlobGarbageCollectionForceThreshold())
           .setMinBlobSize(100)
           .setBlobCompressionType(CompressionType.LZ4_COMPRESSION);
     }

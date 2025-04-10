@@ -30,6 +30,8 @@ public class RocksDBConfigurationBuilder {
   private long cacheCapacity = DEFAULT_CACHE_CAPACITY;
   private int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
   private boolean isHighSpec = DEFAULT_IS_HIGH_SPEC;
+  private double blobGarbageCollectionAgeCutoff = 0.25;
+  private double blobGarbageCollectionForceThreshold = 1.0;
 
   /** Instantiates a new Rocks db configuration builder. */
   public RocksDBConfigurationBuilder() {}
@@ -101,6 +103,30 @@ public class RocksDBConfigurationBuilder {
   }
 
   /**
+   * Blob garbage collection age cutoff.
+   *
+   * @param blobGarbageCollectionAgeCutoff the blob garbage collection age cutoff
+   * @return the rocks db configuration builder
+   */
+  public RocksDBConfigurationBuilder blobGarbageCollectionAgeCutoff(
+      final double blobGarbageCollectionAgeCutoff) {
+    this.blobGarbageCollectionAgeCutoff = blobGarbageCollectionAgeCutoff;
+    return this;
+  }
+
+  /**
+   * Blob garbage collection force threshold.
+   *
+   * @param blobGarbageCollectionForceThreshold the blob garbage collection force threshold
+   * @return the rocks db configuration builder
+   */
+  public RocksDBConfigurationBuilder blobGarbageCollectionForceThreshold(
+      final double blobGarbageCollectionForceThreshold) {
+    this.blobGarbageCollectionForceThreshold = blobGarbageCollectionForceThreshold;
+    return this;
+  }
+
+  /**
    * From.
    *
    * @param configuration the configuration
@@ -111,7 +137,10 @@ public class RocksDBConfigurationBuilder {
         .backgroundThreadCount(configuration.getBackgroundThreadCount())
         .cacheCapacity(configuration.getCacheCapacity())
         .maxOpenFiles(configuration.getMaxOpenFiles())
-        .isHighSpec(configuration.isHighSpec());
+        .isHighSpec(configuration.isHighSpec())
+        .blobGarbageCollectionAgeCutoff(configuration.getBlobGarbageCollectionAgeCutoff())
+        .blobGarbageCollectionForceThreshold(
+            configuration.getBlobGarbageCollectionForceThreshold());
   }
 
   /**
@@ -121,6 +150,13 @@ public class RocksDBConfigurationBuilder {
    */
   public RocksDBConfiguration build() {
     return new RocksDBConfiguration(
-        databaseDir, maxOpenFiles, backgroundThreadCount, cacheCapacity, label, isHighSpec);
+        databaseDir,
+        maxOpenFiles,
+        backgroundThreadCount,
+        cacheCapacity,
+        label,
+        isHighSpec,
+        blobGarbageCollectionAgeCutoff,
+        blobGarbageCollectionForceThreshold);
   }
 }

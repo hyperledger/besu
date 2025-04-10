@@ -21,6 +21,8 @@ public class RocksDBFactoryConfiguration {
   private final int backgroundThreadCount;
   private final long cacheCapacity;
   private final boolean isHighSpec;
+  private final double blobGarbageCollectionAgeCutoff;
+  private final double blobGarbageCollectionForceThreshold;
 
   /**
    * Instantiates a new RocksDb factory configuration.
@@ -29,16 +31,22 @@ public class RocksDBFactoryConfiguration {
    * @param backgroundThreadCount the background thread count
    * @param cacheCapacity the cache capacity
    * @param isHighSpec the is high spec
+   * @param blobGarbageCollectionAgeCutoff the blob garbage collection age cutoff
+   * @param blobGarbageCollectionForceThreshold the blob garbage collection force threshold
    */
   public RocksDBFactoryConfiguration(
       final int maxOpenFiles,
       final int backgroundThreadCount,
       final long cacheCapacity,
-      final boolean isHighSpec) {
+      final boolean isHighSpec,
+      final double blobGarbageCollectionAgeCutoff,
+      final double blobGarbageCollectionForceThreshold) {
     this.backgroundThreadCount = backgroundThreadCount;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
     this.isHighSpec = isHighSpec;
+    this.blobGarbageCollectionAgeCutoff = blobGarbageCollectionAgeCutoff;
+    this.blobGarbageCollectionForceThreshold = blobGarbageCollectionForceThreshold;
   }
 
   /**
@@ -75,5 +83,23 @@ public class RocksDBFactoryConfiguration {
    */
   public boolean isHighSpec() {
     return isHighSpec;
+  }
+
+  /**
+   * Gets blob garbage collection age cutoff.
+   *
+   * @return the blob garbage collection age cutoff
+   */
+  public double getBlobGarbageCollectionAgeCutoff() {
+    return blobGarbageCollectionAgeCutoff;
+  }
+
+  /**
+   * Gets blob garbage collection force threshold.
+   *
+   * @return the blob garbage collection force threshold
+   */
+  public double getBlobGarbageCollectionForceThreshold() {
+    return blobGarbageCollectionForceThreshold;
   }
 }
