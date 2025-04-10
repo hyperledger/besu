@@ -44,7 +44,6 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
@@ -83,6 +82,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   private final ProtocolSchedule protocolSchedule;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
+  private BlockImportTracerProvider blockImportTracerProvider = null;
 
   protected AbstractBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -100,14 +100,18 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
-      final ServiceManager pluginContext, final BlockHeader header) {
+      final ProtocolContext protocolContext, final BlockHeader header) {
 
-    // if we have a BlockImportTracerProvider from pluginContext, use it.
-    return Optional.ofNullable(pluginContext)
-        .flatMap(serviceManager -> serviceManager.getService(BlockImportTracerProvider.class))
-        .map(z -> z.getBlockImportTracer(header))
-        // otherwise return NO_TRACING
-        .orElse(BlockAwareOperationTracer.NO_TRACING);
+    if (blockImportTracerProvider == null) {
+      // fetch from context once, and keep.
+      blockImportTracerProvider =
+          Optional.ofNullable(protocolContext.getPluginServiceManager())
+              .flatMap(serviceManager -> serviceManager.getService(BlockImportTracerProvider.class))
+              // if block import tracer provider is not specified by plugin, default to no tracing
+              .orElse((__) -> BlockAwareOperationTracer.NO_TRACING);
+    }
+
+    return blockImportTracerProvider.getBlockImportTracer(header);
   }
 
   @Override
@@ -156,7 +160,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             worldState,
             protocolSpec,
             blockHashLookup,
-            getBlockImportTracer(protocolContext.getPluginServiceManager(), blockHeader));
+            getBlockImportTracer(protocolContext, blockHeader));
     protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
