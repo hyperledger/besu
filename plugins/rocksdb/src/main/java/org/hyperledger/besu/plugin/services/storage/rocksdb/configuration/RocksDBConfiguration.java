@@ -25,10 +25,7 @@ public class RocksDBConfiguration {
   private final int backgroundThreadCount;
   private final long cacheCapacity;
   private final boolean isHighSpec;
-  private final int recycleLogFileNum;
-  private final int keepLogFileNum;
-  private final long logFileTimeToRoll;
-  private final long maxTotalWalSize;
+  private final int periodicCompactionSeconds;
   private final long deleteObsoleteFilesPeriod;
 
   /**
@@ -40,10 +37,7 @@ public class RocksDBConfiguration {
    * @param cacheCapacity the cache capacity
    * @param label the label
    * @param isHighSpec the is high spec
-   * @param recycleLogFileNum the number of log files to recycle
-   * @param keepLogFileNum the number of log files to keep
-   * @param logFileTimeToRoll the time to roll log files in seconds
-   * @param maxTotalWalSize the maximum total WAL size in bytes
+   * @param periodicCompactionSeconds period in seconds to run compaction
    * @param deleteObsoleteFilesPeriod the period in microseconds to delete obsolete files
    */
   public RocksDBConfiguration(
@@ -53,10 +47,7 @@ public class RocksDBConfiguration {
       final long cacheCapacity,
       final String label,
       final boolean isHighSpec,
-      final int recycleLogFileNum,
-      final int keepLogFileNum,
-      final long logFileTimeToRoll,
-      final long maxTotalWalSize,
+      final int periodicCompactionSeconds,
       final long deleteObsoleteFilesPeriod) {
     this.backgroundThreadCount = backgroundThreadCount;
     this.databaseDir = databaseDir;
@@ -64,10 +55,7 @@ public class RocksDBConfiguration {
     this.cacheCapacity = cacheCapacity;
     this.label = label;
     this.isHighSpec = isHighSpec;
-    this.recycleLogFileNum = recycleLogFileNum;
-    this.keepLogFileNum = keepLogFileNum;
-    this.logFileTimeToRoll = logFileTimeToRoll;
-    this.maxTotalWalSize = maxTotalWalSize;
+    this.periodicCompactionSeconds = periodicCompactionSeconds;
     this.deleteObsoleteFilesPeriod = deleteObsoleteFilesPeriod;
   }
 
@@ -126,39 +114,12 @@ public class RocksDBConfiguration {
   }
 
   /**
-   * Gets recycle log file num.
+   * Gets periodic compaction seconds.
    *
-   * @return the recycle log file num
+   * @return the periodic compaction seconds
    */
-  public int getRecycleLogFileNum() {
-    return recycleLogFileNum;
-  }
-
-  /**
-   * Gets keep log file num.
-   *
-   * @return the keep log file num
-   */
-  public int getKeepLogFileNum() {
-    return keepLogFileNum;
-  }
-
-  /**
-   * Gets log file time to roll.
-   *
-   * @return the log file time to roll
-   */
-  public long getLogFileTimeToRoll() {
-    return logFileTimeToRoll;
-  }
-
-  /**
-   * Gets max total wal size.
-   *
-   * @return the max total wal size
-   */
-  public long getMaxTotalWalSize() {
-    return maxTotalWalSize;
+  public int getPeriodicCompactionSeconds() {
+    return periodicCompactionSeconds;
   }
 
   /**

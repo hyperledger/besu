@@ -18,11 +18,7 @@ import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_DELETE_OBSOLETE_FILES_PERIOD;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_KEEP_LOG_FILE_NUM;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_LOG_FILE_TIME_TO_ROLL;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_TOTAL_WAL_SIZE;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_RECYCLE_LOG_FILE_NUM;
 
 import java.nio.file.Path;
 
@@ -35,10 +31,7 @@ public class RocksDBConfigurationBuilder {
   private long cacheCapacity = DEFAULT_CACHE_CAPACITY;
   private int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
   private boolean isHighSpec = DEFAULT_IS_HIGH_SPEC;
-  private int recycleLogFileNum = DEFAULT_RECYCLE_LOG_FILE_NUM;
-  private int keepLogFileNum = DEFAULT_KEEP_LOG_FILE_NUM;
-  private long logFileTimeToRoll = DEFAULT_LOG_FILE_TIME_TO_ROLL;
-  private long maxTotalWalSize = DEFAULT_MAX_TOTAL_WAL_SIZE;
+  private int periodicCompactionSeconds = 0;
   private long deleteObsoleteFilesPeriod = DEFAULT_DELETE_OBSOLETE_FILES_PERIOD;
 
   /** Instantiates a new Rocks db configuration builder. */
@@ -111,46 +104,14 @@ public class RocksDBConfigurationBuilder {
   }
 
   /**
-   * Sets the number of log files to recycle.
+   * Sets the period for periodic compaction.
    *
-   * @param recycleLogFileNum the number of log files to recycle
+   * @param periodicCompactionSeconds the period in seconds
    * @return the rocks db configuration builder
    */
-  public RocksDBConfigurationBuilder recycleLogFileNum(final int recycleLogFileNum) {
-    this.recycleLogFileNum = recycleLogFileNum;
-    return this;
-  }
-
-  /**
-   * Sets the number of log files to keep.
-   *
-   * @param keepLogFileNum the number of log files to keep
-   * @return the rocks db configuration builder
-   */
-  public RocksDBConfigurationBuilder keepLogFileNum(final int keepLogFileNum) {
-    this.keepLogFileNum = keepLogFileNum;
-    return this;
-  }
-
-  /**
-   * Sets the time interval to roll log files.
-   *
-   * @param logFileTimeToRoll the time to roll log files in seconds
-   * @return the rocks db configuration builder
-   */
-  public RocksDBConfigurationBuilder logFileTimeToRoll(final long logFileTimeToRoll) {
-    this.logFileTimeToRoll = logFileTimeToRoll;
-    return this;
-  }
-
-  /**
-   * Sets the maximum total size of WAL files.
-   *
-   * @param maxTotalWalSize the maximum total WAL size in bytes
-   * @return the rocks db configuration builder
-   */
-  public RocksDBConfigurationBuilder maxTotalWalSize(final long maxTotalWalSize) {
-    this.maxTotalWalSize = maxTotalWalSize;
+  public RocksDBConfigurationBuilder periodicCompactionSeconds(
+      final int periodicCompactionSeconds) {
+    this.periodicCompactionSeconds = periodicCompactionSeconds;
     return this;
   }
 
@@ -166,19 +127,27 @@ public class RocksDBConfigurationBuilder {
     return this;
   }
 
+  /**
+   * From.
+   *
+   * @param configuration the configuration
+   * @return the rocks db configuration builder
+   */
   public static RocksDBConfigurationBuilder from(final RocksDBFactoryConfiguration configuration) {
     return new RocksDBConfigurationBuilder()
         .backgroundThreadCount(configuration.getBackgroundThreadCount())
         .cacheCapacity(configuration.getCacheCapacity())
         .maxOpenFiles(configuration.getMaxOpenFiles())
         .isHighSpec(configuration.isHighSpec())
-        .recycleLogFileNum(configuration.getRecycleLogFileNum())
-        .keepLogFileNum(configuration.getKeepLogFileNum())
-        .logFileTimeToRoll(configuration.getLogFileTimeToRoll())
-        .maxTotalWalSize(configuration.getMaxTotalWalSize())
+        .periodicCompactionSeconds(configuration.getPeriodicCompactionSeconds())
         .deleteObsoleteFilesPeriod(configuration.getDeleteObsoleteFilesPeriod());
   }
 
+  /**
+   * Build rocks db configuration.
+   *
+   * @return the rocks db configuration
+   */
   public RocksDBConfiguration build() {
     return new RocksDBConfiguration(
         databaseDir,
@@ -187,10 +156,7 @@ public class RocksDBConfigurationBuilder {
         cacheCapacity,
         label,
         isHighSpec,
-        recycleLogFileNum,
-        keepLogFileNum,
-        logFileTimeToRoll,
-        maxTotalWalSize,
+        periodicCompactionSeconds,
         deleteObsoleteFilesPeriod);
   }
 }

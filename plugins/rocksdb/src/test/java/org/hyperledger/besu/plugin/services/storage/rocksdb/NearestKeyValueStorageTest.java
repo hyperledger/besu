@@ -18,8 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_DELETE_OBSOLETE_FILES_PERIOD;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_PERIODIC_COMPACTION_INTERVAL;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -68,7 +70,9 @@ public class NearestKeyValueStorageTest {
                     DEFAULT_MAX_OPEN_FILES,
                     DEFAULT_BACKGROUND_THREAD_COUNT,
                     DEFAULT_CACHE_CAPACITY,
-                    DEFAULT_IS_HIGH_SPEC),
+                    DEFAULT_IS_HIGH_SPEC,
+                    DEFAULT_PERIODIC_COMPACTION_INTERVAL,
+                    DEFAULT_DELETE_OBSOLETE_FILES_PERIOD),
             Arrays.asList(KeyValueSegmentIdentifier.values()),
             RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
