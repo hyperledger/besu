@@ -19,8 +19,8 @@ import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionPoolParams;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_INITCODE_CREATE_SIZE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_INITCODE_LIST;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_INITCODE_TX_TARGET;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
@@ -709,9 +709,13 @@ public class MainnetTransactionValidatorTest {
             base.initcodes(List.of(maxCodes[0], tooBig)).build(),
             ValidationResult.invalid(INVALID_INITCODE_LIST)),
         Arguments.of(
-            "missing to",
+            "create TX",
             base.initcodes(List.of(maxCodes[0])).to(null).build(),
-            ValidationResult.invalid(INVALID_INITCODE_TX_TARGET)));
+            ValidationResult.valid()),
+        Arguments.of(
+            "create TX, too many initcodes",
+            base.initcodes(List.of(maxCodes[0], maxCodes[1])).to(null).build(),
+            ValidationResult.invalid(INVALID_INITCODE_CREATE_SIZE)));
   }
 
   @ParameterizedTest(name = "{index} {0}")

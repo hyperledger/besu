@@ -136,7 +136,7 @@ public class TransactionCompleteResult implements TransactionResult {
                   || transactionType == TransactionType.BLOB
                   || transactionType == TransactionType.DELEGATE_CODE
                   || transactionType == TransactionType.INITCODE)
-                  ? Quantity.create(transaction.getYParity())
+              ? Quantity.create(transaction.getYParity())
               : null;
     }
     this.value = Quantity.create(transaction.getValue());

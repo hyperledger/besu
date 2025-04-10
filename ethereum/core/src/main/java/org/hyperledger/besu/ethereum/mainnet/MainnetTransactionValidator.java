@@ -491,12 +491,12 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
   public ValidationResult<TransactionInvalidReason> validateInitcodeTransaction(
       final Transaction transaction) {
-    if (transaction.getTo().isEmpty()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_INITCODE_TX_TARGET,
-          "Initcode transactions cannot have an empty 'to' field");
-    }
     List<Bytes> initCodes = transaction.getInitCodes().get();
+    if (transaction.getTo().isEmpty() && initCodes.size() != 1) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_INITCODE_CREATE_SIZE,
+          "Initcode transactions with an empty 'to' field must have only one initcode");
+    }
     if (initCodes.size() > MAX_INITCODE_COUNT) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_INITCODE_LIST,
