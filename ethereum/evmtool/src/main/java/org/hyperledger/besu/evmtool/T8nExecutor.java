@@ -53,7 +53,7 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
 import org.hyperledger.besu.ethereum.vm.BlockchainBasedBlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -432,7 +432,7 @@ public class T8nExecutor {
       if (shouldClearEmptyAccounts(fork)) {
         var entries = new ArrayList<>(worldState.getAccumulator().getAccountsToUpdate().entrySet());
         for (var entry : entries) {
-          DiffBasedAccount updated = entry.getValue().getUpdated();
+          PathBasedAccount updated = entry.getValue().getUpdated();
           if (updated != null && updated.isEmpty()) {
             worldState.getAccumulator().deleteAccount(entry.getKey());
           }
@@ -449,9 +449,7 @@ public class T8nExecutor {
       long transactionGasUsed = transaction.getGasLimit() - result.getGasRemaining();
 
       gasUsed += transactionGasUsed;
-      long intrinsicGas =
-          gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(), transaction.getTo().isEmpty(), 0);
+      long intrinsicGas = gasCalculator.transactionIntrinsicGasCost(transaction, 0);
       TransactionReceipt receipt =
           protocolSpec
               .getTransactionReceiptFactory()

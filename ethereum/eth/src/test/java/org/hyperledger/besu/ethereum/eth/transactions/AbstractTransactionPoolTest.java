@@ -25,11 +25,13 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_LOW;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURE_REQUIRED;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TX_FEECAP_EXCEEDED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -47,7 +49,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -103,9 +105,9 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
     addAndAssertRemoteTransactionsValid(transaction0);
     addAndAssertRemoteTransactionsValid(transaction1);
 
-    assertThat(transactions.size()).isEqualTo(3);
-    assertThat(transactions.getLocalTransactions()).contains(localTransaction2);
-    assertThat(transactions.getPriorityTransactions()).hasSize(noLocalPriority ? 0 : 1);
+    assertThat(transactionPool.count()).isEqualTo(3);
+    assertThat(getLocalTransactions()).contains(localTransaction2);
+    assertThat(getPriorityTransactions()).hasSize(noLocalPriority ? 0 : 1);
   }
 
   @Test
@@ -131,7 +133,7 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
 
     assertTransactionNotPending(transaction0);
     assertTransactionNotPending(transaction1);
-    assertThat(transactions.size()).isZero();
+    assertThat(transactionPool.count()).isZero();
   }
 
   @Test
@@ -144,7 +146,7 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
 
     assertTransactionNotPending(transaction0);
     assertTransactionNotPending(transaction1);
-    assertThat(transactions.size()).isZero();
+    assertThat(transactionPool.count()).isZero();
   }
 
   @Test
@@ -197,19 +199,19 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
         appendBlock(Difficulty.ONE, originalFork1.getHeader(), transactionOtherSender);
     assertTransactionNotPending(transaction0);
     assertTransactionNotPending(transactionOtherSender);
-    assertThat(transactions.getLocalTransactions()).isEmpty();
+    assertThat(getLocalTransactions()).isEmpty();
 
     final Block reorgFork1 = appendBlock(Difficulty.ONE, commonParent);
     verifyChainHeadIs(originalFork2);
 
-    transactions.subscribePendingTransactions(listener);
+    transactionPool.subscribePendingTransactions(listener);
     final Block reorgFork2 = appendBlock(Difficulty.of(2000), reorgFork1.getHeader());
     verifyChainHeadIs(reorgFork2);
 
     assertTransactionPending(transaction0);
     assertTransactionPending(transactionOtherSender);
-    assertThat(transactions.getLocalTransactions()).contains(transaction0);
-    assertThat(transactions.getLocalTransactions()).doesNotContain(transactionOtherSender);
+    assertThat(getLocalTransactions()).contains(transaction0);
+    assertThat(getLocalTransactions()).doesNotContain(transactionOtherSender);
     verify(listener).onTransactionAdded(transaction0);
     verify(listener).onTransactionAdded(transactionOtherSender);
     verifyNoMoreInteractions(listener);
@@ -275,7 +277,7 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
     assertTransactionPending(transactionWithBlobs);
 
     Optional<Transaction> maybeBlob =
-        transactions.getTransactionByHash(transactionWithBlobs.getHash());
+        transactionPool.getTransactionByHash(transactionWithBlobs.getHash());
     assertThat(maybeBlob).isPresent();
     Transaction restoredBlob = maybeBlob.get();
     assertThat(restoredBlob).isEqualTo(transactionWithBlobs);
@@ -384,10 +386,19 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
 
   @Test
   public void shouldDiscardRemoteTransactionThatAlreadyExistsBeforeValidation() {
-    doReturn(true).when(transactions).containsTransaction(transaction0);
-    transactionPool.addRemoteTransactions(singletonList(transaction0));
+    givenTransactionIsValid(transaction0);
+    addAndAssertRemoteTransactionsValid(transaction0);
 
-    verify(transactions).containsTransaction(transaction0);
+    verify(transactionValidatorFactory, atLeastOnce()).get();
+
+    clearInvocations(transactionValidatorFactory);
+
+    // trying to re-add the same tx should return transaction already known and no
+    // access to the transaction validator factory should be done
+    final var result = transactionPool.addRemoteTransactions(singletonList(transaction0));
+    assertThat(result.get(transaction0.getHash()))
+        .isEqualTo(ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN));
+
     verifyNoInteractions(transactionValidatorFactory);
   }
 
@@ -474,7 +485,8 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
   @Test
   public void shouldSendPooledTransactionHashesIfPeerSupportsEth65() {
     EthPeer peer = mock(EthPeer.class);
-    when(peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)).thenReturn(true);
+    when(peer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
+        .thenReturn(true);
 
     givenTransactionIsValid(transaction0);
     transactionPool.addTransactionViaApi(transaction0);
@@ -486,7 +498,8 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
   @Test
   public void shouldSendFullTransactionsIfPeerDoesNotSupportEth65() {
     EthPeer peer = mock(EthPeer.class);
-    when(peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)).thenReturn(false);
+    when(peer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
+        .thenReturn(false);
 
     givenTransactionIsValid(transaction0);
     transactionPool.addTransactionViaApi(transaction0);
@@ -496,7 +509,7 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
   }
 
   @Test
-  public void shouldSendFullTransactionPoolToNewlyConnectedPeer() {
+  public void shouldSendPooledTransactionHashesToNewlyConnectedPeer() {
     givenTransactionIsValid(transaction0);
     givenTransactionIsValid(transaction1);
 
@@ -506,7 +519,7 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
     RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
     Set<Transaction> transactionsToSendToPeer =
-        peerTransactionTracker.claimTransactionsToSendToPeer(peer.getEthPeer());
+        peerTransactionTracker.claimTransactionHashesToSendToPeer(peer.getEthPeer());
 
     assertThat(transactionsToSendToPeer).contains(transaction0, transaction1);
   }
