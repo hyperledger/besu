@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
@@ -35,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.immutables.value.Value;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Value.Immutable
 @Value.Enclosing
@@ -214,8 +215,8 @@ public abstract class MiningConfiguration {
 
   @Value.Immutable
   public interface MutableInitValues {
-    // Obtain the raw short version from BesuInfo,
-    String RAW_SHORT_VERSION = BesuInfo.shortVersion();
+    // Obtain the raw short version
+    String RAW_SHORT_VERSION = MutableInitValues.class.getPackage().getImplementationVersion();;
     // Strip everything from the first '-' or '+' onward 
     // (handles both e.g. "v23.1.1-dev-ac23d311" or "v23.1.1+commit.abcd1234").
     String SANITIZED_VERSION = RAW_SHORT_VERSION.replaceFirst("[-+].*", "");

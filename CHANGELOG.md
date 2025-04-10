@@ -7,6 +7,7 @@
 - Add support for `eth_simulateV1`. [#8406](https://github.com/hyperledger/besu/pull/8406)
 - New metric `besu_peers_peer_count_by_client` to report the count of peers by client name [#8515](https://github.com/hyperledger/besu/pull/8515)- Add Prague fork time for mainnet. [#8521](https://github.com/hyperledger/besu/pull/8521)
 - Add Prague fork time for mainnet. [#8521](https://github.com/hyperledger/besu/pull/8521)
+- Default ExtraData to "besu+version" rather than empty. [#8536](https://github.com/hyperledger/besu/pull/8536)
 #### Dependencies
 ### Bug fixes
 - Fix for storage proof key - if the key is zero use `0x0` not `0x` [#8499](https://github.com/hyperledger/besu/pull/8499)
