@@ -114,7 +114,7 @@ public class RocksDbSubCommand implements Runnable {
 
     @CommandLine.Option(
         names = {"--column-family-filter", "-c"},
-        description = "Comma separated list of column family names to display stats for",
+        description = "Comma separated list of column family names for which to display stats",
         split = " {0,1}, {0,1}",
         arity = "1..*")
     private List<String> columnFamilyFilter = new ArrayList<>();
