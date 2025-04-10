@@ -41,9 +41,9 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -59,7 +59,7 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
   @BeforeAll
   public static void setUpOnce() throws Exception {
     final String genesisJson =
-        Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
+        Resources.toString(BlockTestUtil.getTestGenesisUrl(), StandardCharsets.UTF_8);
     BlockchainImporter importer =
         new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson);
     MutableBlockchain chain =
