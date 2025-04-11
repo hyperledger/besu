@@ -741,7 +741,7 @@ public record EOFLayout(
         OpcodeInfo ci = V1_OPCODES[byteCode[pc] & 0xff];
 
         if (ci.opcode() == RelativeJumpVectorOperation.OPCODE) {
-          if (byteCode.length <= pc + 1) {
+          if (pc + 1 >= byteCode.length) {
             out.printf(
                 "    %02x # [%d] %s(<truncated instruction>)%n", byteCode[pc], pc, ci.name());
             pc++;
@@ -763,7 +763,7 @@ public record EOFLayout(
               int b1 = byteCode[j] & 0xff;
               out.print(b0 << 8 | b1);
             }
-            if (byteCode.length < calculatedTableEnd) {
+            if (calculatedTableEnd > byteCode.length) {
               out.print("<truncated immediate>");
             }
             pc += tableSize * 2 + 4;
@@ -809,7 +809,7 @@ public record EOFLayout(
           }
           out.printf(" # [%d] %s", pc, ci.name());
           if (advance == 2) {
-            if (byteCode.length <= pc + 1) {
+            if (pc + 1 >= byteCode.length) {
               out.print("(<truncated immediate>)");
             } else {
               out.printf("(%d)", byteCode[pc + 1] & 0xff);
