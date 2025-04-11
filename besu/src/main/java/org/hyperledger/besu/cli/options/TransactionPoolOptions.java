@@ -285,7 +285,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         paramLabel = "<LONG>",
         hidden = true,
         description =
-            "The number of exchanged txs that are remembered with each peer, to avoid broadcasting duplicates (default: ${DEFAULT-VALUE})",
+            "The number of exchanged txs that are remembered with each peer, to minimize broadcasting duplicates (default: ${DEFAULT-VALUE})",
         arity = "1")
     private int maxTrackedSeenTxsPerPeer =
         TransactionPoolConfiguration.Unstable.DEFAULT_MAX_TRACKED_SEEN_TXS_PER_PEER;
