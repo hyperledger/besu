@@ -295,7 +295,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         paramLabel = "<BOOLEAN>",
         hidden = true,
         description =
-            "If txs evicted due to the pool being full should be removed from peer tracker cache that check for already known txs (default: false on layered and true on sequenced)",
+            "Whether txs evicted due to the pool being full should be removed from peer tracker cache that checks for already known txs (default: false on layered and true on sequenced txpool)",
         arity = "1")
     private Boolean peerTrackerForgetEvictedTxs;
   }
