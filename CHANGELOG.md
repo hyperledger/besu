@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 ### Breaking Changes
+- `--compatibility-eth64-forkid-enabled` has been removed. [#8541](https://github.com/hyperledger/besu/pull/8541)
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
