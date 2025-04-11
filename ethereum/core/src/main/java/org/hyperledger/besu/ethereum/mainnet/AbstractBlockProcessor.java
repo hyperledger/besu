@@ -108,7 +108,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           Optional.ofNullable(protocolContext.getPluginServiceManager())
               .flatMap(serviceManager -> serviceManager.getService(BlockImportTracerProvider.class))
               // if block import tracer provider is not specified by plugin, default to no tracing
-              .orElse((__) -> BlockAwareOperationTracer.NO_TRACING);
+              .orElse((__) -> {
+                LOG.info("Block Import uses NO_TRACING");
+               return  BlockAwareOperationTracer.NO_TRACING;
+              });
     }
 
     return blockImportTracerProvider.getBlockImportTracer(header);
