@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 ### Breaking Changes
+- `--compatibility-eth64-forkid-enabled` has been removed. [#8541](https://github.com/hyperledger/besu/pull/8541)
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
@@ -11,6 +12,7 @@
 #### Dependencies
 ### Bug fixes
 - Fix for storage proof key - if the key is zero use `0x0` not `0x` [#8499](https://github.com/hyperledger/besu/pull/8499)
+- Fix ephemery genesis since genesisHash changed [#8539](https://github.com/hyperledger/besu/pull/8539)
 
 ## 25.4.0
 
