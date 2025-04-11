@@ -32,7 +32,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
+import org.hyperledger.besu.ethereum.debug.StructLogTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.account.Account;
 
@@ -119,7 +121,11 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
                       .trace(
                           mutableWorldState,
                           blockHash,
-                          new DebugOperationTracer(new TraceOptions(false, true, true), false))
+                          new DebugOperationTracer(
+                              new TraceOptions<>(
+                                  TracerType.DEFAULT_TRACER,
+                                  new StructLogTracerConfig(false, true, true)),
+                              false))
                       .map(BlockTrace::getTransactionTraces)
                       .orElse(Collections.emptyList())
                       .stream()

@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -53,7 +54,8 @@ public class TraceCall extends AbstractTraceCall {
   }
 
   @Override
-  protected TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext) {
+  protected TraceOptions<? extends TracerConfig> getTraceOptions(
+      final JsonRpcRequestContext requestContext) {
     return buildTraceOptions(getTraceTypes(requestContext));
   }
 
