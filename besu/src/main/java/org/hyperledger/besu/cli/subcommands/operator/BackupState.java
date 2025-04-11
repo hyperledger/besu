@@ -17,7 +17,6 @@ package org.hyperledger.besu.cli.subcommands.operator;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService;
@@ -27,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.io.File;
 import java.util.Optional;
@@ -92,7 +92,7 @@ public class BackupState implements Runnable {
       final long targetBlock = Math.min(blockchain.getChainHeadBlockNumber(), this.block);
       final StateBackupService backup =
           new StateBackupService(
-              BesuInfo.version(),
+              BesuVersionUtils.version(),
               blockchain,
               backupDir.toPath(),
               scheduler,

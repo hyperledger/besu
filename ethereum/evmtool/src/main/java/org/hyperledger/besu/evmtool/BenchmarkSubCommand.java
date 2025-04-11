@@ -17,7 +17,6 @@ package org.hyperledger.besu.evmtool;
 import static org.hyperledger.besu.evmtool.BenchmarkSubCommand.COMMAND_NAME;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evmtool.benchmarks.AltBN128Benchmark;
@@ -26,6 +25,7 @@ import org.hyperledger.besu.evmtool.benchmarks.BenchmarkExecutor;
 import org.hyperledger.besu.evmtool.benchmarks.ECRecoverBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.ModExpBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.Secp256k1Benchmark;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.PrintStream;
@@ -107,7 +107,7 @@ public class BenchmarkSubCommand implements Runnable {
   @Override
   public void run() {
     LogConfigurator.setLevel("", "DEBUG");
-    System.out.println(BesuInfo.version());
+    System.out.println(BesuVersionUtils.version());
     AbstractPrecompiledContract.setPrecompileCaching(enablePrecompileCache);
     AbstractBLS12PrecompiledContract.setPrecompileCaching(enablePrecompileCache);
     var benchmarksToRun = benchmarks.isEmpty() ? EnumSet.allOf(Benchmark.class) : benchmarks;

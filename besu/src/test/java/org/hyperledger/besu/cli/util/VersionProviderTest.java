@@ -18,8 +18,8 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.util.Collections;
 
@@ -37,13 +37,13 @@ public class VersionProviderTest {
   public void validateEmptyListGenerateBesuInfoVersionOnly() {
     when(pluginVersionsProvider.getPluginVersions()).thenReturn(emptyList());
     final VersionProvider versionProvider = new VersionProvider(pluginVersionsProvider);
-    assertThat(versionProvider.getVersion()).containsOnly(BesuInfo.version());
+    assertThat(versionProvider.getVersion()).containsOnly(BesuVersionUtils.version());
   }
 
   @Test
   public void validateVersionListGenerateValidValues() {
     when(pluginVersionsProvider.getPluginVersions()).thenReturn(Collections.singletonList("test"));
     final VersionProvider versionProvider = new VersionProvider(pluginVersionsProvider);
-    assertThat(versionProvider.getVersion()).containsExactly(BesuInfo.version(), "test");
+    assertThat(versionProvider.getVersion()).containsExactly(BesuVersionUtils.version(), "test");
   }
 }
