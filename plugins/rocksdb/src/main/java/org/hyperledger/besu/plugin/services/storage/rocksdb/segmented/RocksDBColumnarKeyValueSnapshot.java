@@ -24,11 +24,13 @@ import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -76,6 +78,20 @@ public class RocksDBColumnarKeyValueSnapshot
   }
 
   @Override
+  public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys)
+      throws StorageException {
+    throwIfClosed();
+
+    if (segments.size() != keys.size()) {
+      throw new IllegalArgumentException("Segments and keys lists must be of equal length");
+    }
+
+    return IntStream.range(0, keys.size())
+        .mapToObj(i -> snapTx.get(segments.get(i), keys.get(i)).orElse(null))
+        .toList();
+  }
+
+  @Override
   public Optional<NearestKeyValue> getNearestBefore(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
 
@@ -84,6 +100,17 @@ public class RocksDBColumnarKeyValueSnapshot
       return Optional.of(rocksIterator)
           .filter(AbstractRocksIterator::isValid)
           .map(it -> new NearestKeyValue(Bytes.of(it.key()), Optional.of(it.value())));
+    }
+  }
+
+  @Override
+  public Optional<Bytes> getNearestKeyBefore(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+    try (final RocksIterator rocksIterator = snapTx.getIterator(segmentIdentifier)) {
+      rocksIterator.seekForPrev(key.toArrayUnsafe());
+      return Optional.of(rocksIterator)
+          .filter(AbstractRocksIterator::isValid)
+          .map(it -> Bytes.of(it.key()));
     }
   }
 

@@ -31,6 +31,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -99,7 +100,8 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
 
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
-  private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
+  private final ReadOptions readOptions =
+      new ReadOptions().setVerifyChecksums(false).setAsyncIo(true);
   private final MetricsSystem metricsSystem;
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
   private final RocksDBConfiguration configuration;
@@ -385,6 +387,22 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   }
 
   @Override
+  public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys)
+      throws StorageException {
+    throwIfClosed();
+    List<ColumnFamilyHandle> columnFamilyHandleList = new ArrayList<>(segments.size());
+    for (int i = 0; i < segments.size(); i++) {
+      columnFamilyHandleList.add(safeColumnHandle(segments.get(i)));
+    }
+    try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
+      List<byte[]> result = getDB().multiGetAsList(readOptions, columnFamilyHandleList, keys);
+      return result != null ? result : Collections.emptyList();
+    } catch (final RocksDBException e) {
+      throw new StorageException(e);
+    }
+  }
+
+  @Override
   public Optional<NearestKeyValue> getNearestBefore(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
 
@@ -394,6 +412,18 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
       return Optional.of(rocksIterator)
           .filter(AbstractRocksIterator::isValid)
           .map(it -> new NearestKeyValue(Bytes.of(it.key()), Optional.of(it.value())));
+    }
+  }
+
+  @Override
+  public Optional<Bytes> getNearestKeyBefore(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+    try (final RocksIterator rocksIterator =
+        getDB().newIterator(safeColumnHandle(segmentIdentifier))) {
+      rocksIterator.seekForPrev(key.toArrayUnsafe());
+      return Optional.of(rocksIterator)
+          .filter(AbstractRocksIterator::isValid)
+          .map(it -> Bytes.of(it.key()));
     }
   }
 

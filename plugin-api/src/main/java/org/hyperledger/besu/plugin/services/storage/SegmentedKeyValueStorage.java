@@ -17,6 +17,7 @@ package org.hyperledger.besu.plugin.services.storage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -38,6 +39,9 @@ public interface SegmentedKeyValueStorage extends Closeable {
    */
   Optional<byte[]> get(SegmentIdentifier segment, byte[] key) throws StorageException;
 
+  public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys)
+      throws StorageException;
+
   /**
    * Finds the key and corresponding value that is "nearest before" the specified key. "Nearest
    * before" is defined as the closest key that is either exactly matching the supplied key or
@@ -50,6 +54,9 @@ public interface SegmentedKeyValueStorage extends Closeable {
    * @throws StorageException If an error occurs during the retrieval process.
    */
   Optional<NearestKeyValue> getNearestBefore(final SegmentIdentifier segmentIdentifier, Bytes key)
+      throws StorageException;
+
+  Optional<Bytes> getNearestKeyBefore(final SegmentIdentifier segmentIdentifier, Bytes key)
       throws StorageException;
 
   /**
