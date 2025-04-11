@@ -267,14 +267,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
     }
 
-    // EIP-7685: process EL requests
-    final Optional<RequestProcessorCoordinator> requestProcessor =
-        protocolSpec.getRequestProcessorCoordinator();
     Optional<List<Request>> maybeRequests = Optional.empty();
-    if (requestProcessor.isPresent()) {
-      RequestProcessingContext requestProcessingContext =
-          new RequestProcessingContext(blockProcessingContext, receipts);
-      maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+    try {
+      // EIP-7685: process EL requests
+      final Optional<RequestProcessorCoordinator> requestProcessor =
+          protocolSpec.getRequestProcessorCoordinator();
+      if (requestProcessor.isPresent()) {
+        RequestProcessingContext requestProcessingContext =
+            new RequestProcessingContext(blockProcessingContext, receipts);
+        maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+      }
+    } catch (final Exception e) {
+      LOG.error("failed processing requests", e);
+      return new BlockProcessingResult(Optional.empty(), e);
     }
 
     if (maybeRequests.isPresent() && blockHeader.getRequestsHash().isPresent()) {
