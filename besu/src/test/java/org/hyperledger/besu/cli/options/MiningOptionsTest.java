@@ -379,9 +379,10 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
     final var expectedRegex = "besu \\d+\\.\\d+(\\.\\d+|\\-develop\\-\\p{XDigit}+)";
     internalTestSuccess(
         this::runtimeConfiguration,
-        miningParams ->
-            assertThat(new String(miningParams.getExtraData().toArray(), StandardCharsets.UTF_8))
-                .matches(expectedRegex));
+        miningParams -> {
+          assertThat(new String(miningParams.getExtraData().toArray(), StandardCharsets.UTF_8))
+              .matches(expectedRegex);
+        });
   }
 
   @Override
