@@ -29,11 +29,14 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -87,6 +90,24 @@ public class MainnetBlockContextProcessorTest {
     final MutableWorldState worldState = createWorldState(CALL_ADDRESS);
     var exception = assertThrows(RuntimeException.class, () -> processSystemCall(worldState));
     assertThat(exception.getMessage()).isEqualTo("System call did not execute to completion");
+  }
+
+  @Test
+  void shouldThrowExceptionOnFailedExecutionWithHaltReason() {
+    doAnswer(
+            invocation -> {
+              MessageFrame messageFrame = invocation.getArgument(0);
+              messageFrame.getMessageFrameStack().pop();
+              messageFrame.setState(MessageFrame.State.COMPLETED_FAILED);
+              messageFrame.setExceptionalHaltReason(
+                  Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+              return null;
+            })
+        .when(mockMessageCallProcessor)
+        .process(any(), any());
+    final MutableWorldState worldState = createWorldState(CALL_ADDRESS);
+    var exception = assertThrows(RuntimeException.class, () -> processSystemCall(worldState));
+    assertThat(exception.getMessage()).isEqualTo("System call halted: Stack underflow");
   }
 
   @Test
