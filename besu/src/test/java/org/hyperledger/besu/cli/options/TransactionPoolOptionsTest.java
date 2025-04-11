@@ -473,6 +473,15 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
+  public void fallbackValueForgetEvictedTxsWithSequenced() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isTrue(),
+        "--tx-pool",
+        SEQUENCED.name().toLowerCase(Locale.ROOT),
+        "--Xpeer-tracker-forget-evicted-txs");
+  }
+
+  @Test
   public void defaultForgetEvictedTxsWithLayeredIsFalse() {
     internalTestSuccess(
         config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isFalse(),
@@ -487,6 +496,15 @@ public class TransactionPoolOptionsTest
         "--tx-pool",
         LAYERED.name().toLowerCase(Locale.ROOT),
         "--Xpeer-tracker-forget-evicted-txs=true");
+  }
+
+  @Test
+  public void fallbackValueForgetEvictedTxsWithLayered() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isTrue(),
+        "--tx-pool",
+        LAYERED.name().toLowerCase(Locale.ROOT),
+        "--Xpeer-tracker-forget-evicted-txs");
   }
 
   @Override
