@@ -42,6 +42,6 @@ public class IDPrecompiledContract extends AbstractPrecompiledContract {
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    return PrecompileContractResult.success(input.copy());
+    return PrecompileContractResult.success(input);
   }
 }

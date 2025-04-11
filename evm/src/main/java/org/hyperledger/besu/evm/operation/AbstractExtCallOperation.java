@@ -194,7 +194,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     }
 
     // all checks passed, do the call
-    final Bytes inputData = frame.readMutableMemory(inputOffset, inputLength);
+    final Bytes inputData = frame.readMemory(inputOffset, inputLength);
 
     MessageFrame.builder()
         .parentMessageFrame(frame)

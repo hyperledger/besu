@@ -229,7 +229,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return new OperationResult(cost, null);
     }
 
-    final Bytes inputData = frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));
+    final Bytes inputData = frame.readMemory(inputDataOffset(frame), inputDataLength(frame));
 
     final Code code = getCode(evm, frame, contract);
 
