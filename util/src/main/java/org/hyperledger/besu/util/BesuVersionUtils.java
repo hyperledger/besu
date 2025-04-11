@@ -31,8 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public final class BesuVersionUtils {
   private static final String CLIENT = "besu";
-  private static final String VERSION =
-      BesuVersionUtils.class.getPackage().getImplementationVersion();
+  private static final String VERSION;
   private static final String OS = PlatformDetector.getOS();
   private static final String VM = PlatformDetector.getVM();
   private static final String COMMIT;
@@ -42,16 +41,23 @@ public final class BesuVersionUtils {
     String classPath = BesuVersionUtils.class.getResource(className).toString();
 
     String commit;
+    String implVersion = BesuVersionUtils.class.getPackage().getImplementationVersion();
     try {
       URL url = new URL(classPath);
       JarURLConnection jarConnection = (JarURLConnection) url.openConnection();
       Manifest manifest = jarConnection.getManifest();
       Attributes attributes = manifest.getMainAttributes();
       commit = attributes.getValue("Commit-Hash");
+      if (implVersion == null) {
+        // workaround fallback: when running tests it could happen that the first class loaded in
+        // the package is a test class and so the package is created without the manifest
+        implVersion = attributes.getValue("Implementation-Version");
+      }
     } catch (Exception e) {
       commit = null;
     }
     COMMIT = commit;
+    VERSION = implVersion;
   }
 
   private BesuVersionUtils() {}
