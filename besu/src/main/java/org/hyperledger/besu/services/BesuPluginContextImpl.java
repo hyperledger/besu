@@ -113,10 +113,13 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
   }
 
   private List<BesuPlugin> detectPlugins(final PluginConfiguration config) {
+    LOG.debug("detecting plugin in configured besu.plugins.dir {}", config.getPluginsDir());
     ClassLoader pluginLoader =
         pluginDirectoryLoader(config.getPluginsDir()).orElse(getClass().getClassLoader());
     ServiceLoader<BesuPlugin> serviceLoader = ServiceLoader.load(BesuPlugin.class, pluginLoader);
-    return StreamSupport.stream(serviceLoader.spliterator(), false).toList();
+    return StreamSupport.stream(serviceLoader.spliterator(), false)
+        .peek(l -> LOG.info("found besu-plugin {}", l.getName().orElse("noName")))
+        .toList();
   }
 
   /**
@@ -155,11 +158,21 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
       } else {
         // Register only the plugins that were explicitly requested and validated
         requestedPlugins = config.getRequestedPlugins();
+
         // Match and validate the requested plugins against the detected plugins
+        try {
         List<BesuPlugin> registeringPlugins =
             matchAndValidateRequestedPlugins(requestedPlugins, detectedPlugins);
 
-        registerPlugins(registeringPlugins);
+          registerPlugins(registeringPlugins);
+
+        } catch (final Exception e) {
+          if (config.isContinueOnPluginError()) {
+            LOG.error("Error matching or registering plugins. Plugins will not start.", e);
+          } else {
+            throw new RuntimeException("Error matching or registering plugins. Plugins will not start", e);
+          }
+        }
       }
     } else {
       LOG.debug("External plugins are disabled. Skipping plugins registration.");
@@ -362,6 +375,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
         final URL[] pluginJarURLs =
             pluginFilesList
                 .filter(p -> p.getFileName().toString().endsWith(".jar"))
+                .peek(p -> LOG.debug("plugin jar url: {}", p))
                 .map(BesuPluginContextImpl::pathToURIOrNull)
                 .toArray(URL[]::new);
         return Optional.of(new URLClassLoader(pluginJarURLs, this.getClass().getClassLoader()));
