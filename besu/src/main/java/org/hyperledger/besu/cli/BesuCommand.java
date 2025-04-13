@@ -1886,18 +1886,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcHttpOptions.checkDependencies(logger, commandLine);
     final JsonRpcConfiguration engineConfig =
         jsonRpcHttpOptions.jsonRpcConfiguration(
-            engineRPCConfig.engineHostsAllowlist(),
+                engineRPCConfig.engineHostsAllowlist,
             p2PDiscoveryConfig.p2pHost(),
             unstableRPCOptions.getWsTimeoutSec());
-    engineConfig.setPort(engineRPCConfig.engineRpcPort());
+    engineConfig.setPort(engineRPCConfig.engineRpcPort);
     engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
     engineConfig.setEnabled(isEngineApiEnabled());
-    if (!engineRPCConfig.isEngineAuthDisabled()) {
+    if (!engineRPCConfig.isEngineAuthDisabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
-      if (Objects.nonNull(engineRPCConfig.engineJwtKeyFile())
-          && java.nio.file.Files.exists(engineRPCConfig.engineJwtKeyFile())) {
-        engineConfig.setAuthenticationPublicKeyFile(engineRPCConfig.engineJwtKeyFile().toFile());
+      if (Objects.nonNull(engineRPCConfig.engineJwtKeyFile)
+          && java.nio.file.Files.exists(engineRPCConfig.engineJwtKeyFile)) {
+        engineConfig.setAuthenticationPublicKeyFile(engineRPCConfig.engineJwtKeyFile.toFile());
       } else {
         logger.warn(
             "Engine API authentication enabled without key file. Expect ephemeral jwt.hex file in datadir");
@@ -2614,7 +2614,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts, jsonRpcHttpOptions.getRpcHttpPort(), jsonRpcHttpOptions.isRpcHttpEnabled());
     addPortIfEnabled(
         effectivePorts, rpcWebsocketOptions.getRpcWsPort(), rpcWebsocketOptions.isRpcWsEnabled());
-    addPortIfEnabled(effectivePorts, engineRPCConfig.engineRpcPort(), isEngineApiEnabled());
+    addPortIfEnabled(effectivePorts, engineRPCConfig.engineRpcPort, isEngineApiEnabled());
     addPortIfEnabled(
         effectivePorts, metricsOptions.getMetricsPort(), metricsOptions.getMetricsEnabled());
     addPortIfEnabled(
@@ -2739,7 +2739,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean isEngineApiEnabled() {
-    return engineRPCConfig.overrideEngineRpcEnabled() || isMergeEnabled();
+    return engineRPCConfig.overrideEngineRpcEnabled || isMergeEnabled();
   }
 
   private SyncMode getDefaultSyncModeIfNotSet() {
