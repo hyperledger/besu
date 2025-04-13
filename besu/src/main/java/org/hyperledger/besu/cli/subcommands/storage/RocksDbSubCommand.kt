@@ -74,7 +74,7 @@ class RocksDbSubCommand
             val dbPath =
                 rocksDbSubCommand!!
                     .storageSubCommand!!
-                    .besuCommand
+                    .besuCommand!!
                     .dataDir()
                     .resolve(BesuController.DATABASE_PATH)
                     .toString()
@@ -126,7 +126,7 @@ class RocksDbSubCommand
             val dbPath =
                 rocksDbSubCommand!!
                     .storageSubCommand!!
-                    .besuCommand
+                    .besuCommand!!
                     .dataDir()
                     .resolve(BesuController.DATABASE_PATH)
                     .toString()

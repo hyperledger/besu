@@ -67,7 +67,7 @@ class RevertMetadataSubCommand
         private val parentCommand: RevertMetadataSubCommand? = null
 
         override fun run() {
-            val dataDir = parentCommand!!.parentCommand!!.besuCommand.dataDir()
+            val dataDir = parentCommand!!.parentCommand!!.besuCommand!!.dataDir()
 
             val dbMetadata = dataDir.resolve(METADATA_FILENAME).toFile()
             if (!dbMetadata.exists()) {
