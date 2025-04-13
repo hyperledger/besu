@@ -1763,8 +1763,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcIpcConfiguration =
         jsonRpcIpcConfiguration(
             unstableIpcOptions.isEnabled(),
-            unstableIpcOptions.getIpcPath(),
-            unstableIpcOptions.getRpcIpcApis());
+                unstableIpcOptions.ipcPath,
+                unstableIpcOptions.rpcIpcApis);
     inProcessRpcConfiguration = inProcessRpcOptions.toDomainObject();
     dataStorageConfiguration = getDataStorageConfiguration();
 
