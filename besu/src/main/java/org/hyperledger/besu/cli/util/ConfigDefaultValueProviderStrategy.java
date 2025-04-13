@@ -69,8 +69,8 @@ public class ConfigDefaultValueProviderStrategy implements IExecutionStrategy {
   @VisibleForTesting
   public IDefaultValueProvider createDefaultValueProvider(
       final CommandLine commandLine,
-      final Optional<File> configFile,
-      final Optional<InputStream> profile) {
+      final Optional<? extends File> configFile,
+      final Optional<? extends InputStream> profile) {
     List<IDefaultValueProvider> providers = new ArrayList<>();
     providers.add(new EnvironmentVariableDefaultProvider(environment));
 
