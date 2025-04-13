@@ -31,8 +31,8 @@ class IbftExtraDataCLIAdapter
 /** Default constructor.  */
     : JSONToRLP {
     @Throws(IOException::class)
-    override fun encode(json: String): Bytes {
-        return fromJsonAddresses(json)
+    override fun encode(json: String?): Bytes? {
+        return fromJsonAddresses(json!!)
     }
 
     @Throws(IOException::class)
@@ -44,8 +44,8 @@ class IbftExtraDataCLIAdapter
     }
 
     @Throws(IOException::class)
-    override fun decode(rlpInput: String): BftExtraData {
-        return fromRLPInput(rlpInput)
+    override fun decode(rlpInput: String?): BftExtraData? {
+        return fromRLPInput(rlpInput!!)
     }
 
     @Throws(IOException::class)
