@@ -1,4 +1,6 @@
-
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+}
 dependencies {
   api 'org.slf4j:slf4j-api'
 
@@ -14,6 +16,7 @@ dependencies {
 
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 task testPluginsJar(type: Jar) {
@@ -34,3 +37,9 @@ artifacts { testPluginsJar }
 
 
 javadoc { enabled = false }
+repositories {
+    mavenCentral()
+}
+kotlin {
+    jvmToolchain(21)
+}

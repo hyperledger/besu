@@ -1,4 +1,6 @@
-/*
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+}/*
  * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -20,4 +22,11 @@ dependencies {
   implementation 'io.consensys.tuweni:tuweni-toml'
   implementation 'org.web3j:abi'
   implementation 'org.web3j:besu'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+}
+repositories {
+    mavenCentral()
+}
+kotlin {
+    jvmToolchain(21)
 }

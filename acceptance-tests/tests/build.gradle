@@ -14,6 +14,7 @@
 plugins {
   id 'org.web3j' version '4.12.2'
   id 'org.web3j.solidity' version '0.5.2'
+    id 'org.jetbrains.kotlin.jvm'
 }
 
 web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
@@ -83,6 +84,7 @@ dependencies {
   testImplementation 'com.google.dagger:dagger'
   testAnnotationProcessor 'com.google.dagger:dagger-compiler'
   testImplementation project(path: ':acceptance-tests:tests:shanghai')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 test.enabled = false
@@ -239,4 +241,10 @@ task acceptanceTestPermissioning(type: Test) {
   }
 
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
+}
+repositories {
+    mavenCentral()
+}
+kotlin {
+    jvmToolchain(21)
 }

@@ -22,6 +22,15 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
+buildscript {
+  ext.kotlin_version = '2.1.20'
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
+}
 plugins {
   id 'com.diffplug.spotless' version '7.0.2'
   id 'com.github.jk1.dependency-license-report' version '2.9'
@@ -147,8 +156,6 @@ configure(allprojects - project(':platform')) {
   }
 
   java {
-    sourceCompatibility = 21
-    targetCompatibility = 21
   }
 
   repositories {
@@ -652,6 +659,7 @@ subprojects {
 jar { enabled = false }
 
 apply plugin: 'application'
+apply plugin: 'kotlin'
 application {
   mainClass = 'org.hyperledger.besu.Besu'
   applicationDefaultJvmArgs = [
@@ -1072,6 +1080,7 @@ dependencies {
   errorprone 'org.hyperledger.besu:besu-errorprone-checks'
   implementation project(':besu')
   implementation project(':ethereum:evmtool')
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 }
 
 @CompileStatic
@@ -1115,3 +1124,9 @@ artifactoryPublish.dependsOn verifyDistributions
 artifactoryPublish.mustRunAfter(distTar)
 artifactoryPublish.mustRunAfter(distZip)
 artifactoryPublish.mustRunAfter(javadocJar)
+repositories {
+  mavenCentral()
+}
+kotlin {
+  jvmToolchain(21)
+}

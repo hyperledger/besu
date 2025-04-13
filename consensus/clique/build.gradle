@@ -13,7 +13,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-plugins { id 'java' }
+plugins { id 'java'
+    id 'org.jetbrains.kotlin.jvm' }
 
 jar {
   archiveBaseName = 'besu-clique'
@@ -61,4 +62,8 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+}
+kotlin {
+    jvmToolchain(21)
 }

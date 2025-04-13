@@ -14,6 +14,7 @@
  */
 
 apply plugin: 'java-library'
+apply plugin: 'kotlin'
 
 jar {
   archiveBaseName = 'besu'
@@ -109,4 +110,20 @@ dependencies {
 
   annotationProcessor 'com.google.dagger:dagger-compiler'
   testAnnotationProcessor 'com.google.dagger:dagger-compiler'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+}
+buildscript {
+    ext.kotlin_version = '2.1.20'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+repositories {
+    mavenCentral()
+}
+kotlin {
+    jvmToolchain(21)
 }
