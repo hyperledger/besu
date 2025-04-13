@@ -62,15 +62,15 @@ class ConfigDefaultValueProviderStrategy
 
         configFile.ifPresent { config: File? ->
             if (config!!.exists()) {
-                providers.add(TomlConfigurationDefaultProvider.fromFile(commandLine, config))
+                providers.add(TomlConfigurationDefaultProvider.fromFile(commandLine!!, config))
             }
         }
 
         profile.ifPresent { p: InputStream? ->
             providers.add(
                 TomlConfigurationDefaultProvider.fromInputStream(
-                    commandLine,
-                    p
+                    commandLine!!,
+                    p!!
                 )
             )
         }
