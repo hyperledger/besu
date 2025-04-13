@@ -1565,7 +1565,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings("ConstantConditions")
   private void validateNatParams() {
-    if (natMethod.equals(NatMethod.AUTO) && !unstableNatOptions.getNatMethodFallbackEnabled()) {
+    if (natMethod.equals(NatMethod.AUTO) && !unstableNatOptions.natMethodFallbackEnabled) {
       throw new ParameterException(
           this.commandLine,
           "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled"
@@ -2303,7 +2303,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
-            .natMethodFallbackEnabled(unstableNatOptions.getNatMethodFallbackEnabled())
+            .natMethodFallbackEnabled(unstableNatOptions.natMethodFallbackEnabled)
             .discoveryEnabled(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .permissioningConfiguration(permissioningConfiguration)
