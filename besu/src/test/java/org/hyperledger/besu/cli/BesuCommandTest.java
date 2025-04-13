@@ -1287,7 +1287,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String url = "besu-node:secret@host:443";
     parseCommand("--ethstats", url);
     verify(mockRunnerBuilder).ethstatsOptions(ethstatsOptionsArgumentCaptor.capture());
-    assertThat(ethstatsOptionsArgumentCaptor.getValue().getEthstatsUrl()).isEqualTo(url);
+    assertThat(ethstatsOptionsArgumentCaptor.getValue().ethstatsUrl).isEqualTo(url);
   }
 
   @Test
@@ -1295,7 +1295,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String contact = "contact@mail.net";
     parseCommand("--ethstats", "besu-node:secret@host:443", "--ethstats-contact", contact);
     verify(mockRunnerBuilder).ethstatsOptions(ethstatsOptionsArgumentCaptor.capture());
-    assertThat(ethstatsOptionsArgumentCaptor.getValue().getEthstatsContact()).isEqualTo(contact);
+    assertThat(ethstatsOptionsArgumentCaptor.getValue().ethstatsContact).isEqualTo(contact);
   }
 
   @Test

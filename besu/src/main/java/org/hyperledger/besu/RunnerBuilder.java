@@ -1002,9 +1002,9 @@ public class RunnerBuilder {
           Optional.of(
               new EthStatsService(
                   EthStatsConnectOptions.fromParams(
-                      ethstatsOptions.getEthstatsUrl(),
-                      ethstatsOptions.getEthstatsContact(),
-                      ethstatsOptions.getEthstatsCaCert()),
+                          ethstatsOptions.ethstatsUrl,
+                          ethstatsOptions.ethstatsContact,
+                          ethstatsOptions.ethstatsCaCert),
                   blockchainQueries,
                   besuController.getProtocolManager(),
                   transactionPool,
@@ -1116,7 +1116,7 @@ public class RunnerBuilder {
   }
 
   private boolean isEthStatsEnabled() {
-    return ethstatsOptions != null && !Strings.isNullOrEmpty(ethstatsOptions.getEthstatsUrl());
+    return ethstatsOptions != null && !Strings.isNullOrEmpty(ethstatsOptions.ethstatsUrl);
   }
 
   private Stream<EnodeURL> sanitizePeers(
