@@ -78,7 +78,7 @@ public class JsonBlockImporter {
     final ChainData chainData = mapper.readValue(chainJson, ChainData.class);
 
     final List<Block> importedBlocks = new ArrayList<>();
-    for (final BlockData blockData : chainData.getBlocks()) {
+    for (final BlockData blockData : chainData.blocks) {
       final BlockHeader parentHeader = getParentHeader(blockData, importedBlocks);
       final Block importedBlock = processBlockData(blockData, parentHeader);
       importedBlocks.add(importedBlock);
