@@ -12,10 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.subcommands.blocks;
+package org.hyperledger.besu.cli.subcommands.blocks
 
-/** The enum Block export format. */
-public enum BlockExportFormat {
-  /** Rlp block export format. */
-  RLP
+/** The enum Block import format.  */
+enum class BlockImportFormat {
+    /** RLP block import format.  */
+    RLP,
+
+    /** Json block import format.  */
+    JSON,
+
+    /** Era1 block import format.  */
+    ERA1,
 }
