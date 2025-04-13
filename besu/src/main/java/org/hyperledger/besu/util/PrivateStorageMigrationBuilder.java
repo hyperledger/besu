@@ -50,11 +50,11 @@ public class PrivateStorageMigrationBuilder {
    * @return the private storage migration
    */
   public PrivateStorageMigration build() {
-    final Blockchain blockchain = besuController.getProtocolContext().getBlockchain();
+    final Blockchain blockchain = besuController.protocolContext.getBlockchain();
     final Address privacyPrecompileAddress = privacyParameters.getPrivacyAddress();
-    final ProtocolSchedule protocolSchedule = besuController.getProtocolSchedule();
+    final ProtocolSchedule protocolSchedule = besuController.protocolSchedule;
     final WorldStateArchive publicWorldStateArchive =
-        besuController.getProtocolContext().getWorldStateArchive();
+        besuController.protocolContext.getWorldStateArchive();
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
     final LegacyPrivateStateStorage legacyPrivateStateStorage =
         privacyParameters.getPrivateStorageProvider().createLegacyPrivateStateStorage();

@@ -124,22 +124,22 @@ public final class RunnerBuilderTest {
 
     when(protocolContext.getWorldStateArchive()).thenReturn(worldstateArchive);
     when(besuController.getProtocolManager()).thenReturn(ethProtocolManager);
-    when(besuController.getSubProtocolConfiguration()).thenReturn(subProtocolConfiguration);
-    when(besuController.getProtocolContext()).thenReturn(protocolContext);
-    when(besuController.getProtocolSchedule()).thenReturn(protocolSchedule);
-    when(besuController.getNodeKey()).thenReturn(nodeKey);
+    when(besuController.subProtocolConfiguration).thenReturn(subProtocolConfiguration);
+    when(besuController.protocolContext).thenReturn(protocolContext);
+    when(besuController.protocolSchedule).thenReturn(protocolSchedule);
+    when(besuController.nodeKey).thenReturn(nodeKey);
     when(besuController.getMiningParameters()).thenReturn(mock(MiningConfiguration.class));
-    when(besuController.getPrivacyParameters()).thenReturn(mock(PrivacyParameters.class));
-    when(besuController.getTransactionPool())
+    when(besuController.privacyParameters).thenReturn(mock(PrivacyParameters.class));
+    when(besuController.transactionPool)
         .thenReturn(mock(TransactionPool.class, RETURNS_DEEP_STUBS));
-    when(besuController.getSynchronizer()).thenReturn(mock(Synchronizer.class));
-    when(besuController.getMiningCoordinator()).thenReturn(mock(MiningCoordinator.class));
-    when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
-    when(besuController.getEthPeers()).thenReturn(mock(EthPeers.class));
+    when(besuController.synchronizer).thenReturn(mock(Synchronizer.class));
+    when(besuController.miningCoordinator).thenReturn(mock(MiningCoordinator.class));
+    when(besuController.miningCoordinator).thenReturn(mock(MergeMiningCoordinator.class));
+    when(besuController.ethPeers).thenReturn(mock(EthPeers.class));
     final GenesisConfigOptions genesisConfigOptions = mock(GenesisConfigOptions.class);
     when(genesisConfigOptions.getForkBlockNumbers()).thenReturn(Collections.emptyList());
     when(genesisConfigOptions.getForkBlockTimestamps()).thenReturn(Collections.emptyList());
-    when(besuController.getGenesisConfigOptions()).thenReturn(genesisConfigOptions);
+    when(besuController.genesisConfigOptions).thenReturn(genesisConfigOptions);
   }
 
   @Test
@@ -251,7 +251,7 @@ public final class RunnerBuilderTest {
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.networkId).thenReturn(BigInteger.ONE);
     MergeConfiguration.setMergeEnabled(true);
-    when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
+    when(besuController.miningCoordinator).thenReturn(mock(MergeMiningCoordinator.class));
 
     final Runner runner =
         new RunnerBuilder()
@@ -293,7 +293,7 @@ public final class RunnerBuilderTest {
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.networkId).thenReturn(BigInteger.ONE);
     MergeConfiguration.setMergeEnabled(true);
-    when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
+    when(besuController.miningCoordinator).thenReturn(mock(MergeMiningCoordinator.class));
     final JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
     engineConf.setEnabled(true);
 
@@ -336,7 +336,7 @@ public final class RunnerBuilderTest {
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.networkId).thenReturn(BigInteger.ONE);
     MergeConfiguration.setMergeEnabled(true);
-    when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
+    when(besuController.miningCoordinator).thenReturn(mock(MergeMiningCoordinator.class));
     final JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
     engineConf.setEnabled(true);
 

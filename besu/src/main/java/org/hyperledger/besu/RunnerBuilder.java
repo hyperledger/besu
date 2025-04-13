@@ -613,7 +613,7 @@ public class RunnerBuilder {
       }
       discoveryConfiguration.setBootnodes(bootstrap);
       discoveryConfiguration.setIncludeBootnodesOnPeerRefresh(
-          besuController.getGenesisConfigOptions().isPoa() && poaDiscoveryRetryBootnodes);
+          besuController.genesisConfigOptions.isPoa() && poaDiscoveryRetryBootnodes);
       LOG.info("Resolved {} bootnodes.", bootstrap.size());
       LOG.debug("Bootnodes = {}", bootstrap);
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.dnsDiscoveryUrl);
@@ -625,13 +625,13 @@ public class RunnerBuilder {
       discoveryConfiguration.setEnabled(false);
     }
 
-    final NodeKey nodeKey = besuController.getNodeKey();
+    final NodeKey nodeKey = besuController.nodeKey;
 
     final SubProtocolConfiguration subProtocolConfiguration =
-        besuController.getSubProtocolConfiguration();
+            besuController.subProtocolConfiguration;
 
-    final ProtocolSchedule protocolSchedule = besuController.getProtocolSchedule();
-    final ProtocolContext context = besuController.getProtocolContext();
+    final ProtocolSchedule protocolSchedule = besuController.protocolSchedule;
+    final ProtocolContext context = besuController.protocolContext;
 
     final List<SubProtocol> subProtocols = subProtocolConfiguration.getSubProtocols();
     final List<ProtocolManager> protocolManagers = subProtocolConfiguration.getProtocolManagers();
@@ -657,9 +657,9 @@ public class RunnerBuilder {
 
     final List<EnodeURL> bootnodes = discoveryConfiguration.getBootnodes();
 
-    final Synchronizer synchronizer = besuController.getSynchronizer();
+    final Synchronizer synchronizer = besuController.synchronizer;
 
-    final TransactionSimulator transactionSimulator = besuController.getTransactionSimulator();
+    final TransactionSimulator transactionSimulator = besuController.transactionSimulator;
 
     final Bytes localNodeId = nodeKey.getPublicKey().getEncodedBytes();
     final Optional<NodePermissioningController> nodePermissioningController =
@@ -672,7 +672,7 @@ public class RunnerBuilder {
             .map(nodePerms -> PeerPermissions.combine(nodePerms, defaultPeerPermissions))
             .orElse(defaultPeerPermissions);
 
-    final EthPeers ethPeers = besuController.getEthPeers();
+    final EthPeers ethPeers = besuController.ethPeers;
 
     LOG.info("Detecting NAT service.");
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;
@@ -691,8 +691,8 @@ public class RunnerBuilder {
               .natService(natService)
               .storageProvider(storageProvider)
               .blockchain(context.getBlockchain())
-              .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
-              .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
+              .blockNumberForks(besuController.genesisConfigOptions.getForkBlockNumbers())
+              .timestampForks(besuController.genesisConfigOptions.getForkBlockTimestamps())
               .allConnectionsSupplier(ethPeers::streamAllConnections)
               .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
               .maxPeers(ethPeers.getMaxPeers())
@@ -725,8 +725,8 @@ public class RunnerBuilder {
             n.setInsufficientPeersPermissioningProvider(
                 new InsufficientPeersPermissioningProvider(network, bootnodes)));
 
-    final TransactionPool transactionPool = besuController.getTransactionPool();
-    final MiningCoordinator miningCoordinator = besuController.getMiningCoordinator();
+    final TransactionPool transactionPool = besuController.transactionPool;
+    final MiningCoordinator miningCoordinator = besuController.miningCoordinator;
     final MiningConfiguration miningConfiguration = besuController.getMiningParameters();
 
     final BlockchainQueries blockchainQueries =
@@ -739,7 +739,7 @@ public class RunnerBuilder {
             apiConfiguration,
             miningConfiguration);
 
-    final PrivacyParameters privacyParameters = besuController.getPrivacyParameters();
+    final PrivacyParameters privacyParameters = besuController.privacyParameters;
 
     final FilterManager filterManager =
         new FilterManagerBuilder()
@@ -1009,10 +1009,10 @@ public class RunnerBuilder {
                   besuController.getProtocolManager(),
                   transactionPool,
                   miningCoordinator,
-                  besuController.getSyncState(),
+                      besuController.syncState,
                   vertx,
                   BesuVersionUtils.nodeName(identityString),
-                  besuController.getGenesisConfigOptions(),
+                      besuController.genesisConfigOptions,
                   network));
     } else {
       ethStatsService = Optional.empty();
@@ -1190,8 +1190,7 @@ public class RunnerBuilder {
 
       accountPermissioningController.ifPresent(
           permissioningController ->
-              besuController
-                  .getProtocolSchedule()
+              besuController.protocolSchedule
                   .setPermissionTransactionFilter(permissioningController::isPermitted));
 
       return accountPermissioningController;
@@ -1270,7 +1269,7 @@ public class RunnerBuilder {
                 BesuVersionUtils.shortVersion(),
                 BesuVersionUtils.commit(),
                     ethNetworkConfig.networkId,
-                besuController.getGenesisConfigOptions(),
+                    besuController.genesisConfigOptions,
                 network,
                 blockchainQueries,
                 synchronizer,
@@ -1366,8 +1365,7 @@ public class RunnerBuilder {
         && privacyParameters.isMultiTenancyEnabled()) {
       final FlexiblePrivacyPrecompiledContract flexiblePrivacyPrecompiledContract =
           (FlexiblePrivacyPrecompiledContract)
-              besuController
-                  .getProtocolSchedule()
+              besuController.protocolSchedule
                   .getByBlockHeader(genesisBlockHeader)
                   .getPrecompileContractRegistry()
                   .get(FLEXIBLE_PRIVACY);

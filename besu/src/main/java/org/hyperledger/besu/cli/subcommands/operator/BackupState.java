@@ -83,9 +83,9 @@ public class BackupState implements Runnable {
         "Backup directory does not exist and cannot be created.");
 
     final BesuController besuController = createBesuController();
-    final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
+    final MutableBlockchain blockchain = besuController.protocolContext.getBlockchain();
     final ForestWorldStateKeyValueStorage forestWorldStateKeyValueStorage =
-        ((ForestWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
+        ((ForestWorldStateArchive) besuController.protocolContext.getWorldStateArchive())
             .getWorldStateStorage();
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
     try {

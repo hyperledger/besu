@@ -303,19 +303,19 @@ public abstract class CommandTestAbstract {
 
     when(mockControllerBuilder.build()).thenReturn(mockController);
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
-    lenient().when(mockController.getProtocolSchedule()).thenReturn(mockProtocolSchedule);
-    lenient().when(mockController.getProtocolContext()).thenReturn(mockProtocolContext);
+    lenient().when(mockController.protocolSchedule).thenReturn(mockProtocolSchedule);
+    lenient().when(mockController.protocolContext).thenReturn(mockProtocolContext);
     lenient()
-        .when(mockController.getAdditionalPluginServices())
+        .when(mockController.additionalPluginServices)
         .thenReturn(new NoopPluginServiceFactory());
-    lenient().when(mockController.getNodeKey()).thenReturn(nodeKey);
+    lenient().when(mockController.nodeKey).thenReturn(nodeKey);
 
     when(mockEthProtocolManager.getBlockBroadcaster()).thenReturn(mockBlockBroadcaster);
 
     when(mockProtocolContext.getBlockchain()).thenReturn(mockMutableBlockchain);
     lenient().when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
-    when(mockController.getTransactionPool()).thenReturn(mockTransactionPool);
-    when(mockController.getStorageProvider()).thenReturn(storageProvider);
+    when(mockController.transactionPool).thenReturn(mockTransactionPool);
+    when(mockController.storageProvider).thenReturn(storageProvider);
 
     when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuController(any())).thenReturn(mockRunnerBuilder);

@@ -293,7 +293,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     final BesuController controller = super.build();
-    mergeBesuControllerBuilder.getPostMergeContext().setSyncState(controller.getSyncState());
+    mergeBesuControllerBuilder.getPostMergeContext().setSyncState(controller.syncState);
     return controller;
   }
 

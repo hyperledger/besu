@@ -200,7 +200,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .staticNodes(node.getStaticNodes().stream().map(EnodeURLImpl::fromString).toList())
         .besuPluginContext(besuPluginContext)
         .autoLogBloomCaching(false)
-        .storageProvider(besuController.getStorageProvider())
+        .storageProvider(besuController.storageProvider)
         .rpcEndpointService(component.rpcEndpointService())
         .inProcessRpcConfiguration(inProcessRpcConfiguration);
     node.engineRpcConfiguration().ifPresent(runnerBuilder::engineJsonRpcConfiguration);
@@ -212,16 +212,16 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(
         BesuEvents.class,
         new BesuEventsImpl(
-            besuController.getProtocolContext().getBlockchain(),
+            besuController.protocolContext.getBlockchain(),
             besuController.getProtocolManager().getBlockBroadcaster(),
-            besuController.getTransactionPool(),
-            besuController.getSyncState(),
-            besuController.getProtocolContext().getBadBlockManager()));
+                besuController.transactionPool,
+                besuController.syncState,
+            besuController.protocolContext.getBadBlockManager()));
     besuPluginContext.addService(
         TransactionPoolService.class,
-        new TransactionPoolServiceImpl(besuController.getTransactionPool()));
+        new TransactionPoolServiceImpl(besuController.transactionPool));
     besuPluginContext.addService(
-        MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
+        MiningService.class, new MiningServiceImpl(besuController.miningCoordinator));
 
     component.rpcEndpointService().init(runner.getInProcessRpcMethods());
 
@@ -336,26 +336,26 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     BlockchainServiceImpl provideBlockchainService(final BesuController besuController) {
       BlockchainServiceImpl retval = new BlockchainServiceImpl();
       retval.init(
-          besuController.getProtocolContext().getBlockchain(),
-          besuController.getProtocolSchedule());
+          besuController.protocolContext.getBlockchain(),
+              besuController.protocolSchedule);
       return retval;
     }
 
     @Provides
     @Singleton
     Blockchain provideBlockchain(final BesuController besuController) {
-      return besuController.getProtocolContext().getBlockchain();
+      return besuController.protocolContext.getBlockchain();
     }
 
     @Provides
     @SuppressWarnings("CloseableProvides")
     WorldStateArchive provideWorldStateArchive(final BesuController besuController) {
-      return besuController.getProtocolContext().getWorldStateArchive();
+      return besuController.protocolContext.getWorldStateArchive();
     }
 
     @Provides
     ProtocolSchedule provideProtocolSchedule(final BesuController besuController) {
-      return besuController.getProtocolSchedule();
+      return besuController.protocolSchedule;
     }
 
     @Provides

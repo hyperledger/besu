@@ -76,7 +76,7 @@ public final class RlpBlockExporterTest {
     BlockTestUtil.write1000Blocks(blocks);
     blockchain = importBlocks(controller, blocks);
     chainHead = blockchain.getChainHeadBlockNumber();
-    protocolSchedule = controller.getProtocolSchedule();
+    protocolSchedule = controller.protocolSchedule;
   }
 
   private static Blockchain importBlocks(final BesuController controller, final Path blocksFile)
@@ -84,7 +84,7 @@ public final class RlpBlockExporterTest {
     final RlpBlockImporter blockImporter = new RlpBlockImporter();
 
     blockImporter.importBlockchain(blocksFile, controller, false);
-    return controller.getProtocolContext().getBlockchain();
+    return controller.protocolContext.getBlockchain();
   }
 
   private static BesuController createController(final @TempDir Path dataDir) throws IOException {

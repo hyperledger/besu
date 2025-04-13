@@ -194,7 +194,7 @@ public class PrivacyReorgTest {
   @Test
   public void privacyGroupHeadIsTracked() {
     // Setup an initial blockchain with one private transaction
-    final ProtocolContext protocolContext = besuController.getProtocolContext();
+    final ProtocolContext protocolContext = besuController.protocolContext;
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     final PrivateStateStorage privateStateStorage =
         component.getPrivacyParameters().getPrivateStateStorage();
@@ -235,7 +235,7 @@ public class PrivacyReorgTest {
   @Test
   public void reorgToChainAtEqualHeight() {
     // Setup an initial blockchain with one private transaction
-    final ProtocolContext protocolContext = besuController.getProtocolContext();
+    final ProtocolContext protocolContext = besuController.protocolContext;
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     assertThat(blockchain.getChainHeadBlockNumber()).isEqualTo(0);
     final Block firstBlock =
@@ -269,7 +269,7 @@ public class PrivacyReorgTest {
   @Test
   public void reorgToShorterChain() {
     // Setup an initial blockchain with one private transaction
-    final ProtocolContext protocolContext = besuController.getProtocolContext();
+    final ProtocolContext protocolContext = besuController.protocolContext;
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
 
     final String firstBlockStateRoot =
@@ -322,7 +322,7 @@ public class PrivacyReorgTest {
   @Test
   public void reorgToLongerChain() {
     // Setup an initial blockchain with one private transaction
-    final ProtocolContext protocolContext = besuController.getProtocolContext();
+    final ProtocolContext protocolContext = besuController.protocolContext;
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
 
     final Block firstBlock =
@@ -393,8 +393,7 @@ public class PrivacyReorgTest {
       final DefaultBlockchain blockchain,
       final ProtocolContext protocolContext,
       final Block block) {
-    return besuController
-        .getProtocolSchedule()
+    return besuController.protocolSchedule
         .getByBlockHeader(blockchain.getChainHeadHeader())
         .getBlockImporter()
         .importBlock(protocolContext, block, HeaderValidationMode.NONE);

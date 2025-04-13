@@ -326,15 +326,15 @@ public class TrieLogSubCommand implements Runnable {
     Configurator.setLevel(LoggerFactory.getLogger(TrieLogPruner.class).getName(), Level.DEBUG);
     checkNotNull(parentCommand);
     BesuController besuController = createBesuController();
-    final DataStorageConfiguration config = besuController.getDataStorageConfiguration();
+    final DataStorageConfiguration config = besuController.dataStorageConfiguration;
     checkArgument(
         DataStorageFormat.BONSAI.equals(config.getDataStorageFormat()),
         "Subcommand only works with data-storage-format=BONSAI");
 
-    final StorageProvider storageProvider = besuController.getStorageProvider();
+    final StorageProvider storageProvider = besuController.storageProvider;
     final BonsaiWorldStateKeyValueStorage rootWorldStateStorage =
         (BonsaiWorldStateKeyValueStorage) storageProvider.createWorldStateStorage(config);
-    final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
+    final MutableBlockchain blockchain = besuController.protocolContext.getBlockchain();
     return new TrieLogContext(config, rootWorldStateStorage, blockchain);
   }
 }

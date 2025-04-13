@@ -207,7 +207,7 @@ public final class RunnerTest {
             noOpMetricsSystem,
             miningParameters);
     setupState(
-        blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
+        blockCount, controllerAhead.protocolSchedule, controllerAhead.protocolContext);
 
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final Path pidPath = dataDirAhead.resolve("pid");

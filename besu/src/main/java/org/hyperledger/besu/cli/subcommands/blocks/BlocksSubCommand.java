@@ -395,7 +395,7 @@ public class BlocksSubCommand implements Runnable {
     }
 
     private void exportRlpFormat(final BesuController controller) throws IOException {
-      final ProtocolContext context = controller.getProtocolContext();
+      final ProtocolContext context = controller.protocolContext;
       final RlpBlockExporter exporter =
           parentCommand.rlpBlockExporterFactory.apply(context.getBlockchain());
       exporter.exportBlocks(blocksExportFile, getStartBlock(), getEndBlock());

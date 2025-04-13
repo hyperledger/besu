@@ -88,12 +88,11 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
     try (BesuController besuController = storageSubCommand.besuCommand.buildController()) {
 
       BlockchainStorage blockchainStorage =
-          besuController
-              .getStorageProvider()
+          besuController.storageProvider
               .createBlockchainStorage(
-                  besuController.getProtocolSchedule(),
-                  besuController.getStorageProvider().createVariablesStorage(),
-                  besuController.getDataStorageConfiguration());
+                      besuController.protocolSchedule,
+                  besuController.storageProvider.createVariablesStorage(),
+                      besuController.dataStorageConfiguration);
 
       try (ExecutorService executor = Executors.newFixedThreadPool(threads)) {
         for (long i = 0; i < mergeBlockNumber; i += pruneRangeSize) {

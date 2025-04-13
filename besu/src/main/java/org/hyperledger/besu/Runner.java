@@ -140,7 +140,7 @@ public class Runner implements AutoCloseable {
         transactionLogBloomCacher.map(
             cacher -> new AutoTransactionLogBloomCachingService(blockchain, cacher));
     this.transactionPoolEvictionService =
-        new TransactionPoolEvictionService(vertx, besuController.getTransactionPool());
+        new TransactionPoolEvictionService(vertx, besuController.transactionPool);
   }
 
   /** Start external services. */
@@ -173,11 +173,11 @@ public class Runner implements AutoCloseable {
       LOG.info("Starting Ethereum main loop ... ");
       natService.start();
       networkRunner.start();
-      besuController.getMiningCoordinator().subscribe();
+      besuController.miningCoordinator.subscribe();
       if (networkRunner.getNetwork().isP2pEnabled()) {
-        besuController.getSynchronizer().start();
+        besuController.synchronizer.start();
       }
-      besuController.getMiningCoordinator().start();
+      besuController.miningCoordinator.start();
       transactionPoolEvictionService.start();
 
       LOG.info("Ethereum main loop is up.");
@@ -205,15 +205,15 @@ public class Runner implements AutoCloseable {
         service ->
             waitForServiceToStop(
                 "ipcJsonRpc", service.stop().toCompletionStage().toCompletableFuture()));
-    waitForServiceToStop("Transaction Pool", besuController.getTransactionPool().setDisabled());
+    waitForServiceToStop("Transaction Pool", besuController.transactionPool.setDisabled());
     metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
     ethStatsService.ifPresent(EthStatsService::stop);
-    besuController.getMiningCoordinator().stop();
-    waitForServiceToStop("Mining Coordinator", besuController.getMiningCoordinator()::awaitStop);
+    besuController.miningCoordinator.stop();
+    waitForServiceToStop("Mining Coordinator", besuController.miningCoordinator::awaitStop);
     stratumServer.ifPresent(server -> waitForServiceToStop("Stratum", server::stop));
     if (networkRunner.getNetwork().isP2pEnabled()) {
-      besuController.getSynchronizer().stop();
-      waitForServiceToStop("Synchronizer", besuController.getSynchronizer()::awaitStop);
+      besuController.synchronizer.stop();
+      waitForServiceToStop("Synchronizer", besuController.synchronizer::awaitStop);
     }
 
     networkRunner.stop();

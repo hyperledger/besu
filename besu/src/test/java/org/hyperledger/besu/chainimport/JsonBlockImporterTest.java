@@ -132,7 +132,7 @@ public abstract class JsonBlockImporterTest {
       final String jsonData = getFileContents("blocks-import-valid.json");
       importer.importChain(jsonData);
 
-      final Blockchain blockchain = controller.getProtocolContext().getBlockchain();
+      final Blockchain blockchain = controller.protocolContext.getBlockchain();
 
       // Check blocks were imported
       assertThat(blockchain.getChainHead().getHeight()).isEqualTo(4);
@@ -227,7 +227,7 @@ public abstract class JsonBlockImporterTest {
       final String jsonData = getFileContents("blocks-import-valid-no-block-identifiers.json");
       importer.importChain(jsonData);
 
-      final Blockchain blockchain = controller.getProtocolContext().getBlockchain();
+      final Blockchain blockchain = controller.protocolContext.getBlockchain();
 
       // Check blocks were imported
       assertThat(blockchain.getChainHead().getHeight()).isEqualTo(4);
@@ -323,7 +323,7 @@ public abstract class JsonBlockImporterTest {
 
       importer.importChain(jsonData);
 
-      final Blockchain blockchain = controller.getProtocolContext().getBlockchain();
+      final Blockchain blockchain = controller.protocolContext.getBlockchain();
 
       // Check blocks were imported
       assertThat(blockchain.getChainHead().getHeight()).isEqualTo(4);
@@ -408,7 +408,7 @@ public abstract class JsonBlockImporterTest {
 
       if (isEthash) {
         importer.importChain(jsonData);
-        final Blockchain blockchain = controller.getProtocolContext().getBlockchain();
+        final Blockchain blockchain = controller.protocolContext.getBlockchain();
         final Block block = getBlockAt(blockchain, 1);
         assertThat(block.getHeader().getExtraData()).isEqualTo(Bytes.fromHexString("0x0123"));
         assertThat(block.getHeader().getCoinbase())

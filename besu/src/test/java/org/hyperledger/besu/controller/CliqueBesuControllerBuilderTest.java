@@ -196,7 +196,7 @@ public class CliqueBesuControllerBuilderTest {
   @Test
   public void miningParametersBlockPeriodSecondsIsUpdatedOnTransition() {
     final var besuController = cliqueBesuControllerBuilder.build();
-    final var protocolContext = besuController.getProtocolContext();
+    final var protocolContext = besuController.protocolContext;
 
     final BlockHeader header1 =
         new BlockHeader(

@@ -88,7 +88,7 @@ public class Era1BlockImporterTest {
             .build();
     era1BlockImporter.importBlocks(targetController, source);
 
-    Blockchain blockchain = targetController.getProtocolContext().getBlockchain();
+    Blockchain blockchain = targetController.protocolContext.getBlockchain();
     BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
     Assertions.assertEquals(8191, chainHeadHeader.getNumber());
   }

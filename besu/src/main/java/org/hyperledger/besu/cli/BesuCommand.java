@@ -1285,20 +1285,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void startPlugins(final Runner runner) {
     blockchainServiceImpl.init(
-        besuController.getProtocolContext().getBlockchain(), besuController.getProtocolSchedule());
+        besuController.protocolContext.getBlockchain(), besuController.protocolSchedule);
     transactionSimulationServiceImpl.init(
-        besuController.getProtocolContext().getBlockchain(),
-        besuController.getTransactionSimulator());
+        besuController.protocolContext.getBlockchain(),
+            besuController.transactionSimulator);
     rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
 
     besuPluginContext.addService(
         BesuEvents.class,
         new BesuEventsImpl(
-            besuController.getProtocolContext().getBlockchain(),
+            besuController.protocolContext.getBlockchain(),
             besuController.getProtocolManager().getBlockBroadcaster(),
-            besuController.getTransactionPool(),
-            besuController.getSyncState(),
-            besuController.getProtocolContext().getBadBlockManager()));
+                besuController.transactionPool,
+                besuController.syncState,
+            besuController.protocolContext.getBadBlockManager()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
 
     besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
@@ -1306,45 +1306,45 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         SynchronizationService.class,
         new SynchronizationServiceImpl(
-            besuController.getSynchronizer(),
-            besuController.getProtocolContext(),
-            besuController.getProtocolSchedule(),
-            besuController.getSyncState(),
-            besuController.getProtocolContext().getWorldStateArchive()));
+                besuController.synchronizer,
+                besuController.protocolContext,
+                besuController.protocolSchedule,
+                besuController.syncState,
+            besuController.protocolContext.getWorldStateArchive()));
 
     besuPluginContext.addService(P2PService.class, new P2PServiceImpl(runner.getP2PNetwork()));
 
     besuPluginContext.addService(
         TransactionPoolService.class,
-        new TransactionPoolServiceImpl(besuController.getTransactionPool()));
+        new TransactionPoolServiceImpl(besuController.transactionPool));
 
     besuPluginContext.addService(
         RlpConverterService.class,
-        new RlpConverterServiceImpl(besuController.getProtocolSchedule()));
+        new RlpConverterServiceImpl(besuController.protocolSchedule));
 
     besuPluginContext.addService(
         TraceService.class,
         new TraceServiceImpl(
             new BlockchainQueries(
-                besuController.getProtocolSchedule(),
-                besuController.getProtocolContext().getBlockchain(),
-                besuController.getProtocolContext().getWorldStateArchive(),
+                    besuController.protocolSchedule,
+                besuController.protocolContext.getBlockchain(),
+                besuController.protocolContext.getWorldStateArchive(),
                 miningParametersSupplier.get()),
-            besuController.getProtocolSchedule()));
+                besuController.protocolSchedule));
 
     besuPluginContext.addService(
-        MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
+        MiningService.class, new MiningServiceImpl(besuController.miningCoordinator));
 
     besuPluginContext.addService(
         BlockSimulationService.class,
         new BlockSimulatorServiceImpl(
-            besuController.getProtocolContext().getWorldStateArchive(),
+            besuController.protocolContext.getWorldStateArchive(),
             miningParametersSupplier.get(),
-            besuController.getTransactionSimulator(),
-            besuController.getProtocolSchedule(),
-            besuController.getProtocolContext().getBlockchain()));
+                besuController.transactionSimulator,
+                besuController.protocolSchedule,
+            besuController.protocolContext.getBlockchain()));
 
-    besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
+    besuController.additionalPluginServices.appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
   }
 
