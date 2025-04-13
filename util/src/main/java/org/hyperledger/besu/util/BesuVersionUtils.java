@@ -12,45 +12,55 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu;
+package org.hyperledger.besu.util;
 
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.net.JarURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Represent Besu information such as version, OS etc. Used with --version option and during Besu
  * start.
  */
-public final class BesuInfo {
+public final class BesuVersionUtils {
   private static final String CLIENT = "besu";
-  private static final String VERSION = BesuInfo.class.getPackage().getImplementationVersion();
+  private static final String VERSION;
   private static final String OS = PlatformDetector.getOS();
   private static final String VM = PlatformDetector.getVM();
   private static final String COMMIT;
 
   static {
-    String className = BesuInfo.class.getSimpleName() + ".class";
-    String classPath = BesuInfo.class.getResource(className).toString();
+    String className = BesuVersionUtils.class.getSimpleName() + ".class";
+    String classPath = BesuVersionUtils.class.getResource(className).toString();
 
     String commit;
+    String implVersion = BesuVersionUtils.class.getPackage().getImplementationVersion();
     try {
       URL url = new URL(classPath);
       JarURLConnection jarConnection = (JarURLConnection) url.openConnection();
       Manifest manifest = jarConnection.getManifest();
       Attributes attributes = manifest.getMainAttributes();
       commit = attributes.getValue("Commit-Hash");
+      if (implVersion == null) {
+        // workaround fallback: when running tests it could happen that the first class loaded in
+        // the package is a test class and so the package is created without the manifest
+        implVersion = attributes.getValue("Implementation-Version");
+      }
     } catch (Exception e) {
       commit = null;
     }
     COMMIT = commit;
+    VERSION = implVersion;
   }
 
-  private BesuInfo() {}
+  private BesuVersionUtils() {}
 
   /**
    * Generate version-only Besu version
@@ -59,6 +69,17 @@ public final class BesuInfo {
    */
   public static String shortVersion() {
     return VERSION;
+  }
+
+  /**
+   * Generate version suitable to be used in the extra data field of a block header
+   *
+   * @return Besu version in format such as "v23.1.0" or "v23.1.1-dev-ac23d311" as UTF-8 encoded
+   *     bytes
+   */
+  public static Bytes versionForExtraData() {
+    final var nameAndVersion = ("besu " + VERSION).getBytes(StandardCharsets.UTF_8);
+    return Bytes.wrap(nameAndVersion, 0, Math.min(32, nameAndVersion.length));
   }
 
   /**

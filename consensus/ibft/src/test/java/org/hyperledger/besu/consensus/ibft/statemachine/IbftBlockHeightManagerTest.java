@@ -174,8 +174,10 @@ public class IbftBlockHeightManagerTest {
         .thenReturn(messageValidator);
 
     protocolContext =
-        new ProtocolContext(
-            blockchain, null, setupContextWithValidators(validators), new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withConsensusContext(setupContextWithValidators(validators))
+            .build();
 
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(

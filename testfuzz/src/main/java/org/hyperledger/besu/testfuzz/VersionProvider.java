@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.testfuzz;
 
-import org.hyperledger.besu.BesuInfo;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import picocli.CommandLine;
 
@@ -42,6 +42,6 @@ public class VersionProvider implements CommandLine.IVersionProvider {
    */
   @Override
   public String[] getVersion() {
-    return new String[] {"Hyperledger Besu evm " + BesuInfo.shortVersion()};
+    return new String[] {"Hyperledger Besu evm " + BesuVersionUtils.shortVersion()};
   }
 }

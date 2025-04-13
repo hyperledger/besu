@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -45,11 +44,9 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(
-            null,
-            null,
-            setupContextWithBftExtraData(validators, bftExtraData),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withConsensusContext(setupContextWithBftExtraData(validators, bftExtraData))
+            .build();
     when(bftExtraData.getValidators()).thenReturn(validators);
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -63,11 +60,9 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(
-            null,
-            null,
-            setupContextWithBftExtraData(validators, bftExtraData),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withConsensusContext(setupContextWithBftExtraData(validators, bftExtraData))
+            .build();
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(validators));
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isFalse();
@@ -84,11 +79,9 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(2), AddressHelpers.ofValue(3), AddressHelpers.ofValue(4));
 
     final ProtocolContext context =
-        new ProtocolContext(
-            null,
-            null,
-            setupContextWithBftExtraData(storedValidators, bftExtraData),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withConsensusContext(setupContextWithBftExtraData(storedValidators, bftExtraData))
+            .build();
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(reportedValidators));
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isFalse();

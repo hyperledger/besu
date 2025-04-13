@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu;
+package org.hyperledger.besu.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,7 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public final class BesuInfoTest {
+public final class BesuVersionUtilsTest {
 
   /**
    * Ethstats wants a version string like &lt;foo&gt/v&lt;bar&gt/&lt;baz&gt/&lt;bif&gt. Foo is the
@@ -33,7 +33,8 @@ public final class BesuInfoTest {
    */
   @Test
   public void versionStringIsEthstatsFriendly() {
-    assertThat(BesuInfo.version()).matches("[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null)/[^/]+/[^/]+");
+    assertThat(BesuVersionUtils.version())
+        .matches("[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null)/[^/]+/[^/]+");
   }
 
   /**
@@ -44,7 +45,7 @@ public final class BesuInfoTest {
    */
   @Test
   public void noIdentityNodeNameIsEthstatsFriendly() {
-    assertThat(BesuInfo.nodeName(Optional.empty()))
+    assertThat(BesuVersionUtils.nodeName(Optional.empty()))
         .matches("[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null)/[^/]+/[^/]+");
   }
 
@@ -57,7 +58,7 @@ public final class BesuInfoTest {
    */
   @Test
   public void userIdentityNodeNameIsEthstatsFriendly() {
-    assertThat(BesuInfo.nodeName(Optional.of("TestUserIdentity")))
+    assertThat(BesuVersionUtils.nodeName(Optional.of("TestUserIdentity")))
         .matches("[^/]+/[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null)/[^/]+/[^/]+");
   }
 }

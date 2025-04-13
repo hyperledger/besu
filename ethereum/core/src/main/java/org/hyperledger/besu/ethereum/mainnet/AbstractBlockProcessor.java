@@ -44,6 +44,8 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -80,6 +82,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   private final ProtocolSchedule protocolSchedule;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
+  private BlockImportTracerProvider blockImportTracerProvider = null;
 
   protected AbstractBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -94,6 +97,21 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
+  }
+
+  private BlockAwareOperationTracer getBlockImportTracer(
+      final ProtocolContext protocolContext, final BlockHeader header) {
+
+    if (blockImportTracerProvider == null) {
+      // fetch from context once, and keep.
+      blockImportTracerProvider =
+          Optional.ofNullable(protocolContext.getPluginServiceManager())
+              .flatMap(serviceManager -> serviceManager.getService(BlockImportTracerProvider.class))
+              // if block import tracer provider is not specified by plugin, default to no tracing
+              .orElse((__) -> BlockAwareOperationTracer.NO_TRACING);
+    }
+
+    return blockImportTracerProvider.getBlockImportTracer(header);
   }
 
   @Override
@@ -138,7 +156,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader);
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
-            blockHeader, worldState, protocolSpec, blockHashLookup, OperationTracer.NO_TRACING);
+            blockHeader,
+            worldState,
+            protocolSpec,
+            blockHashLookup,
+            getBlockImportTracer(protocolContext, blockHeader));
     protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
@@ -245,14 +267,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
     }
 
-    // EIP-7685: process EL requests
-    final Optional<RequestProcessorCoordinator> requestProcessor =
-        protocolSpec.getRequestProcessorCoordinator();
     Optional<List<Request>> maybeRequests = Optional.empty();
-    if (requestProcessor.isPresent()) {
-      RequestProcessingContext requestProcessingContext =
-          new RequestProcessingContext(blockProcessingContext, receipts);
-      maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+    try {
+      // EIP-7685: process EL requests
+      final Optional<RequestProcessorCoordinator> requestProcessor =
+          protocolSpec.getRequestProcessorCoordinator();
+      if (requestProcessor.isPresent()) {
+        RequestProcessingContext requestProcessingContext =
+            new RequestProcessingContext(blockProcessingContext, receipts);
+        maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+      }
+    } catch (final Exception e) {
+      LOG.error("failed processing requests", e);
+      return new BlockProcessingResult(Optional.empty(), e);
     }
 
     if (maybeRequests.isPresent() && blockHeader.getRequestsHash().isPresent()) {
