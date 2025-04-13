@@ -110,20 +110,20 @@ dependencies {
 
   annotationProcessor 'com.google.dagger:dagger-compiler'
   testAnnotationProcessor 'com.google.dagger:dagger-compiler'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 }
 buildscript {
-    ext.kotlin_version = '2.1.20'
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
+  ext.kotlin_version = '2.1.20'
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
 }
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 kotlin {
-    jvmToolchain(21)
+  jvmToolchain(21)
 }

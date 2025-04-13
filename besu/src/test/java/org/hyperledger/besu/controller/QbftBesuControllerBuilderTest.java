@@ -91,9 +91,7 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
     final BesuController besuController = bftBesuControllerBuilder.build();
 
     final ValidatorProvider validatorProvider =
-        besuController.protocolContext
-            .getConsensusContext(BftContext.class)
-            .getValidatorProvider();
+        besuController.protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
     assertThat(validatorProvider).isInstanceOf(ForkingValidatorProvider.class);
   }
 

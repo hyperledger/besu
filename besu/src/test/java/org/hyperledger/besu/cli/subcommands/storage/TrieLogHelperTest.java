@@ -65,7 +65,7 @@ class TrieLogHelperTest {
 
   private static class NonValidatingTrieLogHelper extends TrieLogHelper {
     @Override
-    void validatePruneConfiguration(final DataStorageConfiguration config) {}
+    public void validatePruneConfiguration(final DataStorageConfiguration config) {}
   }
 
   @Mock private MutableBlockchain blockchain;

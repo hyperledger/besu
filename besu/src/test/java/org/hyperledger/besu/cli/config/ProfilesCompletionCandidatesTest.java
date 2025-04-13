@@ -43,7 +43,7 @@ class ProfilesCompletionCandidatesTest {
       final Path profilePath = tempProfilesDir.resolve(internalProfileName + "_external.toml");
 
       String profileConfigFile =
-              InternalProfileName.valueOfIgnoreCase(internalProfileName).get().configFile;
+          InternalProfileName.valueOfIgnoreCase(internalProfileName).get().configFile;
       try (InputStream resourceUrl =
           ProfileFinder.class.getClassLoader().getResourceAsStream(profileConfigFile)) {
         if (resourceUrl != null) {

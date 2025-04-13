@@ -1,5 +1,5 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm'
+  id 'org.jetbrains.kotlin.jvm'
 }/*
  * Copyright ConsenSys AG.
  *
@@ -17,11 +17,11 @@ plugins {
 
 jar { enabled = false }
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 kotlin {
-    jvmToolchain(21)
+  jvmToolchain(21)
 }

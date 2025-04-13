@@ -18,15 +18,15 @@ pluginManagement {
   repositories {
     gradlePluginPortal()
   }
-    plugins {
-        id 'org.jetbrains.kotlin.jvm' version '2.1.20'
-    }
+  plugins {
+    id 'org.jetbrains.kotlin.jvm' version '2.1.20'
+  }
 }
 plugins {
-//    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+  //    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
 }
 
-rootProject.name='besu'
+rootProject.name = 'besu'
 include 'acceptance-tests:test-plugins'
 include 'acceptance-tests:dsl'
 include 'acceptance-tests:tests'

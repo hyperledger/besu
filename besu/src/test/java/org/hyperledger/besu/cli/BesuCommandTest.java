@@ -270,7 +270,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         .ethNetworkConfig(
             new EthNetworkConfig(
                 GenesisConfig.fromResource(MAINNET.genesisFile),
-                    MAINNET.networkId,
+                MAINNET.networkId,
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));

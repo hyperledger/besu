@@ -85,7 +85,8 @@ class FlexGroupPrivacyTest {
 
   private PrecompiledContract getPrecompile(
       final BesuController besuController, final Address defaultPrivacy) {
-    return besuController.protocolSchedule
+    return besuController
+        .protocolSchedule
         .getByBlockHeader(blockHeader(0))
         .getPrecompileContractRegistry()
         .get(defaultPrivacy);

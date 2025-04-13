@@ -221,6 +221,7 @@ configure(allprojects - project(':platform')) {
 
   apply plugin: 'com.diffplug.spotless'
   spotless {
+    repositories { mavenCentral() }
     java {
       // This path needs to be relative to each project
       target 'src/**/*.java'
@@ -750,30 +751,30 @@ task evmToolStartScripts(type: CreateStartScripts) {
   doLast { tweakStartScript(evmToolStartScripts) }
 }
 
-task autocomplete(type: JavaExec) {
-  dependsOn compileJava
-  def tempAutocompleteFile = File.createTempFile("besu", ".autocomplete")
-  standardOutput tempAutocompleteFile.newOutputStream()
-  outputs.file "$buildDir/besu.autocomplete.sh"
-
-  mainClass = application.mainClass
-  args "generate-completion"
-  classpath sourceSets.main.runtimeClasspath
-  doLast {
-    copy {
-      from tempAutocompleteFile
-      into "$buildDir"
-      rename tempAutocompleteFile.getName(), 'besu.autocomplete.sh'
-    }
-  }
-}
+//task autocomplete(type: JavaExec) {
+//  dependsOn compileJava
+//  def tempAutocompleteFile = File.createTempFile("besu", ".autocomplete")
+//  standardOutput tempAutocompleteFile.newOutputStream()
+//  outputs.file "$buildDir/besu.autocomplete.sh"
+//
+//  mainClass = application.mainClass
+//  args "generate-completion"
+//  classpath sourceSets.main.runtimeClasspath
+//  doLast {
+//    copy {
+//      from tempAutocompleteFile
+//      into "$buildDir"
+//      rename tempAutocompleteFile.getName(), 'besu.autocomplete.sh'
+//    }
+//  }
+//}
 
 def archiveBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
 
 installDist { dependsOn checkLicense, untunedStartScripts, evmToolStartScripts }
 
 distTar {
-  dependsOn checkLicense, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn checkLicense, /** autocomplete,**/ untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -783,7 +784,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicense, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn checkLicense, /** autocomplete,**/ untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -1114,7 +1115,7 @@ distributions {
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
       from("./besu/src/main/scripts/besu-entry.sh") { into "./bin/" }
-      from(autocomplete) { into "." }
+      /** from(autocomplete) { into "." } **/
     }
   }
 }

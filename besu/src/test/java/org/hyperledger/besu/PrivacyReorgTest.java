@@ -393,7 +393,8 @@ public class PrivacyReorgTest {
       final DefaultBlockchain blockchain,
       final ProtocolContext protocolContext,
       final Block block) {
-    return besuController.protocolSchedule
+    return besuController
+        .protocolSchedule
         .getByBlockHeader(blockchain.getChainHeadHeader())
         .getBlockImporter()
         .importBlock(protocolContext, block, HeaderValidationMode.NONE);

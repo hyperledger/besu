@@ -1287,8 +1287,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     blockchainServiceImpl.init(
         besuController.protocolContext.getBlockchain(), besuController.protocolSchedule);
     transactionSimulationServiceImpl.init(
-        besuController.protocolContext.getBlockchain(),
-            besuController.transactionSimulator);
+        besuController.protocolContext.getBlockchain(), besuController.transactionSimulator);
     rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
 
     besuPluginContext.addService(
@@ -1296,8 +1295,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new BesuEventsImpl(
             besuController.protocolContext.getBlockchain(),
             besuController.getProtocolManager().getBlockBroadcaster(),
-                besuController.transactionPool,
-                besuController.syncState,
+            besuController.transactionPool,
+            besuController.syncState,
             besuController.protocolContext.getBadBlockManager()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
 
@@ -1306,10 +1305,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         SynchronizationService.class,
         new SynchronizationServiceImpl(
-                besuController.synchronizer,
-                besuController.protocolContext,
-                besuController.protocolSchedule,
-                besuController.syncState,
+            besuController.synchronizer,
+            besuController.protocolContext,
+            besuController.protocolSchedule,
+            besuController.syncState,
             besuController.protocolContext.getWorldStateArchive()));
 
     besuPluginContext.addService(P2PService.class, new P2PServiceImpl(runner.getP2PNetwork()));
@@ -1319,18 +1318,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new TransactionPoolServiceImpl(besuController.transactionPool));
 
     besuPluginContext.addService(
-        RlpConverterService.class,
-        new RlpConverterServiceImpl(besuController.protocolSchedule));
+        RlpConverterService.class, new RlpConverterServiceImpl(besuController.protocolSchedule));
 
     besuPluginContext.addService(
         TraceService.class,
         new TraceServiceImpl(
             new BlockchainQueries(
-                    besuController.protocolSchedule,
+                besuController.protocolSchedule,
                 besuController.protocolContext.getBlockchain(),
                 besuController.protocolContext.getWorldStateArchive(),
                 miningParametersSupplier.get()),
-                besuController.protocolSchedule));
+            besuController.protocolSchedule));
 
     besuPluginContext.addService(
         MiningService.class, new MiningServiceImpl(besuController.miningCoordinator));
@@ -1340,8 +1338,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new BlockSimulatorServiceImpl(
             besuController.protocolContext.getWorldStateArchive(),
             miningParametersSupplier.get(),
-                besuController.transactionSimulator,
-                besuController.protocolSchedule,
+            besuController.transactionSimulator,
+            besuController.protocolSchedule,
             besuController.protocolContext.getBlockchain()));
 
     besuController.additionalPluginServices.appendPluginServices(besuPluginContext);
@@ -1671,7 +1669,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             : genesisFile != null
                 ? GenesisConfig.fromSource(genesisConfigSource(genesisFile))
                 : GenesisConfig.fromResource(
-                Optional.ofNullable(network).orElse(MAINNET).genesisFile);
+                    Optional.ofNullable(network).orElse(MAINNET).genesisFile);
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 

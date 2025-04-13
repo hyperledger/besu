@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -67,7 +68,7 @@ public class OptionParserTest {
   public void format_longRange() {
     final Range<Long> input = Range.closed(-11L, -5L);
     final String expected = "-11..-5";
-    assertThat(OptionParser.format(input)).isEqualTo(expected);
+    assertThat(OptionParser.format(Optional.of(input))).isEqualTo(expected);
   }
 
   @Test

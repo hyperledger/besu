@@ -206,8 +206,7 @@ public final class RunnerTest {
                 dataDirAhead, dbAhead, dataStorageConfiguration, miningParameters),
             noOpMetricsSystem,
             miningParameters);
-    setupState(
-        blockCount, controllerAhead.protocolSchedule, controllerAhead.protocolContext);
+    setupState(blockCount, controllerAhead.protocolSchedule, controllerAhead.protocolContext);
 
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final Path pidPath = dataDirAhead.resolve("pid");
@@ -268,7 +267,7 @@ public final class RunnerTest {
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
               GenesisConfig.fromResource(DEV.genesisFile),
-                  DEV.networkId,
+              DEV.networkId,
               Collections.singletonList(aheadEnode),
               null);
 

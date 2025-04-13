@@ -202,7 +202,8 @@ public class MergeBesuControllerBuilderTest {
 
     final Difficulty terminalTotalDifficulty =
         visitWithMockConfigs(new MergeBesuControllerBuilder())
-            .build().protocolContext
+            .build()
+            .protocolContext
             .getConsensusContext(MergeContext.class)
             .getTerminalTotalDifficulty();
 

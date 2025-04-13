@@ -628,7 +628,7 @@ public class RunnerBuilder {
     final NodeKey nodeKey = besuController.nodeKey;
 
     final SubProtocolConfiguration subProtocolConfiguration =
-            besuController.subProtocolConfiguration;
+        besuController.subProtocolConfiguration;
 
     final ProtocolSchedule protocolSchedule = besuController.protocolSchedule;
     final ProtocolContext context = besuController.protocolContext;
@@ -1009,10 +1009,10 @@ public class RunnerBuilder {
                   besuController.getProtocolManager(),
                   transactionPool,
                   miningCoordinator,
-                      besuController.syncState,
+                  besuController.syncState,
                   vertx,
                   BesuVersionUtils.nodeName(identityString),
-                      besuController.genesisConfigOptions,
+                  besuController.genesisConfigOptions,
                   network));
     } else {
       ethStatsService = Optional.empty();
@@ -1190,8 +1190,8 @@ public class RunnerBuilder {
 
       accountPermissioningController.ifPresent(
           permissioningController ->
-              besuController.protocolSchedule
-                  .setPermissionTransactionFilter(permissioningController::isPermitted));
+              besuController.protocolSchedule.setPermissionTransactionFilter(
+                  permissioningController::isPermitted));
 
       return accountPermissioningController;
     } else {
@@ -1268,8 +1268,8 @@ public class RunnerBuilder {
                 BesuVersionUtils.nodeName(identityString),
                 BesuVersionUtils.shortVersion(),
                 BesuVersionUtils.commit(),
-                    ethNetworkConfig.networkId,
-                    besuController.genesisConfigOptions,
+                ethNetworkConfig.networkId,
+                besuController.genesisConfigOptions,
                 network,
                 blockchainQueries,
                 synchronizer,
@@ -1365,7 +1365,8 @@ public class RunnerBuilder {
         && privacyParameters.isMultiTenancyEnabled()) {
       final FlexiblePrivacyPrecompiledContract flexiblePrivacyPrecompiledContract =
           (FlexiblePrivacyPrecompiledContract)
-              besuController.protocolSchedule
+              besuController
+                  .protocolSchedule
                   .getByBlockHeader(genesisBlockHeader)
                   .getPrecompileContractRegistry()
                   .get(FLEXIBLE_PRIVACY);
