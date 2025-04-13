@@ -334,8 +334,8 @@ public class BesuController implements java.io.Closeable {
      */
     public BesuControllerBuilder fromEthNetworkConfig(
         final EthNetworkConfig ethNetworkConfig, final SyncMode syncMode) {
-      return fromGenesisFile(ethNetworkConfig.genesisConfig(), syncMode)
-          .networkId(ethNetworkConfig.networkId());
+      return fromGenesisFile(ethNetworkConfig.genesisConfig, syncMode)
+          .networkId(ethNetworkConfig.networkId);
     }
 
     /**

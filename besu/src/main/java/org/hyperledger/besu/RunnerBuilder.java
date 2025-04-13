@@ -606,17 +606,17 @@ public class RunnerBuilder {
             .setAdvertisedHost(p2pAdvertisedHost);
     if (discoveryEnabled) {
       final List<EnodeURL> bootstrap;
-      if (ethNetworkConfig.bootNodes() == null) {
-        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET).bootNodes();
+      if (ethNetworkConfig.bootNodes == null) {
+        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET).bootNodes;
       } else {
-        bootstrap = ethNetworkConfig.bootNodes();
+        bootstrap = ethNetworkConfig.bootNodes;
       }
       discoveryConfiguration.setBootnodes(bootstrap);
       discoveryConfiguration.setIncludeBootnodesOnPeerRefresh(
           besuController.getGenesisConfigOptions().isPoa() && poaDiscoveryRetryBootnodes);
       LOG.info("Resolved {} bootnodes.", bootstrap.size());
       LOG.debug("Bootnodes = {}", bootstrap);
-      discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.dnsDiscoveryUrl());
+      discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.dnsDiscoveryUrl);
       discoveryConfiguration.setDiscoveryV5Enabled(
           networkingConfiguration.getDiscovery().isDiscoveryV5Enabled());
       discoveryConfiguration.setFilterOnEnrForkId(
@@ -1269,7 +1269,7 @@ public class RunnerBuilder {
                 BesuVersionUtils.nodeName(identityString),
                 BesuVersionUtils.shortVersion(),
                 BesuVersionUtils.commit(),
-                ethNetworkConfig.networkId(),
+                    ethNetworkConfig.networkId,
                 besuController.getGenesisConfigOptions(),
                 network,
                 blockchainQueries,

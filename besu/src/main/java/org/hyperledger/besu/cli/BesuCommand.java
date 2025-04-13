@@ -1773,7 +1773,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
 
-    final List<EnodeURL> enodeURIs = ethNetworkConfig.bootNodes();
+    final List<EnodeURL> enodeURIs = ethNetworkConfig.bootNodes;
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(p -> ensureAllNodesAreInAllowlist(enodeURIs, p));
@@ -2398,7 +2398,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               genesisConfigOptionsSupplier
                   .get()
                   .getChainId()
-                  .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).networkId()));
+                  .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).networkId));
         } catch (final DecodeException e) {
           throw new ParameterException(
               this.commandLine, String.format("Unable to parse genesis file %s.", genesisFile), e);
@@ -2780,7 +2780,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (genesisFile != null) {
       builder.setCustomGenesis(genesisFile.getAbsolutePath());
     }
-    builder.setNetworkId(ethNetworkConfig.networkId());
+    builder.setNetworkId(ethNetworkConfig.networkId);
 
     builder
         .setDataStorage(dataStorageOptions.normalizeDataStorageFormat())

@@ -123,7 +123,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"));
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes()).isEqualTo(nodes);
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes).isEqualTo(nodes);
 
     final EthNetworkConfig networkConfig =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
@@ -239,7 +239,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.networkId()).isEqualTo(DEV.getNetworkId());
+    assertThat(config.networkId).isEqualTo(DEV.getNetworkId());
   }
 
   /**
@@ -257,7 +257,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.networkId()).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId).isEqualTo(MAINNET.getNetworkId());
   }
 
   /**
@@ -276,7 +276,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.networkId()).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId).isEqualTo(MAINNET.getNetworkId());
   }
 
   /**
@@ -294,6 +294,6 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.networkId()).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId).isEqualTo(MAINNET.getNetworkId());
   }
 }
