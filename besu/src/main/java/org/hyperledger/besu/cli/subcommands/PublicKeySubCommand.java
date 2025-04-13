@@ -179,7 +179,7 @@ public class PublicKeySubCommand implements Runnable {
       final BesuCommand besuCommand = parentCommand.parentCommand;
       checkNotNull(besuCommand);
 
-      final File nodePrivateKeyFile = nodePrivateKeyFileOption.getNodePrivateKeyFile();
+      final File nodePrivateKeyFile = nodePrivateKeyFileOption.nodePrivateKeyFile;
       if (nodePrivateKeyFile != null && !nodePrivateKeyFile.exists()) {
         throw new CommandLine.ParameterException(
             spec.commandLine(), "Private key file doesn't exist");
@@ -187,7 +187,7 @@ public class PublicKeySubCommand implements Runnable {
 
       final KeyPair keyPair;
       try {
-        keyPair = besuCommand.loadKeyPair(nodePrivateKeyFileOption.getNodePrivateKeyFile());
+        keyPair = besuCommand.loadKeyPair(nodePrivateKeyFileOption.nodePrivateKeyFile);
       } catch (IllegalArgumentException e) {
         throw new CommandLine.ParameterException(
             spec.commandLine(), "Private key cannot be loaded from file", e);

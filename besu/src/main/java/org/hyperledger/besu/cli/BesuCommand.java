@@ -1244,7 +1244,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SecurityModule defaultSecurityModule() {
-    return new KeyPairSecurityModule(loadKeyPair(nodePrivateKeyFileOption.getNodePrivateKeyFile()));
+    return new KeyPairSecurityModule(loadKeyPair(nodePrivateKeyFileOption.nodePrivateKeyFile));
   }
 
   /**
@@ -1731,7 +1731,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
-        && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
+        && nodePrivateKeyFileOption.nodePrivateKeyFile != null) {
       logger.warn(
           DEPENDENCY_WARNING_MSG,
           "--node-private-key-file",
