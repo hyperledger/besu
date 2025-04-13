@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData
 import java.io.IOException
 
 /** Behaviour of objects that can be encoded from JSON to RLP  */
-internal interface JSONToRLP {
+interface JSONToRLP {
     /**
      * Encodes the object into an RLP value.
      *

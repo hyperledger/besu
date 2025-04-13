@@ -12,29 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.subcommands.rlp;
+package org.hyperledger.besu.cli.subcommands.rlp
 
-/** Type of the RLP data to encode/decode */
-public enum RLPType {
-  /** The Ibft extra data. */
-  // Enum is used to enable the listing of the possible values in PicoCLI.
-  IBFT_EXTRA_DATA(new IbftExtraDataCLIAdapter()),
-  /** The Qbft extra data. */
-  QBFT_EXTRA_DATA(new QbftExtraDataCLIAdapter());
+/** Type of the RLP data to encode/decode  */
+enum class RLPType(
+    /**
+     * Gets adapter.
+     *
+     * @return the adapter
+     */
+    val adapter: JSONToRLP
+) {
+    /** The Ibft extra data.  */ // Enum is used to enable the listing of the possible values in PicoCLI.
+    IBFT_EXTRA_DATA(IbftExtraDataCLIAdapter()),
 
-  private final JSONToRLP adapter;
-
-  RLPType(final JSONToRLP adapter) {
-
-    this.adapter = adapter;
-  }
-
-  /**
-   * Gets adapter.
-   *
-   * @return the adapter
-   */
-  public JSONToRLP getAdapter() {
-    return adapter;
-  }
+    /** The Qbft extra data.  */
+    QBFT_EXTRA_DATA(QbftExtraDataCLIAdapter())
 }
