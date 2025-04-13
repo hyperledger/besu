@@ -1427,7 +1427,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @VisibleForTesting
   void configureNativeLibs(final Optional<NetworkName> configuredNetwork) {
-    if (unstableNativeLibraryOptions.getNativeAltbn128()
+    if (unstableNativeLibraryOptions.nativeAltbn128
         && AbstractAltBnPrecompiledContract.maybeEnableNative()) {
       logger.info("Using the native implementation of alt bn128");
     } else {
@@ -1435,7 +1435,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Using the Java implementation of alt bn128");
     }
 
-    if (unstableNativeLibraryOptions.getNativeModExp()
+    if (unstableNativeLibraryOptions.nativeModExp
         && BigIntegerModularExponentiationPrecompiledContract.maybeEnableNative()) {
       logger.info("Using the native implementation of modexp");
     } else {
@@ -1443,7 +1443,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Using the Java implementation of modexp");
     }
 
-    if (unstableNativeLibraryOptions.getNativeSecp()
+    if (unstableNativeLibraryOptions.nativeSecp
         && SignatureAlgorithmFactory.getInstance().maybeEnableNative()) {
       logger.info("Using the native implementation of the signature algorithm");
     } else {
@@ -1451,7 +1451,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Using the Java implementation of the signature algorithm");
     }
 
-    if (unstableNativeLibraryOptions.getNativeBlake2bf()
+    if (unstableNativeLibraryOptions.nativeBlake2bf
         && Blake2bfMessageDigest.Blake2bfDigest.isNative()) {
       logger.info("Using the native implementation of the blake2bf algorithm");
     } else {
