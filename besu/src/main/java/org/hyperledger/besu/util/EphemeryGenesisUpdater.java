@@ -50,10 +50,10 @@ public class EphemeryGenesisUpdater {
       throws RuntimeException {
     GenesisConfig genesisConfig;
     try {
-      if (EPHEMERY.getGenesisFile() == null) {
+      if (EPHEMERY.genesisFile == null) {
         throw new IOException("Genesis file or config options are null");
       }
-      genesisConfig = GenesisConfig.fromResource(EPHEMERY.getGenesisFile());
+      genesisConfig = GenesisConfig.fromResource(EPHEMERY.genesisFile);
       long genesisTimestamp = genesisConfig.getTimestamp();
       Optional<BigInteger> genesisChainId = genesisConfig.getConfigOptions().getChainId();
       long currentTimestamp = Instant.now().getEpochSecond();

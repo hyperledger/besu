@@ -144,7 +144,7 @@ public class ForkIdsNetworkConfigTest {
   @ParameterizedTest
   @MethodSource("parameters")
   public void testForkId(final NetworkName chainName, final List<ForkId> expectedForkIds) {
-    final GenesisConfig genesisConfig = GenesisConfig.fromResource(chainName.getGenesisFile());
+    final GenesisConfig genesisConfig = GenesisConfig.fromResource(chainName.genesisFile);
     final MilestoneStreamingTransitionProtocolSchedule schedule = createSchedule(genesisConfig);
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, schedule);
     final Blockchain mockBlockchain = mock(Blockchain.class);

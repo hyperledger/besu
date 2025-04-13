@@ -165,8 +165,8 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
-                GenesisConfig.fromResource(MAINNET.getGenesisFile()),
-                MAINNET.getNetworkId(),
+                GenesisConfig.fromResource(MAINNET.genesisFile),
+                    MAINNET.networkId,
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
@@ -239,7 +239,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.networkId).isEqualTo(DEV.getNetworkId());
+    assertThat(config.networkId).isEqualTo(DEV.networkId);
   }
 
   /**
@@ -257,7 +257,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.networkId).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId).isEqualTo(MAINNET.networkId);
   }
 
   /**
@@ -276,7 +276,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.networkId).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId).isEqualTo(MAINNET.networkId);
   }
 
   /**
@@ -294,6 +294,6 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.networkId).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId).isEqualTo(MAINNET.networkId);
   }
 }

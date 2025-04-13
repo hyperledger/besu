@@ -267,8 +267,8 @@ public final class RunnerTest {
       final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
-              GenesisConfig.fromResource(DEV.getGenesisFile()),
-              DEV.getNetworkId(),
+              GenesisConfig.fromResource(DEV.genesisFile),
+                  DEV.networkId,
               Collections.singletonList(aheadEnode),
               null);
 
@@ -395,7 +395,7 @@ public final class RunnerTest {
   private GenesisConfig getFastSyncGenesis() throws IOException {
     final ObjectNode jsonNode =
         (ObjectNode)
-            new ObjectMapper().readTree(GenesisConfig.class.getResource(MAINNET.getGenesisFile()));
+            new ObjectMapper().readTree(GenesisConfig.class.getResource(MAINNET.genesisFile));
     final Optional<ObjectNode> configNode = JsonUtil.getObjectNode(jsonNode, "config");
     configNode.ifPresent(
         (node) -> {

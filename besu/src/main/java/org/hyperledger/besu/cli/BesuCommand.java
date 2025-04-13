@@ -1671,7 +1671,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             : genesisFile != null
                 ? GenesisConfig.fromSource(genesisConfigSource(genesisFile))
                 : GenesisConfig.fromResource(
-                    Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
+                Optional.ofNullable(network).orElse(MAINNET).genesisFile);
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
