@@ -1489,12 +1489,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     // assert native library requirements for named networks:
     List<NativeRequirementResult> failedNativeReqs =
-        configuredNetwork.getNativeRequirements().stream().filter(r -> !r.present()).toList();
+        configuredNetwork.getNativeRequirements().stream().filter(r -> !r.present).toList();
 
     if (!failedNativeReqs.isEmpty()) {
       String failures =
           failedNativeReqs.stream()
-              .map(r -> r.libname() + " " + r.errorMessage())
+              .map(r -> r.libname + " " + r.errorMessage)
               .collect(Collectors.joining("\n\t"));
       throw new UnsupportedOperationException(
           String.format(
