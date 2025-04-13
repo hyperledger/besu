@@ -2609,7 +2609,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final List<Integer> effectivePorts = new ArrayList<>();
     addPortIfEnabled(effectivePorts, p2PDiscoveryOptions.p2pPort, p2PDiscoveryOptions.p2pEnabled);
     addPortIfEnabled(
-        effectivePorts, graphQlOptions.getGraphQLHttpPort(), graphQlOptions.isGraphQLHttpEnabled());
+        effectivePorts, graphQlOptions.graphQLHttpPort, graphQlOptions.isGraphQLHttpEnabled);
     addPortIfEnabled(
         effectivePorts, jsonRpcHttpOptions.getRpcHttpPort(), jsonRpcHttpOptions.isRpcHttpEnabled());
     addPortIfEnabled(
