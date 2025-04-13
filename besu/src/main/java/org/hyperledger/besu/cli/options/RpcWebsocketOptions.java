@@ -73,7 +73,7 @@ public class RpcWebsocketOptions {
               + " (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final JwtAlgorithm rpcWebsocketsAuthenticationAlgorithm =
-      DefaultCommandValues.DEFAULT_JWT_ALGORITHM;
+      DefaultCommandValues.Companion.getDEFAULT_JWT_ALGORITHM();
 
   @CommandLine.Option(
       names = {"--rpc-ws-enabled"},

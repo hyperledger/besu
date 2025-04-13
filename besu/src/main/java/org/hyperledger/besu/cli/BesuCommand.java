@@ -462,7 +462,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Specify the NAT circumvention method to be used, possible values are ${COMPLETION-CANDIDATES}."
               + " NONE disables NAT functionality. (default: ${DEFAULT-VALUE})")
-  private final NatMethod natMethod = DEFAULT_NAT_METHOD;
+  private final NatMethod natMethod = DefaultCommandValues.Companion.getDEFAULT_NAT_METHOD();
 
   @Option(
       names = {"--network-id"},

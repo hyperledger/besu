@@ -136,7 +136,7 @@ public class JsonRpcHttpOptions {
               + " (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final JwtAlgorithm rpcHttpAuthenticationAlgorithm =
-      DefaultCommandValues.DEFAULT_JWT_ALGORITHM;
+      DefaultCommandValues.Companion.getDEFAULT_JWT_ALGORITHM();
 
   @CommandLine.Option(
       names = {"--rpc-http-tls-enabled"},
@@ -196,7 +196,7 @@ public class JsonRpcHttpOptions {
       split = ",",
       arity = "1..*")
   private final List<String> rpcHttpTlsProtocols =
-      new ArrayList<>(DefaultCommandValues.DEFAULT_TLS_PROTOCOLS);
+      new ArrayList<>(DefaultCommandValues.Companion.getDEFAULT_TLS_PROTOCOLS());
 
   @CommandLine.Option(
       names = {"--rpc-http-tls-cipher-suite", "--rpc-http-tls-cipher-suites"},
