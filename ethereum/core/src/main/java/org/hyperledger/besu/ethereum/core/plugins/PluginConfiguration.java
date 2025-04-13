@@ -20,13 +20,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class PluginConfiguration {
-  private final List<PluginInfo> requestedPlugins;
+  private final List<? extends PluginInfo> requestedPlugins;
   private final Path pluginsDir;
   private final boolean externalPluginsEnabled;
   private final boolean continueOnPluginError;
 
   public PluginConfiguration(
-      final List<PluginInfo> requestedPlugins,
+      final List<? extends PluginInfo> requestedPlugins,
       final Path pluginsDir,
       final boolean externalPluginsEnabled,
       final boolean continueOnPluginError) {
@@ -66,12 +66,12 @@ public class PluginConfiguration {
   }
 
   public static class Builder {
-    private List<PluginInfo> requestedPlugins;
+    private List<? extends PluginInfo> requestedPlugins;
     private Path pluginsDir;
     private boolean externalPluginsEnabled = true;
     private boolean continueOnPluginError = false;
 
-    public Builder requestedPlugins(final List<PluginInfo> requestedPlugins) {
+    public Builder requestedPlugins(final List<? extends PluginInfo> requestedPlugins) {
       this.requestedPlugins = requestedPlugins;
       return this;
     }

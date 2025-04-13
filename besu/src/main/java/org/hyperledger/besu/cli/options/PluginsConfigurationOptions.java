@@ -97,7 +97,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
    * @return A new {@link PluginConfiguration} instance.
    */
   public static PluginConfiguration fromCommandLine(final CommandLine commandLine) {
-    List<PluginInfo> plugins =
+    List<? extends PluginInfo> plugins =
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_PLUGINS_OPTION_NAME, new PluginInfoConverter());
 
