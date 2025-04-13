@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,19 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.converter.exception;
+package org.hyperledger.besu.cli.converter.exception
 
-import static java.lang.String.format;
-
-/** The custom Fraction conversion exception. */
-public final class FractionConversionException extends Exception {
-
-  /**
-   * Instantiates a new Fraction conversion exception.
-   *
-   * @param value the value
-   */
-  public FractionConversionException(final String value) {
-    super(format("Invalid value: %s, should be a decimal between 0.0 and 1.0 inclusive.", value));
-  }
-}
+/** The custom PositiveNumber conversion exception.  */
+class PositiveNumberConversionException
+/**
+ * Instantiates a new PositiveNumber conversion exception.
+ *
+ * @param value the invalid value to add in exception message
+ */
+    (value: String?) :
+    Exception(String.format("Invalid value: %s, should be a positive number >0.", value))

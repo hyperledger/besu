@@ -12,19 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.converter.exception;
+package org.hyperledger.besu.cli.converter.exception
 
-import static java.lang.String.format;
-
-/** The custom Rpc Apis conversion exception. */
-public final class RpcApisConversionException extends Exception {
-
-  /**
-   * Instantiates a new Rpc apis conversion exception.
-   *
-   * @param name the invalid Rpc Api name to report in exception message
-   */
-  public RpcApisConversionException(final String name) {
-    super(format("Invalid value: %s", name));
-  }
-}
+/** The custom Percentage conversion exception.  */
+class PercentageConversionException
+/**
+ * Instantiates a new Percentage conversion exception.
+ *
+ * @param value the invalid value to add in exception message
+ */
+    (value: String?) :
+    Exception(String.format("Invalid value: %s, should be a number between 0 and 100 inclusive.", value))

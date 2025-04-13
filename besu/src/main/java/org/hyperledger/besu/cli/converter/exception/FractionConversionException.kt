@@ -12,19 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.converter.exception;
+package org.hyperledger.besu.cli.converter.exception
 
-import static java.lang.String.format;
-
-/** The custom Percentage conversion exception. */
-public final class PercentageConversionException extends Exception {
-
-  /**
-   * Instantiates a new Percentage conversion exception.
-   *
-   * @param value the invalid value to add in exception message
-   */
-  public PercentageConversionException(final String value) {
-    super(format("Invalid value: %s, should be a number between 0 and 100 inclusive.", value));
-  }
-}
+/** The custom Fraction conversion exception.  */
+class FractionConversionException
+/**
+ * Instantiates a new Fraction conversion exception.
+ *
+ * @param value the value
+ */
+    (value: String?) :
+    Exception(String.format("Invalid value: %s, should be a decimal between 0.0 and 1.0 inclusive.", value))

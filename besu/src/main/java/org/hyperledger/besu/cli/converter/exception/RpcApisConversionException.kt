@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,19 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.converter.exception;
+package org.hyperledger.besu.cli.converter.exception
 
-import static java.lang.String.format;
-
-/** The custom PositiveNumber conversion exception. */
-public final class PositiveNumberConversionException extends Exception {
-
-  /**
-   * Instantiates a new PositiveNumber conversion exception.
-   *
-   * @param value the invalid value to add in exception message
-   */
-  public PositiveNumberConversionException(final String value) {
-    super(format("Invalid value: %s, should be a positive number >0.", value));
-  }
-}
+/** The custom Rpc Apis conversion exception.  */
+class RpcApisConversionException
+/**
+ * Instantiates a new Rpc apis conversion exception.
+ *
+ * @param name the invalid Rpc Api name to report in exception message
+ */
+    (name: String?) : Exception(String.format("Invalid value: %s", name))
