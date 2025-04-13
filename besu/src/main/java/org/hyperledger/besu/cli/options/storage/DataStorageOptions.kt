@@ -53,7 +53,7 @@ internal constructor() : CLIOptions<DataStorageConfiguration?> {
      *
      * @param commandLine the full commandLine to check all the options specified by the user
      */
-    fun validate(commandLine: CommandLine?) {
+    fun validate(commandLine: CommandLine) {
         pathBasedExtraStorageOptions.validate(commandLine, dataStorageFormat)
     }
 
