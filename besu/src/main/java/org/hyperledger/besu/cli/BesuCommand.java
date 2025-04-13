@@ -1628,15 +1628,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateChainDataPruningParams() {
     Long chainDataPruningBlocksRetained =
-        unstableChainPruningOptions.getChainDataPruningBlocksRetained();
-    if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
+            unstableChainPruningOptions.chainDataPruningBlocksRetained;
+    if (unstableChainPruningOptions.chainDataPruningEnabled) {
       final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
       if (chainDataPruningBlocksRetained
-          < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
+          < unstableChainPruningOptions.chainDataPruningBlocksRetainedLimit) {
         throw new ParameterException(
             this.commandLine,
             "--Xchain-pruning-blocks-retained must be >= "
-                + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
+                + unstableChainPruningOptions.chainDataPruningBlocksRetainedLimit);
       } else if (genesisConfigOptions.isPoa()) {
         Long epochLength = 0L;
         String consensusMechanism = "";
@@ -2696,7 +2696,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /** Set ignorable segments in RocksDB Storage Provider plugin. */
   public void setIgnorableStorageSegments() {
-    if (!unstableChainPruningOptions.getChainDataPruningEnabled()) {
+    if (!unstableChainPruningOptions.chainDataPruningEnabled) {
       rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE);
     }
   }
