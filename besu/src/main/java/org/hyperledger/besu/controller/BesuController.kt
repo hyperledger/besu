@@ -69,105 +69,105 @@ class BesuController
  * @param dataStorageConfiguration the data storage configuration
  * @param transactionSimulator the transaction simulator
  */ internal constructor(
-  /**
+    /**
      * Gets protocol schedule.
      *
      * @return the protocol schedule
      */
   @JvmField val protocolSchedule: ProtocolSchedule,
-  /**
+    /**
      * Gets protocol context.
      *
      * @return the protocol context
      */
   @JvmField val protocolContext: ProtocolContext,
-  /**
+    /**
      * Gets protocol manager.
      *
      * @return the protocol manager
      */
     val protocolManager: EthProtocolManager,
-  /**
+    /**
      * Gets genesis config options.
      *
      * @return the genesis config options
      */
   @JvmField val genesisConfigOptions: GenesisConfigOptions,
-  /**
+    /**
      * Gets sub protocol configuration.
      *
      * @return the sub protocol configuration
      */
   @JvmField val subProtocolConfiguration: SubProtocolConfiguration,
-  /**
+    /**
      * Gets synchronizer.
      *
      * @return the synchronizer
      */
   @JvmField val synchronizer: Synchronizer,
-  /**
+    /**
      * Gets sync state.
      *
      * @return the sync state
      */
   @JvmField val syncState: SyncState,
-  /**
+    /**
      * Gets transaction pool.
      *
      * @return the transaction pool
      */
   @JvmField val transactionPool: TransactionPool,
-  /**
+    /**
      * Gets mining coordinator.
      *
      * @return the mining coordinator
      */
   @JvmField val miningCoordinator: MiningCoordinator,
-  /**
+    /**
      * Gets privacy parameters.
      *
      * @return the privacy parameters
      */
   @JvmField val privacyParameters: PrivacyParameters,
-  /**
+    /**
      * Gets mining parameters.
      *
      * @return the mining parameters
      */
     val miningParameters: MiningConfiguration,
-  private val additionalJsonRpcMethodsFactory: JsonRpcMethods,
-  /**
+    private val additionalJsonRpcMethodsFactory: JsonRpcMethods,
+    /**
      * Gets node key.
      *
      * @return the node key
      */
   @JvmField val nodeKey: NodeKey,
-  private val closeables: List<Closeable>,
-  /**
+    private val closeables: MutableList<Closeable?>,
+    /**
      * Gets additional plugin services.
      *
      * @return the additional plugin services
      */
   @JvmField val additionalPluginServices: PluginServiceFactory,
-  /**
+    /**
      * get the collection of eth peers
      *
      * @return the EthPeers collection
      */
   @JvmField val ethPeers: EthPeers,
-  /**
+    /**
      * Get the storage provider
      *
      * @return the storage provider
      */
   @JvmField val storageProvider: StorageProvider,
-  /**
+    /**
      * Gets data storage configuration.
      *
      * @return the data storage configuration
      */
   @JvmField val dataStorageConfiguration: DataStorageConfiguration,
-  /**
+    /**
      * Gets the transaction simulator
      *
      * @return the transaction simulator
@@ -175,7 +175,7 @@ class BesuController
   @JvmField val transactionSimulator: TransactionSimulator
 ) : Closeable {
     override fun close() {
-        closeables.forEach(Consumer { closeable: Closeable -> this.tryClose(closeable) })
+        closeables.forEach(Consumer { closeable: Closeable? -> this.tryClose(closeable!!) })
     }
 
     private fun tryClose(closeable: Closeable) {
@@ -213,7 +213,7 @@ class BesuController
             ethNetworkConfig: EthNetworkConfig, syncMode: SyncMode
         ): BesuControllerBuilder {
             return fromGenesisFile(ethNetworkConfig.genesisConfig, syncMode)
-                .networkId(ethNetworkConfig.networkId)
+                .networkId(ethNetworkConfig.networkId)!!
         }
 
         /**
@@ -250,18 +250,18 @@ class BesuController
             return if (configOptions.terminalTotalDifficulty.isPresent) {
                 // Enable start with vanilla MergeBesuControllerBuilder for PoS checkpoint block
                 if (syncMode == SyncMode.CHECKPOINT && isCheckpointPoSBlock(
-                        configOptions
+                        configOptions!!
                     )
                 ) {
-                    MergeBesuControllerBuilder().genesisConfig(genesisConfig)
+                    MergeBesuControllerBuilder().genesisConfig(genesisConfig)!!
                 } else {
                     // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
                     // series of classes removed after we successfully transition to PoS
                     // https://github.com/hyperledger/besu/issues/2897
                     TransitionBesuControllerBuilder(builder, MergeBesuControllerBuilder())
-                        .genesisConfig(genesisConfig)
+                        .genesisConfig(genesisConfig)!!
                 }
-            } else builder.genesisConfig(genesisConfig)
+            } else builder.genesisConfig(genesisConfig)!!
         }
 
         private fun createConsensusScheduleBesuControllerBuilder(
@@ -285,7 +285,7 @@ class BesuController
             besuControllerBuilderSchedule[qbftBlock] = QbftBesuControllerBuilder()
 
             return ConsensusScheduleBesuControllerBuilder(besuControllerBuilderSchedule)
-                .genesisConfig(genesisConfig)
+                .genesisConfig(genesisConfig)!!
         }
 
         private fun readQbftStartBlockConfig(qbftConfigOptions: QbftConfigOptions): Long {

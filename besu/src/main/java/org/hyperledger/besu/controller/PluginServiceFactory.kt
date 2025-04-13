@@ -12,17 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.controller;
+package org.hyperledger.besu.controller
 
-import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.BesuPluginContextImpl
 
-/** The interface Plugin service factory. */
-public interface PluginServiceFactory {
-
-  /**
-   * Appends concrete plugin service in provided Besu Plugin Context.
-   *
-   * @param besuContext An instance of BesuPluginContextImpl.
-   */
-  void appendPluginServices(BesuPluginContextImpl besuContext);
+/** The interface Plugin service factory.  */
+interface PluginServiceFactory {
+    /**
+     * Appends concrete plugin service in provided Besu Plugin Context.
+     *
+     * @param besuContext An instance of BesuPluginContextImpl.
+     */
+    fun appendPluginServices(besuContext: BesuPluginContextImpl?)
 }

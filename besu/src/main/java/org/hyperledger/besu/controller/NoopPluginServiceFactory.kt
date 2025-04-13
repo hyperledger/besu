@@ -12,15 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.controller;
+package org.hyperledger.besu.controller
 
-import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.BesuPluginContextImpl
 
-/** The Noop plugin service factory. */
-public class NoopPluginServiceFactory implements PluginServiceFactory {
-  /** Default Constructor. */
-  public NoopPluginServiceFactory() {}
-
-  @Override
-  public void appendPluginServices(final BesuPluginContextImpl besuContext) {}
+/** The Noop plugin service factory.  */
+class NoopPluginServiceFactory
+/** Default Constructor.  */
+    : PluginServiceFactory {
+    override fun appendPluginServices(besuContext: BesuPluginContextImpl?) {}
 }

@@ -12,22 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.controller;
+package org.hyperledger.besu.controller
 
-import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration
 
 /**
  * This interface wraps the provided MiningParameters to enable controller-specific parameter
  * overrides.
  */
-public interface MiningParameterOverrides {
-  /**
-   * Overrides MiningParameter.
-   *
-   * @param fromCli The mining parameters that contains original values.
-   * @return MiningParameters constructed from provided param with additional overridden parameters.
-   */
-  default MiningConfiguration getMiningParameterOverrides(final MiningConfiguration fromCli) {
-    return fromCli;
-  }
+interface MiningParameterOverrides {
+    /**
+     * Overrides MiningParameter.
+     *
+     * @param fromCli The mining parameters that contains original values.
+     * @return MiningParameters constructed from provided param with additional overridden parameters.
+     */
+    fun getMiningParameterOverrides(fromCli: MiningConfiguration): MiningConfiguration {
+        return fromCli
+    }
 }
