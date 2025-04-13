@@ -30,7 +30,7 @@ class PrivateDatabaseMigrationPreSyncTask
     PreSynchronizationTask {
     override fun run(besuController: BesuController?) {
         val privateStorageMigrationBuilder =
-            PrivateStorageMigrationBuilder(besuController, privacyParameters)
+            PrivateStorageMigrationBuilder(besuController!!, privacyParameters)
         val privateStorageMigrationService =
             PrivateStorageMigrationService(
                 privacyParameters.privateStateStorage,
