@@ -116,7 +116,7 @@ public class PermissionsOptions {
       final CommandLine commandLine)
       throws Exception {
     if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
-      if (jsonRpcHttpOptions.getRpcHttpApis().contains(RpcApis.PERM.name())
+      if (jsonRpcHttpOptions.rpcHttpApis.contains(RpcApis.PERM.name())
           || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PERM.name())) {
         logger.warn(
             "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");

@@ -2085,9 +2085,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean anyPrivacyApiEnabled() {
-    return jsonRpcHttpOptions.getRpcHttpApis().contains(RpcApis.EEA.name())
+    return jsonRpcHttpOptions.rpcHttpApis.contains(RpcApis.EEA.name())
         || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.EEA.name())
-        || jsonRpcHttpOptions.getRpcHttpApis().contains(RpcApis.PRIV.name())
+        || jsonRpcHttpOptions.rpcHttpApis.contains(RpcApis.PRIV.name())
         || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PRIV.name());
   }
 
@@ -2611,7 +2611,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addPortIfEnabled(
         effectivePorts, graphQlOptions.graphQLHttpPort, graphQlOptions.isGraphQLHttpEnabled);
     addPortIfEnabled(
-        effectivePorts, jsonRpcHttpOptions.getRpcHttpPort(), jsonRpcHttpOptions.isRpcHttpEnabled());
+        effectivePorts, jsonRpcHttpOptions.rpcHttpPort, jsonRpcHttpOptions.isRpcHttpEnabled);
     addPortIfEnabled(
         effectivePorts, rpcWebsocketOptions.getRpcWsPort(), rpcWebsocketOptions.isRpcWsEnabled());
     addPortIfEnabled(effectivePorts, engineRPCConfig.engineRpcPort, isEngineApiEnabled());
