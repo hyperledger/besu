@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -458,7 +459,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     List<String> value =
         Arrays.asList(
             BLOCK_PROPAGATION_RANGE_FLAG,
-            OptionParser.format(blockPropagationRange),
+            OptionParser.format(Optional.ofNullable(blockPropagationRange)),
             DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT_FLAG,
             OptionParser.format(downloaderChangeTargetThresholdByHeight),
             DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD_FLAG,
