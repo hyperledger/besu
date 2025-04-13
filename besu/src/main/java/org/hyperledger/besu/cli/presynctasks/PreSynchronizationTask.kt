@@ -12,22 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.presynctasks;
+package org.hyperledger.besu.cli.presynctasks
 
-import org.hyperledger.besu.Runner;
-import org.hyperledger.besu.cli.BesuCommand;
-import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.controller.BesuController
 
 /**
- * All PreSynchronizationTask instances execute after the {@link BesuController} instance in {@link
- * BesuCommand}* is ready and before {@link Runner#startEthereumMainLoop()} is called
+ * All PreSynchronizationTask instances execute after the [BesuController] instance in [ ]* is ready and before [Runner.startEthereumMainLoop] is called
  */
-public interface PreSynchronizationTask {
-
-  /**
-   * Run.
-   *
-   * @param besuController the besu controller
-   */
-  void run(final BesuController besuController);
+interface PreSynchronizationTask {
+    /**
+     * Run.
+     *
+     * @param besuController the besu controller
+     */
+    fun run(besuController: BesuController?)
 }
