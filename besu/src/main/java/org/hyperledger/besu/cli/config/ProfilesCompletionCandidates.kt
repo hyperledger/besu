@@ -27,7 +27,7 @@ class ProfilesCompletionCandidates
     : Iterable<String?> {
     override fun iterator(): MutableIterator<String> {
         val profileNames: MutableSet<String> = TreeSet(internalProfileNames)
-        profileNames.addAll(ProfileFinder.getExternalProfileNames())
+        profileNames.addAll(ProfileFinder.externalProfileNames)
         return profileNames.iterator()
     }
 }

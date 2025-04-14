@@ -15,10 +15,13 @@
 package org.hyperledger.besu.cli.util
 
 import com.google.common.annotations.VisibleForTesting
+import com.google.common.io.Files
 import picocli.CommandLine
 import java.io.File
+import java.io.FileInputStream
 import java.io.InputStream
 import java.util.*
+
 
 /** Custom Config option search and run handler.  */
 class ConfigDefaultValueProviderStrategy
@@ -54,15 +57,22 @@ class ConfigDefaultValueProviderStrategy
     @VisibleForTesting
     fun createDefaultValueProvider(
         commandLine: CommandLine?,
-        configFile: Optional<out File?>,
+        configFile: Optional<InputStream>,
         profile: Optional<out InputStream?>
     ): CommandLine.IDefaultValueProvider {
         val providers: MutableList<CommandLine.IDefaultValueProvider> = ArrayList()
         providers.add(EnvironmentVariableDefaultProvider(environment))
 
-        configFile.ifPresent { config: File? ->
-            if (config!!.exists()) {
-                providers.add(TomlConfigurationDefaultProvider.fromFile(commandLine!!, config))
+        configFile.ifPresent { config: InputStream? ->
+            if (config != null) {
+                val buffer = ByteArray(config.available())
+                config.read(buffer)
+
+                val targetFile = File("/tmp/targetFile.tmp")
+                Files.write(buffer, targetFile)
+
+//                providers.add(TomlConfigurationDefaultProvider.fromFile(commandLine!!, config))
+                providers.add(TomlConfigurationDefaultProvider.fromFile(commandLine!!, targetFile))
             }
         }
 

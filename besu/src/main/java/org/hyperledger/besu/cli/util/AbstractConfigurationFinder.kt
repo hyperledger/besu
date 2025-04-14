@@ -15,6 +15,8 @@
 package org.hyperledger.besu.cli.util
 
 import picocli.CommandLine
+import java.io.File
+import java.io.InputStream
 import java.util.*
 
 /**
@@ -51,7 +53,7 @@ abstract class AbstractConfigurationFinder<T>
      */
     fun findConfiguration(
         environment: Map<String?, String?>, parseResult: CommandLine.ParseResult
-    ): Optional<out T> {
+    ): Optional<InputStream> {
         val commandLine = parseResult.commandSpec().commandLine()
         if (isConfigSpecifiedInBothSources(environment, parseResult)) {
             throwExceptionForBothSourcesSpecified(environment, parseResult, commandLine)
@@ -75,7 +77,7 @@ abstract class AbstractConfigurationFinder<T>
      */
     protected abstract fun getFromOption(
         parseResult: CommandLine.ParseResult?, commandLine: CommandLine?
-    ): Optional<T>
+    ): Optional<InputStream>
 
     /**
      * Gets the configuration resource from the environment variable.
@@ -87,7 +89,7 @@ abstract class AbstractConfigurationFinder<T>
      */
     protected abstract fun getFromEnvironment(
         environment: Map<String?, String?>?, commandLine: CommandLine?
-    ): Optional<T>
+    ): Optional<InputStream>
 
     /**
      * Checks if the configuration resource is specified in both command line options and environment
