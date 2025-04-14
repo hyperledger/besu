@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidatorRunner;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
+import org.hyperledger.besu.ethereum.eth.sync.BlockRangeBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -77,6 +78,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
   private final Optional<MergePeerFilter> mergePeerFilter;
+  private final BlockRangeBroadcaster blockRangeBroadcaster;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -111,6 +113,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     this.supportedCapabilities =
         calculateCapabilities(synchronizerConfiguration, ethereumWireProtocolConfiguration);
+
+    this.blockRangeBroadcaster = createBlockRangeBroadcaster(ethContext, blockchain);
 
     // Run validators
     for (final PeerValidator peerValidator : this.peerValidators) {
@@ -164,6 +168,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     return blockBroadcaster;
   }
 
+  public Optional<BlockRangeBroadcaster> getBlockRangeBroadcaster() {
+    return Optional.ofNullable(blockRangeBroadcaster);
+  }
+
   @Override
   public String getSupportedProtocol() {
     return EthProtocol.NAME;
@@ -188,6 +196,20 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     capabilities.removeIf(cap -> cap.getVersion() < ethProtocolConfiguration.getMinEthCapability());
 
     return Collections.unmodifiableList(capabilities);
+  }
+
+  private BlockRangeBroadcaster createBlockRangeBroadcaster(
+      final EthContext ethContext, final Blockchain blockchain) {
+    final boolean hasSupportForBlockRangeMessage =
+        supportedCapabilities.stream()
+            .anyMatch(
+                cap ->
+                    EthProtocol.get()
+                        .isValidMessageCode(
+                            cap.getVersion(), EthProtocolMessages.BLOCK_RANGE_UPDATE));
+    return hasSupportForBlockRangeMessage
+        ? new BlockRangeBroadcaster(ethContext, blockchain)
+        : null;
   }
 
   @Override
@@ -474,6 +496,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
                                 new IllegalStateException(
                                     "Unable to get earliest block header from blockchain."))
                         .getNumber())
-            .orElse(0L));
+            .orElse(0L),
+        blockchain.getChainHeadBlockNumber());
   }
 }

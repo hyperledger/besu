@@ -623,7 +623,8 @@ public final class EthProtocolManagerTest {
             .apply(
                 builder -> {
                   if (EthProtocol.isEth69Compatible(capability)) {
-                    builder.blockRange(new StatusMessage.BlockRange(10L));
+                    builder.blockRange(
+                        new StatusMessage.BlockRange(10L, blockchain.getChainHeadBlockNumber()));
                   } else {
                     builder.totalDifficulty(blockchain.getChainHead().getTotalDifficulty());
                   }

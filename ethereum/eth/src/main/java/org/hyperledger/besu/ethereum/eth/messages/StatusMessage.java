@@ -256,51 +256,59 @@ public final class StatusMessage extends AbstractMessageData {
     }
 
     public void writeTo(final RLPOutput out) {
+      /*
+       * (eth/68): `[version, networkId, td, blockHash, genesis, forkId]`
+       * (eth/69): `[version, networkId, genesis, forkId, earliestBlock, latestBlock, blockHash]`
+       */
       out.startList();
-
       out.writeIntScalar(protocolVersion);
       out.writeBigIntegerScalar(networkId);
+      // if total Difficulty is not null, then this is a pre 69 message
       if (totalDifficulty != null) {
         out.writeUInt256Scalar(totalDifficulty);
-      }
-      out.writeBytes(bestHash);
-      out.writeBytes(genesisHash);
-
-      forkId.writeTo(out);
-      if (blockRange != null) {
+        out.writeBytes(bestHash);
+        out.writeBytes(genesisHash);
+        forkId.writeTo(out);
+      } else {
+        out.writeBytes(genesisHash);
+        forkId.writeTo(out);
         out.writeLongScalar(blockRange.getEarliestBlock());
+        out.writeLongScalar(blockRange.getLatestBlock());
+        out.writeBytes(bestHash);
       }
       out.endList();
     }
 
     public static EthStatus readFrom(final RLPInput in) {
+      final Hash bestHash;
+      final Hash genesisHash;
+      final ForkId forkId;
+      Difficulty totalDifficulty = null;
+      BlockRange blockRange = null;
+      /*
+       * (eth/68): `[version, networkId, td, blockHash, genesis, forkId]`
+       * (eth/69): `[version, networkId, genesis, forkId, earliestBlock, latestBlock, blockHash]`
+       */
       in.enterList();
-
       final int protocolVersion = in.readIntScalar();
       final BigInteger networkId = in.readBigIntegerScalar();
 
-      final RLPInput firstElement = in.readAsRlp();
-      final RLPInput secondElement = in.readAsRlp();
-
-      Hash bestHash;
-      Difficulty totalDifficulty = null;
-      final Hash genesisHash;
+      // The third element is either total difficulty (td) or genesis hash
+      final RLPInput thirdElement = in.readAsRlp();
+      // The fourth element is either block hash or fork ID. If it is a list, then it is fork ID and
+      // the message is eth/69
       if (in.nextIsList()) {
-        bestHash = Hash.wrap(firstElement.readBytes32());
-        genesisHash = Hash.wrap(secondElement.readBytes32());
+        genesisHash = Hash.wrap(thirdElement.readBytes32());
+        forkId = ForkId.readFrom(in);
+        blockRange = new BlockRange(in.readLongScalar(), in.readLongScalar());
+        bestHash = Hash.wrap(in.readBytes32());
       } else {
-        totalDifficulty =
-            org.hyperledger.besu.ethereum.core.Difficulty.of(firstElement.readUInt256Scalar());
-        bestHash = Hash.wrap(secondElement.readBytes32());
+        totalDifficulty = Difficulty.of(thirdElement.readUInt256Scalar());
+        bestHash = Hash.wrap(in.readBytes32());
         genesisHash = Hash.wrap(in.readBytes32());
-      }
-      final ForkId forkId = ForkId.readFrom(in);
-      BlockRange blockRange = null;
-      if (!in.isEndOfCurrentList()) {
-        blockRange = new BlockRange(in.readLongScalar());
+        forkId = ForkId.readFrom(in);
       }
       in.leaveList();
-
       return new EthStatus(
           protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId, blockRange);
     }
@@ -333,13 +341,19 @@ public final class StatusMessage extends AbstractMessageData {
 
   public static class BlockRange {
     private final long earliestBlock;
+    private final long latestBlock;
 
-    public BlockRange(final long earliestBlock) {
+    public BlockRange(final long earliestBlock, final long latestBlock) {
       this.earliestBlock = earliestBlock;
+      this.latestBlock = latestBlock;
     }
 
     public long getEarliestBlock() {
       return earliestBlock;
+    }
+
+    public long getLatestBlock() {
+      return latestBlock;
     }
 
     @Override

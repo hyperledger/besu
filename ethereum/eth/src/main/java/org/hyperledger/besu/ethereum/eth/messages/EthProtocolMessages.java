@@ -48,6 +48,9 @@ public final class EthProtocolMessages {
 
   public static final int POOLED_TRANSACTIONS = 0x0A;
 
+  // Eth69 messages
+  public static final int BLOCK_RANGE_UPDATE = 0x11;
+
   private EthProtocolMessages() {
     // Holder for constants only
   }

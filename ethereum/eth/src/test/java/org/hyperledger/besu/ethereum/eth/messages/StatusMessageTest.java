@@ -93,7 +93,7 @@ public class StatusMessageTest {
             () ->
                 builder
                     .protocolVersion(EthProtocolVersion.V68)
-                    .blockRange(new StatusMessage.BlockRange(0L))
+                    .blockRange(new StatusMessage.BlockRange(0L, 10))
                     .build());
     assertThat(exception.getMessage())
         .contains("blockRange is only supported for protocol version >= 69");
@@ -127,7 +127,7 @@ public class StatusMessageTest {
             () ->
                 builder
                     .protocolVersion(EthProtocolVersion.V69)
-                    .blockRange(new StatusMessage.BlockRange(0L))
+                    .blockRange(new StatusMessage.BlockRange(0L, 10L))
                     .totalDifficulty(Difficulty.ZERO)
                     .build());
     assertThat(exception.getMessage())
