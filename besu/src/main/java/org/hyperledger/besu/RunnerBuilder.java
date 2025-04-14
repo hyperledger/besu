@@ -1155,12 +1155,11 @@ public class RunnerBuilder {
           AccountPermissioningControllerFactory.create(
               permissioningConfiguration.get(), transactionSimulator, metricsSystem);
 
-      // MRW - was this only doing privacy-related things?
-      /*accountPermissioningController.ifPresent(
-      permissioningController ->
-          besuController
-              .getProtocolSchedule()
-              .setPermissionTransactionFilter(permissioningController::isPermitted));*/
+      accountPermissioningController.ifPresent(
+          permissioningController ->
+              besuController
+                  .getProtocolSchedule()
+                  .setPermissionTransactionFilter(permissioningController::isPermitted));
 
       return accountPermissioningController;
     } else {

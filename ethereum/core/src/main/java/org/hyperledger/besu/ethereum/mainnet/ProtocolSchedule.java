@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.math.BigInteger;
@@ -64,4 +65,7 @@ public interface ProtocolSchedule {
   boolean isOnMilestoneBoundary(final BlockHeader blockHeader);
 
   boolean anyMatch(Predicate<ScheduledProtocolSpec> predicate);
+
+  void setPermissionTransactionFilter(
+      final PermissionTransactionFilter permissionTransactionFilter);
 }
