@@ -1749,17 +1749,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     jsonRpcConfiguration =
         jsonRpcHttpOptions.jsonRpcConfiguration(
-            hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
+            hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.httpTimeoutSec);
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration = createEngineJsonRpcConfiguration();
     }
     graphQLConfiguration =
         graphQlOptions.graphQLConfiguration(
-            hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
+            hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.httpTimeoutSec);
 
     webSocketConfiguration =
         rpcWebsocketOptions.webSocketConfiguration(
-            hostsAllowlist, p2PDiscoveryConfig.p2pHost(), unstableRPCOptions.getWsTimeoutSec());
+            hostsAllowlist, p2PDiscoveryConfig.p2pHost(), unstableRPCOptions.wsTimeoutSec);
     jsonRpcIpcConfiguration =
         jsonRpcIpcConfiguration(
             unstableIpcOptions.isEnabled(),
@@ -1888,7 +1888,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcHttpOptions.jsonRpcConfiguration(
                 engineRPCConfig.engineHostsAllowlist,
             p2PDiscoveryConfig.p2pHost(),
-            unstableRPCOptions.getWsTimeoutSec());
+                unstableRPCOptions.wsTimeoutSec);
     engineConfig.setPort(engineRPCConfig.engineRpcPort);
     engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
     engineConfig.setEnabled(isEngineApiEnabled());
