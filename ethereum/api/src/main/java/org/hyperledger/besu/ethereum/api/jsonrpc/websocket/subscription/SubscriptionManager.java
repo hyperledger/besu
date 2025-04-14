@@ -38,8 +38,6 @@ import io.vertx.core.json.Json;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// MRW - is this class used for anything other than private TX event subscriptions?
-
 /**
  * The SubscriptionManager is responsible for managing subscriptions and sending messages to the
  * clients that have an active subscription.
