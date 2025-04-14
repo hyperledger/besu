@@ -2086,9 +2086,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private boolean anyPrivacyApiEnabled() {
     return jsonRpcHttpOptions.rpcHttpApis.contains(RpcApis.EEA.name())
-        || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.EEA.name())
+        || rpcWebsocketOptions.rpcWsApis.contains(RpcApis.EEA.name())
         || jsonRpcHttpOptions.rpcHttpApis.contains(RpcApis.PRIV.name())
-        || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PRIV.name());
+        || rpcWebsocketOptions.rpcWsApis.contains(RpcApis.PRIV.name());
   }
 
   private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {
@@ -2613,7 +2613,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addPortIfEnabled(
         effectivePorts, jsonRpcHttpOptions.rpcHttpPort, jsonRpcHttpOptions.isRpcHttpEnabled);
     addPortIfEnabled(
-        effectivePorts, rpcWebsocketOptions.getRpcWsPort(), rpcWebsocketOptions.isRpcWsEnabled());
+        effectivePorts, rpcWebsocketOptions.rpcWsPort, rpcWebsocketOptions.isRpcWsEnabled);
     addPortIfEnabled(effectivePorts, engineRPCConfig.engineRpcPort, isEngineApiEnabled());
     addPortIfEnabled(
         effectivePorts, metricsOptions.getMetricsPort(), metricsOptions.getMetricsEnabled());
