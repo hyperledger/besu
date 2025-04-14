@@ -448,11 +448,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             .addArgument(status::toString)
             .addArgument(message::getConnection)
             .log();
-        peer.registerStatusReceived(
-            status.bestHash(),
-            status.totalDifficulty().orElse(Difficulty.ZERO),
-            status.protocolVersion(),
-            message.getConnection());
+        registerStatusReceived(peer, status);
       }
     } catch (final RLPException e) {
       LOG.atDebug()
@@ -463,6 +459,24 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       // Parsing errors can happen when clients broadcast network ids outside the int range,
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_UNPARSABLE_STATUS);
+    }
+  }
+
+  private void registerStatusReceived(final EthPeer peer, final StatusMessage status) {
+    // pre eth/69 status message
+    if (status.blockRange().isEmpty()) {
+      peer.registerStatusReceived(
+          status.bestHash(),
+          status.totalDifficulty().orElse(Difficulty.ZERO),
+          status.protocolVersion(),
+          peer.getConnection());
+      // eth/69 status message
+    } else {
+      peer.registerStatusReceived(
+          status.bestHash(),
+          status.protocolVersion(),
+          status.blockRange().get(),
+          peer.getConnection());
     }
   }
 

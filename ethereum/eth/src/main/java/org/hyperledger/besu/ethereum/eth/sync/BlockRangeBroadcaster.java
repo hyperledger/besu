@@ -19,9 +19,11 @@ import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockRangeUpdateMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +32,7 @@ public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
   private static final Logger LOG = LoggerFactory.getLogger(BlockRangeBroadcaster.class);
 
   // range update block interval
-  private static final int BLOCK_RANGE_UPDATE_INTERVAL = 32;
+  private static final int BLOCK_RANGE_UPDATE_INTERVAL = 32; // one slot
 
   private final EthContext ethContext;
   private final Blockchain blockchain;
@@ -38,6 +40,9 @@ public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
   public BlockRangeBroadcaster(final EthContext ethContext, final Blockchain blockchain) {
     this.ethContext = ethContext;
     this.blockchain = blockchain;
+    ethContext
+        .getEthMessages()
+        .subscribe(EthProtocolMessages.BLOCK_RANGE_UPDATE, this::handleBlockRangeUpdateMessage);
   }
 
   @Override
@@ -52,15 +57,36 @@ public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
             });
   }
 
+  private void handleBlockRangeUpdateMessage(final EthMessage message) {
+    try {
+      final BlockRangeUpdateMessage blockRangeUpdateMessage =
+          BlockRangeUpdateMessage.readFrom(message.getData());
+      final long earliestBlockNumber = blockRangeUpdateMessage.getEarliestBlockNumber();
+      final long latestBlockNumber = blockRangeUpdateMessage.getLatestBlockNumber();
+      final Hash blockHash = blockRangeUpdateMessage.getBlockHash();
+      LOG.debug(
+          "Received blockRange=[{}, {}, {}] from peer={}",
+          earliestBlockNumber,
+          latestBlockNumber,
+          blockHash,
+          message.getPeer().getId());
+
+      message.getPeer().registerKnownBlock(blockHash);
+      message.getPeer().registerBlockRange(blockHash, latestBlockNumber, earliestBlockNumber);
+    } catch (final RLPException e) {
+      LOG.error("Failed to decode BlockRangeUpdateMessage", e);
+    }
+  }
+
   private void propagate(
       final long earliestBlockNumber, final long latestBlockNumber, final Hash blockHash) {
     final BlockRangeUpdateMessage blockRangeUpdateMessage =
         BlockRangeUpdateMessage.create(earliestBlockNumber, latestBlockNumber, blockHash);
-    LOG.info(
-        "Broadcasting BlockRangeUpdateMessage: earliestBlockNumber={}, latestBlockNumber={}, blockHash={}",
-        earliestBlockNumber,
-        latestBlockNumber,
-        blockHash);
+    LOG.debug(
+        "Sending blockRange=[{}, {}, {}]",
+        blockRangeUpdateMessage.getEarliestBlockNumber(),
+        blockRangeUpdateMessage.getLatestBlockNumber(),
+        blockRangeUpdateMessage.getBlockHash());
     ethContext
         .getEthPeers()
         .streamAvailablePeers()

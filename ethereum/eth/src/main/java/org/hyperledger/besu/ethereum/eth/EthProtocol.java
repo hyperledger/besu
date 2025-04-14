@@ -60,6 +60,7 @@ public class EthProtocol implements SubProtocol {
   public int messageSpace(final int protocolVersion) {
     return switch (protocolVersion) {
       case EthProtocolVersion.V66, EthProtocolVersion.V67, EthProtocolVersion.V68 -> 17;
+      case EthProtocolVersion.V69 -> 18;
       default -> 0;
     };
   }

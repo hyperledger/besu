@@ -71,6 +71,28 @@ public class EthProtocolVersion {
           EthProtocolMessages.POOLED_TRANSACTIONS);
 
   /**
+   * eth/69 EIP-7642
+   *
+   * <p>Version 69 added the BlockRangeUpdate message.
+   */
+  private static final List<Integer> eth69Messages =
+      List.of(
+          EthProtocolMessages.STATUS,
+          EthProtocolMessages.NEW_BLOCK_HASHES,
+          EthProtocolMessages.TRANSACTIONS,
+          EthProtocolMessages.GET_BLOCK_HEADERS,
+          EthProtocolMessages.BLOCK_HEADERS,
+          EthProtocolMessages.GET_BLOCK_BODIES,
+          EthProtocolMessages.BLOCK_BODIES,
+          EthProtocolMessages.NEW_BLOCK,
+          EthProtocolMessages.GET_RECEIPTS,
+          EthProtocolMessages.RECEIPTS,
+          EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES,
+          EthProtocolMessages.GET_POOLED_TRANSACTIONS,
+          EthProtocolMessages.POOLED_TRANSACTIONS,
+          EthProtocolMessages.BLOCK_RANGE_UPDATE);
+
+  /**
    * Returns a list of integers containing the supported messages given the protocol version
    *
    * @param protocolVersion the protocol version
@@ -82,8 +104,9 @@ public class EthProtocolVersion {
         return eth66Messages;
       case EthProtocolVersion.V67:
       case EthProtocolVersion.V68:
-      case EthProtocolVersion.V69:
         return eth67Messages;
+      case EthProtocolVersion.V69:
+        return eth69Messages;
       default:
         return Collections.emptyList();
     }

@@ -26,6 +26,7 @@ public class ChainState implements ChainHeadEstimate {
   private final BestBlock bestBlock = new BestBlock();
   // The highest block that we've seen
   private volatile long estimatedHeight = 0L;
+  private volatile long earliestBlockHeight = 0L;
   private volatile boolean estimatedHeightKnown = false;
 
   private final Subscribers<EstimatedHeightListener> estimatedHeightListeners =
@@ -52,6 +53,10 @@ public class ChainState implements ChainHeadEstimate {
     return estimatedHeight;
   }
 
+  public long getEarliestBlockHeight() {
+    return earliestBlockHeight;
+  }
+
   @Override
   public Difficulty getEstimatedTotalDifficulty() {
     return bestBlock.getTotalDifficulty();
@@ -68,12 +73,31 @@ public class ChainState implements ChainHeadEstimate {
     }
   }
 
+  public void statusReceived(
+      final Hash bestBlockHash, final long bestBlockNumber, final long earliestBlockHeight) {
+    synchronized (this) {
+      this.bestBlock.hash = bestBlockHash;
+      this.bestBlock.number = bestBlockNumber;
+      this.earliestBlockHeight = earliestBlockHeight;
+    }
+  }
+
   public void update(final Hash blockHash, final long blockNumber) {
     synchronized (this) {
       if (bestBlock.hash.equals(blockHash)) {
         bestBlock.number = blockNumber;
       }
       updateHeightEstimate(blockNumber);
+    }
+  }
+
+  public void update(final Hash blockHash, final long blockNumber, final long earliestBlockHeight) {
+    synchronized (this) {
+      if (bestBlock.hash.equals(blockHash)) {
+        bestBlock.number = blockNumber;
+      }
+      updateHeightEstimate(blockNumber);
+      this.earliestBlockHeight = earliestBlockHeight;
     }
   }
 
