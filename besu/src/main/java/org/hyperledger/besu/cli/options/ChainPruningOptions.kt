@@ -34,7 +34,7 @@ internal constructor() : CLIOptions<ChainPrunerConfiguration?> {
         names = [CHAIN_PRUNING_ENABLED_FLAG],
         description = ["Enable the chain pruner to actively prune old chain data (default: \${DEFAULT-VALUE})"]
     )
-    val chainDataPruningEnabled: Boolean = java.lang.Boolean.FALSE
+    var chainDataPruningEnabled: Boolean = java.lang.Boolean.FALSE
 
     /**
      * Gets chain data pruning blocks retained.
@@ -49,7 +49,7 @@ internal constructor() : CLIOptions<ChainPrunerConfiguration?> {
                 + CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
                 + " (default: \${DEFAULT-VALUE})")]
     )
-    val chainDataPruningBlocksRetained: Long = CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
+    var chainDataPruningBlocksRetained: Long = CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
 
     /**
      * Get the configured number of retained blocks for chain pruning.
@@ -65,14 +65,14 @@ internal constructor() : CLIOptions<ChainPrunerConfiguration?> {
                 + ". This flag should be used with caution as reducing the limit may have unintended side effects."
                 + " (default: \${DEFAULT-VALUE})")]
     )
-    val chainDataPruningBlocksRetainedLimit: Long = CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
+    var chainDataPruningBlocksRetainedLimit: Long = CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
 
     @CommandLine.Option(
         hidden = true,
         names = [CHAIN_PRUNING_FREQUENCY_FLAG],
         description = ["The number of blocks added to the chain between two pruning operations. Must be non-negative (default: \${DEFAULT-VALUE})"]
     )
-    private val chainDataPruningBlocksFrequency: PositiveNumber = PositiveNumber.fromInt(
+    private var chainDataPruningBlocksFrequency: PositiveNumber = PositiveNumber.fromInt(
         DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY
     )
 

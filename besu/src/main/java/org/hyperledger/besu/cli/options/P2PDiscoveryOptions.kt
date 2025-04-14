@@ -61,7 +61,7 @@ class P2PDiscoveryOptions
         description = ["Enable P2P functionality (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    val p2pEnabled: Boolean = true
+    var p2pEnabled: Boolean = true
 
     /** Boolean option to indicate if peers should be discovered.  */
     @JvmField
@@ -70,7 +70,7 @@ class P2PDiscoveryOptions
         description = ["Enable P2P discovery (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    val peerDiscoveryEnabled: Boolean = true
+    var peerDiscoveryEnabled: Boolean = true
 
     /**
      * A list of bootstrap nodes can be passed and a hardcoded list will be used otherwise by the
@@ -86,7 +86,7 @@ class P2PDiscoveryOptions
         split = ",",
         arity = "0..*"
     )
-    val bootNodes: List<String>? = null
+    var bootNodes: List<String>? = null
 
     /** The IP the node advertises to peers for P2P communication.  */
     // PicoCLI requires non-final Strings.
@@ -126,7 +126,7 @@ class P2PDiscoveryOptions
         paramLabel = DefaultCommandValues.MANDATORY_INTEGER_FORMAT_HELP,
         description = ["Maximum P2P connections that can be established (default: \${DEFAULT-VALUE})"]
     )
-    val maxPeers: Int = DefaultCommandValues.DEFAULT_MAX_PEERS
+    var maxPeers: Int = DefaultCommandValues.DEFAULT_MAX_PEERS
 
     /** Boolean option to limit the number of P2P connections initiated remotely.  */
     @JvmField
@@ -134,7 +134,7 @@ class P2PDiscoveryOptions
         names = ["--remote-connections-limit-enabled"],
         description = ["Whether to limit the number of P2P connections initiated remotely. (default: \${DEFAULT-VALUE})"]
     )
-    val isLimitRemoteWireConnectionsEnabled: Boolean = true
+    var isLimitRemoteWireConnectionsEnabled: Boolean = true
 
     /** The maximum percentage of P2P connections that can be initiated remotely.  */
     @JvmField
@@ -145,7 +145,7 @@ class P2PDiscoveryOptions
         arity = "1",
         converter = [PercentageConverter::class]
     )
-    val maxRemoteConnectionsPercentage: Percentage =
+    var maxRemoteConnectionsPercentage: Percentage =
         Fraction.fromFloat(DefaultCommandValues.DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED)
             .toPercentage()
 
@@ -161,7 +161,7 @@ class P2PDiscoveryOptions
         names = ["--random-peer-priority-enabled"],
         description = ["Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: \${DEFAULT-VALUE})"]
     )
-    val randomPeerPriority: Boolean = java.lang.Boolean.FALSE
+    var randomPeerPriority: Boolean = java.lang.Boolean.FALSE
 
     /** A list of node IDs to ban from the P2P network.  */
     @CommandLine.Option(
@@ -196,7 +196,7 @@ class P2PDiscoveryOptions
                 + "(default: \${DEFAULT-VALUE})")],
         arity = "1"
     )
-    private val poaDiscoveryRetryBootnodes = true
+    private var poaDiscoveryRetryBootnodes = true
 
     private var bannedNodeIds: Collection<Bytes> = ArrayList()
 
@@ -221,7 +221,7 @@ class P2PDiscoveryOptions
         converter = [SubnetInfoConverter::class],
         description = ["Comma-separated list of allowed IP subnets (e.g., '192.168.1.0/24,10.0.0.0/8')."]
     )
-    private val allowedSubnets: List<SubnetInfo>? = null
+    private var allowedSubnets: List<SubnetInfo>? = null
 
     override fun toDomainObject(): P2PDiscoveryConfiguration {
         return P2PDiscoveryConfiguration(

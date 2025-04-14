@@ -32,7 +32,7 @@ class PluginsConfigurationOptions
         defaultValue = "true",
         arity = "1"
     )
-    private val externalPluginsEnabled = true
+    private var externalPluginsEnabled = true
 
     @CommandLine.Option(
         names = [DefaultCommandValues.DEFAULT_PLUGINS_OPTION_NAME],
@@ -41,7 +41,7 @@ class PluginsConfigurationOptions
         converter = [PluginInfoConverter::class],
         arity = "1"
     )
-    private val plugins: List<PluginInfo>? = null
+    private var plugins: List<PluginInfo>? = null
 
     @CommandLine.Option(
         names = [DefaultCommandValues.DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME],
@@ -49,7 +49,7 @@ class PluginsConfigurationOptions
         defaultValue = "false",
         arity = "1"
     )
-    private val continueOnPluginError = false
+    private var continueOnPluginError = false
 
     override fun toDomainObject(): PluginConfiguration {
         return PluginConfiguration.Builder()

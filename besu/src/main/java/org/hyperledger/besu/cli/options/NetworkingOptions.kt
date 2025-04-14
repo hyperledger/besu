@@ -51,14 +51,14 @@ class NetworkingOptions private constructor() : CLIOptions<NetworkingConfigurati
         hidden = true,
         description = ["Whether to enable P2P Discovery Protocol v5 (default: \${DEFAULT-VALUE})"]
     )
-    private val isPeerDiscoveryV5Enabled = false
+    private var isPeerDiscoveryV5Enabled = false
 
     @CommandLine.Option(
         names = [FILTER_ON_ENR_FORK_ID],
         hidden = true,
         description = ["Whether to enable filtering of peers based on the ENR field ForkId)"]
     )
-    private val filterOnEnrForkId = NetworkingConfiguration.DEFAULT_FILTER_ON_ENR_FORK_ID
+    private var filterOnEnrForkId = NetworkingConfiguration.DEFAULT_FILTER_ON_ENR_FORK_ID
 
     override fun toDomainObject(): NetworkingConfiguration {
         val config = NetworkingConfiguration.create()

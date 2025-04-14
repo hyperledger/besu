@@ -55,14 +55,14 @@ public class TestRpcEndpointServicePlugin implements BesuPlugin {
     context
         .getService(RpcEndpointService.class)
         .ifPresent(
-            rpcEndpointService -> {
-              rpcEndpointService.registerRPCEndpoint(NAMESPACE_ENABLED, "getValue", this::getValue);
-              rpcEndpointService.registerRPCEndpoint(NAMESPACE_ENABLED, "setValue", this::setValue);
-              rpcEndpointService.registerRPCEndpoint(
+              rpcEndpointService -> {
+                ((RpcEndpointService) rpcEndpointService).registerRPCEndpoint(NAMESPACE_ENABLED, "getValue", this::getValue);
+                ((RpcEndpointService) rpcEndpointService).registerRPCEndpoint(NAMESPACE_ENABLED, "setValue", this::setValue);
+                ((RpcEndpointService) rpcEndpointService).registerRPCEndpoint(
                   NAMESPACE_ENABLED, "replaceValueList", this::replaceValueList);
-              rpcEndpointService.registerRPCEndpoint(
+                ((RpcEndpointService) rpcEndpointService).registerRPCEndpoint(
                   NAMESPACE_ENABLED, "throwException", this::throwException);
-              rpcEndpointService.registerRPCEndpoint(
+                ((RpcEndpointService) rpcEndpointService).registerRPCEndpoint(
                   NAMESPACE_NOT_ENABLED, "getValue", this::getValue);
             });
   }

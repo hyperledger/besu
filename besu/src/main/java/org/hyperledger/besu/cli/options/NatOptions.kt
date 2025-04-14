@@ -32,7 +32,7 @@ internal constructor() {
         description = ["Enable fallback to NONE for the nat manager in case of failure. If False BESU will exit on failure. (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    val natMethodFallbackEnabled: Boolean = true
+    var natMethodFallbackEnabled: Boolean = true
 
     companion object {
         /**

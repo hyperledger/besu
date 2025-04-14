@@ -49,7 +49,7 @@ interface ServiceManager {
      * @return an optional containing the instance of the requested service, or empty if the service
      * is unavailable
     </T> */
-    fun <T : BesuService> getService(serviceType: Class<T>): Optional<T>
+    fun <T : BesuService> getService(serviceType: Class<T>): Optional<out BesuService>
 
     /** A basic implementation of ServiceManager, suitable for tests.  */
     class SimpleServiceManager
@@ -61,8 +61,9 @@ interface ServiceManager {
             services[serviceType] = service
         }
 
-        override fun <T : BesuService> getService(serviceType: Class<T>): Optional<T> {
-            return Optional.ofNullable(serviceType.cast(services[serviceType]))
+        override fun <T : BesuService> getService(serviceType: Class<T>): Optional<BesuService> {
+//            return services[serviceType] // NOTE:
+            return Optional.of(services[serviceType]!!)
         }
     }
 }

@@ -12,20 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services;
+package org.hyperledger.besu.plugin.services
 
-import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
+import org.hyperledger.besu.plugin.data.BlockHeader
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer
 
-/** The Block import tracer provider. */
+/** The Block import tracer provider.  */
 @FunctionalInterface
-public interface BlockImportTracerProvider extends BesuService {
-
-  /**
-   * Gets BlockAwareOperationTracer for use during block import
-   *
-   * @param blockHeader header of the block which will be imported
-   * @return the block aware operation tracer
-   */
-  BlockAwareOperationTracer getBlockImportTracer(BlockHeader blockHeader);
+interface BlockImportTracerProvider : BesuService {
+    /**
+     * Gets BlockAwareOperationTracer for use during block import
+     *
+     * @param blockHeader header of the block which will be imported
+     * @return the block aware operation tracer
+     */
+    fun getBlockImportTracer(blockHeader: BlockHeader?): BlockAwareOperationTracer?
 }

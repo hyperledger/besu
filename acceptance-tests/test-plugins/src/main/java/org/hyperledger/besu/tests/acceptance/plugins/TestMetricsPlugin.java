@@ -36,18 +36,18 @@ public class TestMetricsPlugin implements BesuPlugin {
   public void register(final ServiceManager context) {
     LOG.info("Registering TestMetricsPlugin");
     serviceManager = context;
-    context
+    ((MetricCategoryRegistry) context
         .getService(MetricCategoryRegistry.class)
-        .orElseThrow()
+        .orElseThrow())
         .addMetricCategory(TestMetricCategory.TEST_METRIC_CATEGORY);
   }
 
   @Override
   public void start() {
     LOG.info("Starting TestMetricsPlugin");
-    serviceManager
+    ((MetricsSystem) serviceManager
         .getService(MetricsSystem.class)
-        .orElseThrow()
+        .orElseThrow())
         .createGauge(
             TestMetricCategory.TEST_METRIC_CATEGORY,
             "test_metric",

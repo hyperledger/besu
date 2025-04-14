@@ -33,7 +33,7 @@ internal constructor() {
                 + "If the Java implementation should be used instead, this option must be set to false")],
         arity = "1"
     )
-    val nativeSecp: Boolean = java.lang.Boolean.TRUE
+    var nativeSecp: Boolean = java.lang.Boolean.TRUE
 
     /**
      * Whether native Altbn128 is enabled.
@@ -48,7 +48,7 @@ internal constructor() {
                 + "If the Java implementation should be used instead, this option must be set to false")],
         arity = "1"
     )
-    val nativeAltbn128: Boolean = java.lang.Boolean.TRUE
+    var nativeAltbn128: Boolean = java.lang.Boolean.TRUE
 
     /**
      * Whether native blake2bf is enabled.
@@ -63,7 +63,7 @@ internal constructor() {
                 + "If the Java implementation should be used instead, this option must be set to false")],
         arity = "1"
     )
-    val nativeBlake2bf: Boolean = java.lang.Boolean.TRUE
+    var nativeBlake2bf: Boolean = java.lang.Boolean.TRUE
 
     /**
      * Whether native mod exp is enabled.
@@ -78,7 +78,7 @@ internal constructor() {
                 + "If the Java implementation should be used instead, this option must be set to false")],
         arity = "1"
     )
-    val nativeModExp: Boolean = java.lang.Boolean.TRUE
+    var nativeModExp: Boolean = java.lang.Boolean.TRUE
 
     companion object {
         /**

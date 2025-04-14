@@ -56,7 +56,7 @@ internal constructor() : CLIOptions<PathBasedExtraStorageConfiguration?> {
     private var trieLogPruningWindowSize = PathBasedExtraStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE
 
     @CommandLine.ArgGroup(validate = false)
-    private val unstableOptions = Unstable()
+    private var unstableOptions = Unstable()
 
     /** The unstable options for data storage.  */
     class Unstable

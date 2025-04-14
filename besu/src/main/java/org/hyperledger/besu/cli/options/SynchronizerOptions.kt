@@ -263,7 +263,7 @@ class SynchronizerOptions private constructor() : CLIOptions<SynchronizerConfigu
         arity = "0..1",
         description = ["This option is now deprecated and ignored, and will be removed in future release. Snap sync for BFT is supported by default."]
     )
-    val isSnapSyncBftEnabled: Boolean = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED
+    var isSnapSyncBftEnabled: Boolean = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED
 
     /**
      * Flag to indicate whether the peer task system should be used where available
@@ -275,7 +275,7 @@ class SynchronizerOptions private constructor() : CLIOptions<SynchronizerConfigu
         hidden = true,
         description = ["Temporary feature toggle to enable using the new peertask system (default: \${DEFAULT-VALUE})"]
     )
-    val isPeerTaskSystemEnabled: Boolean = false
+    var isPeerTaskSystemEnabled: Boolean = false
 
     @CommandLine.Option(
         names = [SNAP_TRANSACTION_INDEXING_ENABLED_FLAG],

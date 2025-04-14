@@ -28,7 +28,7 @@ internal constructor() : CLIOptions<InProcessRpcConfiguration?> {
         hidden = true,
         description = ["Set to enalbe in-process RPC method call service (default: \${DEFAULT-VALUE})"]
     )
-    private val enabled = InProcessRpcConfiguration.DEFAULT_IN_PROCESS_RPC_ENABLED
+    private var enabled = InProcessRpcConfiguration.DEFAULT_IN_PROCESS_RPC_ENABLED
 
     @CommandLine.Option(
         names = ["--Xin-process-rpc-api", "--Xin-process-rpc-apis"],
@@ -38,7 +38,7 @@ internal constructor() : CLIOptions<InProcessRpcConfiguration?> {
         arity = "1..*",
         description = ["Comma separated list of APIs to enable on  in-process RPC method call service (default: \${DEFAULT-VALUE})"]
     )
-    private val inProcessRpcApis: Set<String> = InProcessRpcConfiguration.DEFAULT_IN_PROCESS_RPC_APIS
+    private var inProcessRpcApis: Set<String> = InProcessRpcConfiguration.DEFAULT_IN_PROCESS_RPC_APIS
 
     override fun toDomainObject(): InProcessRpcConfiguration {
         return ImmutableInProcessRpcConfiguration.builder()

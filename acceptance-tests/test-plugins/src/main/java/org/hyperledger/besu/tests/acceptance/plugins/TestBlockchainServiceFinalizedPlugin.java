@@ -44,20 +44,20 @@ public class TestBlockchainServiceFinalizedPlugin implements BesuPlugin {
     LOG.trace("Registering plugin ...");
 
     final RpcEndpointService rpcEndpointService =
-        serviceManager
-            .getService(RpcEndpointService.class)
-            .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Failed to obtain RpcEndpointService from the BesuContext."));
+            (RpcEndpointService) serviceManager
+                .getService(RpcEndpointService.class)
+                .orElseThrow(
+                    () ->
+                        new RuntimeException(
+                            "Failed to obtain RpcEndpointService from the BesuContext."));
 
     final BlockchainService blockchainService =
-        serviceManager
-            .getService(BlockchainService.class)
-            .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Failed to obtain BlockchainService from the BesuContext."));
+            (BlockchainService) serviceManager
+                .getService(BlockchainService.class)
+                .orElseThrow(
+                    () ->
+                        new RuntimeException(
+                            "Failed to obtain BlockchainService from the BesuContext."));
 
     final FinalizationUpdaterRpcMethod rpcMethod =
         new FinalizationUpdaterRpcMethod(blockchainService);

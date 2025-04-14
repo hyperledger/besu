@@ -38,22 +38,22 @@ public class TestInProcessRpcServicePlugin implements BesuPlugin {
   @Override
   public void register(final ServiceManager context) {
     final PicoCLIOptions cmdlineOptions =
-        context
-            .getService(PicoCLIOptions.class)
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Failed to obtain PicoCLI options from the BesuContext"));
+            (PicoCLIOptions) context
+                .getService(PicoCLIOptions.class)
+                .orElseThrow(
+                    () ->
+                        new IllegalStateException(
+                            "Failed to obtain PicoCLI options from the BesuContext"));
 
     cmdlineOptions.addPicoCLIOptions("test", this);
 
     rpcEndpointService =
-        context
-            .getService(RpcEndpointService.class)
-            .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Failed to obtain RpcEndpointService from the BesuContext."));
+            (RpcEndpointService) context
+                .getService(RpcEndpointService.class)
+                .orElseThrow(
+                    () ->
+                        new RuntimeException(
+                            "Failed to obtain RpcEndpointService from the BesuContext."));
   }
 
   @Override

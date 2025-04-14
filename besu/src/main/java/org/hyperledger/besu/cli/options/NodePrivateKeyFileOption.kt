@@ -33,7 +33,7 @@ internal constructor() {
         paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
         description = ["The node's private key file (default: a file named \"key\" in the Besu data directory)"]
     )
-    val nodePrivateKeyFile: File? = null
+    var nodePrivateKeyFile: File? = null
 
     companion object {
         /**

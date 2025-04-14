@@ -33,33 +33,33 @@ class ApiConfigurationOptions
         names = ["--api-gas-price-blocks"],
         description = ["Number of blocks to consider for eth_gasPrice (default: \${DEFAULT-VALUE})"]
     )
-    private val apiGasPriceBlocks = 100L
+    private var apiGasPriceBlocks = 100L
 
     @CommandLine.Option(
         names = ["--api-gas-price-percentile"],
         description = ["Percentile value to measure for eth_gasPrice (default: \${DEFAULT-VALUE})"]
     )
-    private val apiGasPricePercentile = 50.0
+    private var apiGasPricePercentile = 50.0
 
     @CommandLine.Option(
         names = ["--api-gas-price-max"],
         description = ["Maximum gas price for eth_gasPrice (default: \${DEFAULT-VALUE})"]
     )
-    private val apiGasPriceMax = 500000000000L
+    private var apiGasPriceMax = 500000000000L
 
     @CommandLine.Option(
         names = ["--api-gas-and-priority-fee-limiting-enabled"],
         hidden = true,
         description = ["Set to enable gas price and minimum priority fee limit in eth_getGasPrice and eth_feeHistory (default: \${DEFAULT-VALUE})"]
     )
-    private val apiGasAndPriorityFeeLimitingEnabled = false
+    private var apiGasAndPriorityFeeLimitingEnabled = false
 
     @CommandLine.Option(
         names = ["--api-gas-and-priority-fee-lower-bound-coefficient"],
         hidden = true,
         description = ["Coefficient for setting the lower limit of gas price and minimum priority fee in eth_getGasPrice and eth_feeHistory (default: \${DEFAULT-VALUE})"]
     )
-    private val apiGasAndPriorityFeeLowerBoundCoefficient =
+    private var apiGasAndPriorityFeeLowerBoundCoefficient =
         ApiConfiguration.DEFAULT_LOWER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT
 
     @CommandLine.Option(
@@ -67,26 +67,26 @@ class ApiConfigurationOptions
         hidden = true,
         description = ["Coefficient for setting the upper limit of gas price and minimum priority fee in eth_getGasPrice and eth_feeHistory (default: \${DEFAULT-VALUE})"]
     )
-    private val apiGasAndPriorityFeeUpperBoundCoefficient =
+    private var apiGasAndPriorityFeeUpperBoundCoefficient =
         ApiConfiguration.DEFAULT_UPPER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT
 
     @CommandLine.Option(
         names = ["--rpc-max-logs-range"],
         description = ["Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: \${DEFAULT-VALUE})"]
     )
-    private val rpcMaxLogsRange = 5000L
+    private var rpcMaxLogsRange = 5000L
 
     @CommandLine.Option(
         names = ["--rpc-gas-cap"],
         description = ["Specifies the gasLimit cap for transaction simulation RPC methods. Must be >=0. 0 specifies no limit  (default: \${DEFAULT-VALUE})"]
     )
-    private val rpcGasCap = ApiConfiguration.DEFAULT_GAS_CAP
+    private var rpcGasCap = ApiConfiguration.DEFAULT_GAS_CAP
 
     @CommandLine.Option(
         names = ["--rpc-max-trace-filter-range"],
         description = ["Specifies the maximum number of blocks for the trace_filter method. Must be >=0. 0 specifies no limit  (default: \${DEFAULT-VALUE})"]
     )
-    private val maxTraceFilterRange = 1000L
+    private var maxTraceFilterRange = 1000L
 
     /**
      * Validates the API options.

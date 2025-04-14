@@ -35,59 +35,59 @@ class PermissionsOptions
         names = ["--permissions-nodes-config-file-enabled"],
         description = ["Enable node level permissions (default: \${DEFAULT-VALUE})"]
     )
-    private val permissionsNodesEnabled = false
+    private var permissionsNodesEnabled = false
 
     // PicoCLI requires non-final Strings.
     @CommandLine.Option(
         names = ["--permissions-nodes-config-file"],
         description = ["Node permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)"]
     )
-    private val nodePermissionsConfigFile: String? = null
+    private var nodePermissionsConfigFile: String? = null
 
     @CommandLine.Option(
         names = ["--permissions-accounts-config-file-enabled"],
         description = ["Enable account level permissions (default: \${DEFAULT-VALUE})"]
     )
-    private val permissionsAccountsEnabled = false
+    private var permissionsAccountsEnabled = false
 
     // PicoCLI requires non-final Strings.
     @CommandLine.Option(
         names = ["--permissions-accounts-config-file"],
         description = ["Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)"]
     )
-    private val accountPermissionsConfigFile: String? = null
+    private var accountPermissionsConfigFile: String? = null
 
     @CommandLine.Option(
         names = ["--permissions-nodes-contract-address"],
         description = [DEPRECATION_PREFIX + "Address of the node permissioning smart contract"],
         arity = "1"
     )
-    private val permissionsNodesContractAddress: Address? = null
+    private var permissionsNodesContractAddress: Address? = null
 
     @CommandLine.Option(
         names = ["--permissions-nodes-contract-version"], description = [(DEPRECATION_PREFIX
                 + "Version of the EEA Node Permissioning interface (default: \${DEFAULT-VALUE})")]
     )
-    private val permissionsNodesContractVersion = 1
+    private var permissionsNodesContractVersion = 1
 
     @CommandLine.Option(
         names = ["--permissions-nodes-contract-enabled"], description = [(DEPRECATION_PREFIX
                 + "Enable node level permissions via smart contract (default: \${DEFAULT-VALUE})")]
     )
-    private val permissionsNodesContractEnabled = false
+    private var permissionsNodesContractEnabled = false
 
     @CommandLine.Option(
         names = ["--permissions-accounts-contract-address"],
         description = [DEPRECATION_PREFIX + "Address of the account permissioning smart contract"],
         arity = "1"
     )
-    private val permissionsAccountsContractAddress: Address? = null
+    private var permissionsAccountsContractAddress: Address? = null
 
     @CommandLine.Option(
         names = ["--permissions-accounts-contract-enabled"], description = [(DEPRECATION_PREFIX
                 + "Enable account level permissions via smart contract (default: \${DEFAULT-VALUE})")]
     )
-    private val permissionsAccountsContractEnabled = false
+    private var permissionsAccountsContractEnabled = false
 
     /**
      * Creates a PermissioningConfiguration based on the provided options.

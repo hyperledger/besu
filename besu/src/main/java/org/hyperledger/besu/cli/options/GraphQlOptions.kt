@@ -36,7 +36,7 @@ class GraphQlOptions
         names = ["--graphql-http-enabled"],
         description = ["Set to start the GraphQL HTTP service (default: \${DEFAULT-VALUE})"]
     )
-    val isGraphQLHttpEnabled: Boolean = false
+    var isGraphQLHttpEnabled: Boolean = false
 
     // PicoCLI requires non-final Strings.
     @CommandLine.Option(
@@ -45,7 +45,7 @@ class GraphQlOptions
         description = ["Host for GraphQL HTTP to listen on (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    private val graphQLHttpHost: String? = null
+    private var graphQLHttpHost: String? = null
 
     /**
      * Returns the port for GraphQL over HTTP.
@@ -59,43 +59,43 @@ class GraphQlOptions
         description = ["Port for GraphQL HTTP to listen on (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    val graphQLHttpPort: Int = GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT
+    var graphQLHttpPort: Int = GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT
 
     @CommandLine.Option(
         names = ["--graphql-http-cors-origins"],
         description = ["Comma separated origin domain URLs for CORS validation (default: none)"]
     )
-    private val graphQLHttpCorsAllowedOrigins = CorsAllowedOriginsProperty()
+    private var graphQLHttpCorsAllowedOrigins = CorsAllowedOriginsProperty()
 
     @CommandLine.Option(names = ["--graphql-tls-enabled"], description = ["Enable TLS for GraphQL HTTP service"])
-    private val graphqlTlsEnabled = false
+    private var graphqlTlsEnabled = false
 
     @CommandLine.Option(
         names = ["--graphql-tls-keystore-file"],
         description = ["Path to the TLS keystore file for GraphQL HTTP service"]
     )
-    private val graphqlTlsKeystoreFile: String? = null
+    private var graphqlTlsKeystoreFile: String? = null
 
     @CommandLine.Option(
         names = ["--graphql-tls-keystore-password-file"],
         description = ["Path to the file containing the password for the TLS keystore"]
     )
-    private val graphqlTlsKeystorePasswordFile: String? = null
+    private var graphqlTlsKeystorePasswordFile: String? = null
 
     @CommandLine.Option(names = ["--graphql-mtls-enabled"], description = ["Enable mTLS for GraphQL HTTP service"])
-    private val graphqlMtlsEnabled = false
+    private var graphqlMtlsEnabled = false
 
     @CommandLine.Option(
         names = ["--graphql-tls-truststore-file"],
         description = ["Path to the TLS truststore file for GraphQL HTTP service"]
     )
-    private val graphqlTlsTruststoreFile: String? = null
+    private var graphqlTlsTruststoreFile: String? = null
 
     @CommandLine.Option(
         names = ["--graphql-tls-truststore-password-file"],
         description = ["Path to the file containing the password for the TLS truststore"]
     )
-    private val graphqlTlsTruststorePasswordFile: String? = null
+    private var graphqlTlsTruststorePasswordFile: String? = null
 
     /**
      * Validates the GraphQL HTTP options.

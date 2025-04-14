@@ -38,14 +38,14 @@ class RpcWebsocketOptions
             paramLabel = "<PASSWORD>",
             description = ["Password for the WebSocket RPC keystore file"]
         )
-        internal val rpcWsKeyStorePassword: String? = null
+        internal var rpcWsKeyStorePassword: String? = null
 
         @CommandLine.Option(
             names = ["--rpc-ws-ssl-keystore-password-file"],
             paramLabel = "<FILE>",
             description = ["File containing the password for WebSocket keystore."]
         )
-        val rpcWsKeystorePasswordFile: String? = null
+        var rpcWsKeystorePasswordFile: String? = null
     }
 
     internal class TruststorePasswordOptions {
@@ -54,14 +54,14 @@ class RpcWebsocketOptions
             paramLabel = "<PASSWORD>",
             description = ["Password for the WebSocket RPC truststore file"]
         )
-        val rpcWsTrustStorePassword: String? = null
+        var rpcWsTrustStorePassword: String? = null
 
         @CommandLine.Option(
             names = ["--rpc-ws-ssl-truststore-password-file"],
             paramLabel = "<FILE>",
             description = ["File containing the password for WebSocket truststore."]
         )
-        val rpcWsTruststorePasswordFile: String? = null
+        var rpcWsTruststorePasswordFile: String? = null
     }
 
     @CommandLine.Option(
@@ -70,7 +70,7 @@ class RpcWebsocketOptions
                 + " (default: \${DEFAULT-VALUE})")],
         arity = "1"
     )
-    private val rpcWebsocketsAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM
+    private var rpcWebsocketsAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM
 
     /**
      * Checks if the WebSocket service is enabled.
@@ -82,7 +82,7 @@ class RpcWebsocketOptions
         names = ["--rpc-ws-enabled"],
         description = ["Set to start the JSON-RPC WebSocket service (default: \${DEFAULT-VALUE})"]
     )
-    val isRpcWsEnabled: Boolean = false
+    var isRpcWsEnabled: Boolean = false
 
     // PicoCLI requires non-final Strings.
     @CommandLine.Option(
@@ -91,7 +91,7 @@ class RpcWebsocketOptions
         description = ["Host for JSON-RPC WebSocket service to listen on (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    private val rpcWsHost: String? = null
+    private var rpcWsHost: String? = null
 
     /**
      * Returns the port for the WebSocket service.
@@ -105,21 +105,21 @@ class RpcWebsocketOptions
         description = ["Port for JSON-RPC WebSocket service to listen on (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    val rpcWsPort: Int = WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT
+    var rpcWsPort: Int = WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT
 
     @CommandLine.Option(
         names = ["--rpc-ws-max-frame-size"],
         description = ["Maximum size in bytes for JSON-RPC WebSocket frames (default: \${DEFAULT-VALUE}). If this limit is exceeded, the websocket will be disconnected."],
         arity = "1"
     )
-    private val rpcWsMaxFrameSize = DefaultCommandValues.DEFAULT_WS_MAX_FRAME_SIZE
+    private var rpcWsMaxFrameSize = DefaultCommandValues.DEFAULT_WS_MAX_FRAME_SIZE
 
     @CommandLine.Option(
         names = ["--rpc-ws-max-active-connections"],
         description = ["Maximum number of WebSocket connections allowed for JSON-RPC (default: \${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected."],
         arity = "1"
     )
-    private val rpcWsMaxConnections = DefaultCommandValues.DEFAULT_WS_MAX_CONNECTIONS
+    private var rpcWsMaxConnections = DefaultCommandValues.DEFAULT_WS_MAX_CONNECTIONS
 
     /**
      * Returns the list of APIs for the WebSocket.
@@ -134,7 +134,7 @@ class RpcWebsocketOptions
         arity = "1..*",
         description = ["Comma separated list of APIs to enable on JSON-RPC WebSocket service (default: \${DEFAULT-VALUE})"]
     )
-    val rpcWsApis: List<String> = RpcApis.DEFAULT_RPC_APIS
+    var rpcWsApis: List<String> = RpcApis.DEFAULT_RPC_APIS
 
     @CommandLine.Option(
         names = ["--rpc-ws-api-methods-no-auth", "--rpc-ws-api-method-no-auth"],
@@ -143,13 +143,13 @@ class RpcWebsocketOptions
         arity = "1..*",
         description = ["Comma separated list of RPC methods to exclude from RPC authentication services, RPC WebSocket authentication must be enabled"]
     )
-    private val rpcWsApiMethodsNoAuth: List<String> = ArrayList()
+    private var rpcWsApiMethodsNoAuth: List<String> = ArrayList()
 
     @CommandLine.Option(
         names = ["--rpc-ws-authentication-enabled"],
         description = ["Require authentication for the JSON-RPC WebSocket service (default: \${DEFAULT-VALUE})"]
     )
-    private val isRpcWsAuthenticationEnabled = false
+    private var isRpcWsAuthenticationEnabled = false
 
     // PicoCLI requires non-final Strings.
     @CommandLine.Option(
@@ -158,7 +158,7 @@ class RpcWebsocketOptions
         description = ["Storage file for JSON-RPC WebSocket authentication credentials (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    private val rpcWsAuthenticationCredentialsFile: String? = null
+    private var rpcWsAuthenticationCredentialsFile: String? = null
 
     @CommandLine.Option(
         names = ["--rpc-ws-authentication-jwt-public-key-file"],
@@ -166,75 +166,75 @@ class RpcWebsocketOptions
         description = ["JWT public key file for JSON-RPC WebSocket authentication"],
         arity = "1"
     )
-    private val rpcWsAuthenticationPublicKeyFile: File? = null
+    private var rpcWsAuthenticationPublicKeyFile: File? = null
 
     @CommandLine.Option(
         names = ["--rpc-ws-ssl-enabled"],
         description = ["Enable SSL/TLS for the WebSocket RPC service"]
     )
-    private val isRpcWsSslEnabled = false
+    private var isRpcWsSslEnabled = false
 
     @CommandLine.Option(
         names = ["--rpc-ws-ssl-keystore-file"],
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = ["Path to the keystore file for the WebSocket RPC service"]
     )
-    private val rpcWsKeyStoreFile: String? = null
+    private var rpcWsKeyStoreFile: String? = null
 
     @CommandLine.Option(
         names = ["--rpc-ws-ssl-key-file"],
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = ["Path to the PEM key file for the WebSocket RPC service"]
     )
-    private val rpcWsKeyFile: String? = null
+    private var rpcWsKeyFile: String? = null
 
     @CommandLine.Option(
         names = ["--rpc-ws-ssl-cert-file"],
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = ["Path to the PEM cert file for the WebSocket RPC service"]
     )
-    private val rpcWsCertFile: String? = null
+    private var rpcWsCertFile: String? = null
 
     @CommandLine.Option(
         names = ["--rpc-ws-ssl-keystore-type"],
         paramLabel = "<TYPE>",
         description = ["Type of the WebSocket RPC keystore (JKS, PKCS12, PEM)"]
     )
-    private val rpcWsKeyStoreType: String? = null
+    private var rpcWsKeyStoreType: String? = null
 
     // For client authentication (mTLS)
     @CommandLine.Option(
         names = ["--rpc-ws-ssl-client-auth-enabled"],
         description = ["Enable client authentication for the WebSocket RPC service"]
     )
-    private val isRpcWsClientAuthEnabled = false
+    private var isRpcWsClientAuthEnabled = false
 
     @CommandLine.Option(
         names = ["--rpc-ws-ssl-truststore-file"],
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = ["Path to the truststore file for the WebSocket RPC service"]
     )
-    private val rpcWsTrustStoreFile: String? = null
+    private var rpcWsTrustStoreFile: String? = null
 
     @CommandLine.Option(
         names = ["--rpc-ws-ssl-trustcert-file"],
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = ["Path to the PEM trustcert file for the WebSocket RPC service"]
     )
-    private val rpcWsTrustCertFile: String? = null
+    private var rpcWsTrustCertFile: String? = null
 
     @CommandLine.Option(
         names = ["--rpc-ws-ssl-truststore-type"],
         paramLabel = "<TYPE>",
         description = ["Type of the truststore (JKS, PKCS12, PEM)"]
     )
-    private val rpcWsTrustStoreType: String? = null
+    private var rpcWsTrustStoreType: String? = null
 
     @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
-    private val keystorePasswordOptions: KeystorePasswordOptions? = null
+    private var keystorePasswordOptions: KeystorePasswordOptions? = null
 
     @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
-    private val truststorePasswordOptions: TruststorePasswordOptions? = null
+    private var truststorePasswordOptions: TruststorePasswordOptions? = null
 
     /**
      * Validates the WebSocket options.
@@ -418,18 +418,18 @@ class RpcWebsocketOptions
         webSocketConfiguration.setTrustCertPath(rpcWsTrustCertFile)
 
         if (keystorePasswordOptions != null) {
-            webSocketConfiguration.setKeyStorePassword(keystorePasswordOptions.rpcWsKeyStorePassword)
+            webSocketConfiguration.setKeyStorePassword(keystorePasswordOptions!!.rpcWsKeyStorePassword)
             webSocketConfiguration.setKeyStorePasswordFile(
-                keystorePasswordOptions.rpcWsKeystorePasswordFile
+                keystorePasswordOptions!!.rpcWsKeystorePasswordFile
             )
         }
 
         if (truststorePasswordOptions != null) {
             webSocketConfiguration.setTrustStorePassword(
-                truststorePasswordOptions.rpcWsTrustStorePassword
+                truststorePasswordOptions!!.rpcWsTrustStorePassword
             )
             webSocketConfiguration.setTrustStorePasswordFile(
-                truststorePasswordOptions.rpcWsTruststorePasswordFile
+                truststorePasswordOptions!!.rpcWsTruststorePasswordFile
             )
         }
 

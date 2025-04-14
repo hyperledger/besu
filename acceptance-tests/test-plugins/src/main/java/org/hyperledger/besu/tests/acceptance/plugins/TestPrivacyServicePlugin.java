@@ -43,11 +43,11 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   public void register(final ServiceManager context) {
     this.context = context;
 
-    context
+    ((PicoCLIOptions) context
         .getService(PicoCLIOptions.class)
-        .orElseThrow()
+        .orElseThrow())
         .addPicoCLIOptions("privacy-service", this);
-    pluginService = context.getService(PrivacyPluginService.class).orElseThrow();
+    pluginService = ((PrivacyPluginService) context.getService(PrivacyPluginService.class).orElseThrow());
     pluginService.setPrivacyGroupGenesisProvider(privacyGroupGenesisProvider);
 
     LOG.info("Registering Plugins with options " + this);

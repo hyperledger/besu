@@ -731,9 +731,9 @@ open class BesuCommand @VisibleForTesting protected constructor(
      * @param commandLogger instance of Logger for outputting to the CLI
      */
     init {
-        if (besuPluginContext.getService(BesuConfigurationImpl::class.java).isPresent) {
+        if (besuPluginContext.getService(BesuConfigurationImpl::class.java).isPresent()) {
             this.pluginCommonConfiguration =
-                besuPluginContext.getService(BesuConfigurationImpl::class.java).get()
+                besuPluginContext.getService(BesuConfigurationImpl::class.java).get() as BesuConfigurationImpl
         } else {
             this.pluginCommonConfiguration = BesuConfigurationImpl()
             besuPluginContext.addService<BesuConfiguration>(

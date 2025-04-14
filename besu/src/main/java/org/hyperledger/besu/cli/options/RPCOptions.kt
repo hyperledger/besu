@@ -33,7 +33,7 @@ internal constructor() {
         description = ["HTTP timeout in seconds (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    val httpTimeoutSec: Long = TimeoutOptions.defaultOptions().timeoutSeconds
+    var httpTimeoutSec: Long = TimeoutOptions.defaultOptions().timeoutSeconds
 
     /**
      * Gets WebSocket timeout sec.
@@ -47,7 +47,7 @@ internal constructor() {
         description = ["Web socket timeout in seconds (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    val wsTimeoutSec: Long = TimeoutOptions.defaultOptions().timeoutSeconds
+    var wsTimeoutSec: Long = TimeoutOptions.defaultOptions().timeoutSeconds
 
     companion object {
         /**

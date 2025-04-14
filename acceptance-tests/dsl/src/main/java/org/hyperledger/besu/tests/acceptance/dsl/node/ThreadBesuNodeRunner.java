@@ -148,7 +148,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     GlobalOpenTelemetry.resetForTest();
     final ObservableMetricsSystem metricsSystem =
-        (ObservableMetricsSystem) component.metricsSystem;
+        (ObservableMetricsSystem) component.getMetricsSystem();
     final List<EnodeURL> bootnodes =
         node.getConfiguration().getBootnodes().stream().map(EnodeURLImpl::fromURI).toList();
 
@@ -174,7 +174,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     InProcessRpcConfiguration inProcessRpcConfiguration = node.inProcessRpcConfiguration();
 
     final BesuPluginContextImpl besuPluginContext =
-        besuPluginContextMap.computeIfAbsent(node, n -> component.besuPluginContext);
+        besuPluginContextMap.computeIfAbsent(node, n -> component.getBesuPluginContext());
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());

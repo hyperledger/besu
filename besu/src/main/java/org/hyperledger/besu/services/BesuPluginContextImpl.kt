@@ -73,7 +73,7 @@ class BesuPluginContextImpl
     }
 
     private var state = Lifecycle.UNINITIALIZED
-    private val serviceRegistry: MutableMap<Class<*>, in BesuService> = HashMap()
+    private val serviceRegistry: MutableMap<Class<*>, BesuService> = HashMap()
 
     private var detectedPlugins: List<BesuPlugin> = ArrayList()
     private var requestedPlugins: List<String> = ArrayList()
@@ -99,9 +99,13 @@ class BesuPluginContextImpl
         serviceRegistry[serviceType] = service
     }
 
-    override fun <T : BesuService> getService(serviceType: Class<T>): Optional<T> {
-//        return Optional.ofNullable(serviceRegistry[serviceType])
-        return Optional.of(serviceRegistry[serviceType]!! as T)
+    override fun <T : BesuService> getService(serviceType: Class<T>): Optional<out BesuService> {
+//        return Optional.ofNullable(serviceRegistry[serviceType] as T)
+//        return Optional.of(serviceRegistry[serviceType]!! as T)
+//        val klass = serviceRegistry[serviceType]!!.javaClass
+//        return serviceRegistry[klass] as BesuService?
+//        return serviceRegistry[serviceType]
+        return Optional.of(serviceRegistry[serviceType]!!)
     }
 
     private fun detectPlugins(config: PluginConfiguration): List<BesuPlugin> {

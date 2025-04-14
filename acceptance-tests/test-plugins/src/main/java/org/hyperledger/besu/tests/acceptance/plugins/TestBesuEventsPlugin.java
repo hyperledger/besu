@@ -53,7 +53,7 @@ public class TestBesuEventsPlugin implements BesuPlugin {
     subscriptionId =
         context
             .getService(BesuEvents.class)
-            .map(events -> events.addBlockPropagatedListener(this::onBlockAnnounce));
+            .map(events -> ((BesuEvents) events).addBlockPropagatedListener(this::onBlockAnnounce));
     LOG.info("Listening with ID#" + subscriptionId);
   }
 
@@ -63,7 +63,7 @@ public class TestBesuEventsPlugin implements BesuPlugin {
         id ->
             context
                 .getService(BesuEvents.class)
-                .ifPresent(besuEvents -> besuEvents.removeBlockPropagatedListener(id)));
+                .ifPresent(besuEvents -> ((BesuEvents) besuEvents).removeBlockPropagatedListener(id)));
     LOG.info("No longer listening with ID#" + subscriptionId);
   }
 

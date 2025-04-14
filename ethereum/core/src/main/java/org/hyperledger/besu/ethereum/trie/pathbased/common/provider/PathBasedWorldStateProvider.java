@@ -221,7 +221,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
         >= trieLogManager.getMaxLayersToLoad()) {
       LOG.warn(
           "Exceeded the limit of historical blocks that can be loaded ({}). If you need to make older historical queries, configure your `--bonsai-historical-block-limit`.",
-          trieLogManager.getMaxLayersToLoad());
+              trieLogManager.getMaxLayersToLoad());
       return Optional.empty();
     }
     return cachedWorldStorageManager

@@ -56,7 +56,7 @@ class JsonRpcHttpOptions
         names = ["--rpc-http-enabled"],
         description = ["Set to start the JSON-RPC HTTP service (default: \${DEFAULT-VALUE})"]
     )
-    val isRpcHttpEnabled: Boolean = false
+    var isRpcHttpEnabled: Boolean = false
 
     /**
      * Returns the host for RPC over HTTP.
@@ -70,7 +70,7 @@ class JsonRpcHttpOptions
         description = ["Host for JSON-RPC HTTP to listen on (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    val rpcHttpHost: String = JsonRpcConfiguration.DEFAULT_JSON_RPC_HOST
+    var rpcHttpHost: String = JsonRpcConfiguration.DEFAULT_JSON_RPC_HOST
 
     /**
      * Returns the port for RPC over HTTP.
@@ -84,21 +84,21 @@ class JsonRpcHttpOptions
         description = ["Port for JSON-RPC HTTP to listen on (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    val rpcHttpPort: Int = JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT
+    var rpcHttpPort: Int = JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT
 
     @CommandLine.Option(
         names = ["--rpc-http-max-active-connections"],
         description = ["Maximum number of HTTP connections allowed for JSON-RPC (default: \${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected."],
         arity = "1"
     )
-    private val rpcHttpMaxConnections = DefaultCommandValues.DEFAULT_HTTP_MAX_CONNECTIONS
+    private var rpcHttpMaxConnections = DefaultCommandValues.DEFAULT_HTTP_MAX_CONNECTIONS
 
     // A list of origins URLs that are accepted by the JsonRpcHttpServer (CORS)
     @CommandLine.Option(
         names = ["--rpc-http-cors-origins"],
         description = ["Comma separated origin domain URLs for CORS validation (default: none)"]
     )
-    private val rpcHttpCorsAllowedOrigins = CorsAllowedOriginsProperty()
+    private var rpcHttpCorsAllowedOrigins = CorsAllowedOriginsProperty()
 
     /**
      * Returns the list of APIs enabled for RPC over HTTP.
@@ -113,7 +113,7 @@ class JsonRpcHttpOptions
         arity = "1..*",
         description = ["Comma separated list of APIs to enable on JSON-RPC HTTP service (default: \${DEFAULT-VALUE})"]
     )
-    val rpcHttpApis: List<String> = RpcApis.DEFAULT_RPC_APIS
+    var rpcHttpApis: List<String> = RpcApis.DEFAULT_RPC_APIS
 
     @CommandLine.Option(
         names = ["--rpc-http-api-method-no-auth", "--rpc-http-api-methods-no-auth"],
@@ -122,13 +122,13 @@ class JsonRpcHttpOptions
         arity = "1..*",
         description = ["Comma separated list of API methods to exclude from RPC authentication services, RPC HTTP authentication must be enabled"]
     )
-    private val rpcHttpApiMethodsNoAuth: List<String> = ArrayList()
+    private var rpcHttpApiMethodsNoAuth: List<String> = ArrayList()
 
     @CommandLine.Option(
         names = ["--rpc-http-authentication-enabled"],
         description = ["Require authentication for the JSON-RPC HTTP service (default: \${DEFAULT-VALUE})"]
     )
-    private val isRpcHttpAuthenticationEnabled = false
+    private var isRpcHttpAuthenticationEnabled = false
 
     // PicoCLI requires non-final Strings.
     @CommandLine.Option(
@@ -137,7 +137,7 @@ class JsonRpcHttpOptions
         description = ["Storage file for JSON-RPC HTTP authentication credentials (default: \${DEFAULT-VALUE})"],
         arity = "1"
     )
-    private val rpcHttpAuthenticationCredentialsFile: String? = null
+    private var rpcHttpAuthenticationCredentialsFile: String? = null
 
     @CommandLine.Option(
         names = ["--rpc-http-authentication-jwt-public-key-file"],
@@ -145,7 +145,7 @@ class JsonRpcHttpOptions
         description = ["JWT public key file for JSON-RPC HTTP authentication"],
         arity = "1"
     )
-    private val rpcHttpAuthenticationPublicKeyFile: File? = null
+    private var rpcHttpAuthenticationPublicKeyFile: File? = null
 
     @CommandLine.Option(
         names = ["--rpc-http-authentication-jwt-algorithm"],
@@ -153,46 +153,46 @@ class JsonRpcHttpOptions
                 + " (default: \${DEFAULT-VALUE})")],
         arity = "1"
     )
-    private val rpcHttpAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM
+    private var rpcHttpAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM
 
     @CommandLine.Option(
         names = ["--rpc-http-tls-enabled"],
         description = ["Enable TLS for the JSON-RPC HTTP service (default: \${DEFAULT-VALUE})"]
     )
-    private val isRpcHttpTlsEnabled = false
+    private var isRpcHttpTlsEnabled = false
 
     @CommandLine.Option(
         names = ["--rpc-http-tls-keystore-file"],
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = ["Keystore (PKCS#12) containing key/certificate for the JSON-RPC HTTP service. Required if TLS is enabled."]
     )
-    private val rpcHttpTlsKeyStoreFile: Path? = null
+    private var rpcHttpTlsKeyStoreFile: Path? = null
 
     @CommandLine.Option(
         names = ["--rpc-http-tls-keystore-password-file"],
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = ["File containing password to unlock keystore for the JSON-RPC HTTP service. Required if TLS is enabled."]
     )
-    private val rpcHttpTlsKeyStorePasswordFile: Path? = null
+    private var rpcHttpTlsKeyStorePasswordFile: Path? = null
 
     @CommandLine.Option(
         names = ["--rpc-http-tls-client-auth-enabled"],
         description = ["Enable TLS client authentication for the JSON-RPC HTTP service (default: \${DEFAULT-VALUE})"]
     )
-    private val isRpcHttpTlsClientAuthEnabled = false
+    private var isRpcHttpTlsClientAuthEnabled = false
 
     @CommandLine.Option(
         names = ["--rpc-http-tls-known-clients-file"],
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = ["Path to file containing clients certificate common name and fingerprint for client authentication"]
     )
-    private val rpcHttpTlsKnownClientsFile: Path? = null
+    private var rpcHttpTlsKnownClientsFile: Path? = null
 
     @CommandLine.Option(
         names = ["--rpc-http-tls-ca-clients-enabled"],
         description = ["Enable to accept clients certificate signed by a valid CA for client authentication (default: \${DEFAULT-VALUE})"]
     )
-    private val isRpcHttpTlsCAClientsEnabled = false
+    private var isRpcHttpTlsCAClientsEnabled = false
 
     @CommandLine.Option(
         names = ["--rpc-http-tls-truststore-file"],
@@ -200,7 +200,7 @@ class JsonRpcHttpOptions
         description = ["Path to the truststore file for the JSON-RPC HTTP service."],
         arity = "1"
     )
-    private val rpcHttpTlsTruststoreFile: Path? = null
+    private var rpcHttpTlsTruststoreFile: Path? = null
 
     @CommandLine.Option(
         names = ["--rpc-http-tls-truststore-password-file"],
@@ -208,7 +208,7 @@ class JsonRpcHttpOptions
         description = ["Path to the file containing the password for the truststore."],
         arity = "1"
     )
-    private val rpcHttpTlsTruststorePasswordFile: Path? = null
+    private var rpcHttpTlsTruststorePasswordFile: Path? = null
 
     @CommandLine.Option(
         names = ["--rpc-http-tls-protocol", "--rpc-http-tls-protocols"],
@@ -216,7 +216,7 @@ class JsonRpcHttpOptions
         split = ",",
         arity = "1..*"
     )
-    private val rpcHttpTlsProtocols: MutableList<String> = ArrayList(DEFAULT_TLS_PROTOCOLS)
+    private var rpcHttpTlsProtocols: MutableList<String> = ArrayList(DEFAULT_TLS_PROTOCOLS)
 
     @CommandLine.Option(
         names = ["--rpc-http-tls-cipher-suite", "--rpc-http-tls-cipher-suites"],
@@ -224,27 +224,27 @@ class JsonRpcHttpOptions
         split = ",",
         arity = "1..*"
     )
-    private val rpcHttpTlsCipherSuites: MutableList<String> = ArrayList()
+    private var rpcHttpTlsCipherSuites: MutableList<String> = ArrayList()
 
     @CommandLine.Option(
         names = ["--rpc-http-max-batch-size"],
         paramLabel = DefaultCommandValues.MANDATORY_INTEGER_FORMAT_HELP,
         description = ["Specifies the maximum number of requests in a single RPC batch request via RPC. -1 specifies no limit  (default: \${DEFAULT-VALUE})"]
     )
-    private val rpcHttpMaxBatchSize = DefaultCommandValues.DEFAULT_HTTP_MAX_BATCH_SIZE
+    private var rpcHttpMaxBatchSize = DefaultCommandValues.DEFAULT_HTTP_MAX_BATCH_SIZE
 
     @CommandLine.Option(
         names = ["--rpc-http-max-request-content-length"],
         paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP,
         description = ["Specifies the maximum request content length. (default: \${DEFAULT-VALUE})"]
     )
-    private val rpcHttpMaxRequestContentLength = DefaultCommandValues.DEFAULT_MAX_REQUEST_CONTENT_LENGTH
+    private var rpcHttpMaxRequestContentLength = DefaultCommandValues.DEFAULT_MAX_REQUEST_CONTENT_LENGTH
 
     @CommandLine.Option(
         names = ["--json-pretty-print-enabled"],
         description = ["Enable JSON pretty print format (default: \${DEFAULT-VALUE})"]
     )
-    private val prettyJsonEnabled = JsonRpcConfiguration.DEFAULT_PRETTY_JSON_ENABLED
+    private var prettyJsonEnabled = JsonRpcConfiguration.DEFAULT_PRETTY_JSON_ENABLED
 
     /**
      * Validates the Rpc Http options.

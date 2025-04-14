@@ -30,7 +30,7 @@ private constructor() {
         description = ["Enable early round change upon receiving f+1 valid future Round Change messages from different validators (experimental)"],
         hidden = true
     )
-    val isEarlyRoundChangeEnabled: Boolean = false
+    var isEarlyRoundChangeEnabled: Boolean = false
 
     companion object {
         /**

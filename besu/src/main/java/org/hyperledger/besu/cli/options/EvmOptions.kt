@@ -30,7 +30,7 @@ internal constructor() : CLIOptions<EvmConfiguration?> {
         hidden = true,
         arity = "1"
     )
-    private val jumpDestCacheWeightKilobytes = 32000L // 10k contracts, (25k max contract size / 8 bit) + 32byte hash
+    private var jumpDestCacheWeightKilobytes = 32000L // 10k contracts, (25k max contract size / 8 bit) + 32byte hash
 
     @CommandLine.Option(
         names = [WORLDSTATE_UPDATE_MODE],
@@ -39,7 +39,7 @@ internal constructor() : CLIOptions<EvmConfiguration?> {
         hidden = true,
         arity = "1"
     )
-    private val worldstateUpdateMode = WorldUpdaterMode
+    private var worldstateUpdateMode = WorldUpdaterMode
         .STACKED // Stacked Updater.  Years of battle tested correctness.
 
     override fun toDomainObject(): EvmConfiguration {

@@ -122,7 +122,7 @@ class MiningOptions private constructor() : CLIOptions<MiningConfiguration?> {
         MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME
 
     @CommandLine.ArgGroup(validate = false)
-    private val unstableOptions = Unstable()
+    private var unstableOptions = Unstable()
 
     internal class Unstable {
         @CommandLine.Option(

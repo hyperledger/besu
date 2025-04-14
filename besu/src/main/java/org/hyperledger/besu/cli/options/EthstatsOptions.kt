@@ -32,7 +32,7 @@ class EthstatsOptions private constructor() : CLIOptions<EthStatsConnectOptions?
         description = ["Reporting URL of a ethstats server. Scheme and port can be omitted."],
         arity = "1"
     )
-    val ethstatsUrl: String = ""
+    var ethstatsUrl: String = ""
 
     /**
      * Gets ethstats contact.
@@ -45,7 +45,7 @@ class EthstatsOptions private constructor() : CLIOptions<EthStatsConnectOptions?
         description = ["Contact address to send to ethstats server"],
         arity = "1"
     )
-    val ethstatsContact: String = ""
+    var ethstatsContact: String = ""
 
     /**
      * Returns path to root CA cert file.
@@ -58,7 +58,7 @@ class EthstatsOptions private constructor() : CLIOptions<EthStatsConnectOptions?
         paramLabel = "<FILE>",
         description = ["Specifies the path to the root CA (Certificate Authority) certificate file that has signed ethstats server certificate. This option is optional."]
     )
-    val ethstatsCaCert: Path? = null
+    var ethstatsCaCert: Path? = null
 
     override fun toDomainObject(): EthStatsConnectOptions {
         return EthStatsConnectOptions.fromParams(ethstatsUrl, ethstatsContact, ethstatsCaCert)

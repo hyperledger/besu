@@ -32,7 +32,7 @@ internal constructor() {
         hidden = true,
         description = ["Set to start the JSON-RPC IPC service (default: \${DEFAULT-VALUE})"]
     )
-    val isEnabled: Boolean = false
+    var isEnabled: Boolean = false
 
     /**
      * Gets ipc path.
@@ -45,7 +45,7 @@ internal constructor() {
                 + DEFAULT_IPC_FILE
                 + "\" in the Besu data directory)")]
     )
-    val ipcPath: Path? = null
+    var ipcPath: Path? = null
 
     /**
      * Gets rpc ipc apis.
@@ -61,7 +61,7 @@ internal constructor() {
         arity = "1..*",
         description = ["Comma separated list of APIs to enable on JSON-RPC IPC service (default: \${DEFAULT-VALUE})"]
     )
-    val rpcIpcApis: List<String> = RpcApis.DEFAULT_RPC_APIS
+    var rpcIpcApis: List<String> = RpcApis.DEFAULT_RPC_APIS
 
     companion object {
         private const val DEFAULT_IPC_FILE = "besu.ipc"
