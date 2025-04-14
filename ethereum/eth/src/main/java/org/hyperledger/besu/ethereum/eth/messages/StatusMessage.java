@@ -358,7 +358,7 @@ public final class StatusMessage extends AbstractMessageData {
 
     @Override
     public String toString() {
-      return "{" + "earliestBlock=" + earliestBlock + '}';
+      return "{" + "earliestBlock=" + earliestBlock + ", latestBlock=" + latestBlock + '}';
     }
   }
 }

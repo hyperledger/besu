@@ -240,8 +240,8 @@ class EthServer {
       encodedReceipts.startList();
       TransactionReceiptEncodingConfiguration encodingConfiguration =
           EthProtocol.isEth69Compatible(cap)
-              ? TransactionReceiptEncodingConfiguration.NETWORK_FLAT_RECEIPT
-              : TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT;
+              ? TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION
+              : TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION;
       maybeReceipts
           .get()
           .forEach(

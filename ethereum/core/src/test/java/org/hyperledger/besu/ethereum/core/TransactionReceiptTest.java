@@ -38,7 +38,8 @@ public class TransactionReceiptTest {
                         TransactionReceiptEncoder.writeTo(
                             receipt,
                             output,
-                            TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT))),
+                            TransactionReceiptEncodingConfiguration
+                                .DEFAULT_NETWORK_CONFIGURATION))),
             false);
     assertThat(copy).isEqualTo(receipt);
   }
@@ -132,7 +133,7 @@ public class TransactionReceiptTest {
   @Test
   public void toFromRlpEth69Receipt() {
     final TransactionReceiptEncodingConfiguration encodingConfiguration =
-        TransactionReceiptEncodingConfiguration.NETWORK_FLAT_RECEIPT;
+        TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION;
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));

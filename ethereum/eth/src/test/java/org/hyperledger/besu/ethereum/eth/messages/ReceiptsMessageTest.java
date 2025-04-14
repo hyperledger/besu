@@ -30,12 +30,12 @@ import org.junit.jupiter.api.Test;
 public final class ReceiptsMessageTest {
   @Test
   public void testReceiptsMessageEth68() {
-    roundTripTest(TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
+    roundTripTest(TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
   }
 
   @Test
   public void testReceiptsMessageEth69() {
-    roundTripTest(TransactionReceiptEncodingConfiguration.NETWORK_FLAT_RECEIPT);
+    roundTripTest(TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION);
   }
 
   public void roundTripTest(final TransactionReceiptEncodingConfiguration encodingConfiguration) {

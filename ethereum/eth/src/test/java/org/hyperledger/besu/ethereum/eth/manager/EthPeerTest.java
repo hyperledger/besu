@@ -92,7 +92,7 @@ public class EthPeerTest {
     final MessageData targetMessage =
         ReceiptsMessage.create(
             singletonList(gen.receipts(gen.block())),
-            TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
     final MessageData otherMessage = BlockHeadersMessage.create(asList(gen.header(), gen.header()));
 
     messageStream(getStream, targetMessage, otherMessage);
@@ -238,7 +238,7 @@ public class EthPeerTest {
             peer,
             ReceiptsMessage.create(
                     singletonList(gen.receipts(gen.block())),
-                    TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT)
+                    TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION)
                 .wrapMessageData(BigInteger.ONE));
 
     // Set up stream for headers

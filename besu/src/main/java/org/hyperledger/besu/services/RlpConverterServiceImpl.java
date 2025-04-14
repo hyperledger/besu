@@ -82,6 +82,6 @@ public class RlpConverterServiceImpl implements RlpConverterService {
             TransactionReceiptEncoder.writeTo(
                 (org.hyperledger.besu.ethereum.core.TransactionReceipt) receipt,
                 rlpOutput,
-                TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT));
+                TransactionReceiptEncodingConfiguration.DEFAULT));
   }
 }

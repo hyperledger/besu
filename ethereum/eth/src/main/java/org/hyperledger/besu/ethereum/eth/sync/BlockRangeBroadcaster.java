@@ -76,11 +76,13 @@ public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
       message.getPeer().registerBlockRange(blockHash, latestBlockNumber, earliestBlockNumber);
     } catch (final RLPException e) {
       LOG.atDebug()
-        .setMessage("Unable to parse BlockRangeUpdateMessage from peer {} {}")
-        .addArgument(message.getPeer()::getLoggableId)
-        .addArgument(e)
-        .log();
-      message.getPeer().disconnect(DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED_UNPARSABLE_STATUS);
+          .setMessage("Unable to parse BlockRangeUpdateMessage from peer {} {}")
+          .addArgument(message.getPeer()::getLoggableId)
+          .addArgument(e)
+          .log();
+      message
+          .getPeer()
+          .disconnect(DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED_UNPARSABLE_STATUS);
     }
   }
 

@@ -369,7 +369,8 @@ public class RespondingEthPeer {
               originalReceipts.subList(0, (int) (originalReceipts.size() * portion));
           partialResponse =
               ReceiptsMessage.create(
-                  partialReceipts, TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
+                  partialReceipts,
+                  TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
           break;
         case EthProtocolMessages.GET_NODE_DATA:
           final NodeDataMessage nodeDataMessage = NodeDataMessage.readFrom(originalResponse);
@@ -405,7 +406,8 @@ public class RespondingEthPeer {
         case EthProtocolMessages.GET_RECEIPTS:
           response =
               ReceiptsMessage.create(
-                  Collections.emptyList(), TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
+                  Collections.emptyList(),
+                  TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
           break;
         case EthProtocolMessages.GET_NODE_DATA:
           response = NodeDataMessage.create(Collections.emptyList());

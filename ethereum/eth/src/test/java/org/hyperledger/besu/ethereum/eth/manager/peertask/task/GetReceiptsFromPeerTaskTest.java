@@ -127,7 +127,7 @@ public class GetReceiptsFromPeerTaskTest {
                 List.of(receiptForBlock3),
                 List.of(
                     new TransactionReceipt(1, 101112, Collections.emptyList(), Optional.empty()))),
-            TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
 
     Assertions.assertThrows(
         InvalidPeerTaskResponseException.class, () -> task.processResponse(receiptsMessage));
@@ -164,7 +164,7 @@ public class GetReceiptsFromPeerTaskTest {
         ReceiptsMessage.create(
             List.of(
                 List.of(receiptForBlock1), List.of(receiptForBlock2), List.of(receiptForBlock3)),
-            TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
 
     Map<BlockHeader, List<TransactionReceipt>> resultMap = task.processResponse(receiptsMessage);
 
@@ -185,7 +185,8 @@ public class GetReceiptsFromPeerTaskTest {
 
     ReceiptsMessage receiptsMessage =
         ReceiptsMessage.create(
-            Collections.emptyList(), TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
+            Collections.emptyList(),
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
 
     Map<BlockHeader, List<TransactionReceipt>> resultMap = task.processResponse(receiptsMessage);
 

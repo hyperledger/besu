@@ -570,9 +570,7 @@ public class TransactionAdapter extends AdapterBase {
             receipt -> {
               final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
               TransactionReceiptEncoder.writeTo(
-                  receipt.getReceipt(),
-                  rlpOutput,
-                  TransactionReceiptEncodingConfiguration.NETWORK_DEFAULT);
+                  receipt.getReceipt(), rlpOutput, TransactionReceiptEncodingConfiguration.DEFAULT);
               return rlpOutput.encoded();
             });
   }

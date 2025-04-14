@@ -26,11 +26,12 @@ public class TransactionReceiptEncoder {
       final RLPOutput rlpOutput,
       final TransactionReceiptEncodingConfiguration options) {
 
-    // Network Eth69
-    if (options.isWithFlatReceipt()) {
-      writeFlatReceipt(receipt, rlpOutput, options);
+    // Check if the encoding options require Eth69 receipt format
+    if (options.isWithEth69Receipt()) {
+      writeEth69Receipt(receipt, rlpOutput, options);
       return;
     }
+
     if (shouldEncodeOpaqueBytes(receipt, options)) {
       rlpOutput.writeBytes(RLP.encode(out -> write(receipt, out, options)));
       return;
@@ -113,7 +114,7 @@ public class TransactionReceiptEncoder {
    * @param output the RLP output
    * @param options the encoding options
    */
-  private static void writeFlatReceipt(
+  private static void writeEth69Receipt(
       final TransactionReceipt receipt,
       final RLPOutput output,
       final TransactionReceiptEncodingConfiguration options) {
