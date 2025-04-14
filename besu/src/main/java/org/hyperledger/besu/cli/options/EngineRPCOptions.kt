@@ -50,7 +50,7 @@ class EngineRPCOptions
         names = ["--engine-jwt-disabled"],
         description = ["Disable authentication for Engine APIs (default: \${DEFAULT-VALUE})"]
     )
-    private val isEngineAuthDisabled = false
+    private val isEngineAuthDisabled = true
 
     @CommandLine.Option(
         names = ["--engine-host-allowlist"],
@@ -64,7 +64,7 @@ class EngineRPCOptions
         return EngineRPCConfiguration(
             overrideEngineRpcEnabled,
             engineRpcPort,
-            engineJwtKeyFile!!,
+            engineJwtKeyFile,
             isEngineAuthDisabled,
             engineHostsAllowlist
         )

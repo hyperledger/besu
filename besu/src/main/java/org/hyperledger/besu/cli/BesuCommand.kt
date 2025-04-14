@@ -1875,7 +1875,7 @@ open class BesuCommand @VisibleForTesting protected constructor(
             if (Objects.nonNull(engineRPCConfig.engineJwtKeyFile)
                 && Files.exists(engineRPCConfig.engineJwtKeyFile)
             ) {
-                engineConfig.authenticationPublicKeyFile = engineRPCConfig.engineJwtKeyFile.toFile()
+                engineConfig.authenticationPublicKeyFile = engineRPCConfig.engineJwtKeyFile?.toFile()
             } else {
                 logger.warn(
                     "Engine API authentication enabled without key file. Expect ephemeral jwt.hex file in datadir"
@@ -2861,7 +2861,7 @@ open class BesuCommand @VisibleForTesting protected constructor(
             names = ["--color-enabled"],
             description = ["Force color output to be enabled/disabled (default: colorized only if printing to console)"]
         )
-        val colorEnabled: Optional<Boolean>? = null
+        val colorEnabled: Optional<Boolean>? = Optional.of(true)
 
         @Throws(IOException::class)
         private fun isGroupMember(userName: String, group: GroupPrincipal): Boolean {

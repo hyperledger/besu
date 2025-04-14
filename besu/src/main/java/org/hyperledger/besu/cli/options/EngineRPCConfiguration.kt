@@ -31,7 +31,7 @@ import java.nio.file.Path
 data class EngineRPCConfiguration(
     @JvmField val overrideEngineRpcEnabled: Boolean,
     @JvmField val engineRpcPort: Int,
-    @JvmField val engineJwtKeyFile: Path,
+    @JvmField val engineJwtKeyFile: Path?,
     @JvmField val isEngineAuthDisabled: Boolean,
     @JvmField val engineHostsAllowlist: JsonRPCAllowlistHostsProperty
 )
