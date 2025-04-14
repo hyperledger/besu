@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockRangeUpdateMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import org.slf4j.Logger;
@@ -52,7 +53,7 @@ public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
         .ifPresent(
             header -> {
               if (header.getNumber() % BLOCK_RANGE_UPDATE_INTERVAL == 0) {
-                propagate(0L, header.getNumber(), header.getHash());
+                broadcastBlockRange(0L, header.getNumber(), header.getHash());
               }
             });
   }
@@ -69,16 +70,21 @@ public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
           earliestBlockNumber,
           latestBlockNumber,
           blockHash,
-          message.getPeer().getId());
+          message.getPeer().getLoggableId());
 
       message.getPeer().registerKnownBlock(blockHash);
       message.getPeer().registerBlockRange(blockHash, latestBlockNumber, earliestBlockNumber);
     } catch (final RLPException e) {
-      LOG.error("Failed to decode BlockRangeUpdateMessage", e);
+      LOG.atDebug()
+        .setMessage("Unable to parse BlockRangeUpdateMessage from peer {} {}")
+        .addArgument(message.getPeer()::getLoggableId)
+        .addArgument(e)
+        .log();
+      message.getPeer().disconnect(DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED_UNPARSABLE_STATUS);
     }
   }
 
-  private void propagate(
+  private void broadcastBlockRange(
       final long earliestBlockNumber, final long latestBlockNumber, final Hash blockHash) {
     final BlockRangeUpdateMessage blockRangeUpdateMessage =
         BlockRangeUpdateMessage.create(earliestBlockNumber, latestBlockNumber, blockHash);
@@ -96,7 +102,7 @@ public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
               try {
                 ethPeer.send(blockRangeUpdateMessage);
               } catch (final PeerConnection.PeerNotConnected e) {
-                LOG.trace("Failed to broadcast new block to peer", e);
+                LOG.trace("Failed to broadcast blockRange to peer", e);
               }
             });
   }
