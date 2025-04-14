@@ -86,6 +86,6 @@ class GenerateLogBloomCache
     }
 
     private fun createBesuController(): BesuController {
-        return parentCommand!!.parentCommand!!.buildController()
+        return parentCommand!!.parentCommand!!.buildController()!!
     }
 }

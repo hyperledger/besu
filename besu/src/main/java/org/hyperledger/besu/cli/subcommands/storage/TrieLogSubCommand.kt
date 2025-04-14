@@ -301,7 +301,7 @@ internal constructor() : Runnable {
         private val parentCommand: StorageSubCommand? = null
 
         private fun createBesuController(): BesuController? {
-            val config = parentCommand!!.besuCommand!!.dataStorageConfiguration
+            val config = parentCommand!!.besuCommand!!.getDataStorageConfiguration()
             // disable limit trie logs to avoid preloading during subcommand execution
             return parentCommand
                 .besuCommand!!
@@ -310,7 +310,7 @@ internal constructor() : Runnable {
                     ImmutableDataStorageConfiguration.copyOf(config)
                         .withPathBasedExtraStorageConfiguration(
                             ImmutablePathBasedExtraStorageConfiguration.copyOf(
-                                config.pathBasedExtraStorageConfiguration
+                                config!!.pathBasedExtraStorageConfiguration
                             )
                                 .withLimitTrieLogsEnabled(false)
                         )

@@ -18,7 +18,6 @@ import com.google.common.annotations.VisibleForTesting
 import com.google.common.io.Files
 import picocli.CommandLine
 import java.io.File
-import java.io.FileInputStream
 import java.io.InputStream
 import java.util.*
 
@@ -30,7 +29,7 @@ class ConfigDefaultValueProviderStrategy
  *
  * @param resultHandler the result handler
  * @param environment the environment variables map
- */(private val resultHandler: CommandLine.IExecutionStrategy, private val environment: Map<String?, String?>) :
+ */(private val resultHandler: CommandLine.IExecutionStrategy, private val environment: Map<String, String>) :
     CommandLine.IExecutionStrategy {
     @Throws(CommandLine.ExecutionException::class, CommandLine.ParameterException::class)
     override fun execute(parseResult: CommandLine.ParseResult): Int {

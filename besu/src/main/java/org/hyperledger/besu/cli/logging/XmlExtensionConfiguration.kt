@@ -86,8 +86,8 @@ class XmlExtensionConfiguration
         val patternLayout =
             PatternLayout.newBuilder()
                 .withConfiguration(this)
-                .withDisableAnsi(!BesuCommand.getColorEnabled().orElse(!noColorSet()))
-                .withNoConsoleNoAnsi(!BesuCommand.getColorEnabled().orElse(false))
+                .withDisableAnsi(!BesuCommand.colorEnabled!!.orElse(!noColorSet()))
+                .withNoConsoleNoAnsi(!BesuCommand.colorEnabled.orElse(false))
                 .withPattern(
                     java.lang.String.join(
                         SEP,

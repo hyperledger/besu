@@ -76,7 +76,7 @@ class ConfigFileFinder
      * configuration file was not specified in the environment variable
      */
     override fun getFromEnvironment(
-        environment: Map<String?, String?>?, commandLine: CommandLine?
+        environment: Map<String, String>, commandLine: CommandLine?
     ): Optional<InputStream> {
         val toml = File(environment!![Companion.configEnvName]!!)
         if (!toml.exists()) {

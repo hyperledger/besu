@@ -83,7 +83,7 @@ class StorageSubCommand
         }
 
         private fun createBesuController(): BesuController {
-            return parentCommand!!.besuCommand!!.buildController()
+            return parentCommand!!.besuCommand!!.buildController()!!
         }
 
         private fun revert(storageProvider: StorageProvider) {

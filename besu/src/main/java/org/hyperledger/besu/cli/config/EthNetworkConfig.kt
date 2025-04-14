@@ -97,8 +97,8 @@ data class EthNetworkConfig(
          * @param dnsDiscoveryUrl the dns discovery url
          * @return this builder
          */
-        fun setDnsDiscoveryUrl(dnsDiscoveryUrl: String): Builder {
-            this.dnsDiscoveryUrl = dnsDiscoveryUrl
+        fun setDnsDiscoveryUrl(dnsDiscoveryUrl: String?): Builder {
+            this.dnsDiscoveryUrl = dnsDiscoveryUrl!!
             return this
         }
 

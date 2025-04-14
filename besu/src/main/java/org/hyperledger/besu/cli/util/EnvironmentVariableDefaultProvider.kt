@@ -24,7 +24,7 @@ class EnvironmentVariableDefaultProvider
  * Instantiates a new Environment variable default provider.
  *
  * @param environment the environment
- */(private val environment: Map<String?, String?>) : CommandLine.IDefaultValueProvider {
+ */(private val environment: Map<String, String>) : CommandLine.IDefaultValueProvider {
     override fun defaultValue(argSpec: CommandLine.Model.ArgSpec): String? {
         if (argSpec.isPositional) {
             return null // skip default for positional params

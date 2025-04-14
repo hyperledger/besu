@@ -71,11 +71,11 @@ class PrunePreMergeBlockDataSubCommand
             network,
             dataPath
         )
-        val mergeBlockNumber = getMergeBlockNumber(network)
+        val mergeBlockNumber = getMergeBlockNumber(network!!)
 
         storageSubCommand.besuCommand!!.buildController().use { besuController ->
             val blockchainStorage =
-                besuController.storageProvider.createBlockchainStorage(
+                besuController!!.storageProvider.createBlockchainStorage(
                     besuController.protocolSchedule,
                     besuController.storageProvider.createVariablesStorage(),
                     besuController.dataStorageConfiguration

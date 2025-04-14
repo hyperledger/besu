@@ -63,7 +63,7 @@ public class MetricsOptionsTest
 
   @Override
   protected MetricsOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
-    return besuCommand.getMetricsOptions();
+    return besuCommand.metricsOptions;
   }
 
   @Override

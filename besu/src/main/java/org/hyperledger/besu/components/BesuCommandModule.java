@@ -89,6 +89,6 @@ public class BesuCommandModule {
   @Provides
   @Singleton
   BesuPluginContextImpl provideBesuPluginContextImpl(final BesuCommand provideFrom) {
-    return provideFrom.getBesuPluginContext();
+    return provideFrom.besuPluginContext;
   }
 }

@@ -58,7 +58,7 @@ class ProfileFinder
     }
 
     override fun getFromEnvironment(
-        environment: Map<String?, String?>?, commandLine: CommandLine?
+        environment: Map<String, String>, commandLine: CommandLine?
     ): Optional<InputStream> {
         return getProfile(environment!![Companion.configEnvName], commandLine!!)
     }

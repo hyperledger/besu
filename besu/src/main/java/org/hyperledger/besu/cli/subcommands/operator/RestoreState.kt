@@ -292,7 +292,7 @@ internal constructor() : Runnable {
     }
 
     private fun createBesuController(): BesuController {
-        return parentCommand!!.parentCommand!!.buildController()
+        return parentCommand!!.parentCommand!!.buildController()!!
     }
 
     companion object {
