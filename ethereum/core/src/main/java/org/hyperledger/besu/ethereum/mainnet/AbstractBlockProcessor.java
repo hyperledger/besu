@@ -108,7 +108,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               // if block import tracer provider is not specified by plugin, default to no tracing
               .orElse(
                   (__) -> {
-                    LOG.info("Block Import uses NO_TRACING");
+                    LOG.trace("Block Import uses NO_TRACING");
                     return BlockAwareOperationTracer.NO_TRACING;
                   });
     }
@@ -160,7 +160,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final BlockAwareOperationTracer blockTracer =
         getBlockImportTracer(protocolContext, blockHeader);
 
-    LOG.info("traceStartBlock for {}", blockHeader.getNumber());
+    LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
     blockTracer.traceStartBlock(blockHeader, blockHeader.getCoinbase());
 
     final BlockProcessingContext blockProcessingContext =
@@ -307,7 +307,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
 
-    LOG.info("traceEndBlock for {}", blockHeader.getNumber());
+    LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
     blockTracer.traceEndBlock(blockHeader, blockBody);
 
     try {
