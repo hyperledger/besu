@@ -354,7 +354,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.allowedSubnets(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.poaDiscoveryRetryBootnodes(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
-    when(mockBesuComponent.getMetricsSystem()).thenReturn(new NoOpMetricsSystem());
+    when(mockBesuComponent.metricsSystem).thenReturn(new NoOpMetricsSystem());
 
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 

@@ -885,7 +885,7 @@ open class BesuCommand @VisibleForTesting protected constructor(
             logger.info("Starting Besu")
 
             // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
-            vertx = createVertx(createVertxOptions(besuComponent!!.metricsSystem))
+            vertx = createVertx(createVertxOptions(besuComponent!!.metricsSystem!!))
 
             validateOptions()
 
@@ -1341,7 +1341,7 @@ open class BesuCommand @VisibleForTesting protected constructor(
 
     private fun setReleaseMetrics() {
         besuComponent!!
-            .getMetricsSystem()
+            .metricsSystem!!
             .createLabelledSuppliedGauge(
                 StandardMetricCategory.PROCESS, "release", "Release information", "version"
             )
@@ -2319,7 +2319,7 @@ open class BesuCommand @VisibleForTesting protected constructor(
                 .natMethodFallbackEnabled(unstableNatOptions.natMethodFallbackEnabled)
                 .discoveryEnabled(peerDiscoveryEnabled)
                 .ethNetworkConfig(ethNetworkConfig)
-                .permissioningConfiguration(permissioningConfiguration)
+                .permissioningConfiguration(permissioningConfiguration!!)
                 .p2pAdvertisedHost(p2pAdvertisedHost)
                 .p2pListenInterface(p2pListenInterface)
                 .p2pListenPort(p2pListenPort)
@@ -2337,7 +2337,7 @@ open class BesuCommand @VisibleForTesting protected constructor(
                 .metricsSystem(besuComponent!!.metricsSystem as ObservableMetricsSystem)
                 .permissioningService(permissioningService)
                 .metricsConfiguration(metricsConfiguration)
-                .staticNodes(staticNodes)
+                .staticNodes(staticNodes!!)
                 .identityString(identityString)
                 .besuPluginContext(besuPluginContext)
                 .autoLogBloomCaching(autoLogBloomCachingEnabled)
@@ -2521,7 +2521,7 @@ open class BesuCommand @VisibleForTesting protected constructor(
          *
          * @return Instance of MetricsSystem
          */
-        get() = besuComponent!!.metricsSystem
+        get() = besuComponent!!.metricsSystem!!
 
     @Throws(IOException::class)
     private fun loadStaticNodes(): Set<EnodeURL> {
