@@ -498,19 +498,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   private StatusMessage.BlockRange createBlockRange() {
-    return new StatusMessage.BlockRange(
-        blockchain
-            .getEarliest()
-            .map(
-                hash ->
-                    blockchain
-                        .getBlockHeader(hash)
-                        .orElseThrow(
-                            () ->
-                                new IllegalStateException(
-                                    "Unable to get earliest block header from blockchain."))
-                        .getNumber())
-            .orElse(0L),
-        blockchain.getChainHeadBlockNumber());
+    // TODO this should be either genesis or history expire cutoff block number
+    return new StatusMessage.BlockRange(0L, blockchain.getChainHeadBlockNumber());
   }
 }
