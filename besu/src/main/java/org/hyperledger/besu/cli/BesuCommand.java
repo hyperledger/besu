@@ -1374,7 +1374,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
       }
 
-      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
+      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled
           && privacyPluginService != null
           && privacyPluginService.getPayloadProvider() == null) {
         throw new ParameterException(
@@ -1382,7 +1382,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
       }
 
-      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
+      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled
           && privacyOptionGroup.isFlexiblePrivacyGroupsEnabled) {
         throw new ParameterException(
             commandLine, "Privacy Plugin can not be used with flexible privacy groups");
@@ -2021,7 +2021,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setFlexiblePrivacyGroupsEnabled(
           privacyOptionGroup.isFlexiblePrivacyGroupsEnabled);
       privacyParametersBuilder.setPrivacyPluginEnabled(
-          unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
+              unstablePrivacyPluginOptions.isPrivacyPluginEnabled);
       privacyParametersBuilder.setPrivateNonceAlwaysIncrementsEnabled(
           privacyOptionGroup.isPrivateNonceAlwaysIncrementsEnabled);
 
@@ -2035,7 +2035,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       if (!hasPrivacyPublicKey
           && !privacyOptionGroup.isPrivacyMultiTenancyEnabled
-          && !unstablePrivacyPluginOptions.isPrivacyPluginEnabled()) {
+          && !unstablePrivacyPluginOptions.isPrivacyPluginEnabled) {
         throw new ParameterException(
             commandLine, "Please specify Enclave public key file path to enable privacy");
       }
