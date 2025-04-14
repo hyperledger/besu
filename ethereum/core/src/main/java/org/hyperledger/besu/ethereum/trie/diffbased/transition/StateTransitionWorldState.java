@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
@@ -104,14 +105,14 @@ public class StateTransitionWorldState implements MutableWorldState, DiffBasedWo
                   bonsaiAccount.getCode(),
                   bonsaiAccount.getCodeHash(),
                   true);
-          // notify verkle accumulator that the value was not found in verkle by creating a state
-          // transition diff based value
-          verkleWorldState
+          // notify verkle accumulator that the value was not found in verkle by creating a pmt sourced
+          // diff based value
+         verkleWorldState
               .getAccumulator()
               .getAccountsToUpdate()
               .put(
                   address,
-                  new StateTransitionDiffBasedValue<>(
+                  new PmtSourcedDiffBasedValue<>(
                       new VerkleAccount(verkleAccount), verkleAccount));
           return verkleAccount;
         }
@@ -146,14 +147,14 @@ public class StateTransitionWorldState implements MutableWorldState, DiffBasedWo
       if (maybeSlot.isEmpty() && migrationProgress.isMigrationInProgress()) {
         // read bonsai worldstate
         maybeSlot = bonsaiWorldState.getStorageValueByStorageSlotKey(address, storageSlotKey);
-        // notify verkle accumulator that the value was not found in verkle by creating a state
-        // transition diff based value
+        // notify verkle accumulator that the value was not found in verkle by creating a pmt sourced
+        // diff based value
         maybeSlot.ifPresent(
             slot -> {
               verkleWorldState
                   .getAccumulator()
                   .maybeCreateStorageMap(address)
-                  .put(storageSlotKey, new StateTransitionDiffBasedValue<>(slot, slot));
+                  .put(storageSlotKey, new PmtSourcedDiffBasedValue<>(slot, slot));
             });
       }
       return maybeSlot;
