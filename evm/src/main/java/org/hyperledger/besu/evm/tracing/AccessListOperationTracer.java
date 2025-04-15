@@ -62,28 +62,13 @@ public class AccessListOperationTracer extends EstimateGasOperationTracer {
     return List.of();
   }
 
-  /**
-   * Gets stipend needed.
-   *
-   * @return the stipend needed
-   */
   @Override
-  public long getStipendNeeded() {
-    return 0L;
-  }
-
-  /**
-   * Gets max depth.
-   *
-   * @return the max depth
-   */
-  @Override
-  public int getMaxDepth() {
+  public int getSubCallExponent() {
     return 0;
   }
 
   /**
-   * Create a AccessListOperationTracer.
+   * Create an AccessListOperationTracer.
    *
    * @return the AccessListOperationTracer
    */

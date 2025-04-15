@@ -164,13 +164,13 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   protected long processEstimateGas(
       final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
     final long gasUsedByTransaction = result.result().getEstimateGasUsedByTransaction();
-    // minimum gas remaining is necessary for some operation (additionalStipend)
-    // no more than 64/63 of the remaining gas can be passed to the sub calls
 
+    // no more than 64/63 of the remaining gas can be passed to the sub calls
     final double subCallMultiplier =
-        Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getMaxDepth());
+        Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getSubCallExponent());
+
     // and minimum gas remaining is necessary for some operation (additionalStipend)
-    final long gasStipend = operationTracer.getStipendNeeded();
+    final long gasStipend = operationTracer.getCallStipend();
 
     return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
   }
@@ -228,6 +228,21 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
       throw new InvalidJsonRpcRequestException(
           "Invalid account overrides parameter (index 2)", RpcErrorType.INVALID_CALL_PARAMS, e);
     }
+  }
+
+  protected boolean attemptOptimisticSimulationWithDefaultBlockGasUsed(
+      final CallParameter callParams,
+      final TransactionSimulationFunction simulationFunction,
+      final EstimateGasOperationTracer operationTracer) {
+    // If the transaction is a plain value transfer, try gasLimit 21_000. It is likely to succeed.
+    if (callParams.getPayload() == null || (callParams.getPayload().isEmpty())) {
+      var maybeSimpleTransferResult =
+          simulationFunction.simulate(
+              overrideGasLimit(callParams, DEFAULT_BLOCK_GAS_USED), operationTracer);
+      return maybeSimpleTransferResult.isPresent()
+          && maybeSimpleTransferResult.get().isSuccessful();
+    }
+    return false;
   }
 
   protected interface TransactionSimulationFunction {

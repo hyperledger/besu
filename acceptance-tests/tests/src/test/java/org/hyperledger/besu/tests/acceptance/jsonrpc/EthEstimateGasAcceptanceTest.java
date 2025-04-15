@@ -78,16 +78,16 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
 
       assertThat(ethCall.isReverted()).isEqualTo(false);
 
-      BigInteger gasTooLow = estimateGas.getAmountUsed().subtract(BigInteger.valueOf(500));
-      // Sanity check our estimate is close by sending eth_call with much less than that gas
-      // estimate
-
+      // with the ESTIMATE_GAS_TOLERANCE_RATIO there is now a bit of a difference,
+      // and it's proportional to the size of the estimate.
+      // subtracting 10% should make the eth_call fail
+      BigInteger amountToSubtract = estimateGas.getAmountUsed().divide(BigInteger.valueOf(10));
+      BigInteger gasTooLow = estimateGas.getAmountUsed().subtract(amountToSubtract);
       // Sanity check our estimate is close by sending eth_call with less than that gas estimate
       var ethCallTooLow =
           node.execute(
               new EthCallTransaction(testDepth.getContractAddress(), functionCall, gasTooLow));
 
-      // with the new tolerance ESTIMATE_GAS_TOLERANCE_RATIO there is a bit of a difference
       assertThat(ethCallTooLow.isReverted()).isEqualTo(true);
 
       // Sanity check our estimate is close with eth_sendRawTransaction
