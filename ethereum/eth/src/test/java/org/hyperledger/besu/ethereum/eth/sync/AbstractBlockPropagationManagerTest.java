@@ -105,11 +105,11 @@ public abstract class AbstractBlockPropagationManagerTest {
     protocolSchedule = blockchainUtil.getProtocolSchedule();
     final ProtocolContext tempProtocolContext = blockchainUtil.getProtocolContext();
     protocolContext =
-        new ProtocolContext(
-            blockchain,
-            tempProtocolContext.getWorldStateArchive(),
-            tempProtocolContext.getConsensusContext(ConsensusContext.class),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withWorldStateArchive(tempProtocolContext.getWorldStateArchive())
+            .withConsensusContext(tempProtocolContext.getConsensusContext(ConsensusContext.class))
+            .build();
     ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)

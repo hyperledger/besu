@@ -65,7 +65,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
   @BeforeEach
   public void setUp() {
-    transactionTracker = new PeerTransactionTracker(ethPeers);
+    transactionTracker = new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
     messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
     final Transaction tx = mock(Transaction.class);
     pendingTransactions = mock(PendingTransactions.class);

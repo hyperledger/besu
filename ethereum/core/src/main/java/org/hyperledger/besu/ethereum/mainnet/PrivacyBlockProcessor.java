@@ -23,10 +23,10 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRehydration;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
@@ -82,37 +82,68 @@ public class PrivacyBlockProcessor implements BlockProcessor {
     this.publicWorldStateArchive = publicWorldStateArchive;
   }
 
+  /**
+   * Supplies a privateMetadataUpdater and no preprocessing to wrapped processBlock().
+   *
+   * @param protocolContext the current context of the protocol
+   * @param blockchain the blockchain to append the block to
+   * @param worldState the world state to apply changes to
+   * @param block the block to process
+   * @return BlockProcessing result.
+   */
   @Override
-  public BlockProcessingResult processBlock(
+  public final BlockProcessingResult processBlock(
       final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final Optional<List<Withdrawal>> withdrawals,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
-
-    if (privateMetadataUpdater != null) {
-      throw new IllegalArgumentException("PrivateMetadataUpdater passed in is not null.");
-    }
-
-    maybeRehydrate(blockchain, blockHeader, transactions);
+      final Block block) {
 
     final PrivateMetadataUpdater metadataUpdater =
-        new PrivateMetadataUpdater(blockHeader, privateStateStorage);
+        new PrivateMetadataUpdater(block.getHeader(), privateStateStorage);
+
+    return processBlock(
+        protocolContext,
+        blockchain,
+        worldState,
+        block,
+        Optional.of(metadataUpdater),
+        new AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing());
+  }
+
+  /**
+   * Decorate the call to our wrapped BlockProcessor with private state.
+   *
+   * @param protocolContext the current context of the protocol
+   * @param blockchain the blockchain to append the block to
+   * @param worldState the world state to apply changes to
+   * @param block the block to process
+   * @param privateMetadataUpdater private metadata updater
+   * @param preprocessingBlockFunction block preprocessing function
+   * @return BlockProcessingResult
+   */
+  @Override
+  public final BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block,
+      final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
+      final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
+
+    var blockHeader = block.getHeader();
+    var transactions = block.getBody().getTransactions();
+
+    maybeRehydrate(blockchain, blockHeader, transactions);
 
     final BlockProcessingResult result =
         blockProcessor.processBlock(
             protocolContext,
             blockchain,
             worldState,
-            blockHeader,
-            transactions,
-            ommers,
-            withdrawals,
-            metadataUpdater);
-    metadataUpdater.commit();
+            block,
+            privateMetadataUpdater,
+            preprocessingBlockFunction);
+    privateMetadataUpdater.ifPresent(PrivateMetadataUpdater::commit);
     return result;
   }
 
