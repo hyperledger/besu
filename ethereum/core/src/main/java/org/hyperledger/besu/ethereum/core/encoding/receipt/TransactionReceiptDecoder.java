@@ -28,17 +28,23 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * Decodes a transaction receipt from RLP.
+ *
+ * <pre>
+ * (eth/68): receipt = {legacy-receipt, typed-receipt} with typed-receipt = tx-type || rlp(legacy-receipt)
+ *
+ * legacy-receipt = [
+ *   post-state-or-status: {B_32, {0, 1}},
+ *   cumulative-gas: P,
+ *   bloom: B_256,
+ *   logs: [log₁, log₂, ...]
+ * ]
+ *
+ * (eth/69): receipt = [tx-type, post-state-or-status, cumulative-gas, logs]
+ * </pre>
+ */
 public class TransactionReceiptDecoder {
-
-  /**
-   * Creates a transaction receipt for the given RLP
-   *
-   * @param input the RLP-encoded transaction receipt
-   * @return the transaction receipt
-   */
-  public static TransactionReceipt readFrom(final RLPInput input) {
-    return readFrom(input, true);
-  }
 
   /**
    * Creates a transaction receipt for the given RLP
@@ -49,68 +55,103 @@ public class TransactionReceiptDecoder {
    */
   public static TransactionReceipt readFrom(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
-    RLPInput input = rlpInput;
-    TransactionType transactionType = TransactionType.FRONTIER;
-    boolean isTypedReceipt = false;
+    // The first byte of the RLP input indicates whether the receipt is typed or flat.
     if (!rlpInput.nextIsList()) {
-      final Bytes typedTransactionReceiptBytes = input.readBytes();
-      transactionType = TransactionType.of(typedTransactionReceiptBytes.get(0));
-      input = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
-      // if the first byte is transaction type, then it is not EIP-7642 receipt
-      isTypedReceipt = true;
+      return decodeTypedReceipt(rlpInput, revertReasonAllowed);
+    } else {
+      return decodeFlatReceipt(rlpInput, revertReasonAllowed);
     }
+  }
 
+  private static TransactionReceipt decodeTypedReceipt(
+      final RLPInput rlpInput, final boolean revertReasonAllowed) {
+    RLPInput input = rlpInput;
+    final Bytes typedTransactionReceiptBytes = input.readBytes();
+    TransactionType transactionType = TransactionType.of(typedTransactionReceiptBytes.get(0));
+    input = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
     input.enterList();
-
-    final RLPInput firstElement = input.readAsRlp();
-    final RLPInput secondElement = input.readAsRlp();
-
+    final RLPInput statusOrStateRoot = input.readAsRlp();
+    final long cumulativeGas = input.readLongScalar();
     LogsBloomFilter bloomFilter = null;
-    final boolean hasBloomFilter =
-        !input.nextIsList() && input.nextSize() == LogsBloomFilter.BYTE_SIZE;
-    if (hasBloomFilter) {
-      // The logs below will populate the bloom filter upon construction.
+    final boolean isCompacted = isNextBloomFilter(input);
+    if (!isCompacted) {
       bloomFilter = LogsBloomFilter.readFrom(input);
     }
-
-    final long cumulativeGas;
-    final RLPInput statusOrStateRoot;
-    boolean isEip7642Receipt = !hasBloomFilter && !input.nextIsList();
-    if (isEip7642Receipt) {
-      if (isTypedReceipt) {
-        throw new RLPException("Receipt is EIP-7642 but has transaction type");
-      }
-      int transactionByte = firstElement.readIntScalar();
-      transactionType =
-          transactionByte == 0x00 ? TransactionType.FRONTIER : TransactionType.of(transactionByte);
-      statusOrStateRoot = secondElement;
-      cumulativeGas = input.readLongScalar();
-    } else {
-      statusOrStateRoot = firstElement;
-      cumulativeGas = secondElement.readLongScalar();
-    }
-
-    // TODO consider validating that the logs and bloom filter match.
-    final boolean compacted = !hasBloomFilter && !isEip7642Receipt;
-    final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, compacted));
-    if (compacted) {
+    final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, isCompacted));
+    // if the receipt is compacted, we need to build the bloom filter from the logs
+    if (isCompacted) {
       bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
     }
-
-    final Optional<Bytes> revertReason;
-    if (input.isEndOfCurrentList()) {
-      revertReason = Optional.empty();
-    } else {
-      if (!revertReasonAllowed) {
-        throw new RLPException("Unexpected value at end of TransactionReceipt");
-      }
-      revertReason = Optional.of(input.readBytes());
-    }
-
+    Optional<Bytes> revertReason = readMaybeRevertReason(input, revertReasonAllowed);
     input.leaveList();
+    return createReceipt(
+        transactionType, statusOrStateRoot, cumulativeGas, logs, bloomFilter, revertReason);
+  }
 
-    // Status code-encoded transaction receipts have a single byte for success (0x01) or failure
-    // (0x80).
+  private static TransactionReceipt decodeFlatReceipt(
+      final RLPInput rlpInput, final boolean revertReasonAllowed) {
+    rlpInput.enterList();
+    // Flat receipts can be either legacy or eth/69 receipts.
+    // To determine the type, we need to examine the logs' position, as the bloom filter cannot be
+    // used. This is because compacted legacy receipts also lack a bloom filter.
+    final RLPInput firstElement = rlpInput.readAsRlp();
+    final RLPInput secondElement = rlpInput.readAsRlp();
+    final boolean isCompacted = isNextBloomFilter(rlpInput);
+    LogsBloomFilter bloomFilter = null;
+    if (!isCompacted) {
+      bloomFilter = LogsBloomFilter.readFrom(rlpInput);
+    }
+    boolean isEth69Receipt = isCompacted && !rlpInput.nextIsList();
+    TransactionReceipt receipt;
+    if (isEth69Receipt) {
+      receipt = decodeEth69Receipt(rlpInput, firstElement, secondElement);
+    } else {
+      receipt =
+          decodeLegacyReceipt(
+              rlpInput, firstElement, secondElement, bloomFilter, revertReasonAllowed);
+    }
+    rlpInput.leaveList();
+    return receipt;
+  }
+
+  private static TransactionReceipt decodeEth69Receipt(
+      final RLPInput input, final RLPInput transactionByteRlp, final RLPInput statusOrStateRoot) {
+    int transactionByte = transactionByteRlp.readIntScalar();
+    final TransactionType transactionType =
+        transactionByte == 0x00 ? TransactionType.FRONTIER : TransactionType.of(transactionByte);
+    final long cumulativeGas = input.readLongScalar();
+    final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, false));
+    final LogsBloomFilter bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
+    return createReceipt(
+        transactionType, statusOrStateRoot, cumulativeGas, logs, bloomFilter, Optional.empty());
+  }
+
+  private static TransactionReceipt decodeLegacyReceipt(
+      final RLPInput input,
+      final RLPInput firstElement,
+      final RLPInput secondElement,
+      final LogsBloomFilter bloomFilter,
+      final boolean revertReasonAllowed) {
+    final long cumulativeGas = secondElement.readLongScalar();
+    final boolean isCompacted = bloomFilter == null;
+    final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, isCompacted));
+    Optional<Bytes> revertReason = readMaybeRevertReason(input, revertReasonAllowed);
+    return createReceipt(
+        TransactionType.FRONTIER,
+        firstElement,
+        cumulativeGas,
+        logs,
+        isCompacted ? LogsBloomFilter.builder().insertLogs(logs).build() : bloomFilter,
+        revertReason);
+  }
+
+  private static TransactionReceipt createReceipt(
+      final TransactionType transactionType,
+      final RLPInput statusOrStateRoot,
+      final long cumulativeGas,
+      final List<Log> logs,
+      final LogsBloomFilter bloomFilter,
+      final Optional<Bytes> revertReason) {
     if (statusOrStateRoot.raw().size() == 1) {
       final int status = statusOrStateRoot.readIntScalar();
       return new TransactionReceipt(
@@ -120,5 +161,23 @@ public class TransactionReceiptDecoder {
       return new TransactionReceipt(
           transactionType, stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
     }
+  }
+
+  private static Optional<Bytes> readMaybeRevertReason(
+      final RLPInput input, final boolean revertReasonAllowed) {
+    final Optional<Bytes> revertReason;
+    if (input.isEndOfCurrentList()) {
+      revertReason = Optional.empty();
+    } else {
+      if (!revertReasonAllowed) {
+        throw new RLPException("Unexpected value at end of TransactionReceipt");
+      }
+      revertReason = Optional.of(input.readBytes());
+    }
+    return revertReason;
+  }
+
+  private static boolean isNextBloomFilter(final RLPInput input) {
+    return input.nextIsList() || input.nextSize() != LogsBloomFilter.BYTE_SIZE;
   }
 }

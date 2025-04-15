@@ -56,7 +56,7 @@ public class RlpConverterServiceImpl implements RlpConverterService {
 
   @Override
   public TransactionReceipt buildReceiptFromRlp(final Bytes rlp) {
-    return TransactionReceiptDecoder.readFrom(RLP.input(rlp));
+    return TransactionReceiptDecoder.readFrom(RLP.input(rlp), true);
   }
 
   @Override

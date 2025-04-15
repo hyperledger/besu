@@ -55,8 +55,8 @@ public class TransactionReceiptTest {
         TransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
-                    rlpOut ->
-                        TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))));
+                    rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))),
+            true);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -74,8 +74,8 @@ public class TransactionReceiptTest {
         TransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
-                    rlpOut ->
-                        TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))));
+                    rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))),
+            true);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -94,8 +94,8 @@ public class TransactionReceiptTest {
         TransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
-                    rlpOut ->
-                        TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))));
+                    rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))),
+            true);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -125,8 +125,9 @@ public class TransactionReceiptTest {
             rlpOut ->
                 TransactionReceiptEncoder.writeTo(
                     receipt, rlpOut, encodingOptionsWithoutCompaction));
-    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(compactedReceipt))).isEqualTo(receipt);
-    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(unCompactedReceipt)))
+    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(compactedReceipt), true))
+        .isEqualTo(receipt);
+    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(unCompactedReceipt), true))
         .isEqualTo(receipt);
   }
 
@@ -142,8 +143,8 @@ public class TransactionReceiptTest {
             RLP.input(
                 RLP.encode(
                     rlpOut ->
-                        TransactionReceiptEncoder.writeTo(
-                            receipt, rlpOut, encodingConfiguration))));
+                        TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingConfiguration))),
+            true);
     assertThat(copy).isEqualTo(receipt);
   }
 }
