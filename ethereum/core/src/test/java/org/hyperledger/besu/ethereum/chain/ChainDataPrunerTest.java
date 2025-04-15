@@ -35,8 +35,6 @@ public class ChainDataPrunerTest {
 
   @Test
   public void singleChainPruning() {
-    int totalBlocks = 20;
-    int blocksToRetain = 10;
     final BlockDataGenerator gen = new BlockDataGenerator();
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
@@ -48,7 +46,7 @@ public class ChainDataPrunerTest {
         new ChainDataPruner(
             blockchainStorage,
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
-            blocksToRetain,
+            512,
             0,
             // completed
             new BlockingExecutor());
@@ -58,16 +56,19 @@ public class ChainDataPrunerTest {
             genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
     blockchain.observeBlockAdded(chainDataPruner);
 
-    gen.blockSequence(genesisBlock, totalBlocks)
+    // Generate & Import 1000 blocks
+    gen.blockSequence(genesisBlock, 1000)
         .forEach(
             blk -> {
               blockchain.appendBlock(blk, gen.receipts(blk));
               long number = blk.getHeader().getNumber();
-              if (number <= blocksToRetain) {
+              if (number <= 512) {
                 // No prune happened
                 assertThat(blockchain.getBlockHeader(1)).isPresent();
               } else {
-                assertThat(blockchain.getBlockHeader(number - blocksToRetain)).isEmpty();
+                // Prune number - 512 only
+                assertThat(blockchain.getBlockHeader(number - 512)).isEmpty();
+                assertThat(blockchain.getBlockHeader(number - 511)).isPresent();
               }
             });
   }
