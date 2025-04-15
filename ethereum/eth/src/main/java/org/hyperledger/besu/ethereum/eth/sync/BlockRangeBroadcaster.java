@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +34,7 @@ public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
   private static final Logger LOG = LoggerFactory.getLogger(BlockRangeBroadcaster.class);
 
   // range update block interval
-  private static final int BLOCK_RANGE_UPDATE_INTERVAL = 32; // one slot
+  static final int BLOCK_RANGE_UPDATE_INTERVAL = 32; // one slot
 
   private final EthContext ethContext;
   private final Blockchain blockchain;
@@ -86,7 +87,8 @@ public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
     }
   }
 
-  private void broadcastBlockRange(
+  @VisibleForTesting
+  void broadcastBlockRange(
       final long earliestBlockNumber, final long latestBlockNumber, final Hash blockHash) {
     final BlockRangeUpdateMessage blockRangeUpdateMessage =
         BlockRangeUpdateMessage.create(earliestBlockNumber, latestBlockNumber, blockHash);
