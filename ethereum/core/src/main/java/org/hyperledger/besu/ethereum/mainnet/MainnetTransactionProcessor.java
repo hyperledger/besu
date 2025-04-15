@@ -146,7 +146,7 @@ public class MainnetTransactionProcessor {
         blockHashLookup,
         isPersistingPrivateState,
         transactionValidationParams,
-        null,
+        Optional.empty(),
         blobGasPrice);
   }
 
@@ -185,7 +185,7 @@ public class MainnetTransactionProcessor {
         blockHashLookup,
         isPersistingPrivateState,
         transactionValidationParams,
-        null,
+        Optional.empty(),
         blobGasPrice);
   }
 
@@ -219,7 +219,7 @@ public class MainnetTransactionProcessor {
         blockHashLookup,
         isPersistingPrivateState,
         ImmutableTransactionValidationParams.builder().build(),
-        null,
+        Optional.empty(),
         blobGasPrice);
   }
 
@@ -255,7 +255,7 @@ public class MainnetTransactionProcessor {
         blockHashLookup,
         isPersistingPrivateState,
         transactionValidationParams,
-        null,
+        Optional.empty(),
         blobGasPrice);
   }
 
@@ -268,7 +268,7 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
-      final PrivateMetadataUpdater privateMetadataUpdater,
+      final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
       final Wei blobGasPrice) {
     try {
       final var transactionValidator = transactionValidatorFactory.get();
@@ -361,9 +361,7 @@ public class MainnetTransactionProcessor {
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
       final long intrinsicGas =
           gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(),
-              transaction.isContractCreation(),
-              clampedAdd(accessListGas, codeDelegationGas));
+              transaction, clampedAdd(accessListGas, codeDelegationGas));
 
       final long gasAvailable = transaction.getGasLimit() - intrinsicGas;
       LOG.trace(
@@ -378,8 +376,8 @@ public class MainnetTransactionProcessor {
               .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
               .put(KEY_TRANSACTION, transaction)
               .put(KEY_TRANSACTION_HASH, transaction.getHash());
-      if (privateMetadataUpdater != null) {
-        contextVariablesBuilder.put(KEY_PRIVATE_METADATA_UPDATER, privateMetadataUpdater);
+      if (privateMetadataUpdater.isPresent()) {
+        contextVariablesBuilder.put(KEY_PRIVATE_METADATA_UPDATER, privateMetadataUpdater.get());
       }
 
       operationTracer.traceStartTransaction(worldUpdater, transaction);
@@ -503,6 +501,7 @@ public class MainnetTransactionProcessor {
               ValidationResult.invalid(
                   TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
                   "transaction price must be greater than base fee"),
+              Optional.empty(),
               Optional.empty());
         }
         coinbaseCalculator = coinbaseFeePriceCalculator;
@@ -556,7 +555,11 @@ public class MainnetTransactionProcessor {
               initialFrame.getRevertReason().get());
         }
         return TransactionProcessingResult.failed(
-            gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
+            gasUsedByTransaction,
+            refundedGas,
+            validationResult,
+            initialFrame.getRevertReason(),
+            initialFrame.getExceptionalHaltReason());
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(

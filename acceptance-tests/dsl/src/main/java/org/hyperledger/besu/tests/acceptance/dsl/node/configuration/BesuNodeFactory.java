@@ -23,6 +23,8 @@ import static org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.Consensu
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -43,6 +45,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class BesuNodeFactory {
 
@@ -665,7 +669,11 @@ public class BesuNodeFactory {
             .genesisConfigProvider((a) -> Optional.of(genesisFile))
             .devMode(false)
             .bootnodeEligible(false)
-            .miningEnabled()
+            .miningConfiguration(
+                MiningConfiguration.newDefault()
+                    .setCoinbase(AddressHelpers.ofValue(1))
+                    .setExtraData(Bytes.EMPTY)
+                    .setMiningEnabled(true))
             .jsonRpcEnabled()
             .jsonRpcTxPool()
             .engineRpcEnabled(true)
