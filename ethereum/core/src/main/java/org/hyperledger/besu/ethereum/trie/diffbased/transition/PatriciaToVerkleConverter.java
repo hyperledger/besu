@@ -27,9 +27,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorld
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 import org.hyperledger.besu.plugin.services.trielogs.StateMigrationLog;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -153,23 +151,30 @@ public class PatriciaToVerkleConverter {
                 merkleAccount.getAddress(),
                 addr -> new StorageConsumingMap<>(addr, new ConcurrentHashMap<>(), (a, v) -> {}));
 
-    storages.entrySet().parallelStream().forEach(
-        (entry) -> {
-          final Hash slotHash = Hash.wrap(entry.getKey());
-          final StorageSlotKey storageSlotKey =
-              new StorageSlotKey(
-                  slotHash, Optional.of(UInt256.fromBytes(PRE_IMAGES.get(slotHash))));
+    storages.entrySet().parallelStream()
+        .forEach(
+            (entry) -> {
+              final Hash slotHash = Hash.wrap(entry.getKey());
+              final StorageSlotKey storageSlotKey =
+                  new StorageSlotKey(
+                      slotHash, Optional.of(UInt256.fromBytes(PRE_IMAGES.get(slotHash))));
 
-          if (verkleWorldState
-              .getStorageValueByStorageSlotKey(merkleAccount.getAddress(), storageSlotKey)
-              .isEmpty()) {
-            System.out.println(
-                "migrate storage " + merkleAccount.getAddress() + " " + entry.getKey() + " " + entry.getValue());
-            storageMap.putIfAbsent(
-                storageSlotKey,
-                new DiffBasedValue<>(null, UInt256.fromBytes(RLP.decodeValue(entry.getValue()))));
-          }
-        });
+              if (verkleWorldState
+                  .getStorageValueByStorageSlotKey(merkleAccount.getAddress(), storageSlotKey)
+                  .isEmpty()) {
+                System.out.println(
+                    "migrate storage "
+                        + merkleAccount.getAddress()
+                        + " "
+                        + entry.getKey()
+                        + " "
+                        + entry.getValue());
+                storageMap.putIfAbsent(
+                    storageSlotKey,
+                    new DiffBasedValue<>(
+                        null, UInt256.fromBytes(RLP.decodeValue(entry.getValue()))));
+              }
+            });
   }
 
   /**
@@ -220,13 +225,14 @@ public class PatriciaToVerkleConverter {
                 verkleAccount.getAddress(), new DiffBasedValue<>(verkleAccount, verkleAccount));
       }
       if (verkleAccount.hasCode()) {
+        if (merkleAccount.getCodeHash().equals(verkleAccount.getCodeHash())) {
           verkleUpdateAccumulator
               .getCodeToUpdate()
               .putIfAbsent(
                   verkleAccount.getAddress(), new DiffBasedValue<>(null, verkleAccount.getCode()));
-          // Adjust conversion count based on the code chunkification process
-          convertedEntriesCount.addAndGet(
-              TrieKeyUtils.chunkifyCode(verkleAccount.getCode()).size());
+        }
+        // Adjust conversion count based on the code chunkification process
+        convertedEntriesCount.addAndGet(TrieKeyUtils.chunkifyCode(verkleAccount.getCode()).size());
       }
 
       convertedEntriesCount.incrementAndGet();

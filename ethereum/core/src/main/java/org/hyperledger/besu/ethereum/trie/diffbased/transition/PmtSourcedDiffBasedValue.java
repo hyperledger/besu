@@ -19,18 +19,20 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import java.util.Objects;
 
 /**
- * A {@link DiffBasedValue} used during state transitions to represent values that exist
- * in the Patricia Merkle Trie (PMT), but are not yet present in the Verkle trie.
+ * A {@link DiffBasedValue} used during state transitions to represent values that exist in the
+ * Patricia Merkle Trie (PMT), but are not yet present in the Verkle trie.
  *
- * <p>This class is used in migration or hybrid scenarios where data may be read from the PMT,
- * but must be written to the Verkle trie if it changes. Although a {@code prior} value is
- * provided (from PMT), it is treated as {@code null} from the Verkle perspective, since
- * the key did not yet exist there.
+ * <p>This class is used in migration or hybrid scenarios where data may be read from the PMT, but
+ * must be written to the Verkle trie if it changes. Although a {@code prior} value is provided
+ * (from PMT), it is treated as {@code null} from the Verkle perspective, since the key did not yet
+ * exist there.
  *
  * <p>In practice:
+ *
  * <ul>
- *   <li>{@link #isUnchanged()} uses the actual {@code prior} to detect whether the value changed.</li>
- *   <li>{@link #getPrior()} returns {@code null} to indicate that the value did not exist in Verkle.</li>
+ *   <li>{@link #isUnchanged()} uses the actual {@code prior} to detect whether the value changed.
+ *   <li>{@link #getPrior()} returns {@code null} to indicate that the value did not exist in
+ *       Verkle.
  * </ul>
  *
  * @param <T> the type of value being tracked
@@ -40,7 +42,7 @@ public class PmtSourcedDiffBasedValue<T> extends DiffBasedValue<T> {
   /**
    * Constructs a new {@code PmtSourcedDiffBasedValue}.
    *
-   * @param prior   the value from the PMT used for comparison
+   * @param prior the value from the PMT used for comparison
    * @param updated the current value after execution
    */
   public PmtSourcedDiffBasedValue(final T prior, final T updated) {
@@ -48,8 +50,8 @@ public class PmtSourcedDiffBasedValue<T> extends DiffBasedValue<T> {
   }
 
   /**
-   * Determines if the value has changed by comparing the actual {@code prior} and {@code updated} values.
-   * This is used to decide whether the value must be migrated to Verkle.
+   * Determines if the value has changed by comparing the actual {@code prior} and {@code updated}
+   * values. This is used to decide whether the value must be migrated to Verkle.
    *
    * @return true if the values are equal, false if a change occurred
    */
