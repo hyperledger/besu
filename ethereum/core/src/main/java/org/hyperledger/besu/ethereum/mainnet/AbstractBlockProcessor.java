@@ -160,6 +160,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final BlockAwareOperationTracer blockTracer =
         getBlockImportTracer(protocolContext, blockHeader);
 
+    final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
+
     LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
     blockTracer.traceStartBlock(blockHeader, blockHeader.getCoinbase());
 
@@ -167,8 +169,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         new BlockProcessingContext(
             blockHeader, worldState, protocolSpec, blockHashLookup, blockTracer);
     protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
-
-    final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
     Optional<BlockHeader> maybeParentHeader =
         blockchain.getBlockHeader(blockHeader.getParentHash());
