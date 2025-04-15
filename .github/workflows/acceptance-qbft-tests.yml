@@ -109,7 +109,7 @@ jobs:
           path: 'acceptance-tests/tests/build/reports/tests/**'
         continue-on-error: true
   acceptqbfttests-passed:
-    name: "accepttests-passed"
+    name: "acceptqbfttests-passed"
     runs-on: ubuntu-22.04
     needs: [ acceptanceTestEthereum ]
     permissions:
