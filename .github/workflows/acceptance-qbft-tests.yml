@@ -108,7 +108,7 @@ jobs:
           name: acceptance-node-${{matrix.runner_index}}-test-html-reports
           path: 'acceptance-tests/tests/build/reports/tests/**'
         continue-on-error: true
-  accepttests-passed:
+  acceptqbfttests-passed:
     name: "accepttests-passed"
     runs-on: ubuntu-22.04
     needs: [ acceptanceTestEthereum ]
