@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        runner_index: [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
+        runner_index: [0,1,2,3]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -59,11 +59,11 @@ jobs:
         with:
           branch: main
           workflow: update-test-reports.yml
-          name: acceptance-test-results
+          name: acceptance-qbft-test-results
           path: tmp/junit-xml-reports-downloaded
           if_no_artifact_found: ignore
       - name: Split tests
-        run: .github/workflows/splitTestsByTime.sh tmp/junit-xml-reports-downloaded "tmp/junit-xml-reports-downloaded/acceptance-node-.*-test-results" "TEST-" ${{env.total-runners}} ${{ matrix.runner_index }} > testList.txt
+        run: .github/workflows/splitTestsByTime.sh tmp/junit-xml-reports-downloaded "tmp/junit-xml-reports-downloaded/acceptance-qbft-node-.*-test-results" "TEST-" ${{env.total-runners}} ${{ matrix.runner_index }} > testList.txt
         continue-on-error: true
       - name: format gradle args
         # we do not need the module task here
@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: matrix.runner_index == 0
         with:
-          name: acceptance-tests-timing
+          name: acceptance-qbft-tests-timing
           path: 'tmp/timing.tsv'
         continue-on-error: true
       - name: Upload Lists
@@ -98,15 +98,15 @@ jobs:
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         with:
-          name: acceptance-node-${{matrix.runner_index}}-test-results
-          path: 'acceptance-tests/tests/build/test-results/**/TEST-*.xml'
+          name: acceptance-qbft-node-${{matrix.runner_index}}-test-results
+          path: 'acceptance-qbft-tests/tests/build/test-results/**/TEST-*.xml'
         continue-on-error: true
       - name: Upload Acceptance Test HTML Reports
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: success() || failure()
         with:
-          name: acceptance-node-${{matrix.runner_index}}-test-html-reports
-          path: 'acceptance-tests/tests/build/reports/tests/**'
+          name: acceptance-qbft-node-${{matrix.runner_index}}-test-html-reports
+          path: 'acceptance-qbft-tests/tests/build/reports/tests/**'
         continue-on-error: true
   acceptqbfttests-passed:
     name: "acceptqbfttests-passed"
