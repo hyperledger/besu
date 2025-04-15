@@ -5,6 +5,7 @@
 ### Upcoming Breaking Changes
 ### Additions and Improvements
 #### Dependencies
+- update jc-kzg-4844 dependency from 2.0.0 to 2.1.1
 ### Bug fixes
 - fix block import tracing, refactor BlockProcessor interface [#8549](https://github.com/hyperledger/besu/pull/8549)
 
