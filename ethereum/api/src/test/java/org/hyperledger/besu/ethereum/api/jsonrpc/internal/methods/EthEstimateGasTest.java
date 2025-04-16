@@ -27,6 +27,7 @@ import org.hyperledger.besu.datatypes.StateOverride;
 import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
@@ -96,7 +97,9 @@ public class EthEstimateGasTest {
     when(transactionSimulator.simulatePendingBlockHeader()).thenReturn(pendingBlockHeader);
     when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(true);
 
-    method = new EthEstimateGas(blockchainQueries, transactionSimulator);
+    method =
+        new EthEstimateGas(
+            blockchainQueries, transactionSimulator, ImmutableApiConfiguration.builder().build());
   }
 
   @Test

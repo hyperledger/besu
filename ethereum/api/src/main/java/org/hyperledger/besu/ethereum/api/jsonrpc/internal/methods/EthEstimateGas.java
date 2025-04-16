@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -32,10 +33,17 @@ import org.slf4j.LoggerFactory;
 
 public class EthEstimateGas extends AbstractEstimateGas {
   private static final Logger LOG = LoggerFactory.getLogger(EthEstimateGas.class);
+  private static final double SUB_CALL_REMAINING_GAS_RATIO = 64D / 63D;
+  // zero tolerance means there is no tolerance,
+  // which means keep looping until the estimate is exact (previous behavior)
+  protected double estimateGasToleranceRatio;
 
   public EthEstimateGas(
-      final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
+      final BlockchainQueries blockchainQueries,
+      final TransactionSimulator transactionSimulator,
+      final ApiConfiguration apiConfiguration) {
     super(blockchainQueries, transactionSimulator);
+    this.estimateGasToleranceRatio = apiConfiguration.getEstimateGasToleranceRatio();
   }
 
   @Override
@@ -51,7 +59,10 @@ public class EthEstimateGas extends AbstractEstimateGas {
       final TransactionSimulationFunction simulationFunction) {
 
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
-    LOG.debug("Processing transaction with params: {}", callParams);
+    LOG.debug(
+        "Processing transaction with tolerance {}; callParams: {}",
+        estimateGasToleranceRatio,
+        callParams);
 
     if (attemptOptimisticSimulationWithDefaultBlockGasUsed(
         callParams, simulationFunction, operationTracer)) {
@@ -86,7 +97,8 @@ public class EthEstimateGas extends AbstractEstimateGas {
 
     while (low + 1 < high) {
       // check if we are close enough
-      if ((double) (high - low) / high < ESTIMATE_GAS_TOLERANCE_RATIO) {
+      if (estimateGasToleranceRatio > 0
+          && (double) (high - low) / high < estimateGasToleranceRatio) {
         break;
       }
       mid = (low + high) / 2;
@@ -118,5 +130,27 @@ public class EthEstimateGas extends AbstractEstimateGas {
       return Optional.of(errorResponse(requestContext, maybeResult.get()));
     }
     return Optional.empty();
+  }
+
+  /**
+   * Estimate gas by adding minimum gas remaining for some operation and the necessary gas for sub
+   * calls
+   *
+   * @param result transaction simulator result
+   * @param operationTracer estimate gas operation tracer
+   * @return estimate gas
+   */
+  protected long processEstimateGas(
+      final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
+    final long gasUsedByTransaction = result.result().getEstimateGasUsedByTransaction();
+
+    // no more than 64/63 of the remaining gas can be passed to the sub calls
+    final double subCallMultiplier =
+        Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getSubCallExponent());
+
+    // and minimum gas remaining is necessary for some operation (additionalStipend)
+    final long gasStipend = operationTracer.getCallStipend();
+
+    return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
   }
 }

@@ -45,9 +45,6 @@ import com.google.common.annotations.VisibleForTesting;
 
 public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
 
-  private static final double SUB_CALL_REMAINING_GAS_RATIO = 64D / 63D;
-  // TODO make this tolerance configurable
-  public static final double ESTIMATE_GAS_TOLERANCE_RATIO = 0.015;
   protected static final long DEFAULT_BLOCK_GAS_USED = 21_000;
 
   protected final TransactionSimulator transactionSimulator;
@@ -151,28 +148,6 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
         callParams.getMaxFeePerBlobGas(),
         callParams.getBlobVersionedHashes(),
         callParams.getNonce());
-  }
-
-  /**
-   * Estimate gas by adding minimum gas remaining for some operation and the necessary gas for sub
-   * calls
-   *
-   * @param result transaction simulator result
-   * @param operationTracer estimate gas operation tracer
-   * @return estimate gas
-   */
-  protected long processEstimateGas(
-      final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
-    final long gasUsedByTransaction = result.result().getEstimateGasUsedByTransaction();
-
-    // no more than 64/63 of the remaining gas can be passed to the sub calls
-    final double subCallMultiplier =
-        Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getSubCallExponent());
-
-    // and minimum gas remaining is necessary for some operation (additionalStipend)
-    final long gasStipend = operationTracer.getCallStipend();
-
-    return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
   }
 
   protected JsonRpcErrorResponse errorResponse(
