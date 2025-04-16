@@ -24,8 +24,11 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -99,6 +102,49 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     } finally {
       lock.unlock();
     }
+  }
+
+  @Override
+  public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys)
+      throws StorageException {
+    if (segments.size() != keys.size()) {
+      throw new IllegalArgumentException("The segments and keys lists must have the same length");
+    }
+
+    List<byte[]> results = new ArrayList<>(Collections.nCopies(keys.size(), null));
+    List<Integer> missingIndices = new ArrayList<>();
+    List<SegmentIdentifier> missingSegments = new ArrayList<>();
+    List<byte[]> missingKeys = new ArrayList<>();
+
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      for (int i = 0; i < segments.size(); i++) {
+        final SegmentIdentifier segment = segments.get(i);
+        final byte[] key = keys.get(i);
+        final NavigableMap<Bytes, Optional<byte[]>> segmentMap =
+            hashValueStore.computeIfAbsent(segment, s -> newSegmentMap());
+        final Optional<byte[]> localValue = segmentMap.get(Bytes.wrap(key));
+        if (localValue != null) {
+          results.set(i, localValue.orElse(null));
+        } else {
+          missingIndices.add(i);
+          missingSegments.add(segment);
+          missingKeys.add(key);
+        }
+      }
+    } finally {
+      lock.unlock();
+    }
+
+    if (!missingIndices.isEmpty()) {
+      List<byte[]> parentResults = parent.multiget(missingSegments, missingKeys);
+      for (int j = 0; j < missingIndices.size(); j++) {
+        results.set(missingIndices.get(j), parentResults.get(j));
+      }
+    }
+
+    return results;
   }
 
   @Override
