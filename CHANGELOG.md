@@ -6,6 +6,7 @@
 ### Additions and Improvements
 #### Dependencies
 ### Bug fixes
+- fix block import tracing, refactor BlockProcessor interface [#8549](https://github.com/hyperledger/besu/pull/8549)
 
 ## 25.4.1
 
