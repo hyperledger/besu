@@ -36,4 +36,5 @@ dependencies {
   testImplementation project(':testutil')
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
 }

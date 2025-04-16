@@ -101,7 +101,8 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
 
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
-  private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false).setAsyncIo(true);
+  private final ReadOptions readOptions =
+      new ReadOptions().setVerifyChecksums(false).setAsyncIo(true);
   private final MetricsSystem metricsSystem;
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
   private final RocksDBConfiguration configuration;
