@@ -42,7 +42,7 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   public IstanbulGasCalculator() {}
 
   @Override
-  protected long callDataCost(final long payloadSize, final long zeroBytes) {
+  protected long callDataCost(final int payloadSize, final int zeroBytes) {
     return clampedAdd(
         ISTANBUL_TX_DATA_NON_ZERO_COST * (payloadSize - zeroBytes), TX_DATA_ZERO_COST * zeroBytes);
   }

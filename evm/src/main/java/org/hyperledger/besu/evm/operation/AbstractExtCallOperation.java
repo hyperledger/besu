@@ -31,8 +31,6 @@ import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A skeleton class for implementing call operations.
@@ -123,7 +121,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
           clampedAdd(
               clampedAdd(
                   gasCalculator.memoryExpansionGasCost(frame, inputOffset, inputLength),
-                      valueTransferCost),
+                  valueTransferCost),
               gasCalculator.getColdAccountAccessCost()),
           ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
     }
@@ -133,12 +131,17 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     boolean accountCreation = (contract == null || contract.isEmpty()) && !zeroValue;
     boolean codeDelegation = contract != null && hasCodeDelegation(contract.getCode());
 
-    long memoryExpansionCost = gasCalculator.memoryExpansionGasCost(frame, inputOffset, inputLength);
-    long accountAccessCost = frame.warmUpAddress(to) || gasCalculator.isPrecompile(to)
+    long memoryExpansionCost =
+        gasCalculator.memoryExpansionGasCost(frame, inputOffset, inputLength);
+    long accountAccessCost =
+        frame.warmUpAddress(to) || gasCalculator.isPrecompile(to)
             ? gasCalculator.getWarmStorageReadCost()
             : gasCalculator.getColdAccountAccessCost();
     long accountCreationCost = accountCreation ? gasCalculator.newAccountGasCost() : 0;
-    long codeDelegationCost = codeDelegation ? CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract) : 0;
+    long codeDelegationCost =
+        codeDelegation
+            ? CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract)
+            : 0;
 
     long cost =
         clampedAdd(

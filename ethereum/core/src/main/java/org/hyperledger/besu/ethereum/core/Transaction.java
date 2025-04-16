@@ -125,7 +125,7 @@ public class Transaction
 
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
   private final Optional<List<CodeDelegation>> maybeCodeDelegationList;
-  private final Optional<List<Bytes>> initcodes;
+  private final Optional<Initcodes> initcodes;
 
   private final Optional<Bytes> rawRlp;
 
@@ -202,7 +202,7 @@ public class Transaction
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments,
       final Optional<List<CodeDelegation>> maybeCodeDelegationList,
-      final Optional<List<Bytes>> initcodes,
+      final Optional<Initcodes> initcodes,
       final Optional<Bytes> rawRlp) {
 
     if (!forCopy) {
@@ -248,10 +248,10 @@ public class Transaction
 
       if (transactionType.supportsInitcode()) {
         checkArgument(initcodes.isPresent(), "Initcode transactions must contain a initcode list");
-        int initcodeCount = initcodes.get().size();
+        int initcodeCount = initcodes.get().count();
         checkArgument(
             initcodeCount > 0, "Initcode transactions must contain at least one initcode");
-        for (Bytes initcode : initcodes.get()) {
+        for (Bytes initcode : initcodes.get().getInitcodeBytes()) {
           checkArgument(
               initcode != null && !initcode.isEmpty(), "Initcode entries cannot be zero length");
         }
@@ -417,8 +417,13 @@ public class Transaction
   }
 
   @Override
-  public long getPayloadZeroBytes() {
-    return payload.getZeroBytesCount();
+  public int getPayloadSize() {
+    return payload.getPayloadBytes().size() + initcodes.map(Initcodes::getTotalSize).orElse(0);
+  }
+
+  @Override
+  public int getPayloadZeroBytes() {
+    return payload.getZeroBytesCount() + initcodes.map(Initcodes::getZeroBytesCount).orElse(0);
   }
 
   /**
@@ -743,7 +748,7 @@ public class Transaction
 
   @Override
   public Optional<List<Bytes>> getInitCodes() {
-    return initcodes;
+    return initcodes.map(Initcodes::getInitcodeBytes);
   }
 
   /**
@@ -772,7 +777,7 @@ public class Transaction
       final List<VersionedHash> versionedHashes,
       final Optional<List<CodeDelegation>> codeDelegationList,
       final Optional<BigInteger> chainId,
-      final Optional<List<Bytes>> initcodes) {
+      final Optional<Initcodes> initcodes) {
     if (transactionType.requiresChainId()) {
       checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
     }
@@ -792,7 +797,7 @@ public class Transaction
             versionedHashes,
             codeDelegationList,
             chainId,
-            initcodes);
+            initcodes.map(Initcodes::getInitcodeBytes));
     return keccak256(preimage);
   }
 
@@ -813,7 +818,7 @@ public class Transaction
         versionedHashes.orElse(null),
         maybeCodeDelegationList,
         chainId,
-        initcodes);
+        initcodes.map(Initcodes::getInitcodeBytes));
   }
 
   private static Bytes getPreimage(
@@ -1257,8 +1262,6 @@ public class Transaction
         maybeCodeDelegationList.map(
             codeDelegations ->
                 codeDelegations.stream().map(this::codeDelegationDetachedCopy).toList());
-    final Optional<List<Bytes>> detatchedInitcodes =
-        initcodes.map(ic -> ic.stream().map(Bytes::copy).toList());
 
     final var copiedTx =
         new Transaction(
@@ -1280,7 +1283,7 @@ public class Transaction
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
             detachedCodeDelegationList,
-            detatchedInitcodes,
+            initcodes.map(Initcodes::detatchedCopy),
             Optional.empty());
 
     // copy also the computed fields, to avoid to recompute them
@@ -1359,7 +1362,7 @@ public class Transaction
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
-    private Optional<List<Bytes>> initcodes = Optional.empty();
+    private Optional<Initcodes> initcodes = Optional.empty();
     protected Bytes rawRlp = null;
 
     public Builder copiedFrom(final Transaction toCopy) {
@@ -1468,7 +1471,7 @@ public class Transaction
     }
 
     public Builder initcodes(final List<Bytes> initcodes) {
-      this.initcodes = Optional.of(initcodes);
+      this.initcodes = Optional.of(new Initcodes(initcodes));
       return this;
     }
 

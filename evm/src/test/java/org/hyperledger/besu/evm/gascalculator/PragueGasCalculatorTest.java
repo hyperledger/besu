@@ -88,7 +88,6 @@ class PragueGasCalculatorTest {
     when(messageFrame.getGasRefund()).thenReturn(1000L);
     when(messageFrame.getRemainingGas()).thenReturn(5000L);
     when(transaction.getGasLimit()).thenReturn(100000L);
-    when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
 
     // Act
     long refund = pragueGasCalculator.calculateGasRefund(transaction, messageFrame, 500L);
@@ -110,7 +109,6 @@ class PragueGasCalculatorTest {
     when(messageFrame.getGasRefund()).thenReturn(1000L);
     when(messageFrame.getRemainingGas()).thenReturn(5000L);
     when(transaction.getGasLimit()).thenReturn(100000L);
-    when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
 
     // Act
     long refund = pragueGasCalculator.calculateGasRefund(transaction, messageFrame, 1000L);
@@ -128,7 +126,6 @@ class PragueGasCalculatorTest {
     when(messageFrame.getGasRefund()).thenReturn(100000L);
     when(messageFrame.getRemainingGas()).thenReturn(20000L);
     when(transaction.getGasLimit()).thenReturn(100000L);
-    when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
 
     // Act
     long refund = pragueGasCalculator.calculateGasRefund(transaction, messageFrame, 1000L);
@@ -147,7 +144,6 @@ class PragueGasCalculatorTest {
     when(messageFrame.getGasRefund()).thenReturn(0L);
     when(messageFrame.getRemainingGas()).thenReturn(0L);
     when(transaction.getGasLimit()).thenReturn(100000L);
-    when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
 
     // Act
     long refund =
@@ -167,7 +163,6 @@ class PragueGasCalculatorTest {
     when(messageFrame.getGasRefund()).thenReturn(100000L);
     when(messageFrame.getRemainingGas()).thenReturn(90000L);
     when(transaction.getGasLimit()).thenReturn(100000L);
-    when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
 
     // Act
     long refund = pragueGasCalculator.calculateGasRefund(transaction, messageFrame, 1000L);
@@ -185,20 +180,16 @@ class PragueGasCalculatorTest {
   @Test
   void transactionFloorCostShouldBeAtLeastTransactionBaseCost() {
     // floor cost = 21000 (base cost) + 0
-    AssertionsForClassTypes.assertThat(pragueGasCalculator.transactionFloorCost(Bytes.EMPTY, 0))
+    AssertionsForClassTypes.assertThat(pragueGasCalculator.transactionFloorCost(0, 0))
         .isEqualTo(21000);
     // floor cost = 21000 (base cost) + 256 (tokensInCallData) * 10 (cost per token)
-    AssertionsForClassTypes.assertThat(
-            pragueGasCalculator.transactionFloorCost(Bytes.repeat((byte) 0x0, 256), 256))
+    AssertionsForClassTypes.assertThat(pragueGasCalculator.transactionFloorCost(256, 256))
         .isEqualTo(23560L);
     // floor cost = 21000 (base cost) + 256 * 4 (tokensInCallData) * 10 (cost per token)
-    AssertionsForClassTypes.assertThat(
-            pragueGasCalculator.transactionFloorCost(Bytes.repeat((byte) 0x1, 256), 0))
+    AssertionsForClassTypes.assertThat(pragueGasCalculator.transactionFloorCost(256, 0))
         .isEqualTo(31240L);
     // floor cost = 21000 (base cost) + 5 + (6 * 4) (tokensInCallData) * 10 (cost per token)
-    AssertionsForClassTypes.assertThat(
-            pragueGasCalculator.transactionFloorCost(
-                Bytes.fromHexString("0x0001000100010001000101"), 5))
+    AssertionsForClassTypes.assertThat(pragueGasCalculator.transactionFloorCost(11, 5))
         .isEqualTo(21290L);
   }
 }

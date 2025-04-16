@@ -21,8 +21,6 @@ import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-import org.apache.tuweni.bytes.Bytes;
-
 /**
  * Gas Calculator for Prague
  *
@@ -88,7 +86,7 @@ public class PragueGasCalculator extends CancunGasCalculator {
     final long executionGasUsed =
         transaction.getGasLimit() - initialFrame.getRemainingGas() - refundAllowance;
     final long transactionFloorCost =
-        transactionFloorCost(transaction.getPayload(), transaction.getPayloadZeroBytes());
+        transactionFloorCost(transaction.getPayloadSize(), transaction.getPayloadZeroBytes());
     final long totalGasUsed = Math.max(executionGasUsed, transactionFloorCost);
     return transaction.getGasLimit() - totalGasUsed;
   }
@@ -108,10 +106,10 @@ public class PragueGasCalculator extends CancunGasCalculator {
   }
 
   @Override
-  public long transactionFloorCost(final Bytes transactionPayload, final long payloadZeroBytes) {
+  public long transactionFloorCost(final long payloadTotalSize, final long payloadZeroBytes) {
     return clampedAdd(
         getMinimumTransactionCost(),
-        tokensInCallData(transactionPayload.size(), payloadZeroBytes) * TOTAL_COST_FLOOR_PER_TOKEN);
+        tokensInCallData(payloadTotalSize, payloadZeroBytes) * TOTAL_COST_FLOOR_PER_TOKEN);
   }
 
   private long tokensInCallData(final long payloadSize, final long zeroBytes) {

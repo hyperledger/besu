@@ -113,15 +113,9 @@ public class FrontierGasCalculatorTest {
 
   @Test
   void transactionFloorCostShouldAlwaysBeZero() {
-    assertThat(gasCalculator.transactionFloorCost(Bytes.EMPTY, 0)).isEqualTo(0L);
-    assertThat(
-            gasCalculator.transactionFloorCost(Bytes.fromHexString("0x0001000100010001000101"), 16))
-        .isEqualTo(0L);
-    assertThat(
-            gasCalculator.transactionFloorCost(
-                Bytes.repeat((byte) 0x0, Integer.MAX_VALUE), Integer.MAX_VALUE))
-        .isEqualTo(0L);
-    assertThat(gasCalculator.transactionFloorCost(Bytes.repeat((byte) 0x1, Integer.MAX_VALUE), 0))
-        .isEqualTo(0L);
+    assertThat(gasCalculator.transactionFloorCost(0, 0)).isZero();
+    assertThat(gasCalculator.transactionFloorCost(11, 16)).isZero();
+    assertThat(gasCalculator.transactionFloorCost(Integer.MAX_VALUE, Integer.MAX_VALUE)).isZero();
+    assertThat(gasCalculator.transactionFloorCost(Integer.MAX_VALUE, 0)).isZero();
   }
 }

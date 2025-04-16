@@ -154,7 +154,7 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
     when(gasCalculator.transactionIntrinsicGasCost(any(), anyLong())).thenReturn(5L);
-    when(gasCalculator.transactionFloorCost(any(), anyLong())).thenReturn(51L);
+    when(gasCalculator.transactionFloorCost(anyLong(), anyLong())).thenReturn(51L);
 
     assertThat(
             validator.validate(

@@ -147,7 +147,7 @@ public class FrontierGasCalculator implements GasCalculator {
    * @return the dynamic part of the intrinsic gas cost
    */
   protected long dynamicIntrinsicGasCost(final Transaction transaction, final long baselineGas) {
-    final int payloadSize = transaction.getPayload().size();
+    final int payloadSize = transaction.getPayloadSize();
 
     long cost =
         clampedAdd(callDataCost(payloadSize, transaction.getPayloadZeroBytes()), baselineGas);
@@ -174,7 +174,7 @@ public class FrontierGasCalculator implements GasCalculator {
    * @param zeroBytes the number of zero bytes in the payload
    * @return the cost of the call data
    */
-  protected long callDataCost(final long payloadSize, final long zeroBytes) {
+  protected long callDataCost(final int payloadSize, final int zeroBytes) {
     return clampedAdd(
         TX_DATA_NON_ZERO_COST * (payloadSize - zeroBytes), TX_DATA_ZERO_COST * zeroBytes);
   }
@@ -199,7 +199,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long transactionFloorCost(final Bytes payload, final long payloadZeroBytes) {
+  public long transactionFloorCost(final long payloadTotalSize, final long payloadZeroBytes) {
     return 0L;
   }
 

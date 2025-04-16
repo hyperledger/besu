@@ -46,21 +46,11 @@ public class TxCreateOperation extends AbstractCreateOperation {
 
   @Override
   public long cost(final MessageFrame frame, final Supplier<Code> codeSupplier) {
-    Code code = codeSupplier.get();
-    if (code == null) {
-      return 0;
-    } else {
-      int codeSize = code.getSize();
-      final long inputOffset = getInputOffset(frame);
-      final long inputSize = getInputSize(frame);
-      return clampedAdd(
-          clampedAdd(
-              gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputSize),
-              gasCalculator().initcodeCost(codeSize)),
-          clampedAdd(
-              gasCalculator().txCreateCost(),
-              gasCalculator().createKeccakCost(codeSupplier.get().getSize())));
-    }
+    final long inputOffset = getInputOffset(frame);
+    final long inputSize = getInputSize(frame);
+    return clampedAdd(
+        gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputSize),
+        gasCalculator().txCreateCost());
   }
 
   @Override

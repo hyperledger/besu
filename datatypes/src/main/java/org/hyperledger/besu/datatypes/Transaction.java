@@ -187,11 +187,20 @@ public interface Transaction {
   Bytes getPayload();
 
   /**
-   * The number of zero bytes in the payload.
+   * The number of bytes in the payload. For transactions with multiple variable portions that
+   * charge payload (such as InitcodeTransaction 0x06) this will be the sum across all sections.
    *
    * @return the number of zero bytes in the payload
    */
-  long getPayloadZeroBytes();
+  int getPayloadSize();
+
+  /**
+   * The number of zero bytes in the payload. For transactions with multiple variable portions that
+   * charge payload (such as InitcodeTransaction 0x06) this will be the sum across all sections.
+   *
+   * @return the number of zero bytes in the payload
+   */
+  int getPayloadZeroBytes();
 
   /**
    * Returns the type of the transaction.
