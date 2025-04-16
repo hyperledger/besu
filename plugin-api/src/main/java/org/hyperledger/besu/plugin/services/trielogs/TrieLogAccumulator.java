@@ -52,6 +52,8 @@ public interface TrieLogAccumulator {
   /**
    * Returns current account value
    *
+   * @param <T> the specific storage subclass
+   * @param address the address to lookup
    * @return the current AccountValue.
    */
   <T extends AccountValue> T getAccountValue(Address address);
@@ -59,6 +61,8 @@ public interface TrieLogAccumulator {
   /**
    * Returns current account storage slot value
    *
+   * @param address the address to fetch storage from
+   * @param storageSlotKey the slot key for which to fetch storager
    * @return the current storage slot value
    */
   Optional<UInt256> getStorageValueByStorageSlotKey(
