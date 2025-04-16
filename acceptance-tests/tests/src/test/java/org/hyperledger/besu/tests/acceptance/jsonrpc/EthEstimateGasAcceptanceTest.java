@@ -66,7 +66,6 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
     for (var test : testCase) {
       var functionCall = testDepth.depth(BigInteger.valueOf(test.getKey())).encodeFunctionCall();
 
-      // gas estimate expected 44868 = 0xaf44
       var estimateGas =
           node.execute(new EthEstimateGasTransaction(testDepth.getContractAddress(), functionCall));
 
@@ -78,9 +77,9 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
 
       assertThat(ethCall.isReverted()).isEqualTo(false);
 
-      // with the ESTIMATE_GAS_TOLERANCE_RATIO there is now a bit of a difference,
+      // With the ESTIMATE_GAS_TOLERANCE_RATIO there is now a bit of a difference,
       // and it's proportional to the size of the estimate.
-      // subtracting 10% should make the eth_call fail
+      // Subtracting 10% should make the eth_call fail
       BigInteger amountToSubtract = estimateGas.getAmountUsed().divide(BigInteger.valueOf(10));
       BigInteger gasTooLow = estimateGas.getAmountUsed().subtract(amountToSubtract);
       // Sanity check our estimate is close by sending eth_call with less than that gas estimate

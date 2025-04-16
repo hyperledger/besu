@@ -190,10 +190,8 @@ public class ApiConfigurationOptionsTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(apiConfigurationCaptor.getValue())
-            .isEqualTo(
-                    ImmutableApiConfiguration.builder()
-                            .estimateGasToleranceRatio(tolerance)
-                            .build());
+        .isEqualTo(
+            ImmutableApiConfiguration.builder().estimateGasToleranceRatio(tolerance).build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
