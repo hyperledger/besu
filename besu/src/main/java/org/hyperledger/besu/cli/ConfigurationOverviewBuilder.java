@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.cli;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.log.FramedLogMessage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
@@ -57,7 +57,6 @@ public class ConfigurationOverviewBuilder {
   private long trieLogRetentionLimit = 0;
   private Integer trieLogsPruningWindowSize = null;
   private boolean isSnapServerEnabled = false;
-  private boolean isSnapSyncBftEnabled = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
@@ -247,17 +246,6 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
-   * Sets snap sync BFT enabled/disabled
-   *
-   * @param snapSyncBftEnabled bool to indicate if snap sync for BFT is enabled
-   * @return the builder
-   */
-  public ConfigurationOverviewBuilder setSnapSyncBftEnabled(final boolean snapSyncBftEnabled) {
-    isSnapSyncBftEnabled = snapSyncBftEnabled;
-    return this;
-  }
-
-  /**
    * Sets trie logs pruning window size
    *
    * @param size the max number of blocks to load and prune trie logs for at startup
@@ -321,7 +309,7 @@ public class ConfigurationOverviewBuilder {
    */
   public String build() {
     final List<String> lines = new ArrayList<>();
-    lines.add("Besu version " + BesuInfo.class.getPackage().getImplementationVersion());
+    lines.add("Besu version " + BesuVersionUtils.version());
     lines.add("");
     lines.add("Configuration:");
 
@@ -384,10 +372,6 @@ public class ConfigurationOverviewBuilder {
 
     if (isSnapServerEnabled) {
       lines.add("Experimental Snap Sync server enabled");
-    }
-
-    if (isSnapSyncBftEnabled) {
-      lines.add("Experimental Snap Sync for BFT enabled");
     }
 
     if (isLimitTrieLogsEnabled) {

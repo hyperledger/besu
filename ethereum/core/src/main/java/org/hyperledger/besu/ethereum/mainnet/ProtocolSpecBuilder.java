@@ -320,8 +320,7 @@ public class ProtocolSpecBuilder {
     BlockProcessor blockProcessor = createBlockProcessor(transactionProcessor, protocolSchedule);
 
     final BlockValidator blockValidator =
-        blockValidatorBuilder.apply(
-            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+        blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
     return new ProtocolSpec(
         name,
@@ -397,8 +396,7 @@ public class ProtocolSpecBuilder {
     BlockValidator apply(
         BlockHeaderValidator blockHeaderValidator,
         BlockBodyValidator blockBodyValidator,
-        BlockProcessor blockProcessor,
-        BadBlockManager badBlockManager);
+        BlockProcessor blockProcessor);
   }
 
   public interface BlockImporterBuilder {

@@ -15,10 +15,14 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetAccount;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -29,6 +33,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeInvalid;
@@ -40,7 +45,6 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -175,7 +179,6 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
-    final EVMWorldUpdater evmWorldUpdater = new EVMWorldUpdater(worldState, gasCalculator);
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
@@ -194,7 +197,7 @@ public class MainnetTransactionProcessor {
       }
 
       final Address senderAddress = transaction.getSender();
-      final MutableAccount sender = evmWorldUpdater.getOrCreateSenderAccount(senderAddress);
+      final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
 
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -203,7 +206,7 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
-      operationTracer.tracePrepareTransaction(evmWorldUpdater, transaction);
+      operationTracer.tracePrepareTransaction(worldState, transaction);
 
       final Set<Address> warmAddressList = new BytesTrieSet<>(Address.SIZE);
 
@@ -230,19 +233,19 @@ public class MainnetTransactionProcessor {
           sender.getBalance());
 
       long codeDelegationRefund = 0L;
-      if (transaction.getCodeDelegationList().isPresent()) {
+      if (transaction.getType().equals(TransactionType.DELEGATE_CODE)) {
         if (maybeCodeDelegationProcessor.isEmpty()) {
           throw new RuntimeException("Code delegation processor is required for 7702 transactions");
         }
 
         final CodeDelegationResult codeDelegationResult =
-            maybeCodeDelegationProcessor.get().process(evmWorldUpdater, transaction);
+            maybeCodeDelegationProcessor.get().process(worldState, transaction);
         warmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
 
-        evmWorldUpdater.commit();
+        worldState.commit();
       }
 
       final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
@@ -267,9 +270,7 @@ public class MainnetTransactionProcessor {
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
       final long intrinsicGas =
           gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(),
-              transaction.isContractCreation(),
-              clampedAdd(accessListGas, codeDelegationGas));
+              transaction, clampedAdd(accessListGas, codeDelegationGas));
 
       final long gasAvailable = transaction.getGasLimit() - intrinsicGas;
       LOG.trace(
@@ -278,7 +279,7 @@ public class MainnetTransactionProcessor {
           transaction.getGasLimit(),
           intrinsicGas);
 
-      final WorldUpdater worldUpdater = evmWorldUpdater.updater();
+      final WorldUpdater worldUpdater = worldState.updater();
 
       operationTracer.traceStartTransaction(worldUpdater, transaction);
 
@@ -325,11 +326,7 @@ public class MainnetTransactionProcessor {
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
-        final Optional<Account> maybeContract = Optional.ofNullable(evmWorldUpdater.get(to));
-
-        if (maybeContract.isPresent() && maybeContract.get().hasDelegatedCode()) {
-          warmAddressList.add(maybeContract.get().codeDelegationAddress().get());
-        }
+        final Code code = processCodeFromAccount(worldState, warmAddressList, worldState.get(to));
 
         initialFrame =
             commonMessageFrameBuilder
@@ -337,20 +334,7 @@ public class MainnetTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
-                .code(
-                    maybeContract
-                        .map(
-                            c -> {
-                              if (c.hasDelegatedCode()) {
-                                return messageCallProcessor.getCodeFromEVM(
-                                    c.getCodeDelegationTargetHash().get(),
-                                    c.getCodeDelegationTargetCode().get());
-                              }
-
-                              return messageCallProcessor.getCodeFromEVM(
-                                  c.getCodeHash(), c.getCode());
-                            })
-                        .orElse(CodeV0.EMPTY_CODE))
+                .code(code)
                 .accessListWarmAddresses(warmAddressList)
                 .build();
       }
@@ -417,6 +401,7 @@ public class MainnetTransactionProcessor {
               ValidationResult.invalid(
                   TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
                   "transaction price must be greater than base fee"),
+              Optional.empty(),
               Optional.empty());
         }
         coinbaseCalculator = coinbaseFeePriceCalculator;
@@ -429,12 +414,12 @@ public class MainnetTransactionProcessor {
 
       operationTracer.traceBeforeRewardTransaction(worldUpdater, transaction, coinbaseWeiDelta);
       if (!coinbaseWeiDelta.isZero() || !clearEmptyAccounts) {
-        final var coinbase = evmWorldUpdater.getOrCreate(miningBeneficiary);
+        final var coinbase = worldState.getOrCreate(miningBeneficiary);
         coinbase.incrementBalance(coinbaseWeiDelta);
       }
 
       operationTracer.traceEndTransaction(
-          evmWorldUpdater.updater(),
+          worldState.updater(),
           transaction,
           initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS,
           initialFrame.getOutputData(),
@@ -443,10 +428,10 @@ public class MainnetTransactionProcessor {
           initialFrame.getSelfDestructs(),
           0L);
 
-      initialFrame.getSelfDestructs().forEach(evmWorldUpdater::deleteAccount);
+      initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
       if (clearEmptyAccounts) {
-        evmWorldUpdater.clearAccountsThatAreEmpty();
+        worldState.clearAccountsThatAreEmpty();
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
@@ -470,11 +455,15 @@ public class MainnetTransactionProcessor {
               initialFrame.getRevertReason().get());
         }
         return TransactionProcessingResult.failed(
-            gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
+            gasUsedByTransaction,
+            refundedGas,
+            validationResult,
+            initialFrame.getRevertReason(),
+            initialFrame.getExceptionalHaltReason());
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(
-          evmWorldUpdater.updater(),
+          worldState.updater(),
           transaction,
           false,
           Bytes.EMPTY,
@@ -487,7 +476,7 @@ public class MainnetTransactionProcessor {
       throw re;
     } catch (final RuntimeException re) {
       operationTracer.traceEndTransaction(
-          evmWorldUpdater.updater(),
+          worldState.updater(),
           transaction,
           false,
           Bytes.EMPTY,
@@ -527,6 +516,10 @@ public class MainnetTransactionProcessor {
     return messageCallProcessor;
   }
 
+  public boolean getClearEmptyAccounts() {
+    return clearEmptyAccounts;
+  }
+
   private String printableStackTraceFromThrowable(final RuntimeException re) {
     final StringBuilder builder = new StringBuilder();
 
@@ -535,6 +528,35 @@ public class MainnetTransactionProcessor {
     }
 
     return builder.toString();
+  }
+
+  private Code processCodeFromAccount(
+      final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract) {
+    if (contract == null) {
+      return CodeV0.EMPTY_CODE;
+    }
+
+    final Hash codeHash = contract.getCodeHash();
+    if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
+      return CodeV0.EMPTY_CODE;
+    }
+
+    if (hasCodeDelegation(contract.getCode())) {
+      return delegationTargetCode(worldUpdater, warmAddressList, contract);
+    }
+
+    return messageCallProcessor.getCodeFromEVM(contract.getCodeHash(), contract.getCode());
+  }
+
+  private Code delegationTargetCode(
+      final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract) {
+    // we need to look up the target account and its code, but do NOT charge gas for it
+    final CodeDelegationAccount targetAccount =
+        getTargetAccount(worldUpdater, gasCalculator, contract);
+    warmAddressList.add(targetAccount.getTargetAddress());
+
+    return messageCallProcessor.getCodeFromEVM(
+        targetAccount.getCodeHash(), targetAccount.getCode());
   }
 
   public static Builder builder() {

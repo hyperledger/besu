@@ -93,7 +93,7 @@ public class LogWithMetadata extends Log
     return logsWithMetadata;
   }
 
-  private static List<LogWithMetadata> generate(
+  public static List<LogWithMetadata> generate(
       final int logIndexOffset,
       final List<Log> receiptLogs,
       final long number,

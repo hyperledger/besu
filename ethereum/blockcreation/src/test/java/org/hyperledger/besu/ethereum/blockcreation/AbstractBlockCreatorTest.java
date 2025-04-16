@@ -357,7 +357,7 @@ abstract class AbstractBlockCreatorTest {
     return new CreateOn(
         new TestBlockCreator(
             miningConfiguration,
-            __ -> Address.ZERO,
+            (__, ___) -> Address.ZERO,
             __ -> Bytes.fromHexString("deadbeef"),
             transactionPool,
             executionContextTestFixture.getProtocolContext(),

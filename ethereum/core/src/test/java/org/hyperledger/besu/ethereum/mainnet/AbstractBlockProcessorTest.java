@@ -29,6 +29,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -59,40 +61,29 @@ abstract class AbstractBlockProcessorTest {
 
   final Blockchain blockchain = new ReferenceTestBlockchain();
   final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
-  final BlockHeader emptyBlockHeader =
-      new BlockHeaderTestFixture()
-          .transactionsRoot(Hash.EMPTY_LIST_HASH)
-          .ommersHash(Hash.EMPTY_LIST_HASH)
-          .buildHeader();
   private TestBlockProcessor blockProcessor;
 
   @BeforeEach
   void baseSetup() {
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     lenient()
-        .when(protocolSpec.getBlockHashProcessor())
-        .thenReturn(new FrontierBlockHashProcessor());
+            .when(protocolSpec.getBlockHashProcessor())
+            .thenReturn(new FrontierBlockHashProcessor());
     blockProcessor =
-        new TestBlockProcessor(
-            transactionProcessor,
-            transactionReceiptFactory,
-            Wei.ZERO,
-            BlockHeader::getCoinbase,
-            true,
-            protocolSchedule);
+            new TestBlockProcessor(
+                    transactionProcessor,
+                    transactionReceiptFactory,
+                    Wei.ZERO,
+                    BlockHeader::getCoinbase,
+                    true,
+                    protocolSchedule);
   }
 
   @Test
   void withProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
-        protocolContext,
-        blockchain,
-        worldState,
-        emptyBlockHeader,
-        emptyList(),
-        emptyList(),
-        Optional.empty());
+            protocolContext, blockchain, worldState, testBlockBuilder(emptyList()));
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
 
@@ -100,13 +91,7 @@ abstract class AbstractBlockProcessorTest {
   void withNoProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
-        protocolContext,
-        blockchain,
-        worldState,
-        emptyBlockHeader,
-        emptyList(),
-        emptyList(),
-        Optional.empty());
+            protocolContext, blockchain, worldState, testBlockBuilder(emptyList()));
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
 
@@ -114,15 +99,9 @@ abstract class AbstractBlockProcessorTest {
   void withProcessorAndWithdrawals_WithdrawalsAreProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.of(withdrawalsProcessor));
     final List<Withdrawal> withdrawals =
-        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
+            List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
-        protocolContext,
-        blockchain,
-        worldState,
-        emptyBlockHeader,
-        emptyList(),
-        emptyList(),
-        Optional.of(withdrawals));
+            protocolContext, blockchain, worldState, testBlockBuilder(withdrawals));
     verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any());
   }
 
@@ -131,43 +110,46 @@ abstract class AbstractBlockProcessorTest {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
 
     final List<Withdrawal> withdrawals =
-        List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
+            List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
-        protocolContext,
-        blockchain,
-        worldState,
-        emptyBlockHeader,
-        emptyList(),
-        emptyList(),
-        Optional.of(withdrawals));
+            protocolContext, blockchain, worldState, testBlockBuilder(withdrawals));
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
 
   private static class TestBlockProcessor extends AbstractBlockProcessor {
 
     protected TestBlockProcessor(
-        final MainnetTransactionProcessor transactionProcessor,
-        final TransactionReceiptFactory transactionReceiptFactory,
-        final Wei blockReward,
-        final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        final boolean skipZeroBlockRewards,
-        final ProtocolSchedule protocolSchedule) {
+            final MainnetTransactionProcessor transactionProcessor,
+            final TransactionReceiptFactory transactionReceiptFactory,
+            final Wei blockReward,
+            final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+            final boolean skipZeroBlockRewards,
+            final ProtocolSchedule protocolSchedule) {
       super(
-          transactionProcessor,
-          transactionReceiptFactory,
-          blockReward,
-          miningBeneficiaryCalculator,
-          skipZeroBlockRewards,
-          protocolSchedule);
+              transactionProcessor,
+              transactionReceiptFactory,
+              blockReward,
+              miningBeneficiaryCalculator,
+              skipZeroBlockRewards,
+              protocolSchedule);
     }
 
     @Override
     boolean rewardCoinbase(
-        final MutableWorldState worldState,
-        final BlockHeader header,
-        final List<BlockHeader> ommers,
-        final boolean skipZeroBlockRewards) {
+            final MutableWorldState worldState,
+            final BlockHeader header,
+            final List<BlockHeader> ommers,
+            final boolean skipZeroBlockRewards) {
       return false;
     }
+  }
+
+  Block testBlockBuilder(final List<Withdrawal> withdrawals) {
+    return new Block(
+            new BlockHeaderTestFixture()
+                    .transactionsRoot(Hash.EMPTY_LIST_HASH)
+                    .ommersHash(Hash.EMPTY_LIST_HASH)
+                    .buildHeader(),
+            new BlockBody(emptyList(), emptyList(), Optional.ofNullable(withdrawals)));
   }
 }

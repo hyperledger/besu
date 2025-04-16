@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -132,6 +133,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<Integer> exitCode = Optional.empty();
   private final boolean isStrictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
+  private SynchronizerConfiguration synchronizerConfiguration;
   private final Optional<KeyValueStorageFactory> storageFactory;
 
   public BesuNode(
@@ -230,6 +232,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
     this.environment = environment;
+    this.synchronizerConfiguration = SynchronizerConfiguration.builder().build(); // Default config
     LOG.info("Created BesuNode {}", this);
   }
 
@@ -840,6 +843,15 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public ApiConfiguration getApiConfiguration() {
     return apiConfiguration;
+  }
+
+  public SynchronizerConfiguration getSynchronizerConfiguration() {
+    return synchronizerConfiguration;
+  }
+
+  public BesuNode setSynchronizerConfiguration(final SynchronizerConfiguration config) {
+    this.synchronizerConfiguration = config;
+    return this;
   }
 
   public Optional<KeyValueStorageFactory> getStorageFactory() {

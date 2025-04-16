@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -45,11 +44,9 @@ public class BftVanityDataValidationRuleTest {
         new BftExtraData(Bytes.wrap(new byte[extraDataSize]), emptyList(), empty(), 0, emptyList());
 
     final ProtocolContext context =
-        new ProtocolContext(
-            null,
-            null,
-            setupContextWithBftExtraData(emptyList(), extraData),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withConsensusContext(setupContextWithBftExtraData(emptyList(), extraData))
+            .build();
     return validationRule.validate(blockHeader, null, context);
   }
 }

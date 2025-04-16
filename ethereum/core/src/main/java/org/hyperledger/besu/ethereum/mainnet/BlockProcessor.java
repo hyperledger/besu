@@ -19,11 +19,8 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,16 +39,6 @@ public interface BlockProcessor {
      * @return the receipts generated for the transactions in a block
      */
     List<TransactionReceipt> getReceipts();
-
-    /**
-     * The private receipts generated for the private transactions in a block when in
-     * goQuorumCompatibilityMode
-     *
-     * <p>This is only valid when {@code BlockProcessor#isSuccessful} returns {@code true}.
-     *
-     * @return the receipts generated for the private transactions in a block
-     */
-    List<TransactionReceipt> getPrivateReceipts();
 
     /**
      * Returns whether the block was successfully processed.
@@ -74,91 +61,27 @@ public interface BlockProcessor {
    * @param block the block to process
    * @return the block processing result
    */
-  default BlockProcessingResult processBlock(
-      final ProtocolContext protocolContext,
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final Block block) {
-    return processBlock(
-        protocolContext,
-        blockchain,
-        worldState,
-        block.getHeader(),
-        block.getBody().getTransactions(),
-        block.getBody().getOmmers(),
-        block.getBody().getWithdrawals());
-  }
-
-  /**
-   * Processes the block.
-   *
-   * @param protocolContext the current context of the protocol
-   * @param blockchain the blockchain to append the block to
-   * @param worldState the world state to apply changes to
-   * @param blockHeader the block header for the block
-   * @param transactions the transactions in the block
-   * @param ommers the block ommers
-   * @return the block processing result
-   */
-  default BlockProcessingResult processBlock(
-      final ProtocolContext protocolContext,
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers) {
-    return processBlock(
-        protocolContext,
-        blockchain,
-        worldState,
-        blockHeader,
-        transactions,
-        ommers,
-        Optional.empty());
-  }
-
-  /**
-   * Processes the block.
-   *
-   * @param protocolContext the current context of the protocol
-   * @param blockchain the blockchain to append the block to
-   * @param worldState the world state to apply changes to
-   * @param blockHeader the block header for the block
-   * @param transactions the transactions in the block
-   * @param ommers the block ommers
-   * @param withdrawals the withdrawals for the block
-   * @return the block processing result
-   */
   BlockProcessingResult processBlock(
-      ProtocolContext protocolContext,
-      Blockchain blockchain,
-      MutableWorldState worldState,
-      BlockHeader blockHeader,
-      List<Transaction> transactions,
-      List<BlockHeader> ommers,
-      Optional<List<Withdrawal>> withdrawals);
+          final ProtocolContext protocolContext,
+          final Blockchain blockchain,
+          final MutableWorldState worldState,
+          final Block block);
 
   /**
-   * Processes the block when running Besu in GoQuorum-compatible mode
+   * Processes the block.
    *
    * @param protocolContext the current context of the protocol
    * @param blockchain the blockchain to append the block to
-   * @param worldState the world state to apply public transactions to
-   * @param privateWorldState the private world state to apply private transaction to
+   * @param worldState the world state to apply changes to
    * @param block the block to process
    * @return the block processing result
    */
-  default BlockProcessingResult processBlock(
-      final ProtocolContext protocolContext,
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final MutableWorldState privateWorldState,
-      final Block block) {
-    /*
-     This method should never be executed. All GoQuorum processing must happen in the GoQuorumBlockProcessor.
-    */
-    throw new IllegalStateException("Tried to process GoQuorum block on AbstractBlockProcessor");
-  }
+  BlockProcessingResult processBlock(
+          final ProtocolContext protocolContext,
+          final Blockchain blockchain,
+          final MutableWorldState worldState,
+          final Block block,
+          final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction);
 
   /**
    * Get ommer reward in ${@link Wei}
@@ -169,7 +92,7 @@ public interface BlockProcessor {
    * @return ommer reward
    */
   default Wei getOmmerReward(
-      final Wei blockReward, final long blockNumber, final long ommerBlockNumber) {
+          final Wei blockReward, final long blockNumber, final long ommerBlockNumber) {
     final long distance = blockNumber - ommerBlockNumber;
     return blockReward.subtract(blockReward.multiply(distance).divide(8));
   }
@@ -183,7 +106,7 @@ public interface BlockProcessor {
    * @return coinbase reward
    */
   default Wei getCoinbaseReward(
-      final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
+          final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
     return blockReward.add(blockReward.multiply(numberOfOmmers).divide(32));
   }
 }

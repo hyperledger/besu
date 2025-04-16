@@ -24,24 +24,26 @@ import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -77,6 +79,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   private final ProtocolSchedule protocolSchedule;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
+  private BlockImportTracerProvider blockImportTracerProvider = null;
 
   protected AbstractBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -93,48 +96,81 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.protocolSchedule = protocolSchedule;
   }
 
+  private BlockAwareOperationTracer getBlockImportTracer(
+      final ProtocolContext protocolContext, final BlockHeader header) {
+
+    if (blockImportTracerProvider == null) {
+      // fetch from context once, and keep.
+      blockImportTracerProvider =
+          Optional.ofNullable(protocolContext.getPluginServiceManager())
+              .flatMap(serviceManager -> serviceManager.getService(BlockImportTracerProvider.class))
+              // if block import tracer provider is not specified by plugin, default to no tracing
+              .orElse(
+                  (__) -> {
+                    LOG.trace("Block Import uses NO_TRACING");
+                    return BlockAwareOperationTracer.NO_TRACING;
+                  });
+    }
+
+    return blockImportTracerProvider.getBlockImportTracer(header);
+  }
+
+  /**
+   * Processes the block with no privateMetadata and no preprocessor.
+   *
+   * @param protocolContext the current context of the protocol
+   * @param blockchain the blockchain to append the block to
+   * @param worldState the world state to apply changes to
+   * @param block the block to process
+   * @return the block processing result
+   */
   @Override
   public BlockProcessingResult processBlock(
       final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final Optional<List<Withdrawal>> maybeWithdrawals) {
+      final Block block) {
     return processBlock(
         protocolContext,
         blockchain,
         worldState,
-        blockHeader,
-        transactions,
-        ommers,
-        maybeWithdrawals,
+        block,
         new NoPreprocessing());
   }
 
-  protected BlockProcessingResult processBlock(
+  @Override
+  public BlockProcessingResult processBlock(
       final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final Optional<List<Withdrawal>> maybeWithdrawals,
+      final Block block,
       final PreprocessingFunction preprocessingBlockFunction) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     long currentBlobGasUsed = 0;
 
+    var blockHeader = block.getHeader();
+    var blockBody = block.getBody();
+    var ommers = blockBody.getOmmers();
+    var transactions = blockBody.getTransactions();
+    var maybeWithdrawals = blockBody.getWithdrawals();
+
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
     final BlockHashLookup blockHashLookup =
         protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader);
-    final BlockProcessingContext blockProcessingContext =
-        new BlockProcessingContext(
-            blockHeader, worldState, protocolSpec, blockHashLookup, OperationTracer.NO_TRACING);
-    protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
+
+    final BlockAwareOperationTracer blockTracer =
+        getBlockImportTracer(protocolContext, blockHeader);
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
+
+    LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
+    blockTracer.traceStartBlock(blockHeader, blockHeader.getCoinbase());
+
+    final BlockProcessingContext blockProcessingContext =
+        new BlockProcessingContext(
+            blockHeader, worldState, protocolSpec, blockHashLookup, blockTracer);
+    protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
 
     Optional<BlockHeader> maybeParentHeader =
         blockchain.getBlockHeader(blockHeader.getParentHash());
@@ -170,9 +206,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       TransactionProcessingResult transactionProcessingResult =
           getTransactionProcessingResult(
               preProcessingContext,
-              worldState,
+              blockProcessingContext,
               blockUpdater,
-              blockHeader,
               blobGasPrice,
               miningBeneficiary,
               transaction,
@@ -236,14 +271,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
     }
 
-    // EIP-7685: process EL requests
-    final Optional<RequestProcessorCoordinator> requestProcessor =
-        protocolSpec.getRequestProcessorCoordinator();
     Optional<List<Request>> maybeRequests = Optional.empty();
-    if (requestProcessor.isPresent()) {
-      RequestProcessingContext requestProcessingContext =
-          new RequestProcessingContext(blockProcessingContext, receipts);
-      maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+    try {
+      // EIP-7685: process EL requests
+      final Optional<RequestProcessorCoordinator> requestProcessor =
+          protocolSpec.getRequestProcessorCoordinator();
+      if (requestProcessor.isPresent()) {
+        RequestProcessingContext requestProcessingContext =
+            new RequestProcessingContext(blockProcessingContext, receipts);
+        maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+      }
+    } catch (final Exception e) {
+      LOG.error("failed processing requests", e);
+      return new BlockProcessingResult(Optional.empty(), e);
     }
 
     if (maybeRequests.isPresent() && blockHeader.getRequestsHash().isPresent()) {
@@ -267,6 +307,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
 
+    LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
+    blockTracer.traceEndBlock(blockHeader, blockBody);
+
     try {
       worldState.persist(blockHeader);
     } catch (MerkleTrieException e) {
@@ -275,6 +318,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
       throw e;
+    } catch (StateRootMismatchException ex) {
+      LOG.error(
+          "failed persisting block due to stateroot mismatch; expected {}, actual {}",
+          ex.getExpectedRoot().toHexString(),
+          ex.getActualRoot().toHexString());
+      return new BlockProcessingResult(Optional.empty(), ex.getMessage());
     } catch (Exception e) {
       LOG.error("failed persisting block", e);
       return new BlockProcessingResult(Optional.empty(), e);
@@ -287,9 +336,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected TransactionProcessingResult getTransactionProcessingResult(
       final Optional<PreprocessingContext> preProcessingContext,
-      final MutableWorldState worldState,
+      final BlockProcessingContext blockProcessingContext,
       final WorldUpdater blockUpdater,
-      final BlockHeader blockHeader,
       final Wei blobGasPrice,
       final Address miningBeneficiary,
       final Transaction transaction,
@@ -297,10 +345,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHashLookup blockHashLookup) {
     return transactionProcessor.processTransaction(
         blockUpdater,
-        blockHeader,
+        blockProcessingContext.getBlockHeader(),
         transaction,
         miningBeneficiary,
-        OperationTracer.NO_TRACING,
+        blockProcessingContext.getOperationTracer(),
         blockHashLookup,
         TransactionValidationParams.processingBlock(),
         blobGasPrice);

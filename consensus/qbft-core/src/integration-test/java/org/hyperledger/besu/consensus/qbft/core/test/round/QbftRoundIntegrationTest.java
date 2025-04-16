@@ -30,7 +30,6 @@ import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockAdaptor;
-import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHeaderAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
@@ -41,25 +40,19 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockImporter;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftExtraDataProvider;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -82,14 +75,12 @@ public class QbftRoundIntegrationTest {
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final Subscribers<QbftMinedBlockObserver> subscribers = Subscribers.create();
   private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+  private final QbftBlockInterface blockInterface =
+      new QbftBlockInterfaceAdaptor(new BftBlockInterface(bftExtraDataCodec));
   private MessageFactory peerMessageFactory;
   private MessageFactory peerMessageFactory2;
-  private ProtocolContext protocolContext;
 
   @Mock private QbftProtocolSchedule protocolSchedule;
-  @Mock private QbftProtocolSpec protocolSpec;
-  @Mock private MutableBlockchain blockChain;
-  @Mock private WorldStateArchive worldStateArchive;
   @Mock private QbftBlockImporter blockImporter;
 
   @Mock private QbftBlockCreator blockCreator;
@@ -101,7 +92,6 @@ public class QbftRoundIntegrationTest {
   @Mock private StubValidatorMulticaster multicaster;
   @Mock private QbftBlockHeader parentHeader;
   @Mock private QbftBlockCodec blockEncoder;
-  @Mock private QbftExtraDataProvider qbftExtraDataProvider;
 
   private QbftBlock proposedBlock;
 
@@ -131,22 +121,11 @@ public class QbftRoundIntegrationTest {
     headerTestFixture.number(1);
     final BlockHeader header = headerTestFixture.buildHeader();
     final Block block = new Block(header, new BlockBody(emptyList(), emptyList()));
-    final QbftBlockHeader qbftBlockHeader = new QbftBlockHeaderAdaptor(header);
     proposedBlock = new QbftBlockAdaptor(block);
-    when(qbftExtraDataProvider.getExtraData(qbftBlockHeader)).thenReturn(proposedExtraData);
 
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
+    when(protocolSchedule.getBlockImporter(any())).thenReturn(blockImporter);
 
     when(blockImporter.importBlock(any())).thenReturn(true);
-
-    protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            new QbftContext(
-                null, new QbftBlockInterfaceAdaptor(new BftBlockInterface(qbftExtraDataEncoder))),
-            new BadBlockManager());
   }
 
   @Test
@@ -157,15 +136,13 @@ public class QbftRoundIntegrationTest {
         new QbftRound(
             roundState,
             blockCreator,
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             subscribers,
             nodeKey,
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
-            qbftExtraDataProvider,
             parentHeader);
 
     round.handleProposalMessage(
@@ -185,7 +162,6 @@ public class QbftRoundIntegrationTest {
     final Block sealedBesuBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
     final QbftBlock sealedBlock = new QbftBlockAdaptor(sealedBesuBlock);
     when(blockCreator.createSealedBlock(
-            qbftExtraDataProvider,
             proposedBlock,
             roundIdentifier.getRoundNumber(),
             List.of(remoteCommitSeal, remoteCommitSeal)))
@@ -197,15 +173,13 @@ public class QbftRoundIntegrationTest {
         new QbftRound(
             roundState,
             blockCreator,
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             subscribers,
             nodeKey,
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec,
-            qbftExtraDataProvider,
             parentHeader);
 
     // inject a block first, then a prepare on it.

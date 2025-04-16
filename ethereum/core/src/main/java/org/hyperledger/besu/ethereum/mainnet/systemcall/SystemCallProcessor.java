@@ -97,8 +97,13 @@ public class SystemCallProcessor {
       return frame.getOutputData();
     }
 
-    // the call must execute to completion
-    throw new RuntimeException("System call did not execute to completion");
+    // The call must execute to completion
+    String errorMessage =
+        frame
+            .getExceptionalHaltReason()
+            .map(haltReason -> "System call halted: " + haltReason.getDescription())
+            .orElse("System call did not execute to completion");
+    throw new RuntimeException(errorMessage);
   }
 
   private MessageFrame createMessageFrame(

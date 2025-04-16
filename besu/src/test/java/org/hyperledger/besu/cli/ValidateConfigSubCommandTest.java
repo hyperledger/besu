@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.BesuInfo;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.io.IOException;
 import java.net.URL;
@@ -65,7 +65,8 @@ public class ValidateConfigSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingValidateConfigSubCommandVersionMustDisplayVersion() {
     parseCommand(VALIDATE_CONFIG_SUBCOMMAND_NAME, "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 

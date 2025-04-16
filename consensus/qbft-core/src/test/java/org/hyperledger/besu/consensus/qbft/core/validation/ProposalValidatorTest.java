@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.qbft.core.validation.ValidationTestHelpers.createEmptyRoundChangePayloads;
 import static org.hyperledger.besu.consensus.qbft.core.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
@@ -39,12 +38,8 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSpec;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 
 import java.util.HashMap;
 import java.util.List;
@@ -84,11 +79,8 @@ public class ProposalValidatorTest {
   private static final int VALIDATOR_COUNT = 4;
   @Mock private QbftBlockValidator blockValidator;
   @Mock private QbftProtocolSchedule protocolSchedule;
-  @Mock private QbftProtocolSpec protocolSpec;
   @Mock private QbftBlockCodec blockEncoder;
   @Mock private QbftBlockInterface blockInterface;
-  @Mock private QbftValidatorProvider validatorProvider;
-  @Mock private ProtocolContext protocolContext;
   private QbftNodeList validators;
 
   private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
@@ -100,12 +92,7 @@ public class ProposalValidatorTest {
     when(blockValidator.validateBlock(any()))
         .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
-    QbftContext qbftContext = new QbftContext(validatorProvider, blockInterface);
-    lenient().when(protocolContext.getConsensusContext(QbftContext.class)).thenReturn(qbftContext);
-
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-
-    when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
+    when(protocolSchedule.getBlockValidator(any())).thenReturn(blockValidator);
 
     roundItems.put(ROUND_ID.ZERO, createRoundSpecificItems(0));
     roundItems.put(ROUND_ID.ONE, createRoundSpecificItems(1));
@@ -123,7 +110,7 @@ public class ProposalValidatorTest {
         block,
         roundIdentifier,
         new ProposalValidator(
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             validators.getNodeAddresses(),

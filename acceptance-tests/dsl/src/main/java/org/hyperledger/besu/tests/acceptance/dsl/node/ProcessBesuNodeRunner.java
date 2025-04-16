@@ -153,8 +153,20 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add(node.getNetwork().name());
     }
 
-    params.add("--sync-mode");
-    params.add("FULL");
+    if (node.getSynchronizerConfiguration() != null) {
+
+      if (node.getSynchronizerConfiguration().getSyncMode() != null) {
+        params.add("--sync-mode");
+        params.add(node.getSynchronizerConfiguration().getSyncMode().toString());
+      }
+      params.add("--sync-min-peers");
+      params.add(Integer.toString(node.getSynchronizerConfiguration().getSyncMinimumPeerCount()));
+    } else {
+      params.add("--sync-mode");
+      params.add("FULL");
+    }
+
+    params.add("--Xsnapsync-server-enabled");
 
     params.add("--discovery-enabled");
     params.add(Boolean.toString(node.isDiscoveryEnabled()));
@@ -179,6 +191,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     if (node.getMiningParameters().isMiningEnabled()) {
       params.add("--miner-enabled");
+      params.add("--miner-extra-data");
+      params.add(node.getMiningParameters().getExtraData().toHexString());
       params.add("--miner-coinbase");
       params.add(node.getMiningParameters().getCoinbase().get().toString());
       params.add("--miner-stratum-port");

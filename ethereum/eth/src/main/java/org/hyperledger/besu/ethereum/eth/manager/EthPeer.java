@@ -21,9 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
@@ -108,11 +106,12 @@ public class EthPeer implements Comparable<EthPeer> {
 
   static {
     roundMessages = new HashMap<>();
-    roundMessages.put(EthPV62.BLOCK_HEADERS, EthPV62.GET_BLOCK_HEADERS);
-    roundMessages.put(EthPV62.BLOCK_BODIES, EthPV62.GET_BLOCK_BODIES);
-    roundMessages.put(EthPV63.RECEIPTS, EthPV63.GET_RECEIPTS);
-    roundMessages.put(EthPV63.NODE_DATA, EthPV63.GET_NODE_DATA);
-    roundMessages.put(EthPV65.POOLED_TRANSACTIONS, EthPV65.GET_POOLED_TRANSACTIONS);
+    roundMessages.put(EthProtocolMessages.BLOCK_HEADERS, EthProtocolMessages.GET_BLOCK_HEADERS);
+    roundMessages.put(EthProtocolMessages.BLOCK_BODIES, EthProtocolMessages.GET_BLOCK_BODIES);
+    roundMessages.put(EthProtocolMessages.RECEIPTS, EthProtocolMessages.GET_RECEIPTS);
+    roundMessages.put(EthProtocolMessages.NODE_DATA, EthProtocolMessages.GET_NODE_DATA);
+    roundMessages.put(
+        EthProtocolMessages.POOLED_TRANSACTIONS, EthProtocolMessages.GET_POOLED_TRANSACTIONS);
 
     roundMessages.put(SnapV1.ACCOUNT_RANGE, SnapV1.GET_ACCOUNT_RANGE);
     roundMessages.put(SnapV1.STORAGE_RANGE, SnapV1.GET_STORAGE_RANGE);
@@ -146,27 +145,20 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   private void initEthRequestManagers() {
-    final boolean supportsRequestId =
-        getAgreedCapabilities().stream().anyMatch(EthProtocol::isEth66Compatible);
     // eth protocol
     requestManagers.put(
         EthProtocol.NAME,
         Map.ofEntries(
             Map.entry(
-                EthPV62.GET_BLOCK_HEADERS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                EthProtocolMessages.GET_BLOCK_HEADERS, new RequestManager(this, EthProtocol.NAME)),
             Map.entry(
-                EthPV62.GET_BLOCK_BODIES,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                EthProtocolMessages.GET_BLOCK_BODIES, new RequestManager(this, EthProtocol.NAME)),
+            Map.entry(EthProtocolMessages.GET_RECEIPTS, new RequestManager(this, EthProtocol.NAME)),
             Map.entry(
-                EthPV63.GET_RECEIPTS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                EthProtocolMessages.GET_NODE_DATA, new RequestManager(this, EthProtocol.NAME)),
             Map.entry(
-                EthPV63.GET_NODE_DATA,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
-            Map.entry(
-                EthPV65.GET_POOLED_TRANSACTIONS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME))));
+                EthProtocolMessages.GET_POOLED_TRANSACTIONS,
+                new RequestManager(this, EthProtocol.NAME))));
   }
 
   private void initSnapRequestManagers() {
@@ -174,10 +166,10 @@ public class EthPeer implements Comparable<EthPeer> {
     requestManagers.put(
         SnapProtocol.NAME,
         Map.ofEntries(
-            Map.entry(SnapV1.GET_ACCOUNT_RANGE, new RequestManager(this, true, SnapProtocol.NAME)),
-            Map.entry(SnapV1.GET_STORAGE_RANGE, new RequestManager(this, true, SnapProtocol.NAME)),
-            Map.entry(SnapV1.GET_BYTECODES, new RequestManager(this, true, SnapProtocol.NAME)),
-            Map.entry(SnapV1.GET_TRIE_NODES, new RequestManager(this, true, SnapProtocol.NAME))));
+            Map.entry(SnapV1.GET_ACCOUNT_RANGE, new RequestManager(this, SnapProtocol.NAME)),
+            Map.entry(SnapV1.GET_STORAGE_RANGE, new RequestManager(this, SnapProtocol.NAME)),
+            Map.entry(SnapV1.GET_BYTECODES, new RequestManager(this, SnapProtocol.NAME)),
+            Map.entry(SnapV1.GET_TRIE_NODES, new RequestManager(this, SnapProtocol.NAME))));
   }
 
   public void markValidated(final PeerValidator validator) {
@@ -316,7 +308,7 @@ public class EthPeer implements Comparable<EthPeer> {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(hash, maxHeaders, skip, reverse);
     final RequestManager requestManager =
-        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_HEADERS);
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_BLOCK_HEADERS);
     return sendRequest(requestManager, message);
   }
 
@@ -326,33 +318,36 @@ public class EthPeer implements Comparable<EthPeer> {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(blockNumber, maxHeaders, skip, reverse);
     return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_HEADERS), message);
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_BLOCK_HEADERS), message);
   }
 
   public RequestManager.ResponseStream getBodies(final List<Hash> blockHashes)
       throws PeerNotConnected {
     final GetBlockBodiesMessage message = GetBlockBodiesMessage.create(blockHashes);
     return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_BODIES), message);
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_BLOCK_BODIES), message);
   }
 
   public RequestManager.ResponseStream getReceipts(final List<Hash> blockHashes)
       throws PeerNotConnected {
     final GetReceiptsMessage message = GetReceiptsMessage.create(blockHashes);
-    return sendRequest(requestManagers.get(EthProtocol.NAME).get(EthPV63.GET_RECEIPTS), message);
+    return sendRequest(
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_RECEIPTS), message);
   }
 
   public RequestManager.ResponseStream getNodeData(final Iterable<Hash> nodeHashes)
       throws PeerNotConnected {
     final GetNodeDataMessage message = GetNodeDataMessage.create(nodeHashes);
-    return sendRequest(requestManagers.get(EthProtocol.NAME).get(EthPV63.GET_NODE_DATA), message);
+    return sendRequest(
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_NODE_DATA), message);
   }
 
   public RequestManager.ResponseStream getPooledTransactions(final List<Hash> hashes)
       throws PeerNotConnected {
     final GetPooledTransactionsMessage message = GetPooledTransactionsMessage.create(hashes);
     return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthPV65.GET_POOLED_TRANSACTIONS), message);
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_POOLED_TRANSACTIONS),
+        message);
   }
 
   public RequestManager.ResponseStream getSnapAccountRange(
