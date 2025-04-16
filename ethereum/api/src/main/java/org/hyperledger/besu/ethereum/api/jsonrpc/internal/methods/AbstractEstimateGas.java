@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -44,8 +45,6 @@ import java.util.Optional;
 import com.google.common.annotations.VisibleForTesting;
 
 public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
-
-  protected static final long DEFAULT_BLOCK_GAS_USED = 21_000;
 
   protected final TransactionSimulator transactionSimulator;
 
@@ -68,7 +67,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   protected abstract Object simulate(
       final JsonRpcRequestContext requestContext,
       final CallParameter callParams,
-      final long gasLimit,
+      final ProcessableBlockHeader blockHeader,
       final TransactionSimulationFunction simulationFunction);
 
   @Override
@@ -76,13 +75,13 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final JsonCallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
     final var validationParams = getTransactionValidationParams(jsonCallParameter);
     final var maybeStateOverrides = getAddressStateOverrideMap(requestContext);
+    // TODO this is the header for which to get the protocolSpec and GasCalculator
     final var pendingBlockHeader = transactionSimulator.simulatePendingBlockHeader();
     final TransactionSimulationFunction simulationFunction =
         (cp, op) ->
             transactionSimulator.processOnPending(
                 cp, maybeStateOverrides, validationParams, op, pendingBlockHeader);
-    return simulate(
-        requestContext, jsonCallParameter, pendingBlockHeader.getGasLimit(), simulationFunction);
+    return simulate(requestContext, jsonCallParameter, pendingBlockHeader, simulationFunction);
   }
 
   @Override
@@ -107,8 +106,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
         (cp, op) ->
             transactionSimulator.process(
                 cp, maybeStateOverrides, validationParams, op, blockHeader);
-    return simulate(
-        requestContext, jsonCallParameter, blockHeader.getGasLimit(), simulationFunction);
+    return simulate(requestContext, jsonCallParameter, blockHeader, simulationFunction);
   }
 
   private Optional<BlockHeader> blockHeader(final long blockNumber) {
@@ -205,15 +203,19 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     }
   }
 
-  protected boolean attemptOptimisticSimulationWithDefaultBlockGasUsed(
+  protected boolean attemptOptimisticSimulationWithMinimumBlockGasUsed(
+      final ProcessableBlockHeader blockHeader,
       final CallParameter callParams,
       final TransactionSimulationFunction simulationFunction,
       final EstimateGasOperationTracer operationTracer) {
+
+    // Optimistic simulation - get gas min from GasCalculator
+    final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);
+
     // If the transaction is a plain value transfer, try gasLimit 21_000. It is likely to succeed.
     if (callParams.getPayload() == null || (callParams.getPayload().isEmpty())) {
       var maybeSimpleTransferResult =
-          simulationFunction.simulate(
-              overrideGasLimit(callParams, DEFAULT_BLOCK_GAS_USED), operationTracer);
+          simulationFunction.simulate(overrideGasLimit(callParams, minTxCost), operationTracer);
       return maybeSimpleTransferResult.isPresent()
           && maybeSimpleTransferResult.get().isSuccessful();
     }

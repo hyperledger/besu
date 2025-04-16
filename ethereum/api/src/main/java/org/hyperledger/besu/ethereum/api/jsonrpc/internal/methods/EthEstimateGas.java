@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -55,22 +56,26 @@ public class EthEstimateGas extends AbstractEstimateGas {
   protected Object simulate(
       final JsonRpcRequestContext requestContext,
       final CallParameter callParams,
-      final long gasLimit,
+      final ProcessableBlockHeader blockHeader,
       final TransactionSimulationFunction simulationFunction) {
 
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
+    final long gasLimit = blockHeader.getGasLimit();
     LOG.debug(
         "Processing transaction with tolerance {}; callParams: {}",
         estimateGasToleranceRatio,
         callParams);
 
-    if (attemptOptimisticSimulationWithDefaultBlockGasUsed(
-        callParams, simulationFunction, operationTracer)) {
-      return Quantity.create(DEFAULT_BLOCK_GAS_USED);
+    if (attemptOptimisticSimulationWithMinimumBlockGasUsed(
+        blockHeader, callParams, simulationFunction, operationTracer)) {
+      // Optimistic simulation - get gas min from GasCalculator
+      final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);
+      return Quantity.create(minTxCost);
     }
 
     final var maybeResult =
-        simulationFunction.simulate(overrideGasLimit(callParams, gasLimit), operationTracer);
+        simulationFunction.simulate(
+            overrideGasLimit(callParams, blockHeader.getGasLimit()), operationTracer);
 
     final Optional<JsonRpcErrorResponse> maybeErrorResponse =
         validateSimulationResult(requestContext, maybeResult);
