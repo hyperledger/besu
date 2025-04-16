@@ -747,20 +747,21 @@ public record EOFLayout(
       out.print(prefix);
       out.printf("  %04x # max stack increase:  %1$d%n", cs.getMaxStackIncrease());
     }
+    byte[] byteCode = container.toArray();
     for (int i = 0; i < codeSections.length; i++) {
       CodeSection cs = getCodeSection(i);
       out.print(prefix);
       out.printf(
-          "       # Code section %d - in=%d out=%s extra=%d%n",
+          "       # Code section %d - in=%d out=%s max_increase=%d%n",
           i, cs.inputs, cs.isReturning() ? cs.outputs : "non-returning", cs.maxStackIncreae);
-      byte[] byteCode = container.slice(cs.getEntryPoint(), cs.getLength()).toArray();
-      int pc = 0;
-      while (pc < byteCode.length) {
+      int pc = cs.getEntryPoint();
+      int endPc = pc + cs.getLength();
+      while (pc < endPc) {
         out.print(prefix);
         OpcodeInfo ci = V1_OPCODES[byteCode[pc] & 0xff];
 
         if (ci.opcode() == RelativeJumpVectorOperation.OPCODE) {
-          if (byteCode.length <= pc + 1) {
+          if (pc + 1 >= byteCode.length) {
             out.printf(
                 "    %02x # [%d] %s(<truncated instruction>)%n", byteCode[pc], pc, ci.name());
             pc++;
@@ -782,7 +783,7 @@ public record EOFLayout(
               int b1 = byteCode[j] & 0xff;
               out.print(b0 << 8 | b1);
             }
-            if (byteCode.length < calculatedTableEnd) {
+            if (calculatedTableEnd > byteCode.length) {
               out.print("<truncated immediate>");
             }
             pc += tableSize * 2 + 4;
@@ -828,7 +829,7 @@ public record EOFLayout(
           }
           out.printf(" # [%d] %s", pc, ci.name());
           if (advance == 2) {
-            if (byteCode.length <= pc + 1) {
+            if (pc + 1 >= byteCode.length) {
               out.print("(<truncated immediate>)");
             } else {
               out.printf("(%d)", byteCode[pc + 1] & 0xff);
@@ -838,7 +839,7 @@ public record EOFLayout(
             for (int j = 1; j < advance && (pc + j) < byteCode.length; j++) {
               out.printf("%02x", byteCode[pc + j]);
             }
-            if ((pc + advance) >= byteCode.length) {
+            if ((pc + advance) > byteCode.length) {
               out.print(" <truncated immediate>");
             }
             out.print(")");

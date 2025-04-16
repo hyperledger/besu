@@ -103,7 +103,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
-      final PrivateMetadataUpdater privateMetadataUpdater,
+      final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
       final Executor executor) {
 
     completableFuturesForBackgroundTransactions = new CompletableFuture[transactions.size()];
@@ -137,7 +137,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
+      final Optional<PrivateMetadataUpdater> privateMetadataUpdater) {
     final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
     if (chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
       try (BonsaiWorldState ws =

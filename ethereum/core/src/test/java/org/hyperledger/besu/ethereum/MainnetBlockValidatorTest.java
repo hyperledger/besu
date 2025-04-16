@@ -106,11 +106,7 @@ public class MainnetBlockValidatorTest {
     when(blockBodyValidator.validateBodyLight(any(), any(), any(), any())).thenReturn(true);
     when(blockProcessor.processBlock(eq(protocolContext), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
-    when(blockProcessor.processBlock(any(), any(), any(), any()))
-        .thenReturn(successfulProcessingResult);
-    when(blockProcessor.processBlock(any(), any(), any(), any(), any()))
-        .thenReturn(successfulProcessingResult);
-    when(blockProcessor.processBlock(any(), any(), any(), any(), any(), any(), any(), any()))
+    when(blockProcessor.processBlock(eq(protocolContext), any(), any(), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
 
     assertNoBadBlocks();

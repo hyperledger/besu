@@ -28,12 +28,11 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
@@ -1159,21 +1158,32 @@ public abstract class MainnetProtocolSpecs {
         final ProtocolContext protocolContext,
         final Blockchain blockchain,
         final MutableWorldState worldState,
-        final BlockHeader blockHeader,
-        final List<Transaction> transactions,
-        final List<BlockHeader> ommers,
-        final Optional<List<Withdrawal>> withdrawals,
-        final PrivateMetadataUpdater privateMetadataUpdater) {
+        final Block block) {
+      return processBlock(
+          protocolContext,
+          blockchain,
+          worldState,
+          block,
+          Optional.empty(),
+          new AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing());
+    }
+
+    @Override
+    public BlockProcessingResult processBlock(
+        final ProtocolContext protocolContext,
+        final Blockchain blockchain,
+        final MutableWorldState worldState,
+        final Block block,
+        final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
+        final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
           protocolContext,
           blockchain,
           worldState,
-          blockHeader,
-          transactions,
-          ommers,
-          withdrawals,
-          privateMetadataUpdater);
+          block,
+          privateMetadataUpdater,
+          preprocessingBlockFunction);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

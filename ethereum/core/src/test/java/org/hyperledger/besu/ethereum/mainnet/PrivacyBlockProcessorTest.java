@@ -117,20 +117,16 @@ class PrivacyBlockProcessorTest {
             eq(protocolContext),
             eq(blockchain),
             eq(mutableWorldState),
-            eq(firstBlock.getHeader()),
-            eq(firstBlock.getBody().getTransactions()),
-            eq(firstBlock.getBody().getOmmers()),
-            eq(Optional.empty()),
+            eq(firstBlock),
+            any(),
             any());
     verify(blockProcessor)
         .processBlock(
             eq(protocolContext),
             eq(blockchain),
             eq(mutableWorldState),
-            eq(secondBlock.getHeader()),
-            eq(secondBlock.getBody().getTransactions()),
-            eq(secondBlock.getBody().getOmmers()),
-            eq(Optional.empty()),
+            eq(secondBlock),
+            any(),
             any());
   }
 
@@ -183,10 +179,8 @@ class PrivacyBlockProcessorTest {
             eq(protocolContext),
             eq(blockchain),
             eq(mutableWorldState),
-            eq(secondBlock.getHeader()),
-            eq(secondBlock.getBody().getTransactions()),
-            eq(secondBlock.getBody().getOmmers()),
-            eq(Optional.empty()),
+            eq(secondBlock),
+            any(),
             any());
   }
 
