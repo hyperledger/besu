@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
 
 import javax.annotation.Nonnull;
 
@@ -39,8 +41,6 @@ import org.slf4j.LoggerFactory;
  * execute, and then updates the current message context based on its execution.
  */
 public abstract class AbstractExtCallOperation extends AbstractCallOperation {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractExtCallOperation.class);
 
   static final int STACK_TO = 0;
   static final int STACK_INPUT_OFFSET = 1;
@@ -116,12 +116,14 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
       return new OperationResult(
           gasCalculator.callValueTransferGasCost(), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
+    long valueTransferCost = zeroValue ? 0 : gasCalculator.callValueTransferGasCost();
+
     if (toBytes.size() > Address.SIZE) {
       return new OperationResult(
           clampedAdd(
               clampedAdd(
                   gasCalculator.memoryExpansionGasCost(frame, inputOffset, inputLength),
-                  (zeroValue ? 0 : gasCalculator.callValueTransferGasCost())),
+                      valueTransferCost),
               gasCalculator.getColdAccountAccessCost()),
           ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
     }
@@ -129,16 +131,21 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     final Account contract = frame.getWorldUpdater().get(to);
 
     boolean accountCreation = (contract == null || contract.isEmpty()) && !zeroValue;
+    boolean codeDelegation = contract != null && hasCodeDelegation(contract.getCode());
+
+    long memoryExpansionCost = gasCalculator.memoryExpansionGasCost(frame, inputOffset, inputLength);
+    long accountAccessCost = frame.warmUpAddress(to) || gasCalculator.isPrecompile(to)
+            ? gasCalculator.getWarmStorageReadCost()
+            : gasCalculator.getColdAccountAccessCost();
+    long accountCreationCost = accountCreation ? gasCalculator.newAccountGasCost() : 0;
+    long codeDelegationCost = codeDelegation ? CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract) : 0;
+
     long cost =
         clampedAdd(
             clampedAdd(
-                clampedAdd(
-                    gasCalculator.memoryExpansionGasCost(frame, inputOffset, inputLength),
-                    (zeroValue ? 0 : gasCalculator.callValueTransferGasCost())),
-                (frame.warmUpAddress(to) || gasCalculator.isPrecompile(to)
-                    ? gasCalculator.getWarmStorageReadCost()
-                    : gasCalculator.getColdAccountAccessCost())),
-            (accountCreation ? gasCalculator.newAccountGasCost() : 0));
+                clampedAdd(memoryExpansionCost, valueTransferCost),
+                clampedAdd(accountAccessCost, accountCreationCost)),
+            codeDelegationCost);
     long currentGas = frame.getRemainingGas();
     if (currentGas < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
@@ -174,18 +181,6 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     // transferring value you don't have is not a halting exception, just a failure
     if (!zeroValue && (value.compareTo(balance) > 0)) {
       return softFailure(frame, cost);
-    }
-
-    try {
-      deductGasForCodeDelegationResolution(frame, contract);
-    } catch (InsufficientGasException e) {
-      LOG.atDebug()
-          .setMessage(
-              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
-          .addArgument(frame.getRemainingGas())
-          .addArgument(e.getGasCost())
-          .log();
-      return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     // stack too deep, for large gas systems.
