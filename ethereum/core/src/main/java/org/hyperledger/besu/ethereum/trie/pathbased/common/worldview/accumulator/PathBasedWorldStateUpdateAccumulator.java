@@ -250,6 +250,15 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     return super.getAccount(address);
   }
 
+  /**
+   * Note: PathBasedAccount implements both MutableAccount and AccountValue, so this cast is safe
+   * even though the compiler can't verify it.
+   */
+  @Override
+  public <T extends AccountValue> T getAccountValue(final Address address) {
+    return (T) getAccount(address);
+  }
+
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
     PathBasedValue<ACCOUNT> pathBasedValue = accountsToUpdate.get(address);

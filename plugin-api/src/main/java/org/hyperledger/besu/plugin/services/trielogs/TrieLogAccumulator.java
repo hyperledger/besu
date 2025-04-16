@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -47,4 +48,19 @@ public interface TrieLogAccumulator {
    */
   Map<Address, ? extends Map<StorageSlotKey, ? extends TrieLog.LogTuple<UInt256>>>
       getStorageToUpdate();
+
+  /**
+   * Returns current account value
+   *
+   * @return the current AccountValue.
+   */
+  <T extends AccountValue> T getAccountValue(Address address);
+
+  /**
+   * Returns current account storage slot value
+   *
+   * @return the current storage slot value
+   */
+  Optional<UInt256> getStorageValueByStorageSlotKey(
+      final Address address, final StorageSlotKey storageSlotKey);
 }
