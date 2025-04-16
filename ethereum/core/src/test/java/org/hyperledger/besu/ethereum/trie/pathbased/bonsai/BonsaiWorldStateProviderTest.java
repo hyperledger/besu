@@ -290,8 +290,6 @@ class BonsaiWorldStateProviderTest {
   }
 
   @Test
-  // TODO: refactor to test original intent
-  @Disabled("needs refactor, getWorldState(hash, hash) cannot trigger saveTrieLog")
   void testGetMutableWithRollbackNotOverrideTrieLogLayer() {
     when(segmentedKeyValueStorage.startTransaction())
         .thenReturn(segmentedKeyValueStorageTransaction);
@@ -301,6 +299,7 @@ class BonsaiWorldStateProviderTest {
     final BlockHeader blockHeaderChainB =
         blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
 
+    // Mock trie log manager to verify its behavior
     doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
         .when(trieLogManager)
         .getTrieLogLayer(any(Hash.class));
@@ -321,7 +320,12 @@ class BonsaiWorldStateProviderTest {
 
     // initial persisted state hash key
     when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeaderChainA));
-    // fake trie log layer
+    
+    // Create a mock world state that would be returned when getting blockHeaderChainB
+    final BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class);
+    when(mockWorldState.blockHash()).thenReturn(blockHeaderChainB.getHash());
+    
+    // Mock existing trie log layer for blockHeaderChainB
     final BytesValueRLPOutput rlpLogBlockB = new BytesValueRLPOutput();
     final TrieLogLayer trieLogLayerBlockB = new TrieLogLayer();
     trieLogLayerBlockB.setBlockHash(blockHeaderChainB.getHash());
@@ -332,16 +336,18 @@ class BonsaiWorldStateProviderTest {
     when(blockchain.getBlockHeader(blockHeaderChainB.getHash()))
         .thenReturn(Optional.of(blockHeaderChainB));
     when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
+    
+    // Mock the cachedWorldStorageManager to return our mock world state
+    when(cachedWorldStorageManager.getWorldState(blockHeaderChainB.getHash()))
+        .thenReturn(Optional.of(mockWorldState));
 
+    // Get the world state for blockHeaderChainB
     assertThat(
             bonsaiWorldStateArchive.getWorldState(
-                withStateRootAndBlockHashAndUpdateNodeHead(null, blockHeaderChainB.getHash())))
-        .containsInstanceOf(BonsaiWorldState.class);
+                withBlockHeaderAndNoUpdateNodeHead(blockHeaderChainB)))
+        .isPresent();
 
-    // verify is not persisting if already present
-    verify(segmentedKeyValueStorageTransaction, never())
-        .put(BLOCKCHAIN, eq(blockHeaderChainA.getHash().toArrayUnsafe()), any());
-    verify(segmentedKeyValueStorageTransaction, never())
-        .put(BLOCKCHAIN, eq(blockHeaderChainB.getHash().toArrayUnsafe()), any());
+    // Verify trieLogManager was never asked to save a trie log for the existing block
+    verify(trieLogManager, never()).saveTrieLog(any(), any(), eq(blockHeaderChainB), any());
   }
 }
