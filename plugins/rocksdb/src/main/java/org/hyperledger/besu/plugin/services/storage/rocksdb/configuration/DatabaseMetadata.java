@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DatabindException;
@@ -194,5 +195,6 @@ public class DatabaseMetadata {
 
   @JsonSerialize
   @SuppressWarnings("unused")
+  @JsonIgnoreProperties({"privacyVersion"})
   private record MetadataV2(DataStorageFormat format, int version) {}
 }
