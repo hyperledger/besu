@@ -270,6 +270,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
   }
 
   private long batchSize(final MessageData msg) {
-    return ((GetBlockBodiesMessage) msg).hashes().spliterator().getExactSizeIfKnown();
+    GetBlockBodiesMessage getBlockBodiesMessage = GetBlockBodiesMessage.readFrom(msg);
+    return getBlockBodiesMessage.hashes().spliterator().getExactSizeIfKnown();
   }
 }

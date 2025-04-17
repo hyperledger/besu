@@ -69,6 +69,30 @@ public class BlockchainServiceImpl implements BlockchainService {
         .map(block -> blockContext(block::getHeader, block::getBody));
   }
 
+  /**
+   * Gets block by hash
+   *
+   * @param hash the block hash
+   * @return the BlockContext if block exists otherwise empty
+   */
+  @Override
+  public Optional<BlockContext> getBlockByHash(final Hash hash) {
+    return blockchain
+        .getBlockByHash(hash)
+        .map(block -> blockContext(block::getHeader, block::getBody));
+  }
+
+  /**
+   * Gets block header by hash
+   *
+   * @param hash the block hash
+   * @return the block header if block exists otherwise empty
+   */
+  @Override
+  public Optional<BlockHeader> getBlockHeaderByHash(final Hash hash) {
+    return blockchain.getBlockHeader(hash).map(BlockHeader.class::cast);
+  }
+
   @Override
   public Hash getChainHeadHash() {
     return blockchain.getChainHeadHash();

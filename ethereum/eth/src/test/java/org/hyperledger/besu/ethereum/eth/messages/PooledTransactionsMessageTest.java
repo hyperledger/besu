@@ -44,13 +44,13 @@ public class PooledTransactionsMessageTest {
                 .payload(Bytes.EMPTY)
                 .signAndBuild(SignatureAlgorithmFactory.getInstance().generateKeyPair()));
     final PooledTransactionsMessage msg = PooledTransactionsMessage.create(tx);
-    assertThat(msg.getCode()).isEqualTo(EthPV65.POOLED_TRANSACTIONS);
+    assertThat(msg.getCode()).isEqualTo(EthProtocolMessages.POOLED_TRANSACTIONS);
     assertThat(msg.transactions()).isEqualTo(tx);
   }
 
   @Test
   public void readFromMessageWithWrongCodeThrows() {
-    final RawMessage rawMsg = new RawMessage(EthPV62.BLOCK_HEADERS, Bytes.of(0));
+    final RawMessage rawMsg = new RawMessage(EthProtocolMessages.BLOCK_HEADERS, Bytes.of(0));
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> PooledTransactionsMessage.readFrom(rawMsg));

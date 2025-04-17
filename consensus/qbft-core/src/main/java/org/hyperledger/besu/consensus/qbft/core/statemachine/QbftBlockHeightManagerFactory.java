@@ -19,6 +19,7 @@ import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorModeTransitionLogger;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ public class QbftBlockHeightManagerFactory {
   private final QbftFinalState finalState;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
+  private final QbftValidatorProvider validatorProvider;
   private final QbftValidatorModeTransitionLogger validatorModeTransitionLogger;
   private boolean isEarlyRoundChangeEnabled = false;
 
@@ -43,6 +45,7 @@ public class QbftBlockHeightManagerFactory {
    * @param roundFactory the round factory
    * @param messageValidatorFactory the message validator factory
    * @param messageFactory the message factory
+   * @param validatorProvider the validator provider
    * @param validatorModeTransitionLogger the validator mode transition logger
    */
   public QbftBlockHeightManagerFactory(
@@ -50,11 +53,13 @@ public class QbftBlockHeightManagerFactory {
       final QbftRoundFactory roundFactory,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
+      final QbftValidatorProvider validatorProvider,
       final QbftValidatorModeTransitionLogger validatorModeTransitionLogger) {
     this.roundFactory = roundFactory;
     this.finalState = finalState;
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
+    this.validatorProvider = validatorProvider;
     this.validatorModeTransitionLogger = validatorModeTransitionLogger;
   }
 
@@ -85,7 +90,13 @@ public class QbftBlockHeightManagerFactory {
     this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
   }
 
-  private BaseQbftBlockHeightManager createNoOpBlockHeightManager(
+  /**
+   * Creates a no-op height manager
+   *
+   * @param parentHeader the parent header
+   * @return the no-op height manager
+   */
+  protected BaseQbftBlockHeightManager createNoOpBlockHeightManager(
       final QbftBlockHeader parentHeader) {
     return new NoOpBlockHeightManager(parentHeader);
   }
@@ -113,6 +124,7 @@ public class QbftBlockHeightManagerFactory {
               finalState.getClock(),
               messageValidatorFactory,
               messageFactory,
+              validatorProvider,
               true);
     } else {
       roundChangeManager =
@@ -129,7 +141,8 @@ public class QbftBlockHeightManagerFactory {
               roundFactory,
               finalState.getClock(),
               messageValidatorFactory,
-              messageFactory);
+              messageFactory,
+              validatorProvider);
     }
 
     return qbftBlockHeightManager;

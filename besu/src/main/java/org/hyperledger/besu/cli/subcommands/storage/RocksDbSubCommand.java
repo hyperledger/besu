@@ -112,6 +112,13 @@ public class RocksDbSubCommand implements Runnable {
     @ParentCommand
     private RocksDbSubCommand rocksDbSubCommand;
 
+    @CommandLine.Option(
+        names = {"--column-family-filter", "-c"},
+        description = "Comma separated list of column family names for which to display stats",
+        split = " {0,1}, {0,1}",
+        arity = "1..*")
+    private List<String> columnFamilyFilter = new ArrayList<>();
+
     @Override
     public void run() {
 
@@ -125,16 +132,30 @@ public class RocksDbSubCommand implements Runnable {
               .resolve(DATABASE_PATH)
               .toString();
 
-      out.println("Column Family Stats...");
-      RocksDbHelper.forEachColumnFamily(
-          dbPath,
-          (rocksdb, cfHandle) -> {
-            try {
-              RocksDbHelper.printStatsForColumnFamily(rocksdb, cfHandle, out);
-            } catch (RocksDBException e) {
-              throw new RuntimeException(e);
-            }
-          });
+      if (!columnFamilyFilter.isEmpty()) {
+        out.println("Using column family filter: " + columnFamilyFilter);
+        RocksDbHelper.forFilteredColumnFamily(
+            dbPath,
+            (rocksdb, cfHandle) -> {
+              try {
+                RocksDbHelper.printStatsForColumnFamily(rocksdb, cfHandle, out);
+              } catch (RocksDBException e) {
+                throw new RuntimeException(e);
+              }
+            },
+            columnFamilyFilter);
+      } else {
+        out.println("Stats for All Column Families...");
+        RocksDbHelper.forEachColumnFamily(
+            dbPath,
+            (rocksdb, cfHandle) -> {
+              try {
+                RocksDbHelper.printStatsForColumnFamily(rocksdb, cfHandle, out);
+              } catch (RocksDBException e) {
+                throw new RuntimeException(e);
+              }
+            });
+      }
     }
   }
 }

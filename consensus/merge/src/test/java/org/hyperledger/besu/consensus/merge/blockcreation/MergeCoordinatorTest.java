@@ -197,7 +197,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .thenReturn(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
 
     protocolContext =
-        new ProtocolContext(blockchain, worldStateArchive, mergeContext, badBlockManager);
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withWorldStateArchive(worldStateArchive)
+            .withConsensusContext(mergeContext)
+            .withBadBlockManager(badBlockManager)
+            .build();
     var mutable = worldStateArchive.getWorldState();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
@@ -1008,6 +1013,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         Arguments.of("mainnet", 1L, 36_000_000L),
         Arguments.of("holesky", 17_000L, 36_000_000L),
         Arguments.of("sepolia", 11_155_111L, 36_000_000L),
+        Arguments.of("hoodi", 560_048L, 36_000_000L),
         Arguments.of("ephemery", 39_438_135L, 36_000_000L));
   }
 

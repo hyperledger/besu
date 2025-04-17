@@ -1,9 +1,93 @@
 # Changelog
-
 ## Unreleased
 ### Breaking Changes
+
+### Upcoming Breaking Changes
+### Additions and Improvements
+#### Dependencies
+### Bug fixes
+- fix block import tracing, refactor BlockProcessor interface [#8549](https://github.com/hyperledger/besu/pull/8549)
+
+## 25.4.1
+
+### Breaking Changes
+- `--compatibility-eth64-forkid-enabled` has been removed. [#8541](https://github.com/hyperledger/besu/pull/8541)
+
+### Upcoming Breaking Changes
+- `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
+- `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated, use `--Xbonsai-full-flat-db-enabled` instead.
+- `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-log-pruning-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
+- `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
+- `--tx-pool-disable-locals` has been deprecated, use `--tx-pool-no-local-priority`, instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - Tessera privacy
+    - Smart-contract-based (onchain) permissioning
+    - Proof of Work consensus
+    - Fast Sync
+- Transaction indexing will be disabled by default in a future release for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries.
+- Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that in order to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
+
+### Additions and Improvements
+- Add support for `eth_simulateV1`. [#8406](https://github.com/hyperledger/besu/pull/8406)
+- New metric `besu_peers_peer_count_by_client` to report the count of peers by client name [#8515](https://github.com/hyperledger/besu/pull/8515)- Add Prague fork time for mainnet. [#8521](https://github.com/hyperledger/besu/pull/8521)
+- Add Prague fork time for mainnet. [#8521](https://github.com/hyperledger/besu/pull/8521)
+- Default ExtraData to "besu+version" rather than empty. [#8536](https://github.com/hyperledger/besu/pull/8536)
+- Add block import tracer plugin provider, used during block import [#8524](https://github.com/hyperledger/besu/pull/8534)
+- Tune and make configurable the PeerTransactionTracker [#8537](https://github.com/hyperledger/besu/pull/8537)
+
+### Bug fixes
+- Fix for storage proof key - if the key is zero use `0x0` not `0x` [#8499](https://github.com/hyperledger/besu/pull/8499)
+- Fix ephemery genesis since genesisHash changed [#8539](https://github.com/hyperledger/besu/pull/8539)
+
+## 25.4.0
+
+### Upcoming Breaking Changes
+- `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
+- `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated, use `--Xbonsai-full-flat-db-enabled` instead.
+- `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-log-pruning-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
+- `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
+- `--tx-pool-disable-locals` has been deprecated, use `--tx-pool-no-local-priority`, instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - Tessera privacy
+    - Smart-contract-based (onchain) permissioning
+    - Proof of Work consensus
+    - Fast Sync
+- Transaction indexing will be disabled by default in a future release for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries.
+- Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that in order to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
+- `--compatibility-eth64-forkid-enabled` has been deprecated and will be removed in the next release. [#8492](https://github.com/hyperledger/besu/pull/8492)
+
+### Additions and Improvements
+- Add Hoodi discovery DNS [#8446](https://github.com/hyperledger/besu/pull/8446)
+- Decode deposit log data without Web3j [#8394](https://github.com/hyperledger/besu/issues/8394)
+- Tune layered txpool default configuration for upcoming gas limit and blob count increases [#8487](https://github.com/hyperledger/besu/pull/8487)
+- Removed support for Ethereum protocol versions `eth/62`, `eth/63`, `eth/64`, and `eth/65`. [#8492](https://github.com/hyperledger/besu/pull/8492)
+
+#### Dependencies 
+- Replace tuweni libs with https://github.com/Consensys/tuweni [#8330](https://github.com/hyperledger/besu/pull/8330), [#8461](https://github.com/hyperledger/besu/pull/8461) 
+- Performance: Consensys/tuweni 2.7.0 reduces boxing/unboxing overhead on some EVM opcodes, like PushX and Caller [#8330](https://github.com/hyperledger/besu/pull/8330), [#8461](https://github.com/hyperledger/besu/pull/8461)
+
+### Bug fixes
+- Fix QBFT and IBFT transitions that change the mining beneficiary [#8387](https://github.com/hyperledger/besu/issues/8387)
+- `eth_getLogs` - empty topic is a wildcard match [#8420](https://github.com/hyperledger/besu/pull/8420)
+- Upgrade spring-security-crypto to address CVE-2025-22228 [#8448](https://github.com/hyperledger/besu/pull/8448)
+- Fix restoring txpool from disk when blob transactions are present [#8481](https://github.com/hyperledger/besu/pull/8481)
+- Fix for bonsai db inconsistency on abnormal shutdown [#8500](https://github.com/hyperledger/besu/pull/8500)
+- Fix to add stateroot mismatches to bad block manager [#8207](https://github.com/hyperledger/besu/pull/8207)
+
+## 25.3.0 
+
+### Breaking Changes
+NOTE: This release breaks native Windows compatibility for mainnet ethereum configurations.  As the prague(pectra) hardfork require 
+BLS12-381 precompiles and besu does not currently have a pure java implementation of bls12-381, only platforms which
+have support in besu-native can run mainnet ethereum configurations.  Windows support via WSL should still continue to work.
+
 - k8s (KUBERNETES) Nat method is removed. Use docker or none instead. [#8289](https://github.com/hyperledger/besu/pull/8289)
 - Change `Invalid block, unable to parse RLP` RPC error message to `Invalid block param (block not found)` [#8328](https://github.com/hyperledger/besu/pull/8328)
+- Mainnet ethereum now REQUIRES native crypto libraries, so only linux and macos(darwin) are supported mainnet configurations [#8418](https://github.com/hyperledger/besu/pull/8418)
 
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
@@ -27,6 +111,7 @@
 - Update Holesky and Sepolia deposit contract addresses [#8346](https://github.com/hyperledger/besu/pull/8346)
 #### Plugins
 - Allow plugins to propose transactions during block creation [#8268](https://github.com/hyperledger/besu/pull/8268)
+- Add support for transaction permissioning rules in Plugin API [#8365](https://github.com/hyperledger/besu/pull/8365)
 #### Parallelization
 - Improve conflict detection by considering slots to reduce false positives [#7923](https://github.com/hyperledger/besu/pull/7923)
 #### Dependencies 
@@ -39,13 +124,17 @@
 - Add TLS/mTLS options and configure the GraphQL HTTP service[#7910](https://github.com/hyperledger/besu/pull/7910)
 - Update `eth_getLogs` to return a `Block not found` error when the requested block is not found. [#8290](https://github.com/hyperledger/besu/pull/8290)
 - Change `Invalid block, unable to parse RLP` RPC error message to `Invalid block param (block not found)` [#8328](https://github.com/hyperledger/besu/pull/8328)
+- Add IBFT1 to QBFT migration capability [#8262](https://github.com/hyperledger/besu/pull/8262)
 - Support pending transaction score when saving and restoring txpool [#8363](https://github.com/hyperledger/besu/pull/8363)
 - Upgrade to execution-spec-tests v4.1.0 including better EIP-2537 coverage for BLS [#8402](https://github.com/hyperledger/besu/pull/8402)
 - Add era1 format to blocks import subcommand [#7935](https://github.com/hyperledger/besu/issues/7935)
+- Add Hoodi as new named testnet [#8428](https://github.com/hyperledger/besu/issues/8428)
 
 ### Bug fixes
 - Add missing RPC method `debug_accountRange` to `RpcMethod.java` so this method can be used with `--rpc-http-api-method-no-auth` [#8153](https://github.com/hyperledger/besu/issues/8153)
 - Add a fallback pivot strategy when the safe block does not change for a long time, to make possible to complete the initial sync in case the chain is not finalizing [#8395](https://github.com/hyperledger/besu/pull/8395)
+- Fix issue with new QBFT/IBFT blocks being produced under certain circumstances. [#8308](https://github.com/hyperledger/besu/issues/8308)
+- Bonsai - check if storage is present before saving world state [#8434](https://github.com/hyperledger/besu/pull/8434)
 
 ## 25.2.2 hotfix
 - Pectra - Sepolia: Fix for deposit contract log decoding [#8383](https://github.com/hyperledger/besu/pull/8383)
@@ -106,6 +195,8 @@
   - Smart-contract-based (onchain) permissioning
   - Proof of Work consensus
   - Fast Sync
+- Plugins 
+  - `BesuConfiguration` methods `getRpcHttpHost` and `getRpcHttpPort` (which return Optionals) have been deprecated in favour of `getConfiguredRpcHttpHost` and `getConfiguredRpcHttpPort` which return the actual values, which will always be populated since these options have defaults. [#8127](https://github.com/hyperledger/besu/pull/8127) 
 
 ### Additions and Improvements
 - Add RPC HTTP options to specify custom truststore and its password [#7978](https://github.com/hyperledger/besu/pull/7978)

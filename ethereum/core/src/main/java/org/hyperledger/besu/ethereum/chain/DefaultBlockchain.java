@@ -736,10 +736,9 @@ public class DefaultBlockchain implements MutableBlockchain {
       final Block block = blockWithReceipts.getBlock();
 
       var reorgEvent = handleChainReorg(updater, blockWithReceipts);
+      updateCacheForNewCanonicalHead(block, calculateTotalDifficulty(block.getHeader()));
       updater.commit();
       blockAddedObservers.forEach(o -> o.onBlockAdded(reorgEvent));
-
-      updateCacheForNewCanonicalHead(block, calculateTotalDifficulty(block.getHeader()));
       return true;
     } catch (final NoSuchElementException e) {
       // Any Optional.get() calls in this block should be present, missing data means data
@@ -950,5 +949,9 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   public Optional<Cache<Hash, Difficulty>> getTotalDifficultyCache() {
     return totalDifficultyCache;
+  }
+
+  public BlockchainStorage getBlockchainStorage() {
+    return blockchainStorage;
   }
 }

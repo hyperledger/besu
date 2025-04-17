@@ -18,7 +18,7 @@ import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.MergeStateHandler;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -57,7 +57,9 @@ public class MergePeerFilter implements MergeStateHandler, UnverifiedForkchoiceL
 
   public boolean disconnectIfGossipingBlocks(final Message message, final EthPeer peer) {
     final int code = message.getData().getCode();
-    if (isFinalized() && (code == EthPV62.NEW_BLOCK || code == EthPV62.NEW_BLOCK_HASHES)) {
+    if (isFinalized()
+        && (code == EthProtocolMessages.NEW_BLOCK
+            || code == EthProtocolMessages.NEW_BLOCK_HASHES)) {
       LOG.debug("disconnecting peer for sending new blocks after transition to PoS");
       peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_POW_BLOCKS);
       return true;

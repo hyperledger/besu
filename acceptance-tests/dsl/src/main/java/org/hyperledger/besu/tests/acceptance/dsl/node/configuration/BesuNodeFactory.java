@@ -22,6 +22,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.IBFT;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -42,6 +44,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class BesuNodeFactory {
 
@@ -490,6 +494,39 @@ public class BesuNodeFactory {
     return create(builder.build());
   }
 
+  public BesuNode createQbftMigrationNode(
+      final String name, final boolean fixedPort, final DataStorageFormat storageFormat)
+      throws IOException {
+    JsonRpcConfiguration rpcConfig = node.createJsonRpcWithQbftEnabledConfig(false);
+    rpcConfig.addRpcApi("ADMIN,TXPOOL");
+    if (fixedPort) {
+      rpcConfig.setPort(
+          Math.abs(name.hashCode() % 60000)
+              + 1024); // Generate a consistent port for p2p based on node name
+    }
+
+    BesuNodeConfigurationBuilder builder =
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(rpcConfig)
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .dataStorageConfiguration(
+                storageFormat == DataStorageFormat.FOREST
+                    ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
+                    : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+            .genesisConfigProvider(GenesisConfigurationFactory::createQbftMigrationGenesisConfig);
+    if (fixedPort) {
+      builder.p2pPort(
+          Math.abs(name.hashCode() % 60000)
+              + 1024
+              + 500); // Generate a consistent port for p2p based on node name (+ 500 to avoid
+      // clashing with RPC port or other nodes with a similar name)
+    }
+    return create(builder.build());
+  }
+
   public BesuNode createCustomGenesisNode(
       final String name, final String genesisPath, final boolean canBeBootnode) throws IOException {
     return createCustomGenesisNode(name, genesisPath, canBeBootnode, false);
@@ -528,7 +565,11 @@ public class BesuNodeFactory {
             .genesisConfigProvider((a) -> Optional.of(genesisFile))
             .devMode(false)
             .bootnodeEligible(false)
-            .miningEnabled()
+            .miningConfiguration(
+                MiningConfiguration.newDefault()
+                    .setCoinbase(AddressHelpers.ofValue(1))
+                    .setExtraData(Bytes.EMPTY)
+                    .setMiningEnabled(true))
             .jsonRpcEnabled()
             .jsonRpcTxPool()
             .engineRpcEnabled(true)
