@@ -1108,18 +1108,14 @@ public abstract class MainnetProtocolSpecs {
 
     @Override
     public BlockProcessingResult processBlock(
-            final ProtocolContext protocolContext,
-            final Blockchain blockchain,
-            final MutableWorldState worldState,
-            final Block block,
-            final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
+        final ProtocolContext protocolContext,
+        final Blockchain blockchain,
+        final MutableWorldState worldState,
+        final Block block,
+        final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
-              protocolContext,
-              blockchain,
-              worldState,
-              block,
-              preprocessingBlockFunction);
+          protocolContext, blockchain, worldState, block, preprocessingBlockFunction);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

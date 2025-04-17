@@ -95,13 +95,13 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @param executor The executor to use for asynchronous execution.
    */
   public void runAsyncBlock(
-          final ProtocolContext protocolContext,
-          final BlockHeader blockHeader,
-          final List<Transaction> transactions,
-          final Address miningBeneficiary,
-          final BlockHashLookup blockHashLookup,
-          final Wei blobGasPrice,
-          final Executor executor) {
+      final ProtocolContext protocolContext,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Wei blobGasPrice,
+      final Executor executor) {
 
     completableFuturesForBackgroundTransactions = new CompletableFuture[transactions.size()];
     for (int i = 0; i < transactions.size(); i++) {

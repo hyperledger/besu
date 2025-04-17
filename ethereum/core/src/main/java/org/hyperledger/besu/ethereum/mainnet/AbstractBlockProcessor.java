@@ -130,12 +130,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final Block block) {
-    return processBlock(
-        protocolContext,
-        blockchain,
-        worldState,
-        block,
-        new NoPreprocessing());
+    return processBlock(protocolContext, blockchain, worldState, block, new NoPreprocessing());
   }
 
   @Override

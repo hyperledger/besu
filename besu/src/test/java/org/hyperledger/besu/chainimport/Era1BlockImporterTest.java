@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -77,7 +76,6 @@ public class Era1BlockImporterTest {
             .miningParameters(MiningConfiguration.newDefault())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
-            .privacyParameters(PrivacyParameters.DEFAULT)
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .evmConfiguration(EvmConfiguration.DEFAULT)

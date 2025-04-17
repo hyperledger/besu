@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.List;
-import java.util.Optional;
 
 /** Processes a block. */
 public interface BlockProcessor {
@@ -62,10 +61,10 @@ public interface BlockProcessor {
    * @return the block processing result
    */
   BlockProcessingResult processBlock(
-          final ProtocolContext protocolContext,
-          final Blockchain blockchain,
-          final MutableWorldState worldState,
-          final Block block);
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block);
 
   /**
    * Processes the block.
@@ -77,11 +76,11 @@ public interface BlockProcessor {
    * @return the block processing result
    */
   BlockProcessingResult processBlock(
-          final ProtocolContext protocolContext,
-          final Blockchain blockchain,
-          final MutableWorldState worldState,
-          final Block block,
-          final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction);
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block,
+      final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction);
 
   /**
    * Get ommer reward in ${@link Wei}
@@ -92,7 +91,7 @@ public interface BlockProcessor {
    * @return ommer reward
    */
   default Wei getOmmerReward(
-          final Wei blockReward, final long blockNumber, final long ommerBlockNumber) {
+      final Wei blockReward, final long blockNumber, final long ommerBlockNumber) {
     final long distance = blockNumber - ommerBlockNumber;
     return blockReward.subtract(blockReward.multiply(distance).divide(8));
   }
@@ -106,7 +105,7 @@ public interface BlockProcessor {
    * @return coinbase reward
    */
   default Wei getCoinbaseReward(
-          final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
+      final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
     return blockReward.add(blockReward.multiply(numberOfOmmers).divide(32));
   }
 }

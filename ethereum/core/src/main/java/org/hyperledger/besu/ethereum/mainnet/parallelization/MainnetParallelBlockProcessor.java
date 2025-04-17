@@ -147,10 +147,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           "Parallel transaction processing failure. Falling back to non-parallel processing for block #{} ({})",
           block.getHeader().getNumber(),
           block.getHash());
-      return super.processBlock(
-          protocolContext,
-          blockchain,
-          worldState,block);
+      return super.processBlock(protocolContext, blockchain, worldState, block);
     }
     return blockProcessingResult;
   }
