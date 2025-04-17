@@ -26,6 +26,8 @@ import org.apache.commons.lang3.StringUtils;
  * file.
  */
 public enum InternalProfileName {
+  /** The 'PERFORMANCE' profile */
+  PERFORMANCE("profiles/performance.toml"),
   /** The 'STAKER' profile */
   STAKER("profiles/staker.toml"),
   /** The 'MINIMALIST_STAKER' profile */
