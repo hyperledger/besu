@@ -76,13 +76,12 @@ public class SegmentedInMemoryKeyValueStorage
    * @return populated segment map
    */
   protected static NavigableMap<Bytes, Optional<byte[]>> newSegmentMap(
-          final Map<Bytes, Optional<byte[]>> sourceMap) {
+      final Map<Bytes, Optional<byte[]>> sourceMap) {
 
     Comparator<Bytes> byteWiseComparator =
-            Comparator.comparing(Bytes::toArrayUnsafe, Arrays::compare);
+        Comparator.comparing(Bytes::toArrayUnsafe, Arrays::compare);
 
-    NavigableMap<Bytes, Optional<byte[]>> segMap =
-            new ConcurrentSkipListMap<>(byteWiseComparator);
+    NavigableMap<Bytes, Optional<byte[]>> segMap = new ConcurrentSkipListMap<>(byteWiseComparator);
 
     segMap.putAll(sourceMap);
     return segMap;
