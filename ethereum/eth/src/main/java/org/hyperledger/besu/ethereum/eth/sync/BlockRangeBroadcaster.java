@@ -14,10 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
-import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockRangeUpdateMessage;
@@ -26,37 +25,35 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
+import java.time.Duration;
+
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
+public class BlockRangeBroadcaster {
   private static final Logger LOG = LoggerFactory.getLogger(BlockRangeBroadcaster.class);
 
   // range update block interval
-  static final int BLOCK_RANGE_UPDATE_INTERVAL = 32; // one slot
+  static final int BLOCK_RANGE_UPDATE_INTERVAL = 60;
 
   private final EthContext ethContext;
-  private final Blockchain blockchain;
 
   public BlockRangeBroadcaster(final EthContext ethContext, final Blockchain blockchain) {
     this.ethContext = ethContext;
-    this.blockchain = blockchain;
     ethContext
         .getEthMessages()
         .subscribe(EthProtocolMessages.BLOCK_RANGE_UPDATE, this::handleBlockRangeUpdateMessage);
-  }
 
-  @Override
-  public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
-    blockchain
-        .getBlockHeader(event.getHeadBlockHash())
-        .ifPresent(
-            header -> {
-              if (header.getNumber() % BLOCK_RANGE_UPDATE_INTERVAL == 0) {
-                broadcastBlockRange(0L, header.getNumber(), header.getHash());
-              }
-            });
+    ethContext
+        .getScheduler()
+        .scheduleFutureTaskWithFixedDelay(
+            () -> {
+              BlockHeader header = blockchain.getChainHeadHeader();
+              broadcastBlockRange(0L, header.getNumber(), header.getHash());
+            },
+            Duration.ofSeconds(BLOCK_RANGE_UPDATE_INTERVAL),
+            Duration.ofSeconds(BLOCK_RANGE_UPDATE_INTERVAL));
   }
 
   private void handleBlockRangeUpdateMessage(final EthMessage message) {
@@ -76,7 +73,7 @@ public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
       message.getPeer().registerKnownBlock(blockHash);
       message.getPeer().registerBlockRange(blockHash, latestBlockNumber, earliestBlockNumber);
     } catch (final RLPException e) {
-      LOG.atDebug()
+      LOG.atTrace()
           .setMessage("Unable to parse BlockRangeUpdateMessage from peer {} {}")
           .addArgument(message.getPeer()::getLoggableId)
           .addArgument(e)
@@ -92,15 +89,18 @@ public class BlockRangeBroadcaster implements UnverifiedForkchoiceListener {
       final long earliestBlockNumber, final long latestBlockNumber, final Hash blockHash) {
     final BlockRangeUpdateMessage blockRangeUpdateMessage =
         BlockRangeUpdateMessage.create(earliestBlockNumber, latestBlockNumber, blockHash);
-    LOG.debug(
-        "Sending blockRange=[{}, {}, {}]",
-        blockRangeUpdateMessage.getEarliestBlockNumber(),
-        blockRangeUpdateMessage.getLatestBlockNumber(),
-        blockRangeUpdateMessage.getBlockHash());
     ethContext
         .getEthPeers()
         .streamAvailablePeers()
         .filter(peer -> peer.hasSupportForMessage(EthProtocolMessages.BLOCK_RANGE_UPDATE))
+        .peek(
+            peer ->
+                LOG.debug(
+                    "Broadcasting blockRange=[{}, {}, {}] to peer={}",
+                    earliestBlockNumber,
+                    latestBlockNumber,
+                    blockHash,
+                    peer.getLoggableId()))
         .forEach(
             ethPeer -> {
               try {

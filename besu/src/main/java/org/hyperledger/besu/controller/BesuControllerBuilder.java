@@ -734,14 +734,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             Optional.empty(),
             forkIdManager);
 
-    ethProtocolManager
-        .getBlockRangeBroadcaster()
-        .ifPresent(
-            broadcaster ->
-                protocolContext
-                    .getConsensusContext(MergeContext.class)
-                    .addNewUnverifiedForkchoiceListener(broadcaster));
-
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
             protocolSchedule, protocolContext, ethContext, syncState, metricsSystem, blockchain);
