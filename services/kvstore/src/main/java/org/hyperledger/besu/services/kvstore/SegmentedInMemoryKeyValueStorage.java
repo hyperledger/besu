@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -75,10 +76,14 @@ public class SegmentedInMemoryKeyValueStorage
    * @return populated segment map
    */
   protected static NavigableMap<Bytes, Optional<byte[]>> newSegmentMap(
-      final Map<Bytes, Optional<byte[]>> sourceMap) {
-    // comparing by string to prevent Bytes comparator from collapsing zeroes
+          final Map<Bytes, Optional<byte[]>> sourceMap) {
+
+    Comparator<Bytes> byteWiseComparator =
+            Comparator.comparing(Bytes::toArrayUnsafe, Arrays::compare);
+
     NavigableMap<Bytes, Optional<byte[]>> segMap =
-        new ConcurrentSkipListMap<>(Comparator.comparing(Bytes::toHexString));
+            new ConcurrentSkipListMap<>(byteWiseComparator);
+
     segMap.putAll(sourceMap);
     return segMap;
   }
