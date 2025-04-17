@@ -28,9 +28,12 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
@@ -46,6 +49,7 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
   private static final int STORAGE_CACHE_SIZE = 200_000;
+  private static final int STRIDE = 4;
 
   private final Cache<Bytes, Bytes> accountNodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(ACCOUNT_CACHE_SIZE).build();
@@ -99,39 +103,63 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
 
   @VisibleForTesting
   public void cacheAccountNodes(
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final BonsaiWorldStateKeyValueStorage storage,
       final Hash worldStateRootHash,
       final Address account) {
-    final OperationTimer.TimingContext timingContext = accountPreloadTimer.startTimer();
-    final long storageSubscriberId = worldStateKeyValueStorage.subscribe(this);
+    final OperationTimer.TimingContext timer = accountPreloadTimer.startTimer();
+    final long subscriptionId = storage.subscribe(this);
     try {
       Bytes path = bytesToPath(account.addressHash());
       int size = path.size();
-      List<byte[]> inputs = new ArrayList<>(size);
-      for (int i = 0; i < path.size(); i++) {
-        Bytes slice = path.slice(0, i);
-        inputs.add(slice.toArrayUnsafe());
+
+      List<Integer> markers = new ArrayList<>();
+      for (int idx = 0; idx < size; idx += STRIDE) {
+        markers.add(idx);
+      }
+      if (markers.get(markers.size() - 1) != size - 1) {
+        markers.add(size - 1);
       }
 
-      List<byte[]> outputs = worldStateKeyValueStorage.getMultipleKeys(inputs);
+      List<byte[]> markerKeys =
+          markers.stream().map(i -> path.slice(0, i).toArrayUnsafe()).collect(Collectors.toList());
+      List<byte[]> markerValues = storage.getMultipleKeys(markerKeys);
 
-      if (outputs.size() != inputs.size()) {
-        throw new IllegalStateException("Inputs and outputs must have equal length");
+      Set<Integer> liveMarkers = new HashSet<>();
+      for (int k = 0; k < markers.size(); k++) {
+        byte[] raw = markerValues.get(k);
+        if (raw != null) {
+          Bytes node = Bytes.wrap(raw);
+          accountNodes.put(Hash.hash(node), node);
+          liveMarkers.add(markers.get(k));
+        }
       }
 
-      for (int i = 0; i < outputs.size(); i++) {
-        byte[] rawNodeBytes = outputs.get(i);
-        if (rawNodeBytes != null) {
-          Bytes node = Bytes.wrap(rawNodeBytes);
-          Bytes32 nodeHash = Hash.hash(node);
-          accountNodes.put(nodeHash, node);
+      List<byte[]> secondKeys = new ArrayList<>();
+      for (int m = 0; m < markers.size() - 1; m++) {
+        int start = markers.get(m);
+        int end = markers.get(m + 1);
+        if (!liveMarkers.contains(start) || end - start <= 1) {
+          continue;
+        }
+        for (int i = start + 1; i < end; i++) {
+          secondKeys.add(path.slice(0, i).toArrayUnsafe());
+        }
+      }
+
+      if (!secondKeys.isEmpty()) {
+        List<byte[]> secondValues = storage.getMultipleKeys(secondKeys);
+        for (byte[] raw : secondValues) {
+          if (raw != null) {
+            Bytes node = Bytes.wrap(raw);
+            accountNodes.put(Hash.hash(node), node);
+          }
         }
       }
     } catch (Exception ex) {
       LOG.error("Error caching account nodes", ex);
     } finally {
-      worldStateKeyValueStorage.unSubscribe(storageSubscriberId);
-      timingContext.close();
+      storage.unSubscribe(subscriptionId);
+      timer.close();
     }
   }
 
@@ -145,40 +173,67 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
 
   @VisibleForTesting
   public void cacheStorageNodes(
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final BonsaiWorldStateKeyValueStorage storage,
       final Address account,
       final StorageSlotKey slotKey) {
-    final OperationTimer.TimingContext timingContext = storagePreloadTimer.startTimer();
-    final Hash accountHash = account.addressHash();
-    final long storageSubscriberId = worldStateKeyValueStorage.subscribe(this);
+
+    final OperationTimer.TimingContext timer = storagePreloadTimer.startTimer();
+    final long subscriptionId = storage.subscribe(this);
     try {
       Bytes path = bytesToPath(slotKey.getSlotHash());
+      Bytes accountHash = account.addressHash();
       int size = path.size();
-      List<byte[]> inputs = new ArrayList<>(size);
-      for (int i = 0; i < path.size(); i++) {
-        Bytes slice = path.slice(0, i);
-        inputs.add(Bytes.concatenate(accountHash, slice).toArrayUnsafe());
+
+      List<Integer> markers = new ArrayList<>();
+      for (int idx = 0; idx < size; idx += STRIDE) {
+        markers.add(idx);
+      }
+      if (markers.get(markers.size() - 1) != size - 1) {
+        markers.add(size - 1);
       }
 
-      List<byte[]> outputs = worldStateKeyValueStorage.getMultipleKeys(inputs);
+      List<byte[]> markerKeys =
+          markers.stream()
+              .map(i -> Bytes.concatenate(accountHash, path.slice(0, i)).toArrayUnsafe())
+              .collect(Collectors.toList());
+      List<byte[]> markerValues = storage.getMultipleKeys(markerKeys);
 
-      if (outputs.size() != inputs.size()) {
-        throw new IllegalStateException("Inputs and outputs must have equal length");
+      Set<Integer> liveMarkers = new HashSet<>();
+      for (int k = 0; k < markers.size(); k++) {
+        byte[] raw = markerValues.get(k);
+        if (raw != null) {
+          Bytes node = Bytes.wrap(raw);
+          storageNodes.put(Hash.hash(node), node);
+          liveMarkers.add(markers.get(k));
+        }
       }
 
-      for (int i = 0; i < inputs.size(); i++) {
-        byte[] rawNodeBytes = outputs.get(i);
-        if (rawNodeBytes != null) {
-          Bytes node = Bytes.wrap(rawNodeBytes);
-          Bytes32 nodeHash = Hash.hash(node);
-          storageNodes.put(nodeHash, node);
+      List<byte[]> secondKeys = new ArrayList<>();
+      for (int m = 0; m < markers.size() - 1; m++) {
+        int start = markers.get(m);
+        int end = markers.get(m + 1);
+        if (!liveMarkers.contains(start) || end - start <= 1) {
+          continue;
+        }
+        for (int i = start + 1; i < end; i++) {
+          secondKeys.add(Bytes.concatenate(accountHash, path.slice(0, i)).toArrayUnsafe());
+        }
+      }
+
+      if (!secondKeys.isEmpty()) {
+        List<byte[]> secondValues = storage.getMultipleKeys(secondKeys);
+        for (byte[] raw : secondValues) {
+          if (raw != null) {
+            Bytes node = Bytes.wrap(raw);
+            storageNodes.put(Hash.hash(node), node);
+          }
         }
       }
     } catch (Exception ex) {
       LOG.error("Error caching storage nodes", ex);
     } finally {
-      worldStateKeyValueStorage.unSubscribe(storageSubscriberId);
-      timingContext.close();
+      storage.unSubscribe(subscriptionId);
+      timer.close();
     }
   }
 
