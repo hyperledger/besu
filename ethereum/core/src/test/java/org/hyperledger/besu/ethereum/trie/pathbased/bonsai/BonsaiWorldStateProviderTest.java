@@ -344,7 +344,7 @@ class BonsaiWorldStateProviderTest {
     // Get the world state for blockHeaderChainB
     assertThat(
             bonsaiWorldStateArchive.getWorldState(
-                withBlockHeaderAndNoUpdateNodeHead(blockHeaderChainB)))
+                withBlockHeaderAndUpdateNodeHead(blockHeaderChainB)))
         .isPresent();
 
     // Verify trieLogManager was never asked to save a trie log for the existing block
