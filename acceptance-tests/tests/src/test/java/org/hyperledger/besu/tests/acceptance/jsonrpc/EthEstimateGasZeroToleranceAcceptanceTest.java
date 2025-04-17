@@ -28,19 +28,16 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class EthEstimateGasZeroToleranceAcceptanceTest extends AcceptanceTestBase {
 
-  private BesuNode node;
-  private TestDepth testDepth;
+  final List<SimpleEntry<Integer, Long>> testCase = new ArrayList<>();
 
-  List<SimpleEntry<Integer, Long>> testCase = new ArrayList<>();
-
-  @BeforeEach
-  public void setUp() throws Exception {
-    node =
+  @Test
+  public void estimateGasWithDelegateCall() throws Exception {
+    // there's only one test method so it's more efficient to have the setup in here
+    final BesuNode node =
         besu.createMinerNodeWithExtraCliOptions(
             "node1",
             b ->
@@ -49,7 +46,8 @@ public class EthEstimateGasZeroToleranceAcceptanceTest extends AcceptanceTestBas
             List.of("--estimate-gas-tolerance-ratio=0.0"));
 
     cluster.start(node);
-    testDepth = node.execute(contractTransactions.createSmartContract(TestDepth.class));
+    final TestDepth testDepth =
+        node.execute(contractTransactions.createSmartContract(TestDepth.class));
 
     // taken from geth
     testCase.add(new SimpleEntry<>(1, 45554L));
@@ -59,10 +57,6 @@ public class EthEstimateGasZeroToleranceAcceptanceTest extends AcceptanceTestBas
     testCase.add(new SimpleEntry<>(5, 53063L));
     testCase.add(new SimpleEntry<>(10, 63139L));
     testCase.add(new SimpleEntry<>(65, 246462L));
-  }
-
-  @Test
-  public void estimateGasWithDelegateCall() {
 
     for (var test : testCase) {
       var functionCall = testDepth.depth(BigInteger.valueOf(test.getKey())).encodeFunctionCall();
