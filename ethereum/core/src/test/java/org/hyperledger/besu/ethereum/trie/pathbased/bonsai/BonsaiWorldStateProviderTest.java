@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.WorldStateHealerHelper.throwingWorldStateHealerSupplier;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
@@ -25,7 +24,6 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,12 +32,10 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
@@ -54,7 +50,6 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -338,60 +333,5 @@ class BonsaiWorldStateProviderTest {
     // verify is trying to get the trie log layers to rollback and roll forward
     verify(trieLogManager).getTrieLogLayer(blockHeader1.getHash());
     verify(trieLogManager).getTrieLogLayer(blockHeader1Reorg.getHash());
-  }
-
-  @Test
-  // TODO: refactor to test original intent
-  @Disabled("needs refactor, getWorldState(hash, hash) cannot trigger saveTrieLog")
-  void testGetMutableWithRollbackNotOverrideTrieLogLayer() {
-    when(segmentedKeyValueStorage.startTransaction())
-        .thenReturn(segmentedKeyValueStorageTransaction);
-    final BlockHeader genesis = blockBuilder.number(0).buildHeader();
-    final BlockHeader blockHeaderChainA =
-        blockBuilder.number(1).timestamp(1).parentHash(genesis.getHash()).buildHeader();
-    final BlockHeader blockHeaderChainB =
-        blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
-
-    TrieLogLayer trieLogLayer = mock(TrieLogLayer.class);
-    doAnswer(__ -> Optional.of(trieLogLayer)).when(trieLogManager).getTrieLogLayer(any(Hash.class));
-
-    bonsaiWorldStateArchive =
-        spy(
-            new BonsaiWorldStateProvider(
-                cachedWorldStorageManager,
-                trieLogManager,
-                new BonsaiWorldStateKeyValueStorage(
-                    storageProvider,
-                    new NoOpMetricsSystem(),
-                    DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
-                blockchain,
-                new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-                EvmConfiguration.DEFAULT,
-                throwingWorldStateHealerSupplier()));
-
-    // initial persisted state hash key
-    when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeaderChainA));
-    // fake trie log layer
-    final BytesValueRLPOutput rlpLogBlockB = new BytesValueRLPOutput();
-    final TrieLogLayer trieLogLayerBlockB = new TrieLogLayer();
-    trieLogLayerBlockB.setBlockHash(blockHeaderChainB.getHash());
-    TrieLogFactoryImpl.writeTo(trieLogLayerBlockB, rlpLogBlockB);
-    when(segmentedKeyValueStorage.get(BLOCKCHAIN, blockHeaderChainB.getHash().toArrayUnsafe()))
-        .thenReturn(Optional.of(rlpLogBlockB.encoded().toArrayUnsafe()));
-
-    when(blockchain.getBlockHeader(blockHeaderChainB.getHash()))
-        .thenReturn(Optional.of(blockHeaderChainB));
-    when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
-
-    assertThat(
-            bonsaiWorldStateArchive.getWorldState(
-                withStateRootAndBlockHashAndUpdateNodeHead(null, blockHeaderChainB.getHash())))
-        .containsInstanceOf(BonsaiWorldState.class);
-
-    // verify is not persisting if already present
-    verify(segmentedKeyValueStorageTransaction, never())
-        .put(BLOCKCHAIN, eq(blockHeaderChainA.getHash().toArrayUnsafe()), any());
-    verify(segmentedKeyValueStorageTransaction, never())
-        .put(BLOCKCHAIN, eq(blockHeaderChainB.getHash().toArrayUnsafe()), any());
   }
 }

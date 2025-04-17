@@ -15,7 +15,13 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -26,7 +32,9 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +47,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class TrieLogManagerTests {
 
-  BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
+  private static final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   BonsaiWorldState bonsaiWorldState;
@@ -56,6 +64,7 @@ class TrieLogManagerTests {
 
   @BeforeEach
   public void setup() {
+    when(bonsaiWorldState.getWorldStateStorage()).thenReturn(bonsaiWorldStateKeyValueStorage);
     trieLogManager = new TrieLogManager(blockchain, bonsaiWorldStateKeyValueStorage, 512, null);
   }
 
@@ -70,5 +79,24 @@ class TrieLogManagerTests {
     trieLogManager.saveTrieLog(bonsaiUpdater, Hash.ZERO, blockHeader, bonsaiWorldState);
 
     assertThat(eventFired.get()).isTrue();
+  }
+
+  @Test
+  void testNotOverrideExistingTrieLog() {
+
+    final BonsaiWorldStateKeyValueStorage.Updater mockedUpdater =
+        mock(BonsaiWorldStateKeyValueStorage.Updater.class);
+    final KeyValueStorageTransaction mockedTrieLogTransaction =
+        mock(KeyValueStorageTransaction.class);
+    when(bonsaiWorldStateKeyValueStorage.updater()).thenReturn(mockedUpdater);
+    when(mockedUpdater.getTrieLogStorageTransaction()).thenReturn(mockedTrieLogTransaction);
+    when(trieLogManager.getTrieLogLayer(blockHeader.getBlockHash())).thenReturn(Optional.empty());
+
+    trieLogManager.saveTrieLog(bonsaiUpdater, Hash.ZERO, blockHeader, bonsaiWorldState);
+
+    trieLogManager.saveTrieLog(bonsaiUpdater, Hash.ZERO, blockHeader, bonsaiWorldState);
+
+    verify(mockedTrieLogTransaction, times(1))
+        .put(eq(blockHeader.getBlockHash().toArrayUnsafe()), any());
   }
 }
