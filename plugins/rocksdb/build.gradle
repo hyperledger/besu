@@ -47,7 +47,7 @@ dependencies {
   implementation 'info.picocli:picocli'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.consensys.tuweni:tuweni-bytes'
-  implementation 'org.rocksdb:rocksdbjni'
+  implementation 'io.github.mirgee:rocksdbjni'
   implementation project(path: ':ethereum:core')
 
   testImplementation project(':testutil')

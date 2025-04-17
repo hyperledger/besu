@@ -23,7 +23,9 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -335,5 +337,43 @@ public class LayeredKeyValueStorageTest {
     assertArrayEquals(value2, resultList.get(1).getValue());
     assertArrayEquals(key3, resultList.get(2).getKey());
     assertArrayEquals(value3, resultList.get(2).getValue());
+  }
+
+  @Test
+  void shouldReturnValuesForMultipleKeysAcrossSegments() {
+    SegmentIdentifier segmentA = mock(SegmentIdentifier.class);
+    SegmentIdentifier segmentB = mock(SegmentIdentifier.class);
+
+    byte[] key1 = {0x01};
+    byte[] key2 = {0x02};
+    byte[] key3 = {0x03};
+
+    byte[] val1 = {0x0A};
+    byte[] val2 = {0x0B};
+    byte[] val3 = {0x0C};
+
+    SegmentedInMemoryKeyValueStorage parent = new SegmentedInMemoryKeyValueStorage();
+    var parentTx = parent.startTransaction();
+    parentTx.put(segmentA, key1, val1);
+    parentTx.put(segmentA, key3, val3);
+    parentTx.commit();
+
+    ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>> layerMap =
+        new ConcurrentHashMap<>();
+    NavigableMap<Bytes, Optional<byte[]>> segmentBMap =
+        new TreeMap<>(Comparator.comparing(Bytes::toHexString));
+    segmentBMap.put(Bytes.wrap(key2), Optional.of(val2));
+    layerMap.put(segmentB, segmentBMap);
+
+    layeredKeyValueStorage = new LayeredKeyValueStorage(layerMap, parent);
+
+    List<byte[]> result =
+        layeredKeyValueStorage.multiget(
+            List.of(segmentA, segmentB, segmentA), List.of(key1, key2, key3));
+
+    assertEquals(3, result.size());
+    assertArrayEquals(val1, result.get(0));
+    assertArrayEquals(val2, result.get(1));
+    assertArrayEquals(val3, result.get(2));
   }
 }

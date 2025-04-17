@@ -27,6 +27,7 @@ import java.util.List;
 
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
+import org.rocksdb.Statistics;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.WriteOptions;
 
@@ -73,6 +74,10 @@ public class TransactionDBRocksDBColumnarKeyValueStorage extends RocksDBColumnar
   @Override
   RocksDB getDB() {
     return db;
+  }
+
+  public Statistics getStats() {
+    return stats;
   }
 
   /**

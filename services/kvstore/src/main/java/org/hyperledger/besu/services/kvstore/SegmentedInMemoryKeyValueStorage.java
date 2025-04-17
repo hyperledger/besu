@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -142,6 +143,39 @@ public class SegmentedInMemoryKeyValueStorage
     } finally {
       lock.unlock();
     }
+  }
+
+  @Override
+  public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys)
+      throws StorageException {
+    if (segments.size() != keys.size()) {
+      throw new IllegalArgumentException("The segments and keys lists must have the same length");
+    }
+    final List<byte[]> results = new ArrayList<>(Collections.nCopies(keys.size(), null));
+
+    final Map<SegmentIdentifier, List<Integer>> segmentToIndices = new HashMap<>();
+    for (int i = 0; i < segments.size(); i++) {
+      segmentToIndices.computeIfAbsent(segments.get(i), s -> new ArrayList<>()).add(i);
+    }
+
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      for (Map.Entry<SegmentIdentifier, List<Integer>> entry : segmentToIndices.entrySet()) {
+        final SegmentIdentifier segment = entry.getKey();
+        final NavigableMap<Bytes, Optional<byte[]>> segmentMap =
+            hashValueStore.computeIfAbsent(segment, s -> newSegmentMap());
+        for (Integer index : entry.getValue()) {
+          final byte[] key = keys.get(index);
+          final Optional<byte[]> value = segmentMap.getOrDefault(Bytes.wrap(key), Optional.empty());
+          results.set(index, value.orElse(null));
+        }
+      }
+    } finally {
+      lock.unlock();
+    }
+
+    return results;
   }
 
   @Override
