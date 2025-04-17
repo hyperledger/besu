@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
