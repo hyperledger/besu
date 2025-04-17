@@ -23,11 +23,11 @@ public class TransactionReceiptEncodingConfiguration {
 
   public static final TransactionReceiptEncodingConfiguration ETH69_RECEIPT_CONFIGURATION =
       new Builder()
-          .withBloomFilter(true)
+          .withEth69Receipt(true)
+          .withBloomFilter(false)
           .withCompactedLogs(false)
           .withRevertReason(false)
           .withOpaqueBytes(false)
-          .withEth69Receipt(true)
           .build();
 
   public static final TransactionReceiptEncodingConfiguration STORAGE_WITH_COMPACTION =
