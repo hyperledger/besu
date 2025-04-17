@@ -23,15 +23,15 @@ import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 plugins {
-  id 'com.diffplug.spotless' version '6.25.0'
+  id 'com.diffplug.spotless' version '7.0.2'
   id 'com.github.jk1.dependency-license-report' version '2.9'
   id 'com.jfrog.artifactory' version '5.2.5'
   id 'me.champeau.jmh' version '0.7.2' apply false
-  id 'net.ltgt.errorprone' version '4.0.1'
+  id 'net.ltgt.errorprone' version '4.1.0'
   id 'maven-publish'
   id 'jacoco'
   id 'jacoco-report-aggregation'
-  id 'org.sonarqube' version '5.1.0.4882'
+  id 'org.sonarqube' version '6.0.1.5171'
 }
 
 sonarqube {
@@ -204,6 +204,12 @@ configure(allprojects - project(':platform')) {
     resolutionStrategy.capabilitiesResolution.withCapability('org.bouncycastle:bcpkix-jdk18on') {
       selectHighestVersion()
     }
+
+    // transitive versions conflict with io.protocols.tuweni, prefer ours
+    exclude group: 'io.tmio', module: 'tuweni-bytes'
+    exclude group: 'io.tmio', module: 'tuweni-crypto'
+    exclude group: 'io.tmio', module: 'tuweni-rlp'
+    exclude group: 'io.tmio', module: 'tuweni-units'
   }
 
 
@@ -214,7 +220,7 @@ configure(allprojects - project(':platform')) {
       target 'src/**/*.java'
       targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
       removeUnusedImports()
-      googleJavaFormat('1.22.0')
+      googleJavaFormat('1.25.2')
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
@@ -827,7 +833,7 @@ task distDocker {
       from file("${projectDir}/docker/Dockerfile")
       into(dockerBuildDir)
     }
-    providers.exec {
+    exec {
       def image = "${dockerImageName}:${dockerBuildVersion}"
       def dockerPlatform = ""
       if (project.hasProperty('docker-platform')){
@@ -851,7 +857,7 @@ task testDocker {
   }
 
   doLast {
-    providers.exec {
+    exec {
       def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
       workingDir "${projectDir}/docker"
       executable shell
@@ -875,7 +881,7 @@ task dockerUpload {
   }
 
   doLast {
-    providers.exec {
+    exec {
       def archVariantImage = "${image}-${architecture}"
       def cmd = "docker tag '${image}' '${archVariantImage}' && docker push '${archVariantImage}'"
       println "Executing '${cmd}'"
@@ -892,13 +898,13 @@ task dockerUploadRelease {
   doLast {
     for (def architecture in archs) {
 
-      providers.exec {
+      exec {
         def cmd = "docker pull '${image}-${architecture}' && docker tag '${image}-${architecture}' '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
         args "-c", cmd
       }
-      providers.exec {
+      exec {
         def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
@@ -906,14 +912,14 @@ task dockerUploadRelease {
       }
 
 
-      providers.exec {
+      exec {
         def archImage = "${image}-${architecture}"
         def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
         args "-c", cmd
       }
-      providers.exec {
+      exec {
         def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
@@ -929,7 +935,7 @@ task manifestDocker {
     "arm64",
     "amd64"] //TODO: this assumes dockerUpload task has already been run on 2 different archs!
   doLast {
-    providers.exec {
+    exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${image}-${arch}' " }
       def cmd = "docker manifest create '${image}' ${targets}"
@@ -937,7 +943,7 @@ task manifestDocker {
       executable shell
       args "-c", cmd
     }
-    providers.exec {
+    exec {
       def cmd = "docker manifest push '${image}'"
       println "Executing '${cmd}'"
       executable shell
@@ -952,7 +958,7 @@ task manifestDockerRelease {
 
   doLast {
 
-    providers.exec {
+    exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
       def cmd = "docker manifest create '${baseTag}' ${targets} --amend"
@@ -960,7 +966,7 @@ task manifestDockerRelease {
       executable shell
       args "-c", cmd
     }
-    providers.exec {
+    exec {
       def cmd = "docker manifest push '${baseTag}'"
       println "Executing '${cmd}'"
       executable shell

@@ -20,16 +20,19 @@ import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_OFF
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERKLE_NODE_WIDTH;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
+import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.LongSupplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -41,29 +44,41 @@ public class Eip4762AccessWitness implements AccessWitness {
   private static final Logger LOG = LoggerFactory.getLogger(Eip4762AccessWitness.class);
 
   private static final UInt256 zeroTreeIndex = UInt256.ZERO;
-  private final Map<LeafAccessKey, Integer> leaves;
-  private final Map<BranchAccessKey, Integer> branches;
+  private final Map<AccessEvent<?>, AccessEvent<?>> accesses;
+  private final List<AccessEvent<?>> revertableEvents;
 
   /** Instantiates a new EIP-4762 access witness. */
   public Eip4762AccessWitness() {
-    this(new HashMap<>(), new HashMap<>());
+    this(new HashMap<>(), new ArrayList<>());
   }
 
   /**
    * Instantiates a new EIP-4762 access witness.
    *
-   * @param leaves Collection the controls access to leaves in the trie.
-   * @param branches Collection the controls access to branches in the trie.
+   * @param accesses Collection the controls access to branches and leaves in the trie.
+   * @param revertableEvents access events that can be reverted.
    */
   public Eip4762AccessWitness(
-      final Map<LeafAccessKey, Integer> leaves, final Map<BranchAccessKey, Integer> branches) {
-    this.branches = branches;
-    this.leaves = leaves;
+      final Map<AccessEvent<?>, AccessEvent<?>> accesses,
+      final List<AccessEvent<?>> revertableEvents) {
+    this.accesses = accesses;
+    this.revertableEvents = revertableEvents;
+  }
+
+  private long touchAddressAtomic(final LongSupplier gasSupplier, final long remainingGas) {
+    enterWitness();
+    long gas = gasSupplier.getAsLong();
+    if (remainingGas < gas) {
+      revertWitnesses();
+    }
+    return gas;
   }
 
   @Override
-  public long touchAddressAndChargeRead(final Address address, final UInt256 leafKey) {
-    return touchAddressOnReadAndComputeGas(address, zeroTreeIndex, leafKey);
+  public long touchAddressAndChargeRead(
+      final Address address, final UInt256 leafKey, final long remainingGas) {
+    return touchAddressAtomic(
+        () -> touchAddressOnReadAndComputeGas(address, zeroTreeIndex, leafKey), remainingGas);
   }
 
   @Override
@@ -71,35 +86,46 @@ public class Eip4762AccessWitness implements AccessWitness {
       final Address caller,
       final Address target,
       final boolean isAccountCreation,
-      final long warmReadCost) {
-
-    long gas = 0;
-
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteResetAndComputeGas(caller, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+      final long warmReadCost,
+      final long remainingGas) {
+    long gasRemaining = remainingGas;
+    long gas =
+        touchAddressAtomic(
+            () -> touchAddressOnWriteResetAndComputeGas(caller, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            gasRemaining);
+    gasRemaining -= gas;
 
     if (isAccountCreation) {
       gas =
           clampedAdd(
-              gas, touchAddressOnWriteSetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-      gas =
-          clampedAdd(
-              gas, touchAddressOnWriteSetAndComputeGas(target, zeroTreeIndex, CODE_HASH_LEAF_KEY));
+              gas,
+              touchAddressAtomic(
+                  () ->
+                      clampedAdd(
+                          touchAddressOnWriteSetAndComputeGas(
+                              target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+                          touchAddressOnWriteSetAndComputeGas(
+                              target, zeroTreeIndex, CODE_HASH_LEAF_KEY)),
+                  gasRemaining));
       return gas;
     }
 
     long readTargetStatelessGas =
-        touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY);
+        touchAddressAtomic(
+            () -> touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            gasRemaining);
     if (readTargetStatelessGas == 0) {
       readTargetStatelessGas = clampedAdd(readTargetStatelessGas, warmReadCost);
     }
+    gasRemaining -= readTargetStatelessGas;
 
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    gas = clampedAdd(gas, readTargetStatelessGas);
 
-    return clampedAdd(gas, readTargetStatelessGas);
+    return clampedAdd(
+        gas,
+        touchAddressAtomic(
+            () -> touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            gasRemaining));
   }
 
   @Override
@@ -107,13 +133,15 @@ public class Eip4762AccessWitness implements AccessWitness {
       final Address caller,
       final Address target,
       final boolean isAccountCreation,
-      final long warmReadCost) {
+      final long warmReadCost,
+      final long remainingGas) {
 
-    long gas = 0;
-
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteResetAndComputeGas(caller, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    long gasRemaining = remainingGas;
+    long gas =
+        touchAddressAtomic(
+            () -> touchAddressOnWriteResetAndComputeGas(caller, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            gasRemaining);
+    gasRemaining -= gas;
 
     if (caller.equals(target)) {
       return gas;
@@ -122,55 +150,55 @@ public class Eip4762AccessWitness implements AccessWitness {
     if (isAccountCreation) {
       gas =
           clampedAdd(
-              gas, touchAddressOnWriteSetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-      gas =
-          clampedAdd(
-              gas, touchAddressOnWriteSetAndComputeGas(target, zeroTreeIndex, CODE_HASH_LEAF_KEY));
+              gas,
+              touchAddressAtomic(
+                  () ->
+                      clampedAdd(
+                          touchAddressOnWriteSetAndComputeGas(
+                              target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+                          touchAddressOnWriteSetAndComputeGas(
+                              target, zeroTreeIndex, CODE_HASH_LEAF_KEY)),
+                  gasRemaining));
       return gas;
     }
 
     long readTargetStatelessGas =
-        touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY);
+        touchAddressAtomic(
+            () -> touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            gasRemaining);
     if (readTargetStatelessGas == 0) {
       readTargetStatelessGas = clampedAdd(readTargetStatelessGas, warmReadCost);
     }
+    gasRemaining -= readTargetStatelessGas;
 
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
+    gas = clampedAdd(gas, readTargetStatelessGas);
 
-    return clampedAdd(gas, readTargetStatelessGas);
+    return clampedAdd(
+        gas,
+        touchAddressAtomic(
+            () -> touchAddressOnWriteResetAndComputeGas(target, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+            gasRemaining));
   }
 
   @Override
-  public long touchAndChargeProofOfAbsence(final Address address) {
-    long gas = 0;
-
-    gas =
-        clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-
-    gas =
-        clampedAdd(
-            gas, touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY));
-
-    return gas;
+  public long touchAndChargeProofOfAbsence(final Address address, final long remainingGas) {
+    return touchAddressAtomic(
+        () ->
+            clampedAdd(
+                touchAddressOnReadAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+                touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY)),
+        remainingGas);
   }
 
   @Override
-  public long touchAndChargeContractCreateCompleted(final Address address) {
-
-    long gas = 0;
-
-    gas =
-        clampedAdd(
-            gas,
-            touchAddressOnWriteResetAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY));
-    gas =
-        clampedAdd(
-            gas, touchAddressOnWriteResetAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY));
-
-    return gas;
+  public long touchAndChargeContractCreateCompleted(
+      final Address address, final long remainingGas) {
+    return touchAddressAtomic(
+        () ->
+            clampedAdd(
+                touchAddressOnWriteResetAndComputeGas(address, zeroTreeIndex, BASIC_DATA_LEAF_KEY),
+                touchAddressOnWriteResetAndComputeGas(address, zeroTreeIndex, CODE_HASH_LEAF_KEY)),
+        remainingGas);
   }
 
   @Override
@@ -202,16 +230,23 @@ public class Eip4762AccessWitness implements AccessWitness {
   }
 
   @Override
-  public long touchCodeChunksUponContractCreation(final Address address, final long codeLength) {
+  public long touchCodeChunksUponContractCreation(
+      final Address address, final long codeLength, final long remainingGas) {
+    long gasRemaining = remainingGas;
     long gas = 0;
     for (long i = 0; i < (codeLength + 30) / 31; i++) {
-      gas =
-          clampedAdd(
-              gas,
-              touchAddressOnWriteSetAndComputeGas(
-                  address,
-                  CODE_OFFSET.add(i).divide(VERKLE_NODE_WIDTH),
-                  CODE_OFFSET.add(i).mod(VERKLE_NODE_WIDTH)));
+      final long temp_i = i;
+      final long statelessGas =
+          touchAddressAtomic(
+              () ->
+                  touchAddressOnWriteSetAndComputeGas(
+                      address,
+                      CODE_OFFSET.add(temp_i).divide(VERKLE_NODE_WIDTH),
+                      CODE_OFFSET.add(temp_i).mod(VERKLE_NODE_WIDTH)),
+              gasRemaining);
+      gasRemaining -= statelessGas;
+
+      gas = clampedAdd(gas, statelessGas);
     }
     return gas;
   }
@@ -222,7 +257,9 @@ public class Eip4762AccessWitness implements AccessWitness {
       final boolean isContractInDeployment,
       final long startPc,
       final long readSize,
-      final long codeLength) {
+      final long codeLength,
+      final long remainingGas) {
+    long gasRemaining = remainingGas;
     long gas = 0;
 
     if (isContractInDeployment || readSize == 0 || startPc >= codeLength) {
@@ -232,32 +269,65 @@ public class Eip4762AccessWitness implements AccessWitness {
     // last byte read is limited by code length, and it is an index, hence the decrement
     long endPc = Math.min(startPc + readSize, codeLength) - 1L;
     for (long i = startPc / 31L; i <= endPc / 31L; i++) {
-      gas =
-          clampedAdd(
-              gas,
-              touchAddressOnReadAndComputeGas(
-                  contractAddress,
-                  CODE_OFFSET.add(i).divide(VERKLE_NODE_WIDTH),
-                  CODE_OFFSET.add(i).mod(VERKLE_NODE_WIDTH)));
+      final long temp_i = i;
+      final long statelessGas =
+          touchAddressAtomic(
+              () ->
+                  touchAddressOnReadAndComputeGas(
+                      contractAddress,
+                      CODE_OFFSET.add(temp_i).divide(VERKLE_NODE_WIDTH),
+                      CODE_OFFSET.add(temp_i).mod(VERKLE_NODE_WIDTH)),
+              gasRemaining);
+      gasRemaining -= statelessGas;
+
+      gas = clampedAdd(gas, statelessGas);
     }
 
     return gas;
   }
 
+  @Override
+  public long touchAndChargeStorageLoad(
+      final Address address, final UInt256 storageKey, final long remainingGas) {
+    List<UInt256> treeIndexes = getStorageSlotTreeIndexes(storageKey);
+    return touchAddressAtomic(
+        () -> touchAddressOnReadAndComputeGas(address, treeIndexes.getFirst(), treeIndexes.get(1)),
+        remainingGas);
+  }
+
+  @Override
+  public long touchAndChargeStorageStore(
+      final Address address,
+      final UInt256 storageKey,
+      final boolean hasPreviousValue,
+      final long remainingGas) {
+    List<UInt256> treeIndexes = getStorageSlotTreeIndexes(storageKey);
+    return touchAddressAtomic(
+        () -> {
+          if (!hasPreviousValue) {
+            return touchAddressOnWriteSetAndComputeGas(
+                address, treeIndexes.get(0), treeIndexes.get(1));
+          }
+          return touchAddressOnWriteResetAndComputeGas(
+              address, treeIndexes.get(0), treeIndexes.get(1));
+        },
+        remainingGas);
+  }
+
   private long touchAddressOnWriteResetAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
-    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessEvents.LEAF_RESET);
+    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessEvent.LEAF_RESET);
   }
 
   private long touchAddressOnWriteSetAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
     // TODO: change to LEAF_SET when CHUNK_FILL is implemented. Still not implemented in devnet-7
-    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessEvents.LEAF_RESET);
+    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessEvent.LEAF_RESET);
   }
 
   private long touchAddressOnReadAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
-    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessEvents.LEAF_READ);
+    return touchAddressAndChargeGas(address, treeIndex, subIndex, AccessEvent.LEAF_READ);
   }
 
   private List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
@@ -266,139 +336,116 @@ public class Eip4762AccessWitness implements AccessWitness {
         UInt256.fromBytes(TrieKeyUtils.getStorageKeySuffix(storageKey)));
   }
 
-  @Override
-  public long touchAndChargeStorageLoad(final Address address, final UInt256 storageKey) {
-    List<UInt256> treeIndexes = getStorageSlotTreeIndexes(storageKey);
-    return touchAddressOnReadAndComputeGas(address, treeIndexes.get(0), treeIndexes.get(1));
-  }
-
-  @Override
-  public long touchAndChargeStorageStore(
-      final Address address, final UInt256 storageKey, final boolean hasPreviousValue) {
-    List<UInt256> treeIndexes = getStorageSlotTreeIndexes(storageKey);
-    if (!hasPreviousValue) {
-      return touchAddressOnWriteSetAndComputeGas(address, treeIndexes.get(0), treeIndexes.get(1));
-    }
-    return touchAddressOnWriteResetAndComputeGas(address, treeIndexes.get(0), treeIndexes.get(1));
-  }
-
   private long touchAddressAndChargeGas(
       final Address address,
       final UInt256 treeIndex,
       final UInt256 subIndex,
       final int accessMode) {
-    final int accessEvents = touchAddress(address, treeIndex, subIndex, accessMode);
+
+    BranchAccessEvent branchAccess = new BranchAccessEvent(address, treeIndex);
+    touchAddressForBranch(branchAccess, accessMode);
+    AccessEvent<?> witnessAccess = branchAccess;
+    if (subIndex != null) {
+      // create a leaf access
+      LeafAccessEvent leafAccessEvent = new LeafAccessEvent(branchAccess, subIndex);
+      touchAddressForLeaf(leafAccessEvent, accessMode);
+      witnessAccess = leafAccessEvent;
+    }
+
     long gas = 0;
-    if (AccessEvents.isBranchRead(accessEvents)) {
-      gas = clampedAdd(gas, AccessEvents.getBranchReadCost());
+    if (witnessAccess.getBranchEvent().isBranchRead()) {
+      gas = clampedAdd(gas, AccessEvent.getBranchReadCost());
     }
-    if (AccessEvents.isLeafRead(accessEvents)) {
-      gas = clampedAdd(gas, AccessEvents.getLeafReadCost());
+    if (witnessAccess.isLeafRead()) {
+      gas = clampedAdd(gas, AccessEvent.getLeafReadCost());
     }
-    if (AccessEvents.isBranchWrite(accessEvents)) {
-      gas = clampedAdd(gas, AccessEvents.getBranchWriteCost());
+    if (witnessAccess.getBranchEvent().isBranchWrite()) {
+      gas = clampedAdd(gas, AccessEvent.getBranchWriteCost());
     }
-    if (AccessEvents.isLeafReset(accessEvents)) {
-      gas = clampedAdd(gas, AccessEvents.getLeafResetCost());
+    if (witnessAccess.isLeafReset()) {
+      gas = clampedAdd(gas, AccessEvent.getLeafResetCost());
     }
-    if (AccessEvents.isLeafSet(accessEvents)) {
-      gas = clampedAdd(gas, AccessEvents.getLeafSetCost());
+    if (witnessAccess.isLeafSet()) {
+      gas = clampedAdd(gas, AccessEvent.getLeafSetCost());
     }
 
     final long gasView = gas;
+    final AccessEvent<?> witnessAccessView = witnessAccess;
     LOG.atDebug().log(
         () ->
             "touch witness "
-                + address
-                + " "
-                + treeIndex.toShortHexString()
-                + " "
-                + subIndex.toShortHexString()
+                + witnessAccessView
                 + "\ntotal charges "
                 + gasView
-                + costSchedulePrettyPrint(accessEvents));
+                + witnessAccessView.costSchedulePrettyPrint());
+
+    revertableEvents.add(witnessAccess);
 
     return gas;
   }
 
-  private static String costSchedulePrettyPrint(final int accessEvents) {
-    String message = "";
-    if (AccessEvents.isBranchRead(accessEvents)) {
-      message += "\n\tWITNESS_BRANCH_COST " + AccessEvents.getBranchReadCost();
-    }
-    if (AccessEvents.isLeafRead(accessEvents)) {
-      message += "\n\tWITNESS_CHUNK_COST " + AccessEvents.getLeafReadCost();
-    }
-    if (AccessEvents.isBranchWrite(accessEvents)) {
-      message += "\n\tSUBTREE_EDIT_COST " + AccessEvents.getBranchWriteCost();
-    }
-    if (AccessEvents.isLeafReset(accessEvents)) {
-      message += "\n\tCHUNK_EDIT_COST " + AccessEvents.getLeafResetCost();
-    }
-    if (AccessEvents.isLeafSet(accessEvents)) {
-      message += "\n\tCHUNK_FILL_COST " + AccessEvents.getLeafSetCost();
-    }
-    return message;
-  }
-
-  private int touchAddress(
-      final Address addr, final UInt256 treeIndex, final UInt256 leafIndex, final int accessMode) {
-    BranchAccessKey branchKey = new BranchAccessKey(addr, treeIndex);
-
-    int accessEvents = AccessEvents.NONE;
-    accessEvents = touchAddressForBranch(accessMode, branchKey, accessEvents);
-    if (leafIndex != null) {
-      accessEvents = touchAddressForLeaf(accessMode, branchKey, leafIndex, accessEvents);
-    }
-
-    return accessEvents;
-  }
-
-  private int touchAddressForBranch(
-      final int accessMode, final BranchAccessKey branchKey, final int accEvents) {
-    int accessEvents = accEvents;
-    if (!this.branches.containsKey(branchKey)) {
-      accessEvents = AccessEvents.branchRead(accessEvents);
-      this.branches.put(branchKey, AccessEvents.BRANCH_READ);
+  private void touchAddressForBranch(final BranchAccessEvent accessEvent, final int accessMode) {
+    AccessEvent<?> currentAccess = accesses.putIfAbsent(accessEvent, accessEvent);
+    if (currentAccess == null) {
+      currentAccess = accessEvent;
+      accessEvent.branchRead();
     }
 
     // A write is always a read
-    if (AccessEvents.isWrite(accessMode)) {
-      int previousAccessMode = this.branches.getOrDefault(branchKey, AccessEvents.NONE);
-      if (!AccessEvents.isWrite(previousAccessMode)) {
-        accessEvents = AccessEvents.branchWrite(accessEvents);
-        this.branches.put(branchKey, (previousAccessMode | accessMode));
+    if (AccessEvent.isWrite(accessMode)) {
+      if (!currentAccess.isBranchWrite()) {
+        accessEvent.branchWrite();
       }
     }
 
-    return accessEvents;
+    currentAccess.seenAccess();
+    currentAccess.mergeFlags(accessEvent);
+    accesses.put(currentAccess, currentAccess);
   }
 
-  private int touchAddressForLeaf(
-      final int accessMode,
-      final BranchAccessKey branchKey,
-      final UInt256 subIndex,
-      final int accEvents) {
-    LeafAccessKey leafKey = new LeafAccessKey(branchKey, subIndex);
-
-    int accessEvents = accEvents;
-    if (!this.leaves.containsKey(leafKey)) {
-      accessEvents = AccessEvents.leafRead(accessEvents);
-      this.leaves.put(leafKey, AccessEvents.LEAF_READ);
+  private void touchAddressForLeaf(final LeafAccessEvent accessEvent, final int accessMode) {
+    AccessEvent<?> currentAccess = accesses.putIfAbsent(accessEvent, accessEvent);
+    if (currentAccess == null) {
+      currentAccess = accessEvent;
+      accessEvent.leafRead();
     }
 
     // A write is always a read
-    if (AccessEvents.isWrite(accessMode)) {
-      int previousAccessMode = this.leaves.getOrDefault(leafKey, AccessEvents.NONE);
-      if (!AccessEvents.isWrite(previousAccessMode)) {
-        accessEvents = AccessEvents.leafReset(accessEvents);
-        if (AccessEvents.isLeafSet(accessMode)) {
-          accessEvents = AccessEvents.leafSet(accessEvents);
-        }
-        this.leaves.put(leafKey, (previousAccessMode | accessMode));
+    if (AccessEvent.isWrite(accessMode)) {
+      if (!currentAccess.isLeafReset()) {
+        accessEvent.leafReset();
+      }
+      if (AccessEvent.isLeafSet(accessMode) && !currentAccess.isLeafSet()) {
+        accessEvent.leafSet();
       }
     }
-    return accessEvents;
+
+    currentAccess.seenAccess();
+    currentAccess.mergeFlags(accessEvent);
+    accesses.put(currentAccess, currentAccess);
+  }
+
+  private void revertWitnesses() {
+    revertableEvents.forEach(
+        key -> {
+          if (accesses.containsKey(key)) {
+            LOG.atDebug().log("rolling back {}", key);
+            rollbackAccess(key.getBranchEvent());
+            rollbackAccess(key);
+          }
+        });
+  }
+
+  private void rollbackAccess(final AccessEvent<?> key) {
+    if (accesses.get(key).rollbackAccessAndGet() > 0) {
+      return;
+    }
+    LOG.atDebug().log("removed {}", key);
+    accesses.remove(key);
+  }
+
+  private void enterWitness() {
+    revertableEvents.clear();
   }
 
   @Override
@@ -406,20 +453,28 @@ public class Eip4762AccessWitness implements AccessWitness {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Eip4762AccessWitness that = (Eip4762AccessWitness) o;
-    return Objects.equals(branches, that.branches) && Objects.equals(leaves, that.leaves);
+    return Objects.equals(accesses, that.accesses);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(branches, leaves);
+    return Objects.hash(accesses, accesses);
   }
 
   @Override
   public String toString() {
-    return "AccessWitness{" + "leaves=" + leaves + ", branches=" + branches + '}';
+    return String.format(
+        "AccessWitness { leaves=%s, branches=%s }", getLeafAccesses(), getBranchAccesses());
   }
 
-  record BranchAccessKey(Address address, UInt256 treeIndex) {}
+  private List<AccessEvent<?>> getBranchAccesses() {
+    return accesses.keySet().stream()
+        .filter(access -> access instanceof BranchAccessEvent)
+        .toList();
+  }
 
-  record LeafAccessKey(BranchAccessKey branchAccessKey, UInt256 leafIndex) {}
+  @Override
+  public List<AccessEvent<?>> getLeafAccesses() {
+    return accesses.keySet().stream().filter(access -> access instanceof LeafAccessEvent).toList();
+  }
 }

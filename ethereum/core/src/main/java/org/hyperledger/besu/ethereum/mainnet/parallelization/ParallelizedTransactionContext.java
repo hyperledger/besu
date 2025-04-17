@@ -16,18 +16,18 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 
 import java.util.Objects;
 
 public final class ParallelizedTransactionContext {
-  private final DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator;
+  private final PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator;
   private final TransactionProcessingResult transactionProcessingResult;
   private final boolean isMiningBeneficiaryTouchedPreRewardByTransaction;
   private final Wei miningBeneficiaryReward;
 
   public ParallelizedTransactionContext(
-      final DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator,
+      final PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator,
       final TransactionProcessingResult transactionProcessingResult,
       final boolean isMiningBeneficiaryTouchedPreRewardByTransaction,
       final Wei miningBeneficiaryReward) {
@@ -38,7 +38,7 @@ public final class ParallelizedTransactionContext {
     this.miningBeneficiaryReward = miningBeneficiaryReward;
   }
 
-  public DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator() {
+  public PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator() {
     return transactionAccumulator;
   }
 
@@ -93,13 +93,13 @@ public final class ParallelizedTransactionContext {
   }
 
   public static class Builder {
-    private DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator;
+    private PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator;
     private TransactionProcessingResult transactionProcessingResult;
     private boolean isMiningBeneficiaryTouchedPreRewardByTransaction;
     private Wei miningBeneficiaryReward = Wei.ZERO;
 
     public Builder transactionAccumulator(
-        final DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator) {
+        final PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator) {
       this.transactionAccumulator = transactionAccumulator;
       return this;
     }

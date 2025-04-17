@@ -20,6 +20,9 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -340,6 +343,43 @@ public class CodeV0 implements Code {
 
   @Override
   public String prettyPrint() {
-    return bytes.toHexString();
+    int i = 0;
+    int len = bytes.size();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    PrintStream ps = new PrintStream(out);
+    ps.println("0x # Legacy EVM Code");
+    while (i < len) {
+      i += printInstruction(i, ps);
+    }
+    return out.toString(StandardCharsets.UTF_8);
+  }
+
+  /**
+   * Prints an individual instruction, including immediate data
+   *
+   * @param offset Offset within the code
+   * @param out the print stream to write to
+   * @return the number of bytes to advance the PC (includes consideration of immediate arguments)
+   */
+  public int printInstruction(final int offset, final PrintStream out) {
+    int codeByte = bytes.get(offset) & 0xff;
+    OpcodeInfo info = OpcodeInfo.getLegacyOpcode(codeByte);
+    String push = "";
+    String decimalPush = "";
+    if (info.pcAdvance() > 1) {
+      int start = Math.min(bytes.size(), offset + 1);
+      int end = Math.min(bytes.size(), info.pcAdvance() - 1);
+      Bytes slice = bytes.slice(start, end);
+      push = slice.toUnprefixedHexString();
+      if (info.pcAdvance() < 5) {
+        decimalPush = "(" + slice.toLong() + ")";
+      }
+    }
+    String name = info.name();
+    if (codeByte == 0x5b) {
+      name = "JUMPDEST";
+    }
+    out.printf("%02x%s # [ %d ] %s%s%n", codeByte, push, offset, name, decimalPush);
+    return Math.max(1, info.pcAdvance());
   }
 }

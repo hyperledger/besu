@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -61,7 +60,7 @@ public class ProposalPayload extends QbftPayload {
       final RLPInput rlpInput, final QbftBlockCodec blockEncoder) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = readConsensusRound(rlpInput);
-    final QbftBlock proposedBlock = blockEncoder.readFrom(rlpInput, QbftHashMode.COMMITTED_SEAL);
+    final QbftBlock proposedBlock = blockEncoder.readFrom(rlpInput);
     rlpInput.leaveList();
 
     return new ProposalPayload(roundIdentifier, proposedBlock, blockEncoder);

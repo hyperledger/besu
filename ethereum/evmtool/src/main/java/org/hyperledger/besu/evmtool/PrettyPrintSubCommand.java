@@ -18,6 +18,7 @@ import static org.hyperledger.besu.evmtool.PrettyPrintSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeInvalid;
@@ -96,17 +97,19 @@ public class PrettyPrintSubCommand implements Runnable {
         parentCommand.out.println("Invalid hex string: " + e.getMessage());
         continue;
       }
-      if (container.get(0) != ((byte) 0xef) && container.get(1) != 0) {
-        parentCommand.out.println(
-            "Pretty printing of legacy EVM is not supported. Patches welcome!");
-
+      String fork = EvmSpecVersion.OSAKA.getName();
+      if (parentCommand.hasFork()) {
+        fork = parentCommand.getFork();
+      }
+      ProtocolSpec protocolSpec = ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork);
+      EVM evm = protocolSpec.getEvm();
+      if (evm.getEvmVersion().getMaxEofVersion() < 1
+          || container.get(0) != ((byte) 0xef)
+          || container.get(1) != 0) {
+        Code code = evm.getCodeUncached(container);
+        parentCommand.out.print(code.prettyPrint());
+        parentCommand.out.flush();
       } else {
-        String fork = EvmSpecVersion.OSAKA.getName();
-        if (parentCommand.hasFork()) {
-          fork = parentCommand.getFork();
-        }
-        ProtocolSpec protocolSpec = ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork);
-        EVM evm = protocolSpec.getEvm();
         EOFLayout layout = evm.parseEOF(container);
         if (layout.isValid()) {
           var validatedCode = evm.getCodeUncached(container);
