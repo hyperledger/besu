@@ -46,7 +46,9 @@ public class VersionMetadata implements Comparable<VersionMetadata> {
    * @return the version of Besu
    */
   public static String getRuntimeVersionString() {
-    return BesuVersionUtils.version() == null ? BESU_VERSION_UNKNOWN : BesuVersionUtils.version();
+    return BesuVersionUtils.shortVersion() == null
+        ? BESU_VERSION_UNKNOWN
+        : BesuVersionUtils.shortVersion();
   }
 
   public static VersionMetadata getRuntimeVersion() {
