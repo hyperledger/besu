@@ -31,9 +31,10 @@ import picocli.CommandLine;
 
 /** The prune pre-merge block data sub command */
 @CommandLine.Command(
-    name = "prune-pre-merge-blocks",
+    name = "x-prune-pre-merge-blocks",
     description =
-        "Prunes all pre-merge blocks and associated transaction receipts, leaving only headers",
+        "[Experimental] Prunes all pre-merge blocks and associated transaction receipts, leaving only headers and genesis block",
+    hidden = true,
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class PrunePreMergeBlockDataSubCommand implements Runnable {
@@ -96,7 +97,7 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
                   besuController.getDataStorageConfiguration());
 
       try (ExecutorService executor = Executors.newFixedThreadPool(threads)) {
-        for (long i = 0; i < mergeBlockNumber; i += pruneRangeSize) {
+        for (long i = 1; i < mergeBlockNumber; i += pruneRangeSize) {
           final long headerNumber = i;
           executor.submit(
               () -> deleteBlockRange(headerNumber, mergeBlockNumber, blockchainStorage));

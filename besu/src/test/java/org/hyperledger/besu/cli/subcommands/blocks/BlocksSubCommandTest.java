@@ -24,9 +24,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.CommandTestAbstract;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -143,7 +143,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingBlockSubCommandVersionMustDisplayVersion() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -181,7 +182,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingBlockImportSubCommandVersionMustDisplayVersion() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -477,7 +479,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingBlockExportSubCommandVersionMustDisplayVersion() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_EXPORT_SUBCOMMAND_NAME, "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 

@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.NavigableMap;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -76,29 +75,11 @@ public interface AccountState {
   Bytes getCode();
 
   /**
-   * The optional EVM bytecode if the account has set a 7702 code delegation.
-   *
-   * @return the code of the target account that this account delegates to (which may be empty).
-   */
-  default Optional<Bytes> getCodeDelegationTargetCode() {
-    return Optional.empty();
-  }
-
-  /**
    * The hash of the EVM bytecode associated with this account.
    *
    * @return the hash of the account code (which may be {@link Hash#EMPTY}).
    */
   Hash getCodeHash();
-
-  /**
-   * The optional hash of the delegated EVM bytecode if the account has set a 7702 code delegation.
-   *
-   * @return the hash of the code of the target account (which may be empty).
-   */
-  default Optional<Hash> getCodeDelegationTargetHash() {
-    return Optional.empty();
-  }
 
   /**
    * Whether the account has (non empty) EVM bytecode associated to it.

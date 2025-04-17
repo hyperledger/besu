@@ -20,12 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import okhttp3.Request;
@@ -62,7 +62,8 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
 
   private void graphQLCall(final String name) throws IOException {
     final String json =
-        Resources.toString(EthGraphQLHttpBySpecTest.class.getResource(name), Charsets.UTF_8);
+        Resources.toString(
+            EthGraphQLHttpBySpecTest.class.getResource(name), StandardCharsets.UTF_8);
     final JsonObject spec = new JsonObject(json);
     final String rawRequestBody = spec.getString("request");
     final String rawVariables = spec.getString("variables");
