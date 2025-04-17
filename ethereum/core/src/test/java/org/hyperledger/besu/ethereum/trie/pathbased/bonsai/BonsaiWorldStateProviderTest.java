@@ -17,12 +17,9 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.WorldStateHealerHelper.throwingWorldStateHealerSupplier;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -95,16 +92,7 @@ class BonsaiWorldStateProviderTest {
 
   @Test
   void testGetMutableReturnPersistedStateWhenNeeded() {
-    final BlockHeader chainHead = blockBuilder.number(0).buildHeader();
 
-    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY))
-        .thenReturn(Optional.of(chainHead.getStateRoot().toArrayUnsafe()));
-    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY))
-        .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
-    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY))
-        .thenReturn(Optional.of(chainHead.getStateRoot().toArrayUnsafe()));
-    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY))
-        .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
             cachedWorldStorageManager,
@@ -118,8 +106,33 @@ class BonsaiWorldStateProviderTest {
             EvmConfiguration.DEFAULT,
             throwingWorldStateHealerSupplier());
 
-    assertThat(bonsaiWorldStateArchive.getWorldState(withBlockHeaderAndUpdateNodeHead(chainHead)))
-        .containsInstanceOf(BonsaiWorldState.class);
+    final BlockHeader genesis = blockBuilder.number(0).buildHeader();
+    final BlockHeader blockHeader1 =
+        blockBuilder.number(1).parentHash(genesis.getHash()).buildHeader();
+
+    bonsaiWorldStateArchive.getWorldState().persist(genesis);
+    bonsaiWorldStateArchive.getWorldState().persist(blockHeader1);
+
+    when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
+    when(blockchain.getBlockHeader(blockHeader1.getHash())).thenReturn(Optional.of(blockHeader1));
+
+    TrieLogLayer trieLogLayer1 = mock(TrieLogLayer.class);
+    when(trieLogLayer1.getBlockHash()).thenReturn(blockHeader1.getHash());
+    doAnswer(__ -> Optional.of(trieLogLayer1))
+        .when(trieLogManager)
+        .getTrieLogLayer(eq(blockHeader1.getHash()));
+
+    final Optional<BonsaiWorldState> worldStateGenesis =
+        bonsaiWorldStateArchive
+            .getWorldState(withBlockHeaderAndUpdateNodeHead(genesis))
+            .map(BonsaiWorldState.class::cast);
+    assertThat(worldStateGenesis.get().getWorldStateBlockHash()).isEqualTo(genesis.getBlockHash());
+
+    final Optional<BonsaiWorldState> worldState1 =
+        bonsaiWorldStateArchive
+            .getWorldState(withBlockHeaderAndUpdateNodeHead(blockHeader1))
+            .map(BonsaiWorldState.class::cast);
+    assertThat(worldState1.get().getWorldStateBlockHash()).isEqualTo(blockHeader1.getBlockHash());
   }
 
   @Test
@@ -136,11 +149,17 @@ class BonsaiWorldStateProviderTest {
             null,
             EvmConfiguration.DEFAULT,
             throwingWorldStateHealerSupplier());
-    final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
-    final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
-    when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
-    assertThat(
-            bonsaiWorldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
+
+    final BlockHeader genesis = blockBuilder.number(0).buildHeader();
+    final BlockHeader blockHeader512 =
+        blockBuilder.number(512).parentHash(genesis.getHash()).buildHeader();
+
+    when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
+    when(blockchain.getBlockHeader(blockHeader512.getHash()))
+        .thenReturn(Optional.of(blockHeader512));
+
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader512);
+    assertThat(bonsaiWorldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(genesis)))
         .isEmpty();
     verify(cachedWorldStorageManager, Mockito.never()).getWorldState(any(Hash.class));
   }
@@ -160,27 +179,31 @@ class BonsaiWorldStateProviderTest {
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             throwingWorldStateHealerSupplier());
-    final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
-    final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
-    final BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class);
-    when(mockWorldState.blockHash()).thenReturn(blockHeader.getHash());
-    when(mockWorldState.freezeStorage()).thenReturn(mockWorldState);
+
+    final BlockHeader genesis = blockBuilder.number(0).buildHeader();
+    final BlockHeader blockHeader511 =
+        blockBuilder.number(511).parentHash(genesis.getHash()).buildHeader();
+
+    when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
+    when(blockchain.getBlockHeader(blockHeader511.getHash()))
+        .thenReturn(Optional.of(blockHeader511));
+
+    bonsaiWorldStateArchive.getWorldState().persist(blockHeader511);
+
+    final BonsaiWorldState mockWorldState0 = mock(BonsaiWorldState.class);
+    when(mockWorldState0.blockHash()).thenReturn(genesis.getHash());
+    when(mockWorldState0.freezeStorage()).thenReturn(mockWorldState0);
+    when(cachedWorldStorageManager.getWorldState(genesis.getHash()))
+        .thenReturn(Optional.of(mockWorldState0));
 
     when(trieLogManager.getMaxLayersToLoad()).thenReturn(Long.valueOf(512));
-    when(cachedWorldStorageManager.getWorldState(blockHeader.getHash()))
-        .thenReturn(Optional.of(mockWorldState));
-    when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
-    assertThat(
-            bonsaiWorldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader511);
+    assertThat(bonsaiWorldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(genesis)))
         .containsInstanceOf(BonsaiWorldState.class);
   }
 
   @Test
   void testGetMutableWithStorageInconsistencyRollbackTheState() {
-
-    doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
-        .when(trieLogManager)
-        .getTrieLogLayer(any(Hash.class));
 
     var worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
@@ -197,17 +220,29 @@ class BonsaiWorldStateProviderTest {
                 new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT,
                 throwingWorldStateHealerSupplier()));
-    final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
-    when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.of(blockHeader));
+    final BlockHeader genesis = blockBuilder.number(0).buildHeader();
+    final BlockHeader blockHeader1 =
+        blockBuilder.number(1).parentHash(genesis.getHash()).buildHeader();
 
+    when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
+    when(blockchain.getBlockHeader(blockHeader1.getHash())).thenReturn(Optional.of(blockHeader1));
+
+    bonsaiWorldStateArchive.getWorldState().persist(genesis);
+    bonsaiWorldStateArchive.getWorldState().persist(blockHeader1);
+
+    TrieLogLayer trieLogLayer1 = mock(TrieLogLayer.class);
+    when(trieLogLayer1.getBlockHash()).thenReturn(blockHeader1.getHash());
+    doAnswer(__ -> Optional.of(trieLogLayer1))
+        .when(trieLogManager)
+        .getTrieLogLayer(eq(blockHeader1.getHash()));
     assertThat(
             bonsaiWorldStateArchive.getWorldState(
-                withStateRootAndBlockHashAndUpdateNodeHead(null, blockHeader.getHash())))
+                withStateRootAndBlockHashAndUpdateNodeHead(null, genesis.getHash())))
         .containsInstanceOf(BonsaiWorldState.class);
 
     // verify is trying to get the trie log layer to rollback
-    verify(trieLogManager).getTrieLogLayer(Hash.ZERO);
+    verify(trieLogManager).getTrieLogLayer(blockHeader1.getBlockHash());
   }
 
   //    @SuppressWarnings({"unchecked", "rawtypes"})
@@ -230,14 +265,19 @@ class BonsaiWorldStateProviderTest {
                 EvmConfiguration.DEFAULT,
                 throwingWorldStateHealerSupplier()));
 
-    final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
+    final BlockHeader genesis = blockBuilder.number(0).buildHeader();
+    final BlockHeader blockHeader1 =
+        blockBuilder.number(1).parentHash(genesis.getHash()).buildHeader();
 
-    when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.of(blockHeader));
-    when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
+    when(blockchain.getBlockHeader(blockHeader1.getHash())).thenReturn(Optional.of(blockHeader1));
+
+    bonsaiWorldStateArchive.getWorldState().persist(genesis);
+    bonsaiWorldStateArchive.getWorldState().persist(blockHeader1);
 
     assertThat(
             bonsaiWorldStateArchive.getWorldState(
-                withStateRootAndBlockHashAndUpdateNodeHead(null, blockHeader.getHash())))
+                withStateRootAndBlockHashAndUpdateNodeHead(null, blockHeader1.getHash())))
         .containsInstanceOf(BonsaiWorldState.class);
 
     // verify is not trying to get the trie log layer to rollback when block is present
@@ -246,15 +286,6 @@ class BonsaiWorldStateProviderTest {
 
   @Test
   void testGetMutableWithStorageConsistencyToRollbackAndRollForwardTheState() {
-    final BlockHeader genesis = blockBuilder.number(0).buildHeader();
-    final BlockHeader blockHeaderChainA =
-        blockBuilder.number(1).timestamp(1).parentHash(genesis.getHash()).buildHeader();
-    final BlockHeader blockHeaderChainB =
-        blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
-
-    doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
-        .when(trieLogManager)
-        .getTrieLogLayer(any(Hash.class));
 
     var worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
@@ -273,20 +304,40 @@ class BonsaiWorldStateProviderTest {
                 EvmConfiguration.DEFAULT,
                 throwingWorldStateHealerSupplier()));
 
-    // initial persisted state hash key
-    when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeaderChainA));
-    when(blockchain.getBlockHeader(blockHeaderChainB.getHash()))
-        .thenReturn(Optional.of(blockHeaderChainB));
+    final BlockHeader genesis = blockBuilder.number(0).buildHeader();
+    final BlockHeader blockHeader1 =
+        blockBuilder.number(1).timestamp(1).parentHash(genesis.getHash()).buildHeader();
+    final BlockHeader blockHeader1Reorg =
+        blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
+
     when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
+    when(blockchain.getBlockHeader(blockHeader1.getHash())).thenReturn(Optional.of(blockHeader1));
+    when(blockchain.getBlockHeader(blockHeader1Reorg.getHash()))
+        .thenReturn(Optional.of(blockHeader1Reorg));
+
+    bonsaiWorldStateArchive.getWorldState().persist(genesis);
+    bonsaiWorldStateArchive.getWorldState().persist(blockHeader1);
+
+    TrieLogLayer trieLogLayerA = mock(TrieLogLayer.class);
+    when(trieLogLayerA.getBlockHash()).thenReturn(blockHeader1.getBlockHash());
+    doAnswer(__ -> Optional.of(trieLogLayerA))
+        .when(trieLogManager)
+        .getTrieLogLayer(eq(blockHeader1.getHash()));
+
+    TrieLogLayer trieLogLayerB = mock(TrieLogLayer.class);
+    when(trieLogLayerB.getBlockHash()).thenReturn(blockHeader1Reorg.getBlockHash());
+    doAnswer(__ -> Optional.of(trieLogLayerB))
+        .when(trieLogManager)
+        .getTrieLogLayer(eq(blockHeader1Reorg.getHash()));
 
     assertThat(
             bonsaiWorldStateArchive.getWorldState(
-                withStateRootAndBlockHashAndUpdateNodeHead(null, blockHeaderChainB.getHash())))
+                withStateRootAndBlockHashAndUpdateNodeHead(null, blockHeader1Reorg.getHash())))
         .containsInstanceOf(BonsaiWorldState.class);
 
     // verify is trying to get the trie log layers to rollback and roll forward
-    verify(trieLogManager).getTrieLogLayer(blockHeaderChainA.getHash());
-    verify(trieLogManager).getTrieLogLayer(blockHeaderChainB.getHash());
+    verify(trieLogManager).getTrieLogLayer(blockHeader1.getHash());
+    verify(trieLogManager).getTrieLogLayer(blockHeader1Reorg.getHash());
   }
 
   @Test
@@ -301,9 +352,8 @@ class BonsaiWorldStateProviderTest {
     final BlockHeader blockHeaderChainB =
         blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
 
-    doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
-        .when(trieLogManager)
-        .getTrieLogLayer(any(Hash.class));
+    TrieLogLayer trieLogLayer = mock(TrieLogLayer.class);
+    doAnswer(__ -> Optional.of(trieLogLayer)).when(trieLogManager).getTrieLogLayer(any(Hash.class));
 
     bonsaiWorldStateArchive =
         spy(
