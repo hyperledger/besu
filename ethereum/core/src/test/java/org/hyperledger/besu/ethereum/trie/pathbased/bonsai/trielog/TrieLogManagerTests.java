@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,6 +56,9 @@ class TrieLogManagerTests {
   @Mock BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage;
   @Mock BonsaiWorldState worldState;
   @Mock Blockchain blockchain;
+  @Mock BonsaiWorldStateKeyValueStorage.Updater mockedUpdater;
+  @Mock KeyValueStorageTransaction mockedTrieLogTransaction;
+
   BonsaiWorldStateUpdateAccumulator bonsaiUpdater =
       spy(
           new BonsaiWorldStateUpdateAccumulator(
@@ -65,6 +69,9 @@ class TrieLogManagerTests {
   @BeforeEach
   public void setup() {
     when(bonsaiWorldState.getWorldStateStorage()).thenReturn(bonsaiWorldStateKeyValueStorage);
+    when(bonsaiWorldStateKeyValueStorage.updater()).thenReturn(mockedUpdater);
+    when(mockedUpdater.getTrieLogStorageTransaction()).thenReturn(mockedTrieLogTransaction);
+
     trieLogManager = new TrieLogManager(blockchain, bonsaiWorldStateKeyValueStorage, 512, null);
   }
 
@@ -84,13 +91,9 @@ class TrieLogManagerTests {
   @Test
   void testNotOverrideExistingTrieLog() {
 
-    final BonsaiWorldStateKeyValueStorage.Updater mockedUpdater =
-        mock(BonsaiWorldStateKeyValueStorage.Updater.class);
-    final KeyValueStorageTransaction mockedTrieLogTransaction =
-        mock(KeyValueStorageTransaction.class);
-    when(bonsaiWorldStateKeyValueStorage.updater()).thenReturn(mockedUpdater);
-    when(mockedUpdater.getTrieLogStorageTransaction()).thenReturn(mockedTrieLogTransaction);
-    when(trieLogManager.getTrieLogLayer(blockHeader.getBlockHash())).thenReturn(Optional.empty());
+    when(trieLogManager.getTrieLogLayer(blockHeader.getBlockHash()))
+        .thenReturn(Optional.empty())
+        .thenReturn(Optional.of(mock(TrieLog.class)));
 
     trieLogManager.saveTrieLog(bonsaiUpdater, Hash.ZERO, blockHeader, bonsaiWorldState);
 
