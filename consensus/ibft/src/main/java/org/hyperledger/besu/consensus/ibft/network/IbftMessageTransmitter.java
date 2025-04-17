@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.ibft.network;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
@@ -43,7 +43,7 @@ public class IbftMessageTransmitter {
   private static final Logger LOG = LoggerFactory.getLogger(IbftMessageTransmitter.class);
 
   private final MessageFactory messageFactory;
-  private final ValidatorMulticaster multicaster;
+  private final PeerMulticaster multicaster;
 
   /**
    * Instantiates a new Ibft message transmitter.
@@ -52,7 +52,7 @@ public class IbftMessageTransmitter {
    * @param multicaster the multicaster
    */
   public IbftMessageTransmitter(
-      final MessageFactory messageFactory, final ValidatorMulticaster multicaster) {
+      final MessageFactory messageFactory, final PeerMulticaster multicaster) {
     this.messageFactory = messageFactory;
     this.multicaster = multicaster;
   }

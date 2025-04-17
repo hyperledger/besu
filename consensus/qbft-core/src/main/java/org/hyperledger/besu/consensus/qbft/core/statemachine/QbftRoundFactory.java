@@ -99,7 +99,7 @@ public class QbftRoundFactory {
 
     // TODO(tmm): Why is this created everytime?!
     final QbftMessageTransmitter messageTransmitter =
-        new QbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
+        new QbftMessageTransmitter(messageFactory, finalState.getPeerMulticaster());
 
     return new QbftRound(
         roundState,

@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
@@ -39,7 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class UniqueMessageMulticasterTest {
 
   private final MessageTracker messageTracker = mock(MessageTracker.class);
-  private final ValidatorMulticaster multicaster = mock(ValidatorMulticaster.class);
+  private final PeerMulticaster multicaster = mock(PeerMulticaster.class);
   private final UniqueMessageMulticaster uniqueMessageMulticaster =
       new UniqueMessageMulticaster(multicaster, messageTracker);
   private final RawMessage messageSent = new RawMessage(5, Bytes.wrap(new byte[5]));

@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
@@ -35,7 +35,7 @@ public class QbftFinalStateImpl implements QbftFinalState {
   private final NodeKey nodeKey;
   private final Address localAddress;
   private final ProposerSelector proposerSelector;
-  private final ValidatorMulticaster validatorMulticaster;
+  private final PeerMulticaster peerMulticaster;
   private final RoundTimer roundTimer;
   private final BlockTimer blockTimer;
   private final QbftBlockCreatorFactory blockCreatorFactory;
@@ -48,7 +48,7 @@ public class QbftFinalStateImpl implements QbftFinalState {
    * @param nodeKey the node key
    * @param localAddress the local address
    * @param proposerSelector the proposer selector
-   * @param validatorMulticaster the validator multicaster
+   * @param peerMulticaster the validator multicaster
    * @param roundTimer the round timer
    * @param blockTimer the block timer
    * @param blockCreatorFactory the block creator factory
@@ -59,7 +59,7 @@ public class QbftFinalStateImpl implements QbftFinalState {
       final NodeKey nodeKey,
       final Address localAddress,
       final ProposerSelector proposerSelector,
-      final ValidatorMulticaster validatorMulticaster,
+      final PeerMulticaster peerMulticaster,
       final RoundTimer roundTimer,
       final BlockTimer blockTimer,
       final QbftBlockCreatorFactory blockCreatorFactory,
@@ -68,7 +68,7 @@ public class QbftFinalStateImpl implements QbftFinalState {
     this.nodeKey = nodeKey;
     this.localAddress = localAddress;
     this.proposerSelector = proposerSelector;
-    this.validatorMulticaster = validatorMulticaster;
+    this.peerMulticaster = peerMulticaster;
     this.roundTimer = roundTimer;
     this.blockTimer = blockTimer;
     this.blockCreatorFactory = blockCreatorFactory;
@@ -91,8 +91,8 @@ public class QbftFinalStateImpl implements QbftFinalState {
    * @return the validator multicaster
    */
   @Override
-  public ValidatorMulticaster getValidatorMulticaster() {
-    return validatorMulticaster;
+  public PeerMulticaster getPeerMulticaster() {
+    return peerMulticaster;
   }
 
   /**

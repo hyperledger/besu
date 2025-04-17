@@ -96,8 +96,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     this.parentHeader = parentHeader;
     this.roundFactory = qbftRoundFactory;
     this.validatorProvider = validatorProvider;
-    this.transmitter =
-        new QbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
+    this.transmitter = new QbftMessageTransmitter(messageFactory, finalState.getPeerMulticaster());
     this.messageFactory = messageFactory;
     this.clock = clock;
     this.roundChangeManager = roundChangeManager;

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,21 +19,20 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.Collection;
 
-/** The interface Validator multicaster. */
-public interface ValidatorMulticaster {
-
+/** Interface responsible for sending messages to network peers */
+public interface PeerMulticaster {
   /**
-   * Send.
+   * Send message to all peers
    *
-   * @param message the message
+   * @param message The message to be sent
    */
   void send(final MessageData message);
 
   /**
-   * Send.
+   * Send message to all peers except those in denyList
    *
-   * @param message the message
-   * @param denylist the denylist
+   * @param message The message to be sent
+   * @param denylist List of peers to exclude from message distribution
    */
   void send(final MessageData message, final Collection<Address> denylist);
 }

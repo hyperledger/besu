@@ -34,7 +34,7 @@ import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.consensus.qbft.core.QbftBlockTestFixture;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
@@ -101,7 +101,7 @@ public class QbftBlockHeightManagerTest {
   @Mock private BlockTimer blockTimer;
   @Mock private RoundTimer roundTimer;
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
-  @Mock private ValidatorMulticaster validatorMulticaster;
+  @Mock private PeerMulticaster peerMulticaster;
   @Mock private QbftProtocolSchedule protocolSchedule;
   @Mock private QbftBlockHeader parentHeader;
   @Mock private QbftBlockCodec blockEncoder;
@@ -134,7 +134,7 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getBlockTimer()).thenReturn(blockTimer);
     when(finalState.getRoundTimer()).thenReturn(roundTimer);
     when(finalState.getQuorum()).thenReturn(3);
-    when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
+    when(finalState.getPeerMulticaster()).thenReturn(peerMulticaster);
     when(finalState.getClock()).thenReturn(clock);
     when(blockCreator.createBlock(anyLong(), any())).thenReturn(createdBlock);
 
@@ -508,7 +508,7 @@ public class QbftBlockHeightManagerTest {
 
     manager.roundExpired(new RoundExpiry(roundIdentifier));
 
-    verify(validatorMulticaster, times(1)).send(sentMessageArgCaptor.capture());
+    verify(peerMulticaster, times(1)).send(sentMessageArgCaptor.capture());
     final MessageData capturedMessageData = sentMessageArgCaptor.getValue();
 
     assertThat(capturedMessageData).isInstanceOf(RoundChangeMessageData.class);
