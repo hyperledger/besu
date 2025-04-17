@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import static org.hyperledger.besu.ethereum.eth.sync.BlockRangeBroadcaster.BLOCK_RANGE_UPDATE_INTERVAL;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -24,11 +22,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -37,7 +32,6 @@ import org.hyperledger.besu.ethereum.eth.messages.BlockRangeUpdateMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -61,26 +55,6 @@ public class BlockRangeBroadcasterTest {
   public void setup() {
     when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
     blockRangeBroadcaster = spy(new BlockRangeBroadcaster(ethContext, blockchain));
-  }
-
-  @Test
-  public void shouldNotifyEveryBlockRangeUpdateInterval() {
-    setupPeers(ethPeerWithSupport);
-    BlockHeader blockHeader =
-        new BlockHeaderTestFixture().number(BLOCK_RANGE_UPDATE_INTERVAL).buildHeader();
-    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(blockHeader));
-    blockRangeBroadcaster.onNewUnverifiedForkchoice(mock(ForkchoiceEvent.class));
-    verify(blockRangeBroadcaster, times(1))
-        .broadcastBlockRange(0L, blockHeader.getNumber(), blockHeader.getHash());
-  }
-
-  @Test
-  public void shouldNotNotifyIfNotBlockRangeUpdateInterval() {
-    BlockHeader blockHeader =
-        new BlockHeaderTestFixture().number(BLOCK_RANGE_UPDATE_INTERVAL + 1).buildHeader();
-    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(blockHeader));
-    blockRangeBroadcaster.onNewUnverifiedForkchoice(mock(ForkchoiceEvent.class));
-    verify(blockRangeBroadcaster, never()).broadcastBlockRange(anyInt(), anyInt(), any(Hash.class));
   }
 
   @Test
