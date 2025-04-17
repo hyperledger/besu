@@ -177,8 +177,7 @@ class MainnetTransactionProcessorTest {
     when(worldState.getOrCreateSenderAccount(senderAddress)).thenReturn(senderAccount);
     when(worldState.get(toAddress.get())).thenReturn(receiverAccount);
     when(worldState.updater()).thenReturn(worldState);
-    when(messageCallProcessor.getCodeFromEVM(any(), any())).thenReturn(CodeV0.EMPTY_CODE);
-    // throw exception when processing the transaction
+      // throw exception when processing the transaction
     doAnswer(
             invocation -> {
               throw exception;
