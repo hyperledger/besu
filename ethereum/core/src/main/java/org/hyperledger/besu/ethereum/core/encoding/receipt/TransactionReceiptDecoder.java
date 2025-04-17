@@ -73,7 +73,7 @@ public class TransactionReceiptDecoder {
     final RLPInput statusOrStateRoot = input.readAsRlp();
     final long cumulativeGas = input.readLongScalar();
     LogsBloomFilter bloomFilter = null;
-    final boolean isCompacted = isNextBloomFilter(input);
+    final boolean isCompacted = isNextNotBloomFilter(input);
     if (!isCompacted) {
       bloomFilter = LogsBloomFilter.readFrom(input);
     }
@@ -96,7 +96,7 @@ public class TransactionReceiptDecoder {
     // used. This is because compacted legacy receipts also lack a bloom filter.
     final RLPInput firstElement = rlpInput.readAsRlp();
     final RLPInput secondElement = rlpInput.readAsRlp();
-    final boolean isCompacted = isNextBloomFilter(rlpInput);
+    final boolean isCompacted = isNextNotBloomFilter(rlpInput);
     LogsBloomFilter bloomFilter = null;
     if (!isCompacted) {
       bloomFilter = LogsBloomFilter.readFrom(rlpInput);
@@ -177,7 +177,7 @@ public class TransactionReceiptDecoder {
     return revertReason;
   }
 
-  private static boolean isNextBloomFilter(final RLPInput input) {
+  private static boolean isNextNotBloomFilter(final RLPInput input) {
     return input.nextIsList() || input.nextSize() != LogsBloomFilter.BYTE_SIZE;
   }
 }
