@@ -75,7 +75,6 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final JsonCallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
     final var validationParams = getTransactionValidationParams(jsonCallParameter);
     final var maybeStateOverrides = getAddressStateOverrideMap(requestContext);
-    // TODO this is the header for which to get the protocolSpec and GasCalculator
     final var pendingBlockHeader = transactionSimulator.simulatePendingBlockHeader();
     final TransactionSimulationFunction simulationFunction =
         (cp, op) ->
@@ -209,10 +208,10 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
       final TransactionSimulationFunction simulationFunction,
       final EstimateGasOperationTracer operationTracer) {
 
-    // Optimistic simulation - get gas min from GasCalculator
+    // Optimistic simulation - get min transaction cost from GasCalculator
     final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);
 
-    // If the transaction is a plain value transfer, try gasLimit 21_000. It is likely to succeed.
+    // If the transaction is a plain value transfer, try minTxCost. It is likely to succeed.
     if (callParams.getPayload() == null || (callParams.getPayload().isEmpty())) {
       var maybeSimpleTransferResult =
           simulationFunction.simulate(overrideGasLimit(callParams, minTxCost), operationTracer);

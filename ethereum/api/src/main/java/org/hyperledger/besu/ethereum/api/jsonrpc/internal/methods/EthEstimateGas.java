@@ -153,7 +153,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
     final double subCallMultiplier =
         Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getSubCallExponent());
 
-    // and minimum gas remaining is necessary for some operation (additionalStipend)
+    // add additionalStipend
     final long gasStipend = operationTracer.getCallStipend();
 
     return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
