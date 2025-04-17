@@ -124,7 +124,6 @@ task acceptanceTest(type: Test) {
 }
 
 task acceptanceTestNotPrivacy(type: Test) {
-  // Todo - rename once privacy has been removed
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   exclude '**/permissioning/**'
   exclude '**/bftsoak/**'
