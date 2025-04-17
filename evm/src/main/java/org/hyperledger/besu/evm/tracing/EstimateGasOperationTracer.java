@@ -14,40 +14,13 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
-import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
-import org.hyperledger.besu.evm.operation.SStoreOperation;
-
 /** The Estimate gas operation tracer. */
 public class EstimateGasOperationTracer implements OperationTracer {
 
-  private int maxDepth = 0;
-  private long sStoreStipendNeeded = 0L;
   private static final long callStipend = 2_300L;
 
   /** Default constructor. */
   public EstimateGasOperationTracer() {}
-
-  @Override
-  public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
-    // SSTORE needs additional stipend
-    if (frame.getCurrentOperation() instanceof SStoreOperation sStoreOperation
-        && sStoreStipendNeeded == 0L) {
-      sStoreStipendNeeded = sStoreOperation.getMinimumGasRemaining();
-    }
-    if (maxDepth < frame.getDepth()) {
-      maxDepth = frame.getDepth();
-    }
-  }
-
-  /**
-   * Gets max depth.
-   *
-   * @return the max depth
-   */
-  public int getMaxDepth() {
-    return maxDepth;
-  }
 
   /**
    * Gets call stipend.
@@ -56,15 +29,6 @@ public class EstimateGasOperationTracer implements OperationTracer {
    */
   public long getCallStipend() {
     return callStipend;
-  }
-
-  /**
-   * Gets stipend needed.
-   *
-   * @return the stipend needed
-   */
-  public long getStipendNeeded() {
-    return sStoreStipendNeeded;
   }
 
   /**
