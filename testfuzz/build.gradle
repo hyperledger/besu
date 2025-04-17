@@ -41,7 +41,7 @@ dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
-  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'org.jacoco:org.jacoco.agent'
   implementation 'org.jacoco:org.jacoco.core'
 }

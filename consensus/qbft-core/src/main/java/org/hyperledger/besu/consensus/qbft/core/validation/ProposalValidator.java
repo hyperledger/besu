@@ -27,12 +27,9 @@ import org.hyperledger.besu.consensus.qbft.core.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftHashMode;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -48,7 +45,7 @@ public class ProposalValidator {
   private static final Logger LOG = LoggerFactory.getLogger(ProposalValidator.class);
   private static final String ERROR_PREFIX = "Invalid Proposal Payload";
 
-  private final ProtocolContext protocolContext;
+  private final QbftBlockInterface blockInterface;
   private final QbftProtocolSchedule protocolSchedule;
   private final int quorumMessageCount;
   private final Collection<Address> validators;
@@ -58,7 +55,7 @@ public class ProposalValidator {
   /**
    * Instantiates a new Proposal validator.
    *
-   * @param protocolContext the protocol context
+   * @param blockInterface the block interface
    * @param protocolSchedule the protocol schedule
    * @param quorumMessageCount the quorum message count
    * @param validators the validators
@@ -66,13 +63,13 @@ public class ProposalValidator {
    * @param expectedProposer the expected proposer
    */
   public ProposalValidator(
-      final ProtocolContext protocolContext,
+      final QbftBlockInterface blockInterface,
       final QbftProtocolSchedule protocolSchedule,
       final int quorumMessageCount,
       final Collection<Address> validators,
       final ConsensusRoundIdentifier roundIdentifier,
       final Address expectedProposer) {
-    this.protocolContext = protocolContext;
+    this.blockInterface = blockInterface;
     this.protocolSchedule = protocolSchedule;
     this.quorumMessageCount = quorumMessageCount;
     this.validators = validators;
@@ -88,7 +85,7 @@ public class ProposalValidator {
    */
   public boolean validate(final Proposal msg) {
     final QbftBlockValidator blockValidator =
-        protocolSchedule.getByBlockHeader(msg.getBlock().getHeader()).getBlockValidator();
+        protocolSchedule.getBlockValidator(msg.getBlock().getHeader());
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
@@ -143,11 +140,8 @@ public class ProposalValidator {
         // to create a block with the old round in it, then re-calc expected hash
         // Need to check that if we substitute the LatestPrepareCert round number into the supplied
         // block that we get the SAME hash as PreparedCert.
-        final QbftBlockInterface bftBlockInterface =
-            protocolContext.getConsensusContext(QbftContext.class).blockInterface();
         final QbftBlock currentBlockWithOldRound =
-            bftBlockInterface.replaceRoundInBlock(
-                proposal.getBlock(), metadata.getPreparedRound(), QbftHashMode.COMMITTED_SEAL);
+            blockInterface.replaceRoundInBlock(proposal.getBlock(), metadata.getPreparedRound());
 
         final Hash expectedPriorBlockHash = currentBlockWithOldRound.getHash();
 
