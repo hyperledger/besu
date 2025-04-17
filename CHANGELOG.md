@@ -4,6 +4,7 @@
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
+- Let Non validators gossip QBFT messages [#8562](https://github.com/hyperledger/besu/pull/8562)
 #### Dependencies
 ### Bug fixes
 - fix block import tracing, refactor BlockProcessor interface [#8549](https://github.com/hyperledger/besu/pull/8549)
