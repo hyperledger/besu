@@ -384,7 +384,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
   // fcU calls are synchronous, no need to make volatile
   private long lastFcuInfoLog = System.currentTimeMillis();
-  private static final String logMessage = "FCU({}) | head: {} | finalized: {} | safeBlockHash: {}";
+  private static final String logMessage = "FCU({}) | head: {} | finalized: {} | safe: {}";
 
   private void logForkchoiceUpdatedCall(
       final EngineStatus status, final EngineForkchoiceUpdatedParameter forkChoice) {
