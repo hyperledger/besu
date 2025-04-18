@@ -174,7 +174,9 @@ class ContractCreationProcessorTest
     final Bytes contractCode = Bytes.fromHexString("6030602001");
     final Bytes initCode = EOF_CREATE_CONTRACT;
     final MessageFrame messageFrame =
-        new TestMessageFrameBuilder().code(evm.getCodeForCreation(initCode)).build();
+        new TestMessageFrameBuilder()
+            .code(evm.getCodeForCreation(initCode, evm.getMaxEOFVersion()))
+            .build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(19_000L);
 

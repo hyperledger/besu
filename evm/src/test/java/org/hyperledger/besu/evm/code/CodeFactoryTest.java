@@ -614,7 +614,7 @@ class CodeFactoryTest {
 
   private static void invalidCodeForCreation(final String str) {
     EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
-    Code code = evm.getCodeForCreation(bytesFromPrettyPrint(str));
+    Code code = evm.getCodeForCreation(bytesFromPrettyPrint(str), evm.getMaxEOFVersion());
     assertThat(code.isValid()).isFalse();
   }
 }

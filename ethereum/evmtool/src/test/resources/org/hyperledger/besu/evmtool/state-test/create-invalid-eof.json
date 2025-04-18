@@ -72,7 +72,8 @@
     }
   },
   "stdout": [
-    {"output":"","gasUsed":53656,"test":"create-eof","fork":"Osaka","d":0,"g":0,"v":0,"stateRoot":"0x2a9c58298ba5d4ec86ca682b9fcc9ff67c3fc44dbd39f85a2f9b74bfe4e5178e","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":false,"error":"Invalid EOF Layout: unexpected_header_kind expected 1 actual 17"},
+    {"pc":0,"op":"0xef","gas":7946344,"gasCost":0,"memSize":0,"stack":[],"depth":1,"refund":0,"opName":"INVALID","error":"Invalid opcode: 0xef"},
+    {"output":"","gasUsed":8000000,"test":"create-eof","fork":"Osaka","d":0,"g":0,"v":0,"stateRoot":"0xaa80d89bc89f58da8de41d3894bd1a241896ff91f7a5964edaefb39e8e3a4a98","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":false,"error":"Invalid opcode: 0xef"},
     {"pc":0,"op":"0xef","gas":7946344,"gasCost":0,"memSize":0,"stack":[],"depth":1,"refund":0,"opName":"INVALID","error":"Invalid opcode: 0xef"},
     {"output":"","gasUsed":8000000,"test":"create-eof","fork":"Cancun","d":0,"g":0,"v":0,"stateRoot":"0xaa80d89bc89f58da8de41d3894bd1a241896ff91f7a5964edaefb39e8e3a4a98","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true,"error":"Invalid opcode: 0xef"}
   ]

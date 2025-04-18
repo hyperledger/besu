@@ -112,14 +112,19 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     if (value.compareTo(account.getBalance()) > 0
         || frame.getDepth() >= 1024
         || account.getNonce() == -1
-        || code == null) {
+        || code == null
+        || maxEofVersion != code.getEofVersion()) {
       fail(frame);
     } else {
       account.incrementNonce();
 
-      frame.decrementRemainingGas(cost);
-      spawnChildMessage(frame, code, evm);
-      frame.incrementRemainingGas(cost);
+      if (!code.isValid()) {
+        fail(frame);
+      } else {
+        frame.decrementRemainingGas(cost);
+        spawnChildMessage(frame, code, evm);
+        frame.incrementRemainingGas(cost);
+      }
     }
     return new OperationResult(cost, null, getPcIncrement());
   }
@@ -258,7 +263,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       Code outputCode =
           (childFrame.getCreatedCode() != null)
               ? childFrame.getCreatedCode()
-              : evm.getCodeForCreation(childFrame.getOutputData());
+              : evm.getCodeForCreation(childFrame.getOutputData(), evm.getMaxEOFVersion());
       if (outputCode.isValid()) {
         Address createdAddress = childFrame.getContractAddress();
         frame.pushStackItem(Words.fromAddress(createdAddress));

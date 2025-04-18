@@ -69,6 +69,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
 
+import com.google.errorprone.annotations.InlineMe;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -410,8 +411,21 @@ public class EVM {
    * @param codeBytes the code bytes
    * @return the code
    */
-  public Code getCodeForCreation(final Bytes codeBytes) {
-    return codeFactory.createCode(codeBytes, true, getMaxEOFVersion());
+  @Deprecated(forRemoval = true)
+  @InlineMe(replacement = "this.getCodeForCreation(codeBytes, this.getMaxEOFVersion())")
+  public final Code getCodeForCreation(final Bytes codeBytes) {
+    return getCodeForCreation(codeBytes, getMaxEOFVersion());
+  }
+
+  /**
+   * Gets code for creation. Skips code cache and allows for extra data after EOF contracts.
+   *
+   * @param codeBytes the code bytes
+   * @param maxRequestedVersion the maximum EOF Version
+   * @return the code
+   */
+  public Code getCodeForCreation(final Bytes codeBytes, final int maxRequestedVersion) {
+    return codeFactory.createCode(codeBytes, true, maxRequestedVersion);
   }
 
   /**
