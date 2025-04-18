@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
@@ -35,7 +35,7 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
 
   public BonsaiReferenceTestUpdateAccumulator(
       final PathBasedWorldView world,
-      final Consumer<PathBasedDiffValue<BonsaiAccount>> accountPreloader,
+      final Consumer<PathBasedValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
       final BonsaiPreImageProxy preImageProxy,
       final EvmConfiguration evmConfiguration) {
@@ -67,7 +67,7 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
     getStorageToUpdate()
         .forEach(
             (k, v) -> {
-              StorageConsumingMap<StorageSlotKey, PathBasedDiffValue<UInt256>> newMap =
+              StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> newMap =
                   new StorageConsumingMap<>(k, new ConcurrentHashMap<>(), v.getConsumer());
               v.forEach((key, value) -> newMap.put(key, value.copy()));
               copy.getStorageToUpdate().put(k, newMap);

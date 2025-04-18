@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMer
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
@@ -127,7 +127,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
 
     // This must be done before updating the accounts so
     // that we can get the storage state hash
-    Stream<Map.Entry<Address, StorageConsumingMap<StorageSlotKey, PathBasedDiffValue<UInt256>>>>
+    Stream<Map.Entry<Address, StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>>>>
         storageStream = worldStateUpdater.getStorageToUpdate().entrySet().stream();
     if (maybeStateUpdater.isEmpty()) {
       storageStream =
@@ -172,10 +172,10 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater,
       final MerkleTrie<Bytes, Bytes> accountTrie) {
-    for (final Map.Entry<Address, PathBasedDiffValue<BonsaiAccount>> accountUpdate :
+    for (final Map.Entry<Address, PathBasedValue<BonsaiAccount>> accountUpdate :
         worldStateUpdater.getAccountsToUpdate().entrySet()) {
       final Bytes accountKey = accountUpdate.getKey();
-      final PathBasedDiffValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
+      final PathBasedValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
       try {
         if (updatedAccount == null) {
@@ -205,7 +205,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
     maybeStateUpdater.ifPresent(
         bonsaiUpdater -> {
-          for (final Map.Entry<Address, PathBasedDiffValue<Bytes>> codeUpdate :
+          for (final Map.Entry<Address, PathBasedValue<Bytes>> codeUpdate :
               worldStateUpdater.getCodeToUpdate().entrySet()) {
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
             final Hash accountHash = codeUpdate.getKey().addressHash();
@@ -235,12 +235,12 @@ public class BonsaiWorldState extends PathBasedWorldState {
   private void updateAccountStorageState(
       final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater,
-      final Map.Entry<Address, StorageConsumingMap<StorageSlotKey, PathBasedDiffValue<UInt256>>>
+      final Map.Entry<Address, StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>>>
           storageAccountUpdate) {
     final Address updatedAddress = storageAccountUpdate.getKey();
     final Hash updatedAddressHash = updatedAddress.addressHash();
     if (worldStateUpdater.getAccountsToUpdate().containsKey(updatedAddress)) {
-      final PathBasedDiffValue<BonsaiAccount> accountValue =
+      final PathBasedValue<BonsaiAccount> accountValue =
           worldStateUpdater.getAccountsToUpdate().get(updatedAddress);
       final BonsaiAccount accountOriginal = accountValue.getPrior();
       final Hash storageRoot =
@@ -256,7 +256,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
               storageRoot);
 
       // for manicured tries and composting, collect branches here (not implemented)
-      for (final Map.Entry<StorageSlotKey, PathBasedDiffValue<UInt256>> storageUpdate :
+      for (final Map.Entry<StorageSlotKey, PathBasedValue<UInt256>> storageUpdate :
           storageAccountUpdate.getValue().entrySet()) {
         final Hash slotHash = storageUpdate.getKey().getSlotHash();
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
@@ -322,7 +322,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
               (location, key) -> getStorageTrieNode(addressHash, location, key),
               oldAccount.getStorageRoot());
       try {
-        StorageConsumingMap<StorageSlotKey, PathBasedDiffValue<UInt256>> storageToDelete = null;
+        StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> storageToDelete = null;
         Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
         while (!entriesToDelete.isEmpty()) {
           if (storageToDelete == null) {
@@ -347,8 +347,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
                     bonsaiUpdater.removeStorageValueBySlotHash(
                         address.addressHash(), storageSlotKey.getSlotHash()));
             storageToDelete
-                .computeIfAbsent(
-                    storageSlotKey, key -> new PathBasedDiffValue<>(slotValue, null, true))
+                .computeIfAbsent(storageSlotKey, key -> new PathBasedValue<>(slotValue, null, true))
                 .setPrior(slotValue);
           }
           entriesToDelete.keySet().forEach(storageTrie::remove);

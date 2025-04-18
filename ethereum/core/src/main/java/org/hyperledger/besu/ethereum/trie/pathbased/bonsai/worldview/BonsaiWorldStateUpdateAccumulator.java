@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.Consumer;
@@ -31,7 +31,7 @@ public class BonsaiWorldStateUpdateAccumulator
     extends PathBasedWorldStateUpdateAccumulator<BonsaiAccount> {
   public BonsaiWorldStateUpdateAccumulator(
       final PathBasedWorldView world,
-      final Consumer<PathBasedDiffValue<BonsaiAccount>> accountPreloader,
+      final Consumer<PathBasedValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
       final EvmConfiguration evmConfiguration) {
     super(

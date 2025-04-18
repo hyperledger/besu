@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.transition;
 
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 
 import java.util.Objects;
 
 /**
- * A {@link PathBasedDiffValue} used during state transitions to represent values that exist in the
+ * A {@link PathBasedValue} used during state transitions to represent values that exist in the
  * Patricia Merkle Trie (PMT), but are not yet present in the Verkle trie.
  *
  * <p>This class is used in migration or hybrid scenarios where data may be read from the PMT, but
@@ -37,7 +37,7 @@ import java.util.Objects;
  *
  * @param <T> the type of value being tracked
  */
-public class MigratedDiffValue<T> extends PathBasedDiffValue<T> {
+public class MigratedDiffValue<T> extends PathBasedValue<T> {
 
   /**
    * Constructs a new {@code PmtSourcedDiffBasedValue}.

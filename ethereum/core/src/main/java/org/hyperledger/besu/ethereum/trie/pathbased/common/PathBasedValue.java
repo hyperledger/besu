@@ -19,28 +19,28 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-public class PathBasedDiffValue<T> implements TrieLog.LogTuple<T> {
+public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
   protected T prior;
   protected T updated;
   private boolean lastStepCleared;
 
   private boolean clearedAtLeastOnce;
 
-  public PathBasedDiffValue(final T prior, final T updated) {
+  public PathBasedValue(final T prior, final T updated) {
     this.prior = prior;
     this.updated = updated;
     this.lastStepCleared = false;
     this.clearedAtLeastOnce = false;
   }
 
-  public PathBasedDiffValue(final T prior, final T updated, final boolean lastStepCleared) {
+  public PathBasedValue(final T prior, final T updated, final boolean lastStepCleared) {
     this.prior = prior;
     this.updated = updated;
     this.lastStepCleared = lastStepCleared;
     this.clearedAtLeastOnce = lastStepCleared;
   }
 
-  public PathBasedDiffValue(
+  public PathBasedValue(
       final T prior,
       final T updated,
       final boolean lastStepCleared,
@@ -61,12 +61,12 @@ public class PathBasedDiffValue<T> implements TrieLog.LogTuple<T> {
     return updated;
   }
 
-  public PathBasedDiffValue<T> setPrior(final T prior) {
+  public PathBasedValue<T> setPrior(final T prior) {
     this.prior = prior;
     return this;
   }
 
-  public PathBasedDiffValue<T> setUpdated(final T updated) {
+  public PathBasedValue<T> setUpdated(final T updated) {
     this.lastStepCleared = updated == null;
     if (lastStepCleared) {
       this.clearedAtLeastOnce = true;
@@ -110,7 +110,7 @@ public class PathBasedDiffValue<T> implements TrieLog.LogTuple<T> {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    PathBasedDiffValue<?> that = (PathBasedDiffValue<?>) o;
+    PathBasedValue<?> that = (PathBasedValue<?>) o;
     return new EqualsBuilder()
         .append(lastStepCleared, that.lastStepCleared)
         .append(prior, that.prior)
@@ -127,7 +127,7 @@ public class PathBasedDiffValue<T> implements TrieLog.LogTuple<T> {
         .toHashCode();
   }
 
-  public PathBasedDiffValue<T> copy() {
-    return new PathBasedDiffValue<T>(prior, updated, lastStepCleared, clearedAtLeastOnce);
+  public PathBasedValue<T> copy() {
+    return new PathBasedValue<T>(prior, updated, lastStepCleared, clearedAtLeastOnce);
   }
 }

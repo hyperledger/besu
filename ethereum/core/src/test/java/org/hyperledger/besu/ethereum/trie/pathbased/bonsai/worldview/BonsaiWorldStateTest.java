@@ -24,7 +24,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.HashMap;
@@ -70,8 +70,8 @@ class BonsaiWorldStateTest {
   @MethodSource("priorAndUpdatedEmptyAndNullBytes")
   void codeUpdateDoesNothingWhenMarkedAsDeletedButAlreadyDeleted(
       final Bytes prior, final Bytes updated) {
-    final Map<Address, PathBasedDiffValue<Bytes>> codeToUpdate =
-        Map.of(Address.ZERO, new PathBasedDiffValue<>(prior, updated));
+    final Map<Address, PathBasedValue<Bytes>> codeToUpdate =
+        Map.of(Address.ZERO, new PathBasedValue<>(prior, updated));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
@@ -80,8 +80,8 @@ class BonsaiWorldStateTest {
 
   @Test
   void codeUpdateDoesNothingWhenAddingSameAsExistingValue() {
-    final Map<Address, PathBasedDiffValue<Bytes>> codeToUpdate =
-        Map.of(Address.ZERO, new PathBasedDiffValue<>(CODE, CODE));
+    final Map<Address, PathBasedValue<Bytes>> codeToUpdate =
+        Map.of(Address.ZERO, new PathBasedValue<>(CODE, CODE));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
@@ -91,8 +91,8 @@ class BonsaiWorldStateTest {
   @ParameterizedTest
   @MethodSource("emptyAndNullBytes")
   void removesCodeWhenMarkedAsDeleted(final Bytes updated) {
-    final Map<Address, PathBasedDiffValue<Bytes>> codeToUpdate =
-        Map.of(Address.ZERO, new PathBasedDiffValue<>(CODE, updated));
+    final Map<Address, PathBasedValue<Bytes>> codeToUpdate =
+        Map.of(Address.ZERO, new PathBasedValue<>(CODE, updated));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
@@ -102,8 +102,8 @@ class BonsaiWorldStateTest {
   @ParameterizedTest
   @MethodSource("codeValueAndEmptyAndNullBytes")
   void addsCodeForNewCodeValue(final Bytes prior) {
-    final Map<Address, PathBasedDiffValue<Bytes>> codeToUpdate =
-        Map.of(ACCOUNT, new PathBasedDiffValue<>(prior, CODE));
+    final Map<Address, PathBasedValue<Bytes>> codeToUpdate =
+        Map.of(ACCOUNT, new PathBasedValue<>(prior, CODE));
 
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
@@ -113,10 +113,10 @@ class BonsaiWorldStateTest {
 
   @Test
   void updateCodeForMultipleValues() {
-    final Map<Address, PathBasedDiffValue<Bytes>> codeToUpdate = new HashMap<>();
-    codeToUpdate.put(Address.fromHexString("0x1"), new PathBasedDiffValue<>(null, CODE));
-    codeToUpdate.put(Address.fromHexString("0x2"), new PathBasedDiffValue<>(CODE, null));
-    codeToUpdate.put(Address.fromHexString("0x3"), new PathBasedDiffValue<>(Bytes.of(9), CODE));
+    final Map<Address, PathBasedValue<Bytes>> codeToUpdate = new HashMap<>();
+    codeToUpdate.put(Address.fromHexString("0x1"), new PathBasedValue<>(null, CODE));
+    codeToUpdate.put(Address.fromHexString("0x2"), new PathBasedValue<>(CODE, null));
+    codeToUpdate.put(Address.fromHexString("0x3"), new PathBasedValue<>(Bytes.of(9), CODE));
 
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);

@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.StateMigrationLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -118,7 +118,7 @@ public class TrieLogLayer implements TrieLog {
   public TrieLogLayer addCodeChange(
       final Address address, final Bytes oldValue, final Bytes newValue, final Hash blockHash) {
     checkState(!frozen, "Layer is Frozen");
-    code.put(address, new PathBasedDiffValue<>(oldValue, newValue, newValue == null));
+    code.put(address, new PathBasedValue<>(oldValue, newValue, newValue == null));
     return this;
   }
 

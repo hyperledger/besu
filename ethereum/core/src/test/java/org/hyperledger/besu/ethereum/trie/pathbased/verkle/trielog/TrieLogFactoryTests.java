@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.trie.common.VerkleStateTrieAccountValue;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -58,7 +58,7 @@ public class TrieLogFactoryTests {
           .setBlockHash(headerFixture.getBlockHash())
           .addAccountChange(
               accountFixture,
-              new PathBasedDiffValue<>(
+              new PathBasedValue<>(
                   null,
                   new VerkleStateTrieAccountValue(
                       0, Wei.fromEth(1), Hash.hash(code), Optional.of((long) code.size()))))
@@ -66,7 +66,7 @@ public class TrieLogFactoryTests {
           .addStorageChange(
               accountFixture,
               new StorageSlotKey(UInt256.ZERO),
-              new PathBasedDiffValue<>(null, UInt256.ONE))
+              new PathBasedValue<>(null, UInt256.ONE))
           .setDataStorageFormat(DataStorageFormat.VERKLE);
 
   @Test

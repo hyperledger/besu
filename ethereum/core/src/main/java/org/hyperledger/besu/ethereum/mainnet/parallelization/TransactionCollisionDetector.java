@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
 
@@ -138,7 +138,7 @@ public class TransactionCollisionDetector {
     HashSet<StorageSlotKey> slots = new HashSet<>();
     accumulator.ifPresent(
         pathBasedWorldStateUpdateAccumulator -> {
-          final StorageConsumingMap<StorageSlotKey, PathBasedDiffValue<UInt256>> map =
+          final StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> map =
               pathBasedWorldStateUpdateAccumulator.getStorageToUpdate().get(address);
           if (map != null) {
             map.forEach(
@@ -175,7 +175,7 @@ public class TransactionCollisionDetector {
     if (maybeBlockAccumulator.isPresent()) {
       final PathBasedWorldStateUpdateAccumulator<? extends PathBasedAccount> blockAccumulator =
           maybeBlockAccumulator.get();
-      final PathBasedDiffValue<? extends PathBasedAccount> pathBasedValue =
+      final PathBasedValue<? extends PathBasedAccount> pathBasedValue =
           blockAccumulator.getAccountsToUpdate().get(addressToFind);
       if (pathBasedValue != null) {
         return Optional.of(
@@ -207,7 +207,7 @@ public class TransactionCollisionDetector {
     HashSet<StorageSlotKey> slots = new HashSet<>();
     accumulator.ifPresent(
         pathBasedWorldStateUpdateAccumulator -> {
-          final StorageConsumingMap<StorageSlotKey, PathBasedDiffValue<UInt256>> map =
+          final StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> map =
               pathBasedWorldStateUpdateAccumulator.getStorageToUpdate().get(address);
           if (map != null) {
             map.forEach(

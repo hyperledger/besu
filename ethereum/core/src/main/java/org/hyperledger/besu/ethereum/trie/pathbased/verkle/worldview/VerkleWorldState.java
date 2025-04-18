@@ -21,7 +21,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
@@ -142,7 +142,7 @@ public class VerkleWorldState extends PathBasedWorldState {
     addressesToPersist.parallelStream()
         .forEach(
             accountKey -> {
-              final PathBasedDiffValue<VerkleAccount> accountUpdate =
+              final PathBasedValue<VerkleAccount> accountUpdate =
                   worldStateUpdater.getAccountsToUpdate().get(accountKey);
 
               // generate account triekeys
@@ -156,7 +156,7 @@ public class VerkleWorldState extends PathBasedWorldState {
               }
 
               // generate storage triekeys
-              final StorageConsumingMap<StorageSlotKey, PathBasedDiffValue<UInt256>>
+              final StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>>
                   storageAccountUpdate = worldStateUpdater.getStorageToUpdate().get(accountKey);
               boolean isStorageUpdateNeeded;
               if (storageAccountUpdate != null) {
@@ -180,7 +180,7 @@ public class VerkleWorldState extends PathBasedWorldState {
               }
 
               // generate code triekeys
-              final PathBasedDiffValue<Bytes> codeUpdate =
+              final PathBasedValue<Bytes> codeUpdate =
                   worldStateUpdater.getCodeToUpdate().get(accountKey);
               boolean isCodeUpdateNeeded;
               if (codeUpdate != null) {
@@ -268,7 +268,7 @@ public class VerkleWorldState extends PathBasedWorldState {
   private void handleCoupledCodeAccountUpdates(
       final Address accountKey,
       final LeafBuilder leafBuilder,
-      final PathBasedDiffValue<VerkleAccount> accountUpdate,
+      final PathBasedValue<VerkleAccount> accountUpdate,
       final VerkleWorldStateUpdateAccumulator worldStateUpdater) {
     final VerkleAccount priorAccount = accountUpdate.getPrior();
     final VerkleAccount updatedAccount = accountUpdate.getUpdated();
@@ -289,7 +289,7 @@ public class VerkleWorldState extends PathBasedWorldState {
       final Address accountKey,
       final LeafBuilder leafBuilder,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
-      final PathBasedDiffValue<Bytes> codeUpdate) {
+      final PathBasedValue<Bytes> codeUpdate) {
     if (codeUpdate == null
         || codeUpdate.isUnchanged()
         || (codeIsEmpty(codeUpdate.getPrior()) && codeIsEmpty(codeUpdate.getUpdated()))) {
@@ -318,13 +318,13 @@ public class VerkleWorldState extends PathBasedWorldState {
       final Address accountKey,
       final LeafBuilder leafBuilder,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
-      final StorageConsumingMap<StorageSlotKey, PathBasedDiffValue<UInt256>> storageAccountUpdate) {
+      final StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> storageAccountUpdate) {
     if (storageAccountUpdate == null || storageAccountUpdate.keySet().isEmpty()) {
       return;
     }
     final Hash updatedAddressHash = accountKey.addressHash();
     // for manicured tries and composting, collect branches here (not implemented)
-    for (final Map.Entry<StorageSlotKey, PathBasedDiffValue<UInt256>> storageUpdate :
+    for (final Map.Entry<StorageSlotKey, PathBasedValue<UInt256>> storageUpdate :
         storageAccountUpdate.entrySet()) {
       final Hash slotHash = storageUpdate.getKey().getSlotHash();
       if (!storageUpdate.getValue().isUnchanged()) {
@@ -398,7 +398,7 @@ public class VerkleWorldState extends PathBasedWorldState {
                   });
               System.out.println(
                   "add storage key " + pair.getFirst() + "  value " + pair.getSecond());
-              Optional<PathBasedDiffValue<UInt256>> storageUpdate =
+              Optional<PathBasedValue<UInt256>> storageUpdate =
                   Optional.ofNullable(storageAccountUpdate.get(storageSlotKey));
               stateTrie
                   .put(pair.getFirst(), pair.getSecond())

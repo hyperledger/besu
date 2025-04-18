@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.worldview.VerkleWorldState;
@@ -144,7 +144,7 @@ public class PatriciaToVerkleConverter {
       migrationProgress.markStorageAccountFullyMigrated();
     }
 
-    final StorageConsumingMap<StorageSlotKey, PathBasedDiffValue<UInt256>> storageMap =
+    final StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> storageMap =
         verkleUpdateAccumulator
             .getStorageToUpdate()
             .computeIfAbsent(
@@ -173,9 +173,9 @@ public class PatriciaToVerkleConverter {
                     storageSlotKey,
                     (slotKey, existing) ->
                         existing != null
-                            ? new PathBasedDiffValue<>(
+                            ? new PathBasedValue<>(
                                 null, existing.getUpdated(), existing.isLastStepCleared())
-                            : new PathBasedDiffValue<>(
+                            : new PathBasedValue<>(
                                 null, UInt256.fromBytes(RLP.decodeValue(entry.getValue()))));
               }
             });
@@ -212,7 +212,7 @@ public class PatriciaToVerkleConverter {
                         .getAccountsToUpdate()
                         .putIfAbsent(
                             existingAccount.getAddress(),
-                            new PathBasedDiffValue<>(existingAccount, existingAccount));
+                            new PathBasedValue<>(existingAccount, existingAccount));
                     return existingAccount;
                   })
               .orElseGet(
@@ -237,9 +237,9 @@ public class PatriciaToVerkleConverter {
                             toMigrateAccount.getAddress(),
                             (address, existing) ->
                                 existing != null
-                                    ? new PathBasedDiffValue<>(
+                                    ? new PathBasedValue<>(
                                         null, existing.getUpdated(), existing.isLastStepCleared())
-                                    : new PathBasedDiffValue<>(null, toMigrateAccount));
+                                    : new PathBasedValue<>(null, toMigrateAccount));
 
                     return toMigrateAccount;
                   });
@@ -249,8 +249,7 @@ public class PatriciaToVerkleConverter {
           verkleUpdateAccumulator
               .getCodeToUpdate()
               .putIfAbsent(
-                  verkleAccount.getAddress(),
-                  new PathBasedDiffValue<>(null, verkleAccount.getCode()));
+                  verkleAccount.getAddress(), new PathBasedValue<>(null, verkleAccount.getCode()));
         }
         // Adjust conversion count based on the code chunkification process
         convertedEntriesCount.addAndGet(TrieKeyUtils.chunkifyCode(verkleAccount.getCode()).size());

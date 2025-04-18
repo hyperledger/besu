@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -33,21 +33,20 @@ import org.apache.tuweni.bytes.Bytes;
  * <p>This class uses a thread-safe {@link ConcurrentMap} to store data, allowing concurrent
  * modifications.
  */
-public class CodeConsumingMap extends ForwardingMap<Address, PathBasedDiffValue<Bytes>> {
+public class CodeConsumingMap extends ForwardingMap<Address, PathBasedValue<Bytes>> {
 
-  private final ConcurrentMap<Address, PathBasedDiffValue<Bytes>> codes;
+  private final ConcurrentMap<Address, PathBasedValue<Bytes>> codes;
   private final Consumer<Bytes> consumer;
 
   public CodeConsumingMap(
-      final ConcurrentMap<Address, PathBasedDiffValue<Bytes>> codes,
-      final Consumer<Bytes> consumer) {
+      final ConcurrentMap<Address, PathBasedValue<Bytes>> codes, final Consumer<Bytes> consumer) {
     this.codes = codes;
     this.consumer = consumer;
   }
 
   @Override
-  public PathBasedDiffValue<Bytes> put(
-      @Nonnull final Address address, @Nonnull final PathBasedDiffValue<Bytes> value) {
+  public PathBasedValue<Bytes> put(
+      @Nonnull final Address address, @Nonnull final PathBasedValue<Bytes> value) {
     consumer.process(address, value.getUpdated() != null ? value.getUpdated() : value.getPrior());
     return codes.put(address, value);
   }
@@ -58,7 +57,7 @@ public class CodeConsumingMap extends ForwardingMap<Address, PathBasedDiffValue<
 
   @Nonnull
   @Override
-  protected Map<Address, PathBasedDiffValue<Bytes>> delegate() {
+  protected Map<Address, PathBasedValue<Bytes>> delegate() {
     return codes;
   }
 }

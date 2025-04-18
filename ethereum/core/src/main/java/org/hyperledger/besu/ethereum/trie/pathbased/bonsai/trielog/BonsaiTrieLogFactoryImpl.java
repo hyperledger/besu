@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.InvalidTrieLogTypeException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
@@ -157,7 +157,7 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
         input.leaveList();
         newLayer
             .getAccountChanges()
-            .put(address, new PathBasedDiffValue<>(oldValue, newValue, isCleared));
+            .put(address, new PathBasedValue<>(oldValue, newValue, isCleared));
       }
 
       if (input.nextIsNull()) {
@@ -168,9 +168,7 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
         final Bytes newCode = nullOrValue(input, RLPInput::readBytes);
         final boolean isCleared = getOptionalIsCleared(input);
         input.leaveList();
-        newLayer
-            .getCodeChanges()
-            .put(address, new PathBasedDiffValue<>(oldCode, newCode, isCleared));
+        newLayer.getCodeChanges().put(address, new PathBasedValue<>(oldCode, newCode, isCleared));
       }
 
       if (input.nextIsNull()) {
@@ -185,8 +183,7 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
           final UInt256 oldValue = nullOrValue(input, RLPInput::readUInt256Scalar);
           final UInt256 newValue = nullOrValue(input, RLPInput::readUInt256Scalar);
           final boolean isCleared = getOptionalIsCleared(input);
-          storageChanges.put(
-              storageSlotKey, new PathBasedDiffValue<>(oldValue, newValue, isCleared));
+          storageChanges.put(storageSlotKey, new PathBasedValue<>(oldValue, newValue, isCleared));
           input.leaveList();
         }
         input.leaveList();

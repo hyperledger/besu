@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.Consumer;
@@ -39,7 +39,7 @@ public class VerkleWorldStateUpdateAccumulator
 
   public VerkleWorldStateUpdateAccumulator(
       final PathBasedWorldView world,
-      final Consumer<PathBasedDiffValue<VerkleAccount>> accountPreloader,
+      final Consumer<PathBasedValue<VerkleAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
       final Consumer<Bytes> codePreloader,
       final EvmConfiguration evmConfiguration) {

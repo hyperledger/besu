@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedDiffValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 
 import java.util.Optional;
 
@@ -63,9 +63,9 @@ public class TrieLogLayerTests {
     PmtStateTrieAccountValue otherNewValue =
         new PmtStateTrieAccountValue(1, Wei.fromEth(1), Hash.EMPTY, Hash.EMPTY);
 
-    trieLogLayer.addAccountChange(address, new PathBasedDiffValue<>(oldValue, newValue));
+    trieLogLayer.addAccountChange(address, new PathBasedValue<>(oldValue, newValue));
     otherTrieLogLayer.addAccountChange(
-        otherAddress, new PathBasedDiffValue<>(otherOldValue, otherNewValue));
+        otherAddress, new PathBasedValue<>(otherOldValue, otherNewValue));
 
     Assertions.assertThat(trieLogLayer).isEqualTo(otherTrieLogLayer);
 
@@ -119,9 +119,9 @@ public class TrieLogLayerTests {
     StorageSlotKey otherStorageSlotKey = new StorageSlotKey(otherSlot);
 
     trieLogLayer.addStorageChange(
-        address, storageSlotKey, new PathBasedDiffValue<>(oldValue, newValue));
+        address, storageSlotKey, new PathBasedValue<>(oldValue, newValue));
     otherTrieLogLayer.addStorageChange(
-        otherAddress, otherStorageSlotKey, new PathBasedDiffValue<>(otherOldValue, otherNewValue));
+        otherAddress, otherStorageSlotKey, new PathBasedValue<>(otherOldValue, otherNewValue));
 
     Assertions.assertThat(trieLogLayer).isEqualTo(otherTrieLogLayer);
 
