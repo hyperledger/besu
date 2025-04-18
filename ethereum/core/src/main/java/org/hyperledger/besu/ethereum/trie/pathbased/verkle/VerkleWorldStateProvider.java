@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.trie.pathbased.verkle;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.cache.VerkleCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.worldview.VerkleWorldState;
@@ -25,8 +24,6 @@ import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.Optional;
-
-import com.google.common.annotations.VisibleForTesting;
 
 public class VerkleWorldStateProvider extends PathBasedWorldStateProvider {
 
@@ -44,31 +41,6 @@ public class VerkleWorldStateProvider extends PathBasedWorldStateProvider {
         pluginContext);
     provideCachedWorldStorageManager(
         new VerkleCachedWorldStorageManager(this, worldStateKeyValueStorage, worldStateConfig));
-    loadHeadWorldState(
-        new VerkleWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
-  }
-
-  public VerkleWorldStateProvider(
-      final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Blockchain blockchain,
-      final TrieLogManager trieLogManager,
-      final EvmConfiguration evmConfiguration) {
-    super(DataStorageFormat.VERKLE, worldStateKeyValueStorage, blockchain, trieLogManager);
-    provideCachedWorldStorageManager(
-        new VerkleCachedWorldStorageManager(this, worldStateKeyValueStorage, worldStateConfig));
-    loadHeadWorldState(
-        new VerkleWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
-  }
-
-  @VisibleForTesting
-  VerkleWorldStateProvider(
-      final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Blockchain blockchain,
-      final TrieLogManager trieLogManager,
-      final EvmConfiguration evmConfiguration,
-      final VerkleCachedWorldStorageManager cachedWorldStorageManager) {
-    super(DataStorageFormat.VERKLE, worldStateKeyValueStorage, blockchain, trieLogManager);
-    provideCachedWorldStorageManager(cachedWorldStorageManager);
     loadHeadWorldState(
         new VerkleWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
   }
