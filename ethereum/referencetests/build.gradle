@@ -13,6 +13,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+configurations {
+  referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
+  executionRefTestImplementation.extendsFrom referenceTestImplementation
+  eofRefTestImplementation.extendsFrom referenceTestImplementation
+}
 
 def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
   final referenceTestsPath = 'src/reference-test/external-resources/BlockchainTests'
@@ -63,10 +68,58 @@ def eipStateReferenceTests = tasks.register("eipStateReferenceTests")  {
     )
 }
 
-def executionSpecTests = tasks.register("executionSpecTests") {
-  final referenceTestsPath = "$buildDir/execution-spec-tests/"
+def eofSpecTests = tasks.register("eofSpecTests") {
+  final referenceTestsPath = "$buildDir/execution-spec-tests/eof"
   final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
-  def tarPath = configurations.tarConfig.files.find{ it.name.startsWith('execution-spec-tests')}
+  def tarPath = configurations.eofRefTestImplementation.files.find {
+    it.absolutePath.contains('execution-spec-tests')
+  }
+
+  copy {
+    from tarTree(tarPath)
+    into "$referenceTestsPath"
+  }
+
+  inputs.files fileTree(referenceTestsPath), fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+
+  // generate blockchain_tests:
+  generateTestFiles(
+    fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
+    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    "eof/fixtures",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/blockchain/eof",
+    "EofSpecBlockchainTest",
+    "org.hyperledger.besu.ethereum.vm.blockchain.eof",
+    )
+
+  // generate state_tests:
+  generateTestFiles(
+    fileTree(referenceTestsPath + "/fixtures/state_tests"),
+    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+    "eof/fixtures",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/state/eof",
+    "EofSpecStateTest",
+    "org.hyperledger.besu.ethereum.vm.state.eof",
+    )
+
+  // generate eof_tests:
+  generateTestFiles(
+    fileTree(referenceTestsPath + "/fixtures/eof_tests"),
+    file("src/reference-test/templates/EOFReferenceTest.java.template"),
+    "eof/fixtures",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/container/eof",
+    "EofSpecContainerTest",
+    "org.hyperledger.besu.ethereum.vm.container.eof"
+    )
+}
+
+def executionSpecTests = tasks.register("executionSpecTests") {
+  final referenceTestsPath = "$buildDir/execution-spec-tests/stable"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  def tarPath = configurations.executionRefTestImplementation.files.find {
+    it.absolutePath.contains('execution-spec-tests')
+  }
 
   copy {
     from tarTree(tarPath)
@@ -79,7 +132,7 @@ def executionSpecTests = tasks.register("executionSpecTests") {
   generateTestFiles(
     fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
     file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
-    "fixtures",
+    "stable/fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
     "ExecutionSpecBlockchainTest",
     "org.hyperledger.besu.ethereum.vm.executionspec",
@@ -89,7 +142,7 @@ def executionSpecTests = tasks.register("executionSpecTests") {
   generateTestFiles(
     fileTree(referenceTestsPath + "/fixtures/state_tests"),
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
-    "fixtures",
+    "stable/fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
     "ExecutionSpecStateTest",
     "org.hyperledger.besu.ethereum.vm.executionspec",
@@ -128,22 +181,6 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     )
 }
 
-def eofReferenceTests = tasks.register("eofReferenceTests") {
-  final referenceTestsPath = "src/reference-test/external-resources/EOFTests"
-  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
-  inputs.files fileTree(referenceTestsPath),
-    fileTree(generatedTestsPath)
-  outputs.files generatedTestsPath
-  generateTestFiles(
-    fileTree(referenceTestsPath),
-    file("src/reference-test/templates/EOFReferenceTest.java.template"),
-    "EOFTests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eof",
-    "EOFReferenceTest",
-    "org.hyperledger.besu.ethereum.vm.eof"
-    )
-}
-
 sourceSets {
   referenceTest {
     java {
@@ -154,9 +191,9 @@ sourceSets {
         eipBlockchainReferenceTests,
         eipStateReferenceTests,
         executionSpecTests,
+        eofSpecTests,
         generalstateReferenceTests,
-        generalstateRegressionReferenceTests,
-        eofReferenceTests
+        generalstateRegressionReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',
@@ -197,8 +234,6 @@ dependencies {
   referenceTestImplementation project(path: ':plugin-api')
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
-  // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:4.1.0:fixtures_develop@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.consensys.tuweni:tuweni-bytes'
@@ -206,6 +241,28 @@ dependencies {
   referenceTestImplementation 'org.assertj:assertj-core'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-params'
+
+  // the following will be resolved via custom ivy repository declared in root build.gradle
+  executionRefTestImplementation dependencies.create('ethereum:execution-spec-tests') {
+    version {
+      strictly 'v4.1.0'
+    }
+    artifact {
+      name = 'fixtures'
+      classifier = 'stable'
+      type = 'tar.gz'
+    }
+  }
+  eofRefTestImplementation dependencies.create('ethereum:execution-spec-tests') {
+    version {
+      strictly 'eip7692@v2.3.0'
+    }
+    artifact {
+      name = 'fixtures'
+      classifier = 'eip7692'
+      type = 'tar.gz'
+    }
+  }
 
   referenceTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }
@@ -293,15 +350,5 @@ def generateTestFiles(
       .replaceAll("%%TESTS_NAME%%", namePrefix + "_" + idx)
       .replaceAll("%%PACKAGE_NAME%%", packageString)
     testFile.newWriter().withWriter { w -> w << testFileContents }
-  }
-}
-
-configurations {
-  referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
-  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
-  tarConfig.extendsFrom referenceTestImplementation
-  tarConfig {
-    canBeResolved = true
-    canBeConsumed = false
   }
 }

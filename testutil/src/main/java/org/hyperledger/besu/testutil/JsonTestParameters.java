@@ -304,10 +304,9 @@ public class JsonTestParameters<S, T> {
   }
 
   private Collection<File> getFilteredFiles(final String[] paths) {
-    final ClassLoader classLoader = JsonTestParameters.class.getClassLoader();
     final List<File> files = new ArrayList<>();
     for (final String path : paths) {
-      final URL url = classLoader.getResource(path);
+      final URL url = ClassLoader.getSystemClassLoader().getResource(path);
       checkState(url != null, "Cannot find test directory %s", path);
       final Path dir;
       try {
