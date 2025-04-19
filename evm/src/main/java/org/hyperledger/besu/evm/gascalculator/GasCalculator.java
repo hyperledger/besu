@@ -26,7 +26,6 @@ import org.hyperledger.besu.evm.operation.ExpOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeCopyOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeHashOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeSizeOperation;
-import org.hyperledger.besu.evm.operation.InsufficientGasException;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.Keccak256Operation;
 import org.hyperledger.besu.evm.operation.LogOperation;
