@@ -67,7 +67,7 @@ class CodeDelegationHelperTest {
   @Test
   void getTargetAccountReturnsEmptyIfAccountIsNull() {
     assertThatThrownBy(
-            () -> CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator, null))
+            () -> CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator::isPrecompile, null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Account must not be null.");
   }
@@ -78,7 +78,7 @@ class CodeDelegationHelperTest {
     when(account.getCode()).thenReturn(code);
 
     assertThatThrownBy(
-            () -> CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator, account))
+            () -> CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator::isPrecompile, account))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Account does not have code delegation.");
   }
@@ -92,7 +92,7 @@ class CodeDelegationHelperTest {
     when(worldUpdater.get(targetAddress)).thenReturn(null);
 
     CodeDelegationAccount result =
-        CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator, account);
+        CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator::isPrecompile, account);
 
     assertThat(result.getCode()).isEqualTo(Bytes.EMPTY);
   }
@@ -109,7 +109,7 @@ class CodeDelegationHelperTest {
     when(gasCalculator.isPrecompile(targetAddress)).thenReturn(true);
 
     CodeDelegationAccount result =
-        CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator, account);
+        CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator::isPrecompile, account);
 
     assertThat(result.getCode()).isEqualTo(Bytes.EMPTY);
   }
@@ -128,7 +128,7 @@ class CodeDelegationHelperTest {
     when(gasCalculator.isPrecompile(targetAddress)).thenReturn(false);
 
     CodeDelegationAccount result =
-        CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator, account);
+        CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator::isPrecompile, account);
 
     assertThat(result.getTargetAddress()).isEqualTo(targetAddress);
     assertThat(result.getCode()).isEqualTo(targetCode);

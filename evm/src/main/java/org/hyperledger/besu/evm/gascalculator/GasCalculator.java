@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.operation.ExpOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeCopyOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeHashOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeSizeOperation;
+import org.hyperledger.besu.evm.operation.InsufficientGasException;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.Keccak256Operation;
 import org.hyperledger.besu.evm.operation.LogOperation;
@@ -677,4 +678,15 @@ public interface GasCalculator {
    */
   long calculateGasRefund(
       Transaction transaction, MessageFrame initialFrame, long codeDelegationRefund);
+
+  /**
+   * Compute the gas cost for delegated code resolution.
+   *
+   * @param frame the message frame
+   * @param targetAccount the account
+   */
+  default long calculateCodeDelegationResolutionGas(
+      final MessageFrame frame, final Account targetAccount) {
+    return 0L;
+  }
 }
