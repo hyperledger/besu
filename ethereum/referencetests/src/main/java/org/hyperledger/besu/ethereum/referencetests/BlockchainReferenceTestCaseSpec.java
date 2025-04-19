@@ -39,6 +39,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.ServiceManager.SimpleServiceManager;
 
 import java.util.List;
 import java.util.Map;
@@ -67,6 +69,8 @@ public class BlockchainReferenceTestCaseSpec {
   private final String sealEngine;
 
   private final ProtocolContext protocolContext;
+
+  private final ServiceManager serviceManager;
 
   private static WorldStateArchive buildWorldStateArchive(
       final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
@@ -107,11 +111,13 @@ public class BlockchainReferenceTestCaseSpec {
     this.worldStateArchive = buildWorldStateArchive(accounts);
     this.blockchain = buildBlockchain(genesisBlockHeader);
     this.sealEngine = sealEngine;
+    this.serviceManager = new SimpleServiceManager();
     this.protocolContext =
         new ProtocolContext.Builder()
             .withBlockchain(blockchain)
             .withWorldStateArchive(this.worldStateArchive)
             .withConsensusContext(new ConsensusContextFixture())
+            .withServiceManager(serviceManager)
             .build();
   }
 
@@ -145,6 +151,10 @@ public class BlockchainReferenceTestCaseSpec {
 
   public String getSealEngine() {
     return sealEngine;
+  }
+
+  public ServiceManager getServiceManager() {
+    return serviceManager;
   }
 
   public static class ReferenceTestBlockHeader extends BlockHeader {

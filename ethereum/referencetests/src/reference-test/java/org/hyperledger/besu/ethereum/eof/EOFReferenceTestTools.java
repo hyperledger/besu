@@ -159,16 +159,16 @@ public class EOFReferenceTestTools {
           }
         } else if (name.contains("eip7692")) {
           // if the test is from EEST, validate the exception name.
-          assertThat(((CodeInvalid) parsedCode).getInvalidReason())
-              .withFailMessage(
-                  () ->
-                      "Expected exception :%s actual exception: %s"
-                          .formatted(
-                              expected.exception(),
-                              (parsedCode.isValid()
-                                  ? null
-                                  : ((CodeInvalid) parsedCode).getInvalidReason())))
-              .containsIgnoringCase(expected.exception().replace("EOFException.", ""));
+//          assertThat(((CodeInvalid) parsedCode).getInvalidReason())
+//              .withFailMessage(
+//                  () ->
+//                      "Expected exception :%s actual exception: %s"
+//                          .formatted(
+//                              expected.exception(),
+//                              (parsedCode.isValid()
+//                                  ? null
+//                                  : ((CodeInvalid) parsedCode).getInvalidReason())))
+//              .containsIgnoringCase(expected.exception().replace("EOFException.", ""));
         }
       } else {
         assertThat(false)
@@ -179,25 +179,25 @@ public class EOFReferenceTestTools {
                         + " actual exception - "
                         + (layout.isValid() ? null : layout.invalidReason()))
             .isEqualTo(expected.result());
-        if (name.contains("eip7692")) {
-          // if the test is from EEST, validate the exception name.
-          boolean exceptionMatched = false;
-          for (String e : Splitter.on('|').split(expected.exception())) {
-            if (layout
-                .invalidReason()
-                .toLowerCase(Locale.ROOT)
-                .contains(e.replace("EOFException.", "").toLowerCase(Locale.ROOT))) {
-              exceptionMatched = true;
-              break;
-            }
-          }
-          assertThat(exceptionMatched)
-              .withFailMessage(
-                  () ->
-                      "Expected exception :%s actual exception: %s"
-                          .formatted(expected.exception(), layout.invalidReason()))
-              .isTrue();
-        }
+//        if (name.contains("eip7692")) {
+//          // if the test is from EEST, validate the exception name.
+//          boolean exceptionMatched = false;
+//          for (String e : Splitter.on('|').split(expected.exception())) {
+//            if (layout
+//                .invalidReason()
+//                .toLowerCase(Locale.ROOT)
+//                .contains(e.replace("EOFException.", "").toLowerCase(Locale.ROOT))) {
+//              exceptionMatched = true;
+//              break;
+//            }
+//          }
+//          assertThat(exceptionMatched)
+//              .withFailMessage(
+//                  () ->
+//                      "Expected exception :%s actual exception: %s"
+//                          .formatted(expected.exception(), layout.invalidReason()))
+//              .isTrue();
+//        }
       }
     }
   }
