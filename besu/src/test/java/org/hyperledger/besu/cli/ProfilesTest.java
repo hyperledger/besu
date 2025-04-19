@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.cli.config.InternalProfileName;
 import org.hyperledger.besu.cli.util.ProfileFinder;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,8 +38,17 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Spy;
 
 public class ProfilesTest extends CommandTestAbstract {
+
+  @Spy private BesuPluginContextImpl besuPluginContextSpy;
+
+  @Override
+  protected BesuPluginContextImpl getBesuPluginContext() {
+    return besuPluginContextSpy;
+  }
+
   @TempDir private static Path tempProfilesDir;
   private static String originalProfilesDirProperty;
 
