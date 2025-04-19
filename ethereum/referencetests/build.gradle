@@ -128,22 +128,6 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     )
 }
 
-def eofReferenceTests = tasks.register("eofReferenceTests") {
-  final referenceTestsPath = "src/reference-test/external-resources/EOFTests"
-  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
-  inputs.files fileTree(referenceTestsPath),
-    fileTree(generatedTestsPath)
-  outputs.files generatedTestsPath
-  generateTestFiles(
-    fileTree(referenceTestsPath),
-    file("src/reference-test/templates/EOFReferenceTest.java.template"),
-    "EOFTests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eof",
-    "EOFReferenceTest",
-    "org.hyperledger.besu.ethereum.vm.eof"
-    )
-}
-
 sourceSets {
   referenceTest {
     java {
@@ -155,8 +139,7 @@ sourceSets {
         eipStateReferenceTests,
         executionSpecTests,
         generalstateReferenceTests,
-        generalstateRegressionReferenceTests,
-        eofReferenceTests
+        generalstateRegressionReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',
@@ -198,7 +181,8 @@ dependencies {
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:4.1.0:fixtures_develop@tar.gz'
+  referenceTestImplementation 'ethereum:execution-spec-tests:4.3.0:fixtures_develop@tar.gz'
+  referenceTestImplementation 'ethereum:execution-spec-tests:4.3.0:fixtures_eip7692@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.consensys.tuweni:tuweni-bytes'
