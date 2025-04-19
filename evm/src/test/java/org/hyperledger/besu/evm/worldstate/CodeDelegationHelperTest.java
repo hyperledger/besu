@@ -67,7 +67,9 @@ class CodeDelegationHelperTest {
   @Test
   void getTargetAccountReturnsEmptyIfAccountIsNull() {
     assertThatThrownBy(
-            () -> CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator::isPrecompile, null))
+            () ->
+                CodeDelegationHelper.getTargetAccount(
+                    worldUpdater, gasCalculator::isPrecompile, null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Account must not be null.");
   }
@@ -78,7 +80,9 @@ class CodeDelegationHelperTest {
     when(account.getCode()).thenReturn(code);
 
     assertThatThrownBy(
-            () -> CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator::isPrecompile, account))
+            () ->
+                CodeDelegationHelper.getTargetAccount(
+                    worldUpdater, gasCalculator::isPrecompile, account))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Account does not have code delegation.");
   }

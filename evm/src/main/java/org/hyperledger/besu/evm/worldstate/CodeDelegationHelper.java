@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.evm.worldstate;
 
-import java.util.function.Predicate;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.CodeDelegationAccount;
+
+import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -57,7 +57,7 @@ public class CodeDelegationHelper {
    *     null or doesn't have code delegation.
    */
   public static CodeDelegationAccount getTargetAccount(
-    final WorldUpdater worldUpdater, final Predicate<Address> isPrecompile, final Account account)
+      final WorldUpdater worldUpdater, final Predicate<Address> isPrecompile, final Account account)
       throws IllegalArgumentException {
     if (account == null) {
       throw new IllegalArgumentException("Account must not be null.");

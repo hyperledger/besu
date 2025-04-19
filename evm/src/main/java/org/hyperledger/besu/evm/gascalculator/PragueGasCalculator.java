@@ -18,17 +18,15 @@ import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
-import java.util.function.Predicate;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 
 /**
  * Gas Calculator for Prague
@@ -127,26 +125,26 @@ public class PragueGasCalculator extends CancunGasCalculator {
   }
 
   @Override
-  public long calculateCodeDelegationResolutionGas(final MessageFrame frame, final Account targetAccount) {
-      if (targetAccount == null) {
-        return 0;
-      }
+  public long calculateCodeDelegationResolutionGas(
+      final MessageFrame frame, final Account targetAccount) {
+    if (targetAccount == null) {
+      return 0;
+    }
 
-      final Hash codeHash = targetAccount.getCodeHash();
-      if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
-        return 0;
-      }
+    final Hash codeHash = targetAccount.getCodeHash();
+    if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
+      return 0;
+    }
 
-      if (!hasCodeDelegation(targetAccount.getCode())) {
-        return 0;
-      }
+    if (!hasCodeDelegation(targetAccount.getCode())) {
+      return 0;
+    }
 
     final Address targetAddress =
-      CodeDelegationHelper.getTargetAccount(frame.getWorldUpdater(), this::isPrecompile, targetAccount).getTargetAddress();
-    final boolean isWarm =
-      isPrecompile(targetAddress) || frame.warmUpAddress(targetAddress);
-    return isWarm
-      ? getWarmStorageReadCost()
-      : getColdAccountAccessCost();
+        CodeDelegationHelper.getTargetAccount(
+                frame.getWorldUpdater(), this::isPrecompile, targetAccount)
+            .getTargetAddress();
+    final boolean isWarm = isPrecompile(targetAddress) || frame.warmUpAddress(targetAddress);
+    return isWarm ? getWarmStorageReadCost() : getColdAccountAccessCost();
   }
 }
