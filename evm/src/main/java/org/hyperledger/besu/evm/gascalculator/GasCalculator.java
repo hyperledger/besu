@@ -683,6 +683,7 @@ public interface GasCalculator {
    *
    * @param frame the message frame
    * @param targetAccount the account
+   * @return the gas cost
    */
   default long calculateCodeDelegationResolutionGas(
       final MessageFrame frame, final Account targetAccount) {
