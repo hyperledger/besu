@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -198,24 +198,6 @@ public final class StatusMessage extends AbstractMessageData {
     }
 
     public StatusMessage build() {
-      checkNotNull(protocolVersion, "protocolVersion must be set");
-      checkNotNull(networkId, "networkId must be set");
-      checkNotNull(bestHash, "bestHash must be set");
-      checkNotNull(genesisHash, "genesisHash must be set");
-      checkNotNull(forkId, "forkId must be set");
-      checkState(
-          blockRange == null || protocolVersion >= EthProtocolVersion.V69,
-          "blockRange is only supported for protocol version >= 69");
-      checkState(
-          blockRange != null || protocolVersion <= EthProtocolVersion.V68,
-          "blockRange must be present for protocol version >= 69");
-      checkState(
-          totalDifficulty == null || protocolVersion <= EthProtocolVersion.V68,
-          "totalDifficulty must be not present for protocol version >= 69");
-      checkState(
-          totalDifficulty != null || protocolVersion >= EthProtocolVersion.V69,
-          "totalDifficulty must be present for protocol version <= 68");
-
       final EthStatus status =
           new EthStatus(
               protocolVersion,
@@ -239,19 +221,36 @@ public final class StatusMessage extends AbstractMessageData {
     private final BlockRange blockRange;
 
     EthStatus(
-        final int protocolVersion,
+        final Integer protocolVersion,
         final BigInteger networkId,
         final Difficulty totalDifficulty,
         final Hash bestHash,
         final Hash genesisHash,
-        final ForkId forkHash,
+        final ForkId forkId,
         final BlockRange blockRange) {
+      checkNotNull(protocolVersion, "protocolVersion must be set");
+      checkNotNull(networkId, "networkId must be set");
+      checkNotNull(bestHash, "bestHash must be set");
+      checkNotNull(genesisHash, "genesisHash must be set");
+      checkNotNull(forkId, "forkId must be set");
+      checkArgument(
+          blockRange == null || protocolVersion >= EthProtocolVersion.V69,
+          "blockRange is only supported for protocol version >= 69");
+      checkArgument(
+          blockRange != null || protocolVersion <= EthProtocolVersion.V68,
+          "blockRange must be present for protocol version >= 69");
+      checkArgument(
+          totalDifficulty == null || protocolVersion <= EthProtocolVersion.V68,
+          "totalDifficulty must be not present for protocol version >= 69");
+      checkArgument(
+          totalDifficulty != null || protocolVersion >= EthProtocolVersion.V69,
+          "totalDifficulty must be present for protocol version <= 68");
       this.protocolVersion = protocolVersion;
       this.networkId = networkId;
       this.totalDifficulty = totalDifficulty;
       this.bestHash = bestHash;
       this.genesisHash = genesisHash;
-      this.forkId = forkHash;
+      this.forkId = forkId;
       this.blockRange = blockRange;
     }
 

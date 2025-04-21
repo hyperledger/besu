@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
 import java.util.Random;
@@ -89,7 +90,7 @@ public class StatusMessageTest {
   public void shouldNotHaveBlockRangeWhenEth68() {
     Exception exception =
         assertThrows(
-            IllegalStateException.class,
+            IllegalArgumentException.class,
             () ->
                 builder
                     .protocolVersion(EthProtocolVersion.V68)
@@ -103,7 +104,7 @@ public class StatusMessageTest {
   public void shouldHaveBlockRangeWhenEth69() {
     Exception exception =
         assertThrows(
-            IllegalStateException.class,
+            IllegalArgumentException.class,
             () -> builder.protocolVersion(EthProtocolVersion.V69).blockRange(null).build());
     assertThat(exception.getMessage())
         .contains("blockRange must be present for protocol version >= 69");
@@ -113,7 +114,7 @@ public class StatusMessageTest {
   public void shouldHaveTotalDifficultWhenEth68() {
     Exception exception =
         assertThrows(
-            IllegalStateException.class,
+            IllegalArgumentException.class,
             () -> builder.protocolVersion(EthProtocolVersion.V68).totalDifficulty(null).build());
     assertThat(exception.getMessage())
         .contains("totalDifficulty must be present for protocol version <= 68");
@@ -123,7 +124,7 @@ public class StatusMessageTest {
   public void shouldNotHaveTotalDifficultWhenEth69() {
     Exception exception =
         assertThrows(
-            IllegalStateException.class,
+            IllegalArgumentException.class,
             () ->
                 builder
                     .protocolVersion(EthProtocolVersion.V69)
@@ -139,5 +140,22 @@ public class StatusMessageTest {
     final byte[] bytes = new byte[32];
     random.nextBytes(bytes);
     return Hash.wrap(Bytes32.wrap(bytes));
+  }
+
+  @Test
+  public void shouldNotHaveTotalDifficultWhen69FromRawInput() {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeIntScalar(69);
+    out.writeBigIntegerScalar(networkId);
+    out.writeUInt256Scalar(Difficulty.of(1000L));
+    out.writeBytes(bestHash);
+    out.writeBytes(genesisHash);
+    forkId.writeTo(out);
+    out.endList();
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> StatusMessage.create(out.encoded()).protocolVersion(),
+        "StatusMessage should not be able to deserialize invalid data");
   }
 }
