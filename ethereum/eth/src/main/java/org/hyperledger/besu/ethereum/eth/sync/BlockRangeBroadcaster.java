@@ -84,7 +84,7 @@ public class BlockRangeBroadcaster {
           .log();
       message
           .getPeer()
-          .disconnect(DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED_UNPARSABLE_STATUS);
+          .disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     }
   }
 
