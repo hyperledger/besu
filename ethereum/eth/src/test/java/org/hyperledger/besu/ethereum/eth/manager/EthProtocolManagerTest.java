@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -1362,12 +1363,16 @@ public final class EthProtocolManagerTest {
 
   @Test
   public void shouldSendEarliestBlockToPeerWhenCapabilityEth69() {
-    long expectedEarliestBlock = 0L;
-    long expectedLatestBlock = blockchain.getChainHeadBlockNumber();
+    long expectedEarliestBlock = 10L;
+    Blockchain blockChainMock = spy(blockchain);
+    when(blockChainMock.getEarliest())
+        .thenReturn(
+            Optional.ofNullable(
+                blockchain.getBlockByNumber(expectedEarliestBlock).orElseThrow().getHash()));
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
-            .setBlockchain(blockchain)
+            .setBlockchain(blockChainMock)
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
@@ -1381,9 +1386,33 @@ public final class EthProtocolManagerTest {
             long earliestBlock =
                 StatusMessage.create(msg.getData()).blockRange().orElseThrow().getEarliestBlock();
             assertThat(earliestBlock).isEqualTo(expectedEarliestBlock);
-            long latestBlock =
-                StatusMessage.create(msg.getData()).blockRange().orElseThrow().getLatestBlock();
-            assertThat(latestBlock).isEqualTo(expectedLatestBlock);
+          },
+          EthProtocol.ETH69);
+    }
+  }
+
+  @Test
+  public void shouldSendCorrectEarliestBlockToPeerWhenEarliestIsNotSet() {
+    Blockchain blockChainMock = spy(blockchain);
+    when(blockChainMock.getEarliest()).thenReturn(Optional.empty());
+
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(protocolSchedule)
+            .setBlockchain(blockChainMock)
+            .setEthScheduler(new DeterministicEthScheduler(() -> false))
+            .setWorldStateArchive(protocolContext.getWorldStateArchive())
+            .setTransactionPool(transactionPool)
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .build()) {
+
+      setupPeerWithoutStatusExchange(
+          ethManager,
+          (cap, msg, conn) -> {
+            assertThat(msg.getCode() == EthProtocolMessages.STATUS).isTrue();
+            long earliestBlock =
+                StatusMessage.create(msg.getData()).blockRange().orElseThrow().getEarliestBlock();
+            assertThat(earliestBlock).isEqualTo(0L);
           },
           EthProtocol.ETH69);
     }
