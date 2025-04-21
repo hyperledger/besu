@@ -30,11 +30,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CreateAccessListResult;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -51,7 +51,8 @@ public class EthCreateAccessListIntegrationTest {
   @BeforeAll
   public static void setUpOnce() throws Exception {
     final String genesisJson =
-        Resources.toString(BlockTestUtil.getEthRefTestResources().getGenesisURL(), Charsets.UTF_8);
+        Resources.toString(
+            BlockTestUtil.getEthRefTestResources().getGenesisURL(), StandardCharsets.UTF_8);
 
     BLOCKCHAIN =
         new JsonRpcTestMethodsFactory(

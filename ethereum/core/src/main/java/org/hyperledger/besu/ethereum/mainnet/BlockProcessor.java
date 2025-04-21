@@ -19,11 +19,8 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 
 import java.util.List;
@@ -75,95 +72,28 @@ public interface BlockProcessor {
    * @param block the block to process
    * @return the block processing result
    */
-  default BlockProcessingResult processBlock(
-      final ProtocolContext protocolContext,
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final Block block) {
-    return processBlock(
-        protocolContext,
-        blockchain,
-        worldState,
-        block.getHeader(),
-        block.getBody().getTransactions(),
-        block.getBody().getOmmers(),
-        block.getBody().getWithdrawals(),
-        null);
-  }
-
-  /**
-   * Processes the block.
-   *
-   * @param protocolContext the current context of the protocol
-   * @param blockchain the blockchain to append the block to
-   * @param worldState the world state to apply changes to
-   * @param blockHeader the block header for the block
-   * @param transactions the transactions in the block
-   * @param ommers the block ommers
-   * @return the block processing result
-   */
-  default BlockProcessingResult processBlock(
-      final ProtocolContext protocolContext,
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers) {
-    return processBlock(
-        protocolContext,
-        blockchain,
-        worldState,
-        blockHeader,
-        transactions,
-        ommers,
-        Optional.empty(),
-        null);
-  }
-
-  /**
-   * Processes the block.
-   *
-   * @param protocolContext the current context of the protocol
-   * @param blockchain the blockchain to append the block to
-   * @param worldState the world state to apply changes to
-   * @param blockHeader the block header for the block
-   * @param transactions the transactions in the block
-   * @param ommers the block ommers
-   * @param withdrawals the withdrawals for the block
-   * @param privateMetadataUpdater the updater used to update the private metadata for the block
-   * @return the block processing result
-   */
   BlockProcessingResult processBlock(
-      ProtocolContext protocolContext,
-      Blockchain blockchain,
-      MutableWorldState worldState,
-      BlockHeader blockHeader,
-      List<Transaction> transactions,
-      List<BlockHeader> ommers,
-      Optional<List<Withdrawal>> withdrawals,
-      PrivateMetadataUpdater privateMetadataUpdater);
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block);
 
   /**
-   * Processes the block when running Besu in GoQuorum-compatible mode
+   * Processes the block.
    *
    * @param protocolContext the current context of the protocol
    * @param blockchain the blockchain to append the block to
-   * @param worldState the world state to apply public transactions to
-   * @param privateWorldState the private world state to apply private transaction to
+   * @param worldState the world state to apply changes to
    * @param block the block to process
    * @return the block processing result
    */
-  default BlockProcessingResult processBlock(
+  BlockProcessingResult processBlock(
       final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
-      final MutableWorldState privateWorldState,
-      final Block block) {
-    /*
-     This method should never be executed. All GoQuorum processing must happen in the GoQuorumBlockProcessor.
-    */
-    throw new IllegalStateException("Tried to process GoQuorum block on AbstractBlockProcessor");
-  }
+      final Block block,
+      final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
+      final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction);
 
   /**
    * Get ommer reward in ${@link Wei}
