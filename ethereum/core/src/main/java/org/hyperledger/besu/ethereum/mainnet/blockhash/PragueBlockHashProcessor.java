@@ -64,7 +64,7 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
       processor.process(historyStorageAddress, context, inputData);
     } catch (InvalidSystemCallAddressException e) {
       // According to EIP-2935, the system call should fail silently if the address does not exist
-      LOG.trace("Invalid system call address: {}", historyStorageAddress);
+      LOG.warn("Invalid system call address: {}", historyStorageAddress);
     }
     return null;
   }
