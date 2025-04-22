@@ -94,10 +94,11 @@ public class BlockRangeBroadcaster {
    *
    * <p>The block range is from 0 to the latest block number in the chain head.
    */
-  private void broadcastBlockRange() {
+  @VisibleForTesting
+  protected void broadcastBlockRange() {
+    long earliestBlockNumber = getEarliestBlockNumber();
     BlockHeader header = blockchain.getChainHeadHeader();
-    // TODO when pruning pre-merge, we need to send the cut-off block number
-    broadcastBlockRange(0L, header.getNumber(), header.getHash());
+    broadcastBlockRange(earliestBlockNumber, header.getNumber(), header.getHash());
   }
 
   /**
@@ -154,5 +155,20 @@ public class BlockRangeBroadcaster {
     } catch (PeerConnection.PeerNotConnected e) {
       LOG.trace("Failed to broadcast blockRange to peer {}", peer.getLoggableId(), e);
     }
+  }
+
+  private long getEarliestBlockNumber() {
+    return blockchain
+        .getEarliest()
+        .map(
+            hash ->
+                blockchain
+                    .getBlockHeader(hash)
+                    .orElseThrow(
+                        () ->
+                            new IllegalStateException(
+                                "Unable to get earliest block header from blockchain."))
+                    .getNumber())
+        .orElse(0L);
   }
 }

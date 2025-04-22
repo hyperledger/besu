@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -33,8 +34,10 @@ import org.hyperledger.besu.ethereum.eth.messages.BlockRangeUpdateMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,5 +93,32 @@ public class BlockRangeBroadcasterTest {
     long endBlockNumber = 1L;
     Hash endBlockHash = Hash.ZERO;
     blockRangeBroadcaster.broadcastBlockRange(startBlockNumber, endBlockNumber, endBlockHash);
+  }
+
+  @Test
+  public void shouldSendCorrectBlockRangeToPeers() {
+    final long expectedEarliestBlock = 10L;
+    final long expectedLatestBlockNumber = 20L;
+    final Hash expectedBlockHash = Hash.wrap(Bytes32.fromHexString("0x0B"));
+
+    setupPeers(ethPeerWithoutSupport, ethPeerWithSupport);
+    setupBlockchain(expectedEarliestBlock, expectedLatestBlockNumber, expectedBlockHash);
+
+    blockRangeBroadcaster.broadcastBlockRange();
+    verify(blockRangeBroadcaster, times(1))
+        .broadcastBlockRange(expectedEarliestBlock, expectedLatestBlockNumber, expectedBlockHash);
+  }
+
+  private void setupBlockchain(
+      final long earliestBlockNumber, final long latestBlockNumber, final Hash expectedBlockHash) {
+    final Hash earliestBlockHash = Hash.wrap(Bytes32.fromHexString("0x0A"));
+    final BlockHeader earliestBlockHeader = mock(BlockHeader.class);
+    final BlockHeader latestBlockHeader = mock(BlockHeader.class);
+    when(earliestBlockHeader.getNumber()).thenReturn(earliestBlockNumber);
+    when(latestBlockHeader.getNumber()).thenReturn(latestBlockNumber);
+    when(latestBlockHeader.getHash()).thenReturn(expectedBlockHash);
+    when(blockchain.getEarliest()).thenReturn(Optional.of(earliestBlockHash));
+    when(blockchain.getBlockHeader(earliestBlockHash)).thenReturn(Optional.of(earliestBlockHeader));
+    when(blockchain.getChainHeadHeader()).thenReturn(latestBlockHeader);
   }
 }
