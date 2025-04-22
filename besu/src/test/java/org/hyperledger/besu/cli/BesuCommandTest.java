@@ -2404,6 +2404,13 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void verifyVersionInTheConfigurationOverviewIsCorrect() {
+    parseCommand();
+    verify(mockLogger)
+        .info(argThat(arg -> arg.contains("# Besu version " + BesuVersionUtils.shortVersion())));
+  }
+
+  @Test
   public void checkpointPostMergeShouldFailWhenGenesisHasNoTTD() throws IOException {
     final String configText =
         Resources.toString(
