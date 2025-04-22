@@ -31,12 +31,8 @@ import java.util.Deque;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SystemCallProcessor {
-  private static final Logger LOG = LoggerFactory.getLogger(SystemCallProcessor.class);
-
   /**
    * The gas limit as defined in <a
    * href="https://eips.ethereum.org/EIPS/eip-2935#block-processing">EIP-2935</a> This value is
@@ -65,12 +61,12 @@ public class SystemCallProcessor {
   public Bytes process(
       final Address callAddress, final BlockProcessingContext context, final Bytes inputData) {
     WorldUpdater updater = context.getWorldState().updater();
-
-    // if no code exists at CALL_ADDRESS, the call must fail silently
     final Account maybeContract = updater.get(callAddress);
     if (maybeContract == null) {
-      LOG.trace("System call address not found {}", callAddress);
-      return Bytes.EMPTY;
+      throw new RuntimeException("Invalid system call address: " + callAddress);
+    }
+    if (maybeContract.getCode().isEmpty()) {
+      throw new RuntimeException("Invalid system call, no code at address " + callAddress);
     }
 
     final AbstractMessageProcessor processor =
