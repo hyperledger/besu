@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.BlockRangeUpdateMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -54,6 +55,7 @@ public class BlockRangeBroadcasterTest {
   @BeforeEach
   public void setup() {
     when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
+    when(ethContext.getScheduler()).thenReturn(mock(EthScheduler.class));
     blockRangeBroadcaster = spy(new BlockRangeBroadcaster(ethContext, blockchain));
   }
 
