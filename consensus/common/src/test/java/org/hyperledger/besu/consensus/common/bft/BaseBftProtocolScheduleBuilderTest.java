@@ -45,12 +45,26 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class BaseBftProtocolScheduleBuilderTest {
 
   private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
   private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
+
+  @BeforeEach
+  void setup() {
+    when(genesisConfig.getDepositContractAddress())
+        .thenReturn(
+            Optional.of(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa")));
+    when(genesisConfig.getWithdrawalRequestContractAddress())
+        .thenReturn(
+            Optional.of(Address.fromHexString("0x00000961ef480eb55e80d19ad83579a64c007002")));
+    when(genesisConfig.getConsolidationRequestContractAddress())
+        .thenReturn(
+            Optional.of(Address.fromHexString("0x0000bbddc7ce488642fb579f8b00f3a590007251")));
+  }
 
   @Test
   public void ensureBlockRewardAndMiningBeneficiaryInProtocolSpecMatchConfig() {

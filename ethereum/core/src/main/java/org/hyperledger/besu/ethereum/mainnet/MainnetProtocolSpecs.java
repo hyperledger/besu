@@ -934,6 +934,7 @@ public abstract class MainnetProtocolSpecs {
           pragueRequestsProcessors(requestContractAddresses));
     } catch (NoSuchElementException nsee) {
       LOG.warn("Prague definitions require system contract addresses in genesis");
+      throw nsee;
     }
 
     return pragueSpecBuilder;
