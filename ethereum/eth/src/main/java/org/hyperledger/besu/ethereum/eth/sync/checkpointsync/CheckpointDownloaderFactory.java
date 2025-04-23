@@ -91,13 +91,9 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
               address ->
                   snapContext.addAccountToHealingList(
                       CompactEncoding.bytesToPath(address.addressHash())));
-    } else if (!protocolContext
-        .getWorldStateArchive()
-        .getWorldState()
-        .rootHash()
-        .equals(GENESIS_STATE_ROOT)) {
+    } else if (syncState.isInitialSyncPhaseDone()) {
       LOG.info(
-          "Checkpoint sync was requested, but cannot be enabled because the world state root hash exists.");
+          "Checkpoint sync was requested, but cannot be enabled because initial sync phase has already completed.");
       return Optional.empty();
     }
 

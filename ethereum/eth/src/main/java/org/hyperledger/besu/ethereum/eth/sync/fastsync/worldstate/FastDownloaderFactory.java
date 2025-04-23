@@ -84,14 +84,9 @@ public class FastDownloaderFactory {
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
 
-    if (!syncState.isResyncNeeded()
-        && !protocolContext
-            .getWorldStateArchive()
-            .getWorldState()
-            .rootHash()
-            .equals(GENESIS_STATE_ROOT)) {
+    if (!syncState.isResyncNeeded() && syncState.isInitialSyncPhaseDone()) {
       LOG.info(
-          "Fast sync was requested, but cannot be enabled because the world state root hash exists.");
+          "Fast sync was requested, but cannot be enabled because initial sync phase has already completed.");
       return Optional.empty();
     }
 

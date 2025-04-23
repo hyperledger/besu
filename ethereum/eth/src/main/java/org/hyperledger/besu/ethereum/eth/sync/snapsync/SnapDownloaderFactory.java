@@ -86,13 +86,9 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
               address ->
                   snapContext.addAccountToHealingList(
                       CompactEncoding.bytesToPath(address.addressHash())));
-    } else if (!protocolContext
-        .getWorldStateArchive()
-        .getWorldState()
-        .rootHash()
-        .equals(GENESIS_STATE_ROOT)) {
+    } else if (syncState.isInitialSyncPhaseDone()) {
       LOG.info(
-          "Snap sync was requested, but cannot be enabled because the world state root hash exists.");
+          "Snap sync was requested, but cannot be enabled because initial sync phase has already completed.");
       return Optional.empty();
     }
 
