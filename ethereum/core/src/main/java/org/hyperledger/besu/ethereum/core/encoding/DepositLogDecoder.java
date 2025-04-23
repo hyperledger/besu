@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import org.hyperledger.besu.ethereum.mainnet.requests.InvalidDepositLogLayoutException;
 import org.hyperledger.besu.evm.log.Log;
+
+import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -53,52 +56,84 @@ public class DepositLogDecoder {
   private static final int DEPOSIT_LOG_LENGTH = 576;
   private static final int LENGTH_FIELD_SIZE = 32;
 
+  private static final int POSITION_PUB_KEY = 0;
+  private static final int POSITION_WITHDRAWAL_CRED = 32;
+  private static final int POSITION_AMOUNT = 64;
+  private static final int POSITION_SIGNATURE = 96;
+  private static final int POSITION_INDEX = 128;
+
   private static final int PUB_KEY_LENGTH = 48;
   private static final int WITHDRAWAL_CRED_LENGTH = 32;
   private static final int AMOUNT_LENGTH = 8;
   private static final int SIGNATURE_LENGTH = 96;
   private static final int INDEX_LENGTH = 8;
 
-  // PublicKey is the first element.
-  private static final int PUB_KEY_OFFSET = 0;
-  // ABI encoding pads values to 32 bytes, so despite BLS public keys being length 48, the value
-  // length here is 64. Then skip over the next length value.
-  private static final int WITHDRAWAL_CRED_OFFSET =
-      PUB_KEY_OFFSET + PUB_KEY_LENGTH + 16 + LENGTH_FIELD_SIZE;
-  // WithdrawalCredentials is 32 bytes. Read that value then skip over next length.
-  private static final int AMOUNT_OFFSET =
-      WITHDRAWAL_CRED_OFFSET + WITHDRAWAL_CRED_LENGTH + LENGTH_FIELD_SIZE;
-  // amount is only 8 bytes long but is stored in a 32 byte slot. The remaining 24 bytes need to be
-  // added to the offset.
-  private static final int SIGNATURE_OFFSET =
-      AMOUNT_OFFSET + AMOUNT_LENGTH + 24 + LENGTH_FIELD_SIZE;
-  // Signature is 96 bytes. Skip over it and the next length.
-  private static final int INDEX_OFFSET = SIGNATURE_OFFSET + SIGNATURE_LENGTH + LENGTH_FIELD_SIZE;
-
-  // The ABI encodes the position of dynamic elements first. Since there are 5
-  // elements, skip over the positional data. The first 32 bytes of dynamic
-  // elements also encode their actual length. Skip over that value too.
-  private static final int DATA_START_POSITION = 32 * 5 + LENGTH_FIELD_SIZE;
+  private static final int PUB_KEY_OFFSET = 160;
+  private static final int WITHDRAWAL_CRED_OFFSET = 256;
+  private static final int AMOUNT_OFFSET = 320;
+  private static final int SIGNATURE_OFFSET = 384;
+  private static final int INDEX_OFFSET = 512;
 
   public static Bytes decodeFromLog(final Log log) {
     final Bytes data = log.getData();
+    validateLogLength(data);
+    validateOffsets(data);
+    validateSizes(data);
 
-    if (data.size() != DEPOSIT_LOG_LENGTH) {
-      throw new IllegalArgumentException(
-          "Invalid deposit log length. Must be "
-              + DEPOSIT_LOG_LENGTH
-              + " bytes, but is "
-              + data.size()
-              + " bytes");
-    }
-
-    final Bytes pubKey = data.slice(DATA_START_POSITION + PUB_KEY_OFFSET, PUB_KEY_LENGTH);
-    final Bytes withdrawalCred =
-        data.slice(DATA_START_POSITION + WITHDRAWAL_CRED_OFFSET, WITHDRAWAL_CRED_LENGTH);
-    final Bytes amount = data.slice(DATA_START_POSITION + AMOUNT_OFFSET, AMOUNT_LENGTH);
-    final Bytes signature = data.slice(DATA_START_POSITION + SIGNATURE_OFFSET, SIGNATURE_LENGTH);
-    final Bytes index = data.slice(DATA_START_POSITION + INDEX_OFFSET, INDEX_LENGTH);
+    final Bytes pubKey = extractField(data, PUB_KEY_OFFSET, PUB_KEY_LENGTH);
+    final Bytes withdrawalCred = extractField(data, WITHDRAWAL_CRED_OFFSET, WITHDRAWAL_CRED_LENGTH);
+    final Bytes amount = extractField(data, AMOUNT_OFFSET, AMOUNT_LENGTH);
+    final Bytes signature = extractField(data, SIGNATURE_OFFSET, SIGNATURE_LENGTH);
+    final Bytes index = extractField(data, INDEX_OFFSET, INDEX_LENGTH);
 
     return Bytes.concatenate(pubKey, withdrawalCred, amount, signature, index);
+  }
+
+  private static void validateLogLength(final Bytes data) {
+    if (data.size() != DEPOSIT_LOG_LENGTH) {
+      throw new InvalidDepositLogLayoutException(
+          String.format(
+              "Invalid deposit log length. Must be %d bytes, but is %d bytes",
+              DEPOSIT_LOG_LENGTH, data.size()));
+    }
+  }
+
+  private static void validateOffsets(final Bytes data) {
+    validateFieldOffset(data, POSITION_PUB_KEY, PUB_KEY_OFFSET, "pubKey");
+    validateFieldOffset(data, POSITION_WITHDRAWAL_CRED, WITHDRAWAL_CRED_OFFSET, "withdrawalCred");
+    validateFieldOffset(data, POSITION_AMOUNT, AMOUNT_OFFSET, "amount");
+    validateFieldOffset(data, POSITION_SIGNATURE, SIGNATURE_OFFSET, "signature");
+    validateFieldOffset(data, POSITION_INDEX, INDEX_OFFSET, "index");
+  }
+
+  private static void validateFieldOffset(
+      final Bytes data, final int position, final int expectedOffset, final String fieldName) {
+    BigInteger offset = data.slice(position, LENGTH_FIELD_SIZE).toBigInteger();
+    if (!offset.equals(BigInteger.valueOf(expectedOffset))) {
+      throw new InvalidDepositLogLayoutException(
+          String.format(
+              "Invalid %s offset: expected %d, but got %d", fieldName, expectedOffset, offset));
+    }
+  }
+
+  private static void validateSizes(final Bytes data) {
+    validateFieldSize(data, PUB_KEY_OFFSET, PUB_KEY_LENGTH, "pubKey");
+    validateFieldSize(data, WITHDRAWAL_CRED_OFFSET, WITHDRAWAL_CRED_LENGTH, "withdrawalCred");
+    validateFieldSize(data, AMOUNT_OFFSET, AMOUNT_LENGTH, "amount");
+    validateFieldSize(data, SIGNATURE_OFFSET, SIGNATURE_LENGTH, "signature");
+    validateFieldSize(data, INDEX_OFFSET, INDEX_LENGTH, "index");
+  }
+
+  private static void validateFieldSize(
+      final Bytes data, final int offset, final int expectedSize, final String fieldName) {
+    BigInteger size = data.slice(offset, LENGTH_FIELD_SIZE).toBigInteger();
+    if (!size.equals(BigInteger.valueOf(expectedSize))) {
+      throw new InvalidDepositLogLayoutException(
+          String.format("Invalid %s size: expected %d, but got %d", fieldName, expectedSize, size));
+    }
+  }
+
+  private static Bytes extractField(final Bytes data, final int offset, final int length) {
+    return data.slice(LENGTH_FIELD_SIZE + offset, length);
   }
 }
