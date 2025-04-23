@@ -123,9 +123,14 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
   }
 
   public static MutableWorldState createInMemoryWorldState() {
+    return createInMemoryWorldState(DataStorageConfiguration.DEFAULT_FOREST_CONFIG);
+  }
+
+  public static MutableWorldState createInMemoryWorldState(
+      final DataStorageConfiguration dataStorageConfiguration) {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     return new ForestMutableWorldState(
-        provider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_FOREST_CONFIG),
+        provider.createWorldStateStorage(dataStorageConfiguration),
         provider.createWorldStatePreimageStorage(),
         EvmConfiguration.DEFAULT);
   }
