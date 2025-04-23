@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,16 +81,14 @@ public class PreimageSubCommand implements Runnable {
         .build();
   }
 
-  private static Path pathOrDataDir(final Path preimagePath) {
-    return Optional.ofNullable(preimagePath)
-        .orElse(
-            Paths.get(
-                PreimageSubCommand.parentCommand
-                    .besuCommand
-                    .dataDir()
-                    .resolve("preimages.dat")
-                    .toAbsolutePath()
-                    .toString()));
+  private static Path orDataDir() {
+    return Paths.get(
+        PreimageSubCommand.parentCommand
+            .besuCommand
+            .dataDir()
+            .resolve("preimages.dat")
+            .toAbsolutePath()
+            .toString());
   }
 
   @CommandLine.Command(
@@ -99,23 +98,35 @@ public class PreimageSubCommand implements Runnable {
       versionProvider = VersionProvider.class)
   static class Export implements Runnable {
 
+    @VisibleForTesting
     @CommandLine.Option(
         names = "--preimage-file-path",
         description = "The flat file to which to export preimage data",
         arity = "1..1")
-    private Path preimageFilePath = null;
+    Path preimageFilePath = null;
 
+    @VisibleForTesting
     @CommandLine.Option(
         names = "--hex",
         description = "export data in hex (human readable) format",
         arity = "1..1")
-    private boolean hex = false;
+    boolean hex = false;
+
+    StorageProvider storageProvider = null;
+
+    StorageProvider getStorageProvider() {
+      if (storageProvider == null) {
+        storageProvider = createBesuController().getStorageProvider();
+      }
+      return storageProvider;
+    }
 
     @Override
     public void run() {
-      var besuController = createBesuController();
-      final StorageProvider storageProvider = besuController.getStorageProvider();
-      var preimagesPath = pathOrDataDir(preimageFilePath);
+
+      final StorageProvider storageProvider = getStorageProvider();
+      var preimagesPath =
+          Optional.ofNullable(preimageFilePath).orElseGet(PreimageSubCommand::orDataDir);
 
       var preimageStorage =
           storageProvider.getStorageBySegmentIdentifier(
@@ -172,27 +183,38 @@ public class PreimageSubCommand implements Runnable {
       versionProvider = VersionProvider.class)
   static class Import implements Runnable {
 
+    @VisibleForTesting
     @CommandLine.Option(
         names = "--preimage-file-path",
         description = "The flat file from which to load preimage data",
         arity = "1..1")
-    private Path preimageFilePath = null;
+    Path preimageFilePath = null;
 
+    @VisibleForTesting
     @CommandLine.Option(
         names = "--hex",
         description = "import data from a hex formatted, line delimited input file",
         arity = "1..1")
-    private boolean hex = false;
+    boolean hex = false;
+
+    StorageProvider storageProvider = null;
+
+    StorageProvider getStorageProvider() {
+      if (storageProvider == null) {
+        storageProvider = createBesuController().getStorageProvider();
+      }
+      return storageProvider;
+    }
 
     @Override
     public void run() {
-      var besuController = createBesuController();
-      final StorageProvider storageProvider = besuController.getStorageProvider();
+      final StorageProvider storageProvider = getStorageProvider();
       var preimageStorage =
           storageProvider.getStorageBySegmentIdentifier(
               KeyValueSegmentIdentifier.HASH_PREIMAGE_STORE);
 
-      var preimages = pathOrDataDir(preimageFilePath);
+      var preimagesPath =
+          Optional.ofNullable(preimageFilePath).orElseGet(PreimageSubCommand::orDataDir);
 
       int batchSize = 1_000_000;
       int counter = 0;
@@ -201,7 +223,7 @@ public class PreimageSubCommand implements Runnable {
       try {
         if (hex) {
           // HEX MODE: read line-by-line
-          try (var lines = Files.lines(preimages)) {
+          try (var lines = Files.lines(preimagesPath)) {
             var filteredLines =
                 lines
                     .map(String::trim)
@@ -225,7 +247,7 @@ public class PreimageSubCommand implements Runnable {
           }
         } else {
           // BINARY MODE: read [1-byte length][N-byte value] format
-          try (var in = Files.newInputStream(preimages)) {
+          try (var in = Files.newInputStream(preimagesPath)) {
             while (true) {
               int lenByte = in.read();
               if (lenByte == -1) break; // EOF
@@ -255,7 +277,7 @@ public class PreimageSubCommand implements Runnable {
         }
 
       } catch (IOException e) {
-        throw new UncheckedIOException("Failed to load preimages from file: " + preimages, e);
+        throw new UncheckedIOException("Failed to load preimages from file: " + preimagesPath, e);
       }
     }
   }

@@ -18,6 +18,10 @@ import static org.assertj.core.util.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_CONFIG;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
+import static org.hyperledger.besu.evm.internal.EvmConfiguration.DEFAULT;
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfig;
@@ -35,8 +39,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.BlockTestUtil;
@@ -112,6 +116,11 @@ public class BlockchainSetupUtil {
     return blocks.size();
   }
 
+  public static BlockchainSetupUtil forTesting(
+      final DataStorageConfiguration dataStorageConfiguration) {
+    return createForEthashChain(BlockTestUtil.getTestChainResources(), dataStorageConfiguration);
+  }
+
   public static BlockchainSetupUtil forTesting(final DataStorageFormat storageFormat) {
     return createForEthashChain(BlockTestUtil.getTestChainResources(), storageFormat);
   }
@@ -121,7 +130,7 @@ public class BlockchainSetupUtil {
   }
 
   public static BlockchainSetupUtil forMainnet() {
-    return createForEthashChain(BlockTestUtil.getMainnetResources(), DataStorageFormat.BONSAI);
+    return createForEthashChain(BlockTestUtil.getMainnetResources(), BONSAI);
   }
 
   public static BlockchainSetupUtil forOutdatedFork() {
@@ -138,9 +147,21 @@ public class BlockchainSetupUtil {
 
   public static BlockchainSetupUtil createForEthashChain(
       final ChainResources chainResources, final DataStorageFormat storageFormat) {
+    var storageConfig =
+        storageFormat.equals(BONSAI) ? DEFAULT_BONSAI_CONFIG : DEFAULT_FOREST_CONFIG;
     return create(
         chainResources,
-        storageFormat,
+        storageConfig,
+        BlockchainSetupUtil::mainnetProtocolScheduleProvider,
+        BlockchainSetupUtil::mainnetProtocolContextProvider,
+        new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+  }
+
+  public static BlockchainSetupUtil createForEthashChain(
+      final ChainResources chainResources, final DataStorageConfiguration storageConfig) {
+    return create(
+        chainResources,
+        storageConfig,
         BlockchainSetupUtil::mainnetProtocolScheduleProvider,
         BlockchainSetupUtil::mainnetProtocolContextProvider,
         new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
@@ -150,7 +171,7 @@ public class BlockchainSetupUtil {
       final GenesisConfig genesisConfig) {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfig.getConfigOptions(),
-        EvmConfiguration.DEFAULT,
+        DEFAULT,
         MiningConfiguration.newDefault(),
         new BadBlockManager(),
         false,
@@ -168,7 +189,7 @@ public class BlockchainSetupUtil {
 
   private static BlockchainSetupUtil create(
       final ChainResources chainResources,
-      final DataStorageFormat storageFormat,
+      final DataStorageConfiguration storageConfig,
       final ProtocolScheduleProvider protocolScheduleProvider,
       final ProtocolContextProvider protocolContextProvider,
       final EthScheduler scheduler) {
@@ -179,8 +200,8 @@ public class BlockchainSetupUtil {
       final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
       final WorldStateArchive worldArchive =
-          storageFormat == DataStorageFormat.BONSAI
-              ? createBonsaiInMemoryWorldStateArchive(blockchain)
+          storageConfig.getDataStorageFormat() == BONSAI
+              ? createBonsaiInMemoryWorldStateArchive(blockchain, DEFAULT, storageConfig)
               : createInMemoryWorldStateArchive();
       final TransactionPool transactionPool = mock(TransactionPool.class);
 
