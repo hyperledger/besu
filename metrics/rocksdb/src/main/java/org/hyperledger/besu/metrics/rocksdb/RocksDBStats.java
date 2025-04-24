@@ -116,6 +116,7 @@ public class RocksDBStats {
     TickerType.NUMBER_RATE_LIMITER_DRAINS,
     TickerType.NUMBER_ITER_SKIP,
     TickerType.NUMBER_MULTIGET_KEYS_FOUND,
+    TickerType.MULTIGET_COROUTINE_COUNT,
   };
 
   /** The constant HISTOGRAM_TYPES. */
@@ -145,6 +146,8 @@ public class RocksDBStats {
     HistogramType.COMPRESSION_TIMES_NANOS,
     HistogramType.DECOMPRESSION_TIMES_NANOS,
     HistogramType.READ_NUM_MERGE_OPERANDS,
+    HistogramType.ASYNC_READ_BYTES,
+    HistogramType.MULTIGET_IO_BATCH_SIZE,
   };
 
   /** Default constructor */

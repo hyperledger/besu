@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -81,14 +80,7 @@ public class RocksDBColumnarKeyValueSnapshot
   public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys)
       throws StorageException {
     throwIfClosed();
-
-    if (segments.size() != keys.size()) {
-      throw new IllegalArgumentException("Segments and keys lists must be of equal length");
-    }
-
-    return IntStream.range(0, keys.size())
-        .mapToObj(i -> snapTx.get(segments.get(i), keys.get(i)).orElse(null))
-        .toList();
+    return snapTx.multiget(segments, keys);
   }
 
   @Override
