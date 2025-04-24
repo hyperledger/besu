@@ -35,6 +35,8 @@ public class EOFValidationCodeRule implements ContractValidationRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(EOFValidationCodeRule.class);
 
+  private static final byte FORMAT_RESERVED = (byte) 0xEF;
+
   final int maxEofVersion;
 
   private EOFValidationCodeRule(final int maxEofVersion) {
@@ -56,6 +58,10 @@ public class EOFValidationCodeRule implements ContractValidationRule {
     Code code = evm.getCode(Hash.hash(contractCode), contractCode);
     if (!code.isValid()) {
       LOG.trace("EOF Validation Error: {}", ((CodeInvalid) code).getInvalidReason());
+      return Optional.of(ExceptionalHaltReason.INVALID_CODE);
+    }
+    if (code.getSize() == 1 && contractCode.get(0) == FORMAT_RESERVED) {
+      LOG.trace("Contract creation error: code cannot start with {}", FORMAT_RESERVED);
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);
     }
 

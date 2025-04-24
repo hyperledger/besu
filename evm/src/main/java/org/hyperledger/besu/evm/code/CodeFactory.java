@@ -70,6 +70,9 @@ public class CodeFactory {
   private @Nonnull Code createV1Code(final Bytes bytes, final boolean createTransaction) {
     int codeSize = bytes.size();
     if (codeSize > 0 && bytes.get(0) == EOF_LEAD_BYTE) {
+      if (codeSize == 1) {
+        return new CodeV0(bytes);
+      }
       if (codeSize < 3) {
         return new CodeInvalid(bytes, "EOF Container too short");
       }

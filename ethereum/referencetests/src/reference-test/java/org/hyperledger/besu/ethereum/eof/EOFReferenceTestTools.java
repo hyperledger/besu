@@ -21,11 +21,9 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.common.base.Splitter;
 import org.apache.tuweni.bytes.Bytes;
 
 import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
@@ -157,8 +155,8 @@ public class EOFReferenceTestTools {
           } else {
             fail("Invalid code expected " + expected.exception() + " but was valid");
           }
-        } else if (name.contains("eip7692")) {
-          // if the test is from EEST, validate the exception name.
+//        } else if (name.contains("eip7692")) {
+//          // if the test is from EEST, validate the exception name.
 //          assertThat(((CodeInvalid) parsedCode).getInvalidReason())
 //              .withFailMessage(
 //                  () ->
