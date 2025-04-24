@@ -14,17 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BlobScheduleOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -43,10 +38,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class MainnetProtocolSpecsTest {
 
-  @Mock(lenient = true) private GenesisConfigOptions genesisConfigOptions;
-  @Mock(lenient = true) private MiningConfiguration miningConfiguration;
-  @Mock(lenient = true) private BlobScheduleOptions.BlobSchedule pragueBlobSchedule;
-  @Mock(lenient = true) private BlobScheduleOptions blobScheduleOptions;
+  @Mock(lenient = true)
+  private GenesisConfigOptions genesisConfigOptions;
+
+  @Mock(lenient = true)
+  private MiningConfiguration miningConfiguration;
+
+  @Mock(lenient = true)
+  private BlobScheduleOptions.BlobSchedule pragueBlobSchedule;
+
+  @Mock(lenient = true)
+  private BlobScheduleOptions blobScheduleOptions;
 
   private final EvmConfiguration evmConfiguration = EvmConfiguration.DEFAULT;
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -57,33 +59,36 @@ public class MainnetProtocolSpecsTest {
 
   @BeforeEach
   public void setUp() {
-    when(genesisConfigOptions.getLondonBlockNumber()).thenReturn(OptionalLong.of(londonForkBlockNumber));
-    when(genesisConfigOptions.getBlobScheduleOptions()).thenReturn(Optional.of(blobScheduleOptions));
+    when(genesisConfigOptions.getLondonBlockNumber())
+        .thenReturn(OptionalLong.of(londonForkBlockNumber));
+    when(genesisConfigOptions.getBlobScheduleOptions())
+        .thenReturn(Optional.of(blobScheduleOptions));
     when(blobScheduleOptions.getPrague()).thenReturn(Optional.of(pragueBlobSchedule));
     when(pragueBlobSchedule.getTarget()).thenReturn(6);
     when(pragueBlobSchedule.getMax()).thenReturn(9);
     when(pragueBlobSchedule.getBaseFeeUpdateFraction()).thenReturn(1234);
-
   }
-
 
   @Test
   public void pragueDefinitionShouldThrowExceptionWhenAllContractAddressesAreMissing() {
     // Given
     when(genesisConfigOptions.getDepositContractAddress()).thenReturn(Optional.empty());
-    when(genesisConfigOptions.getConsolidationRequestContractAddress()).thenReturn(Optional.empty());
+    when(genesisConfigOptions.getConsolidationRequestContractAddress())
+        .thenReturn(Optional.empty());
     when(genesisConfigOptions.getWithdrawalRequestContractAddress()).thenReturn(Optional.empty());
 
     // When/Then
     assertThatExceptionOfType(NoSuchElementException.class)
-        .isThrownBy(() -> MainnetProtocolSpecs.pragueDefinition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            metricsSystem))
+        .isThrownBy(
+            () ->
+                MainnetProtocolSpecs.pragueDefinition(
+                    chainId,
+                    enableRevertReason,
+                    genesisConfigOptions,
+                    evmConfiguration,
+                    miningConfiguration,
+                    isParallelTxProcessingEnabled,
+                    metricsSystem))
         .withMessageContaining("Withdrawal Request Contract Address not found");
   }
 
@@ -91,19 +96,22 @@ public class MainnetProtocolSpecsTest {
   public void pragueDefinitionShouldThrowExceptionWhenWithdrawalRequestContractAddressIsMissing() {
     // Given
     when(genesisConfigOptions.getDepositContractAddress()).thenReturn(Optional.of(Address.ZERO));
-    when(genesisConfigOptions.getConsolidationRequestContractAddress()).thenReturn(Optional.of(Address.ZERO));
+    when(genesisConfigOptions.getConsolidationRequestContractAddress())
+        .thenReturn(Optional.of(Address.ZERO));
     when(genesisConfigOptions.getWithdrawalRequestContractAddress()).thenReturn(Optional.empty());
 
     // When/Then
     assertThatExceptionOfType(NoSuchElementException.class)
-        .isThrownBy(() -> MainnetProtocolSpecs.pragueDefinition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            metricsSystem))
+        .isThrownBy(
+            () ->
+                MainnetProtocolSpecs.pragueDefinition(
+                    chainId,
+                    enableRevertReason,
+                    genesisConfigOptions,
+                    evmConfiguration,
+                    miningConfiguration,
+                    isParallelTxProcessingEnabled,
+                    metricsSystem))
         .withMessageContaining("Withdrawal Request Contract Address not found");
   }
 
@@ -111,39 +119,48 @@ public class MainnetProtocolSpecsTest {
   public void pragueDefinitionShouldThrowExceptionWhenDepositContractAddressIsMissing() {
     // Given
     when(genesisConfigOptions.getDepositContractAddress()).thenReturn(Optional.empty());
-    when(genesisConfigOptions.getConsolidationRequestContractAddress()).thenReturn(Optional.of(Address.ZERO));
-    when(genesisConfigOptions.getWithdrawalRequestContractAddress()).thenReturn(Optional.of(Address.ZERO));
+    when(genesisConfigOptions.getConsolidationRequestContractAddress())
+        .thenReturn(Optional.of(Address.ZERO));
+    when(genesisConfigOptions.getWithdrawalRequestContractAddress())
+        .thenReturn(Optional.of(Address.ZERO));
 
     // When/Then
     assertThatExceptionOfType(NoSuchElementException.class)
-        .isThrownBy(() -> MainnetProtocolSpecs.pragueDefinition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            metricsSystem))
+        .isThrownBy(
+            () ->
+                MainnetProtocolSpecs.pragueDefinition(
+                    chainId,
+                    enableRevertReason,
+                    genesisConfigOptions,
+                    evmConfiguration,
+                    miningConfiguration,
+                    isParallelTxProcessingEnabled,
+                    metricsSystem))
         .withMessageContaining("Deposit Contract Address not found");
   }
 
   @Test
-  public void pragueDefinitionShouldThrowExceptionWhenConsolidationRequestContractAddressIsMissing() {
+  public void
+      pragueDefinitionShouldThrowExceptionWhenConsolidationRequestContractAddressIsMissing() {
     // Given
     when(genesisConfigOptions.getDepositContractAddress()).thenReturn(Optional.of(Address.ZERO));
-    when(genesisConfigOptions.getConsolidationRequestContractAddress()).thenReturn(Optional.empty());
-    when(genesisConfigOptions.getWithdrawalRequestContractAddress()).thenReturn(Optional.of(Address.ZERO));
+    when(genesisConfigOptions.getConsolidationRequestContractAddress())
+        .thenReturn(Optional.empty());
+    when(genesisConfigOptions.getWithdrawalRequestContractAddress())
+        .thenReturn(Optional.of(Address.ZERO));
 
     // When/Then
     assertThatExceptionOfType(NoSuchElementException.class)
-        .isThrownBy(() -> MainnetProtocolSpecs.pragueDefinition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            metricsSystem))
+        .isThrownBy(
+            () ->
+                MainnetProtocolSpecs.pragueDefinition(
+                    chainId,
+                    enableRevertReason,
+                    genesisConfigOptions,
+                    evmConfiguration,
+                    miningConfiguration,
+                    isParallelTxProcessingEnabled,
+                    metricsSystem))
         .withMessageContaining("Consolidation Request Contract Address not found");
   }
 }
