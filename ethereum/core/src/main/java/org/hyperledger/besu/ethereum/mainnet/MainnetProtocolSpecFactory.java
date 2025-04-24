@@ -224,66 +224,66 @@ public class MainnetProtocolSpecFactory {
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder osakaDefinition(final GenesisConfiguration genesisConfiguration) {
+  public ProtocolSpecBuilder osakaDefinition(final GenesisConfiguration genesisConfig) {
     return MainnetProtocolSpecs.osakaDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfiguration,
+        genesisConfig,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder bpo1Definition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder bpo1Definition(final GenesisConfiguration genesisConfig) {
     return MainnetProtocolSpecs.bpo1Definition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+        genesisConfig,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder bpo2Definition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder bpo2Definition(final GenesisConfiguration genesisConfig) {
     return MainnetProtocolSpecs.bpo2Definition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+        genesisConfig,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder bpo3Definition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder bpo3Definition(final GenesisConfiguration genesisConfig) {
     return MainnetProtocolSpecs.bpo3Definition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+        genesisConfig,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder bpo4Definition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder bpo4Definition(final GenesisConfiguration genesisConfig) {
     return MainnetProtocolSpecs.bpo4Definition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+        genesisConfig,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder bpo5Definition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder bpo5Definition(final GenesisConfiguration genesisConfig) {
     return MainnetProtocolSpecs.bpo5Definition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfigOptions,
+        genesisConfig,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
@@ -298,14 +298,14 @@ public class MainnetProtocolSpecFactory {
    * <p>There is no guarantee of the contents of this fork across Besu releases and should be
    * considered unstable.
    *
-   * @param genesisConfiguration the chain options from the genesis config
+   * @param genesisConfig the chain options from the genesis config
    * @return a protocol spec for the "Future" fork.
    */
-  public ProtocolSpecBuilder futureEipsDefinition(final GenesisConfiguration genesisConfiguration) {
+  public ProtocolSpecBuilder futureEipsDefinition(final GenesisConfiguration genesisConfig) {
     return MainnetProtocolSpecs.futureEipsDefinition(
         chainId,
         isRevertReasonEnabled,
-        genesisConfiguration,
+        genesisConfig,
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,

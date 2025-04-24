@@ -839,10 +839,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return maybeGenesisStateRoot
         .map(
             genesisStateRoot ->
-                GenesisState.fromStorage(genesisStateRoot, genesisFile, protocolSchedule, besuComponent.get().getGenesisConfig()))
+                GenesisState.fromStorage(
+                    genesisStateRoot,
+                    genesisFile,
+                    protocolSchedule,
+                    besuComponent.get().getGenesisConfig()))
         .orElseGet(
             () ->
-                GenesisState.fromConfig(dataStorageConfiguration, genesisFile, protocolSchedule, besuComponent.get().getGenesisConfig()));
+                GenesisState.fromConfig(
+                    dataStorageConfiguration,
+                    genesisFile,
+                    protocolSchedule,
+                    besuComponent.get().getGenesisConfig()));
   }
 
   private TrieLogPruner createTrieLogPruner(

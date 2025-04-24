@@ -32,62 +32,169 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** The Stub genesis config options. */
 public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable {
 
+  /** The block number for Homestead fork. */
   private OptionalLong homesteadBlockNumber = OptionalLong.empty();
+
+  /** The block number for DAO fork. */
   private OptionalLong daoForkBlock = OptionalLong.empty();
+
+  /** The block number for Tangerine Whistle fork (EIP-150). */
   private OptionalLong tangerineWhistleBlockNumber = OptionalLong.empty();
+
+  /** The block number for Spurious Dragon fork (EIP-158, EIP-155, EIP-160, EIP-161). */
   private OptionalLong spuriousDragonBlockNumber = OptionalLong.empty();
+
+  /** The block number for Byzantium fork. */
   private OptionalLong byzantiumBlockNumber = OptionalLong.empty();
+
+  /** The block number for Constantinople fork. */
   private OptionalLong constantinopleBlockNumber = OptionalLong.empty();
+
+  /** The block number for Petersburg fork. */
   private OptionalLong petersburgBlockNumber = OptionalLong.empty();
+
+  /** The block number for Istanbul fork. */
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
+
+  /** The block number for Muir Glacier fork. */
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
+
+  /** The block number for Berlin fork. */
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
+
+  /** The block number for London fork. */
   private OptionalLong londonBlockNumber = OptionalLong.empty();
+
+  /** The block number for Arrow Glacier fork. */
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
+
+  /** The block number for Gray Glacier fork. */
   private OptionalLong grayGlacierBlockNumber = OptionalLong.empty();
+
+  /** The block number for Merge Net Split. */
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
+
+  /** The timestamp for Shanghai fork. */
   private OptionalLong shanghaiTime = OptionalLong.empty();
+
+  /** The timestamp for Cancun fork. */
   private OptionalLong cancunTime = OptionalLong.empty();
+
+  /** The timestamp for Cancun EOF (Ethereum Object Format) fork. */
   private OptionalLong cancunEOFTime = OptionalLong.empty();
+
+  /** The timestamp for Prague fork. */
   private OptionalLong pragueTime = OptionalLong.empty();
+
+  /** The timestamp for Osaka fork. */
   private OptionalLong osakaTime = OptionalLong.empty();
+
+    /** Placeholder timestamp for future BPO hardfork. */
   private OptionalLong bpo1Time = OptionalLong.empty();
+
+    /** Placeholder timestamp for future BPO hardfork. */
   private OptionalLong bpo2Time = OptionalLong.empty();
+
+    /** Placeholder timestamp for future BPO hardfork. */
   private OptionalLong bpo3Time = OptionalLong.empty();
+
+    /** Placeholder timestamp for future BPO hardfork. */
   private OptionalLong bpo4Time = OptionalLong.empty();
+
+    /** Placeholder timestamp for future BPO hardfork. */
   private OptionalLong bpo5Time = OptionalLong.empty();
 
+
+  /** The timestamp for Future EIPs. */
   private OptionalLong futureEipsTime = OptionalLong.empty();
+
+  /** The timestamp for Experimental EIPs. */
   private OptionalLong experimentalEipsTime = OptionalLong.empty();
+
+  /** The terminal block number for The Merge. */
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
+
+  /** The terminal block hash for The Merge. */
   private Optional<Hash> terminalBlockHash = Optional.empty();
+
+  /** The terminal total difficulty for The Merge. */
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
 
+  /** The base fee per gas for EIP-1559. */
   private Optional<Wei> baseFeePerGas = Optional.empty();
+
+  /** The block number for Ethereum Classic fork. */
   private OptionalLong classicForkBlock = OptionalLong.empty();
+
+  /** The block number for ECIP-1015 fork (Ethereum Classic). */
   private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
+
+  /** The block number for DieHard fork (Ethereum Classic). */
   private OptionalLong diehardBlockNumber = OptionalLong.empty();
+
+  /** The block number for Gotham fork (Ethereum Classic). */
   private OptionalLong gothamBlockNumber = OptionalLong.empty();
+
+  /** The block number for Defuse Difficulty Bomb fork (Ethereum Classic). */
   private OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
+
+  /** The block number for Atlantis fork (Ethereum Classic). */
   private OptionalLong atlantisBlockNumber = OptionalLong.empty();
+
+  /** The block number for Agharta fork (Ethereum Classic). */
   private OptionalLong aghartaBlockNumber = OptionalLong.empty();
+
+  /** The block number for Phoenix fork (Ethereum Classic). */
   private OptionalLong phoenixBlockNumber = OptionalLong.empty();
+
+  /** The block number for Thanos fork (Ethereum Classic). */
   private OptionalLong thanosBlockNumber = OptionalLong.empty();
+
+  /** The block number for Magneto fork (Ethereum Classic). */
   private OptionalLong magnetoBlockNumber = OptionalLong.empty();
+
+  /** The block number for Mystique fork (Ethereum Classic). */
   private OptionalLong mystiqueBlockNumber = OptionalLong.empty();
+
+  /** The block number for Spiral fork (Ethereum Classic). */
   private OptionalLong spiralBlockNumber = OptionalLong.empty();
+
+  /** The chain ID. */
   private Optional<BigInteger> chainId = Optional.empty();
+
+  /** The contract size limit. */
   private OptionalInt contractSizeLimit = OptionalInt.empty();
+
+  /** The EVM stack size limit. */
   private OptionalInt stackSizeLimit = OptionalInt.empty();
+
+  /** The number of rounds per era for ECIP-1017 (Ethereum Classic). */
   private final OptionalLong ecip1017EraRounds = OptionalLong.empty();
+
+  /** The elliptic curve to use. */
   private Optional<String> ecCurve = Optional.empty();
+
+  /** The QBFT configuration options. */
   private QbftConfigOptions qbftConfigOptions = JsonQbftConfigOptions.DEFAULT;
+
+  /** The BFT configuration options. */
   private BftConfigOptions bftConfigOptions = JsonBftConfigOptions.DEFAULT;
+
+  /** The transitions configuration options. */
   private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
+
+  /** The discovery options. */
   private static final DiscoveryOptions DISCOVERY_OPTIONS = DiscoveryOptions.DEFAULT;
+
+  /** Flag to indicate if zero base fee should be used. */
   private boolean zeroBaseFee = false;
+
+  /** Flag to indicate if fixed base fee should be used. */
   private boolean fixedBaseFee = false;
+
+  /** The timestamp of the genesis block. */
   private Long timestamp = 0L;
+
   /** Default constructor. */
   public StubGenesisConfiguration() {
     // Explicit default constructor because of JavaDoc linting
@@ -488,7 +595,7 @@ public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable
 
   @Override
   public Optional<Wei> getGenesisBaseFeePerGas() {
-    if(londonBlockNumber.isPresent() && londonBlockNumber.getAsLong() == 0) {
+    if (londonBlockNumber.isPresent() && londonBlockNumber.getAsLong() == 0) {
       return Optional.of(BASEFEE_AT_GENESIS_DEFAULT_VALUE);
     }
     return Optional.empty();
@@ -744,7 +851,7 @@ public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable
    * @param timestamp the timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions bpo1Time(final long timestamp) {
+  public StubGenesisConfiguration bpo1Time(final long timestamp) {
     bpo1Time = OptionalLong.of(timestamp);
     return this;
   }
@@ -755,7 +862,7 @@ public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable
    * @param timestamp the timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions bpo2Time(final long timestamp) {
+  public StubGenesisConfiguration bpo2Time(final long timestamp) {
     bpo2Time = OptionalLong.of(timestamp);
     return this;
   }
@@ -766,7 +873,7 @@ public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable
    * @param timestamp the timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions bpo3Time(final long timestamp) {
+  public StubGenesisConfiguration bpo3Time(final long timestamp) {
     bpo3Time = OptionalLong.of(timestamp);
     return this;
   }
@@ -777,7 +884,7 @@ public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable
    * @param timestamp the timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions bpo4Time(final long timestamp) {
+  public StubGenesisConfiguration bpo4Time(final long timestamp) {
     bpo4Time = OptionalLong.of(timestamp);
     return this;
   }
@@ -788,7 +895,7 @@ public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable
    * @param timestamp the timestamp
    * @return the stub genesis config options
    */
-  public StubGenesisConfigOptions bpo5Time(final long timestamp) {
+  public StubGenesisConfiguration bpo5Time(final long timestamp) {
     bpo5Time = OptionalLong.of(timestamp);
     return this;
   }
@@ -1093,6 +1200,7 @@ public class StubGenesisConfiguration implements GenesisConfiguration, Cloneable
 
   /**
    * Sets the timestamp of this genesis configuration, used by ephemeral chains.
+   *
    * @param timestamp of genesis
    * @return the stub genesis config options
    */

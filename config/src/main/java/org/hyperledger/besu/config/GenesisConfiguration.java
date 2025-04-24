@@ -30,6 +30,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** The interface Genesis config options. */
 public interface GenesisConfiguration {
 
+  /** The default base fee value at genesis (1 Gwei). */
   public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1_000_000_000L);
 
   /**
@@ -139,6 +140,11 @@ public interface GenesisConfiguration {
    */
   EthashConfigOptions getEthashConfigOptions();
 
+  /**
+   * Gets the timestamp of the genesis block.
+   *
+   * @return the timestamp of the genesis block
+   */
   long getTimestamp();
 
   /**
@@ -564,12 +570,13 @@ public interface GenesisConfiguration {
    */
   boolean isZeroBaseFee();
 
-    /**
-     * The genesis base fee per gas, used when London is active at genesis
-     *
-     * @return the base fee per gas
-     */
+  /**
+   * The genesis base fee per gas, used when London is active at genesis
+   *
+   * @return the base fee per gas
+   */
   Optional<Wei> getGenesisBaseFeePerGas();
+
   /**
    * Force a Base Fee as Gas Price network to used with London/EIP-1559.
    *
@@ -606,6 +613,11 @@ public interface GenesisConfiguration {
    */
   Optional<BlobScheduleOptions> getBlobScheduleOptions();
 
+  /**
+   * Checks if Shanghai fork is active at genesis.
+   *
+   * @return true if Shanghai is active at genesis, false otherwise
+   */
   default boolean isShanghaiAtGenesis() {
     final OptionalLong shanghaiTimestamp = getShanghaiTime();
     if (shanghaiTimestamp.isPresent()) {
@@ -614,6 +626,11 @@ public interface GenesisConfiguration {
     return isCancunAtGenesis();
   }
 
+  /**
+   * Checks if Cancun fork is active at genesis.
+   *
+   * @return true if Cancun is active at genesis, false otherwise
+   */
   default boolean isCancunAtGenesis() {
     final OptionalLong cancunTimestamp = getCancunTime();
     if (cancunTimestamp.isPresent()) {
@@ -622,6 +639,11 @@ public interface GenesisConfiguration {
     return isPragueAtGenesis() || isCancunEOFAtGenesis();
   }
 
+  /**
+   * Checks if Cancun EOF (Ethereum Object Format) is active at genesis.
+   *
+   * @return true if Cancun EOF is active at genesis, false otherwise
+   */
   default boolean isCancunEOFAtGenesis() {
     final OptionalLong cancunEOFTimestamp = getCancunEOFTime();
     if (cancunEOFTimestamp.isPresent()) {
@@ -630,6 +652,11 @@ public interface GenesisConfiguration {
     return false;
   }
 
+  /**
+   * Checks if Prague fork is active at genesis.
+   *
+   * @return true if Prague is active at genesis, false otherwise
+   */
   default boolean isPragueAtGenesis() {
     final OptionalLong pragueTimestamp = getPragueTime();
     if (pragueTimestamp.isPresent()) {
@@ -638,6 +665,11 @@ public interface GenesisConfiguration {
     return isOsakaAtGenesis();
   }
 
+  /**
+   * Checks if Osaka fork is active at genesis.
+   *
+   * @return true if Osaka is active at genesis, false otherwise
+   */
   default boolean isOsakaAtGenesis() {
     final OptionalLong osakaTimestamp = getOsakaTime();
     if (osakaTimestamp.isPresent()) {
@@ -646,6 +678,11 @@ public interface GenesisConfiguration {
     return isFutureEipsTimeAtGenesis();
   }
 
+  /**
+   * Checks if Future EIPs are active at genesis.
+   *
+   * @return true if Future EIPs are active at genesis, false otherwise
+   */
   default boolean isFutureEipsTimeAtGenesis() {
     final OptionalLong futureEipsTime = getFutureEipsTime();
     if (futureEipsTime.isPresent()) {
@@ -654,6 +691,11 @@ public interface GenesisConfiguration {
     return isExperimentalEipsTimeAtGenesis();
   }
 
+  /**
+   * Checks if Experimental EIPs are active at genesis.
+   *
+   * @return true if Experimental EIPs are active at genesis, false otherwise
+   */
   default boolean isExperimentalEipsTimeAtGenesis() {
     final OptionalLong experimentalEipsTime = getExperimentalEipsTime();
     if (experimentalEipsTime.isPresent()) {
@@ -661,5 +703,4 @@ public interface GenesisConfiguration {
     }
     return false;
   }
-
 }

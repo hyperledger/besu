@@ -461,7 +461,7 @@ public abstract class MainnetProtocolSpecs {
                 miningConfiguration.getMinTransactionGasPrice(),
                 (blobSchedule) ->
                     FeeMarket.london(
-                        londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas())))
+                        londonForkBlockNumber, genesisConfiguration.getBaseFeePerGas())))
         .gasCalculator(blobSchedule -> new LondonGasCalculator())
         .gasLimitCalculatorBuilder(
             (feeMarket, gasCalculator, blobSchedule) ->
@@ -677,10 +677,10 @@ public abstract class MainnetProtocolSpecs {
                 (blobSchedule) ->
                     FeeMarket.cancun(
                         londonForkBlockNumber,
-                            genesisConfiguration.getBaseFeePerGas(),
+                        genesisConfiguration.getBaseFeePerGas(),
                         blobSchedule)))
         .blobSchedule(
-                genesisConfiguration
+            genesisConfiguration
                 .getBlobScheduleOptions()
                 .flatMap(BlobScheduleOptions::getCancun)
                 .orElse(BlobSchedule.CANCUN_DEFAULT))
@@ -777,7 +777,7 @@ public abstract class MainnetProtocolSpecs {
                 isParallelTxProcessingEnabled,
                 metricsSystem)
             .blobSchedule(
-                    genesisConfiguration
+                genesisConfiguration
                     .getBlobScheduleOptions()
                     .flatMap(BlobScheduleOptions::getPrague)
                     .orElse(BlobSchedule.PRAGUE_DEFAULT))
@@ -879,7 +879,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder bpo1Definition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -899,7 +899,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder bpo2Definition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -919,7 +919,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder bpo3Definition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -939,7 +939,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder bpo4Definition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -959,7 +959,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder bpo5Definition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
@@ -978,10 +978,10 @@ public abstract class MainnetProtocolSpecs {
 
   private static ProtocolSpecBuilder applyBlobSchedule(
       final ProtocolSpecBuilder builder,
-      final GenesisConfigOptions genesisConfigOptions,
+      final GenesisConfiguration genesisConfig,
       final Function<BlobScheduleOptions, Optional<BlobSchedule>> blobGetter,
       final String name) {
-    genesisConfigOptions
+    genesisConfig
         .getBlobScheduleOptions()
         .flatMap(blobGetter)
         .ifPresent(builder::blobSchedule);

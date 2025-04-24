@@ -65,7 +65,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return IbftProtocolSchedule.create(
-            genesisConfiguration, isRevertReasonEnabled, evmConfiguration);
+        genesisConfiguration, isRevertReasonEnabled, evmConfiguration);
   }
 
   @Override

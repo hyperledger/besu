@@ -88,7 +88,6 @@ public interface BesuComponent {
   BlobCache getBlobCache();
 
   /**
-   *
    * @return
    */
   GenesisConfiguration getGenesisConfig();

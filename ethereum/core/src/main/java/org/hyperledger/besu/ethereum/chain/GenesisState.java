@@ -41,7 +41,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -67,7 +66,10 @@ public final class GenesisState {
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
-  public static GenesisState fromJson(final String json, final ProtocolSchedule protocolSchedule, final GenesisConfiguration genesisConfiguration) {
+  public static GenesisState fromJson(
+      final String json,
+      final ProtocolSchedule protocolSchedule,
+      final GenesisConfiguration genesisConfiguration) {
     return fromConfig(GenesisFile.fromConfig(json), protocolSchedule, genesisConfiguration);
   }
 
@@ -87,7 +89,10 @@ public final class GenesisState {
       final ProtocolSchedule protocolSchedule,
       final GenesisConfiguration genesisConfiguration) {
     return fromConfig(
-        dataStorageConfiguration, GenesisFile.fromConfig(jsonSource), protocolSchedule, genesisConfiguration);
+        dataStorageConfiguration,
+        GenesisFile.fromConfig(jsonSource),
+        protocolSchedule,
+        genesisConfiguration);
   }
 
   /**
@@ -98,8 +103,11 @@ public final class GenesisState {
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
-      final GenesisFile config, final ProtocolSchedule protocolSchedule, final GenesisConfiguration genesisConfiguration) {
-    return fromConfig(DataStorageConfiguration.DEFAULT_CONFIG, config, protocolSchedule, genesisConfiguration);
+      final GenesisFile config,
+      final ProtocolSchedule protocolSchedule,
+      final GenesisConfiguration genesisConfiguration) {
+    return fromConfig(
+        DataStorageConfiguration.DEFAULT_CONFIG, config, protocolSchedule, genesisConfiguration);
   }
 
   /**
@@ -109,7 +117,8 @@ public final class GenesisState {
    *     configuration
    * @param genesisFile A {@link GenesisFile} describing the network initial state
    * @param protocolSchedule A protocol Schedule associated with
-   * @param genesisConfiguration A {@link GenesisConfiguration} including any user specified overrides
+   * @param genesisConfiguration A {@link GenesisConfiguration} including any user specified
+   *     overrides
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
@@ -291,8 +300,6 @@ public final class GenesisState {
     }
     return Long.parseUnsignedLong(v, 16);
   }
-
-
 
   @Override
   public String toString() {

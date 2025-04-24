@@ -14,21 +14,18 @@
  */
 package org.hyperledger.besu.config;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import static java.util.Collections.emptyMap;
+import static org.hyperledger.besu.config.JsonGenesisConfiguration.TRANSITIONS_CONFIG_KEY;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import dagger.Module;
-import dagger.Provides;
-
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import static java.util.Collections.emptyMap;
-import static org.hyperledger.besu.config.JsonGenesisConfiguration.TRANSITIONS_CONFIG_KEY;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import dagger.Module;
+import dagger.Provides;
 
 /** A dagger module that provides the genesis configuration. */
 @Module
@@ -37,6 +34,12 @@ public class GenesisModule {
   /** Default constructor. */
   public GenesisModule() {}
 
+  /**
+   * Provides the genesis file from the genesis config JSON.
+   *
+   * @param genesisConfigJson the genesis config JSON
+   * @return the genesis file
+   */
   @Singleton
   @Provides
   GenesisFile providesGenesisConfig(final @Named("genesisConfigJson") String genesisConfigJson) {
@@ -50,9 +53,10 @@ public class GenesisModule {
    */
   @Singleton
   @Provides
-  GenesisConfiguration provideGenesisConfigOptions(final GenesisFile genesisConfig,
-                                                   final GenesisReader loader,
-                                                   final @Named("genesisConfigOverrides") Optional<Map<String, String>> overrides) {
+  GenesisConfiguration provideGenesisConfigOptions(
+      final GenesisFile genesisConfig,
+      final GenesisReader loader,
+      final @Named("genesisConfigOverrides") Optional<Map<String, String>> overrides) {
     final ObjectNode config = loader.getConfig();
     // are there any overrides to apply?
     if (overrides.isEmpty()) {
@@ -80,15 +84,21 @@ public class GenesisModule {
    * @return the json genesis config options
    */
   private JsonGenesisConfiguration fromJsonObjectWithOverrides(
-          final ObjectNode configRoot, final Map<String, String> configOverrides) {
+      final ObjectNode configRoot, final Map<String, String> configOverrides) {
     final TransitionsConfigOptions transitionsConfigOptions;
     transitionsConfigOptions = loadTransitionsFrom(configRoot);
     return new JsonGenesisConfiguration(configRoot, configOverrides, transitionsConfigOptions);
   }
 
+  /**
+   * Loads transitions configuration from the parent node.
+   *
+   * @param parentNode the parent JSON node
+   * @return the transitions configuration options
+   */
   private TransitionsConfigOptions loadTransitionsFrom(final ObjectNode parentNode) {
     final Optional<ObjectNode> transitionsNode =
-            JsonUtil.getObjectNode(parentNode, TRANSITIONS_CONFIG_KEY);
+        JsonUtil.getObjectNode(parentNode, TRANSITIONS_CONFIG_KEY);
     if (transitionsNode.isEmpty()) {
       return new TransitionsConfigOptions(JsonUtil.createEmptyObjectNode());
     }

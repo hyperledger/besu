@@ -108,7 +108,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
 
     var mergeBestPeerComparator =
         new TransitionBestPeerComparator(
-                genesisConfiguration.getTerminalTotalDifficulty().map(Difficulty::of).orElseThrow());
+            genesisConfiguration.getTerminalTotalDifficulty().map(Difficulty::of).orElseThrow());
     ethPeers.setBestPeerComparator(mergeBestPeerComparator);
     mergeContext.observeNewIsPostMergeState(mergeBestPeerComparator);
 
@@ -176,7 +176,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return MergeProtocolSchedule.create(
-            genesisConfiguration,
+        genesisConfiguration,
         isRevertReasonEnabled,
         miningConfiguration,
         badBlockManager,

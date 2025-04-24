@@ -38,30 +38,61 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** The Json genesis config options. */
 public class JsonGenesisConfiguration implements GenesisConfiguration {
 
+  /** The key for Ethash configuration in the genesis file. */
   private static final String ETHASH_CONFIG_KEY = "ethash";
+
+  /** The key for IBFT legacy configuration in the genesis file. */
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
+
+  /** The key for IBFT2 configuration in the genesis file. */
   private static final String IBFT2_CONFIG_KEY = "ibft2";
+
+  /** The key for QBFT configuration in the genesis file. */
   private static final String QBFT_CONFIG_KEY = "qbft";
+
+  /** The key for Clique configuration in the genesis file. */
   private static final String CLIQUE_CONFIG_KEY = "clique";
+
+  /** The key for elliptic curve configuration in the genesis file. */
   private static final String EC_CURVE_CONFIG_KEY = "eccurve";
+
+  /** The key for transitions configuration in the genesis file. */
   static final String TRANSITIONS_CONFIG_KEY = "transitions";
+
+  /** The key for discovery configuration in the genesis file. */
   private static final String DISCOVERY_CONFIG_KEY = "discovery";
+
+  /** The key for checkpoint configuration in the genesis file. */
   private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
+
+  /** The key for blob schedule configuration in the genesis file. */
   private static final String BLOB_SCHEDULE_CONFIG_KEY = "blobschedule";
+
+  /** The key for zero base fee configuration in the genesis file. */
   private static final String ZERO_BASE_FEE_KEY = "zerobasefee";
+
+  /** The key for fixed base fee configuration in the genesis file. */
   private static final String FIXED_BASE_FEE_KEY = "fixedbasefee";
+
+  /** The key for withdrawal request contract address in the genesis file. */
   private static final String WITHDRAWAL_REQUEST_CONTRACT_ADDRESS_KEY =
       "withdrawalrequestcontractaddress";
+
+  /** The key for deposit contract address in the genesis file. */
   private static final String DEPOSIT_CONTRACT_ADDRESS_KEY = "depositcontractaddress";
+
+  /** The key for consolidation request contract address in the genesis file. */
   private static final String CONSOLIDATION_REQUEST_CONTRACT_ADDRESS_KEY =
       "consolidationrequestcontractaddress";
-  /** The constant BASEFEE_AT_GENESIS_DEFAULT_VALUE. */
 
+  /** The root node of the JSON configuration. */
   private final ObjectNode configRoot;
+
+  /** The map of configuration overrides. */
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+  /** The transitions configuration options. */
   private final TransitionsConfigOptions transitions;
-
-
 
   /**
    * Instantiates a new Json genesis config options.
@@ -73,7 +104,7 @@ public class JsonGenesisConfiguration implements GenesisConfiguration {
   JsonGenesisConfiguration(
       final ObjectNode maybeConfig,
       final Map<String, String> configOverrides,
-      final TransitionsConfigOptions transitionsConfig) { //TODO: aren't these optional?
+      final TransitionsConfigOptions transitionsConfig) { // TODO: aren't these optional?
     this.configRoot = isNull(maybeConfig) ? JsonUtil.createEmptyObjectNode() : maybeConfig;
     if (configOverrides != null) {
       this.configOverrides.putAll(configOverrides);

@@ -18,9 +18,7 @@ import org.hyperledger.besu.datatypes.Wei;
 
 import java.net.URL;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,11 +33,19 @@ public class GenesisFile {
   public static final GenesisFile DEFAULT =
       new GenesisFile(new GenesisReader.FromObjectNode(JsonUtil.createEmptyObjectNode()));
 
-
+  /** The genesis reader used to load the genesis file. */
   private final GenesisReader loader;
-  private final ObjectNode genesisRoot;
-  //private Map<String, String> overrides;
 
+  /** The root node of the genesis JSON. */
+  private final ObjectNode genesisRoot;
+
+  // private Map<String, String> overrides;
+
+  /**
+   * Constructs a GenesisFile with the specified loader.
+   *
+   * @param loader the genesis reader
+   */
   private GenesisFile(final GenesisReader loader) {
     this.loader = loader;
     this.genesisRoot = loader.getRoot();
@@ -104,7 +110,6 @@ public class GenesisFile {
     return new GenesisFile(new GenesisReader.FromObjectNode(config));
   }
 
-
   /**
    * Stream allocations stream.
    *
@@ -159,8 +164,6 @@ public class GenesisFile {
     return JsonUtil.getString(genesisRoot, "basefeepergas")
         .map(baseFeeStr -> Wei.of(parseLong("baseFeePerGas", baseFeeStr)));
   }
-
-
 
   /**
    * Gets mix hash.
@@ -228,10 +231,24 @@ public class GenesisFile {
     return parseLong("timestamp", JsonUtil.getValueAsString(genesisRoot, "timestamp", "0x0"));
   }
 
+  /**
+   * Gets a required string value from the genesis configuration.
+   *
+   * @param key the key to look up
+   * @return the string value
+   */
   private String getRequiredString(final String key) {
     return getFirstRequiredString(key);
   }
 
+  /**
+   * Gets the first required string value from the genesis configuration that matches any of the
+   * provided keys.
+   *
+   * @param keys the keys to look up
+   * @return the string value of the first matching key
+   * @throws IllegalArgumentException if none of the keys are found
+   */
   private String getFirstRequiredString(final String... keys) {
     List<String> keysList = Arrays.asList(keys);
     return keysList.stream()
@@ -246,6 +263,14 @@ public class GenesisFile {
                         keysList)));
   }
 
+  /**
+   * Parses a string value as a long.
+   *
+   * @param name the name of the value (for error reporting)
+   * @param value the string value to parse
+   * @return the parsed long value
+   * @throws IllegalArgumentException if the value cannot be parsed as a long
+   */
   private long parseLong(final String name, final String value) {
     try {
       return Long.decode(value);
@@ -258,7 +283,6 @@ public class GenesisFile {
               + "'");
     }
   }
-
 
   @Override
   public boolean equals(final Object o) {

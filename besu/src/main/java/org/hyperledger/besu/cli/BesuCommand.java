@@ -1388,8 +1388,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateMiningParams() {
-    miningOptions.validate(
-        commandLine, genesisConfigSupplier.get(), isMergeEnabled(), logger);
+    miningOptions.validate(commandLine, genesisConfigSupplier.get(), isMergeEnabled(), logger);
   }
 
   private void validateP2POptions() {

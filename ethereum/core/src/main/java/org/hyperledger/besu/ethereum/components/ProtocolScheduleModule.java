@@ -32,7 +32,7 @@ import dagger.Module;
 import dagger.Provides;
 
 /** Provides the protocol schedule for the network. */
-@Module
+@Module()
 public class ProtocolScheduleModule {
 
   /** Default constructor. */

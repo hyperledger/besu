@@ -25,6 +25,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import dagger.Subcomponent;
+
+
 public interface ProtocolSchedule {
 
   ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader);

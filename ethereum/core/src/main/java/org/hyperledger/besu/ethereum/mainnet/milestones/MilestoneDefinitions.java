@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.milestones;
 import static org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinition.createBlockNumberMilestone;
 import static org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinition.createTimestampMilestone;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfiguration;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecFactory;
@@ -30,7 +30,7 @@ import java.util.OptionalLong;
 public class MilestoneDefinitions {
 
   public static List<MilestoneDefinition> createMilestoneDefinitions(
-      final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
+      final MainnetProtocolSpecFactory specFactory, final GenesisConfiguration config) {
     List<MilestoneDefinition> milestones = new ArrayList<>();
     milestones.addAll(createMainnetMilestoneDefinitions(specFactory, config));
     milestones.addAll(createClassicMilestoneDefinitions(specFactory, config));
@@ -45,7 +45,7 @@ public class MilestoneDefinitions {
    * @return a list of milestone definitions for the Classic network
    */
   private static List<MilestoneDefinition> createClassicMilestoneDefinitions(
-      final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
+      final MainnetProtocolSpecFactory specFactory, final GenesisConfiguration config) {
     return List.of(
         createBlockNumberMilestone(
             HardforkId.ClassicHardforkId.CLASSIC_TANGERINE_WHISTLE,
@@ -101,7 +101,7 @@ public class MilestoneDefinitions {
    * @return a list of milestone definitions for the Mainnet
    */
   private static List<MilestoneDefinition> createMainnetMilestoneDefinitions(
-      final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
+      final MainnetProtocolSpecFactory specFactory, final GenesisConfiguration config) {
     List<MilestoneDefinition> milestones = new ArrayList<>();
     // Add block number milestones first
     milestones.addAll(createMainnetBlockNumberMilestones(specFactory, config));
@@ -118,7 +118,7 @@ public class MilestoneDefinitions {
    * @return a list of block number milestones
    */
   private static List<MilestoneDefinition> createMainnetBlockNumberMilestones(
-      final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
+      final MainnetProtocolSpecFactory specFactory, final GenesisConfiguration config) {
     return List.of(
         createBlockNumberMilestone(
             MainnetHardforkId.FRONTIER, OptionalLong.of(0), specFactory::frontierDefinition),
@@ -182,7 +182,7 @@ public class MilestoneDefinitions {
    * @return a list of timestamp milestones
    */
   private static List<MilestoneDefinition> createMainnetTimestampMilestones(
-      final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
+      final MainnetProtocolSpecFactory specFactory, final GenesisConfiguration config) {
     return List.of(
         createTimestampMilestone(
             MainnetHardforkId.SHANGHAI,
