@@ -74,15 +74,19 @@ public class DebugCallTracerResult implements DebugTracerResult {
       // check and set revert error and reason
       if (!transactionTrace.getTraceFrames().isEmpty()
           && hasRevertInSubCall(transactionTrace, transactionTrace.getTraceFrames().getFirst())) {
-        this.error = "REVERTED";
+        this.error = "execution reverted";
       }
       revertReason.ifPresent(r -> this.revertReason = r.toHexString());
 
     } else {
       this.type = "CREATE";
       this.to = smartContractAddress.orElse(null);
-      // TODO: Input field for smart contract? Should it be the code?
+      // set input from init field for smart contract deployment
+      this.input = tx.getInit().map(Bytes::toHexString).orElse(null);
+      this.from = tx.getSender().toHexString();
     }
+
+    // TODO: Other Types???
 
     // set gasUsed
     if (!transactionTrace.getTraceFrames().isEmpty()) {
