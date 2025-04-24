@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,10 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache;
+package org.hyperledger.besu.preload;
 
 import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import javax.inject.Singleton;
@@ -24,12 +23,11 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module
-public class BonsaiCachedMerkleTrieLoaderModule {
+public class PreloaderModule {
 
   @Provides
   @Singleton
-  BonsaiCachedMerkleTrieLoader provideCachedMerkleTrieLoaderModule(
-      final MetricsSystem metricsSystem, final Preloader preloader) {
-    return new BonsaiCachedMerkleTrieLoader((ObservableMetricsSystem) metricsSystem, preloader);
+  Preloader providePreloader(final MetricsSystem metricsSystem) {
+    return new PreloadService(metricsSystem);
   }
 }

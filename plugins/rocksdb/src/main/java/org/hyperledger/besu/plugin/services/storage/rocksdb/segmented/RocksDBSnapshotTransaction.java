@@ -21,6 +21,8 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -70,7 +72,10 @@ public class RocksDBSnapshotTransaction
     this.writeOptions = new WriteOptions();
     this.snapTx = db.beginTransaction(writeOptions);
     this.readOptions =
-        new ReadOptions().setVerifyChecksums(false).setSnapshot(snapshot.markAndUseSnapshot());
+        new ReadOptions()
+            .setVerifyChecksums(false)
+            .setAsyncIo(true)
+            .setSnapshot(snapshot.markAndUseSnapshot());
   }
 
   private RocksDBSnapshotTransaction(
@@ -101,6 +106,22 @@ public class RocksDBSnapshotTransaction
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
       return Optional.ofNullable(snapTx.get(readOptions, columnFamilyMapper.apply(segmentId), key));
+    } catch (final RocksDBException e) {
+      throw new StorageException(e);
+    }
+  }
+
+  public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys) {
+    if (segments.size() != keys.size()) {
+      throw new IllegalArgumentException("Segments and keys lists must be of equal length");
+    }
+
+    List<ColumnFamilyHandle> columnFamilyHandleList = new ArrayList<>(segments.size());
+    for (int i = 0; i < segments.size(); i++) {
+      columnFamilyHandleList.add(columnFamilyMapper.apply(segments.get(i)));
+    }
+    try (final OperationTimer.TimingContext ignored = metrics.getMultiReadLatency().startTimer()) {
+      return snapTx.multiGetAsList(readOptions, columnFamilyHandleList, keys);
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
@@ -253,7 +274,8 @@ public class RocksDBSnapshotTransaction
   public RocksDBSnapshotTransaction copy() {
     throwIfClosed();
     try {
-      var copyReadOptions = new ReadOptions().setSnapshot(snapshot.markAndUseSnapshot());
+      var copyReadOptions =
+          new ReadOptions().setAsyncIo(true).setSnapshot(snapshot.markAndUseSnapshot());
       var copySnapTx = db.beginTransaction(writeOptions);
       copySnapTx.rebuildFromWriteBatch(snapTx.getWriteBatch().getWriteBatch());
       return new RocksDBSnapshotTransaction(

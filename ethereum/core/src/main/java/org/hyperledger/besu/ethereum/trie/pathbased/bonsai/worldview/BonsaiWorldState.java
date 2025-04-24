@@ -62,7 +62,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldState extends PathBasedWorldState {
 
-  protected BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
+  private final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
+  private final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoaderNoOp;
+  private boolean cacheEnabled;
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
@@ -87,16 +89,17 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final WorldStateConfig worldStateConfig) {
     super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager, worldStateConfig);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    this.bonsaiCachedMerkleTrieLoaderNoOp = new NoopBonsaiCachedMerkleTrieLoader();
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.setAccumulator(
         new BonsaiWorldStateUpdateAccumulator(
             this,
             (addr, value) ->
-                bonsaiCachedMerkleTrieLoader.preLoadAccount(
-                    getWorldStateStorage(), worldStateRootHash, addr),
+                this.getBonsaiCachedMerkleTrieLoader()
+                    .preLoadAccount(getWorldStateStorage(), worldStateRootHash, addr),
             (addr, value) ->
-                this.bonsaiCachedMerkleTrieLoader.preLoadStorageSlot(
-                    getWorldStateStorage(), addr, value),
+                this.getBonsaiCachedMerkleTrieLoader()
+                    .preLoadStorageSlot(getWorldStateStorage(), addr, value),
             evmConfiguration));
   }
 
@@ -145,8 +148,8 @@ public class BonsaiWorldState extends PathBasedWorldState {
     final MerkleTrie<Bytes, Bytes> accountTrie =
         createTrie(
             (location, hash) ->
-                bonsaiCachedMerkleTrieLoader.getAccountStateTrieNode(
-                    getWorldStateStorage(), location, hash),
+                this.getBonsaiCachedMerkleTrieLoader()
+                    .getAccountStateTrieNode(getWorldStateStorage(), location, hash),
             worldStateRootHash);
 
     // for manicured tries and composting, collect branches here (not implemented)
@@ -250,8 +253,9 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final MerkleTrie<Bytes, Bytes> storageTrie =
           createTrie(
               (location, key) ->
-                  bonsaiCachedMerkleTrieLoader.getAccountStorageTrieNode(
-                      getWorldStateStorage(), updatedAddressHash, location, key),
+                  this.getBonsaiCachedMerkleTrieLoader()
+                      .getAccountStorageTrieNode(
+                          getWorldStateStorage(), updatedAddressHash, location, key),
               storageRoot);
 
       // for manicured tries and composting, collect branches here (not implemented)
@@ -451,7 +455,15 @@ public class BonsaiWorldState extends PathBasedWorldState {
   }
 
   public void disableCacheMerkleTrieLoader() {
-    this.bonsaiCachedMerkleTrieLoader = new NoopBonsaiCachedMerkleTrieLoader();
+    this.cacheEnabled = false;
+  }
+
+  public void enableCacheMerkleTrieLoader() {
+    this.cacheEnabled = true;
+  }
+
+  public BonsaiCachedMerkleTrieLoader getBonsaiCachedMerkleTrieLoader() {
+    return cacheEnabled ? bonsaiCachedMerkleTrieLoader : bonsaiCachedMerkleTrieLoaderNoOp;
   }
 
   private MerkleTrie<Bytes, Bytes> createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
