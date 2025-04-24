@@ -24,14 +24,6 @@ public class RequestContractAddresses {
   private final Address depositContractAddress;
   private final Address consolidationRequestContractAddress;
 
-  /*
-    public static final Address DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS =
-        Address.fromHexString("0x00000961ef480eb55e80d19ad83579a64c007002");
-    public static final Address DEFAULT_CONSOLIDATION_REQUEST_CONTRACT_ADDRESS =
-        Address.fromHexString("0x0000bbddc7ce488642fb579f8b00f3a590007251");
-    public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
-        Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
-  */
   private RequestContractAddresses(
       final Address withdrawalRequestContractAddress,
       final Address depositContractAddress,
