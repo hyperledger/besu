@@ -14,6 +14,7 @@
     - Fast Sync
   
 ### Additions and Improvements
+- add optional persistent preimage storage, add default limited in-memory preimage storage for bonsai [#7800](https://github.com/hyperledger/besu/pull/7800)
 
 ##  25.12.0-RC1
 
