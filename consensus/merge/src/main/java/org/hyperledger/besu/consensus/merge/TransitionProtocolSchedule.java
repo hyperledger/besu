@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -220,20 +219,6 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     transitionUtils.dispatchConsumerAccordingToMergeState(
         protocolSchedule ->
             protocolSchedule.setPermissionTransactionFilter(permissionTransactionFilter));
-  }
-
-  /**
-   * Sets public world state archive for privacy block processor.
-   *
-   * @param publicWorldStateArchive the public world state archive
-   */
-  @Override
-  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
-      final WorldStateArchive publicWorldStateArchive) {
-    transitionUtils.dispatchConsumerAccordingToMergeState(
-        protocolSchedule ->
-            protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
-                publicWorldStateArchive));
   }
 
   /**

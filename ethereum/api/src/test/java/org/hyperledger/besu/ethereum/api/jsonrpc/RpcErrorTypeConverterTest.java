@@ -32,9 +32,7 @@ public class RpcErrorTypeConverterTest {
     return Arrays.asList(
         new Object[][] {
           {TransactionInvalidReason.NONCE_TOO_LOW, RpcErrorType.NONCE_TOO_LOW},
-          {TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW, RpcErrorType.NONCE_TOO_LOW},
           {TransactionInvalidReason.NONCE_TOO_HIGH, RpcErrorType.NONCE_TOO_HIGH},
-          {TransactionInvalidReason.PRIVATE_NONCE_TOO_HIGH, RpcErrorType.NONCE_TOO_HIGH},
           {TransactionInvalidReason.INVALID_SIGNATURE, RpcErrorType.INVALID_TRANSACTION_SIGNATURE},
           {
             TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
@@ -58,10 +56,6 @@ public class RpcErrorTypeConverterTest {
             RpcErrorType.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE
           },
           {TransactionInvalidReason.GAS_PRICE_TOO_LOW, RpcErrorType.GAS_PRICE_TOO_LOW},
-          {
-            TransactionInvalidReason.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST,
-            RpcErrorType.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST
-          },
           {
             TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN,
             RpcErrorType.ETH_SEND_TX_ALREADY_KNOWN

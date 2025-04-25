@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -352,12 +351,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   public BesuControllerBuilder metricsSystem(final ObservableMetricsSystem metricsSystem) {
     super.metricsSystem(metricsSystem);
     return propagateConfig(z -> z.metricsSystem(metricsSystem));
-  }
-
-  @Override
-  public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
-    super.privacyParameters(privacyParameters);
-    return propagateConfig(z -> z.privacyParameters(privacyParameters));
   }
 
   @Override

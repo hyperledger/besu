@@ -94,22 +94,7 @@ public enum GraphQLError {
       -32000, "Signatures with replay protection are not supported"),
 
   /** Error code -32000. This error occurs when the transaction fee cap is exceeded. */
-  TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
-
-  // Private Transaction Errors
-  /** Error code -32000. This error occurs when a private transaction fails. */
-  PRIVATE_TRANSACTION_FAILED(-32000, "Private transaction failed"),
-
-  /**
-   * Error code -50100. This error occurs when the nonce value for a private transaction is too low.
-   */
-  PRIVATE_NONCE_TOO_LOW(-50100, "Private transaction nonce too low"),
-
-  /**
-   * Error code -50100. This error occurs when the nonce value for a private transaction is
-   * incorrect.
-   */
-  INCORRECT_PRIVATE_NONCE(-50100, "Private transaction nonce is incorrect");
+  TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded");
 
   private final int code;
   private final String message;
@@ -154,14 +139,12 @@ public enum GraphQLError {
       case REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED -> REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED;
       case INVALID_SIGNATURE -> INVALID_TRANSACTION_SIGNATURE;
       case UPFRONT_COST_EXCEEDS_BALANCE -> TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
-      case NONCE_TOO_LOW, PRIVATE_NONCE_TOO_LOW -> NONCE_TOO_LOW;
-      case NONCE_TOO_HIGH, PRIVATE_NONCE_TOO_HIGH -> INCORRECT_NONCE;
+      case NONCE_TOO_LOW -> NONCE_TOO_LOW;
+      case NONCE_TOO_HIGH -> INCORRECT_NONCE;
       case INTRINSIC_GAS_EXCEEDS_GAS_LIMIT -> INTRINSIC_GAS_EXCEEDS_LIMIT;
       case EXCEEDS_BLOCK_GAS_LIMIT -> EXCEEDS_BLOCK_GAS_LIMIT;
       case TX_SENDER_NOT_AUTHORIZED -> TX_SENDER_NOT_AUTHORIZED;
       case CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE -> CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
-      // Private Transaction Invalid Reasons
-      case PRIVATE_TRANSACTION_FAILED -> PRIVATE_TRANSACTION_FAILED;
       case GAS_PRICE_TOO_LOW -> GAS_PRICE_TOO_LOW;
       case TX_FEECAP_EXCEEDED -> TX_FEECAP_EXCEEDED;
       default -> INTERNAL_ERROR;

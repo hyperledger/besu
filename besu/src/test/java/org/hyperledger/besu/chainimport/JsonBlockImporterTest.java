@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.components.MiningParametersModule;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -467,7 +466,6 @@ public abstract class JsonBlockImporterTest {
                 .build())
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
-        .privacyParameters(PrivacyParameters.DEFAULT)
         .dataDirectory(dataDir)
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)

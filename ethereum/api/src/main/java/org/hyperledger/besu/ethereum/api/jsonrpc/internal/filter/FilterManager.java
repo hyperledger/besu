@@ -15,20 +15,16 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
-import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,20 +35,17 @@ import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.AbstractVerticle;
 
 /** Manages JSON-RPC filter events. */
-public class FilterManager extends AbstractVerticle implements PrivateTransactionObserver {
+public class FilterManager extends AbstractVerticle {
 
   private static final int FILTER_TIMEOUT_CHECK_TIMER = 10000;
 
   private final FilterIdGenerator filterIdGenerator;
   private final FilterRepository filterRepository;
   private final BlockchainQueries blockchainQueries;
-  private final Optional<PrivacyQueries> privacyQueries;
-  private final List<PrivateTransactionEvent> removalEvents;
 
   FilterManager(
       final BlockchainQueries blockchainQueries,
       final TransactionPool transactionPool,
-      final Optional<PrivacyQueries> privacyQueries,
       final FilterIdGenerator filterIdGenerator,
       final FilterRepository filterRepository) {
     this.filterIdGenerator = filterIdGenerator;
@@ -61,8 +54,6 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
     blockchainQueries.getBlockchain().observeBlockAdded(this::recordBlockEvent);
     transactionPool.subscribePendingTransactions(this::recordPendingTransactionEvent);
     this.blockchainQueries = blockchainQueries;
-    this.privacyQueries = privacyQueries;
-    this.removalEvents = new ArrayList<>();
   }
 
   @Override
@@ -121,29 +112,6 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
   }
 
   /**
-   * Installs a new private log filter
-   *
-   * @param privacyGroupId String privacyGroupId
-   * @param privacyUserId String privacyUserId of user creating the filter
-   * @param fromBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
-   * @param toBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
-   * @param logsQuery {@link LogsQuery} Addresses and/or topics to filter by
-   * @return the log filter id
-   */
-  public String installPrivateLogFilter(
-      final String privacyGroupId,
-      final String privacyUserId,
-      final BlockParameter fromBlock,
-      final BlockParameter toBlock,
-      final LogsQuery logsQuery) {
-    final String filterId = filterIdGenerator.nextId();
-    filterRepository.save(
-        new PrivateLogFilter(
-            filterId, privacyGroupId, privacyUserId, fromBlock, toBlock, logsQuery));
-    return filterId;
-  }
-
-  /**
    * Uninstalls the specified filter.
    *
    * @param filterId the id of the filter to remove
@@ -169,9 +137,6 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
           }
         });
 
-    removalEvents.stream().forEach(removalEvent -> processRemovalEvent(removalEvent));
-    removalEvents.clear();
-
     final List<LogWithMetadata> logsWithMetadata = event.getLogsWithMetadata();
     filterRepository.getFiltersOfType(LogFilter.class).stream()
         .filter(
@@ -187,25 +152,10 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
               filter.addLogs(
                   // We need to use privacy queries for private log filters but for regular
                   // log filters we already have all the info in the event
-                  filter instanceof PrivateLogFilter
-                      ? privacyQueries
-                          .map(
-                              pq ->
-                                  pq.matchingLogs(
-                                      ((PrivateLogFilter) filter).getPrivacyGroupId(),
-                                      blockHash,
-                                      logsQuery))
-                          .orElse(emptyList())
-                      : logsWithMetadata.stream()
-                          .filter(logsQuery::matches)
-                          .collect(toUnmodifiableList()));
+                  logsWithMetadata.stream()
+                      .filter(logsQuery::matches)
+                      .collect(toUnmodifiableList()));
             });
-  }
-
-  @Override
-  public void onPrivateTransactionProcessed(final PrivateTransactionEvent event) {
-    // the list will be processed at the end of the block
-    removalEvents.add(event);
   }
 
   @VisibleForTesting
@@ -222,20 +172,6 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
             filter.addTransactionHash(transaction.getHash());
           }
         });
-  }
-
-  @VisibleForTesting
-  void processRemovalEvent(final PrivateTransactionEvent event) {
-    // when user removed from privacy group, remove all filters created by that user in that group
-    filterRepository.getFiltersOfType(PrivateLogFilter.class).stream()
-        .filter(
-            privateLogFilter ->
-                privateLogFilter.getPrivacyGroupId().equals(event.getPrivacyGroupId())
-                    && privateLogFilter.getPrivacyUserId().equals(event.getPrivacyUserId()))
-        .forEach(
-            privateLogFilter -> {
-              uninstallFilter(privateLogFilter.getId());
-            });
   }
 
   /**
@@ -314,19 +250,7 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
 
   private List<LogWithMetadata> findLogsWithinRange(
       final LogFilter filter, final long fromBlockNumber, final long toBlockNumber) {
-    if (filter instanceof PrivateLogFilter) {
-      return privacyQueries
-          .map(
-              pq ->
-                  pq.matchingLogs(
-                      ((PrivateLogFilter) filter).getPrivacyGroupId(),
-                      fromBlockNumber,
-                      toBlockNumber,
-                      filter.getLogsQuery()))
-          .orElse(emptyList());
-    } else {
-      return blockchainQueries.matchingLogs(
-          fromBlockNumber, toBlockNumber, filter.getLogsQuery(), () -> true);
-    }
+    return blockchainQueries.matchingLogs(
+        fromBlockNumber, toBlockNumber, filter.getLogsQuery(), () -> true);
   }
 }

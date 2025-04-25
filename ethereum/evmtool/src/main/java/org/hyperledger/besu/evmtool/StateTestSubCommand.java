@@ -271,11 +271,10 @@ public class StateTestSubCommand implements Runnable {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
+                tracer,
                 (__, blockNumber) ->
                     Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
-                false,
                 TransactionValidationParams.processingBlock(),
-                tracer,
                 blobGasPrice);
         timer.stop();
         if (shouldClearEmptyAccounts(spec.getFork())) {

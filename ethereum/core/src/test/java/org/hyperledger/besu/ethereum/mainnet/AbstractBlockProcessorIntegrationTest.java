@@ -260,7 +260,6 @@ class AbstractBlockProcessorIntegrationTest {
             blockchain,
             worldStateParallel,
             block,
-            Optional.empty(),
             new ParallelTransactionPreprocessing(transactionProcessor, Runnable::run));
 
     BlockProcessingResult sequentialResult =
