@@ -433,6 +433,17 @@ public class DefaultBlockchain implements MutableBlockchain {
     appendBlockHelper(new BlockWithReceipts(block, receipts), true, true);
   }
 
+  @Override
+  public void storeHeaderUnsafe(
+      final BlockHeader blockHeader, final Optional<Difficulty> maybeTotalDifficulty) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    updater.putBlockHeader(blockHeader.getHash(), blockHeader);
+    updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
+    maybeTotalDifficulty.ifPresent(
+        totalDifficulty -> updater.putTotalDifficulty(blockHeader.getHash(), totalDifficulty));
+    updater.commit();
+  }
+
   private void cacheBlockData(final Block block, final List<TransactionReceipt> receipts) {
     blockHeadersCache.ifPresent(cache -> cache.put(block.getHash(), block.getHeader()));
     blockBodiesCache.ifPresent(cache -> cache.put(block.getHash(), block.getBody()));
