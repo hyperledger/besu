@@ -21,8 +21,12 @@ import java.util.List;
 
 public interface MutableLocalNode extends LocalNode {
   static MutableLocalNode create(
-      final String clientId, final int p2pVersion, final List<Capability> supportedCapabilities) {
-    return DefaultLocalNode.create(clientId, p2pVersion, supportedCapabilities);
+      final String clientId,
+      final int p2pVersion,
+      final List<Capability> supportedCapabilities,
+      final boolean p2pHostShareViaRlpx) {
+    return DefaultLocalNode.create(
+        clientId, p2pVersion, supportedCapabilities, p2pHostShareViaRlpx);
   }
 
   void setEnode(EnodeURL enode) throws NodeAlreadySetException;

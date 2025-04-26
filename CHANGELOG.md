@@ -4,6 +4,7 @@
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
+- Support of the new Besu config option `p2p-host-share-via-rlpx` that enables Besu nodes to exchange their `p2p-host` value during RLPx hello message [#8400](https://github.com/hyperledger/besu/issues/8400)
 #### Dependencies
 - update jc-kzg-4844 dependency from 2.0.0 to 2.1.1
 ### Bug fixes
