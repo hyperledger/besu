@@ -218,6 +218,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
@@ -2437,7 +2438,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     List<EnodeURL> listBootNodes = null;
     if (p2PDiscoveryOptions.bootNodes != null) {
       try {
-        listBootNodes = buildEnodes(p2PDiscoveryOptions.bootNodes, getEnodeDnsConfiguration());
+        // Resolve bootnode arguments, including URLs and file paths
+        final List<String> resolvedBootNodeArgs = resolveBootnodeStrings(p2PDiscoveryOptions.bootNodes);
+        listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
       }
@@ -2848,5 +2851,53 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public MetricsOptions getMetricsOptions() {
     return metricsOptions;
+  }
+
+  /**
+   * Resolve bootnode argument list. Supports reading from HTTP(S) URLs, file URIs, and local files.
+   */
+  private List<String> resolveBootnodeStrings(final List<String> bootNodesList) {
+    final List<String> resolved = new ArrayList<>();
+    for (final String node : bootNodesList) {
+      if (node.startsWith("http://") || node.startsWith("https://")) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new URL(node).openStream(), UTF_8))) {
+          reader.lines()
+                .map(String::trim)
+                .filter(line -> !line.isEmpty())
+                .forEach(resolved::add);
+        } catch (final IOException e) {
+          throw new ParameterException(commandLine,
+              "Failed to fetch bootnodes from URL: " + node + "; " + e.getMessage());
+        }
+      } else if (node.startsWith("file://")) {
+        try {
+          final URI uri = new URI(node);
+          final Path path = Paths.get(uri);
+          Files.readAllLines(path, UTF_8).stream()
+               .map(String::trim)
+               .filter(line -> !line.isEmpty())
+               .forEach(resolved::add);
+        } catch (final Exception e) {
+          throw new ParameterException(commandLine,
+              "Failed to read bootnodes from file URI: " + node + "; " + e.getMessage());
+        }
+      } else {
+        final Path p = Paths.get(node);
+        if (Files.exists(p)) {
+          try {
+            Files.readAllLines(p, UTF_8).stream()
+                 .map(String::trim)
+                 .filter(line -> !line.isEmpty())
+                 .forEach(resolved::add);
+            continue;
+          } catch (final IOException e) {
+            throw new ParameterException(commandLine,
+                "Failed to read bootnodes from file: " + node + "; " + e.getMessage());
+          }
+        }
+        resolved.add(node);
+      }
+    }
+    return resolved;
   }
 }
