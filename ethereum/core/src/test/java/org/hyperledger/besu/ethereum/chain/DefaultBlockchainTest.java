@@ -1177,19 +1177,4 @@ public class DefaultBlockchainTest {
     return blockchain;
   }
 
-  /*
-  @Test
-  void testFindFirstExistingBlockNumberWithIntermittentBlocks() {
-    // Append intermittent blocks to the blockchain
-    Block block2 = blockDataGenerator.block(BlockDataGenerator.BlockOptions.create().setBlockNumber(2L));
-    Block block4 = blockDataGenerator.block(BlockDataGenerator.BlockOptions.create().setBlockNumber(4L));
-    blockchain.appendBlock(block2, blockDataGenerator.receipts(block2));
-    blockchain.appendBlock(block4, blockDataGenerator.receipts(block4));
-
-    // Test the method
-    Optional<Long> result = blockchain.findFirstExistingBlockNumber();
-    assertThat(result).isPresent();
-    assertThat(result.get()).isEqualTo(2L);
-  }*/
-
 }
