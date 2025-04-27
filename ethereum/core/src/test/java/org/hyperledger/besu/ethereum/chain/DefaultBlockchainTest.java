@@ -1176,5 +1176,4 @@ public class DefaultBlockchainTest {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(lastBlockNumber);
     return blockchain;
   }
-
 }
