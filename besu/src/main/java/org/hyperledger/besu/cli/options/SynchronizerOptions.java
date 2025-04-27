@@ -89,6 +89,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
 
+  private static final String SAVE_PRE_MERGE_HEADERS_ONLY_FLAG =
+      "--Xsynchronizer-downloader-pre-merge-headers-only";
+
   /**
    * Parse block propagation range.
    *
@@ -343,6 +346,13 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean snapTransactionIndexingEnabled =
       SnapSyncConfiguration.DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
 
+  @CommandLine.Option(
+      names = SAVE_PRE_MERGE_HEADERS_ONLY_FLAG,
+      hidden = true,
+      description =
+          "Enable the downloader to save only headers for pre-merge blocks. (default: ${DEFAULT-VALUE})")
+  private boolean savePreMergeHeadersOnlyEnabled = false;
+
   private SynchronizerOptions() {}
 
   /**
@@ -425,6 +435,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
     options.snapTransactionIndexingEnabled =
         config.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled();
+    options.savePreMergeHeadersOnlyEnabled = config.isSavePreMergeHeadersOnlyEnabled();
     return options;
   }
 
@@ -462,6 +473,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
+    builder.savePreMergeHeadersOnlyEnabled(savePreMergeHeadersOnlyEnabled);
     return builder;
   }
 
@@ -520,7 +532,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             SNAP_SERVER_ENABLED_FLAG,
             OptionParser.format(snapsyncServerEnabled),
             SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
-            OptionParser.format(snapTransactionIndexingEnabled));
+            OptionParser.format(snapTransactionIndexingEnabled),
+            SAVE_PRE_MERGE_HEADERS_ONLY_FLAG,
+            OptionParser.format(savePreMergeHeadersOnlyEnabled));
     return value;
   }
 }

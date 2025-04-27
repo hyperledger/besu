@@ -32,15 +32,16 @@ import org.slf4j.LoggerFactory;
 public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(SavePreMergeHeadersStep.class);
   private final MutableBlockchain blockchain;
-  private final long mergeBlockNumber;
+  private final long preMergeBlockNumber;
 
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
   private static final int LOG_REPEAT_DELAY_SECONDS = 30;
   private static final int LOG_PROGRESS_INTERVAL = 1000;
 
-  public SavePreMergeHeadersStep(final MutableBlockchain blockchain, final long mergeBlockNumber) {
+  public SavePreMergeHeadersStep(
+      final MutableBlockchain blockchain, final long preMergeBlockNumber) {
     this.blockchain = blockchain;
-    this.mergeBlockNumber =  mergeBlockNumber;
+    this.preMergeBlockNumber = preMergeBlockNumber;
   }
 
   @Override
@@ -55,7 +56,7 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
   }
 
   private boolean isPostMergeBlock(final long blockNumber) {
-    return mergeBlockNumber <= 0 || blockNumber > mergeBlockNumber;
+    return preMergeBlockNumber <= 0 || blockNumber > preMergeBlockNumber;
   }
 
   private void storeBlockHeader(final BlockHeader blockHeader) {
@@ -64,17 +65,17 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
   }
 
   private void logProgress(final BlockHeader blockHeader) {
-    if (blockHeader.getNumber() == mergeBlockNumber) {
+    if (blockHeader.getNumber() == preMergeBlockNumber) {
       LOG.info("Pre-merge headers import completed at block {}", blockHeader.toLogString());
     } else {
       long blockNumber = blockHeader.getNumber();
       if (blockNumber % LOG_PROGRESS_INTERVAL == 0) {
-        double importPercent = (double) (100 * blockNumber) / mergeBlockNumber;
+        double importPercent = (double) (100 * blockNumber) / preMergeBlockNumber;
         throttledLog(
             LOG::info,
             String.format(
                 "Pre-merge headers import progress: %d of %d (%.2f%%)",
-                blockNumber, mergeBlockNumber, importPercent),
+                blockNumber, preMergeBlockNumber, importPercent),
             shouldLog,
             LOG_REPEAT_DELAY_SECONDS);
       }
