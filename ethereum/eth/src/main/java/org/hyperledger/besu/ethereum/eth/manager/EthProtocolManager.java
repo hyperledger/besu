@@ -168,10 +168,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     return blockBroadcaster;
   }
 
-  public Optional<BlockRangeBroadcaster> getBlockRangeBroadcaster() {
-    return Optional.ofNullable(blockRangeBroadcaster);
-  }
-
   @Override
   public String getSupportedProtocol() {
     return EthProtocol.NAME;

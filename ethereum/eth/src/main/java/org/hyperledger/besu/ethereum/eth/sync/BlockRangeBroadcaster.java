@@ -37,7 +37,7 @@ public class BlockRangeBroadcaster {
   private static final Logger LOG = LoggerFactory.getLogger(BlockRangeBroadcaster.class);
 
   // range update block interval
-  static final int BLOCK_RANGE_UPDATE_INTERVAL = 60;
+  static final int BLOCK_RANGE_UPDATE_INTERVAL = 120;
 
   private final EthContext ethContext;
   private final Blockchain blockchain;

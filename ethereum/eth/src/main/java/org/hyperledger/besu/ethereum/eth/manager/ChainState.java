@@ -53,10 +53,6 @@ public class ChainState implements ChainHeadEstimate {
     return estimatedHeight;
   }
 
-  public long getEarliestBlockHeight() {
-    return earliestBlockHeight;
-  }
-
   @Override
   public Difficulty getEstimatedTotalDifficulty() {
     return bestBlock.getTotalDifficulty();
@@ -139,6 +135,7 @@ public class ChainState implements ChainHeadEstimate {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
+        .add("earliestBlockHeight", earliestBlockHeight)
         .add("estimatedHeight", estimatedHeight)
         .add("bestBlock", bestBlock)
         .toString();

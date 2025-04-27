@@ -89,7 +89,7 @@ public class TransactionReceiptEncodingConfiguration {
         + withOpaqueBytes
         + ", withBloomFilter="
         + withBloomFilter
-        + ", withFlatReceipt="
+        + ", withEth69Receipt="
         + withEth69Receipt
         + '}';
   }

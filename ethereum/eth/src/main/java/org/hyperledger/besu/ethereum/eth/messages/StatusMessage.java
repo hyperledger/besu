@@ -271,8 +271,8 @@ public final class StatusMessage extends AbstractMessageData {
       } else {
         out.writeBytes(genesisHash);
         forkId.writeTo(out);
-        out.writeLongScalar(blockRange.getEarliestBlock());
-        out.writeLongScalar(blockRange.getLatestBlock());
+        out.writeLongScalar(blockRange.earliestBlock());
+        out.writeLongScalar(blockRange.latestBlock());
         out.writeBytes(bestHash);
       }
       out.endList();
@@ -338,22 +338,7 @@ public final class StatusMessage extends AbstractMessageData {
     return status().toString();
   }
 
-  public static class BlockRange {
-    private final long earliestBlock;
-    private final long latestBlock;
-
-    public BlockRange(final long earliestBlock, final long latestBlock) {
-      this.earliestBlock = earliestBlock;
-      this.latestBlock = latestBlock;
-    }
-
-    public long getEarliestBlock() {
-      return earliestBlock;
-    }
-
-    public long getLatestBlock() {
-      return latestBlock;
-    }
+  public record BlockRange(long earliestBlock, long latestBlock) {
 
     @Override
     public String toString() {

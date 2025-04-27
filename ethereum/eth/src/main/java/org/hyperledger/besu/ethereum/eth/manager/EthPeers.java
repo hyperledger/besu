@@ -79,7 +79,7 @@ public class EthPeers implements PeerSelector {
       Comparator.comparing((final EthPeer p) -> p.getReputation().getScore())
           .thenComparing(CHAIN_HEIGHT);
 
-  public static final Comparator<EthPeer> TOTAL_DIFFICULT_THEN_HEIGHT =
+  public static final Comparator<EthPeer> TOTAL_DIFFICULTY_THEN_HEIGHT =
       TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> LEAST_TO_MOST_BUSY =
@@ -140,7 +140,7 @@ public class EthPeers implements PeerSelector {
     this.permissioningProviders = permissioningProviders;
     this.maxMessageSize = maxMessageSize;
     this.bestPeerComparator =
-        currentProtocolSpecSupplier.get().isPoS() ? CHAIN_HEIGHT : TOTAL_DIFFICULT_THEN_HEIGHT;
+        currentProtocolSpecSupplier.get().isPoS() ? CHAIN_HEIGHT : TOTAL_DIFFICULTY_THEN_HEIGHT;
     this.localNodeId = localNodeId;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;

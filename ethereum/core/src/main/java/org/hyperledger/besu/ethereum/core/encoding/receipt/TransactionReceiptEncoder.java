@@ -33,10 +33,10 @@ public class TransactionReceiptEncoder {
     }
 
     if (shouldEncodeOpaqueBytes(receipt, options)) {
-      rlpOutput.writeBytes(RLP.encode(out -> write(receipt, out, options)));
+      rlpOutput.writeBytes(RLP.encode(out -> writeLegacyReceipt(receipt, out, options)));
       return;
     }
-    write(receipt, rlpOutput, options);
+    writeLegacyReceipt(receipt, rlpOutput, options);
   }
 
   private static boolean shouldEncodeOpaqueBytes(
@@ -54,7 +54,7 @@ public class TransactionReceiptEncoder {
    * @param rlpOutput the RLP output
    * @param options the encoding options
    */
-  private static void write(
+  private static void writeLegacyReceipt(
       final TransactionReceipt receipt,
       final RLPOutput rlpOutput,
       final TransactionReceiptEncodingConfiguration options) {

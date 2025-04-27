@@ -1384,7 +1384,7 @@ public final class EthProtocolManagerTest {
           (cap, msg, conn) -> {
             assertThat(msg.getCode() == EthProtocolMessages.STATUS).isTrue();
             long earliestBlock =
-                StatusMessage.create(msg.getData()).blockRange().orElseThrow().getEarliestBlock();
+                StatusMessage.create(msg.getData()).blockRange().orElseThrow().earliestBlock();
             assertThat(earliestBlock).isEqualTo(expectedEarliestBlock);
           },
           EthProtocol.ETH69);
@@ -1411,7 +1411,7 @@ public final class EthProtocolManagerTest {
           (cap, msg, conn) -> {
             assertThat(msg.getCode() == EthProtocolMessages.STATUS).isTrue();
             long earliestBlock =
-                StatusMessage.create(msg.getData()).blockRange().orElseThrow().getEarliestBlock();
+                StatusMessage.create(msg.getData()).blockRange().orElseThrow().earliestBlock();
             assertThat(earliestBlock).isEqualTo(0L);
           },
           EthProtocol.ETH69);

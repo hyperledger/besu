@@ -527,7 +527,7 @@ public class EthPeer implements Comparable<EthPeer> {
       final int protocolVersion,
       final StatusMessage.BlockRange blockRange,
       final PeerConnection connection) {
-    chainHeadState.statusReceived(hash, blockRange.getLatestBlock(), blockRange.getEarliestBlock());
+    chainHeadState.statusReceived(hash, blockRange.latestBlock(), blockRange.earliestBlock());
     lastProtocolVersion.set(protocolVersion);
     statusHasBeenReceivedFromPeer.set(true);
     synchronized (this) {

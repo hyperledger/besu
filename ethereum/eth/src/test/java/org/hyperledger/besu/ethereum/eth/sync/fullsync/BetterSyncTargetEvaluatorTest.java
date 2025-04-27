@@ -49,7 +49,7 @@ public class BetterSyncTargetEvaluatorTest {
 
   @BeforeEach
   public void setupMocks() {
-    when(ethPeers.getBestPeerComparator()).thenReturn(EthPeers.TOTAL_DIFFICULT_THEN_HEIGHT);
+    when(ethPeers.getBestPeerComparator()).thenReturn(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT);
   }
 
   @Test

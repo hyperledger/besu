@@ -55,7 +55,7 @@ public class TransactionReceiptDecoder {
    */
   public static TransactionReceipt readFrom(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
-    // The first byte of the RLP input indicates whether the receipt is typed or flat.
+    // The first byte indicates whether the receipt is typed (eth/68) or flat (eth/69).
     if (!rlpInput.nextIsList()) {
       return decodeTypedReceipt(rlpInput, revertReasonAllowed);
     } else {
@@ -94,7 +94,9 @@ public class TransactionReceiptDecoder {
     // Flat receipts can be either legacy or eth/69 receipts.
     // To determine the type, we need to examine the logs' position, as the bloom filter cannot be
     // used. This is because compacted legacy receipts also lack a bloom filter.
+    // The first element can be either the transaction type (eth/69 or stateRootOrStatus (eth/68
     final RLPInput firstElement = rlpInput.readAsRlp();
+    // The second element can be either the state root or status (eth/68) or cumulative gas (eth/69)
     final RLPInput secondElement = rlpInput.readAsRlp();
     final boolean isCompacted = isNextNotBloomFilter(rlpInput);
     LogsBloomFilter bloomFilter = null;
@@ -128,17 +130,17 @@ public class TransactionReceiptDecoder {
 
   private static TransactionReceipt decodeLegacyReceipt(
       final RLPInput input,
-      final RLPInput firstElement,
-      final RLPInput secondElement,
+      final RLPInput statusOrStateRootRlpInput,
+      final RLPInput cumulativeGasRlpInput,
       final LogsBloomFilter bloomFilter,
       final boolean revertReasonAllowed) {
-    final long cumulativeGas = secondElement.readLongScalar();
+    final long cumulativeGas = cumulativeGasRlpInput.readLongScalar();
     final boolean isCompacted = bloomFilter == null;
     final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, isCompacted));
     Optional<Bytes> revertReason = readMaybeRevertReason(input, revertReasonAllowed);
     return createReceipt(
         TransactionType.FRONTIER,
-        firstElement,
+        statusOrStateRootRlpInput,
         cumulativeGas,
         logs,
         isCompacted ? LogsBloomFilter.builder().insertLogs(logs).build() : bloomFilter,
