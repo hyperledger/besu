@@ -113,11 +113,13 @@ public class DefaultBlockchain implements MutableBlockchain {
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
     totalDifficulty = blockchainStorage.getTotalDifficulty(chainHead).get();
 
-    blockchainStorage.getBlockBody(chainHead).ifPresent(
-        headBlockBody -> {
-      chainHeadTransactionCount = headBlockBody.getTransactions().size();
-      chainHeadOmmerCount = headBlockBody.getOmmers().size();
-    });
+    blockchainStorage
+        .getBlockBody(chainHead)
+        .ifPresent(
+            headBlockBody -> {
+              chainHeadTransactionCount = headBlockBody.getTransactions().size();
+              chainHeadOmmerCount = headBlockBody.getOmmers().size();
+            });
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     this.blockChoiceRule = heaviestChainBlockChoiceRule;
@@ -437,13 +439,19 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public void storeHeaderUnsafe(
-      final BlockHeader blockHeader, final Optional<Difficulty> maybeTotalDifficulty) {
+  public void unsafeStoreHeader(
+      final BlockHeader blockHeader,
+      final Difficulty totalDifficulty,
+      final boolean updateChainHead) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
     updater.putBlockHeader(blockHeader.getHash(), blockHeader);
     updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
-    maybeTotalDifficulty.ifPresent(
-        totalDifficulty -> updater.putTotalDifficulty(blockHeader.getHash(), totalDifficulty));
+    updater.putTotalDifficulty(blockHeader.getHash(), totalDifficulty);
+    if (updateChainHead) {
+      this.chainHeader = blockHeader;
+      this.totalDifficulty = totalDifficulty;
+      updater.setChainHead(blockHeader.getBlockHash());
+    }
     updater.commit();
   }
 

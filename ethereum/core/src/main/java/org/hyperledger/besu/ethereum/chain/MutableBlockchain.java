@@ -66,7 +66,8 @@ public interface MutableBlockchain extends Blockchain {
    *
    * @param blockHeader The block to append.
    */
-  void storeHeaderUnsafe(BlockHeader blockHeader, Optional<Difficulty> maybeTotalDifficulty);
+  void unsafeStoreHeader(
+      BlockHeader blockHeader, Difficulty totalDifficulty, boolean updateChainHead);
 
   void unsafeImportBlock(
       final Block block,

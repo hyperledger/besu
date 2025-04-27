@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -41,7 +40,7 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
 
   public SavePreMergeHeadersStep(final MutableBlockchain blockchain, final long mergeBlockNumber) {
     this.blockchain = blockchain;
-    this.mergeBlockNumber = mergeBlockNumber;
+    this.mergeBlockNumber =  mergeBlockNumber;
   }
 
   @Override
@@ -61,13 +60,12 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
 
   private void storeBlockHeader(final BlockHeader blockHeader) {
     Difficulty difficulty = blockchain.calculateTotalDifficulty(blockHeader);
-    blockchain.storeHeaderUnsafe(blockHeader, Optional.of(difficulty));
-    blockchain.unsafeSetChainHead(blockHeader, difficulty);
+    blockchain.unsafeStoreHeader(blockHeader, difficulty, true);
   }
 
   private void logProgress(final BlockHeader blockHeader) {
     if (blockHeader.getNumber() == mergeBlockNumber) {
-      LOG.info("Pre-merge block headers import completed at block {}", blockHeader.toLogString());
+      LOG.info("Pre-merge headers import completed at block {}", blockHeader.toLogString());
     } else {
       long blockNumber = blockHeader.getNumber();
       if (blockNumber % LOG_PROGRESS_INTERVAL == 0) {
@@ -75,7 +73,7 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
         throttledLog(
             LOG::info,
             String.format(
-                "Pre-merge block headers import progress: %d of %d (%.2f%%)",
+                "Pre-merge headers import progress: %d of %d (%.2f%%)",
                 blockNumber, mergeBlockNumber, importPercent),
             shouldLog,
             LOG_REPEAT_DELAY_SECONDS);
