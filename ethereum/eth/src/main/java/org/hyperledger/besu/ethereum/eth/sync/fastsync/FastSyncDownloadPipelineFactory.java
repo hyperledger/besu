@@ -120,10 +120,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   @Override
   public Pipeline<SyncTargetRange> createDownloadPipelineForSyncTarget(
       final SyncState syncState, final SyncTarget target) {
-    final int downloaderHeaderParallelism = syncConfig.getDownloaderHeaderParallelism();
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
-    final int singleHeaderBufferSize = headerRequestSize * downloaderHeaderParallelism;
+    final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
 
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
@@ -175,8 +174,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
                 "action"),
             true,
             "fastSync")
-        .thenProcessAsyncOrdered(
-            "downloadHeaders", downloadHeadersStep, downloaderHeaderParallelism)
+        .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .thenFlatMap("savePreMergeHeadersStep", savePreMergeHeadersStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
@@ -207,10 +205,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     return shouldContinue;
   }
 
-
   private long getPreMergeHeaderBlockNumber(final SyncState syncState) {
     return syncConfig.isSavePreMergeHeadersOnlyEnabled()
-      ? syncState.getCheckpoint().map(checkpoint -> checkpoint.blockNumber() - 1).orElse(0L)
-      : 0L;
+        ? syncState.getCheckpoint().map(checkpoint -> checkpoint.blockNumber() - 1).orElse(0L)
+        : 0L;
   }
 }
