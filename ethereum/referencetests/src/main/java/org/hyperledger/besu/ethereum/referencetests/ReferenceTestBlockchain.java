@@ -107,7 +107,7 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
-  public Optional<Hash> getEarliest() {
+  public Optional<Long> getEarliestBlockNumber() {
     // Deterministic, but just not implemented.
     throw new UnsupportedOperationException();
   }

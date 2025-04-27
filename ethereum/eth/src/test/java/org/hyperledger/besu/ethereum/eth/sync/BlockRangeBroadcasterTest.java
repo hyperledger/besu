@@ -111,14 +111,10 @@ public class BlockRangeBroadcasterTest {
 
   private void setupBlockchain(
       final long earliestBlockNumber, final long latestBlockNumber, final Hash expectedBlockHash) {
-    final Hash earliestBlockHash = Hash.wrap(Bytes32.fromHexString("0x0A"));
-    final BlockHeader earliestBlockHeader = mock(BlockHeader.class);
     final BlockHeader latestBlockHeader = mock(BlockHeader.class);
-    when(earliestBlockHeader.getNumber()).thenReturn(earliestBlockNumber);
     when(latestBlockHeader.getNumber()).thenReturn(latestBlockNumber);
     when(latestBlockHeader.getHash()).thenReturn(expectedBlockHash);
-    when(blockchain.getEarliest()).thenReturn(Optional.of(earliestBlockHash));
-    when(blockchain.getBlockHeader(earliestBlockHash)).thenReturn(Optional.of(earliestBlockHeader));
+    when(blockchain.getEarliestBlockNumber()).thenReturn(Optional.of(earliestBlockNumber));
     when(blockchain.getChainHeadHeader()).thenReturn(latestBlockHeader);
   }
 }

@@ -29,7 +29,6 @@ public interface VariablesStorage {
     FORK_HEADS("forkHeads"),
     FINALIZED_BLOCK_HASH("finalizedBlockHash"),
     SAFE_BLOCK_HASH("safeBlockHash"),
-    EARLIEST_BLOCK_HASH("earliestBlockHash"),
     SEQ_NO_STORE("local-enr-seqno"),
     GENESIS_STATE_HASH("genesisStateHash");
 
@@ -65,8 +64,6 @@ public interface VariablesStorage {
 
   Optional<Hash> getSafeBlock();
 
-  Optional<Hash> getEarliest();
-
   Optional<Bytes> getLocalEnrSeqno();
 
   Optional<Hash> getGenesisStateHash();
@@ -82,8 +79,6 @@ public interface VariablesStorage {
     void setFinalized(Hash blockHash);
 
     void setSafeBlock(Hash blockHash);
-
-    void setEarliest(Hash blockHash);
 
     void setLocalEnrSeqno(Bytes nodeRecord);
 

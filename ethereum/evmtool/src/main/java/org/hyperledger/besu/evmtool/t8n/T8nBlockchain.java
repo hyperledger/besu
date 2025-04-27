@@ -110,7 +110,7 @@ public class T8nBlockchain implements Blockchain {
   }
 
   @Override
-  public Optional<Hash> getEarliest() {
+  public Optional<Long> getEarliestBlockNumber() {
     throw new UnsupportedOperationException();
   }
 

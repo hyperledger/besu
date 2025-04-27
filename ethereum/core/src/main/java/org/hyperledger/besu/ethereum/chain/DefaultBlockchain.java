@@ -75,6 +75,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private volatile Difficulty totalDifficulty;
   private volatile int chainHeadTransactionCount;
   private volatile int chainHeadOmmerCount;
+  private volatile Long earliestBlockNumber;
 
   private Comparator<BlockHeader> blockChoiceRule;
 
@@ -301,8 +302,13 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public Optional<Hash> getEarliest() {
-    return blockchainStorage.getEarliest();
+  public Optional<Long> getEarliestBlockNumber() {
+    if (earliestBlockNumber == null) {
+      Optional<Long> maybeEarliestBlockNumber = getFirstNonGenesisBlockNumber();
+      maybeEarliestBlockNumber.ifPresent(value -> earliestBlockNumber = value);
+      return maybeEarliestBlockNumber;
+    }
+    return Optional.of(earliestBlockNumber);
   }
 
   @Override
@@ -792,12 +798,6 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.commit();
   }
 
-  public void setEarliest(final Hash blockHash) {
-    final var updater = blockchainStorage.updater();
-    updater.setEarliest(blockHash);
-    updater.commit();
-  }
-
   private long getFinalizedBlockNumber() {
     return this.getFinalized().flatMap(this::getBlockHeader).map(BlockHeader::getNumber).orElse(0L);
   }
@@ -843,7 +843,6 @@ public class DefaultBlockchain implements MutableBlockchain {
       // Initialize blockchain store with genesis block.
       final BlockchainStorage.Updater updater = blockchainStorage.updater();
       final Hash hash = genesisBlock.getHash();
-      updater.setEarliest(hash);
       updater.putBlockHeader(hash, genesisBlock.getHeader());
       updater.putBlockBody(hash, genesisBlock.getBody());
       updater.putTransactionReceipts(hash, emptyList());
@@ -965,5 +964,31 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   public BlockchainStorage getBlockchainStorage() {
     return blockchainStorage;
+  }
+
+  /**
+   * Performs a binary search to find the first existing block number in the blockchain. This method
+   * starts the search from block number 1, as the genesis block (block 0) is assumed to always
+   * exist. It uses the chain head block number as the upper limit for the search.
+   *
+   * <p>The search involves checking the presence of blocks by their numbers, narrowing down the
+   * range until the first existing block is identified. If a block is found, its number is returned
+   * wrapped in an {@code Optional}. If no block is found, an empty {@code Optional} is returned.
+   *
+   * @return an {@code Optional<Long>} containing the number of the first existing block, or {@code
+   *     Optional.empty()} if no block is found.
+   */
+  private Optional<Long> getFirstNonGenesisBlockNumber() {
+    long low = 1;
+    long high = getChainHeadBlockNumber();
+    while (low < high) {
+      long mid = (low + high) / 2;
+      if (getBlockByNumber(mid).isPresent()) {
+        high = mid;
+      } else {
+        low = mid + 1;
+      }
+    }
+    return getBlockByNumber(low).map(block -> block.getHeader().getNumber());
   }
 }

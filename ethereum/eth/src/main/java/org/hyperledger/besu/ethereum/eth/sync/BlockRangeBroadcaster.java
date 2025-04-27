@@ -90,15 +90,26 @@ public class BlockRangeBroadcaster {
   }
 
   /**
-   * Broadcasts the block range update message to all peers that support it.
-   *
-   * <p>The block range is from 0 to the latest block number in the chain head.
+   * Broadcasts a block range update message to all connected peers that support the
+   * BLOCK_RANGE_UPDATE protocol. This method is used to inform peers about the range of blocks
+   * available, from the earliest to the latest. If the earliest block number is not available, the
+   * genesis block number is used as a fallback.
    */
   @VisibleForTesting
   protected void broadcastBlockRange() {
-    long earliestBlockNumber = getEarliestBlockNumber();
-    BlockHeader header = blockchain.getChainHeadHeader();
-    broadcastBlockRange(earliestBlockNumber, header.getNumber(), header.getHash());
+    blockchain
+        .getEarliestBlockNumber()
+        .ifPresentOrElse(
+            earliestBlockNumber -> {
+              BlockHeader chainHeader = blockchain.getChainHeadHeader();
+              broadcastBlockRange(
+                  earliestBlockNumber, chainHeader.getNumber(), chainHeader.getHash());
+            },
+            () -> {
+              BlockHeader genesisBlock = blockchain.getGenesisBlockHeader();
+              broadcastBlockRange(
+                  genesisBlock.getNumber(), genesisBlock.getNumber(), genesisBlock.getHash());
+            });
   }
 
   /**
@@ -112,6 +123,12 @@ public class BlockRangeBroadcaster {
   void broadcastBlockRange(
       final long earliestBlockNumber, final long latestBlockNumber, final Hash blockHash) {
     List<EthPeer> peers = getPeersSupportingBlockRangeUpdate();
+    LOG.info(
+        "Broadcasting blockRange=[{}, {}, {}] to {} peers",
+        earliestBlockNumber,
+        latestBlockNumber,
+        blockHash,
+        peers.size());
     if (peers.isEmpty()) {
       LOG.debug("No peers available that support BLOCK_RANGE_UPDATE message.");
       return;
@@ -155,20 +172,5 @@ public class BlockRangeBroadcaster {
     } catch (PeerConnection.PeerNotConnected e) {
       LOG.trace("Failed to broadcast blockRange to peer {}", peer.getLoggableId(), e);
     }
-  }
-
-  private long getEarliestBlockNumber() {
-    return blockchain
-        .getEarliest()
-        .map(
-            hash ->
-                blockchain
-                    .getBlockHeader(hash)
-                    .orElseThrow(
-                        () ->
-                            new IllegalStateException(
-                                "Unable to get earliest block header from blockchain."))
-                    .getNumber())
-        .orElse(0L);
   }
 }

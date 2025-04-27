@@ -52,11 +52,11 @@ public interface Blockchain {
   Optional<Hash> getSafeBlock();
 
   /**
-   * Return the hash of the earliest block in the canonical chain.
+   * Return the number of the earliest block in the canonical chain.
    *
-   * @return The hash of the earliest block in the chain.
+   * @return The number of the earliest block in the chain.
    */
-  Optional<Hash> getEarliest();
+  Optional<Long> getEarliestBlockNumber();
 
   /**
    * Return the block number of the head of the canonical chain.

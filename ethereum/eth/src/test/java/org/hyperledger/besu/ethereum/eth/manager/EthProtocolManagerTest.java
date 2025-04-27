@@ -1365,10 +1365,7 @@ public final class EthProtocolManagerTest {
   public void shouldSendEarliestBlockToPeerWhenCapabilityEth69() {
     long expectedEarliestBlock = 10L;
     Blockchain blockChainMock = spy(blockchain);
-    when(blockChainMock.getEarliest())
-        .thenReturn(
-            Optional.ofNullable(
-                blockchain.getBlockByNumber(expectedEarliestBlock).orElseThrow().getHash()));
+    when(blockChainMock.getEarliestBlockNumber()).thenReturn(Optional.of(expectedEarliestBlock));
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
@@ -1394,7 +1391,7 @@ public final class EthProtocolManagerTest {
   @Test
   public void shouldSendCorrectEarliestBlockToPeerWhenEarliestIsNotSet() {
     Blockchain blockChainMock = spy(blockchain);
-    when(blockChainMock.getEarliest()).thenReturn(Optional.empty());
+    when(blockChainMock.getEarliestBlockNumber()).thenReturn(Optional.empty());
 
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestBuilder.builder()
