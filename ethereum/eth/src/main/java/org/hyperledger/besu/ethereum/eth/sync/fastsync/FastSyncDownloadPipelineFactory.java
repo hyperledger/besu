@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.FULL;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_DETACHED_ONLY;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
+import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.NONE;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.SKIP_DETACHED;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -63,6 +64,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   protected final FastSyncValidationPolicy attachedValidationPolicy;
   protected final FastSyncValidationPolicy detachedValidationPolicy;
   protected final FastSyncValidationPolicy ommerValidationPolicy;
+  private final FastSyncValidationPolicy noneHeaderValidationPolicy;
 
   public FastSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
@@ -101,6 +103,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             LIGHT_DETACHED_ONLY,
             DETACHED_ONLY,
             fastSyncValidationCounter);
+    noneHeaderValidationPolicy =
+        new FastSyncValidationPolicy(
+            this.syncConfig.getFastSyncFullValidationRate(), NONE, NONE, fastSyncValidationCounter);
   }
 
   @Override
@@ -113,11 +118,12 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   }
 
   @Override
-  public Pipeline<SyncTargetRange> createDownloadPipelineForSyncTarget(final SyncTarget target) {
-
+  public Pipeline<SyncTargetRange> createDownloadPipelineForSyncTarget(
+      final SyncState syncState, final SyncTarget target) {
+    final int downloaderHeaderParallelism = syncConfig.getDownloaderHeaderParallelism();
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
-    final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
+    final int singleHeaderBufferSize = headerRequestSize * downloaderHeaderParallelism;
 
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
@@ -134,14 +140,14 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolSchedule,
             protocolContext,
             ethContext,
-            detachedValidationPolicy,
+            noneHeaderValidationPolicy,
             syncConfig,
             headerRequestSize,
             metricsSystem);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final SavePreMergeHeadersStep savePreMergeHeadersStep =
-        new SavePreMergeHeadersStep(protocolContext.getBlockchain(), 50000);
+        new SavePreMergeHeadersStep(protocolContext.getBlockchain(), syncState.getCheckpoint());
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =
@@ -150,8 +156,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new ImportBlocksStep(
             protocolSchedule,
             protocolContext,
-            attachedValidationPolicy,
-            ommerValidationPolicy,
+            noneHeaderValidationPolicy,
+            noneHeaderValidationPolicy,
             ethContext,
             fastSyncState.getPivotBlockHeader().get(),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
@@ -168,7 +174,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
                 "action"),
             true,
             "fastSync")
-        .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
+        .thenProcessAsyncOrdered(
+            "downloadHeaders", downloadHeadersStep, downloaderHeaderParallelism)
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .thenFlatMap("savePreMergeHeadersStep", savePreMergeHeadersStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
