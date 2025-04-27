@@ -78,7 +78,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
   private final Optional<MergePeerFilter> mergePeerFilter;
-  private final BlockRangeBroadcaster blockRangeBroadcaster;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -114,7 +113,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.supportedCapabilities =
         calculateCapabilities(synchronizerConfiguration, ethereumWireProtocolConfiguration);
 
-    this.blockRangeBroadcaster = createBlockRangeBroadcaster(ethContext, blockchain);
+    subscribeBlockRangeBroadcaster(ethContext, blockchain);
 
     // Run validators
     for (final PeerValidator peerValidator : this.peerValidators) {
@@ -194,7 +193,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     return Collections.unmodifiableList(capabilities);
   }
 
-  private BlockRangeBroadcaster createBlockRangeBroadcaster(
+  private BlockRangeBroadcaster subscribeBlockRangeBroadcaster(
       final EthContext ethContext, final Blockchain blockchain) {
     final boolean hasSupportForBlockRangeMessage =
         supportedCapabilities.stream()
