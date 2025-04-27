@@ -112,9 +112,12 @@ public class DefaultBlockchain implements MutableBlockchain {
     final Hash chainHead = blockchainStorage.getChainHead().get();
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
     totalDifficulty = blockchainStorage.getTotalDifficulty(chainHead).get();
-    final BlockBody chainHeadBody = blockchainStorage.getBlockBody(chainHead).get();
-    chainHeadTransactionCount = chainHeadBody.getTransactions().size();
-    chainHeadOmmerCount = chainHeadBody.getOmmers().size();
+
+    blockchainStorage.getBlockBody(chainHead).ifPresent(
+        headBlockBody -> {
+      chainHeadTransactionCount = headBlockBody.getTransactions().size();
+      chainHeadOmmerCount = headBlockBody.getOmmers().size();
+    });
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     this.blockChoiceRule = heaviestChainBlockChoiceRule;

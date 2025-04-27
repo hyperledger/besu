@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.SavePreMergeHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersValidationStep;
@@ -147,7 +148,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final SavePreMergeHeadersStep savePreMergeHeadersStep =
-        new SavePreMergeHeadersStep(protocolContext.getBlockchain(), syncState.getCheckpoint());
+        new SavePreMergeHeadersStep(
+            protocolContext.getBlockchain(),
+            syncState.getCheckpoint().map(Checkpoint::blockNumber).orElse(0L));
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =

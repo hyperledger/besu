@@ -20,7 +20,6 @@ import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,18 +34,14 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
   private static final Logger LOG = LoggerFactory.getLogger(SavePreMergeHeadersStep.class);
   private final MutableBlockchain blockchain;
   private final long mergeBlockNumber;
-  private final Difficulty mergeTotalDifficulty;
 
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
   private static final int LOG_REPEAT_DELAY_SECONDS = 30;
-  private static final int LOG_PROGRESS_INTERVAL = 100;
+  private static final int LOG_PROGRESS_INTERVAL = 1000;
 
-  public SavePreMergeHeadersStep(
-      final MutableBlockchain blockchain, final Optional<Checkpoint> maybeCheckpoint) {
+  public SavePreMergeHeadersStep(final MutableBlockchain blockchain, final long mergeBlockNumber) {
     this.blockchain = blockchain;
-    // if no checkpoint is provided, import blocks from genesis
-    mergeBlockNumber = maybeCheckpoint.map(Checkpoint::blockNumber).orElse(0L);
-    mergeTotalDifficulty = maybeCheckpoint.map(Checkpoint::totalDifficulty).orElse(Difficulty.ZERO);
+    this.mergeBlockNumber = mergeBlockNumber;
   }
 
   @Override
@@ -55,11 +50,7 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
     if (isPostMergeBlock(blockNumber)) {
       return Stream.of(blockHeader);
     }
-    if (isMergeBlock(blockNumber)) {
-      storeMergeBlock(blockHeader);
-      return Stream.empty();
-    }
-    storePreMergeBlockHeader(blockHeader);
+    storeBlockHeader(blockHeader);
     logProgress(blockHeader);
     return Stream.empty();
   }
@@ -68,31 +59,27 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
     return mergeBlockNumber <= 0 || blockNumber > mergeBlockNumber;
   }
 
-  private boolean isMergeBlock(final long blockNumber) {
-    return blockNumber == mergeBlockNumber;
-  }
-
-  private void storeMergeBlock(final BlockHeader blockHeader) {
-    blockchain.storeHeaderUnsafe(blockHeader, Optional.of(mergeTotalDifficulty));
-    blockchain.unsafeSetChainHead(blockHeader, mergeTotalDifficulty);
-    LOG.info("Pre-merge block headers import completed at block {}", blockHeader.toLogString());
-  }
-
-  private void storePreMergeBlockHeader(final BlockHeader blockHeader) {
-    blockchain.storeHeaderUnsafe(blockHeader, Optional.empty());
+  private void storeBlockHeader(final BlockHeader blockHeader) {
+    Difficulty difficulty = blockchain.calculateTotalDifficulty(blockHeader);
+    blockchain.storeHeaderUnsafe(blockHeader, Optional.of(difficulty));
+    blockchain.unsafeSetChainHead(blockHeader, difficulty);
   }
 
   private void logProgress(final BlockHeader blockHeader) {
-    long blockNumber = blockHeader.getNumber();
-    if (blockNumber % LOG_PROGRESS_INTERVAL == 0) {
-      double importPercent = (double) (100 * blockNumber) / mergeBlockNumber;
-      throttledLog(
-          LOG::info,
-          String.format(
-              "Pre-merge block headers import progress: %d of %d (%.2f%%)",
-              blockNumber, mergeBlockNumber, importPercent),
-          shouldLog,
-          LOG_REPEAT_DELAY_SECONDS);
+    if (blockHeader.getNumber() == mergeBlockNumber) {
+      LOG.info("Pre-merge block headers import completed at block {}", blockHeader.toLogString());
+    } else {
+      long blockNumber = blockHeader.getNumber();
+      if (blockNumber % LOG_PROGRESS_INTERVAL == 0) {
+        double importPercent = (double) (100 * blockNumber) / mergeBlockNumber;
+        throttledLog(
+            LOG::info,
+            String.format(
+                "Pre-merge block headers import progress: %d of %d (%.2f%%)",
+                blockNumber, mergeBlockNumber, importPercent),
+            shouldLog,
+            LOG_REPEAT_DELAY_SECONDS);
+      }
     }
   }
 }
