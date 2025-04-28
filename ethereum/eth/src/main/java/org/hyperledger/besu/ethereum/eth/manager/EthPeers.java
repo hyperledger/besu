@@ -140,11 +140,7 @@ public class EthPeers implements PeerSelector {
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.maxMessageSize = maxMessageSize;
-    if (currentProtocolSpecSupplier.get().isPoS()) {
-      this.bestPeerComparator = CHAIN_HEIGHT;
-    } else {
-      this.bestPeerComparator = TOTAL_DIFFICULTY_THEN_HEIGHT;
-    }
+    this.bestPeerComparator = TOTAL_DIFFICULTY_THEN_HEIGHT;
     this.localNodeId = localNodeId;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
