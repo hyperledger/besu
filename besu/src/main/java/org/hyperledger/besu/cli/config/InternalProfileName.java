@@ -26,6 +26,10 @@ import org.apache.commons.lang3.StringUtils;
  * file.
  */
 public enum InternalProfileName {
+  /** The 'PERFORMANCE' profile */
+  PERFORMANCE("profiles/performance.toml"),
+  /** The 'PERFORMANCE_RPC' profile */
+  PERFORMANCE_RPC("profiles/performance-rpc.toml"),
   /** The 'STAKER' profile */
   STAKER("profiles/staker.toml"),
   /** The 'MINIMALIST_STAKER' profile */
