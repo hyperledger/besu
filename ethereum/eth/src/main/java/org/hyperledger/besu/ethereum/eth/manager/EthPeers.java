@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
+import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerClientName;
@@ -139,8 +140,11 @@ public class EthPeers implements PeerSelector {
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.maxMessageSize = maxMessageSize;
-    this.bestPeerComparator =
-        currentProtocolSpecSupplier.get().isPoS() ? CHAIN_HEIGHT : TOTAL_DIFFICULTY_THEN_HEIGHT;
+    if (currentProtocolSpecSupplier.get().isPoS()) {
+      this.bestPeerComparator = CHAIN_HEIGHT;
+    } else {
+      this.bestPeerComparator = TOTAL_DIFFICULTY_THEN_HEIGHT;
+    }
     this.localNodeId = localNodeId;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
