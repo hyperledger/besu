@@ -69,7 +69,7 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
               + CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
               + " (default: ${DEFAULT-VALUE}). Unused if "
               + PRE_MERGE_PRUNING_ENABLED_FLAG
-              + "is enabled")
+              + " is enabled")
   private final Long chainDataPruningBlocksRetained = CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT;
 
   @CommandLine.Option(
