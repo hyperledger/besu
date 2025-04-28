@@ -81,7 +81,7 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
               + ". This flag should be used with caution as reducing the limit may have unintended side effects."
               + " (default: ${DEFAULT-VALUE}). Unused if "
               + PRE_MERGE_PRUNING_ENABLED_FLAG
-              + "is enabled")
+              + " is enabled")
   private final Long chainDataPruningBlocksRetainedLimit =
       CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT;
 
