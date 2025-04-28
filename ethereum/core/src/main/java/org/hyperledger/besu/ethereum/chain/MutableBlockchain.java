@@ -62,9 +62,9 @@ public interface MutableBlockchain extends Blockchain {
   void storeBlock(Block block, List<TransactionReceipt> receipts);
 
   /**
-   * Adds a block header to the blockchain, without updating the chain state.
+   * Store a block header to the blockchain, updating the chain state if necessary.
    *
-   * @param blockHeader The block to append.
+   * @param blockHeader The block header to store.
    */
   void unsafeStoreHeader(
       BlockHeader blockHeader, Difficulty totalDifficulty, boolean updateChainHead);
