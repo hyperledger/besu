@@ -989,6 +989,15 @@ public class DefaultBlockchain implements MutableBlockchain {
         low = mid + 1;
       }
     }
-    return getBlockByNumber(low).map(block -> block.getHeader().getNumber());
+    return getBlockByNumber(low)
+        .map(
+            earliestBlock -> {
+              // if the earliestBlock's parent is genesis, we have the whole chain, return the
+              // genesis number
+              if (earliestBlock.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER + 1) {
+                return BlockHeader.GENESIS_BLOCK_NUMBER;
+              }
+              return earliestBlock.getHeader().getNumber();
+            });
   }
 }
