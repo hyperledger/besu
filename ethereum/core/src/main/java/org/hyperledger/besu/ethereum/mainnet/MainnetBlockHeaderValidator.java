@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ExtraDataMaxL
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.IncrementalTimestampRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.NoBlobRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.NoDifficultyRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.NoNonceRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkValidationRule;
@@ -196,6 +197,10 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new NoNonceRule())
         .addRule(new NoDifficultyRule())
         .addRule(new IncrementalTimestampRule());
+  }
+
+  public static BlockHeaderValidator.Builder noBlobBlockHeaderValidator(final FeeMarket feeMarket) {
+    return mergeBlockHeaderValidator(feeMarket).addRule(new NoBlobRule());
   }
 
   public static BlockHeaderValidator.Builder blobAwareBlockHeaderValidator(
