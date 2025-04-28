@@ -36,20 +36,20 @@ import org.apache.tuweni.bytes.Bytes;
   "to",
   "input",
   "output",
-  "value",
   "error",
   "revertReason",
+  "value",
   "type"
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DebugCallTracerResult implements DebugTracerResult {
   private final String type;
-  private String from;
+  private final String from;
   private final String to;
-  private String value;
+  private final String value;
   private String gas;
   private String gasUsed;
-  private String input;
+  private final String input;
   private String output;
   private String error;
   private String revertReason;
@@ -70,6 +70,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
       this.type = "CALL";
       this.input = payload == null ? "0x" : payload.toHexString();
       this.from = tx.getSender().toHexString();
+      this.value = tx.getValue().toShortHexString();
 
       // check and set revert error and reason
       if (!transactionTrace.getTraceFrames().isEmpty()
@@ -84,6 +85,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
       // set input from init field for smart contract deployment
       this.input = tx.getInit().map(Bytes::toHexString).orElse(null);
       this.from = tx.getSender().toHexString();
+      this.value = tx.getValue().toShortHexString();
     }
 
     // TODO: Other Types???
