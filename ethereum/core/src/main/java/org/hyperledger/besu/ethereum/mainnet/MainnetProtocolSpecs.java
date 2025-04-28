@@ -666,7 +666,7 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .withdrawalsProcessor(new WithdrawalsProcessor())
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::shanghaiHeaderValidator)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::noBlobBlockHeaderValidator)
         .name("Shanghai");
   }
 
@@ -763,7 +763,9 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(
-            fm -> MainnetBlockHeaderValidator.cancunBlockHeaderValidator(fm, cancunGasCalcSupplier))
+            fm ->
+                MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(
+                    fm, cancunGasCalcSupplier))
         .blockHashProcessor(new CancunBlockHashProcessor())
         .name("Cancun");
   }
@@ -916,7 +918,9 @@ public abstract class MainnetProtocolSpecs {
         // blockHeaderValidatorBuilder every time the GasCalculator changes?
         // EIP-7840 blob schedule | EIP-7691 6/9 blob increase
         .blockHeaderValidatorBuilder(
-            fm -> MainnetBlockHeaderValidator.cancunBlockHeaderValidator(fm, pragueGasCalcSupplier))
+            fm ->
+                MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(
+                    fm, pragueGasCalcSupplier))
         // EIP-2935 Blockhash processor
         .blockHashProcessor(new PragueBlockHashProcessor())
         .name("Prague");
@@ -991,7 +995,9 @@ public abstract class MainnetProtocolSpecs {
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .blockHeaderValidatorBuilder(
-            fm -> MainnetBlockHeaderValidator.cancunBlockHeaderValidator(fm, osakaGasCalcSupplier));
+            fm ->
+                MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(
+                    fm, osakaGasCalcSupplier));
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(

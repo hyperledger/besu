@@ -199,11 +199,11 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new IncrementalTimestampRule());
   }
 
-  public static BlockHeaderValidator.Builder shanghaiHeaderValidator(final FeeMarket feeMarket) {
+  public static BlockHeaderValidator.Builder noBlobBlockHeaderValidator(final FeeMarket feeMarket) {
     return mergeBlockHeaderValidator(feeMarket).addRule(new NoBlobRule());
   }
 
-  public static BlockHeaderValidator.Builder cancunBlockHeaderValidator(
+  public static BlockHeaderValidator.Builder blobAwareBlockHeaderValidator(
       final FeeMarket feeMarket, final Supplier<GasCalculator> gasCalculator) {
     return mergeBlockHeaderValidator(feeMarket)
         .addRule(new BlobGasValidationRule(gasCalculator.get()));
