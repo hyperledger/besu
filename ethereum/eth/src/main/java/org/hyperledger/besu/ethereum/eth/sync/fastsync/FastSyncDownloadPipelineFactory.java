@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.FULL;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_DETACHED_ONLY;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.NONE;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.SKIP_DETACHED;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -64,7 +63,6 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   protected final FastSyncValidationPolicy attachedValidationPolicy;
   protected final FastSyncValidationPolicy detachedValidationPolicy;
   protected final FastSyncValidationPolicy ommerValidationPolicy;
-  private final FastSyncValidationPolicy noneHeaderValidationPolicy;
 
   public FastSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
@@ -103,9 +101,6 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             LIGHT_DETACHED_ONLY,
             DETACHED_ONLY,
             fastSyncValidationCounter);
-    noneHeaderValidationPolicy =
-        new FastSyncValidationPolicy(
-            this.syncConfig.getFastSyncFullValidationRate(), NONE, NONE, fastSyncValidationCounter);
   }
 
   @Override
@@ -139,7 +134,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolSchedule,
             protocolContext,
             ethContext,
-            noneHeaderValidationPolicy,
+            detachedValidationPolicy,
             syncConfig,
             headerRequestSize,
             metricsSystem);
@@ -156,8 +151,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new ImportBlocksStep(
             protocolSchedule,
             protocolContext,
-            noneHeaderValidationPolicy,
-            noneHeaderValidationPolicy,
+            attachedValidationPolicy,
+            ommerValidationPolicy,
             ethContext,
             fastSyncState.getPivotBlockHeader().get(),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
