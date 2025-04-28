@@ -28,7 +28,7 @@ import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
-import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.inttest.StubPeerMulticaster;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -88,7 +88,7 @@ public class IbftRoundIntegrationTest {
   @Mock private NodeKey nodeKey;
   private MessageFactory throwingMessageFactory;
   private IbftMessageTransmitter transmitter;
-  @Mock private StubValidatorMulticaster multicaster;
+  @Mock private StubPeerMulticaster multicaster;
   @Mock BlockHeader parentHeader;
 
   private Block proposedBlock;

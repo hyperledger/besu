@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft.inttest;
 
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
@@ -23,11 +23,11 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-public class StubValidatorMulticaster implements ValidatorMulticaster {
+public class StubPeerMulticaster implements PeerMulticaster {
 
   private final List<DefaultValidatorPeer> validatorNodes = Lists.newArrayList();
 
-  public StubValidatorMulticaster() {}
+  public StubPeerMulticaster() {}
 
   public void addNetworkPeers(final Collection<DefaultValidatorPeer> nodes) {
     validatorNodes.addAll(nodes);

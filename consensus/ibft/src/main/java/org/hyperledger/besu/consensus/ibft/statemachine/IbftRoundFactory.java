@@ -103,7 +103,7 @@ public class IbftRoundFactory {
         blockCreatorFactory.create(roundState.getRoundIdentifier().getRoundNumber());
 
     final IbftMessageTransmitter messageTransmitter =
-        new IbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
+        new IbftMessageTransmitter(messageFactory, finalState.getPeerMulticaster());
 
     return new IbftRound(
         roundState,

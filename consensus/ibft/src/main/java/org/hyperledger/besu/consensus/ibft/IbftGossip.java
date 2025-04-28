@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
@@ -33,14 +33,14 @@ import com.google.common.collect.Lists;
 /** Class responsible for rebroadcasting IBFT messages to known validators */
 public class IbftGossip implements Gossiper {
 
-  private final ValidatorMulticaster multicaster;
+  private final PeerMulticaster multicaster;
 
   /**
    * Constructor that attaches gossip logic to a set of multicaster
    *
    * @param multicaster Network connections to the remote validators
    */
-  public IbftGossip(final ValidatorMulticaster multicaster) {
+  public IbftGossip(final PeerMulticaster multicaster) {
     this.multicaster = multicaster;
   }
 

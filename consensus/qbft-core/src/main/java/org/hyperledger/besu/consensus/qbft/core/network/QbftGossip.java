@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.qbft.core.network;
 
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
@@ -34,7 +34,7 @@ import com.google.common.collect.Lists;
 /** Class responsible for rebroadcasting QBFT messages to known validators */
 public class QbftGossip implements Gossiper {
 
-  private final ValidatorMulticaster multicaster;
+  private final PeerMulticaster multicaster;
   private final QbftBlockCodec blockEncoder;
 
   /**
@@ -43,7 +43,7 @@ public class QbftGossip implements Gossiper {
    * @param multicaster Network connections to the remote validators
    * @param blockEncoder the block encoder
    */
-  public QbftGossip(final ValidatorMulticaster multicaster, final QbftBlockCodec blockEncoder) {
+  public QbftGossip(final PeerMulticaster multicaster, final QbftBlockCodec blockEncoder) {
     this.multicaster = multicaster;
     this.blockEncoder = blockEncoder;
   }

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.qbft.core.network;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
@@ -46,7 +46,7 @@ public class QbftMessageTransmitter {
   private static final Logger LOG = LoggerFactory.getLogger(QbftMessageTransmitter.class);
 
   private final MessageFactory messageFactory;
-  private final ValidatorMulticaster multicaster;
+  private final PeerMulticaster multicaster;
 
   /**
    * Instantiates a new Qbft message transmitter.
@@ -55,7 +55,7 @@ public class QbftMessageTransmitter {
    * @param multicaster the multicaster
    */
   public QbftMessageTransmitter(
-      final MessageFactory messageFactory, final ValidatorMulticaster multicaster) {
+      final MessageFactory messageFactory, final PeerMulticaster multicaster) {
     this.messageFactory = messageFactory;
     this.multicaster = multicaster;
   }

@@ -38,7 +38,7 @@ import org.hyperledger.besu.consensus.common.bft.UniqueMessageMulticaster;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorPeers;
+import org.hyperledger.besu.consensus.common.bft.network.Peers;
 import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
@@ -116,7 +116,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   private BftEventQueue bftEventQueue;
   private QbftConfigOptions qbftConfig;
   private ForksSchedule<QbftConfigOptions> qbftForksSchedule;
-  private ValidatorPeers peers;
+  private Peers peers;
   private TransactionValidatorProvider transactionValidatorProvider;
   private BftConfigOptions bftConfigOptions;
   private QbftExtraDataCodec qbftExtraDataCodec;
@@ -234,7 +234,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
-    peers = new ValidatorPeers(validatorProvider, Istanbul100SubProtocol.NAME);
+    // Use Peers instead of ValidatorPeers to allow message relay by non-validators
+    peers = new Peers(Istanbul100SubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, qbftConfig.getGossipedHistoryLimit());

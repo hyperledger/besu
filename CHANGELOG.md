@@ -4,6 +4,7 @@
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
+- Let Non validators gossip QBFT messages [#8562](https://github.com/hyperledger/besu/pull/8562)
 #### Dependencies
 - update jc-kzg-4844 dependency from 2.0.0 to 2.1.1
 ### Bug fixes

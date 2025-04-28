@@ -20,7 +20,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
@@ -39,7 +39,7 @@ public class BftFinalState {
   private final BlockTimer blockTimer;
   private final BftBlockCreatorFactory<?> blockCreatorFactory;
   private final Clock clock;
-  private final ValidatorMulticaster validatorMulticaster;
+  private final PeerMulticaster peerMulticaster;
 
   /**
    * Instantiates a new Bft final state.
@@ -48,7 +48,7 @@ public class BftFinalState {
    * @param nodeKey the node key
    * @param localAddress the local address
    * @param proposerSelector the proposer selector
-   * @param validatorMulticaster the validator multicaster
+   * @param peerMulticaster the peer multicaster
    * @param roundTimer the round timer
    * @param blockTimer the block timer
    * @param blockCreatorFactory the block creator factory
@@ -59,7 +59,7 @@ public class BftFinalState {
       final NodeKey nodeKey,
       final Address localAddress,
       final ProposerSelector proposerSelector,
-      final ValidatorMulticaster validatorMulticaster,
+      final PeerMulticaster peerMulticaster,
       final RoundTimer roundTimer,
       final BlockTimer blockTimer,
       final BftBlockCreatorFactory<?> blockCreatorFactory,
@@ -72,7 +72,7 @@ public class BftFinalState {
     this.blockTimer = blockTimer;
     this.blockCreatorFactory = blockCreatorFactory;
     this.clock = clock;
-    this.validatorMulticaster = validatorMulticaster;
+    this.peerMulticaster = peerMulticaster;
   }
 
   /**
@@ -168,12 +168,12 @@ public class BftFinalState {
   }
 
   /**
-   * Gets validator multicaster.
+   * Gets peer multicaster.
    *
-   * @return the validator multicaster
+   * @return the peer multicaster
    */
-  public ValidatorMulticaster getValidatorMulticaster() {
-    return validatorMulticaster;
+  public PeerMulticaster getPeerMulticaster() {
+    return peerMulticaster;
   }
 
   /**

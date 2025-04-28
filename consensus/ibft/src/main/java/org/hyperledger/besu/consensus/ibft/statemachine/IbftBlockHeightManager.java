@@ -97,8 +97,7 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
     this.parentHeader = parentHeader;
     this.roundFactory = ibftRoundFactory;
     this.blockTimer = finalState.getBlockTimer();
-    this.transmitter =
-        new IbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
+    this.transmitter = new IbftMessageTransmitter(messageFactory, finalState.getPeerMulticaster());
     this.messageFactory = messageFactory;
     this.clock = clock;
     this.roundChangeManager = roundChangeManager;

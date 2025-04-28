@@ -19,7 +19,7 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.network.MockPeerFactory;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.cryptoservices.NodeKey;
@@ -42,13 +42,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class IbftGossipTest {
   private IbftGossip ibftGossip;
-  @Mock private ValidatorMulticaster validatorMulticaster;
+  @Mock private PeerMulticaster peerMulticaster;
   private PeerConnection peerConnection;
   private static final Address senderAddress = AddressHelpers.ofValue(9);
 
   @BeforeEach
   public void setup() {
-    ibftGossip = new IbftGossip(validatorMulticaster);
+    ibftGossip = new IbftGossip(peerMulticaster);
     peerConnection = MockPeerFactory.create(senderAddress);
   }
 
@@ -60,8 +60,7 @@ public class IbftGossipTest {
     final Message message = new DefaultMessage(peerConnection, messageData);
 
     ibftGossip.send(message);
-    verify(validatorMulticaster)
-        .send(messageData, newArrayList(senderAddress, payload.getAuthor()));
+    verify(peerMulticaster).send(messageData, newArrayList(senderAddress, payload.getAuthor()));
   }
 
   @Test

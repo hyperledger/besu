@@ -40,7 +40,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.messagedata.RoundChangeMessageData;
@@ -118,7 +118,7 @@ public class IbftBlockHeightManagerTest {
   @Mock private DefaultBlockchain blockchain;
   @Mock private RoundTimer roundTimer;
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
-  @Mock private ValidatorMulticaster validatorMulticaster;
+  @Mock private PeerMulticaster peerMulticaster;
   @Mock private BlockHeader parentHeader;
 
   @Captor private ArgumentCaptor<MessageData> sentMessageArgCaptor;
@@ -157,7 +157,7 @@ public class IbftBlockHeightManagerTest {
     lenient().when(messageValidator.validatePrepare(any())).thenReturn(true);
     when(finalState.getBlockTimer()).thenReturn(blockTimer);
     lenient().when(finalState.getQuorum()).thenReturn(3);
-    when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
+    when(finalState.getPeerMulticaster()).thenReturn(peerMulticaster);
     lenient()
         .when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
@@ -415,7 +415,7 @@ public class IbftBlockHeightManagerTest {
 
     manager.roundExpired(new RoundExpiry(roundIdentifier));
 
-    verify(validatorMulticaster, times(1)).send(sentMessageArgCaptor.capture());
+    verify(peerMulticaster, times(1)).send(sentMessageArgCaptor.capture());
     final MessageData capturedMessageData = sentMessageArgCaptor.getValue();
 
     assertThat(capturedMessageData).isInstanceOf(RoundChangeMessageData.class);

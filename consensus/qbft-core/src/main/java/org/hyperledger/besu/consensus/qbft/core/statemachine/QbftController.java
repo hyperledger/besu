@@ -196,7 +196,9 @@ public class QbftController implements QbftEventHandler {
 
     if (processMessage(bftMessage, message)) {
       gossiper.send(message);
-      handleMessage.accept(bftMessage);
+      if (finalState.isLocalNodeValidator()) {
+        handleMessage.accept(bftMessage);
+      }
     }
   }
 
@@ -274,7 +276,7 @@ public class QbftController implements QbftEventHandler {
   private boolean processMessage(final BftMessage<?> msg, final Message rawMsg) {
     final ConsensusRoundIdentifier msgRoundIdentifier = msg.getRoundIdentifier();
     if (isMsgForCurrentHeight(msgRoundIdentifier)) {
-      return isMsgFromKnownValidator(msg) && finalState.isLocalNodeValidator();
+      return isMsgFromKnownValidator(msg);
     } else if (isMsgForFutureChainHeight(msgRoundIdentifier)) {
       LOG.trace("Received message for future block height round={}", msgRoundIdentifier);
       futureMessageBuffer.addMessage(msgRoundIdentifier.getSequenceNumber(), rawMsg);
