@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration.DEFAULT_BYTECODE_COUNT_PER_REQUEST;
+
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
@@ -75,11 +77,11 @@ public class SynchronizerOptionsTest
                 .trienodeCountPerRequest(
                     SnapSyncConfiguration.DEFAULT_TRIENODE_COUNT_PER_REQUEST + 2)
                 .storageCountPerRequest(SnapSyncConfiguration.DEFAULT_STORAGE_COUNT_PER_REQUEST + 2)
-                .bytecodeCountPerRequest(
-                    SnapSyncConfiguration.DEFAULT_BYTECODE_COUNT_PER_REQUEST + 2)
+                .bytecodeCountPerRequest(DEFAULT_BYTECODE_COUNT_PER_REQUEST + 2)
                 .isSnapServerEnabled(Boolean.TRUE)
                 .isSnapSyncTransactionIndexingEnabled(Boolean.TRUE)
-                .build());
+                .build())
+        .savePreMergeHeadersOnlyEnabled(false);
   }
 
   @Override

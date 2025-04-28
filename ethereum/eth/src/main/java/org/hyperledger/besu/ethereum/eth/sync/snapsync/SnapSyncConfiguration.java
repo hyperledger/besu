@@ -40,6 +40,7 @@ public class SnapSyncConfiguration {
 
   public static final Boolean DEFAULT_SNAP_SYNC_BFT_ENABLED = Boolean.FALSE;
   public static final Boolean DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED = Boolean.TRUE;
+  public static final Boolean DEFAULT_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED = Boolean.FALSE;
 
   public static SnapSyncConfiguration getDefault() {
     return ImmutableSnapSyncConfiguration.builder().build();
