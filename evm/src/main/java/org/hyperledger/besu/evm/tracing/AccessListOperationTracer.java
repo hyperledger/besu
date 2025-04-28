@@ -26,7 +26,7 @@ import com.google.common.collect.Table;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** The Access List Operation Tracer. */
-public class AccessListOperationTracer extends EstimateGasOperationTracer {
+public class AccessListOperationTracer implements OperationTracer {
 
   private Table<Address, Bytes32, Boolean> warmedUpStorage;
 
@@ -37,7 +37,6 @@ public class AccessListOperationTracer extends EstimateGasOperationTracer {
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
-    super.tracePostExecution(frame, operationResult);
     warmedUpStorage = frame.getWarmedUpStorage();
   }
 
@@ -60,11 +59,6 @@ public class AccessListOperationTracer extends EstimateGasOperationTracer {
       return list;
     }
     return List.of();
-  }
-
-  @Override
-  public int getSubCallExponent() {
-    return 0;
   }
 
   /**

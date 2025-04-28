@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
@@ -206,7 +205,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
       final ProcessableBlockHeader blockHeader,
       final CallParameter callParams,
       final TransactionSimulationFunction simulationFunction,
-      final EstimateGasOperationTracer operationTracer) {
+      final OperationTracer operationTracer) {
 
     // Optimistic simulation - get min transaction cost from GasCalculator
     final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);

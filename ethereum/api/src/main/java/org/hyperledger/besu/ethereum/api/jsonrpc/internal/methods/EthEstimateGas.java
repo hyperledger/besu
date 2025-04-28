@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
 
@@ -38,6 +38,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
   // zero tolerance means there is no tolerance,
   // which means keep looping until the estimate is exact (previous behavior)
   protected double estimateGasToleranceRatio;
+  private static final long CALL_STIPEND = 2_300L;
 
   public EthEstimateGas(
       final BlockchainQueries blockchainQueries,
@@ -59,7 +60,6 @@ public class EthEstimateGas extends AbstractEstimateGas {
       final ProcessableBlockHeader blockHeader,
       final TransactionSimulationFunction simulationFunction) {
 
-    final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
     final long gasLimit = blockHeader.getGasLimit();
     LOG.debug(
         "Processing transaction with tolerance {}; callParams: {}",
@@ -67,7 +67,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
         callParams);
 
     if (attemptOptimisticSimulationWithMinimumBlockGasUsed(
-        blockHeader, callParams, simulationFunction, operationTracer)) {
+        blockHeader, callParams, simulationFunction, OperationTracer.NO_TRACING)) {
       // Optimistic simulation - get gas min from GasCalculator
       final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);
       return Quantity.create(minTxCost);
@@ -75,7 +75,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
 
     final var maybeResult =
         simulationFunction.simulate(
-            overrideGasLimit(callParams, blockHeader.getGasLimit()), operationTracer);
+            overrideGasLimit(callParams, blockHeader.getGasLimit()), OperationTracer.NO_TRACING);
 
     final Optional<JsonRpcErrorResponse> maybeErrorResponse =
         validateSimulationResult(requestContext, maybeResult);
@@ -88,11 +88,11 @@ public class EthEstimateGas extends AbstractEstimateGas {
     long mid;
 
     long low = result.result().getEstimateGasUsedByTransaction() - 1;
-    var optimisticGasLimit = processEstimateGas(result, operationTracer);
+    var optimisticGasLimit = processEstimateGas(result);
 
     final var optimisticResult =
         simulationFunction.simulate(
-            overrideGasLimit(callParams, optimisticGasLimit), operationTracer);
+            overrideGasLimit(callParams, optimisticGasLimit), OperationTracer.NO_TRACING);
 
     if (optimisticResult.isPresent() && optimisticResult.get().isSuccessful()) {
       high = optimisticGasLimit;
@@ -108,7 +108,8 @@ public class EthEstimateGas extends AbstractEstimateGas {
       }
       mid = (low + high) / 2;
       var binarySearchResult =
-          simulationFunction.simulate(overrideGasLimit(callParams, mid), operationTracer);
+          simulationFunction.simulate(
+              overrideGasLimit(callParams, mid), OperationTracer.NO_TRACING);
 
       if (binarySearchResult.isEmpty() || !binarySearchResult.get().isSuccessful()) {
         low = mid;
@@ -138,24 +139,26 @@ public class EthEstimateGas extends AbstractEstimateGas {
   }
 
   /**
-   * Estimate gas by adding minimum gas remaining for some operation and the necessary gas for sub
-   * calls
+   * Estimate gas by adding call stipend and compute the necessary gas for sub calls
    *
    * @param result transaction simulator result
-   * @param operationTracer estimate gas operation tracer
    * @return estimate gas
    */
-  protected long processEstimateGas(
-      final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
+  protected long processEstimateGas(final TransactionSimulatorResult result) {
     final long gasUsedByTransaction = result.result().getEstimateGasUsedByTransaction();
 
     // no more than 64/63 of the remaining gas can be passed to the sub calls
-    final double subCallMultiplier =
-        Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getSubCallExponent());
+    final double subCallMultiplier = Math.pow(SUB_CALL_REMAINING_GAS_RATIO, getSubCallExponent());
 
-    // add additionalStipend
-    final long gasStipend = operationTracer.getCallStipend();
+    return ((long) ((gasUsedByTransaction + CALL_STIPEND) * subCallMultiplier));
+  }
 
-    return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
+  /**
+   * Gets the sub call exponent
+   *
+   * @return the sub call exponent
+   */
+  public int getSubCallExponent() {
+    return 1;
   }
 }
