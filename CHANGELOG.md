@@ -1,8 +1,14 @@
 # Changelog
 ## Unreleased
 ### Breaking Changes
+- Removal of Tessera Privacy feature (as highlighted in previous notices of upcoming breaking changes and [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)) [#8369](https://github.com/hyperledger/besu/pull/8369)
 
 ### Upcoming Breaking Changes
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - Smart-contract-based (onchain) permissioning
+    - Proof of Work consensus
+    - Fast Sync
+
 ### Additions and Improvements
 #### Dependencies
 ### Bug fixes
@@ -12,7 +18,6 @@
 
 ### Breaking Changes
 - `--compatibility-eth64-forkid-enabled` has been removed. [#8541](https://github.com/hyperledger/besu/pull/8541)
-- Removal of Tessera Privacy feature (as highlighted in previous notices of upcoming breaking changes and [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)) [8369](https://github.com/hyperledger/besu/pull/8369)
 
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
@@ -23,6 +28,7 @@
 - `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
 - `--tx-pool-disable-locals` has been deprecated, use `--tx-pool-no-local-priority`, instead.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - Tessera Privacy
     - Smart-contract-based (onchain) permissioning
     - Proof of Work consensus
     - Fast Sync
