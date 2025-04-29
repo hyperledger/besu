@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -52,7 +51,7 @@ class SavePreMergeHeadersStepTest {
     Stream<BlockHeader> nextProcessingStateInput = savePreMergeHeadersStep.apply(blockHeader);
 
     assertEquals(0, nextProcessingStateInput.count());
-    verify(blockchain).unsafeStoreHeader(blockHeader, difficulty, true);
+    verify(blockchain).unsafeStoreHeader(blockHeader, difficulty);
   }
 
   @Test
@@ -62,7 +61,7 @@ class SavePreMergeHeadersStepTest {
     Stream<BlockHeader> nextProcessingStateInput = savePreMergeHeadersStep.apply(blockHeader);
 
     assertEquals(1, nextProcessingStateInput.count());
-    verify(blockchain, never()).unsafeStoreHeader(any(), any(), anyBoolean());
+    verify(blockchain, never()).unsafeStoreHeader(any(), any());
   }
 
   @Test
@@ -74,7 +73,7 @@ class SavePreMergeHeadersStepTest {
     Stream<BlockHeader> nextProcessingStateInput = savePreMergeHeadersStep.apply(blockHeader);
 
     assertEquals(0, nextProcessingStateInput.count());
-    verify(blockchain).unsafeStoreHeader(blockHeader, difficulty, true);
+    verify(blockchain).unsafeStoreHeader(blockHeader, difficulty);
   }
 
   private BlockHeader createMockBlockHeader(final long blockNumber) {

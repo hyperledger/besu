@@ -61,7 +61,7 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
 
   private void storeBlockHeader(final BlockHeader blockHeader) {
     Difficulty difficulty = blockchain.calculateTotalDifficulty(blockHeader);
-    blockchain.unsafeStoreHeader(blockHeader, difficulty, true);
+    blockchain.unsafeStoreHeader(blockHeader, difficulty);
   }
 
   private void logProgress(final BlockHeader blockHeader) {

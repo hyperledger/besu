@@ -439,19 +439,14 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public void unsafeStoreHeader(
-      final BlockHeader blockHeader,
-      final Difficulty totalDifficulty,
-      final boolean updateChainHead) {
+  public void unsafeStoreHeader(final BlockHeader blockHeader, final Difficulty totalDifficulty) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
     updater.putBlockHeader(blockHeader.getHash(), blockHeader);
     updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
     updater.putTotalDifficulty(blockHeader.getHash(), totalDifficulty);
-    if (updateChainHead) {
-      this.chainHeader = blockHeader;
-      this.totalDifficulty = totalDifficulty;
-      updater.setChainHead(blockHeader.getBlockHash());
-    }
+    this.chainHeader = blockHeader;
+    this.totalDifficulty = totalDifficulty;
+    updater.setChainHead(blockHeader.getBlockHash());
     updater.commit();
   }
 

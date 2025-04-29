@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.options;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration.DEFAULT_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration.DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
 
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
@@ -89,8 +89,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
 
-  private static final String SAVE_PRE_MERGE_HEADERS_ONLY_FLAG =
-      "--Xsynchronizer-downloader-pre-merge-headers-only-enabled";
+  private static final String SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG =
+      "--Xsnapsync-synchronizer-downloader-pre-merge-headers-only-enabled";
 
   /**
    * Parse block propagation range.
@@ -339,13 +339,14 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SnapSyncConfiguration.DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
 
   @CommandLine.Option(
-      names = SAVE_PRE_MERGE_HEADERS_ONLY_FLAG,
+      names = SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG,
       paramLabel = "<Boolean>",
       hidden = true,
       arity = "0..1",
       description =
-          "Enable the downloader to save only headers for pre-merge blocks. (default: ${DEFAULT-VALUE})")
-  private Boolean savePreMergeHeadersOnlyEnabled = DEFAULT_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
+          "Snap sync downloader does not store bodies and receipts for blocks created before the merge. (default: ${DEFAULT-VALUE})")
+  private Boolean snapSyncSavePreMergeHeadersOnlyEnabled =
+      DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
 
   private SynchronizerOptions() {}
 
@@ -428,7 +429,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
     options.snapTransactionIndexingEnabled =
         config.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled();
-    options.savePreMergeHeadersOnlyEnabled = config.isSavePreMergeHeadersOnlyEnabled();
+    options.snapSyncSavePreMergeHeadersOnlyEnabled =
+        config.isSnapSyncSavePreMergeHeadersOnlyEnabled();
     return options;
   }
 
@@ -465,7 +467,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
-    builder.savePreMergeHeadersOnlyEnabled(savePreMergeHeadersOnlyEnabled);
+    builder.snapSyncSavePreMergeHeadersOnlyEnabled(snapSyncSavePreMergeHeadersOnlyEnabled);
     return builder;
   }
 
@@ -523,8 +525,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(snapsyncServerEnabled),
             SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
             OptionParser.format(snapTransactionIndexingEnabled),
-            SAVE_PRE_MERGE_HEADERS_ONLY_FLAG,
-            OptionParser.format(savePreMergeHeadersOnlyEnabled));
+            SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG,
+            OptionParser.format(snapSyncSavePreMergeHeadersOnlyEnabled));
     return value;
   }
 }
