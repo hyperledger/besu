@@ -90,7 +90,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
 
   private static final String SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG =
-      "--Xsnapsync-synchronizer-downloader-pre-merge-headers-only-enabled";
+      "--Xsnapsync-synchronizer-pre-merge-headers-only-enabled";
 
   /**
    * Parse block propagation range.
@@ -344,7 +344,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       hidden = true,
       arity = "0..1",
       description =
-          "Snap sync downloader does not store bodies and receipts for blocks created before the merge. (default: ${DEFAULT-VALUE})")
+          "Enable snap sync downloader to save only headers for blocks before the merge. (default: ${DEFAULT-VALUE})")
   private Boolean snapSyncSavePreMergeHeadersOnlyEnabled =
       DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
 
