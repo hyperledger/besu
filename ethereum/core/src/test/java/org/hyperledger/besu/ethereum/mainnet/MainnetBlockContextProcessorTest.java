@@ -27,7 +27,9 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.InvalidSystemCallAddressException;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -111,10 +113,21 @@ public class MainnetBlockContextProcessorTest {
   }
 
   @Test
-  void shouldReturnEmptyWhenContractDoesNotExist() {
+  void shouldThrowExceptionIfSystemCallAddressDoesNotExist() {
     final MutableWorldState worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
-    Bytes actualOutput = processSystemCall(worldState);
-    assertThat(actualOutput).isEqualTo(Bytes.EMPTY);
+    var exception =
+        assertThrows(InvalidSystemCallAddressException.class, () -> processSystemCall(worldState));
+    assertThat(exception.getMessage()).isEqualTo("Invalid system call address: " + CALL_ADDRESS);
+  }
+
+  @Test
+  void shouldThrowExceptionIfSystemCallHasNoCode() {
+    Bytes code = Bytes.EMPTY;
+    final MutableWorldState worldState = createWorldState(CALL_ADDRESS, code);
+    var exception =
+        assertThrows(InvalidSystemCallAddressException.class, () -> processSystemCall(worldState));
+    assertThat(exception.getMessage())
+        .isEqualTo("Invalid system call, no code at address " + CALL_ADDRESS);
   }
 
   Bytes processSystemCall(final MutableWorldState worldState) {
@@ -133,9 +146,14 @@ public class MainnetBlockContextProcessorTest {
   }
 
   private MutableWorldState createWorldState(final Address address) {
+    return createWorldState(address, Bytes.fromHexString("0x00"));
+  }
+
+  private MutableWorldState createWorldState(final Address address, final Bytes code) {
     final MutableWorldState worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
     final WorldUpdater updater = worldState.updater();
-    updater.getOrCreate(address);
+    MutableAccount account = updater.getOrCreate(address);
+    account.setCode(code);
     updater.commit();
     return worldState;
   }
