@@ -148,17 +148,6 @@ public class EthEstimateGas extends AbstractEstimateGas {
     final long gasUsedByTransaction = result.result().getEstimateGasUsedByTransaction();
 
     // no more than 64/63 of the remaining gas can be passed to the sub calls
-    final double subCallMultiplier = Math.pow(SUB_CALL_REMAINING_GAS_RATIO, getSubCallExponent());
-
-    return ((long) ((gasUsedByTransaction + CALL_STIPEND) * subCallMultiplier));
-  }
-
-  /**
-   * Gets the sub call exponent
-   *
-   * @return the sub call exponent
-   */
-  public int getSubCallExponent() {
-    return 1;
+    return ((long) ((gasUsedByTransaction + CALL_STIPEND) * SUB_CALL_REMAINING_GAS_RATIO));
   }
 }
