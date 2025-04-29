@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.SavePreMergeHeadersStep;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +62,25 @@ class SavePreMergeHeadersStepTest {
     Stream<BlockHeader> nextProcessingStateInput = savePreMergeHeadersStep.apply(blockHeader);
 
     assertEquals(1, nextProcessingStateInput.count());
+    verify(blockchain, never()).unsafeStoreHeader(any(), any());
+  }
+
+  @Test
+  void shouldNotSaveIfCheckpointIsGenesisBlock() {
+    savePreMergeHeadersStep =
+        new SavePreMergeHeadersStep(blockchain, BlockHeader.GENESIS_BLOCK_NUMBER);
+
+    BlockHeader block0 = createMockBlockHeader(0);
+    BlockHeader block1 = createMockBlockHeader(1);
+
+    List<BlockHeader> nextProcessingStateInput = savePreMergeHeadersStep.apply(block0).toList();
+    assertEquals(1, nextProcessingStateInput.size());
+    assertEquals(nextProcessingStateInput.getFirst(), block0);
+
+    nextProcessingStateInput = savePreMergeHeadersStep.apply(block1).toList();
+    assertEquals(1, nextProcessingStateInput.size());
+    assertEquals(nextProcessingStateInput.getFirst(), block1);
+
     verify(blockchain, never()).unsafeStoreHeader(any(), any());
   }
 
