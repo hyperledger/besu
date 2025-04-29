@@ -43,15 +43,15 @@ class SavePreMergeHeadersStepTest {
   }
 
   @Test
-  void shouldNotStoreOnlyBlockHeaderWhenMergeBlock() {
+  void shouldSaveFullBlockForMergeBlock() {
     BlockHeader blockHeader = createMockBlockHeader(MERGE_BLOCK_NUMBER);
     Difficulty difficulty = mock(Difficulty.class);
     when(blockchain.calculateTotalDifficulty(blockHeader)).thenReturn(difficulty);
 
     Stream<BlockHeader> nextProcessingStateInput = savePreMergeHeadersStep.apply(blockHeader);
 
-    assertEquals(0, nextProcessingStateInput.count());
-    verify(blockchain).unsafeStoreHeader(blockHeader, difficulty);
+    assertEquals(1, nextProcessingStateInput.count());
+    verify(blockchain, never()).unsafeStoreHeader(blockHeader, difficulty);
   }
 
   @Test

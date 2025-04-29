@@ -43,9 +43,9 @@
       ]
     },
     "checkpoint": {
-      "hash": "0x36fb89fba5b7857cf0ca78b5a9625b4043ff4555dfce9b7bcdcdd758a11eb946",
-      "number":  1735371,
-      "totalDifficulty": "0x3c656d23029ab0"
+      "hash": "0x491ebac1b7f9c0eb426047a495dc577140cb3e09036cd3f7266eda86b635d9fa",
+      "number": 1273020,
+      "totalDifficulty": "0x13DE1653E7D280"
     }
   },
   "alloc":{
