@@ -35,6 +35,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
@@ -70,6 +71,7 @@ import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
+import org.hyperledger.besu.plugin.services.TraceService;
 import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
@@ -89,6 +91,7 @@ import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.TraceServiceImpl;
 import org.hyperledger.besu.services.TransactionPoolServiceImpl;
 import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
@@ -377,6 +380,19 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     @Provides
     @Singleton
+    TraceServiceImpl provideTraceService(
+        final BesuController besuController, final MiningConfiguration miningConfiguration) {
+      return new TraceServiceImpl(
+          new BlockchainQueries(
+              besuController.getProtocolSchedule(),
+              besuController.getProtocolContext().getBlockchain(),
+              besuController.getProtocolContext().getWorldStateArchive(),
+              miningConfiguration),
+          besuController.getProtocolSchedule());
+    }
+
+    @Provides
+    @Singleton
     TransactionPoolConfiguration provideTransactionPoolConfiguration(
         final BesuNode node,
         final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl) {
@@ -520,6 +536,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final MetricsConfiguration metricsConfiguration,
         final MetricCategoryRegistryImpl metricCategoryRegistry,
         final MetricsSystem metricsSystem,
+        final TraceServiceImpl traceService,
         final @Named("ExtraCLIOptions") List<String> extraCLIOptions,
         final @Named("RequestedPlugins") List<String> requestedPlugins) {
       final CommandLine commandLine = new CommandLine(CommandSpec.create());
@@ -539,6 +556,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       metricCategoryRegistry.setMetricsConfiguration(metricsConfiguration);
       besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
       besuPluginContext.addService(MetricsSystem.class, metricsSystem);
+      besuPluginContext.addService(TraceService.class, traceService);
 
       final Path pluginsPath;
       final String pluginDir = System.getProperty("besu.plugins.dir");
