@@ -41,7 +41,7 @@ import picocli.CommandLine;
 /** The preimage subcommand. */
 @CommandLine.Command(
     name = "preimage",
-    description = "import/export has preimage data",
+    description = "import/export hash preimage data",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
     subcommands = {PreimageSubCommand.Export.class, PreimageSubCommand.Import.class})
