@@ -384,7 +384,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
   // fcU calls are synchronous, no need to make volatile
   private long lastFcuInfoLog = System.currentTimeMillis();
-  private static final String logMessage = "FCU({}) | head: {} | finalized: {} | safeBlockHash: {}";
+  private static final String logMessage = "FCU({}) | head: {} | safe: {} | finalized: {}";
 
   private void logForkchoiceUpdatedCall(
       final EngineStatus status, final EngineForkchoiceUpdatedParameter forkChoice) {
@@ -408,8 +408,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         logMessage,
         status.name(),
         forkChoice.getHeadBlockHash().toShortLogString(),
-        forkChoice.getFinalizedBlockHash().toShortLogString(),
-        forkChoice.getSafeBlockHash().toShortLogString());
+        forkChoice.getSafeBlockHash().toShortLogString(),
+        forkChoice.getFinalizedBlockHash().toShortLogString());
   }
 
   private void logAtDebug(
@@ -418,7 +418,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         logMessage,
         status.name(),
         forkChoice.getHeadBlockHash(),
-        forkChoice.getFinalizedBlockHash(),
-        forkChoice.getSafeBlockHash());
+        forkChoice.getSafeBlockHash(),
+        forkChoice.getFinalizedBlockHash());
   }
 }
