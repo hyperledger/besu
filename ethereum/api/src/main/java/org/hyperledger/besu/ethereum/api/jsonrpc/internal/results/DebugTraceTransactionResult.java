@@ -31,7 +31,6 @@ public class DebugTraceTransactionResult<T extends DebugTracerResult> {
 
   public DebugTraceTransactionResult(final TransactionTrace transactionTrace, final T result) {
     this.txHash = transactionTrace.getTransaction().getHash().toHexString();
-    ;
     this.result = result;
   }
 
