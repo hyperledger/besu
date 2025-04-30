@@ -632,7 +632,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
     double mgasPerSec = (timeInS != 0) ? block.getHeader().getGasUsed() / (timeInS * 1_000_000) : 0;
     message.append(
-        "| %d blobs| %s base| %,10d (%5.1f%%) gas used| %01.3fs exec| %6.2f Mgas/s| %2d peers");
+        "| %2d blobs| %s bfee| %,11d (%5.1f%%) gas used| %01.3fs exec| %6.2f Mgas/s| %2d peers");
     messageArgs.addAll(
         List.of(
             blobCount,
