@@ -46,6 +46,8 @@ jobs:
         run: ./gradlew ethereum:referencetests:referenceTestClasses -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: list test files generated
         run: find ethereum/referencetests/build/generated/sources/reference-test -name "*.java" | sort >> filenames.txt
+      - name: list test files written
+        run: find ethereum/referencetests/src/reference-test/java -name "*.java" | sort >> filenames.txt
       - name: Split tests
         run: ./.github/workflows/splitList.sh filenames.txt ${{env.total-runners}}
       - name: echo test file count
