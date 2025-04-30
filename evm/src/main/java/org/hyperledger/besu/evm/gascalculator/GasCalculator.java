@@ -677,4 +677,16 @@ public interface GasCalculator {
    */
   long calculateGasRefund(
       Transaction transaction, MessageFrame initialFrame, long codeDelegationRefund);
+
+  /**
+   * Compute the gas cost for delegated code resolution.
+   *
+   * @param frame the message frame
+   * @param targetAccount the account
+   * @return the gas cost
+   */
+  default long calculateCodeDelegationResolutionGas(
+      final MessageFrame frame, final Account targetAccount) {
+    return 0L;
+  }
 }

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,8 +36,7 @@ public class BlockProcessingResult extends BlockValidationResult {
    * @param yield the outputs of processing a block
    */
   public BlockProcessingResult(final Optional<BlockProcessingOutputs> yield) {
-    this.yield = yield;
-    this.isPartial = false;
+    this(yield, false);
   }
 
   /**
@@ -51,8 +49,7 @@ public class BlockProcessingResult extends BlockValidationResult {
   public BlockProcessingResult(
       final Optional<BlockProcessingOutputs> yield,
       final Optional<Integer> nbParallelizedTransactions) {
-    this.yield = yield;
-    this.isPartial = false;
+    this(yield, false);
     this.nbParallelizedTransactions = nbParallelizedTransactions;
   }
 
@@ -76,9 +73,7 @@ public class BlockProcessingResult extends BlockValidationResult {
    */
   public BlockProcessingResult(
       final Optional<BlockProcessingOutputs> yield, final String errorMessage) {
-    super(errorMessage);
-    this.yield = yield;
-    this.isPartial = false;
+    this(yield, errorMessage, false);
   }
 
   /**
@@ -145,11 +140,7 @@ public class BlockProcessingResult extends BlockValidationResult {
    * @return the transaction receipts of the result
    */
   public List<TransactionReceipt> getReceipts() {
-    if (yield.isEmpty()) {
-      return new ArrayList<>();
-    } else {
-      return yield.get().getReceipts();
-    }
+    return yield.map(BlockProcessingOutputs::getReceipts).orElse(List.of());
   }
 
   /**
