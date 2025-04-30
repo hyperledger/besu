@@ -139,7 +139,6 @@ public class ChainDataPruner implements BlockAddedObserver {
           updater.commit();
           prunerStorage.setPruningMark(pruningTransaction, expectedNewPruningMark);
           pruningTransaction.commit();
-          System.gc();
           LOG.info("Pruned blocks {} to {}", storedPruningMark, expectedNewPruningMark);
           if (expectedNewPruningMark == mergeBlock) {
             LOG.info(
