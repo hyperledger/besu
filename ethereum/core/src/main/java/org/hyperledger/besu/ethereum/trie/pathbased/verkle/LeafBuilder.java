@@ -18,9 +18,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyFactory;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
-import org.hyperledger.besu.ethereum.trie.verkle.util.SuffixTreeEncoder;
+import org.hyperledger.besu.ethereum.stateless.adapter.TrieKeyFactory;
+import org.hyperledger.besu.ethereum.stateless.adapter.TrieKeyUtils;
+import org.hyperledger.besu.ethereum.stateless.util.SuffixTreeEncoder;
 
 import java.util.HashMap;
 import java.util.HashSet;

@@ -60,7 +60,7 @@ dependencies {
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
 
-  implementation 'org.hyperledger.besu:besu-verkle-trie'
+  implementation 'org.hyperledger.besu:besu-stateless'
 
   implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'io.consensys.tuweni:tuweni-concurrent'

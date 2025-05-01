@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BASIC_DATA_LEAF_KEY;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_HASH_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.stateless.util.Parameters.BASIC_DATA_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.stateless.util.Parameters.CODE_HASH_LEAF_KEY;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
 import org.hyperledger.besu.datatypes.AccessWitness;
