@@ -18,7 +18,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -46,7 +45,7 @@ public abstract class AbstractJsonRpcAuthenticationAcceptanceTest extends Accept
           + "c2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.pWXniN6XQ7G8b1nawy8sviPCMxrfbcI6c7UFzeXm26CMGMUEZxiC"
           + "JjRntB8ueuZcsxnGlEhCHt-KngpFEmx5TA";
 
-  protected static final List<String> NO_AUTH_API_METHODS = Arrays.asList("net_services");
+  protected static final List<String> NO_AUTH_API_METHODS = List.of("net_services");
 
   @Test
   public void shouldFailLoginWithWrongCredentials() {

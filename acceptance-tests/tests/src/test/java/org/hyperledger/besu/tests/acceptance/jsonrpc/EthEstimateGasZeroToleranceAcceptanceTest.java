@@ -30,19 +30,21 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
+public class EthEstimateGasZeroToleranceAcceptanceTest extends AcceptanceTestBase {
 
   final List<SimpleEntry<Integer, Long>> testCase = new ArrayList<>();
 
   @Test
   public void estimateGasWithDelegateCall() throws Exception {
-    // there's only one test method so setup is in here
+    // there's only one test method so it's more efficient to have the setup in here
     final BesuNode node =
-        besu.createMinerNode(
+        besu.createMinerNodeWithExtraCliOptions(
             "node1",
             b ->
                 b.genesisConfigProvider(GenesisConfigurationFactory::createDevLondonGenesisConfig)
-                    .devMode(false));
+                    .devMode(false),
+            List.of("--estimate-gas-tolerance-ratio=0.0"));
+
     cluster.start(node);
     final TestDepth testDepth =
         node.execute(contractTransactions.createSmartContract(TestDepth.class));
@@ -70,23 +72,23 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
 
       assertThat(ethCall.isReverted()).isEqualTo(false);
 
-      // With the ESTIMATE_GAS_TOLERANCE_RATIO there is now a bit of a difference,
-      // and it's proportional to the size of the estimate.
-      // Subtracting 10% should make the eth_call fail
-      BigInteger amountToSubtract = estimateGas.getAmountUsed().divide(BigInteger.valueOf(10));
-      BigInteger gasTooLow = estimateGas.getAmountUsed().subtract(amountToSubtract);
-      // Sanity check our estimate is close by sending eth_call with less than that gas estimate
+      // Zero tolerance means the estimate is right on the edge with eth_call
       var ethCallTooLow =
           node.execute(
-              new EthCallTransaction(testDepth.getContractAddress(), functionCall, gasTooLow));
+              new EthCallTransaction(
+                  testDepth.getContractAddress(),
+                  functionCall,
+                  estimateGas.getAmountUsed().subtract(BigInteger.ONE)));
 
       assertThat(ethCallTooLow.isReverted()).isEqualTo(true);
 
-      // Sanity check our estimate is close with eth_sendRawTransaction
+      // Zero tolerance means the estimate is right on the edge with eth_sendRawTransaction
       var transactionTooLow =
           node.execute(
               contractTransactions.callSmartContract(
-                  testDepth.getContractAddress(), functionCall, gasTooLow));
+                  testDepth.getContractAddress(),
+                  functionCall,
+                  estimateGas.getAmountUsed().subtract(BigInteger.ONE)));
 
       node.verify(eth.expectSuccessfulTransactionReceipt(transactionTooLow.getTransactionHash()));
 

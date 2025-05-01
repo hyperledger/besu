@@ -147,6 +147,7 @@ rpc-ws-ssl-trustcert-file="none.pfx"
 api-gas-price-blocks=100
 api-gas-price-percentile=50.0
 api-gas-price-max=500000000000
+estimate-gas-tolerance-ratio=0.02
 
 # Prometheus Metrics Endpoint
 metrics-enabled=false
