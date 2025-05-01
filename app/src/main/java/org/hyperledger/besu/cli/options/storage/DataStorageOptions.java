@@ -61,8 +61,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
   @CommandLine.Option(
       names = {HASH_STORE_PREIMAGE_ENABLED},
-      description =
-          "Whether to enable preimage storage. (default: ${DEFAULT-VALUE}).",
+      description = "Whether to enable preimage storage. (default: ${DEFAULT-VALUE}).",
       arity = "1")
   private Boolean hashStorePreimagesEnabled = DEFAULT_HASH_PREIMAGE_STORAGE_ENABLED;
 
