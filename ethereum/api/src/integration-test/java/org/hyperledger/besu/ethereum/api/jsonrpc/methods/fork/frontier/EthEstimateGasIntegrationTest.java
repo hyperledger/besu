@@ -103,7 +103,7 @@ public class EthEstimateGasIntegrationTest {
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter);
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x1b551");
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x1b954");
 
     final JsonRpcResponse response = method.response(request);
 
@@ -124,7 +124,7 @@ public class EthEstimateGasIntegrationTest {
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter);
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x1b551");
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x1b954");
 
     final JsonRpcResponse response = method.response(request);
 
