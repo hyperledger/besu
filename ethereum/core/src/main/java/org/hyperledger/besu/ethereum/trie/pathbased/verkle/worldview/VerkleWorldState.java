@@ -201,6 +201,11 @@ public class VerkleWorldState extends PathBasedWorldState {
         verkleUpdater ->
             stateTrie.commit(
                 (location, hash, value) -> {
+                  if (value == null) {
+                    removeTrieNode(
+                        TRIE_BRANCH_STORAGE, verkleUpdater.getWorldStateTransaction(), location);
+                    return;
+                  }
                   writeTrieNode(
                       TRIE_BRANCH_STORAGE,
                       verkleUpdater.getWorldStateTransaction(),
@@ -448,6 +453,13 @@ public class VerkleWorldState extends PathBasedWorldState {
       final Bytes location,
       final Bytes value) {
     tx.put(segmentId, location.toArrayUnsafe(), value.toArrayUnsafe());
+  }
+
+  protected void removeTrieNode(
+      final SegmentIdentifier segmentId,
+      final SegmentedKeyValueStorageTransaction tx,
+      final Bytes location) {
+    tx.remove(segmentId, location.toArrayUnsafe());
   }
 
   protected Hash hashAndSavePreImage(final Bytes value) {
