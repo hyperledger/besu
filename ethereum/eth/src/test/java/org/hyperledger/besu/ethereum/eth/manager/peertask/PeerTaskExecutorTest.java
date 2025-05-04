@@ -308,6 +308,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(peerTask.getRetriesWithOtherPeer()).thenReturn(2);
     Mockito.when(peerTask.getRetriesWithSamePeer()).thenReturn(0);
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
+    Mockito.when(subprotocol.getName()).thenReturn(protocolName);
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenThrow(new TimeoutException());
     Mockito.when(requestMessageData.getCode()).thenReturn(requestMessageDataCode);
