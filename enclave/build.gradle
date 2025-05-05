@@ -1,3 +1,16 @@
+jar {
+  archiveBaseName = calculateArtifactId(project)
+  manifest {
+    attributes(
+            'Specification-Title': archiveBaseName,
+            'Specification-Version': project.version,
+            'Implementation-Title': archiveBaseName,
+            'Implementation-Version': calculateVersion(),
+            'Commit-Hash': getGitCommitDetails(40).hash
+    )
+  }
+}
+
 dependencies {
   api project(':util')
   api project(':crypto:algorithms')

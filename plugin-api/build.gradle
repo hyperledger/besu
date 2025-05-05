@@ -15,7 +15,7 @@ import java.security.MessageDigest
 
 apply plugin: 'java-library'
 jar {
-  archiveBaseName = 'plugin-api'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,

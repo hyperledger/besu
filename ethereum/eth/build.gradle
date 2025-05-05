@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-eth'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -30,7 +30,7 @@ jar {
 
 configurations { testArtifacts }
 task testJar(type: Jar) {
-  archiveBaseName = "${project.name}-test"
+  archiveBaseName = calculateArtifactId(project)+ '-test'
   from sourceSets.test.output
 }
 

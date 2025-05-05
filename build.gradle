@@ -455,7 +455,7 @@ task checkMavenCoordinateCollisions {
           if (coordinate.toString().startsWith("org") && coordinates.containsKey(coordinate)) {
             throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
             "both ${coordinates[coordinate]} and ${it.path}.\n" +
-            "Please add a `publishing` script block to one or both subprojects.")
+            "Prefer automatic artifactId creation or if not possible disambiguate manually.")
           }
           coordinates[coordinate] = it.path
         }
@@ -486,7 +486,7 @@ subprojects {
     dependencies { testImplementation sourceSets.testSupport.output }
 
     task testSupportJar(type: Jar) {
-      archiveBaseName = "${project.name}-support-test"
+      archiveBaseName = calculateArtifactId(project) + '-support-test'
       archiveClassifier = 'test-support'
       from sourceSets.testSupport.output
     }
@@ -540,6 +540,7 @@ subprojects {
       publications {
         mavenJava(MavenPublication) {
           groupId "org.hyperledger.besu.internal"
+          artifactId calculateArtifactId(project)
           version "${project.version}"
           if (sourceSetIsPopulated("main")) {
             from components.java
@@ -1006,6 +1007,17 @@ def calculateVersion() {
     def gitDetails = getGitCommitDetails(7) // Adjust length as needed
     return "${gitDetails.date}-develop-${gitDetails.hash}"
   }
+}
+
+def calculateArtifactId(configuringProject) {
+  def currentProject = configuringProject
+  def projectNames = []
+  do {
+    projectNames << currentProject.name
+    currentProject = currentProject.getParent()
+  } while( currentProject != null)
+
+    return projectNames.reverse().join('-')
 }
 
 def getGitCommitDetails(length = 8) {
