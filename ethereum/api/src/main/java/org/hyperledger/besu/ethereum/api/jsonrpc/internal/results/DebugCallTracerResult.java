@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
@@ -328,7 +328,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
    * Interface to allow updating of the 'to' field which is final. This is a workaround since we
    * need to update the contract address after creation.
    */
-  @JsonIgnore
+  @JsonIgnoreType
   private interface DebugCallTracerResultAccessor {
     void updateToAddress(String address);
   }
@@ -393,7 +393,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
   }
 
   /** Helper class to track call stack entries for resolving returns. */
-  @JsonIgnore
+  @JsonIgnoreType
   private static class CallStackEntry {
     private final int startFrameIndex;
     private final int depth;
