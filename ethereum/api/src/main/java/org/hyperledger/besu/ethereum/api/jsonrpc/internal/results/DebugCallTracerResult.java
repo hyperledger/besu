@@ -21,10 +21,10 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -141,7 +141,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
     callsByDepth.put(0, this);
 
     // Track call stack for resolving returns
-    Deque<CallStackEntry> callStack = new LinkedList<>();
+    Deque<CallStackEntry> callStack = new ArrayDeque<>();
 
     for (int i = 0; i < frames.size(); i++) {
       final TraceFrame frame = frames.get(i);
