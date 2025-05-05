@@ -128,9 +128,6 @@ import org.slf4j.LoggerFactory;
 public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
-  private static final long MAINNET_MERGE_BLOCK_NUMBER = 15_537_393;
-  private static final long SEPOLIA_MERGE_BLOCK_NUMBER = 1_735_371;
-
   /** The genesis file */
   protected GenesisConfig genesisConfig;
 
@@ -1191,11 +1188,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         new ChainDataPrunerStorage(
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
-        switch (network) {
-          case MAINNET -> MAINNET_MERGE_BLOCK_NUMBER;
-          case SEPOLIA -> SEPOLIA_MERGE_BLOCK_NUMBER;
-          default -> 0;
-        },
+        network.getMergeBlockNumber().orElse(0),
         chainPrunerConfiguration.chainPruningEnabled()
             ? ChainDataPruner.Mode.CHAIN_PRUNING
             : (chainPrunerConfiguration.preMergePruningEnabled()
