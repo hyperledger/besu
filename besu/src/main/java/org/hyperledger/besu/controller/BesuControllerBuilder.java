@@ -1198,7 +1198,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         chainPrunerConfiguration.blocksFrequency(),
         chainPrunerConfiguration.preMergePruningBlocksQuantity(),
         MonitoredExecutors.newBoundedThreadPool(
-            ChainDataPruner.class.getSimpleName(),
+            EthScheduler.class.getSimpleName() + "-ChainDataPruner",
             1,
             1,
             ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
