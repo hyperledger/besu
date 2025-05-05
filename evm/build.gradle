@@ -18,7 +18,7 @@ apply plugin: 'java-library'
 apply plugin: 'idea'
 
 jar {
-  archiveBaseName = 'besu-evm'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
