@@ -96,6 +96,13 @@ public class GenesisConfigurationFactory {
         validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
   }
 
+  public static Optional<String> createQbftLondonGenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/qbft/qbft-london.json");
+    return updateGenesisExtraData(
+        validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
+  }
+
   public static Optional<String> createQbftMigrationGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
     final String template = readGenesisFile("/qbft/migration-ibft1/qbft-migration.json");

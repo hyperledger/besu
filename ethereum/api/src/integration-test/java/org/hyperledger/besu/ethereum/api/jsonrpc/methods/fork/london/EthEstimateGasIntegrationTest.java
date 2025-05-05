@@ -34,10 +34,10 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -56,7 +56,7 @@ public class EthEstimateGasIntegrationTest {
   @BeforeAll
   public static void setUpOnce() throws Exception {
     final String genesisJson =
-        Resources.toString(BlockTestUtil.getTestLondonGenesisUrl(), Charsets.UTF_8);
+        Resources.toString(BlockTestUtil.getTestLondonGenesisUrl(), StandardCharsets.UTF_8);
 
     BLOCKCHAIN =
         new JsonRpcTestMethodsFactory(
@@ -94,7 +94,7 @@ public class EthEstimateGasIntegrationTest {
             .build();
 
     final JsonRpcResponse response = method.response(requestWithParams(callParameter));
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x62d4");
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x6429");
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
@@ -109,7 +109,7 @@ public class EthEstimateGasIntegrationTest {
             .build();
 
     final JsonRpcResponse response = method.response(requestWithParams(callParameter));
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x1f081");
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x1f4c0");
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
@@ -126,7 +126,7 @@ public class EthEstimateGasIntegrationTest {
             .build();
 
     final JsonRpcResponse response = method.response(requestWithParams(callParameter));
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x2014d");
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x2059d");
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 

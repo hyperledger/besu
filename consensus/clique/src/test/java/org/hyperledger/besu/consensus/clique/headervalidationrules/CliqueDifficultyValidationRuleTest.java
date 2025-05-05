@@ -28,7 +28,6 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -60,7 +59,8 @@ public class CliqueDifficultyValidationRuleTest {
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     CliqueHelpers.setCliqueContext(cliqueContext);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
+    cliqueProtocolContext =
+        new ProtocolContext.Builder().withConsensusContext(cliqueContext).build();
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 

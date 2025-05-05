@@ -28,7 +28,8 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -400,7 +401,10 @@ public class EthServerTest {
   private int calculateRlpEncodedSize(final List<TransactionReceipt> receipts) {
     final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
     rlp.startList();
-    receipts.forEach(r -> TransactionReceiptEncoder.writeToForNetwork(r, rlp));
+    receipts.forEach(
+        r ->
+            TransactionReceiptEncoder.writeTo(
+                r, rlp, TransactionReceiptEncodingConfiguration.NETWORK));
     rlp.endList();
     return rlp.encodedSize();
   }

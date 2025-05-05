@@ -28,12 +28,11 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
@@ -71,6 +70,7 @@ import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -80,6 +80,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -89,6 +90,8 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonArray;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Provides the various {@link ProtocolSpec}s on mainnet hard forks. */
 public abstract class MainnetProtocolSpecs {
@@ -110,6 +113,8 @@ public abstract class MainnetProtocolSpecs {
   private static final Wei BYZANTIUM_BLOCK_REWARD = Wei.fromEth(3);
 
   private static final Wei CONSTANTINOPLE_BLOCK_REWARD = Wei.fromEth(2);
+
+  private static final Logger LOG = LoggerFactory.getLogger(MainnetProtocolSpecs.class);
 
   private MainnetProtocolSpecs() {}
 
@@ -666,6 +671,7 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .withdrawalsProcessor(new WithdrawalsProcessor())
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::noBlobBlockHeaderValidator)
         .name("Shanghai");
   }
 
@@ -744,9 +750,6 @@ public abstract class MainnetProtocolSpecs {
                     .maxStackSize(evmConfiguration.evmStackSize())
                     .feeMarket(feeMarket)
                     .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
-                    .codeDelegationProcessor(
-                        new CodeDelegationProcessor(
-                            chainId, SIGNATURE_ALGORITHM.get().getHalfCurveOrder()))
                     .build())
         // change to check for max blob gas per block for EIP-4844
         .transactionValidatorFactoryBuilder(
@@ -815,9 +818,6 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
-    RequestContractAddresses requestContractAddresses =
-        RequestContractAddresses.fromGenesis(genesisConfigOptions);
-
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
     final var pragueBlobSchedule =
         genesisConfigOptions
@@ -844,65 +844,101 @@ public abstract class MainnetProtocolSpecs {
               pragueBlobSchedule.getBaseFeeUpdateFraction());
     }
 
-    return cancunDefinition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            metricsSystem)
-        .feeMarket(pragueFeeMarket)
-        .gasCalculator(pragueGasCalcSupplier)
-        // EIP-7840 Blob schedule | EIP-7691 6/9 blob increase
-        .gasLimitCalculatorBuilder(
-            feeMarket ->
-                new PragueTargetingGasLimitCalculator(
-                    londonForkBlockNumber,
-                    (BaseFeeMarket) feeMarket,
-                    pragueGasCalcSupplier.get(),
-                    pragueBlobSchedule.getMax()))
-        // EIP-3074 AUTH and AUTHCALL
-        .evmBuilder(
-            (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.prague(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+    ProtocolSpecBuilder pragueSpecBuilder =
+        cancunDefinition(
+                chainId,
+                enableRevertReason,
+                genesisConfigOptions,
+                evmConfiguration,
+                miningConfiguration,
+                isParallelTxProcessingEnabled,
+                metricsSystem)
+            .feeMarket(pragueFeeMarket)
+            .gasCalculator(pragueGasCalcSupplier)
+            // EIP-7840 Blob schedule | EIP-7691 6/9 blob increase
+            .gasLimitCalculatorBuilder(
+                feeMarket ->
+                    new PragueTargetingGasLimitCalculator(
+                        londonForkBlockNumber,
+                        (BaseFeeMarket) feeMarket,
+                        pragueGasCalcSupplier.get(),
+                        pragueBlobSchedule.getMax()))
+            // EIP-3074 AUTH and AUTHCALL
+            .evmBuilder(
+                (gasCalculator, jdCacheConfig) ->
+                    MainnetEVMs.prague(
+                        gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
 
-        // EIP-2537 BLS12-381 precompiles
-        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
+            // EIP-2537 BLS12-381 precompiles
+            .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
 
-        // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
-        .requestsValidator(new MainnetRequestsValidator())
-        // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
-        .requestProcessorCoordinator(pragueRequestsProcessors(requestContractAddresses))
-        // change to accept EIP-7702 transactions
-        .transactionValidatorFactoryBuilder(
-            (evm, gasLimitCalculator, feeMarket) ->
-                new TransactionValidatorFactory(
-                    evm.getGasCalculator(),
-                    gasLimitCalculator,
+            // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
+            .requestsValidator(new MainnetRequestsValidator())
+            // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
+            //
+            // change to accept EIP-7702 transactions
+            .transactionValidatorFactoryBuilder(
+                (evm, gasLimitCalculator, feeMarket) ->
+                    new TransactionValidatorFactory(
+                        evm.getGasCalculator(),
+                        gasLimitCalculator,
+                        feeMarket,
+                        true,
+                        chainId,
+                        Set.of(
+                            TransactionType.FRONTIER,
+                            TransactionType.ACCESS_LIST,
+                            TransactionType.EIP1559,
+                            TransactionType.BLOB,
+                            TransactionType.DELEGATE_CODE),
+                        evm.getMaxInitcodeSize()))
+            // CodeDelegationProcessor
+            .transactionProcessorBuilder(
+                (gasCalculator,
                     feeMarket,
-                    true,
-                    chainId,
-                    Set.of(
-                        TransactionType.FRONTIER,
-                        TransactionType.ACCESS_LIST,
-                        TransactionType.EIP1559,
-                        TransactionType.BLOB,
-                        TransactionType.DELEGATE_CODE),
-                    evm.getMaxInitcodeSize()))
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor) ->
+                    MainnetTransactionProcessor.builder()
+                        .gasCalculator(gasCalculator)
+                        .transactionValidatorFactory(transactionValidator)
+                        .contractCreationProcessor(contractCreationProcessor)
+                        .messageCallProcessor(messageCallProcessor)
+                        .clearEmptyAccounts(true)
+                        .warmCoinbase(true)
+                        .maxStackSize(evmConfiguration.evmStackSize())
+                        .feeMarket(feeMarket)
+                        .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
+                        .codeDelegationProcessor(
+                            new CodeDelegationProcessor(
+                                chainId,
+                                SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+                                new CodeDelegationService()))
+                        .build())
 
-        // TODO SLD EIP-7840 Can we dynamically wire in the appropriate GasCalculator instead of
-        // overriding
-        // blockHeaderValidatorBuilder every time the GasCalculator changes?
-        // EIP-7840 blob schedule | EIP-7691 6/9 blob increase
-        .blockHeaderValidatorBuilder(
-            fm ->
-                MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(
-                    fm, pragueGasCalcSupplier))
-        // EIP-2935 Blockhash processor
-        .blockHashProcessor(new PragueBlockHashProcessor())
-        .name("Prague");
+            // TODO SLD EIP-7840 Can we dynamically wire in the appropriate GasCalculator instead of
+            // overriding
+            // blockHeaderValidatorBuilder every time the GasCalculator changes?
+            // EIP-7840 blob schedule | EIP-7691 6/9 blob increase
+            .blockHeaderValidatorBuilder(
+                fm ->
+                    MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(
+                        fm, pragueGasCalcSupplier))
+            // EIP-2935 Blockhash processor
+            .blockHashProcessor(new PragueBlockHashProcessor())
+            .name("Prague");
+    try {
+      RequestContractAddresses requestContractAddresses =
+          RequestContractAddresses.fromGenesis(genesisConfigOptions);
+
+      pragueSpecBuilder.requestProcessorCoordinator(
+          pragueRequestsProcessors(requestContractAddresses));
+    } catch (NoSuchElementException nsee) {
+      LOG.warn("Prague definitions require system contract addresses in genesis");
+      throw nsee;
+    }
+
+    return pragueSpecBuilder;
   }
 
   static ProtocolSpecBuilder osakaDefinition(
@@ -1104,21 +1140,32 @@ public abstract class MainnetProtocolSpecs {
         final ProtocolContext protocolContext,
         final Blockchain blockchain,
         final MutableWorldState worldState,
-        final BlockHeader blockHeader,
-        final List<Transaction> transactions,
-        final List<BlockHeader> ommers,
-        final Optional<List<Withdrawal>> withdrawals,
-        final PrivateMetadataUpdater privateMetadataUpdater) {
+        final Block block) {
+      return processBlock(
+          protocolContext,
+          blockchain,
+          worldState,
+          block,
+          Optional.empty(),
+          new AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing());
+    }
+
+    @Override
+    public BlockProcessingResult processBlock(
+        final ProtocolContext protocolContext,
+        final Blockchain blockchain,
+        final MutableWorldState worldState,
+        final Block block,
+        final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
+        final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
           protocolContext,
           blockchain,
           worldState,
-          blockHeader,
-          transactions,
-          ommers,
-          withdrawals,
-          privateMetadataUpdater);
+          block,
+          privateMetadataUpdater,
+          preprocessingBlockFunction);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

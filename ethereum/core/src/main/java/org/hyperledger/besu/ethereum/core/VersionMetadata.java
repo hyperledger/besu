@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.util.BesuVersionUtils;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -44,9 +46,9 @@ public class VersionMetadata implements Comparable<VersionMetadata> {
    * @return the version of Besu
    */
   public static String getRuntimeVersionString() {
-    return VersionMetadata.class.getPackage().getImplementationVersion() == null
+    return BesuVersionUtils.shortVersion() == null
         ? BESU_VERSION_UNKNOWN
-        : VersionMetadata.class.getPackage().getImplementationVersion();
+        : BesuVersionUtils.shortVersion();
   }
 
   public static VersionMetadata getRuntimeVersion() {

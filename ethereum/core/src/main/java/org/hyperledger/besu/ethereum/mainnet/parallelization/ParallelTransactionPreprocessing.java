@@ -45,7 +45,7 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
   @Override
   public Optional<PreprocessingContext> run(
       final ProtocolContext protocolContext,
-      final PrivateMetadataUpdater privateMetadataUpdater,
+      final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final Address miningBeneficiary,
