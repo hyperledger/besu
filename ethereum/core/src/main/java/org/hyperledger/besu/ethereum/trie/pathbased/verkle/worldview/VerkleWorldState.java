@@ -20,6 +20,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.stateless.adapter.TrieKeyFactory;
+import org.hyperledger.besu.ethereum.stateless.adapter.TrieKeyUtils;
+import org.hyperledger.besu.ethereum.stateless.hasher.StemHasher;
+import org.hyperledger.besu.ethereum.stateless.util.Parameters;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
@@ -36,10 +40,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.verkle.cache.preloader.StemP
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.cache.preloader.VerklePreloader;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.storage.VerkleLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.storage.VerkleWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyFactory;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.StemHasher;
-import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 import org.hyperledger.besu.ethereum.verkletrie.VerkleTrie;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -201,6 +201,11 @@ public class VerkleWorldState extends PathBasedWorldState {
         verkleUpdater ->
             stateTrie.commit(
                 (location, hash, value) -> {
+                  if (value == null) {
+                    removeTrieNode(
+                        TRIE_BRANCH_STORAGE, verkleUpdater.getWorldStateTransaction(), location);
+                    return;
+                  }
                   writeTrieNode(
                       TRIE_BRANCH_STORAGE,
                       verkleUpdater.getWorldStateTransaction(),
@@ -448,6 +453,13 @@ public class VerkleWorldState extends PathBasedWorldState {
       final Bytes location,
       final Bytes value) {
     tx.put(segmentId, location.toArrayUnsafe(), value.toArrayUnsafe());
+  }
+
+  protected void removeTrieNode(
+      final SegmentIdentifier segmentId,
+      final SegmentedKeyValueStorageTransaction tx,
+      final Bytes location) {
+    tx.remove(segmentId, location.toArrayUnsafe());
   }
 
   protected Hash hashAndSavePreImage(final Bytes value) {

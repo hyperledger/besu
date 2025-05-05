@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.trie.pathbased.verkle.cache.preloader;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.Hasher;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.StemHasher;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.builder.StemHasherBuilder;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.cache.InMemoryCacheStrategy;
+import org.hyperledger.besu.ethereum.stateless.adapter.TrieKeyUtils;
+import org.hyperledger.besu.ethereum.stateless.hasher.Hasher;
+import org.hyperledger.besu.ethereum.stateless.hasher.StemHasher;
+import org.hyperledger.besu.ethereum.stateless.hasher.builder.StemHasherBuilder;
+import org.hyperledger.besu.ethereum.stateless.hasher.cache.InMemoryCacheStrategy;
 
 import java.util.List;
 import java.util.Map;

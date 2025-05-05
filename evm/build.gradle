@@ -44,7 +44,7 @@ dependencies {
   implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:arithmetic'
-  implementation 'org.hyperledger.besu:besu-verkle-trie'
+  implementation 'org.hyperledger.besu:besu-stateless'
   implementation'org.hyperledger.besu:gnark'
   implementation 'io.consensys.protocols:jc-kzg-4844'
 
