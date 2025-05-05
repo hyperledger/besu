@@ -16,15 +16,18 @@ package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.util.log.LogUtil;
 
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ChainDataPruner implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(ChainDataPruner.class);
+  private static final int LOG_PRE_MERGE_PRUNING_PROGRESS_REPEAT_DELAY = 300;
 
   public static final int MAX_PRUNING_THREAD_QUEUE_SIZE = 16;
 
@@ -37,6 +40,7 @@ public class ChainDataPruner implements BlockAddedObserver {
   private final long pruningFrequency;
   private final long pruningQuantity;
   private final ExecutorService pruningExecutor;
+  private final AtomicBoolean logPreMergePruningProgress = new AtomicBoolean(true);
 
   public ChainDataPruner(
       final BlockchainStorage blockchainStorage,
@@ -139,7 +143,10 @@ public class ChainDataPruner implements BlockAddedObserver {
           updater.commit();
           prunerStorage.setPruningMark(pruningTransaction, expectedNewPruningMark);
           pruningTransaction.commit();
-          LOG.info("Pruned blocks {} to {}", storedPruningMark, expectedNewPruningMark);
+          LogUtil.throttledLog(
+              () -> LOG.info("Pruned pre-merge blocks up to {}", expectedNewPruningMark),
+              logPreMergePruningProgress,
+              LOG_PRE_MERGE_PRUNING_PROGRESS_REPEAT_DELAY);
           if (expectedNewPruningMark == mergeBlock) {
             LOG.info(
                 "Done pruning pre-merge blocks. Unsubscribing from block added event observation");
