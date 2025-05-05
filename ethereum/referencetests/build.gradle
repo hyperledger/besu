@@ -13,6 +13,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+apply plugin: 'java-library'
+
+jar {
+  archiveBaseName = calculateArtifactId(project)
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
+      )
+  }
+}
 
 def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
   final referenceTestsPath = 'src/reference-test/external-resources/BlockchainTests'

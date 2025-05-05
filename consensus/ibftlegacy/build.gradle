@@ -1,7 +1,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-ibftlegacy'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,

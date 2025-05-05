@@ -2,6 +2,7 @@
 ## Unreleased
 ### Breaking Changes
 - Changes to gas estimation algorithm for `eth_estimateGas` and `eth_createAccessList` [#8478](https://github.com/hyperledger/besu/pull/8478) - if you require the previous behavior, specify `--estimate-gas-tolerance-ratio=0.0`
+- Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins [#8589](https://github.com/hyperledger/besu/pull/8589)
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
