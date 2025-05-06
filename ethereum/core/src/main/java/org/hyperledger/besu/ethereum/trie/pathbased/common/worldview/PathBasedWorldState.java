@@ -183,6 +183,29 @@ public abstract class PathBasedWorldState
         worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
     Runnable cacheWorldState = () -> {};
+    Runnable savePreimages =
+        () -> {
+          var preImageUpdater = worldStateKeyValueStorage.getPreimageStorage().updater();
+          localCopy
+              .getAccountsToUpdate()
+              .keySet()
+              .forEach(acct -> preImageUpdater.putAccountTrieKeyPreimage(acct.addressHash(), acct));
+          localCopy.getStorageToUpdate().values().stream()
+              .flatMap(z -> z.keySet().stream())
+              .filter(
+                  z -> {
+                    // TODO: we should add logic here to limit writing
+                    //     common slot keys
+                    return z.getSlotKey().isPresent();
+                  })
+              .distinct()
+              .forEach(
+                  slot -> {
+                    preImageUpdater.putStorageTrieKeyPreimage(
+                        slot.getSlotHash(), slot.getSlotKey().get());
+                  });
+          preImageUpdater.commit();
+        };
 
     try {
       final Hash calculatedRootHash;
@@ -229,13 +252,14 @@ public abstract class PathBasedWorldState
       if (success) {
         // commit the trielog transaction ahead of the state, in case of an abnormal shutdown:
         saveTrieLog.run();
+        // save preImages to persisted storage or limited in-memory cache
+        savePreimages.run();
         // commit only the composed worldstate, as trielog transaction is already complete:
         stateUpdater.commitComposedOnly();
         if (!isStorageFrozen) {
           // optionally save the committed worldstate state in the cache
           cacheWorldState.run();
         }
-
         accumulator.reset();
       } else {
         stateUpdater.rollback();
@@ -319,7 +343,7 @@ public abstract class PathBasedWorldState
 
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("storage format do not provide account streaming.");
+    return worldStateKeyValueStorage.streamAccounts(this, startKeyHash, limit);
   }
 
   @Override

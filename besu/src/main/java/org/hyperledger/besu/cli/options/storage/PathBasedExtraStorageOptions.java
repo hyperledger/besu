@@ -56,26 +56,16 @@ public class PathBasedExtraStorageOptions
   public static final String TRIE_LOG_PRUNING_WINDOW_SIZE =
       "--bonsai-trie-logs-pruning-window-size";
 
-  // TODO --Xbonsai-limit-trie-logs-enabled and --Xbonsai-trie-log-pruning-enabled are deprecated,
-  // remove in a future release
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @Option(
-      names = {
-        LIMIT_TRIE_LOGS_ENABLED,
-        "--Xbonsai-limit-trie-logs-enabled", // deprecated
-        "--Xbonsai-trie-log-pruning-enabled" // deprecated
-      },
+      names = {LIMIT_TRIE_LOGS_ENABLED},
       fallbackValue = "true",
       description = "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
   private Boolean limitTrieLogsEnabled = DEFAULT_LIMIT_TRIE_LOGS_ENABLED;
 
-  // TODO --Xbonsai-trie-logs-pruning-window-size is deprecated, remove in a future release
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @Option(
-      names = {
-        TRIE_LOG_PRUNING_WINDOW_SIZE,
-        "--Xbonsai-trie-logs-pruning-window-size" // deprecated
-      },
+      names = {TRIE_LOG_PRUNING_WINDOW_SIZE},
       description =
           "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
   private Integer trieLogPruningWindowSize = DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
@@ -89,13 +79,11 @@ public class PathBasedExtraStorageOptions
   /** The unstable options for data storage. */
   public static class Unstable {
 
-    // TODO: --Xsnapsync-synchronizer-flat-db-healing-enabled is deprecated, remove it in a future
     // release
     @Option(
         hidden = true,
         names = {
           "--Xbonsai-full-flat-db-enabled",
-          "--Xsnapsync-synchronizer-flat-db-healing-enabled"
         },
         arity = "1",
         description = "Enables bonsai full flat database strategy. (default: ${DEFAULT-VALUE})")

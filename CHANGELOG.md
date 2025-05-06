@@ -9,9 +9,11 @@
 - Add `--profile=PERFORMANCE` for high spec nodes: increases rocksdb cache and enables parallel transaction processing [#8560](https://github.com/hyperledger/besu/pull/8560)
 - Add `--profile=PERFORMANCE_RPC` for high spec RPC nodes: increases rocksdb cache and caches last 2048 blocks [#8560](https://github.com/hyperledger/besu/pull/8560)
 - Refine gas estimation algorithm for `eth_estimateGas` and `eth_createAccessList` [#8478](https://github.com/hyperledger/besu/pull/8478) including a new option to specify `--estimate-gas-tolerance-ratio`
+- add optional persistent preimage storage, add default limited in-memory preimage storage for bonsai [#7800](https://github.com/hyperledger/besu/pull/7800)
 
 #### Dependencies
 - update jc-kzg-4844 dependency from 2.0.0 to 2.1.1
+
 ### Bug fixes
 - fix block import tracing, refactor BlockProcessor interface [#8549](https://github.com/hyperledger/besu/pull/8549)
 - Shorten and standardise log labels in AbstractEngineNewPayload and AbstractEngineForkchoiceUpdated [#8568](https://github.com/hyperledger/besu/pull/8568)
@@ -260,6 +262,11 @@ This is a hotfix to address publishing besu maven artifacts.  There are no issue
     | jvm_memory_pool_bytes_init      | jvm_memory_pool_init_bytes      |
     | jvm_memory_pool_bytes_max       | jvm_memory_pool_max_bytes       |
     | jvm_memory_pool_bytes_used      | jvm_memory_pool_used_bytes      |
+- Removed deprecated experimental feature names 
+  - `--Xsnapsync-synchronizer-flat-db-healing-enabled` in favor of `--Xbonsai-full-flat-db-enabled` 
+  - `--Xbonsai-limit-trie-logs-enabled` and `--Xbonsai-trie-log-pruning-enabled` in favor of `--bonsai-limit-trie-logs-enabled`
+  - `--Xbonsai-trie-logs-pruning-window-size` in favor of `--bonsai-trie-logs-pruning-window-size` 
+
 
 ### Upcoming Breaking Changes
 - Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.

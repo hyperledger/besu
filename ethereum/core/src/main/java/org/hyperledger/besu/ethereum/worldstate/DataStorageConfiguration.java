@@ -21,9 +21,11 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @Value.Enclosing
-public interface DataStorageConfiguration {
+public interface DataStorageConfiguration
+    extends org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration {
 
   boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = true;
+  boolean DEFAULT_HASH_PREIMAGE_STORAGE_ENABLED = false;
 
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()
@@ -48,6 +50,7 @@ public interface DataStorageConfiguration {
           .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DISABLED)
           .build();
 
+  @Override
   DataStorageFormat getDataStorageFormat();
 
   @Value.Default
@@ -56,6 +59,13 @@ public interface DataStorageConfiguration {
   }
 
   @Value.Default
+  @Override
+  default boolean getHashPreImageStorageEnabled() {
+    return DEFAULT_HASH_PREIMAGE_STORAGE_ENABLED;
+  }
+
+  @Value.Default
+  @Override
   default boolean getReceiptCompactionEnabled() {
     return DEFAULT_RECEIPT_COMPACTION_ENABLED;
   }

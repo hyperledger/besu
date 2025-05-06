@@ -65,7 +65,7 @@ public class GenesisWorldStateProvider {
         new BonsaiWorldStateKeyValueStorage(
             new KeyValueStorageProvider(
                 segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
-                new InMemoryKeyValueStorage(),
+                () -> new InMemoryKeyValueStorage(),
                 new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
             DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
