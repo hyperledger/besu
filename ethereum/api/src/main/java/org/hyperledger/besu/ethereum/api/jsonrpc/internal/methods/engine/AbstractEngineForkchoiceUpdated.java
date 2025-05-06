@@ -381,7 +381,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     return RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES;
   }
 
-
   private static final String logMessage = "FCU({}) | head: {} | safe: {} | finalized: {}";
 
   private void logAtInfoFCUCall(
