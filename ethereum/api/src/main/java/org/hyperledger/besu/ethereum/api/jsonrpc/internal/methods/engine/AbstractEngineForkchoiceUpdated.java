@@ -381,7 +381,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     return RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES;
   }
 
-  private static final String logMessage = "FCU({}) | head: {} | finalized: {} | safeBlockHash: {}";
+
+  private static final String logMessage = "FCU({}) | head: {} | safe: {} | finalized: {}";
 
   private void logAtInfoFCUCall(
       final EngineStatus status, final EngineForkchoiceUpdatedParameter forkChoice) {
@@ -389,8 +390,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         logMessage,
         status.name(),
         forkChoice.getHeadBlockHash().toShortLogString(),
-        forkChoice.getFinalizedBlockHash().toShortLogString(),
-        forkChoice.getSafeBlockHash().toShortLogString());
+        forkChoice.getSafeBlockHash().toShortLogString(),
+        forkChoice.getFinalizedBlockHash().toShortLogString());
   }
 
   private void logAtDebugFCUCall(
@@ -399,7 +400,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         logMessage,
         status.name(),
         forkChoice.getHeadBlockHash(),
-        forkChoice.getFinalizedBlockHash(),
-        forkChoice.getSafeBlockHash());
+        forkChoice.getSafeBlockHash(),
+        forkChoice.getFinalizedBlockHash());
   }
 }
