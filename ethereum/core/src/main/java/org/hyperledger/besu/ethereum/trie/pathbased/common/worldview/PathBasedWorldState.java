@@ -14,10 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.common.worldview;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -142,11 +138,12 @@ public abstract class PathBasedWorldState
   /**
    * Reset the worldState to this block header
    *
-   * @param blockHeader block to use
+   * @param blockHash blockhash to use
+   * @param stateroot stateroot to use
    */
-  public void resetWorldStateTo(final BlockHeader blockHeader) {
-    worldStateBlockHash = blockHeader.getBlockHash();
-    worldStateRootHash = blockHeader.getStateRoot();
+  public void resetWorldStateTo(final Hash blockHash, final Hash stateroot) {
+    worldStateBlockHash = blockHash;
+    worldStateRootHash = stateroot;
   }
 
   @Override
@@ -204,26 +201,21 @@ public abstract class PathBasedWorldState
         verifyWorldStateRoot(calculatedRootHash, blockHeader);
         saveTrieLog =
             () -> {
+              System.out.println("trielog saved ? " + blockHeader.getBlockHash());
               trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
               // not save a frozen state in the cache
               if (!isStorageFrozen) {
                 cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
               }
             };
-
-        stateUpdater
-            .getWorldStateTransaction()
-            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
+        stateUpdater.saveWorldState(blockHeader.getHash(), calculatedRootHash);
         worldStateBlockHash = blockHeader.getHash();
+        worldStateRootHash = calculatedRootHash;
       } else {
-        stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
-        worldStateBlockHash = null;
+        stateUpdater.saveWorldState(Hash.ZERO, calculatedRootHash);
+        worldStateBlockHash = Hash.ZERO;
+        worldStateRootHash = calculatedRootHash;
       }
-
-      stateUpdater
-          .getWorldStateTransaction()
-          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, calculatedRootHash.toArrayUnsafe());
-      worldStateRootHash = calculatedRootHash;
       success = true;
     } finally {
       if (success) {

@@ -128,6 +128,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final PrivateMetadataUpdater privateMetadataUpdater,
       final PreprocessingFunction preprocessingBlockFunction) {
+
+    worldState.announceBlockToImport(blockHeader);
+
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     long currentBlobGasUsed = 0;

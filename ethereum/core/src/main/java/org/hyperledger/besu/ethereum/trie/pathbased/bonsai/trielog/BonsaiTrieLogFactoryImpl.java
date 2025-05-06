@@ -24,9 +24,13 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.InvalidTrieLogTypeException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +42,19 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
+
+  @Override
+  public TrieLogLayer create(
+      final TrieLogAccumulator accumulator,
+      final DataStorageFormat dataStorageFormat,
+      final BlockHeader blockHeader) {
+    TrieLogLayer layer = new TrieLogLayer();
+    layer.setBlockHash(blockHeader.getBlockHash());
+    layer.setBlockNumber(blockHeader.getNumber());
+    layer.setDataStorageFormat(dataStorageFormat);
+    applyStateModification(layer, accumulator, blockHeader);
+    return layer;
+  }
 
   @Override
   public byte[] serialize(final TrieLog layer) {
@@ -60,7 +77,10 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
     addresses.addAll(layer.getStorageChanges().keySet());
 
     output.startList();
+
     output.writeBytes(layer.getBlockHash());
+
+    output.writeInt(layer.getDataStorageFormat().getValue());
 
     for (final Address address : addresses) {
       output.startList();
@@ -99,6 +119,7 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
 
       output.endList();
     }
+
     output.endList();
   }
 
@@ -106,10 +127,22 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
     final TrieLogLayer newLayer = new TrieLogLayer();
 
     input.enterList();
-    newLayer.setBlockHash(Hash.wrap(input.readBytes32()));
+    final Hash blockHash = Hash.wrap(input.readBytes32());
+    newLayer.setBlockHash(blockHash);
+
+    DataStorageFormat dataStorageFormat;
+    if (!input.nextIsList()) {
+      dataStorageFormat = DataStorageFormat.fromValue(input.readInt());
+      if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
+        newLayer.setDataStorageFormat(dataStorageFormat);
+      } else {
+        return new InvalidTrieLogTypeException(blockHash, dataStorageFormat);
+      }
+    }
 
     while (!input.isEndOfCurrentList()) {
       input.enterList();
+
       final Address address = Address.readFrom(input);
 
       if (input.nextIsNull()) {
@@ -141,7 +174,7 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
       if (input.nextIsNull()) {
         input.skipNext();
       } else {
-        final Map<StorageSlotKey, PathBasedValue<UInt256>> storageChanges = new TreeMap<>();
+        final Map<StorageSlotKey, TrieLog.LogTuple<UInt256>> storageChanges = new TreeMap<>();
         input.enterList();
         while (!input.isEndOfCurrentList()) {
           input.enterList();
@@ -160,6 +193,7 @@ public class BonsaiTrieLogFactoryImpl extends TrieLogFactoryImpl {
       // lenient leave list for forward compatible additions.
       input.leaveListLenient();
     }
+
     input.leaveListLenient();
     newLayer.freeze();
 

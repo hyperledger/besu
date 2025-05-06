@@ -20,8 +20,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
-  private T prior;
-  private T updated;
+  protected T prior;
+  protected T updated;
   private boolean lastStepCleared;
 
   private boolean clearedAtLeastOnce;

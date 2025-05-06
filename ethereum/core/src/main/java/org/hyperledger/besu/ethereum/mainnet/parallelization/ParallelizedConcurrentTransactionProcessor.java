@@ -245,6 +245,7 @@ public class ParallelizedConcurrentTransactionProcessor {
     final PathBasedWorldState pathBasedWorldState = (PathBasedWorldState) worldState;
     final PathBasedWorldStateUpdateAccumulator blockAccumulator =
         (PathBasedWorldStateUpdateAccumulator) pathBasedWorldState.updater();
+
     final ParallelizedTransactionContext parallelizedTransactionContext =
         parallelizedTransactionContextByLocation.remove(transactionLocation);
     /*

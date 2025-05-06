@@ -157,7 +157,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
                       createLayeredKeyValueStorage(cached.getWorldStateStorage()),
                       evmConfiguration));
     }
-    LOG.atDebug()
+    LOG.atInfo()
         .setMessage("did not find worldstate in cache for {}")
         .addArgument(blockHash.toShortHexString())
         .log();

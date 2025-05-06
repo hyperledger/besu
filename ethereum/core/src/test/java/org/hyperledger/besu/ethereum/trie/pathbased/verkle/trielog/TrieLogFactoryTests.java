@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.trie.common.VerkleStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -57,11 +58,16 @@ public class TrieLogFactoryTests {
           .setBlockHash(headerFixture.getBlockHash())
           .addAccountChange(
               accountFixture,
-              null,
-              new VerkleStateTrieAccountValue(
-                  0, Wei.fromEth(1), Hash.hash(code), Optional.of((long) code.size())))
+              new PathBasedValue<>(
+                  null,
+                  new VerkleStateTrieAccountValue(
+                      0, Wei.fromEth(1), Hash.hash(code), Optional.of((long) code.size()))))
           .addCodeChange(accountFixture, null, code, headerFixture.getBlockHash())
-          .addStorageChange(accountFixture, new StorageSlotKey(UInt256.ZERO), null, UInt256.ONE);
+          .addStorageChange(
+              accountFixture,
+              new StorageSlotKey(UInt256.ZERO),
+              new PathBasedValue<>(null, UInt256.ONE))
+          .setDataStorageFormat(DataStorageFormat.VERKLE);
 
   @Test
   public void testSerializeDeserializeAreEqual() {

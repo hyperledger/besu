@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.AccountConsumingMap;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.CodeConsumingMap;
@@ -76,6 +75,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       storageToUpdate = new ConcurrentHashMap<>();
 
   private final Map<UInt256, Hash> storageKeyHashLookup = new ConcurrentHashMap<>();
+
   protected boolean isAccumulatorStateChanged;
 
   public PathBasedWorldStateUpdateAccumulator(
@@ -94,7 +94,15 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     this.evmConfiguration = evmConfiguration;
   }
 
-  public void cloneFromUpdater(final PathBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+  public PathBasedWorldStateUpdateAccumulator(
+      final PathBasedWorldView worldView,
+      final PathBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+    this(
+        worldView,
+        source.accountPreloader,
+        source.storagePreloader,
+        source.codePreloader,
+        source.evmConfiguration);
     accountsToUpdate.putAll(source.getAccountsToUpdate());
     codeToUpdate.putAll(source.codeToUpdate);
     storageToClear.addAll(source.storageToClear);
@@ -116,53 +124,81 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
    */
   public void importStateChangesFromSource(
       final PathBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+
     source
         .getAccountsToUpdate()
         .forEach(
-            (address, pathBasedValue) -> {
-              ACCOUNT copyPrior =
-                  pathBasedValue.getPrior() != null
-                      ? copyAccount(pathBasedValue.getPrior(), this, false)
-                      : null;
-              ACCOUNT copyUpdated =
-                  pathBasedValue.getUpdated() != null
-                      ? copyAccount(pathBasedValue.getUpdated(), this, true)
-                      : null;
-              accountsToUpdate.put(
+            (address, sourceValue) -> {
+              accountsToUpdate.compute(
                   address,
-                  new PathBasedValue<>(copyPrior, copyUpdated, pathBasedValue.isLastStepCleared()));
+                  (addr, existing) -> {
+                    ACCOUNT copyUpdated =
+                        sourceValue.getUpdated() != null
+                            ? copyAccount(sourceValue.getUpdated(), this, true)
+                            : null;
+                    if (existing != null) {
+                      existing.setUpdated(copyUpdated);
+                      return existing;
+                    } else {
+                      ACCOUNT copyPrior =
+                          sourceValue.getPrior() != null
+                              ? copyAccount(sourceValue.getPrior(), this, false)
+                              : null;
+                      return new PathBasedValue<>(
+                          copyPrior, copyUpdated, sourceValue.isLastStepCleared());
+                    }
+                  });
             });
+
+    // 2. Code
     source
         .getCodeToUpdate()
         .forEach(
-            (address, pathBasedValue) -> {
-              codeToUpdate.put(
+            (address, sourceValue) -> {
+              codeToUpdate.compute(
                   address,
-                  new PathBasedValue<>(
-                      pathBasedValue.getPrior(),
-                      pathBasedValue.getUpdated(),
-                      pathBasedValue.isLastStepCleared()));
+                  (addr, existing) -> {
+                    if (existing != null) {
+                      existing.setUpdated(sourceValue.getUpdated());
+                      return existing;
+                    } else {
+                      return new PathBasedValue<>(
+                          sourceValue.getPrior(),
+                          sourceValue.getUpdated(),
+                          sourceValue.isLastStepCleared());
+                    }
+                  });
             });
+
     source
         .getStorageToUpdate()
         .forEach(
             (address, slots) -> {
-              StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> storageConsumingMap =
+              StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> targetMap =
                   storageToUpdate.computeIfAbsent(
                       address,
                       k ->
                           new StorageConsumingMap<>(
                               address, new ConcurrentHashMap<>(), storagePreloader));
+
               slots.forEach(
-                  (storageSlotKey, uInt256PathBasedValue) -> {
-                    storageConsumingMap.put(
-                        storageSlotKey,
-                        new PathBasedValue<>(
-                            uInt256PathBasedValue.getPrior(),
-                            uInt256PathBasedValue.getUpdated(),
-                            uInt256PathBasedValue.isLastStepCleared()));
+                  (slotKey, sourceValue) -> {
+                    targetMap.compute(
+                        slotKey,
+                        (key, existing) -> {
+                          if (existing != null) {
+                            existing.setUpdated(sourceValue.getUpdated());
+                            return existing;
+                          } else {
+                            return new PathBasedValue<>(
+                                sourceValue.getPrior(),
+                                sourceValue.getUpdated(),
+                                sourceValue.isLastStepCleared());
+                          }
+                        });
                   });
             });
+
     storageToClear.addAll(source.storageToClear);
     storageKeyHashLookup.putAll(source.storageKeyHashLookup);
 
@@ -415,7 +451,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       accountValue.setUpdated(null);
     }
 
-    getUpdatedAccounts().parallelStream()
+    getUpdatedAccounts()
         .forEach(
             tracked -> {
               final Address updatedAddress = tracked.getAddress();
@@ -545,9 +581,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     }
     try {
       final Optional<UInt256> valueUInt =
-          (wrappedWorldView() instanceof PathBasedWorldState worldState)
-              ? worldState.getStorageValueByStorageSlotKey(address, storageSlotKey)
-              : wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
+          wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
       storageToUpdate
           .computeIfAbsent(
               address,
@@ -788,6 +822,12 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     }
   }
 
+  public Map<StorageSlotKey, PathBasedValue<UInt256>> maybeCreateStorageMap(final Address address) {
+    final StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> storageMap =
+        storageToUpdate.get(address);
+    return maybeCreateStorageMap(storageMap, address);
+  }
+
   private Map<StorageSlotKey, PathBasedValue<UInt256>> maybeCreateStorageMap(
       final Map<StorageSlotKey, PathBasedValue<UInt256>> storageMap, final Address address) {
     if (storageMap == null) {
@@ -956,9 +996,6 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
 
   protected abstract void assertCloseEnoughForDiffing(
       final ACCOUNT source, final AccountValue account, final String context);
-
-  protected abstract Optional<UInt256> getStorageValueByStorageSlotKey(
-      PathBasedWorldState worldState, Address address, StorageSlotKey storageSlotKey);
 
   protected abstract boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate();
 }

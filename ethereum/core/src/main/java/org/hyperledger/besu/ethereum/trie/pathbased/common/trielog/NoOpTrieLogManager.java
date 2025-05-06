@@ -36,7 +36,7 @@ public class NoOpTrieLogManager extends TrieLogManager {
       final BlockHeader forBlockHeader,
       final PathBasedWorldState forWorldState) {
     // notify trie log added observers, synchronously
-    TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
+    TrieLog trieLog = trieLogFactory.create(localUpdater, DataStorageFormat.BONSAI, forBlockHeader);
     trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
   }
 

@@ -44,6 +44,7 @@ public class TrieLogManager {
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogManager.class);
   public static final long LOG_RANGE_LIMIT = 1000; // restrict trielog range queries to 1k logs
   protected final Blockchain blockchain;
+  private final DataStorageFormat dataStorageFormat;
   protected final PathBasedWorldStateKeyValueStorage rootWorldStateStorage;
 
   protected final long maxLayersToLoad;
@@ -58,6 +59,7 @@ public class TrieLogManager {
       final long maxLayersToLoad,
       final ServiceManager pluginContext) {
     this.blockchain = blockchain;
+    this.dataStorageFormat = dataStorageFormat;
     this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.maxLayersToLoad = maxLayersToLoad;
     this.trieLogFactory = setupTrieLogFactory(dataStorageFormat, pluginContext);
@@ -99,7 +101,7 @@ public class TrieLogManager {
         .setMessage("Adding layered world state for {}")
         .addArgument(blockHeader::toLogString)
         .log();
-    final TrieLog trieLog = trieLogFactory.create(localUpdater, blockHeader);
+    final TrieLog trieLog = trieLogFactory.create(localUpdater, dataStorageFormat, blockHeader);
     trieLog.freeze();
     return trieLog;
   }
@@ -109,7 +111,7 @@ public class TrieLogManager {
       final Hash worldStateRootHash,
       final TrieLog trieLog,
       final PathBasedWorldStateKeyValueStorage.Updater stateUpdater) {
-    LOG.atDebug()
+    LOG.atInfo()
         .setMessage("Persisting trie log for block hash {} and world state root {}")
         .addArgument(blockHeader::toLogString)
         .addArgument(worldStateRootHash::toHexString)
@@ -136,7 +138,7 @@ public class TrieLogManager {
     trieLogObservers.unsubscribe(id);
   }
 
-  private TrieLogFactory setupTrieLogFactory(
+  protected TrieLogFactory setupTrieLogFactory(
       final DataStorageFormat dataStorageFormat, final ServiceManager pluginContext) {
     // if we have a TrieLogService from pluginContext, use it.
     var trieLogServicez =

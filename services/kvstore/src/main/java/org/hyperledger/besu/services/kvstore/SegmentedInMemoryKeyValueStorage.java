@@ -64,7 +64,7 @@ public class SegmentedInMemoryKeyValueStorage
    *
    * @return segment map
    */
-  protected static NavigableMap<Bytes, Optional<byte[]>> newSegmentMap() {
+  public static NavigableMap<Bytes, Optional<byte[]>> newSegmentMap() {
     return newSegmentMap(Collections.emptyMap());
   }
 
@@ -86,6 +86,13 @@ public class SegmentedInMemoryKeyValueStorage
   /** Instantiates a new In memory key value storage. */
   public SegmentedInMemoryKeyValueStorage() {
     this(new ConcurrentHashMap<>());
+  }
+
+  protected SegmentedInMemoryKeyValueStorage(
+      final SegmentIdentifier segmentIdentifier,
+      final NavigableMap<Bytes, Optional<byte[]>> values) {
+    this();
+    hashValueStore.put(segmentIdentifier, values);
   }
 
   /**

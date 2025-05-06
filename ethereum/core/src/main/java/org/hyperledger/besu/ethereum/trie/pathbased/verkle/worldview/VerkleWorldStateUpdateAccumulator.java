@@ -20,21 +20,22 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.VerkleAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
+import org.hyperledger.besu.plugin.services.trielogs.StateMigrationLog;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class VerkleWorldStateUpdateAccumulator
     extends PathBasedWorldStateUpdateAccumulator<VerkleAccount> {
+
+  private Optional<StateMigrationLog> maybeStateMigrationLog;
 
   public VerkleWorldStateUpdateAccumulator(
       final PathBasedWorldView world,
@@ -43,19 +44,18 @@ public class VerkleWorldStateUpdateAccumulator
       final Consumer<Bytes> codePreloader,
       final EvmConfiguration evmConfiguration) {
     super(world, accountPreloader, storagePreloader, codePreloader, evmConfiguration);
+    this.maybeStateMigrationLog = Optional.empty();
+  }
+
+  public VerkleWorldStateUpdateAccumulator(
+      final PathBasedWorldView worldView, final VerkleWorldStateUpdateAccumulator source) {
+    super(worldView, source);
+    this.maybeStateMigrationLog = source.getStateMigrationLog();
   }
 
   @Override
   public PathBasedWorldStateUpdateAccumulator<VerkleAccount> copy() {
-    final VerkleWorldStateUpdateAccumulator copy =
-        new VerkleWorldStateUpdateAccumulator(
-            wrappedWorldView(),
-            getAccountPreloader(),
-            getStoragePreloader(),
-            getCodePreloader(),
-            getEvmConfiguration());
-    copy.cloneFromUpdater(this);
-    return copy;
+    return new VerkleWorldStateUpdateAccumulator(this, this);
   }
 
   @Override
@@ -102,15 +102,21 @@ public class VerkleWorldStateUpdateAccumulator
   }
 
   @Override
-  protected Optional<UInt256> getStorageValueByStorageSlotKey(
-      final PathBasedWorldState worldState,
-      final Address address,
-      final StorageSlotKey storageSlotKey) {
-    return worldState.getStorageValueByStorageSlotKey(address, storageSlotKey);
+  protected boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate() {
+    return false;
+  }
+
+  public Optional<StateMigrationLog> getStateMigrationLog() {
+    return maybeStateMigrationLog;
+  }
+
+  public void setStateMigrationLog(final Optional<StateMigrationLog> maybeStateMigrationLog) {
+    this.maybeStateMigrationLog = maybeStateMigrationLog;
   }
 
   @Override
-  protected boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate() {
-    return false;
+  public void reset() {
+    super.reset();
+    this.maybeStateMigrationLog = Optional.empty();
   }
 }

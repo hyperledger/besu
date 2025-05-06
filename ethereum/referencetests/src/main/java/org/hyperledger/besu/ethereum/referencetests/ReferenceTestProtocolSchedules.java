@@ -116,7 +116,10 @@ public class ReferenceTestProtocolSchedules {
                 Map.entry(
                     "Experimental_EIPs",
                     createSchedule(genesisStub.clone().experimentalEipsTime(0))),
-                Map.entry("Verkle", createSchedule(genesisStub.clone().verkleTime(0))))
+                Map.entry("Verkle", createSchedule(genesisStub.clone().verkleTime(0))),
+                Map.entry(
+                    "ShanghaiToVerkleAtTime32",
+                    createSchedule(genesisStub.clone().shanghaiTime(0).verkleTime(32))))
             .entrySet()
             .stream()
             .map(e -> Map.entry(e.getKey().toLowerCase(Locale.ROOT), e.getValue()))
@@ -133,6 +136,10 @@ public class ReferenceTestProtocolSchedules {
     return schedules.get(name.toLowerCase(Locale.ROOT));
   }
 
+  public void setMilestone(final String milestone, final ProtocolSchedule protocolSchedule) {
+    schedules.put(milestone.toLowerCase(Locale.ROOT), protocolSchedule);
+  }
+
   public ProtocolSpec geSpecByName(final String name) {
     ProtocolSchedule schedule = getByName(name);
     if (schedule == null) {
@@ -143,7 +150,7 @@ public class ReferenceTestProtocolSchedules {
     return schedule.getByBlockHeader(header);
   }
 
-  private static ProtocolSchedule createSchedule(final GenesisConfigOptions options) {
+  public static ProtocolSchedule createSchedule(final GenesisConfigOptions options) {
     return new ProtocolScheduleBuilder(
             options,
             Optional.of(CHAIN_ID),

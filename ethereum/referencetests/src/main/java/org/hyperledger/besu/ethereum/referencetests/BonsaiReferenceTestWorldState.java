@@ -282,7 +282,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         final BlockHeader forBlockHeader,
         final PathBasedWorldState forWorldState) {
       // notify trie log added observers, synchronously
-      TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
+      TrieLog trieLog =
+          trieLogFactory.create(localUpdater, DataStorageFormat.BONSAI, forBlockHeader);
       trieLogCache.put(forBlockHeader.getHash(), trieLogFactory.serialize(trieLog));
       trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
     }

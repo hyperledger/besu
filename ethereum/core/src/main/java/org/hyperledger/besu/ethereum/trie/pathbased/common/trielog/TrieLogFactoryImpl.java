@@ -27,20 +27,18 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public abstract class TrieLogFactoryImpl implements TrieLogFactory {
-  @Override
-  public TrieLogLayer create(final TrieLogAccumulator accumulator, final BlockHeader blockHeader) {
-    TrieLogLayer layer = new TrieLogLayer();
-    layer.setBlockHash(blockHeader.getBlockHash());
-    layer.setBlockNumber(blockHeader.getNumber());
+
+  protected void applyStateModification(
+      final TrieLogLayer layer,
+      final TrieLogAccumulator accumulator,
+      final BlockHeader blockHeader) {
     for (final var updatedAccount : accumulator.getAccountsToUpdate().entrySet()) {
       final var value = updatedAccount.getValue();
-      final var oldAccountValue = value.getPrior();
-      final var newAccountValue = value.getUpdated();
-      if (oldAccountValue == null && newAccountValue == null) {
+      if (value.getPrior() == null && value.getUpdated() == null) {
         // by default do not persist empty reads of accounts to the trie log
         continue;
       }
-      layer.addAccountChange(updatedAccount.getKey(), oldAccountValue, newAccountValue);
+      layer.addAccountChange(updatedAccount.getKey(), value);
     }
 
     for (final var updatedCode : accumulator.getCodeToUpdate().entrySet()) {
@@ -55,15 +53,13 @@ public abstract class TrieLogFactoryImpl implements TrieLogFactory {
       final Address address = updatesStorage.getKey();
       for (final var slotUpdate : updatesStorage.getValue().entrySet()) {
         var val = slotUpdate.getValue();
-
         if (val.getPrior() == null && val.getUpdated() == null) {
           // by default do not persist empty reads to the trie log
           continue;
         }
-        layer.addStorageChange(address, slotUpdate.getKey(), val.getPrior(), val.getUpdated());
+        layer.addStorageChange(address, slotUpdate.getKey(), val);
       }
     }
-    return layer;
   }
 
   protected static <T> T nullOrValue(final RLPInput input, final Function<RLPInput, T> reader) {
