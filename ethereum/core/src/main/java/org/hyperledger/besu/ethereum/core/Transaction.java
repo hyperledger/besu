@@ -52,7 +52,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.primitives.Longs;
@@ -120,7 +122,8 @@ public class Transaction
   protected volatile int size = -1;
   private final TransactionType transactionType;
 
-  private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private final Optional<List<VersionedHash>> versionedHashes;
 
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
@@ -461,7 +464,8 @@ public class Transaction
 
   private Address computeSender() {
     final SECPPublicKey publicKey =
-        signatureAlgorithm
+        SIGNATURE_ALGORITHM
+            .get()
             .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
             .orElseThrow(
                 () ->
@@ -478,7 +482,8 @@ public class Transaction
    * @return the public key
    */
   public Optional<String> getPublicKey() {
-    return signatureAlgorithm
+    return SIGNATURE_ALGORITHM
+        .get()
         .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
         .map(SECPPublicKey::toString);
   }
