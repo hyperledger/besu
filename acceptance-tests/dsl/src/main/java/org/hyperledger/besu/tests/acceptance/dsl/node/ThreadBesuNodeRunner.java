@@ -386,6 +386,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
+    DataStorageConfiguration provideDataStorageConfiguration(final BesuNode node) {
+      return node.getDataStorageConfiguration();
+    }
+
+    @Provides
     @Singleton
     TransactionSelectionServiceImpl provideTransactionSelectionService() {
       return new TransactionSelectionServiceImpl();
@@ -468,12 +473,14 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     public BesuControllerBuilder provideBesuControllerBuilder(
             final EthNetworkConfig ethNetworkConfig,
             final SynchronizerConfiguration synchronizerConfiguration,
-            final TransactionPoolConfiguration transactionPoolConfiguration) {
+            final TransactionPoolConfiguration transactionPoolConfiguration,
+            final DataStorageConfiguration dataStorageConfiguration) {
 
       final BesuControllerBuilder builder =
               new BesuController.Builder()
                       .fromEthNetworkConfig(ethNetworkConfig, synchronizerConfiguration.getSyncMode());
       builder.transactionPoolConfiguration(transactionPoolConfiguration);
+      builder.dataStorageConfiguration(dataStorageConfiguration);
       return builder;
     }
 
@@ -499,12 +506,13 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             final MetricCategoryRegistryImpl metricCategoryRegistry,
             final @Named("ExtraCLIOptions") List<String> extraCLIOptions,
             final @Named("RequestedPlugins") List<String> requestedPlugins,
-            final BesuPluginContextImpl besuPluginContext) {
+            final BesuPluginContextImpl besuPluginContext,
+            final DataStorageConfiguration dataStorageConfiguration) {
 
       builder
               .synchronizerConfiguration(synchronizerConfiguration)
               .metricsSystem((ObservableMetricsSystem) metricsSystem)
-              .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+              .dataStorageConfiguration(dataStorageConfiguration)
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .clock(Clock.systemUTC())
               .storageProvider(storageProvider)
