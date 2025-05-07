@@ -115,42 +115,47 @@ public class ChainDataPruner implements BlockAddedObserver {
   private void preMergePruningAction() {
     pruningExecutor.submit(
         () -> {
-          final long storedPruningMark = prunerStorage.getPruningMark().orElse(1L);
-          final long expectedNewPruningMark =
-              Math.min(storedPruningMark + pruningQuantity, mergeBlock);
-          final KeyValueStorageTransaction pruningTransaction = prunerStorage.startTransaction();
-          final BlockchainStorage.Updater updater = blockchainStorage.updater();
-          for (long blockNumber = storedPruningMark;
-              blockNumber < expectedNewPruningMark;
-              blockNumber++) {
-            blockchainStorage
-                .getBlockHash(blockNumber)
-                .ifPresent(
-                    (blockHash) -> {
-                      updater.removeBlockBody(blockHash);
-                      updater.removeTransactionReceipts(blockHash);
-                      updater.removeTotalDifficulty(blockHash);
-                      blockchainStorage
-                          .getBlockBody(blockHash)
-                          .ifPresent(
-                              blockBody ->
-                                  blockBody
-                                      .getTransactions()
-                                      .forEach(
-                                          t -> updater.removeTransactionLocation(t.getHash())));
-                    });
-          }
-          updater.commit();
-          prunerStorage.setPruningMark(pruningTransaction, expectedNewPruningMark);
-          pruningTransaction.commit();
-          LogUtil.throttledLog(
-              () -> LOG.info("Pruned pre-merge blocks up to {}", expectedNewPruningMark),
-              logPreMergePruningProgress,
-              LOG_PRE_MERGE_PRUNING_PROGRESS_REPEAT_DELAY);
-          if (expectedNewPruningMark == mergeBlock) {
-            LOG.info(
-                "Done pruning pre-merge blocks. Unsubscribing from block added event observation");
-            unsubscribeRunnable.run();
+          try {
+            Thread.sleep(1000);
+            final long storedPruningMark = prunerStorage.getPruningMark().orElse(1L);
+            final long expectedNewPruningMark =
+                Math.min(storedPruningMark + pruningQuantity, mergeBlock);
+            final KeyValueStorageTransaction pruningTransaction = prunerStorage.startTransaction();
+            final BlockchainStorage.Updater updater = blockchainStorage.updater();
+            for (long blockNumber = storedPruningMark;
+                blockNumber < expectedNewPruningMark;
+                blockNumber++) {
+              blockchainStorage
+                  .getBlockHash(blockNumber)
+                  .ifPresent(
+                      (blockHash) -> {
+                        updater.removeBlockBody(blockHash);
+                        updater.removeTransactionReceipts(blockHash);
+                        updater.removeTotalDifficulty(blockHash);
+                        blockchainStorage
+                            .getBlockBody(blockHash)
+                            .ifPresent(
+                                blockBody ->
+                                    blockBody
+                                        .getTransactions()
+                                        .forEach(
+                                            t -> updater.removeTransactionLocation(t.getHash())));
+                      });
+            }
+            updater.commit();
+            prunerStorage.setPruningMark(pruningTransaction, expectedNewPruningMark);
+            pruningTransaction.commit();
+            LogUtil.throttledLog(
+                () -> LOG.info("Pruned pre-merge blocks up to {}", expectedNewPruningMark),
+                logPreMergePruningProgress,
+                LOG_PRE_MERGE_PRUNING_PROGRESS_REPEAT_DELAY);
+            if (expectedNewPruningMark == mergeBlock) {
+              LOG.info(
+                  "Done pruning pre-merge blocks. Unsubscribing from block added event observation");
+              unsubscribeRunnable.run();
+            }
+          } catch (InterruptedException e) {
+            throw new RuntimeException(e);
           }
         });
   }
