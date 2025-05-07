@@ -111,17 +111,9 @@ public class RocksDBSnapshotTransaction
     }
   }
 
-  public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys) {
-    if (segments.size() != keys.size()) {
-      throw new IllegalArgumentException("Segments and keys lists must be of equal length");
-    }
-
-    List<ColumnFamilyHandle> columnFamilyHandleList = new ArrayList<>(segments.size());
-    for (int i = 0; i < segments.size(); i++) {
-      columnFamilyHandleList.add(columnFamilyMapper.apply(segments.get(i)));
-    }
+  public List<byte[]> multiget(final SegmentIdentifier segment, final List<byte[]> keys) {
     try (final OperationTimer.TimingContext ignored = metrics.getMultiReadLatency().startTimer()) {
-      return snapTx.multiGetAsList(readOptions, columnFamilyHandleList, keys);
+      return snapTx.multiGetAsList(readOptions, columnFamilyMapper.apply(segment), keys);
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }

@@ -80,7 +80,7 @@ public class RocksDBColumnarKeyValueSnapshot
   public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys)
       throws StorageException {
     throwIfClosed();
-    return snapTx.multiget(segments, keys);
+    return snapTx.multiget(segments.get(0), keys);
   }
 
   @Override
