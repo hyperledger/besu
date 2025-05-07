@@ -18,7 +18,6 @@ import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsProc
 
 import org.hyperledger.besu.config.BlobScheduleOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
@@ -184,13 +183,6 @@ public abstract class MainnetProtocolSpecs {
         .evmConfiguration(evmConfiguration)
         .blockHashProcessor(new FrontierBlockHashProcessor())
         .name("Frontier");
-  }
-
-  public static PoWHasher powHasher(final PowAlgorithm powAlgorithm) {
-    if (powAlgorithm == null) {
-      return PoWHasher.UNSUPPORTED;
-    }
-    return powAlgorithm == PowAlgorithm.ETHASH ? PoWHasher.ETHASH_LIGHT : PoWHasher.UNSUPPORTED;
   }
 
   public static BlockValidatorBuilder blockValidatorBuilder() {

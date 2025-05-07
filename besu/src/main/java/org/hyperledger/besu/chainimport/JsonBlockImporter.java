@@ -17,9 +17,7 @@ package org.hyperledger.besu.chainimport;
 import org.hyperledger.besu.chainimport.internal.BlockData;
 import org.hyperledger.besu.chainimport.internal.ChainData;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -41,7 +39,6 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,7 +112,7 @@ public class JsonBlockImporter {
       final List<Transaction> transactions) {
     final MiningCoordinator miner = controller.getMiningCoordinator();
     final GenesisConfigOptions genesisConfigOptions = controller.getGenesisConfigOptions();
-    setOptionalFields(miner, blockData, genesisConfigOptions);
+    setOptionalFields(blockData, genesisConfigOptions);
 
     // Some MiningCoordinator's (specific to consensus type) do not support block-level imports
     return miner
@@ -128,16 +125,8 @@ public class JsonBlockImporter {
   }
 
   private void setOptionalFields(
-      final MiningCoordinator miner,
-      final BlockData blockData,
-      final GenesisConfigOptions genesisConfig) {
-    // Some fields can only be configured for ethash
-    if (genesisConfig.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
-      // For simplicity only set these for PoW consensus algorithms.
-      // Other consensus algorithms use these fields for special purposes or ignore them.
-      miner.setCoinbase(blockData.getCoinbase().orElse(Address.ZERO));
-      controller.getMiningParameters().setExtraData(blockData.getExtraData().orElse(Bytes.EMPTY));
-    } else if (blockData.getCoinbase().isPresent() || blockData.getExtraData().isPresent()) {
+      final BlockData blockData, final GenesisConfigOptions genesisConfig) {
+    if (blockData.getCoinbase().isPresent() || blockData.getExtraData().isPresent()) {
       // Fail if these fields are set for non-ethash chains
       final Stream.Builder<String> fields = Stream.builder();
       blockData.getCoinbase().map((c) -> "coinbase").ifPresent(fields::add);

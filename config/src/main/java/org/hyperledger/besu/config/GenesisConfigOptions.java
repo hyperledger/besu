@@ -31,13 +31,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 public interface GenesisConfigOptions {
 
   /**
-   * Is eth hash boolean.
-   *
-   * @return the boolean
-   */
-  boolean isEthHash();
-
-  /**
    * Is ibft legacy boolean (NOTE this is a deprecated feature).
    *
    * @return the boolean
@@ -502,13 +495,6 @@ public interface GenesisConfigOptions {
    * @return the transitions
    */
   TransitionsConfigOptions getTransitions();
-
-  /**
-   * The PoW algorithm associated with the genesis file.
-   *
-   * @return the PoW algorithm in use.
-   */
-  PowAlgorithm getPowAlgorithm();
 
   /**
    * The elliptic curve which should be used in SignatureAlgorithm.

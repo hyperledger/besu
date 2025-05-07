@@ -102,11 +102,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public boolean isEthHash() {
-    return true;
-  }
-
-  @Override
   public boolean isIbftLegacy() {
     return false;
   }
@@ -418,9 +413,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
     }
-    if (isEthHash()) {
-      builder.put("ethash", getEthashConfigOptions().asMap());
-    }
     if (isIbftLegacy()) {
       builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
@@ -433,11 +425,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public TransitionsConfigOptions getTransitions() {
     return transitions;
-  }
-
-  @Override
-  public PowAlgorithm getPowAlgorithm() {
-    return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.UNSUPPORTED;
   }
 
   @Override

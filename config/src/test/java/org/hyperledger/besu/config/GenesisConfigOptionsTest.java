@@ -32,19 +32,6 @@ import org.junit.jupiter.api.Test;
 class GenesisConfigOptionsTest {
 
   @Test
-  void shouldUseEthHashWhenEthHashInConfig() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("ethash", emptyMap()));
-    assertThat(config.isEthHash()).isTrue();
-    assertThat(config.getConsensusEngine()).isEqualTo("ethash");
-  }
-
-  @Test
-  void shouldNotUseEthHashIfEthHashNotPresent() {
-    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
-    assertThat(config.isEthHash()).isFalse();
-  }
-
-  @Test
   void shouldUseIbft2WhenIbft2InConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft2", emptyMap()));
     assertThat(config.isIbft2()).isTrue();
@@ -261,7 +248,6 @@ class GenesisConfigOptionsTest {
   @Test
   void shouldSupportEmptyGenesisConfig() {
     final GenesisConfigOptions config = GenesisConfig.fromConfig("{}").getConfigOptions();
-    assertThat(config.isEthHash()).isFalse();
     assertThat(config.isClique()).isFalse();
     assertThat(config.isPoa()).isFalse();
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
