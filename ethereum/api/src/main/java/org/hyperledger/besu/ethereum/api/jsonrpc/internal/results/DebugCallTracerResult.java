@@ -186,11 +186,11 @@ public class DebugCallTracerResult implements DebugTracerResult {
         callsByDepth.put(depth + 1, childCall);
 
         // Push to call stack with index for gas calculation
-        CallStackEntry entry = new CallStackEntry(i, depth + 1, childCall, frame.getGasRemaining());
+        CallStackEntry entry = new CallStackEntry(depth + 1, childCall, frame.getGasRemaining());
 
         // Set gas stipend for value-transferring CALL operations
         if ("CALL".equals(opcodeString) && !Wei.ZERO.equals(frame.getValue())) {
-          entry.setGasStipend(CALL_STIPEND);
+          entry = entry.withGasStipend(CALL_STIPEND);
         }
 
         callStack.push(entry);
@@ -242,9 +242,9 @@ public class DebugCallTracerResult implements DebugTracerResult {
       else if ("RETURN".equals(opcodeString)
           || "REVERT".equals(opcodeString)
           || "STOP".equals(opcodeString)) {
-        if (!callStack.isEmpty() && callStack.peek().getDepth() == depth) {
+        if (!callStack.isEmpty() && callStack.peek().depth() == depth) {
           final CallStackEntry entry = callStack.pop();
-          final DebugCallTracerResult call = entry.getCall();
+          final DebugCallTracerResult call = entry.call();
 
           if ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString)) {
             // Set output data on successful return
@@ -280,9 +280,9 @@ public class DebugCallTracerResult implements DebugTracerResult {
       }
       // Handle exceptional halts
       else if (frame.getExceptionalHaltReason().isPresent()) {
-        if (!callStack.isEmpty() && callStack.peek().getDepth() == depth) {
+        if (!callStack.isEmpty() && callStack.peek().depth() == depth) {
           final CallStackEntry entry = callStack.pop();
-          final DebugCallTracerResult call = entry.getCall();
+          final DebugCallTracerResult call = entry.call();
 
           // Set error message
           call.error =
@@ -303,7 +303,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
     // Handle any remaining calls in the stack (could happen if trace is incomplete)
     while (!callStack.isEmpty()) {
       final CallStackEntry entry = callStack.pop();
-      final DebugCallTracerResult call = entry.getCall();
+      final DebugCallTracerResult call = entry.call();
 
       // Mark as failed with unknown error
       call.error = "execution incomplete";
@@ -324,7 +324,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
   private void calculateGasUsed(
       final CallStackEntry entry, final TraceFrame currentFrame, final String opcodeString) {
 
-    final DebugCallTracerResult call = entry.getCall();
+    final DebugCallTracerResult call = entry.call();
 
     // Check for precompiled contract first
     if (currentFrame.getPrecompiledGasCost().isPresent()) {
@@ -334,7 +334,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
     }
 
     // Basic gas calculation
-    long startGas = entry.getInitialGas();
+    long startGas = entry.initialGas();
     long endGas = currentFrame.getGasRemaining();
     long gasUsed = startGas - endGas;
 
@@ -365,10 +365,9 @@ public class DebugCallTracerResult implements DebugTracerResult {
     }
 
     // Adjust for call stipends if applicable
-    if (entry.getGasStipend() > 0
-        && ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString))) {
+    if (entry.gasStipend() > 0 && ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString))) {
       // Only subtract stipend if the call was successful
-      gasUsed = Math.max(0, gasUsed - entry.getGasStipend());
+      gasUsed = Math.max(0, gasUsed - entry.gasStipend());
     }
 
     // Ensure gas used is not negative
@@ -437,7 +436,6 @@ public class DebugCallTracerResult implements DebugTracerResult {
         to = null;
       }
     } else {
-      // For other calls, get the recipient from the next frame
       // For other calls, get the recipient from the next frame
       to = nextFrame.getRecipient() != null ? nextFrame.getRecipient().toHexString() : null;
     }
@@ -573,47 +571,18 @@ public class DebugCallTracerResult implements DebugTracerResult {
 
   /** Helper class to track call stack entries for resolving returns. */
   @JsonIgnoreType
-  private static class CallStackEntry {
-    private final int startFrameIndex;
-    private final int depth;
-    private final DebugCallTracerResult call;
-    private final long initialGas;
-    private long gasStipend;
+  private record CallStackEntry(
+      int depth, DebugCallTracerResult call, long initialGas, long gasStipend) {
 
+    // Compact constructor for default gasStipend
     public CallStackEntry(
-        final int startFrameIndex,
-        final int depth,
-        final DebugCallTracerResult call,
-        final long initialGas) {
-      this.startFrameIndex = startFrameIndex;
-      this.depth = depth;
-      this.call = call;
-      this.initialGas = initialGas;
-      this.gasStipend = 0;
+        final int depth, final DebugCallTracerResult call, final long initialGas) {
+      this(depth, call, initialGas, 0); // Default gasStipend to 0
     }
 
-    public int getStartFrameIndex() {
-      return startFrameIndex;
-    }
-
-    public int getDepth() {
-      return depth;
-    }
-
-    public DebugCallTracerResult getCall() {
-      return call;
-    }
-
-    public long getInitialGas() {
-      return initialGas;
-    }
-
-    public long getGasStipend() {
-      return gasStipend;
-    }
-
-    public void setGasStipend(final long gasStipend) {
-      this.gasStipend = gasStipend;
+    // Method to create a new instance with updated gasStipend
+    public CallStackEntry withGasStipend(final long newGasStipend) {
+      return new CallStackEntry(depth, call, initialGas, newGasStipend);
     }
   }
 }
