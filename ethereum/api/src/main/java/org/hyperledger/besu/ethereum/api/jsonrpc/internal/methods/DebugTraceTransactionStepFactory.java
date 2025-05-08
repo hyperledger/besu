@@ -18,8 +18,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugCallTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStructLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTracerResult;
 import org.hyperledger.besu.ethereum.debug.TracerType;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -40,25 +40,25 @@ public class DebugTraceTransactionStepFactory {
    * result based on the specified {@link TracerType}.
    *
    * @param tracerType the type of tracer to use for processing the transaction trace
+   * @param gasCalculator the gas calculator to use for the call tracer
    * @return a function that processes a {@link TransactionTrace} and returns a {@link
    *     CompletableFuture} containing a {@link DebugTraceTransactionResult} with the appropriate
    *     tracer result
    */
-  public static Function<
-          TransactionTrace, CompletableFuture<DebugTraceTransactionResult<DebugTracerResult>>>
-      create(final TracerType tracerType) {
+  public static Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> create(
+      final TracerType tracerType, final GasCalculator gasCalculator) {
     return switch (tracerType) {
       case DEFAULT_TRACER ->
           transactionTrace -> {
             var result = new DebugStructLoggerTracerResult(transactionTrace);
             return CompletableFuture.completedFuture(
-                new DebugTraceTransactionResult<>(transactionTrace, result));
+                new DebugTraceTransactionResult(transactionTrace, result));
           };
       case CALL_TRACER, FLAT_CALL_TRACER ->
           transactionTrace -> {
-            var result = new DebugCallTracerResult(transactionTrace);
+            var result = new DebugCallTracerResult(transactionTrace, gasCalculator);
             return CompletableFuture.completedFuture(
-                new DebugTraceTransactionResult<>(transactionTrace, result));
+                new DebugTraceTransactionResult(transactionTrace, result));
           };
     };
   }

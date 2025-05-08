@@ -42,7 +42,7 @@ public class DebugStructLoggerTracerResult implements DebugTracerResult {
     failed = !transactionTrace.getResult().isSuccessful();
   }
 
-  public static Collection<DebugTraceTransactionResult<DebugStructLoggerTracerResult>> of(
+  public static Collection<DebugTraceTransactionResult> of(
       final Collection<TransactionTrace> traces) {
     return DebugTraceTransactionResult.of(traces, DebugStructLoggerTracerResult::new);
   }

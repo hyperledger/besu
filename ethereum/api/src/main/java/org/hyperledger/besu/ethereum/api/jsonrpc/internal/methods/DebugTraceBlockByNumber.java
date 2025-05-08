@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTracerResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
@@ -113,7 +112,7 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                     getBlockchainQueries(),
                     Optional.of(block.getHeader()),
                     traceableState -> {
-                      List<DebugTraceTransactionResult<? extends DebugTracerResult>> tracesList =
+                      List<DebugTraceTransactionResult> tracesList =
                           Collections.synchronizedList(new ArrayList<>());
                       final ProtocolSpec protocolSpec =
                           protocolSchedule.getByBlockHeader(block.getHeader());
@@ -146,7 +145,7 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                               .thenProcessAsyncOrdered(
                                   "debugTraceTransactionStep",
                                   DebugTraceTransactionStepFactory.create(
-                                      traceOptions.tracerType()),
+                                      traceOptions.tracerType(), protocolSpec.getGasCalculator()),
                                   4)
                               .andFinishWith("collect_results", tracesList::add);
 

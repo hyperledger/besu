@@ -23,21 +23,21 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"txHash", "result"})
-public class DebugTraceTransactionResult<T extends DebugTracerResult> {
+public class DebugTraceTransactionResult {
 
   private final String txHash;
+  private final Object result;
 
-  private final T result;
-
-  public DebugTraceTransactionResult(final TransactionTrace transactionTrace, final T result) {
+  public DebugTraceTransactionResult(final TransactionTrace transactionTrace, final Object result) {
     this.txHash = transactionTrace.getTransaction().getHash().toHexString();
     this.result = result;
   }
 
-  public static <T extends DebugTracerResult> Collection<DebugTraceTransactionResult<T>> of(
-      final Collection<TransactionTrace> traces, final Function<TransactionTrace, T> constructor) {
+  public static Collection<DebugTraceTransactionResult> of(
+      final Collection<TransactionTrace> traces,
+      final Function<TransactionTrace, Object> constructor) {
     return traces.stream()
-        .map(trace -> new DebugTraceTransactionResult<>(trace, constructor.apply(trace)))
+        .map(trace -> new DebugTraceTransactionResult(trace, constructor.apply(trace)))
         .toList();
   }
 
@@ -47,7 +47,7 @@ public class DebugTraceTransactionResult<T extends DebugTracerResult> {
   }
 
   @JsonGetter(value = "result")
-  public T getResult() {
+  public Object getResult() {
     return result;
   }
 }
