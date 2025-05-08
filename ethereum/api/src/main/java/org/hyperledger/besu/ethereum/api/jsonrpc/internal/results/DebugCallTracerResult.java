@@ -87,7 +87,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
 
     // Set transaction details
     this.from = tx.getSender().toHexString();
-    this.value = tx.getValue().toHexString();
+    this.value = tx.getValue().toShortHexString();
     this.gas = "0x" + Long.toHexString(tx.getGasLimit());
 
     // Set result details based on success/failure
