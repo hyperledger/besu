@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -45,11 +46,11 @@ import org.apache.tuweni.bytes.Bytes;
   "gasUsed",
   "to",
   "input",
+  "output",
   "error",
   "revertReason",
   "calls",
   "value",
-  "output",
   "type",
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -92,12 +93,19 @@ public class DebugCallTracerResult implements DebugTracerResult {
 
     // Set result details based on success/failure
     if (result.isSuccessful()) {
-      this.output = result.getOutput().toHexString();
+      var outputBytes = result.getOutput();
+      if (!outputBytes.isEmpty()) {
+        this.output = outputBytes.toHexString();
+      }
       // Calculate gas used from gas limit and gas remaining
       final long gasUsed = tx.getGasLimit() - result.getGasRemaining();
       this.gasUsed = "0x" + Long.toHexString(gasUsed);
     } else {
-      this.error = "execution reverted";
+      this.error =
+          result
+              .getExceptionalHaltReason()
+              .map(ExceptionalHaltReason::getDescription)
+              .orElse("execution reverted");
       // Calculate gas used for failed transaction
       final long gasUsed = result.getEstimateGasUsedByTransaction();
       this.gasUsed = "0x" + Long.toHexString(gasUsed);
