@@ -304,6 +304,24 @@ public class ConfigurationOverviewBuilder {
     return this;
   }
 
+  /**
+   * set the plugin context
+   *
+   * @param besuPluginContext the plugin context
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setPluginContext(
+      final BesuPluginContextImpl besuPluginContext) {
+    this.besuPluginContext = besuPluginContext;
+    return this;
+  }
+
+  /**
+   * Sets the blob db settings.
+   *
+   * @param blobDBSettings the blob db settings
+   * @return the builder
+   */
   public ConfigurationOverviewBuilder setBlobDBSettings(
       final RocksDBCLIOptions.BlobDBSettings blobDBSettings) {
     this.blobDBSettings = blobDBSettings;
@@ -480,14 +498,5 @@ public class ConfigurationOverviewBuilder {
 
   private String normalizeSize(final long size) {
     return String.format("%.02f", (double) (size) / 1024 / 1024 / 1024) + " GB";
-  }
-
-  /**
-   * set the plugin context
-   *
-   * @param besuPluginContext the plugin context
-   */
-  public void setPluginContext(final BesuPluginContextImpl besuPluginContext) {
-    this.besuPluginContext = besuPluginContext;
   }
 }

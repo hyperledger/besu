@@ -207,18 +207,15 @@ public class RocksDBCLIOptions {
         .toString();
   }
 
+  /**
+   * A container type BlobDBSettings
+   *
+   * @param isBlockchainGarbageCollectionEnabled the is blockchain garbage collection enabled
+   * @param blobGarbageCollectionAgeCutoff the blob garbage collection age cutoff
+   * @param blobGarbageCollectionForceThreshold the blob garbage collection force threshold
+   */
   public record BlobDBSettings(
       boolean isBlockchainGarbageCollectionEnabled,
       Optional<Double> blobGarbageCollectionAgeCutoff,
-      Optional<Double> blobGarbageCollectionForceThreshold) {
-
-    @Override
-    public String toString() {
-      return MoreObjects.toStringHelper(this)
-          .add("isBlockchainGarbageCollectionEnabled", isBlockchainGarbageCollectionEnabled)
-          .add("blobGarbageCollectionAgeCutoff", blobGarbageCollectionAgeCutoff)
-          .add("blobGarbageCollectionForceThreshold", blobGarbageCollectionForceThreshold)
-          .toString();
-    }
-  }
+      Optional<Double> blobGarbageCollectionForceThreshold) {}
 }
