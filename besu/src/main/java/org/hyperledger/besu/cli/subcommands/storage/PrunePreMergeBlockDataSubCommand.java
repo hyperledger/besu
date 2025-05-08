@@ -141,7 +141,6 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
       }
       final Hash h = maybeBlockHash.get();
       updater.removeTransactionReceipts(h);
-      updater.removeTotalDifficulty(h);
       updater.removeBlockBody(h);
     } while (++headerNumber < endBlockNumber);
     updater.commit();
