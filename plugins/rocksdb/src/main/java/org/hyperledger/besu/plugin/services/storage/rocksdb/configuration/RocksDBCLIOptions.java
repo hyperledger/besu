@@ -114,7 +114,7 @@ public class RocksDBCLIOptions {
       hidden = true,
       paramLabel = "<DOUBLE>",
       description = "Blob garbage collection age cutoff (default: ${DEFAULT-VALUE})")
-  Optional<Double> blobGarbageCollectionAgeCutoff;
+  Optional<Double> blobGarbageCollectionAgeCutoff = Optional.empty();
 
   /**
    * The Blob garbage collection force threshold. The fraction of garbage inside eligible blob files
@@ -126,7 +126,7 @@ public class RocksDBCLIOptions {
       hidden = true,
       paramLabel = "<DOUBLE>",
       description = "Blob garbage collection force threshold (default: ${DEFAULT-VALUE})")
-  Optional<Double> blobGarbageCollectionForceThreshold;
+  Optional<Double> blobGarbageCollectionForceThreshold = Optional.empty();
 
   private RocksDBCLIOptions() {}
 
