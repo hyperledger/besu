@@ -22,12 +22,12 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ public class BaseFeeMarketBaseFeeTest {
       final String testFilePath = "basefee-test.json";
       final URL testFileUrl = BaseFeeMarketBaseFeeTest.class.getResource(testFilePath);
       checkState(testFileUrl != null, "Cannot find test file " + testFilePath);
-      final String testSuiteJson = Resources.toString(testFileUrl, Charsets.UTF_8);
+      final String testSuiteJson = Resources.toString(testFileUrl, StandardCharsets.UTF_8);
       final ObjectMapper objectMapper = new ObjectMapper();
       final BaseFeeMarketBaseFeeTestCase[] testCases =
           objectMapper.readValue(testSuiteJson, BaseFeeMarketBaseFeeTestCase[].class);

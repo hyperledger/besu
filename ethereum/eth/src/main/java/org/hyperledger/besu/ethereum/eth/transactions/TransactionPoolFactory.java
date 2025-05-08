@@ -61,7 +61,7 @@ public class TransactionPoolFactory {
     final TransactionPoolMetrics metrics = new TransactionPoolMetrics(metricsSystem);
 
     final PeerTransactionTracker transactionTracker =
-        new PeerTransactionTracker(ethContext.getEthPeers());
+        new PeerTransactionTracker(transactionPoolConfiguration, ethContext.getEthPeers());
     final TransactionsMessageSender transactionsMessageSender =
         new TransactionsMessageSender(transactionTracker);
 

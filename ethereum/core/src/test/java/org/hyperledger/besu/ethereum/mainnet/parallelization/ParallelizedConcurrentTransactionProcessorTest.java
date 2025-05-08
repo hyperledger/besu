@@ -70,15 +70,17 @@ class ParallelizedConcurrentTransactionProcessorTest {
   @Mock private BlockHeader blockHeader;
   @Mock ProtocolContext protocolContext;
   @Mock private Transaction transaction;
-  @Mock private PrivateMetadataUpdater privateMetadataUpdater;
+  @Mock private PrivateMetadataUpdater mockPrivateMetadataUpdater;
   @Mock private TransactionCollisionDetector transactionCollisionDetector;
 
   private BonsaiWorldState worldState;
+  private Optional<PrivateMetadataUpdater> privateMetadataUpdater;
 
   private ParallelizedConcurrentTransactionProcessor processor;
 
   @BeforeEach
   void setUp() {
+    privateMetadataUpdater = Optional.of(mockPrivateMetadataUpdater);
     processor =
         new ParallelizedConcurrentTransactionProcessor(
             transactionProcessor, transactionCollisionDetector);
@@ -167,7 +169,8 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 0,
                 ValidationResult.invalid(
                     TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE),
-                Optional.of(Bytes.EMPTY)));
+                Optional.of(Bytes.EMPTY),
+                Optional.empty()));
 
     processor.runTransaction(
         protocolContext,
