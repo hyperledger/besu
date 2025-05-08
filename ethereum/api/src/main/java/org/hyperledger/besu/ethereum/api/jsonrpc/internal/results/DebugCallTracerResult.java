@@ -109,7 +109,8 @@ public class DebugCallTracerResult implements DebugTracerResult {
       // Calculate gas used for failed transaction
       final long gasUsed = result.getEstimateGasUsedByTransaction();
       this.gasUsed = "0x" + Long.toHexString(gasUsed);
-      result.getRevertReason().ifPresent(r -> this.revertReason = r.toHexString());
+      this.revertReason =
+          result.getRevertReason().filter(r -> !r.isEmpty()).map(Bytes::toHexString).orElse(null);
     }
 
     // Process trace frames to build call hierarchy
