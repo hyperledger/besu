@@ -1012,7 +1012,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     return Stream.of(
         Arguments.of("mainnet", 1L, 36_000_000L),
         Arguments.of("holesky", 17_000L, 36_000_000L),
-        Arguments.of("sepolia", 11_155_111L, 36_000_000L),
+        Arguments.of("sepolia", 11_155_111L, 60_000_000L),
         Arguments.of("hoodi", 560_048L, 36_000_000L),
         Arguments.of("ephemery", 39_438_135L, 36_000_000L));
   }
