@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -124,6 +125,7 @@ public class PeerTaskExecutor {
               return inflightRequests;
             });
     MessageData requestMessageData = peerTask.getRequestMessage();
+    SubProtocol peerTaskSubProtocol = peerTask.getSubProtocol();
     PeerTaskExecutorResult<T> executorResult;
     int retriesRemaining = peerTask.getRetriesWithSamePeer();
     do {
@@ -134,7 +136,7 @@ public class PeerTaskExecutor {
           inflightRequestCountForThisTaskClass.incrementAndGet();
 
           MessageData responseMessageData =
-              requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
+              requestSender.sendRequest(peerTaskSubProtocol, requestMessageData, peer);
 
           if (responseMessageData == null) {
             throw new InvalidPeerTaskResponseException();
@@ -157,9 +159,7 @@ public class PeerTaskExecutor {
         } else {
           LOG.debug(
               "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId());
-          validationResponse
-              .getDisconnectReason()
-              .ifPresent((disconnectReason) -> peer.disconnect(disconnectReason));
+          validationResponse.getDisconnectReason().ifPresent(peer::disconnect);
           executorResult =
               new PeerTaskExecutorResult<>(
                   Optional.ofNullable(result),
@@ -175,7 +175,7 @@ public class PeerTaskExecutor {
                 Optional.of(peer));
 
       } catch (InterruptedException | TimeoutException e) {
-        peer.recordRequestTimeout(requestMessageData.getCode());
+        peer.recordRequestTimeout(peerTaskSubProtocol.getName(), requestMessageData.getCode());
         timeoutCounter.labels(taskClassName).inc();
         executorResult =
             new PeerTaskExecutorResult<>(
