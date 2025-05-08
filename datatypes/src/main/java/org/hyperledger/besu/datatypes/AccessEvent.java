@@ -306,11 +306,4 @@ public abstract class AccessEvent<T> {
   public UInt256 getIndex() {
     return index;
   }
-
-  /**
-   * Prints a {@code toString()} version suitable printed in JSON format.
-   *
-   * @return the string
-   */
-  public abstract String toJsonObject();
 }

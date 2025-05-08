@@ -57,13 +57,4 @@ public final class LeafAccessEvent extends AccessEvent<AccessEvent<Address>> {
     }
     return message;
   }
-
-  @Override
-  public String toJsonObject() {
-    return String.format(
-        "{\"addr\": \"%s\",\"treeIndex\": \"%s\",\"subIndex\": \"%s\"}",
-        getBranchEvent().getKey(),
-        getBranchEvent().getIndex().toQuantityHexString(),
-        getIndex().toQuantityHexString());
-  }
 }

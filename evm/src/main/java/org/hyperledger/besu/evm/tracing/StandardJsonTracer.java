@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
-import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.evm.code.OpcodeInfo;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -27,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Joiner;
 import org.apache.tuweni.bytes.Bytes;
@@ -235,11 +235,15 @@ public class StandardJsonTracer implements OperationTracer {
     }
 
     if (showStatelessAccessWitness) {
-      sb.append(",\"witness\": ")
-          .append(
-              messageFrame.getAccessWitness().getLeafAccesses().stream()
-                  .map(AccessEvent::toJsonObject)
-                  .toList());
+      sb.append(",\"statelessAccessWitness\": {");
+      sb.append(
+      messageFrame.getAccessWitness().getLeafAccesses().stream().map(
+        accessEvent ->
+          "{\"" + accessEvent.getBranchEvent().getKey() + "\"," +
+          "\"" + accessEvent.getBranchEvent().getIndex().toQuantityHexString() + "\"," +
+          "\"" + accessEvent.getIndex().toQuantityHexString() + "\"}"
+      ).collect(Collectors.joining(",")));
+      sb.append("}");
     }
 
     sb.append(storageString).append("}");

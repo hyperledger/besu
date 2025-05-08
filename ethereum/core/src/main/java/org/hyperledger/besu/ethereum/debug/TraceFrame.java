@@ -210,7 +210,7 @@ public class TraceFrame {
         .add("stack", stack)
         .add("memory", memory)
         .add("storage", storage)
-        .add("stalessWitness", statelessAccessWitness)
+        .add("statelessAccessWitness", statelessAccessWitness)
         .toString();
   }
 

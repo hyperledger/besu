@@ -38,13 +38,6 @@ public final class BranchAccessEvent extends AccessEvent<Address> {
   }
 
   @Override
-  public String toJsonObject() {
-    return String.format(
-        "{\"addr\": \"%s\",\"treeIndex\": \"%s\"}",
-        getBranchEvent().getKey(), getBranchEvent().getIndex().toShortHexString());
-  }
-
-  @Override
   public String toString() {
     return String.format(
         "BranchAccessEvent { key=%s, index=%s }", key, getIndex().toShortHexString());
