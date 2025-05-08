@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
