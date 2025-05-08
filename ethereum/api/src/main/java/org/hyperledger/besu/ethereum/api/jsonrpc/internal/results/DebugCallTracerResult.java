@@ -488,6 +488,36 @@ public class DebugCallTracerResult implements DebugTracerResult {
     System.out.println("  Gas used: " + selfDestructCall.gasUsed);
   }
 
+  /**
+   * Handle CALLDATALOAD operations.
+   *
+   * @param frame the current trace frame
+   * @param depth the current depth
+   * @param callsByDepth map of calls by depth
+   */
+  private void handleCallDataLoad(
+          final TraceFrame frame,
+          final int depth,
+          final Map<Integer, DebugCallTracerResult> callsByDepth) {
+
+    // Get the current call context
+    final DebugCallTracerResult currentCall = callsByDepth.get(depth);
+    if (currentCall == null) {
+      return;
+    }
+
+    // Update the value based on the frame's value
+    if (!frame.getValue().isZero()) {
+      currentCall.value = frame.getValue().toShortHexString();
+    } else {
+      currentCall.value = "0x0";
+    }
+
+    // Debug output
+    System.out.println("Handled CALLDATALOAD operation:");
+    System.out.println("  Updated value: " + currentCall.value);
+  }
+
 
 
   /**
