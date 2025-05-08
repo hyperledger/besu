@@ -40,17 +40,17 @@ import org.apache.tuweni.bytes.Bytes;
  * https://geth.ethereum.org/docs/developers/evm-tracing/built-in-tracers#call-tracer
  */
 @JsonPropertyOrder({
-  "type",
   "from",
-  "to",
-  "value",
   "gas",
   "gasUsed",
+  "to",
   "input",
-  "output",
   "error",
   "revertReason",
-  "calls"
+  "calls",
+  "value",
+  "output",
+  "type",
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DebugCallTracerResult implements DebugTracerResult {
