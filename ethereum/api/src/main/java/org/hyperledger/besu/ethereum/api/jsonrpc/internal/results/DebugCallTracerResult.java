@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.Words;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -298,7 +299,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
     // For regular calls, get the recipient from the stack if available
     if (frame.getStack().isPresent() && frame.getStack().get().length > 1) {
       Bytes[] stack = frame.getStack().get();
-      to = Address.wrap(stack[stack.length - 2]).toHexString();
+      to = Words.toAddress(stack[stack.length - 2]).toString();
     } else {
       // Fallback to next frame's recipient
       to = nextFrame.getRecipient() != null ? nextFrame.getRecipient().toHexString() : null;
