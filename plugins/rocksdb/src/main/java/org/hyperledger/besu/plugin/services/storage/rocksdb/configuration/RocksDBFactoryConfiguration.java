@@ -21,6 +21,7 @@ public class RocksDBFactoryConfiguration {
   private final int backgroundThreadCount;
   private final long cacheCapacity;
   private final boolean isHighSpec;
+  private final boolean isBlockchainGarbageCollectionEnabled;
   private final double blobGarbageCollectionAgeCutoff;
   private final double blobGarbageCollectionForceThreshold;
 
@@ -31,6 +32,8 @@ public class RocksDBFactoryConfiguration {
    * @param backgroundThreadCount the background thread count
    * @param cacheCapacity the cache capacity
    * @param isHighSpec the is high spec
+   * @param isBlockchainGarbageCollectionEnabled is garbage collection enabled for the BLOCKCHAIN
+   *     column family
    * @param blobGarbageCollectionAgeCutoff the blob garbage collection age cutoff
    * @param blobGarbageCollectionForceThreshold the blob garbage collection force threshold
    */
@@ -39,12 +42,14 @@ public class RocksDBFactoryConfiguration {
       final int backgroundThreadCount,
       final long cacheCapacity,
       final boolean isHighSpec,
+      final boolean isBlockchainGarbageCollectionEnabled,
       final double blobGarbageCollectionAgeCutoff,
       final double blobGarbageCollectionForceThreshold) {
     this.backgroundThreadCount = backgroundThreadCount;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
     this.isHighSpec = isHighSpec;
+    this.isBlockchainGarbageCollectionEnabled = isBlockchainGarbageCollectionEnabled;
     this.blobGarbageCollectionAgeCutoff = blobGarbageCollectionAgeCutoff;
     this.blobGarbageCollectionForceThreshold = blobGarbageCollectionForceThreshold;
   }
@@ -83,6 +88,15 @@ public class RocksDBFactoryConfiguration {
    */
   public boolean isHighSpec() {
     return isHighSpec;
+  }
+
+  /**
+   * Is garbage collection enabled for the BLOCKCHAIN column family.
+   *
+   * @return the boolean
+   */
+  public boolean isBlockchainGarbageCollectionEnabled() {
+    return isBlockchainGarbageCollectionEnabled;
   }
 
   /**

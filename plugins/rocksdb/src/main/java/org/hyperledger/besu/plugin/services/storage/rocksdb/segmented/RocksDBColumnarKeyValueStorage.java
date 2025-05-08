@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -229,7 +230,8 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
     if (segment.containsStaticData()) {
       options
           .setEnableBlobFiles(true)
-          .setEnableBlobGarbageCollection(segment.isStaticDataGarbageCollectionEnabled())
+          .setEnableBlobGarbageCollection(
+              isStaticDataGarbageCollectionEnabled(segment, configuration))
           // fraction of file age to be considered eligible for GC;
           // 0.25 = oldest 25% of files eligible;
           // 1 = all files eligible
@@ -243,6 +245,16 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
     }
 
     return new ColumnFamilyDescriptor(segment.getId(), options);
+  }
+
+  private static boolean isStaticDataGarbageCollectionEnabled(
+      final SegmentIdentifier segment, final RocksDBConfiguration configuration) {
+    if (BLOCKCHAIN.getName().equals(segment.getName())
+        && configuration.isBlockchainGarbageCollectionEnabled()) {
+      return true;
+    } else {
+      return segment.isStaticDataGarbageCollectionEnabled();
+    }
   }
 
   /***

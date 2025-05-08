@@ -30,6 +30,7 @@ public class RocksDBConfigurationBuilder {
   private long cacheCapacity = DEFAULT_CACHE_CAPACITY;
   private int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
   private boolean isHighSpec = DEFAULT_IS_HIGH_SPEC;
+  private boolean isBlockchainGarbageCollectionEnabled = false;
   private double blobGarbageCollectionAgeCutoff = 0.25;
   private double blobGarbageCollectionForceThreshold = 1.0;
 
@@ -103,6 +104,18 @@ public class RocksDBConfigurationBuilder {
   }
 
   /**
+   * Is blockchain garbage collection enabled.
+   *
+   * @param isBlockchainGarbageCollectionEnabled the is blockchain garbage collection enabled
+   * @return the rocks db configuration builder
+   */
+  public RocksDBConfigurationBuilder isBlockchainGarbageCollectionEnabled(
+      final boolean isBlockchainGarbageCollectionEnabled) {
+    this.isBlockchainGarbageCollectionEnabled = isBlockchainGarbageCollectionEnabled;
+    return this;
+  }
+
+  /**
    * Blob garbage collection age cutoff.
    *
    * @param blobGarbageCollectionAgeCutoff the blob garbage collection age cutoff
@@ -138,6 +151,7 @@ public class RocksDBConfigurationBuilder {
         .cacheCapacity(configuration.getCacheCapacity())
         .maxOpenFiles(configuration.getMaxOpenFiles())
         .isHighSpec(configuration.isHighSpec())
+        .isBlockchainGarbageCollectionEnabled(configuration.isBlockchainGarbageCollectionEnabled())
         .blobGarbageCollectionAgeCutoff(configuration.getBlobGarbageCollectionAgeCutoff())
         .blobGarbageCollectionForceThreshold(
             configuration.getBlobGarbageCollectionForceThreshold());
@@ -156,6 +170,7 @@ public class RocksDBConfigurationBuilder {
         cacheCapacity,
         label,
         isHighSpec,
+        isBlockchainGarbageCollectionEnabled,
         blobGarbageCollectionAgeCutoff,
         blobGarbageCollectionForceThreshold);
   }

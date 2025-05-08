@@ -45,6 +45,10 @@ public class RocksDBCLIOptions {
   /** The constant IS_HIGH_SPEC. */
   public static final String IS_HIGH_SPEC = "--Xplugin-rocksdb-high-spec-enabled";
 
+  /** Key name for configuring blockchain_blob_garbage_collection_enabled */
+  public static final String BLOB_BLOCKCHAIN_GARBAGE_COLLECTION_ENABLED =
+      "--Xplugin-rocksdb-blockchain-blob-garbage-collection-enabled";
+
   /** Key name for configuring blob_garbage_collection_age_cutoff */
   public static final String BLOB_GARBAGE_COLLECTION_AGE_CUTOFF =
       "--Xplugin-rocksdb-blob-garbage-collection-age-cutoff";
@@ -89,6 +93,16 @@ public class RocksDBCLIOptions {
           "Use this flag to boost Besu performance if you have a 16 GiB RAM hardware or more (default: ${DEFAULT-VALUE})")
   boolean isHighSpec;
 
+  /** The Blob blockchain garbage collection enabled. */
+  @CommandLine.Option(
+      names = {BLOB_BLOCKCHAIN_GARBAGE_COLLECTION_ENABLED},
+      hidden = true,
+      defaultValue = "false",
+      paramLabel = "<BOOLEAN>",
+      description =
+          "Enable garbage collection for the BLOCKCHAIN column family (default: ${DEFAULT-VALUE})")
+  boolean isBlockchainGarbageCollectionEnabled = false;
+
   /** The Blob garbage collection age cutoff. */
   @CommandLine.Option(
       names = {BLOB_GARBAGE_COLLECTION_AGE_CUTOFF},
@@ -130,6 +144,7 @@ public class RocksDBCLIOptions {
     options.cacheCapacity = config.getCacheCapacity();
     options.backgroundThreadCount = config.getBackgroundThreadCount();
     options.isHighSpec = config.isHighSpec();
+    options.isBlockchainGarbageCollectionEnabled = config.isBlockchainGarbageCollectionEnabled();
     options.blobGarbageCollectionAgeCutoff = config.getBlobGarbageCollectionAgeCutoff();
     options.blobGarbageCollectionForceThreshold = config.getBlobGarbageCollectionForceThreshold();
     return options;
@@ -146,6 +161,7 @@ public class RocksDBCLIOptions {
         backgroundThreadCount,
         cacheCapacity,
         isHighSpec,
+        isBlockchainGarbageCollectionEnabled,
         blobGarbageCollectionAgeCutoff,
         blobGarbageCollectionForceThreshold);
   }
@@ -166,6 +182,7 @@ public class RocksDBCLIOptions {
         .add("cacheCapacity", cacheCapacity)
         .add("backgroundThreadCount", backgroundThreadCount)
         .add("isHighSpec", isHighSpec)
+        .add("isBlockchainGarbageCollectionEnabled", isBlockchainGarbageCollectionEnabled)
         .add("blobGarbageCollectionAgeCutoff", blobGarbageCollectionAgeCutoff)
         .add("blobGarbageCollectionForceThreshold", blobGarbageCollectionForceThreshold)
         .toString();
