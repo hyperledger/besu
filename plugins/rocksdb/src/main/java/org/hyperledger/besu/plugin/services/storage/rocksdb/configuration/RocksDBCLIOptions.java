@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
+import java.util.Optional;
+
 import com.google.common.base.MoreObjects;
 import picocli.CommandLine;
 
@@ -97,29 +99,34 @@ public class RocksDBCLIOptions {
   @CommandLine.Option(
       names = {BLOB_BLOCKCHAIN_GARBAGE_COLLECTION_ENABLED},
       hidden = true,
-      defaultValue = "false",
       paramLabel = "<BOOLEAN>",
       description =
           "Enable garbage collection for the BLOCKCHAIN column family (default: ${DEFAULT-VALUE})")
   boolean isBlockchainGarbageCollectionEnabled = false;
 
-  /** The Blob garbage collection age cutoff. */
+  /**
+   * The Blob garbage collection age cutoff. The fraction of file age to be considered eligible for
+   * GC; e.g. 0.25 = oldest 25% of files eligible; e.g. 1 = all files eligible When unspecified, use
+   * RocksDB default
+   */
   @CommandLine.Option(
       names = {BLOB_GARBAGE_COLLECTION_AGE_CUTOFF},
       hidden = true,
-      defaultValue = "0.25",
       paramLabel = "<DOUBLE>",
       description = "Blob garbage collection age cutoff (default: ${DEFAULT-VALUE})")
-  double blobGarbageCollectionAgeCutoff;
+  Optional<Double> blobGarbageCollectionAgeCutoff;
 
-  /** The Blob garbage collection force threshold. */
+  /**
+   * The Blob garbage collection force threshold. The fraction of garbage inside eligible blob files
+   * to trigger GC; e.g. 1 = trigger when eligible file contains 100% garbage; e.g. 0 = trigger for
+   * all eligible files; When unspecified, use Rocksdb default
+   */
   @CommandLine.Option(
       names = {BLOB_GARBAGE_COLLECTION_FORCE_THRESHOLD},
       hidden = true,
-      defaultValue = "1.0",
       paramLabel = "<DOUBLE>",
       description = "Blob garbage collection force threshold (default: ${DEFAULT-VALUE})")
-  double blobGarbageCollectionForceThreshold;
+  Optional<Double> blobGarbageCollectionForceThreshold;
 
   private RocksDBCLIOptions() {}
 

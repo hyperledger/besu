@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
+import java.util.Optional;
+
 /** The RocksDb factory configuration. */
 public class RocksDBFactoryConfiguration {
 
@@ -22,8 +24,8 @@ public class RocksDBFactoryConfiguration {
   private final long cacheCapacity;
   private final boolean isHighSpec;
   private final boolean isBlockchainGarbageCollectionEnabled;
-  private final double blobGarbageCollectionAgeCutoff;
-  private final double blobGarbageCollectionForceThreshold;
+  private final Optional<Double> blobGarbageCollectionAgeCutoff;
+  private final Optional<Double> blobGarbageCollectionForceThreshold;
 
   /**
    * Instantiates a new RocksDb factory configuration.
@@ -43,8 +45,8 @@ public class RocksDBFactoryConfiguration {
       final long cacheCapacity,
       final boolean isHighSpec,
       final boolean isBlockchainGarbageCollectionEnabled,
-      final double blobGarbageCollectionAgeCutoff,
-      final double blobGarbageCollectionForceThreshold) {
+      final Optional<Double> blobGarbageCollectionAgeCutoff,
+      final Optional<Double> blobGarbageCollectionForceThreshold) {
     this.backgroundThreadCount = backgroundThreadCount;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
@@ -102,18 +104,18 @@ public class RocksDBFactoryConfiguration {
   /**
    * Gets blob garbage collection age cutoff.
    *
-   * @return the blob garbage collection age cutoff
+   * @return the blob garbage collection age cutoff, if set
    */
-  public double getBlobGarbageCollectionAgeCutoff() {
+  public Optional<Double> getBlobGarbageCollectionAgeCutoff() {
     return blobGarbageCollectionAgeCutoff;
   }
 
   /**
    * Gets blob garbage collection force threshold.
    *
-   * @return the blob garbage collection force threshold
+   * @return the blob garbage collection force threshold, if set
    */
-  public double getBlobGarbageCollectionForceThreshold() {
+  public Optional<Double> getBlobGarbageCollectionForceThreshold() {
     return blobGarbageCollectionForceThreshold;
   }
 }

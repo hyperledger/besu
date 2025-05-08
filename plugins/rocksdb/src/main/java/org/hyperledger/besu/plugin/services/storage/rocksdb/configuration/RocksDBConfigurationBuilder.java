@@ -20,6 +20,7 @@ import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 /** The RocksDb configuration builder. */
 public class RocksDBConfigurationBuilder {
@@ -31,8 +32,8 @@ public class RocksDBConfigurationBuilder {
   private int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
   private boolean isHighSpec = DEFAULT_IS_HIGH_SPEC;
   private boolean isBlockchainGarbageCollectionEnabled = false;
-  private double blobGarbageCollectionAgeCutoff = 0.25;
-  private double blobGarbageCollectionForceThreshold = 1.0;
+  private Optional<Double> blobGarbageCollectionAgeCutoff = Optional.empty();
+  private Optional<Double> blobGarbageCollectionForceThreshold = Optional.empty();
 
   /** Instantiates a new Rocks db configuration builder. */
   public RocksDBConfigurationBuilder() {}
@@ -122,7 +123,7 @@ public class RocksDBConfigurationBuilder {
    * @return the rocks db configuration builder
    */
   public RocksDBConfigurationBuilder blobGarbageCollectionAgeCutoff(
-      final double blobGarbageCollectionAgeCutoff) {
+      final Optional<Double> blobGarbageCollectionAgeCutoff) {
     this.blobGarbageCollectionAgeCutoff = blobGarbageCollectionAgeCutoff;
     return this;
   }
@@ -134,7 +135,7 @@ public class RocksDBConfigurationBuilder {
    * @return the rocks db configuration builder
    */
   public RocksDBConfigurationBuilder blobGarbageCollectionForceThreshold(
-      final double blobGarbageCollectionForceThreshold) {
+      final Optional<Double> blobGarbageCollectionForceThreshold) {
     this.blobGarbageCollectionForceThreshold = blobGarbageCollectionForceThreshold;
     return this;
   }

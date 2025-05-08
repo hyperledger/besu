@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 /** The Rocks db configuration. */
 public class RocksDBConfiguration {
@@ -26,8 +27,8 @@ public class RocksDBConfiguration {
   private final long cacheCapacity;
   private final boolean isHighSpec;
   private final boolean isBlockchainGarbageCollectionEnabled;
-  private final double blobGarbageCollectionAgeCutoff;
-  private final double blobGarbageCollectionForceThreshold;
+  private final Optional<Double> blobGarbageCollectionAgeCutoff;
+  private final Optional<Double> blobGarbageCollectionForceThreshold;
 
   /**
    * Instantiates a new RocksDb configuration.
@@ -51,8 +52,8 @@ public class RocksDBConfiguration {
       final String label,
       final boolean isHighSpec,
       final boolean isBlockchainGarbageCollectionEnabled,
-      final double blobGarbageCollectionAgeCutoff,
-      final double blobGarbageCollectionForceThreshold) {
+      final Optional<Double> blobGarbageCollectionAgeCutoff,
+      final Optional<Double> blobGarbageCollectionForceThreshold) {
     this.backgroundThreadCount = backgroundThreadCount;
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
@@ -132,7 +133,7 @@ public class RocksDBConfiguration {
    *
    * @return the blob garbage collection age cutoff
    */
-  public double getBlobGarbageCollectionAgeCutoff() {
+  public Optional<Double> getBlobGarbageCollectionAgeCutoff() {
     return blobGarbageCollectionAgeCutoff;
   }
 
@@ -141,7 +142,7 @@ public class RocksDBConfiguration {
    *
    * @return the blob garbage collection force threshold
    */
-  public double getBlobGarbageCollectionForceThreshold() {
+  public Optional<Double> getBlobGarbageCollectionForceThreshold() {
     return blobGarbageCollectionForceThreshold;
   }
 }

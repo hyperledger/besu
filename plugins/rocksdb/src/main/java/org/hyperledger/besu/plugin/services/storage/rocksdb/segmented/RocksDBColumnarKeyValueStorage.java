@@ -228,23 +228,36 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
             .setTableFormatConfig(basedTableConfig)
             .setLevelCompactionDynamicLevelBytes(dynamicLevelBytes);
     if (segment.containsStaticData()) {
-      options
-          .setEnableBlobFiles(true)
-          .setEnableBlobGarbageCollection(
-              isStaticDataGarbageCollectionEnabled(segment, configuration))
-          // fraction of file age to be considered eligible for GC;
-          // 0.25 = oldest 25% of files eligible;
-          // 1 = all files eligible
-          .setBlobGarbageCollectionAgeCutoff(configuration.getBlobGarbageCollectionAgeCutoff())
-          // fraction of garbage in eligible blob files to trigger GC;
-          // 0 = trigger for all eligible files
-          .setBlobGarbageCollectionForceThreshold(
-              configuration.getBlobGarbageCollectionForceThreshold())
-          .setMinBlobSize(100)
-          .setBlobCompressionType(CompressionType.LZ4_COMPRESSION);
+      configureBlobDBForSegment(segment, configuration, options);
     }
 
     return new ColumnFamilyDescriptor(segment.getId(), options);
+  }
+
+  private static void configureBlobDBForSegment(
+      final SegmentIdentifier segment,
+      final RocksDBConfiguration configuration,
+      final ColumnFamilyOptions options) {
+    options
+        .setEnableBlobFiles(true)
+        .setEnableBlobGarbageCollection(
+            isStaticDataGarbageCollectionEnabled(segment, configuration))
+        .setMinBlobSize(100)
+        .setBlobCompressionType(CompressionType.LZ4_COMPRESSION);
+    if (configuration.getBlobGarbageCollectionAgeCutoff().isPresent()) {
+      // fraction of file age to be considered eligible for GC;
+      // 0.25 = oldest 25% of files eligible;
+      // 1 = all files eligible
+      options.setBlobGarbageCollectionAgeCutoff(
+          configuration.getBlobGarbageCollectionAgeCutoff().get());
+    }
+    if (configuration.getBlobGarbageCollectionForceThreshold().isPresent()) {
+      // fraction of garbage in eligible blob files to trigger GC;
+      // 1 = trigger when eligible file contains 100% garbage;
+      // 0 = trigger for all eligible files;
+      options.setBlobGarbageCollectionForceThreshold(
+          configuration.getBlobGarbageCollectionForceThreshold().get());
+    }
   }
 
   private static boolean isStaticDataGarbageCollectionEnabled(
