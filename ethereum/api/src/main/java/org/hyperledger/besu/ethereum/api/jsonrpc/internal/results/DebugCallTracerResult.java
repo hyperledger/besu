@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -67,13 +68,16 @@ public class DebugCallTracerResult implements DebugTracerResult {
   private String error;
   private String revertReason;
   private final List<DebugCallTracerResult> calls;
+  private final GasCalculator gasCalculator;
 
   // Constants for gas calculations
   private static final int CODE_DEPOSIT_GAS_PER_BYTE = 200;
   private static final int CALL_STIPEND = 2300;
   private static final int EIP_150_DIVISOR = 64;
 
-  public DebugCallTracerResult(final TransactionTrace transactionTrace) {
+  public DebugCallTracerResult(
+      final TransactionTrace transactionTrace, final GasCalculator gasCalculator) {
+    this.gasCalculator = gasCalculator;
     final Transaction tx = transactionTrace.getTransaction();
     final TransactionProcessingResult result = transactionTrace.getResult();
 
@@ -130,7 +134,8 @@ public class DebugCallTracerResult implements DebugTracerResult {
       final String to,
       final String value,
       final BigInteger gas,
-      final String input) {
+      final String input,
+      final GasCalculator gasCalculator) {
     this.type = type;
     this.from = from;
     this.to = to;
@@ -139,13 +144,9 @@ public class DebugCallTracerResult implements DebugTracerResult {
     this.input = input;
     this.calls = new ArrayList<>();
     this.gasUsed = null; // Explicitly set to null for nested calls
+    this.gasCalculator = gasCalculator;
   }
 
-  /**
-   * Process trace frames to build a hierarchical call tree structure.
-   *
-   * @param transactionTrace the transaction trace containing frames
-   */
   /**
    * Process trace frames to build a hierarchical call tree structure.
    *
@@ -187,7 +188,17 @@ public class DebugCallTracerResult implements DebugTracerResult {
           continue;
         }
 
-        handleCall(frames, i, frame, nextFrame.get(), opcodeString, depth, parentCall, callsByDepth, callStack, cumulativeGasCost);
+        handleCall(
+            frames,
+            i,
+            frame,
+            nextFrame.get(),
+            opcodeString,
+            depth,
+            parentCall,
+            callsByDepth,
+            callStack,
+            cumulativeGasCost);
       } else if (isCreateOp(opcodeString)) {
         // Handle CREATE, CREATE2
         Optional<TraceFrame> nextFrame = getNextFrameAtDepth(frames, i, depth + 1);
@@ -196,13 +207,33 @@ public class DebugCallTracerResult implements DebugTracerResult {
           continue;
         }
 
-        handleCreate(frames, i, frame, nextFrame.get(), opcodeString, depth, parentCall, callsByDepth, callStack, cumulativeGasCost);
+        handleCreate(
+            frames,
+            i,
+            frame,
+            nextFrame.get(),
+            opcodeString,
+            depth,
+            parentCall,
+            callsByDepth,
+            callStack,
+            cumulativeGasCost);
       } else if ("SELFDESTRUCT".equals(opcodeString)) {
         if (frame.getExceptionalHaltReason().isPresent()) {
           // If there's an exceptional halt reason, handle it as a call
           Optional<TraceFrame> nextFrame = getNextFrameAtDepth(frames, i, depth + 1);
           if (nextFrame.isPresent() && frame.getDepth() < nextFrame.get().getDepth()) {
-            handleCall(frames, i, frame, nextFrame.get(), opcodeString, depth, parentCall, callsByDepth, callStack, cumulativeGasCost);
+            handleCall(
+                frames,
+                i,
+                frame,
+                nextFrame.get(),
+                opcodeString,
+                depth,
+                parentCall,
+                callsByDepth,
+                callStack,
+                cumulativeGasCost);
           }
         } else {
           // Otherwise, handle it as a self-destruct
@@ -210,8 +241,10 @@ public class DebugCallTracerResult implements DebugTracerResult {
         }
       } else if ("CALLDATALOAD".equals(opcodeString)) {
         handleCallDataLoad(frame, depth, callsByDepth);
-      } else if ("RETURN".equals(opcodeString) || "REVERT".equals(opcodeString) || "STOP".equals(opcodeString)) {
+      } else if ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString)) {
         handleReturn(frame, opcodeString, depth, callStack, callsByDepth);
+      } else if ("REVERT".equals(opcodeString)) {
+        handleRevert(frame, depth, callStack, callsByDepth);
       } else if (frame.getExceptionalHaltReason().isPresent()) {
         handleExceptionalHalt(frame, depth, callStack, callsByDepth);
       }
@@ -245,16 +278,16 @@ public class DebugCallTracerResult implements DebugTracerResult {
    * @param cumulativeGasCost the cumulative gas cost
    */
   private void handleCall(
-          final List<TraceFrame> frames,
-          final int frameIndex,
-          final TraceFrame frame,
-          final TraceFrame nextFrame,
-          final String opcodeString,
-          final int depth,
-          final DebugCallTracerResult parentCall,
-          final Map<Integer, DebugCallTracerResult> callsByDepth,
-          final Deque<CallStackEntry> callStack,
-          final long cumulativeGasCost) {
+      final List<TraceFrame> frames,
+      final int frameIndex,
+      final TraceFrame frame,
+      final TraceFrame nextFrame,
+      final String opcodeString,
+      final int depth,
+      final DebugCallTracerResult parentCall,
+      final Map<Integer, DebugCallTracerResult> callsByDepth,
+      final Deque<CallStackEntry> callStack,
+      final long cumulativeGasCost) {
 
     // Determine from address (caller)
     final String from = parentCall.to;
@@ -290,8 +323,8 @@ public class DebugCallTracerResult implements DebugTracerResult {
     final String input = inputData != null ? inputData.toHexString() : "0x";
 
     // Create the call result
-    DebugCallTracerResult childCall = new DebugCallTracerResult(
-            opcodeString, from, to, value, callGas, input);
+    DebugCallTracerResult childCall =
+        new DebugCallTracerResult(opcodeString, from, to, value, callGas, input, gasCalculator);
 
     // Add to parent's calls list
     parentCall.calls.add(childCall);
@@ -300,7 +333,9 @@ public class DebugCallTracerResult implements DebugTracerResult {
     callsByDepth.put(depth + 1, childCall);
 
     // Push to call stack with index for gas calculation
-    CallStackEntry entry = new CallStackEntry(frameIndex, depth + 1, childCall, frame.getGasRemaining(), cumulativeGasCost);
+    CallStackEntry entry =
+        new CallStackEntry(
+            frameIndex, depth + 1, childCall, frame.getGasRemaining(), cumulativeGasCost);
 
     // Set gas stipend for value-transferring CALL operations
     if ("CALL".equals(opcodeString) && !Wei.ZERO.equals(frame.getValue())) {
@@ -335,16 +370,16 @@ public class DebugCallTracerResult implements DebugTracerResult {
    * @param cumulativeGasCost the cumulative gas cost
    */
   private void handleCreate(
-          final List<TraceFrame> frames,
-          final int frameIndex,
-          final TraceFrame frame,
-          final TraceFrame nextFrame,
-          final String opcodeString,
-          final int depth,
-          final DebugCallTracerResult parentCall,
-          final Map<Integer, DebugCallTracerResult> callsByDepth,
-          final Deque<CallStackEntry> callStack,
-          final long cumulativeGasCost) {
+      final List<TraceFrame> frames,
+      final int frameIndex,
+      final TraceFrame frame,
+      final TraceFrame nextFrame,
+      final String opcodeString,
+      final int depth,
+      final DebugCallTracerResult parentCall,
+      final Map<Integer, DebugCallTracerResult> callsByDepth,
+      final Deque<CallStackEntry> callStack,
+      final long cumulativeGasCost) {
 
     // Determine from address (creator) - similar to calculateCallingAddress in FlatTraceGenerator
     final String from = parentCall.to;
@@ -353,12 +388,12 @@ public class DebugCallTracerResult implements DebugTracerResult {
     long callGas = computeGas(frame, Optional.of(nextFrame));
 
     // Determine value - from the next frame's value
-    final String value = nextFrame.getValue() != null ?
-            nextFrame.getValue().toShortHexString() : "0x0";
+    final String value =
+        nextFrame.getValue() != null ? nextFrame.getValue().toShortHexString() : "0x0";
 
     // Determine to address - will be set later, but initialize with recipient if available
-    final String to = nextFrame.getRecipient() != null ?
-            nextFrame.getRecipient().toHexString() : null;
+    final String to =
+        nextFrame.getRecipient() != null ? nextFrame.getRecipient().toHexString() : null;
 
     // Determine input data (initialization code)
     final String input;
@@ -370,8 +405,9 @@ public class DebugCallTracerResult implements DebugTracerResult {
     }
 
     // Create the call result
-    DebugCallTracerResult childCall = new DebugCallTracerResult(
-            opcodeString, from, to, value, BigInteger.valueOf(callGas), input);
+    DebugCallTracerResult childCall =
+        new DebugCallTracerResult(
+            opcodeString, from, to, value, BigInteger.valueOf(callGas), input, gasCalculator);
 
     // Add to parent's calls list
     parentCall.calls.add(childCall);
@@ -380,7 +416,9 @@ public class DebugCallTracerResult implements DebugTracerResult {
     callsByDepth.put(depth + 1, childCall);
 
     // Push to call stack with index for gas calculation
-    CallStackEntry entry = new CallStackEntry(frameIndex, depth + 1, childCall, frame.getGasRemaining(), cumulativeGasCost);
+    CallStackEntry entry =
+        new CallStackEntry(
+            frameIndex, depth + 1, childCall, frame.getGasRemaining(), cumulativeGasCost);
 
     // Mark this as a create operation (similar to setCreateOp in FlatTraceGenerator)
     // We'll use this information in calculateGasUsed to handle code deposit costs
@@ -394,16 +432,15 @@ public class DebugCallTracerResult implements DebugTracerResult {
     System.out.println("  To: " + to);
     System.out.println("  Gas: " + callGas + " (0x" + Long.toHexString(callGas) + ")");
     System.out.println("  Value: " + value);
-    System.out.println("  Input: " + (input.length() > 100 ? input.substring(0, 100) + "..." : input));
+    System.out.println(
+        "  Input: " + (input.length() > 100 ? input.substring(0, 100) + "..." : input));
     System.out.println("  Frame gas remaining: " + frame.getGasRemaining());
     System.out.println("  Next frame gas remaining: " + nextFrame.getGasRemaining());
     System.out.println("  Computed gas: " + callGas);
     System.out.println("  Cumulative gas cost: " + cumulativeGasCost);
   }
 
-  /**
-   * Compute gas for a call based on FlatTraceGenerator's computeGas method.
-   */
+  /** Compute gas for a call based on FlatTraceGenerator's computeGas method. */
   private long computeGas(final TraceFrame frame, final Optional<TraceFrame> nextFrame) {
     if (frame.getGasCost().isPresent()) {
       final long gasNeeded = frame.getGasCost().getAsLong();
@@ -424,9 +461,9 @@ public class DebugCallTracerResult implements DebugTracerResult {
    * @param callsByDepth map of calls by depth
    */
   private void handleSelfDestruct(
-          final TraceFrame frame,
-          final int depth,
-          final Map<Integer, DebugCallTracerResult> callsByDepth) {
+      final TraceFrame frame,
+      final int depth,
+      final Map<Integer, DebugCallTracerResult> callsByDepth) {
 
     // Get the current call context
     final DebugCallTracerResult currentCall = callsByDepth.get(depth);
@@ -437,7 +474,8 @@ public class DebugCallTracerResult implements DebugTracerResult {
     // Calculate gas used for the current call
     long gasUsed = 0;
     if (currentCall.gas != null) {
-      gasUsed = currentCall.gas.longValue() - frame.getGasRemaining() + frame.getGasCost().orElse(0L);
+      gasUsed =
+          currentCall.gas.longValue() - frame.getGasRemaining() + frame.getGasCost().orElse(0L);
     }
 
     // Set gas used on the current call
@@ -462,14 +500,16 @@ public class DebugCallTracerResult implements DebugTracerResult {
     }
 
     // Create a SELFDESTRUCT call result
-    final DebugCallTracerResult selfDestructCall = new DebugCallTracerResult(
-            "SELFDESTRUCT",  // Keep as SELFDESTRUCT to match Geth's callTracer
-            from,  // from address is the self-destructing contract
-            refundAddress.toHexString(),  // to address is the refund address
-            balance.toShortHexString(),  // value is the balance being transferred
-            BigInteger.ZERO,  // no gas allocation needed
-            "0x"  // no input data
-    );
+    final DebugCallTracerResult selfDestructCall =
+        new DebugCallTracerResult(
+            "SELFDESTRUCT", // Keep as SELFDESTRUCT to match Geth's callTracer
+            from, // from address is the self-destructing contract
+            refundAddress.toHexString(), // to address is the refund address
+            balance.toShortHexString(), // value is the balance being transferred
+            BigInteger.ZERO, // no gas allocation needed
+            "0x", // no input data
+            gasCalculator // pass the gas calculator
+            );
 
     // Set the output to null since SELFDESTRUCT doesn't return data
     selfDestructCall.output = null;
@@ -496,9 +536,9 @@ public class DebugCallTracerResult implements DebugTracerResult {
    * @param callsByDepth map of calls by depth
    */
   private void handleCallDataLoad(
-          final TraceFrame frame,
-          final int depth,
-          final Map<Integer, DebugCallTracerResult> callsByDepth) {
+      final TraceFrame frame,
+      final int depth,
+      final Map<Integer, DebugCallTracerResult> callsByDepth) {
 
     // Get the current call context
     final DebugCallTracerResult currentCall = callsByDepth.get(depth);
@@ -518,7 +558,92 @@ public class DebugCallTracerResult implements DebugTracerResult {
     System.out.println("  Updated value: " + currentCall.value);
   }
 
+  /** Handle return operations (RETURN, STOP). */
+  private void handleReturn(
+      final TraceFrame frame,
+      final String opcodeString,
+      final int depth,
+      final Deque<CallStackEntry> callStack,
+      final Map<Integer, DebugCallTracerResult> callsByDepth) {
 
+    if (callStack.isEmpty() || callStack.peek().depth() != depth) {
+      return;
+    }
+
+    final CallStackEntry entry = callStack.pop();
+    final DebugCallTracerResult call = entry.call();
+
+    // Set value from the frame if available
+    if (frame.getValue() != null) {
+      call.value = frame.getValue().toShortHexString();
+    }
+
+    // Set output data
+    final Bytes outputData = frame.getOutputData();
+    call.output = outputData != null ? outputData.toHexString() : null;
+
+    // For CREATE operations, update the contract address
+    if (("CREATE".equals(call.type) || "CREATE2".equals(call.type))
+        && frame.getRecipient() != null) {
+      call.to = frame.getRecipient().toHexString();
+    }
+
+    // Calculate gas used
+    calculateGasUsed(entry, frame, opcodeString);
+
+    // Remove from tracking
+    callsByDepth.remove(depth);
+
+    // Debug output
+    System.out.println("Handled " + opcodeString + " operation:");
+    System.out.println("  Value: " + call.value);
+    System.out.println(
+        "  Output: "
+            + (call.output != null
+                ? (call.output.length() > 100 ? call.output.substring(0, 100) + "..." : call.output)
+                : "null"));
+    System.out.println("  Gas used: " + call.gasUsed);
+    if (("CREATE".equals(call.type) || "CREATE2".equals(call.type))) {
+      System.out.println("  Contract address: " + call.to);
+    }
+  }
+
+  /** Handle revert operations. */
+  private void handleRevert(
+      final TraceFrame frame,
+      final int depth,
+      final Deque<CallStackEntry> callStack,
+      final Map<Integer, DebugCallTracerResult> callsByDepth) {
+
+    if (callStack.isEmpty() || callStack.peek().depth() != depth) {
+      return;
+    }
+
+    final CallStackEntry entry = callStack.pop();
+    final DebugCallTracerResult call = entry.call();
+
+    // Set error message
+    call.error = "execution reverted";
+    call.output = null;
+
+    // Get revert reason if available
+    final Optional<Bytes> revertReason = frame.getRevertReason();
+    if (revertReason.isPresent() && !revertReason.get().isEmpty()) {
+      call.revertReason = revertReason.get().toHexString();
+    }
+
+    // Calculate gas used
+    calculateGasUsed(entry, frame, "REVERT");
+
+    // Remove from tracking
+    callsByDepth.remove(depth);
+
+    // Debug output
+    System.out.println("Handled REVERT operation:");
+    System.out.println("  Error: " + call.error);
+    System.out.println("  Revert reason: " + call.revertReason);
+    System.out.println("  Gas used: " + call.gasUsed);
+  }
 
   /**
    * Calculate the gas used for a call and set it on the call result.
@@ -528,7 +653,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
    * @param opcodeString the opcode string
    */
   private void calculateGasUsed(
-          final CallStackEntry entry, final TraceFrame currentFrame, final String opcodeString) {
+      final CallStackEntry entry, final TraceFrame currentFrame, final String opcodeString) {
 
     final DebugCallTracerResult call = entry.call();
 
@@ -541,26 +666,46 @@ public class DebugCallTracerResult implements DebugTracerResult {
     }
 
     // Follow FlatTraceGenerator's computeGasUsed logic
-    long gasRemainingBeforeProcessed;
-    long gasRemainingAfterProcessed;
-    long gasRefund = 0;
-
-    // For sub-calls (not the top-level transaction)
-    gasRemainingBeforeProcessed = entry.initialGas();
-    gasRemainingAfterProcessed = currentFrame.getGasRemaining();
-
-    // Calculate gas refund
-    gasRefund = currentFrame.getGasRefund();
+    BigInteger gasRemainingBeforeProcessed = BigInteger.valueOf(entry.initialGas());
+    BigInteger gasRemainingAfterProcessed = BigInteger.valueOf(currentFrame.getGasRemaining());
+    BigInteger gasRefund = BigInteger.valueOf(currentFrame.getGasRefund());
 
     // Calculate gas used
-    long gasUsedValue = gasRemainingBeforeProcessed - gasRemainingAfterProcessed + gasRefund;
-    BigInteger gasUsed = BigInteger.valueOf(gasUsedValue);
+    BigInteger gasUsed =
+        gasRemainingBeforeProcessed.subtract(gasRemainingAfterProcessed).add(gasRefund);
+
+    // Ensure gas used is not negative
+    gasUsed = gasUsed.max(BigInteger.ZERO);
+
+    // For CREATE operations, add code deposit cost on successful return
+    if (entry.isCreateOp()
+        && ("CREATE".equals(call.type) || "CREATE2".equals(call.type))
+        && "RETURN".equals(opcodeString)) {
+      final Bytes outputData = currentFrame.getOutputData();
+      if (outputData != null && !outputData.isEmpty()) {
+        // Use the CODE_DEPOSIT_GAS_PER_BYTE constant
+        gasUsed = gasUsed.add(BigInteger.valueOf(outputData.size() * CODE_DEPOSIT_GAS_PER_BYTE));
+      }
+    }
+
+    // Adjust for call stipends if applicable
+    if (entry.gasStipend() > 0 && ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString))) {
+      // Only subtract stipend if the call was successful
+      gasUsed = gasUsed.subtract(BigInteger.valueOf(entry.gasStipend())).max(BigInteger.ZERO);
+    }
+
+    // Ensure gas used doesn't exceed the allocated gas
+    if (call.gas != null) {
+      gasUsed = gasUsed.min(call.gas);
+    }
 
     // Debug output
-    System.out.println("Calculating gasUsed using FlatTraceGenerator logic:");
+    System.out.println("Calculating gasUsed for " + opcodeString + ":");
     System.out.println("  Gas remaining before: " + gasRemainingBeforeProcessed);
     System.out.println("  Gas remaining after: " + gasRemainingAfterProcessed);
     System.out.println("  Gas refund: " + gasRefund);
+    System.out.println("  Is create op: " + entry.isCreateOp());
+    System.out.println("  Gas stipend: " + entry.gasStipend());
     System.out.println("  Calculated gasUsed: " + gasUsed + " (0x" + gasUsed.toString(16) + ")");
 
     call.gasUsed = gasUsed;
@@ -599,11 +744,11 @@ public class DebugCallTracerResult implements DebugTracerResult {
    * @return a new call result object
    */
   private DebugCallTracerResult createCallResult(
-          final TraceFrame frame,
-          final String opcodeString,
-          final DebugCallTracerResult parentCall,
-          final TraceFrame nextFrame,
-          final long cumulativeGasCost) {
+      final TraceFrame frame,
+      final String opcodeString,
+      final DebugCallTracerResult parentCall,
+      final TraceFrame nextFrame,
+      final long cumulativeGasCost) {
 
     // Determine from address (caller)
     final String from = parentCall.to;
@@ -651,8 +796,8 @@ public class DebugCallTracerResult implements DebugTracerResult {
     final String input = inputData != null ? inputData.toHexString() : "0x";
 
     // Create the call result
-    DebugCallTracerResult childCall = new DebugCallTracerResult(
-            opcodeString, from, to, value, callGas, input);
+    DebugCallTracerResult childCall =
+        new DebugCallTracerResult(opcodeString, from, to, value, callGas, input, gasCalculator);
 
     // Debug output
     System.out.println("Creating call using FlatTraceGenerator logic:");
@@ -667,9 +812,9 @@ public class DebugCallTracerResult implements DebugTracerResult {
 
   private boolean isCallOp(final String opcodeString) {
     return "CALL".equals(opcodeString)
-            || "DELEGATECALL".equals(opcodeString)
-            || "CALLCODE".equals(opcodeString)
-            || "STATICCALL".equals(opcodeString);
+        || "DELEGATECALL".equals(opcodeString)
+        || "CALLCODE".equals(opcodeString)
+        || "STATICCALL".equals(opcodeString);
   }
 
   private boolean isCreateOp(final String opcodeString) {
@@ -742,32 +887,34 @@ public class DebugCallTracerResult implements DebugTracerResult {
   /** Helper record to track call stack entries for resolving returns. */
   @JsonIgnoreType
   private record CallStackEntry(
-          int startFrameIndex,
-          int depth,
-          DebugCallTracerResult call,
-          long initialGas,
-          long cumulativeGasCost,
-          long gasStipend,
-          boolean isCreateOp) {
+      int startFrameIndex,
+      int depth,
+      DebugCallTracerResult call,
+      long initialGas,
+      long cumulativeGasCost,
+      long gasStipend,
+      boolean isCreateOp) {
 
     // Compact constructor for default values
     public CallStackEntry(
-            final int startFrameIndex,
-            final int depth,
-            final DebugCallTracerResult call,
-            final long initialGas,
-            final long cumulativeGasCost) {
+        final int startFrameIndex,
+        final int depth,
+        final DebugCallTracerResult call,
+        final long initialGas,
+        final long cumulativeGasCost) {
       this(startFrameIndex, depth, call, initialGas, cumulativeGasCost, 0, false);
     }
 
     // Method to create a new instance with updated gasStipend
     public CallStackEntry withGasStipend(final long newGasStipend) {
-      return new CallStackEntry(startFrameIndex, depth, call, initialGas, cumulativeGasCost, newGasStipend, isCreateOp);
+      return new CallStackEntry(
+          startFrameIndex, depth, call, initialGas, cumulativeGasCost, newGasStipend, isCreateOp);
     }
 
     // Method to create a new instance with updated isCreateOp
     public CallStackEntry withCreateOp(final boolean newIsCreateOp) {
-      return new CallStackEntry(startFrameIndex, depth, call, initialGas, cumulativeGasCost, gasStipend, newIsCreateOp);
+      return new CallStackEntry(
+          startFrameIndex, depth, call, initialGas, cumulativeGasCost, gasStipend, newIsCreateOp);
     }
   }
 }
