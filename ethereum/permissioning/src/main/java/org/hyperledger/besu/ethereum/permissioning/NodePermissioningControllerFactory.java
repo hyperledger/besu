@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.permissioning;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -26,7 +25,6 @@ import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissi
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -45,8 +43,6 @@ public class NodePermissioningControllerFactory {
 
     ArrayList<NodeConnectionPermissioningProvider> providers = Lists.newArrayList(pluginProviders);
 
-    final Optional<SyncStatusNodePermissioningProvider> syncStatusProviderOptional;
-
     if (permissioningConfiguration.getLocalConfig().isPresent()) {
       LocalPermissioningConfiguration localPermissioningConfiguration =
           permissioningConfiguration.getLocalConfig().get();
@@ -61,10 +57,8 @@ public class NodePermissioningControllerFactory {
       }
     }
 
-    syncStatusProviderOptional = Optional.empty();
-
     final NodePermissioningController nodePermissioningController =
-        new NodePermissioningController(syncStatusProviderOptional, providers);
+        new NodePermissioningController(providers);
 
     return nodePermissioningController;
   }

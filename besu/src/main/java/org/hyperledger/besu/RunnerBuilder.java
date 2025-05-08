@@ -668,7 +668,7 @@ public class RunnerBuilder {
 
     final PeerPermissions peerPermissions =
         nodePermissioningController
-            .map(nodePC -> new PeerPermissionsAdapter(nodePC, bootnodes, context.getBlockchain()))
+            .map(nodePC -> new PeerPermissionsAdapter(nodePC, context.getBlockchain()))
             .map(nodePerms -> PeerPermissions.combine(nodePerms, defaultPeerPermissions))
             .orElse(defaultPeerPermissions);
 

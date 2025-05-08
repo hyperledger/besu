@@ -19,10 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -32,21 +29,16 @@ public class PeerPermissionsAdapter extends PeerPermissions {
   private static final Logger LOG = LoggerFactory.getLogger(PeerPermissionsAdapter.class);
 
   private final NodePermissioningController nodePermissioningController;
-  private final List<EnodeURL> bootnodes;
   private final Blockchain blockchain;
   private final long blockchainListenId;
   private final long nodePermissioningListenId;
 
   public PeerPermissionsAdapter(
-      final NodePermissioningController nodePermissioningController,
-      final List<EnodeURL> bootnodes,
-      final Blockchain blockchain) {
+      final NodePermissioningController nodePermissioningController, final Blockchain blockchain) {
     checkNotNull(nodePermissioningController);
-    checkNotNull(bootnodes);
     checkNotNull(blockchain);
 
     this.nodePermissioningController = nodePermissioningController;
-    this.bootnodes = bootnodes;
     this.blockchain = blockchain;
 
     // TODO: These events should be more targeted
@@ -87,30 +79,11 @@ public class PeerPermissionsAdapter extends PeerPermissions {
   }
 
   private boolean allowOutboundBonding(final Peer localNode, final Peer remotePeer) {
-    final boolean outboundMessagingAllowed = outboundIsPermitted(localNode, remotePeer);
-    if (!nodePermissioningController.getSyncStatusNodePermissioningProvider().isPresent()) {
-      return outboundMessagingAllowed;
-    }
-
-    // We're using smart-contract based permissioning
-    // If we're out of sync, only allow bonding to our bootnodes
-    final SyncStatusNodePermissioningProvider syncStatus =
-        nodePermissioningController.getSyncStatusNodePermissioningProvider().get();
-    return outboundMessagingAllowed
-        && (syncStatus.hasReachedSync() || bootnodes.contains(remotePeer.getEnodeURL()));
+    return outboundIsPermitted(localNode, remotePeer);
   }
 
   private boolean allowOutboundNeighborsRequests(final Peer localNode, final Peer remotePeer) {
-    final boolean outboundMessagingAllowed = outboundIsPermitted(localNode, remotePeer);
-    if (!nodePermissioningController.getSyncStatusNodePermissioningProvider().isPresent()) {
-      return outboundMessagingAllowed;
-    }
-
-    // We're using smart-contract based permissioning
-    // Only allow neighbors requests if we're in sync
-    final SyncStatusNodePermissioningProvider syncStatus =
-        nodePermissioningController.getSyncStatusNodePermissioningProvider().get();
-    return outboundMessagingAllowed && syncStatus.hasReachedSync();
+    return outboundIsPermitted(localNode, remotePeer);
   }
 
   private boolean outboundIsPermitted(final Peer localNode, final Peer remotePeer) {
