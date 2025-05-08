@@ -112,9 +112,14 @@ public class DefaultBlockchain implements MutableBlockchain {
     final Hash chainHead = blockchainStorage.getChainHead().get();
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
     totalDifficulty = blockchainStorage.getTotalDifficulty(chainHead).get();
-    final BlockBody chainHeadBody = blockchainStorage.getBlockBody(chainHead).get();
-    chainHeadTransactionCount = chainHeadBody.getTransactions().size();
-    chainHeadOmmerCount = chainHeadBody.getOmmers().size();
+
+    blockchainStorage
+        .getBlockBody(chainHead)
+        .ifPresent(
+            headBlockBody -> {
+              chainHeadTransactionCount = headBlockBody.getTransactions().size();
+              chainHeadOmmerCount = headBlockBody.getOmmers().size();
+            });
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     this.blockChoiceRule = heaviestChainBlockChoiceRule;
@@ -433,6 +438,18 @@ public class DefaultBlockchain implements MutableBlockchain {
     appendBlockHelper(new BlockWithReceipts(block, receipts), true, true);
   }
 
+  @Override
+  public void unsafeStoreHeader(final BlockHeader blockHeader, final Difficulty totalDifficulty) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    updater.putBlockHeader(blockHeader.getHash(), blockHeader);
+    updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
+    updater.putTotalDifficulty(blockHeader.getHash(), totalDifficulty);
+    this.chainHeader = blockHeader;
+    this.totalDifficulty = totalDifficulty;
+    updater.setChainHead(blockHeader.getBlockHash());
+    updater.commit();
+  }
+
   private void cacheBlockData(final Block block, final List<TransactionReceipt> receipts) {
     blockHeadersCache.ifPresent(cache -> cache.put(block.getHash(), block.getHeader()));
     blockBodiesCache.ifPresent(cache -> cache.put(block.getHash(), block.getBody()));
@@ -736,10 +753,9 @@ public class DefaultBlockchain implements MutableBlockchain {
       final Block block = blockWithReceipts.getBlock();
 
       var reorgEvent = handleChainReorg(updater, blockWithReceipts);
+      updateCacheForNewCanonicalHead(block, calculateTotalDifficulty(block.getHeader()));
       updater.commit();
       blockAddedObservers.forEach(o -> o.onBlockAdded(reorgEvent));
-
-      updateCacheForNewCanonicalHead(block, calculateTotalDifficulty(block.getHeader()));
       return true;
     } catch (final NoSuchElementException e) {
       // Any Optional.get() calls in this block should be present, missing data means data
@@ -950,5 +966,9 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   public Optional<Cache<Hash, Difficulty>> getTotalDifficultyCache() {
     return totalDifficultyCache;
+  }
+
+  public BlockchainStorage getBlockchainStorage() {
+    return blockchainStorage;
   }
 }

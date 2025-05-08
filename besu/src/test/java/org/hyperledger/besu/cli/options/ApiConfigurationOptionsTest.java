@@ -180,4 +180,20 @@ public class ApiConfigurationOptionsTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
+
+  @Test
+  public void estimateGasToleranceRatioOptionMustBeUsed() {
+    final double tolerance = 0.5d;
+    parseCommand("--estimate-gas-tolerance-ratio", Double.toString(tolerance));
+
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(
+            ImmutableApiConfiguration.builder().estimateGasToleranceRatio(tolerance).build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
 }

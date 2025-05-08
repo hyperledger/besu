@@ -26,7 +26,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -44,11 +43,11 @@ import org.junit.jupiter.api.Test;
 public class QbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
-    return new ProtocolContext(
-        null,
-        null,
-        setupContextWithBftExtraDataEncoder(BftContext.class, validators, new QbftExtraDataCodec()),
-        new BadBlockManager());
+    return new ProtocolContext.Builder()
+        .withConsensusContext(
+            setupContextWithBftExtraDataEncoder(
+                BftContext.class, validators, new QbftExtraDataCodec()))
+        .build();
   }
 
   @Test

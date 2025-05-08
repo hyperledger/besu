@@ -36,8 +36,8 @@ dependencies {
   implementation "org.immutables:value-annotations"
   implementation 'com.google.guava:guava'
   implementation 'io.opentelemetry:opentelemetry-api'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'org.bouncycastle:bcprov-jdk18on'
   implementation 'org.hyperledger.besu:ipa-multipoint'
 
@@ -48,7 +48,7 @@ dependencies {
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
-  testImplementation 'io.tmio:tuweni-units'
+  testImplementation 'io.consensys.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'

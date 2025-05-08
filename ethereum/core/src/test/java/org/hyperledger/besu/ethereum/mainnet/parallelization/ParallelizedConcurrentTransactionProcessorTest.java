@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -38,12 +38,12 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -70,15 +70,17 @@ class ParallelizedConcurrentTransactionProcessorTest {
   @Mock private BlockHeader blockHeader;
   @Mock ProtocolContext protocolContext;
   @Mock private Transaction transaction;
-  @Mock private PrivateMetadataUpdater privateMetadataUpdater;
+  @Mock private PrivateMetadataUpdater mockPrivateMetadataUpdater;
   @Mock private TransactionCollisionDetector transactionCollisionDetector;
 
   private BonsaiWorldState worldState;
+  private Optional<PrivateMetadataUpdater> privateMetadataUpdater;
 
   private ParallelizedConcurrentTransactionProcessor processor;
 
   @BeforeEach
   void setUp() {
+    privateMetadataUpdater = Optional.of(mockPrivateMetadataUpdater);
     processor =
         new ParallelizedConcurrentTransactionProcessor(
             transactionProcessor, transactionCollisionDetector);
@@ -135,7 +137,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     verify(transactionProcessor, times(1))
         .processTransaction(
-            any(DiffBasedWorldStateUpdateAccumulator.class),
+            any(PathBasedWorldStateUpdateAccumulator.class),
             eq(blockHeader),
             eq(transaction),
             eq(miningBeneficiary),
@@ -167,7 +169,8 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 0,
                 ValidationResult.invalid(
                     TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE),
-                Optional.of(Bytes.EMPTY)));
+                Optional.of(Bytes.EMPTY),
+                Optional.empty()));
 
     processor.runTransaction(
         protocolContext,
@@ -210,7 +213,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     verify(transactionProcessor, times(1))
         .processTransaction(
-            any(DiffBasedWorldStateUpdateAccumulator.class),
+            any(PathBasedWorldStateUpdateAccumulator.class),
             eq(blockHeader),
             eq(transaction),
             eq(miningBeneficiary),

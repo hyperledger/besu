@@ -124,6 +124,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
@@ -190,7 +191,6 @@ public class RunnerBuilder {
   private StorageProvider storageProvider;
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
-  private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
   private List<SubnetInfo> allowedSubnets = new ArrayList<>();
   private boolean poaDiscoveryRetryBootnodes = true;
@@ -645,7 +645,7 @@ public class RunnerBuilder {
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
             .setSupportedProtocols(subProtocols)
-            .setClientId(BesuInfo.nodeName(identityString));
+            .setClientId(BesuVersionUtils.nodeName(identityString));
     networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
 
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
@@ -685,7 +685,6 @@ public class RunnerBuilder {
               .vertx(vertx)
               .nodeKey(nodeKey)
               .config(networkingConfiguration)
-              .legacyForkIdEnabled(legacyForkIdEnabled)
               .peerPermissions(peerPermissions)
               .metricsSystem(metricsSystem)
               .supportedCapabilities(caps)
@@ -1012,7 +1011,7 @@ public class RunnerBuilder {
                   miningCoordinator,
                   besuController.getSyncState(),
                   vertx,
-                  BesuInfo.nodeName(identityString),
+                  BesuVersionUtils.nodeName(identityString),
                   besuController.getGenesisConfigOptions(),
                   network));
     } else {
@@ -1267,9 +1266,9 @@ public class RunnerBuilder {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
-                BesuInfo.nodeName(identityString),
-                BesuInfo.shortVersion(),
-                BesuInfo.commit(),
+                BesuVersionUtils.nodeName(identityString),
+                BesuVersionUtils.shortVersion(),
+                BesuVersionUtils.commit(),
                 ethNetworkConfig.networkId(),
                 besuController.getGenesisConfigOptions(),
                 network,
@@ -1444,16 +1443,5 @@ public class RunnerBuilder {
 
   private Optional<MetricsService> createMetricsService(final MetricsConfiguration configuration) {
     return MetricsService.create(configuration, metricsSystem);
-  }
-
-  /**
-   * Add Legacy fork id.
-   *
-   * @param legacyEth64ForkIdEnabled the legacy eth64 fork id enabled
-   * @return the runner builder
-   */
-  public RunnerBuilder legacyForkId(final boolean legacyEth64ForkIdEnabled) {
-    this.legacyForkIdEnabled = legacyEth64ForkIdEnabled;
-    return this;
   }
 }

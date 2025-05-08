@@ -32,9 +32,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
@@ -126,7 +124,7 @@ public class RespondingEthPeer {
       final boolean addToEthPeers) {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
 
-    final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
+    final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.LATEST));
     final BlockingQueue<OutgoingMessage> outgoingMessages = new ArrayBlockingQueue<>(1000);
     final MockPeerConnection peerConnection =
         new MockPeerConnection(
@@ -134,7 +132,8 @@ public class RespondingEthPeer {
     ethPeers.registerNewConnection(peerConnection, peerValidators);
     final int before = ethPeers.peerCount();
     final EthPeer peer = ethPeers.peer(peerConnection);
-    peer.registerStatusReceived(chainHeadHash, totalDifficulty, 63, peerConnection);
+    peer.registerStatusReceived(
+        chainHeadHash, totalDifficulty, EthProtocol.LATEST.getVersion(), peerConnection);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
     if (addToEthPeers) {
       peer.registerStatusSent(peerConnection);
@@ -219,12 +218,21 @@ public class RespondingEthPeer {
   }
 
   private void respondToMessage(final Responder responder, final OutgoingMessage msg) {
-    final Optional<MessageData> maybeResponse = responder.respond(msg.capability, msg.messageData);
+    boolean supportsRequestId = EthProtocol.requestIdCompatible(msg.messageData.getCode());
+    final Optional<MessageData> maybeResponse =
+        responder.respond(
+            msg.capability,
+            supportsRequestId ? msg.messageData.unwrapMessageData().getValue() : msg.messageData);
     maybeResponse.ifPresent(
         (response) -> {
           if (ethProtocolManager.getSupportedCapabilities().contains(msg.capability)) {
             ethProtocolManager.processMessage(
-                msg.capability, new DefaultMessage(peerConnection, response));
+                msg.capability,
+                new DefaultMessage(
+                    peerConnection,
+                    supportsRequestId
+                        ? response.wrapMessageData(msg.messageData.unwrapMessageData().getKey())
+                        : response));
           } else
             snapProtocolManager.ifPresent(
                 protocolManager ->
@@ -282,20 +290,20 @@ public class RespondingEthPeer {
     return (cap, msg) -> {
       MessageData response = null;
       switch (msg.getCode()) {
-        case EthPV62.GET_BLOCK_HEADERS:
+        case EthProtocolMessages.GET_BLOCK_HEADERS:
           response = EthServer.constructGetHeadersResponse(blockchain, msg, 200, maxMsgSize);
           break;
-        case EthPV62.GET_BLOCK_BODIES:
+        case EthProtocolMessages.GET_BLOCK_BODIES:
           response = EthServer.constructGetBodiesResponse(blockchain, msg, 200, maxMsgSize);
           break;
-        case EthPV63.GET_RECEIPTS:
+        case EthProtocolMessages.GET_RECEIPTS:
           response = EthServer.constructGetReceiptsResponse(blockchain, msg, 200, maxMsgSize);
           break;
-        case EthPV63.GET_NODE_DATA:
+        case EthProtocolMessages.GET_NODE_DATA:
           response =
               EthServer.constructGetNodeDataResponse(worldStateArchive, msg, 200, maxMsgSize);
           break;
-        case EthPV65.GET_POOLED_TRANSACTIONS:
+        case EthProtocolMessages.GET_POOLED_TRANSACTIONS:
           response =
               EthServer.constructGetPooledTransactionsResponse(
                   transactionPool, msg, 200, maxMsgSize);
@@ -336,7 +344,7 @@ public class RespondingEthPeer {
       final MessageData originalResponse = maybeResponse.get();
       MessageData partialResponse = originalResponse;
       switch (msg.getCode()) {
-        case EthPV62.GET_BLOCK_HEADERS:
+        case EthProtocolMessages.GET_BLOCK_HEADERS:
           final BlockHeadersMessage headersMessage = BlockHeadersMessage.readFrom(originalResponse);
           final List<BlockHeader> originalHeaders =
               Lists.newArrayList(headersMessage.getHeaders(protocolSchedule));
@@ -344,7 +352,7 @@ public class RespondingEthPeer {
               originalHeaders.subList(0, (int) (originalHeaders.size() * portion));
           partialResponse = BlockHeadersMessage.create(partialHeaders);
           break;
-        case EthPV62.GET_BLOCK_BODIES:
+        case EthProtocolMessages.GET_BLOCK_BODIES:
           final BlockBodiesMessage bodiesMessage = BlockBodiesMessage.readFrom(originalResponse);
           final List<BlockBody> originalBodies =
               Lists.newArrayList(bodiesMessage.bodies(protocolSchedule));
@@ -352,7 +360,7 @@ public class RespondingEthPeer {
               originalBodies.subList(0, (int) (originalBodies.size() * portion));
           partialResponse = BlockBodiesMessage.create(partialBodies);
           break;
-        case EthPV63.GET_RECEIPTS:
+        case EthProtocolMessages.GET_RECEIPTS:
           final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(originalResponse);
           final List<List<TransactionReceipt>> originalReceipts =
               Lists.newArrayList(receiptsMessage.receipts());
@@ -360,14 +368,14 @@ public class RespondingEthPeer {
               originalReceipts.subList(0, (int) (originalReceipts.size() * portion));
           partialResponse = ReceiptsMessage.create(partialReceipts);
           break;
-        case EthPV63.GET_NODE_DATA:
+        case EthProtocolMessages.GET_NODE_DATA:
           final NodeDataMessage nodeDataMessage = NodeDataMessage.readFrom(originalResponse);
           final List<Bytes> originalNodeData = Lists.newArrayList(nodeDataMessage.nodeData());
           final List<Bytes> partialNodeData =
               originalNodeData.subList(0, (int) (originalNodeData.size() * portion));
           partialResponse = NodeDataMessage.create(partialNodeData);
           break;
-        case EthPV65.GET_POOLED_TRANSACTIONS:
+        case EthProtocolMessages.GET_POOLED_TRANSACTIONS:
           final PooledTransactionsMessage pooledTransactionsMessage =
               PooledTransactionsMessage.readFrom(originalResponse);
           final List<Transaction> originalPooledTx =
@@ -385,19 +393,19 @@ public class RespondingEthPeer {
     return (cap, msg) -> {
       MessageData response = null;
       switch (msg.getCode()) {
-        case EthPV62.GET_BLOCK_HEADERS:
+        case EthProtocolMessages.GET_BLOCK_HEADERS:
           response = BlockHeadersMessage.create(Collections.emptyList());
           break;
-        case EthPV62.GET_BLOCK_BODIES:
+        case EthProtocolMessages.GET_BLOCK_BODIES:
           response = BlockBodiesMessage.create(Collections.emptyList());
           break;
-        case EthPV63.GET_RECEIPTS:
+        case EthProtocolMessages.GET_RECEIPTS:
           response = ReceiptsMessage.create(Collections.emptyList());
           break;
-        case EthPV63.GET_NODE_DATA:
+        case EthProtocolMessages.GET_NODE_DATA:
           response = NodeDataMessage.create(Collections.emptyList());
           break;
-        case EthPV65.GET_POOLED_TRANSACTIONS:
+        case EthProtocolMessages.GET_POOLED_TRANSACTIONS:
           response = PooledTransactionsMessage.create(Collections.emptyList());
           break;
       }

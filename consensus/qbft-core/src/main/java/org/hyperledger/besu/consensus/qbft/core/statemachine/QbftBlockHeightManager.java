@@ -27,6 +27,7 @@ import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.datatypes.Address;
@@ -56,6 +57,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   private static final Logger LOG = LoggerFactory.getLogger(QbftBlockHeightManager.class);
 
   private final QbftRoundFactory roundFactory;
+  private final QbftValidatorProvider validatorProvider;
   private final RoundChangeManager roundChangeManager;
   private final QbftBlockHeader parentHeader;
   private final QbftMessageTransmitter transmitter;
@@ -79,6 +81,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
    * @param clock the clock
    * @param messageValidatorFactory the message validator factory
    * @param messageFactory the message factory
+   * @param validatorProvider the validator provider
    */
   public QbftBlockHeightManager(
       final QbftBlockHeader parentHeader,
@@ -87,9 +90,11 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       final QbftRoundFactory qbftRoundFactory,
       final Clock clock,
       final MessageValidatorFactory messageValidatorFactory,
-      final MessageFactory messageFactory) {
+      final MessageFactory messageFactory,
+      final QbftValidatorProvider validatorProvider) {
     this.parentHeader = parentHeader;
     this.roundFactory = qbftRoundFactory;
+    this.validatorProvider = validatorProvider;
     this.transmitter =
         new QbftMessageTransmitter(
             messageFactory,
@@ -117,6 +122,42 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
         new ConsensusRoundIdentifier(nextBlockHeight, 0);
 
     finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader::getTimestamp);
+  }
+
+  /**
+   * Instantiates a new Qbft block height manager. Secondary constructor with early round change
+   * option.
+   *
+   * @param parentHeader the parent header
+   * @param finalState the final state
+   * @param roundChangeManager the round change manager
+   * @param qbftRoundFactory the qbft round factory
+   * @param clock the clock
+   * @param messageValidatorFactory the message validator factory
+   * @param messageFactory the message factory
+   * @param validatorProvider the validator provider
+   * @param isEarlyRoundChangeEnabled enable round change when f+1 RC messages are received
+   */
+  public QbftBlockHeightManager(
+      final QbftBlockHeader parentHeader,
+      final QbftFinalState finalState,
+      final RoundChangeManager roundChangeManager,
+      final QbftRoundFactory qbftRoundFactory,
+      final Clock clock,
+      final MessageValidatorFactory messageValidatorFactory,
+      final MessageFactory messageFactory,
+      final QbftValidatorProvider validatorProvider,
+      final boolean isEarlyRoundChangeEnabled) {
+    this(
+        parentHeader,
+        finalState,
+        roundChangeManager,
+        qbftRoundFactory,
+        clock,
+        messageValidatorFactory,
+        messageFactory,
+        validatorProvider);
+    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
   }
 
   @Override
@@ -200,9 +241,9 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   private void logValidatorChanges(final QbftRound qbftRound) {
     if (qbftRound.getRoundIdentifier().getRoundNumber() == 0) {
       final Collection<Address> previousValidators =
-          MessageValidatorFactory.getValidatorsForBlock(qbftRound.protocolContext, parentHeader);
+          validatorProvider.getValidatorsForBlock(parentHeader);
       final Collection<Address> validatorsForHeight =
-          MessageValidatorFactory.getValidatorsAfterBlock(qbftRound.protocolContext, parentHeader);
+          validatorProvider.getValidatorsAfterBlock(parentHeader);
       if (!(validatorsForHeight.containsAll(previousValidators))
           || !(previousValidators.containsAll(validatorsForHeight))) {
         LOG.info(

@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.hyperledger.besu.ethereum.core.BlockHeaderBuilder.createPending;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
@@ -219,10 +219,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .getTransactionSelectionService()
               .createPluginTransactionSelector(selectorsStateManager);
       final var operationTracer = pluginTransactionSelector.getOperationTracer();
-      pluginTransactionSelector
-          .getOperationTracer()
-          .traceStartBlock(processableBlockHeader, miningBeneficiary);
-
       operationTracer.traceStartBlock(processableBlockHeader, miningBeneficiary);
       BlockProcessingContext blockProcessingContext =
           new BlockProcessingContext(
