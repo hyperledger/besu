@@ -609,7 +609,7 @@ public class BesuNodeFactory {
     }
     return create(builder.build());
   }
-  
+
   public BesuNode createQbftPluginsNode(
       final String name,
       final List<String> plugins,
