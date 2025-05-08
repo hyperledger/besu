@@ -272,7 +272,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
           }
 
           // Calculate gas used for this call
-          calculateGasUsed(frames, entry, frame, opcodeString);
+          calculateGasUsed(entry, frame, opcodeString);
 
           // Remove from tracking
           callsByDepth.remove(depth);
@@ -292,7 +292,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
                   .orElse("execution failed");
 
           // Calculate gas used for this call
-          calculateGasUsed(frames, entry, frame, opcodeString);
+          calculateGasUsed(entry, frame, opcodeString);
 
           // Remove from tracking
           callsByDepth.remove(depth);
@@ -317,16 +317,12 @@ public class DebugCallTracerResult implements DebugTracerResult {
   /**
    * Calculate the gas used for a call and set it on the call result.
    *
-   * @param frames the list of trace frames
    * @param entry the call stack entry
    * @param currentFrame the current frame (RETURN/REVERT)
    * @param opcodeString the opcode string
    */
   private void calculateGasUsed(
-      final List<TraceFrame> frames,
-      final CallStackEntry entry,
-      final TraceFrame currentFrame,
-      final String opcodeString) {
+      final CallStackEntry entry, final TraceFrame currentFrame, final String opcodeString) {
 
     final DebugCallTracerResult call = entry.getCall();
 
@@ -336,9 +332,6 @@ public class DebugCallTracerResult implements DebugTracerResult {
       call.gasUsed = "0x" + Long.toHexString(currentFrame.getPrecompiledGasCost().getAsLong());
       return;
     }
-
-    // Get the starting frame
-    final TraceFrame startFrame = frames.get(entry.getStartFrameIndex());
 
     // Basic gas calculation
     long startGas = entry.getInitialGas();
@@ -413,10 +406,6 @@ public class DebugCallTracerResult implements DebugTracerResult {
         || "STATICCALL".equals(opcodeString)
         || "CREATE".equals(opcodeString)
         || "CREATE2".equals(opcodeString);
-  }
-
-  private boolean isSelfDestructOp(final String opcodeString) {
-    return "SELFDESTRUCT".equals(opcodeString);
   }
 
   /**
@@ -623,7 +612,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
       return gasStipend;
     }
 
-    public void setGasStipend(long gasStipend) {
+    public void setGasStipend(final long gasStipend) {
       this.gasStipend = gasStipend;
     }
   }
