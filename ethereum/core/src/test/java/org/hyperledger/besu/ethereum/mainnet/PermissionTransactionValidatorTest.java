@@ -92,9 +92,7 @@ public class PermissionTransactionValidatorTest extends MainnetTransactionValida
     final PermissionTransactionFilter permissionTransactionFilter =
         mock(PermissionTransactionFilter.class);
     when(permissionTransactionFilter.permitted(
-            any(Transaction.class),
-            stateChangeLocalParamCaptor.capture(),
-            stateChangeOnchainParamCaptor.capture()))
+            any(Transaction.class), stateChangeLocalParamCaptor.capture()))
         .thenReturn(true);
 
     final TransactionValidator baseValidator =
@@ -151,7 +149,7 @@ public class PermissionTransactionValidatorTest extends MainnetTransactionValida
   private PermissionTransactionFilter transactionFilter(final boolean permitted) {
     final PermissionTransactionFilter permissionTransactionFilter =
         mock(PermissionTransactionFilter.class);
-    when(permissionTransactionFilter.permitted(any(Transaction.class), anyBoolean(), anyBoolean()))
+    when(permissionTransactionFilter.permitted(any(Transaction.class), anyBoolean()))
         .thenReturn(permitted);
     return permissionTransactionFilter;
   }

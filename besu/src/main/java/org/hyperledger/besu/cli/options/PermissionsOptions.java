@@ -15,13 +15,11 @@
 package org.hyperledger.besu.cli.options;
 
 import org.hyperledger.besu.cli.DefaultCommandValues;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
-import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -56,42 +54,6 @@ public class PermissionsOptions {
           "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
   private String accountPermissionsConfigFile = null;
 
-  private static final String DEPRECATION_PREFIX =
-      "Deprecated. Onchain permissioning is deprecated. See CHANGELOG for alternative options. ";
-
-  @CommandLine.Option(
-      names = {"--permissions-nodes-contract-address"},
-      description = DEPRECATION_PREFIX + "Address of the node permissioning smart contract",
-      arity = "1")
-  private final Address permissionsNodesContractAddress = null;
-
-  @CommandLine.Option(
-      names = {"--permissions-nodes-contract-version"},
-      description =
-          DEPRECATION_PREFIX
-              + "Version of the EEA Node Permissioning interface (default: ${DEFAULT-VALUE})")
-  private final Integer permissionsNodesContractVersion = 1;
-
-  @CommandLine.Option(
-      names = {"--permissions-nodes-contract-enabled"},
-      description =
-          DEPRECATION_PREFIX
-              + "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
-  private final Boolean permissionsNodesContractEnabled = false;
-
-  @CommandLine.Option(
-      names = {"--permissions-accounts-contract-address"},
-      description = DEPRECATION_PREFIX + "Address of the account permissioning smart contract",
-      arity = "1")
-  private final Address permissionsAccountsContractAddress = null;
-
-  @CommandLine.Option(
-      names = {"--permissions-accounts-contract-enabled"},
-      description =
-          DEPRECATION_PREFIX
-              + "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
-  private final Boolean permissionsAccountsContractEnabled = false;
-
   /** Default constructor. */
   public PermissionsOptions() {}
 
@@ -115,7 +77,7 @@ public class PermissionsOptions {
       final Logger logger,
       final CommandLine commandLine)
       throws Exception {
-    if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
+    if (!(localPermissionsEnabled())) {
       if (jsonRpcHttpOptions.getRpcHttpApis().contains(RpcApis.PERM.name())
           || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PERM.name())) {
         logger.warn(
@@ -155,61 +117,14 @@ public class PermissionsOptions {
       localPermissioningConfigurationOptional = Optional.empty();
     }
 
-    final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
-        SmartContractPermissioningConfiguration.createDefault();
-
-    if (Boolean.TRUE.equals(permissionsNodesContractEnabled)) {
-      logger.warn("Onchain (contract) node permissioning options are " + DEPRECATION_PREFIX);
-      if (permissionsNodesContractAddress == null) {
-        throw new CommandLine.ParameterException(
-            commandLine,
-            "No node permissioning contract address specified. Cannot enable smart contract based node permissioning.");
-      } else {
-        smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(
-            permissionsNodesContractEnabled);
-        smartContractPermissioningConfiguration.setNodeSmartContractAddress(
-            permissionsNodesContractAddress);
-        smartContractPermissioningConfiguration.setNodeSmartContractInterfaceVersion(
-            permissionsNodesContractVersion);
-      }
-    } else if (permissionsNodesContractAddress != null) {
-      logger.warn(
-          "Node permissioning smart contract address set {} but smart contract node permissioning is disabled.",
-          permissionsNodesContractAddress);
-    }
-
-    if (Boolean.TRUE.equals(permissionsAccountsContractEnabled)) {
-      logger.warn("Onchain (contract) account permissioning options are " + DEPRECATION_PREFIX);
-      if (permissionsAccountsContractAddress == null) {
-        throw new CommandLine.ParameterException(
-            commandLine,
-            "No account permissioning contract address specified. Cannot enable smart contract based account permissioning.");
-      } else {
-        smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(
-            permissionsAccountsContractEnabled);
-        smartContractPermissioningConfiguration.setAccountSmartContractAddress(
-            permissionsAccountsContractAddress);
-      }
-    } else if (permissionsAccountsContractAddress != null) {
-      logger.warn(
-          "Account permissioning smart contract address set {} but smart contract account permissioning is disabled.",
-          permissionsAccountsContractAddress);
-    }
-
     final PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(
-            localPermissioningConfigurationOptional,
-            Optional.of(smartContractPermissioningConfiguration));
+        new PermissioningConfiguration(localPermissioningConfigurationOptional);
 
     return Optional.of(permissioningConfiguration);
   }
 
   private boolean localPermissionsEnabled() {
     return permissionsAccountsEnabled || permissionsNodesEnabled;
-  }
-
-  private boolean contractPermissionsEnabled() {
-    return permissionsNodesContractEnabled || permissionsAccountsContractEnabled;
   }
 
   private String getDefaultPermissioningFilePath(final Path dataPath) {

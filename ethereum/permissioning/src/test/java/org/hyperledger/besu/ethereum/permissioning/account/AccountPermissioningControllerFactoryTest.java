@@ -58,7 +58,7 @@ public class AccountPermissioningControllerFactoryTest {
     assertThat(localConfig.isAccountAllowlistEnabled()).isFalse();
 
     PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.of(localConfig), Optional.empty());
+        new PermissioningConfiguration(Optional.of(localConfig));
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
@@ -76,7 +76,7 @@ public class AccountPermissioningControllerFactoryTest {
     assertThat(localConfig.isAccountAllowlistEnabled()).isTrue();
 
     PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.of(localConfig), Optional.empty());
+        new PermissioningConfiguration(Optional.of(localConfig));
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
@@ -87,7 +87,6 @@ public class AccountPermissioningControllerFactoryTest {
 
     Assertions.assertThat(controller).isNotEmpty();
     assertThat(controller.get().getAccountLocalConfigPermissioningController()).isNotEmpty();
-    assertThat(controller.get().getTransactionSmartContractPermissioningController()).isEmpty();
   }
 
   private LocalPermissioningConfiguration localConfig() {

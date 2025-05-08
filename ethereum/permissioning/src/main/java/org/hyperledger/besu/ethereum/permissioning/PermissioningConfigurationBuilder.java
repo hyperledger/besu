@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -29,14 +28,6 @@ public class PermissioningConfigurationBuilder {
 
   public static final String ACCOUNTS_ALLOWLIST_KEY = "accounts-allowlist";
   public static final String NODES_ALLOWLIST_KEY = "nodes-allowlist";
-
-  public static SmartContractPermissioningConfiguration smartContractPermissioningConfiguration(
-      final Address address, final boolean smartContractPermissionedNodeEnabled) {
-    SmartContractPermissioningConfiguration config = new SmartContractPermissioningConfiguration();
-    config.setNodeSmartContractAddress(address);
-    config.setSmartContractNodeAllowlistEnabled(smartContractPermissionedNodeEnabled);
-    return config;
-  }
 
   public static LocalPermissioningConfiguration permissioningConfiguration(
       final boolean nodePermissioningEnabled,

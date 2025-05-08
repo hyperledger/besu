@@ -65,7 +65,7 @@ public class NodePermissioningControllerFactoryTest {
 
   @Test
   public void testCreateWithNoPermissioningEnabled() {
-    config = new PermissioningConfiguration(Optional.empty(), Optional.empty());
+    config = new PermissioningConfiguration(Optional.empty());
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
         factory.create(
@@ -88,8 +88,7 @@ public class NodePermissioningControllerFactoryTest {
     localPermissioningConfig = LocalPermissioningConfiguration.createDefault();
     localPermissioningConfig.setNodeAllowlist(Collections.emptyList());
     localPermissioningConfig.setNodePermissioningConfigFilePath("fake-file-path");
-    config =
-        new PermissioningConfiguration(Optional.of(localPermissioningConfig), Optional.empty());
+    config = new PermissioningConfiguration(Optional.of(localPermissioningConfig));
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -117,8 +116,7 @@ public class NodePermissioningControllerFactoryTest {
     localPermissioningConfig = LocalPermissioningConfiguration.createDefault();
     localPermissioningConfig.setNodeAllowlist(Collections.emptyList());
     localPermissioningConfig.setNodePermissioningConfigFilePath("fake-file-path");
-    config =
-        new PermissioningConfiguration(Optional.of(localPermissioningConfig), Optional.empty());
+    config = new PermissioningConfiguration(Optional.of(localPermissioningConfig));
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
