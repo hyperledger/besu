@@ -131,7 +131,6 @@ public class ChainDataPruner implements BlockAddedObserver {
                       (blockHash) -> {
                         updater.removeBlockBody(blockHash);
                         updater.removeTransactionReceipts(blockHash);
-                        updater.removeTotalDifficulty(blockHash);
                         blockchainStorage
                             .getBlockBody(blockHash)
                             .ifPresent(
