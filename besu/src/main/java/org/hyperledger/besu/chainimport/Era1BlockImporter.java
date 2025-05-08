@@ -47,7 +47,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -142,16 +141,16 @@ public class Era1BlockImporter implements Closeable {
 
     Block block = null;
     for (int i = 0; i < headersFutures.size(); i++) {
-      BlockHeader blockHeader = headersFutures.get(i).get(10, TimeUnit.SECONDS);
+      BlockHeader blockHeader = headersFutures.get(i).get();
       BlockImporter blockImporter =
           protocolSchedule.getByBlockHeader(blockHeader).getBlockImporter();
-      block = new Block(blockHeader, bodiesFutures.get(i).get(10, TimeUnit.SECONDS));
+      block = new Block(blockHeader, bodiesFutures.get(i).get());
 
       BlockImportResult importResult =
           blockImporter.importBlockForSyncing(
               context,
               block,
-              receiptsFutures.get(i).get(10, TimeUnit.SECONDS),
+              receiptsFutures.get(i).get(),
               HeaderValidationMode.NONE,
               HeaderValidationMode.NONE,
               BodyValidationMode.NONE,
