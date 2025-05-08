@@ -56,12 +56,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewPendingT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSimulateV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSyncing;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthUninstallFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -81,6 +83,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final FilterManager filterManager;
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
+  private final MiningConfiguration miningConfiguration;
+
   private final Set<Capability> supportedCapabilities;
   private final ApiConfiguration apiConfiguration;
   private final TransactionSimulator transactionSimulator;
@@ -92,6 +96,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final FilterManager filterManager,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
+      final MiningConfiguration miningConfiguration,
       final Set<Capability> supportedCapabilities,
       final ApiConfiguration apiConfiguration,
       final TransactionSimulator transactionSimulator) {
@@ -101,6 +106,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.filterManager = filterManager;
     this.transactionPool = transactionPool;
     this.miningCoordinator = miningCoordinator;
+    this.miningConfiguration = miningConfiguration;
     this.supportedCapabilities = supportedCapabilities;
     this.apiConfiguration = apiConfiguration;
     this.transactionSimulator = transactionSimulator;
@@ -154,6 +160,12 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthGasPrice(blockchainQueries, apiConfiguration),
         new EthChainId(protocolSchedule.getChainId()),
         new EthBlobBaseFee(blockchainQueries.getBlockchain(), protocolSchedule),
-        new EthMaxPriorityFeePerGas(blockchainQueries));
+        new EthMaxPriorityFeePerGas(blockchainQueries),
+        new EthSimulateV1(
+            blockchainQueries,
+            protocolSchedule,
+            transactionSimulator,
+            miningConfiguration,
+            apiConfiguration));
   }
 }

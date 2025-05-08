@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract.cacheEventConsumer;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.sun.jna.ptr.IntByReference;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -37,6 +39,9 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     // set parallel 1 for testing.  Remove this for prod code (or set a rational limit)
     // LibGnarkEIP2537.setDegreeOfMSMParallelism(1);
   }
+
+  /** Default result caching to false unless otherwise set. */
+  protected static Boolean enableResultCaching = Boolean.FALSE;
 
   /** The Discount table. */
   static final int[] G1_DISCOUNT_TABLE =
@@ -108,6 +113,40 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
+
+    PrecompileInputResultTuple res = null;
+
+    Integer cacheKey = null;
+
+    if (enableResultCaching) {
+      cacheKey = AbstractPrecompiledContract.getCacheKey(input);
+      res = getCache().getIfPresent(cacheKey);
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(
+              new AbstractPrecompiledContract.CacheEvent(
+                  name, AbstractPrecompiledContract.CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          LOG.debug(
+              "false positive {} {}, cache key {}, cached input: {}, input: {}",
+              name,
+              input.getClass().getSimpleName(),
+              cacheKey,
+              res.cachedInput().toHexString(),
+              input.toHexString());
+
+          cacheEventConsumer.accept(
+              new AbstractPrecompiledContract.CacheEvent(
+                  name, AbstractPrecompiledContract.CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(
+            new AbstractPrecompiledContract.CacheEvent(
+                name, AbstractPrecompiledContract.CacheMetric.MISS));
+      }
+    }
+
     final byte[] result = new byte[LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_RESULT_BYTES];
     final byte[] error = new byte[LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_ERROR_BYTES];
 
@@ -128,14 +167,25 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
             err_len);
 
     if (errorNo == 0) {
-      return PrecompileContractResult.success(Bytes.wrap(result, 0, o_len.getValue()));
+      res =
+          new PrecompileInputResultTuple(
+              enableResultCaching ? input.copy() : input,
+              PrecompileContractResult.success(Bytes.wrap(result, 0, o_len.getValue())));
     } else {
       final String errorMessage = new String(error, 0, err_len.getValue(), UTF_8);
       messageFrame.setRevertReason(Bytes.wrap(error, 0, err_len.getValue()));
       LOG.trace("Error executing precompiled contract {}: '{}'", name, errorMessage);
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      res =
+          new PrecompileInputResultTuple(
+              enableResultCaching ? input.copy() : input,
+              PrecompileContractResult.halt(
+                  null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR)));
     }
+
+    if (enableResultCaching && cacheKey != null) {
+      getCache().put(cacheKey, res);
+    }
+    return res.cachedResult();
   }
 
   /**
@@ -175,4 +225,20 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     }
     return G2_DISCOUNT_TABLE[k];
   }
+
+  /**
+   * Enable or disable precompile result caching.
+   *
+   * @param enablePrecompileCaching boolean indicating whether to cache precompile results
+   */
+  public static void setPrecompileCaching(final boolean enablePrecompileCaching) {
+    enableResultCaching = enablePrecompileCaching;
+  }
+
+  /**
+   * get the presompile-specific cache.
+   *
+   * @return precompile cache.
+   */
+  protected abstract Cache<Integer, PrecompileInputResultTuple> getCache();
 }

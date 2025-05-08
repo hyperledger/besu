@@ -279,7 +279,8 @@ public class T8nSubCommand implements Runnable {
                       parentCommand.showMemory,
                       !parentCommand.hideStack,
                       parentCommand.showReturnData,
-                      parentCommand.showStorage);
+                      parentCommand.showStorage,
+                      parentCommand.eip3155strict);
               outputStreams.put(jsonTracer, traceDest);
               return jsonTracer;
             }

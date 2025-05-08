@@ -219,10 +219,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .getTransactionSelectionService()
               .createPluginTransactionSelector(selectorsStateManager);
       final var operationTracer = pluginTransactionSelector.getOperationTracer();
-      pluginTransactionSelector
-          .getOperationTracer()
-          .traceStartBlock(processableBlockHeader, miningBeneficiary);
-
       operationTracer.traceStartBlock(processableBlockHeader, miningBeneficiary);
       BlockProcessingContext blockProcessingContext =
           new BlockProcessingContext(

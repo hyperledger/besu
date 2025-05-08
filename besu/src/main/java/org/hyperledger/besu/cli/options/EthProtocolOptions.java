@@ -30,8 +30,6 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private static final String MAX_GET_RECEIPTS_FLAG = "--Xewp-max-get-receipts";
   private static final String MAX_GET_NODE_DATA_FLAG = "--Xewp-max-get-node-data";
   private static final String MAX_GET_POOLED_TRANSACTIONS = "--Xewp-max-get-pooled-transactions";
-  private static final String LEGACY_ETH_64_FORK_ID_ENABLED =
-      "--compatibility-eth64-forkid-enabled";
 
   private static final String MAX_CAPABILITY = "--Xeth-capability-max";
   private static final String MIN_CAPABILITY = "--Xeth-capability-min";
@@ -91,13 +89,6 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS);
 
   @CommandLine.Option(
-      names = {LEGACY_ETH_64_FORK_ID_ENABLED},
-      paramLabel = "<Boolean>",
-      description = "Enable the legacy Eth/64 fork id. (default: ${DEFAULT-VALUE})")
-  private Boolean legacyEth64ForkIdEnabled =
-      EthProtocolConfiguration.DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED;
-
-  @CommandLine.Option(
       hidden = true,
       names = {MAX_CAPABILITY},
       paramLabel = "<INTEGER>",
@@ -136,7 +127,6 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
     options.maxGetReceipts = PositiveNumber.fromInt(config.getMaxGetReceipts());
     options.maxGetNodeData = PositiveNumber.fromInt(config.getMaxGetNodeData());
     options.maxGetPooledTransactions = PositiveNumber.fromInt(config.getMaxGetPooledTransactions());
-    options.legacyEth64ForkIdEnabled = config.isLegacyEth64ForkIdEnabled();
     options.maxEthCapability = config.getMaxEthCapability();
     options.minEthCapability = config.getMinEthCapability();
     return options;
@@ -151,7 +141,6 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
         .maxGetReceipts(maxGetReceipts)
         .maxGetNodeData(maxGetNodeData)
         .maxGetPooledTransactions(maxGetPooledTransactions)
-        .legacyEth64ForkIdEnabled(legacyEth64ForkIdEnabled)
         .maxEthCapability(maxEthCapability)
         .minEthCapability(minEthCapability)
         .build();
@@ -171,7 +160,6 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
         MAX_GET_NODE_DATA_FLAG,
         OptionParser.format(maxGetNodeData.getValue()),
         MAX_GET_POOLED_TRANSACTIONS,
-        OptionParser.format(maxGetPooledTransactions.getValue()),
-        LEGACY_ETH_64_FORK_ID_ENABLED + "=" + legacyEth64ForkIdEnabled);
+        OptionParser.format(maxGetPooledTransactions.getValue()));
   }
 }

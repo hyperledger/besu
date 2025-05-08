@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 
@@ -70,7 +71,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   public void setup() {
     metricsSystem = new StubMetricsSystem();
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    transactionTracker = new PeerTransactionTracker(ethPeers);
+    transactionTracker = new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
     ScheduledFuture<?> mock = mock(ScheduledFuture.class);
     fetcher =

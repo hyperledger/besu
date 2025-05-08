@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -218,6 +219,17 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
         "--poa-block-txs-selection-max-time can be only used with PoA networks, see --block-txs-selection-max-time instead",
         "--poa-block-txs-selection-max-time",
         "90");
+  }
+
+  @Test
+  public void extraDataDefaultValueIsBesuVersion() {
+    final var expectedRegex = "besu \\d+\\.\\d+(\\.\\d+|\\-develop\\-\\p{XDigit}+)";
+    internalTestSuccess(
+        this::runtimeConfiguration,
+        miningParams -> {
+          assertThat(new String(miningParams.getExtraData().toArray(), StandardCharsets.UTF_8))
+              .matches(expectedRegex);
+        });
   }
 
   @Override
