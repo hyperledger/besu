@@ -473,50 +473,53 @@ public class DebugCallTracerResult implements DebugTracerResult {
     }
 
     // Determine gas
-    // For calls, calculate the gas that will be available to the call
-    long gasRemaining = frame.getGasRemaining();
-    long gasCost = frame.getGasCost().orElse(0L);
+    BigInteger callGas;
 
-    // Calculate gas available to the call
-    long callGas;
+    // Try to use a simpler approach based on the next frame's gas
+    callGas = BigInteger.valueOf(nextFrame.getGasRemaining());
 
-    // If we have stack information, extract the gas parameter
+    // If we have stack information, try to get a more accurate gas value
     if (frame.getStack().isPresent() && frame.getStack().get().length > 0) {
-      // Get the gas value from the stack
-      BigInteger gasValue = frame.getStack().get()[0].toUnsignedBigInteger();
+      try {
+        // Get the gas value from the stack
+        BigInteger stackGasValue = frame.getStack().get()[0].toUnsignedBigInteger();
 
-      // Convert to long, capping at Long.MAX_VALUE if necessary
-      if (gasValue.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
-        callGas = Long.MAX_VALUE;
-      } else {
-        callGas = gasValue.longValue();
+        // Calculate maximum available gas
+        long gasRemaining = frame.getGasRemaining();
+        long gasCost = frame.getGasCost().orElse(0L);
+        BigInteger maxCallGas =
+            BigInteger.valueOf(Math.max(0, gasRemaining - gasCost - cumulativeGasCost));
+
+        // Cap the call gas at the maximum available
+        if (stackGasValue.compareTo(maxCallGas) > 0) {
+          stackGasValue = maxCallGas;
+        }
+
+        // Apply the EIP-150 divisor for non-CREATE calls
+        if (!isCreateOp(opcodeString)) {
+          stackGasValue =
+              stackGasValue.subtract(stackGasValue.divide(BigInteger.valueOf(EIP_150_DIVISOR)));
+        }
+
+        // Use the stack-based value if it seems reasonable
+        if (stackGasValue.compareTo(BigInteger.ZERO) >= 0) {
+          callGas = stackGasValue;
+        }
+      } catch (Exception e) {
+        // If anything goes wrong with stack-based calculation, keep the nextFrame-based value
+        // This is just a fallback to ensure we always have a valid gas value
       }
-
-      // Apply EIP-150 gas forwarding rules
-      // Adjust the maximum available gas by subtracting the cumulative gas cost
-      long maxCallGas = gasRemaining - gasCost - cumulativeGasCost;
-
-      // Cap the call gas at the maximum available
-      if (callGas > maxCallGas) {
-        callGas = maxCallGas;
-      }
-
-      // Apply the EIP-150 divisor for non-CREATE calls
-      if (!isCreateOp(opcodeString)) {
-        callGas = callGas - (callGas / EIP_150_DIVISOR);
-      }
-    } else {
-      // Fallback to next frame's gas remaining
-      callGas = nextFrame.getGasRemaining();
     }
+
+    // Ensure gas is never negative
+    callGas = callGas.max(BigInteger.ZERO);
 
     // Determine input data
     final Bytes inputData = nextFrame.getInputData();
     final String input = inputData != null ? inputData.toHexString() : "0x";
 
     // Create and return the call result
-    return new DebugCallTracerResult(
-        opcodeString, from, to, value, BigInteger.valueOf(callGas), input);
+    return new DebugCallTracerResult(opcodeString, from, to, value, callGas, input);
   }
 
   private boolean isCreateOp(final String opcodeString) {
