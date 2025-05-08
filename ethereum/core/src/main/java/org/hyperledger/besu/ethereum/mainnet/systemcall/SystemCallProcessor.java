@@ -65,12 +65,15 @@ public class SystemCallProcessor {
   public Bytes process(
       final Address callAddress, final BlockProcessingContext context, final Bytes inputData) {
     WorldUpdater updater = context.getWorldState().updater();
-
-    // if no code exists at CALL_ADDRESS, the call must fail silently
     final Account maybeContract = updater.get(callAddress);
     if (maybeContract == null) {
-      LOG.trace("System call address not found {}", callAddress);
-      return Bytes.EMPTY;
+      LOG.error("Invalid system call address: {}", callAddress);
+      throw new InvalidSystemCallAddressException("Invalid system call address: " + callAddress);
+    }
+    if (maybeContract.getCode().isEmpty()) {
+      LOG.error("Invalid system call address: {}", callAddress);
+      throw new InvalidSystemCallAddressException(
+          "Invalid system call, no code at address " + callAddress);
     }
 
     final AbstractMessageProcessor processor =
