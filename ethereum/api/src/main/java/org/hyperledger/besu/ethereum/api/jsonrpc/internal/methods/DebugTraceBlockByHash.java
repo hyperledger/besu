@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -58,7 +59,7 @@ public class DebugTraceBlockByHash extends AbstractDebugTraceBlock {
           "Invalid block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_HASH_PARAMS, e);
     }
 
-    TraceOptions traceOptions = getTraceOptions(requestContext);
+    TraceOptions<? extends TracerConfig> traceOptions = getTraceOptions(requestContext);
     Optional<Block> maybeBlock = getBlockchainQueries().getBlockchain().getBlockByHash(blockHash);
 
     final Collection<DebugTraceTransactionResult> results =
