@@ -2812,6 +2812,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
+    builder.setBlobDBSettings(rocksDBPlugin.getBlobDBSettings());
+
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
       final PathBasedExtraStorageConfiguration subStorageConfiguration =
           getDataStorageConfiguration().getPathBasedExtraStorageConfiguration();

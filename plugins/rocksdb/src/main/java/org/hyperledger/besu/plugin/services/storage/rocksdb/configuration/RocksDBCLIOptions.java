@@ -182,6 +182,18 @@ public class RocksDBCLIOptions {
     return isHighSpec;
   }
 
+  /**
+   * Gets blob db settings.
+   *
+   * @return the blob db settings
+   */
+  public BlobDBSettings getBlobDBSettings() {
+    return new BlobDBSettings(
+        isBlockchainGarbageCollectionEnabled,
+        blobGarbageCollectionAgeCutoff,
+        blobGarbageCollectionForceThreshold);
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -193,5 +205,20 @@ public class RocksDBCLIOptions {
         .add("blobGarbageCollectionAgeCutoff", blobGarbageCollectionAgeCutoff)
         .add("blobGarbageCollectionForceThreshold", blobGarbageCollectionForceThreshold)
         .toString();
+  }
+
+  public record BlobDBSettings(
+      boolean isBlockchainGarbageCollectionEnabled,
+      Optional<Double> blobGarbageCollectionAgeCutoff,
+      Optional<Double> blobGarbageCollectionForceThreshold) {
+
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(this)
+          .add("isBlockchainGarbageCollectionEnabled", isBlockchainGarbageCollectionEnabled)
+          .add("blobGarbageCollectionAgeCutoff", blobGarbageCollectionAgeCutoff)
+          .add("blobGarbageCollectionForceThreshold", blobGarbageCollectionForceThreshold)
+          .toString();
+    }
   }
 }

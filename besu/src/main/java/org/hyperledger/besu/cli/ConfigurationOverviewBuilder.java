@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.log.FramedLogMessage;
@@ -61,6 +62,7 @@ public class ConfigurationOverviewBuilder {
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
+  private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
 
   /**
    * Create a new ConfigurationOverviewBuilder.
@@ -302,6 +304,12 @@ public class ConfigurationOverviewBuilder {
     return this;
   }
 
+  public ConfigurationOverviewBuilder setBlobDBSettings(
+      final RocksDBCLIOptions.BlobDBSettings blobDBSettings) {
+    this.blobDBSettings = blobDBSettings;
+    return this;
+  }
+
   /**
    * Build configuration overview.
    *
@@ -364,15 +372,7 @@ public class ConfigurationOverviewBuilder {
 
     lines.add("Using " + txPoolImplementation + " transaction pool implementation");
 
-    if (isHighSpec) {
-      lines.add("Experimental high spec configuration enabled");
-    }
-
     lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
-
-    if (isSnapServerEnabled) {
-      lines.add("Experimental Snap Sync server enabled");
-    }
 
     if (isLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();
@@ -383,6 +383,34 @@ public class ConfigurationOverviewBuilder {
         trieLogPruningString.append("; prune window: ").append(trieLogsPruningWindowSize);
       }
       lines.add(trieLogPruningString.toString());
+    }
+
+    if (isSnapServerEnabled) {
+      lines.add("Experimental Snap Sync server enabled");
+    }
+
+    if (isHighSpec) {
+      lines.add("Experimental high spec configuration enabled");
+    }
+
+    if (blobDBSettings != null && blobDBSettings.isBlockchainGarbageCollectionEnabled()) {
+      lines.add("Experimental BlobDB BLOCKCHAIN Garbage Collection enabled");
+    }
+    if (hasCustomBlobDBSettings()) {
+      final StringBuilder blobDBString = new StringBuilder();
+      blobDBString.append("Experimental BlobDB GC ");
+      if (blobDBSettings.blobGarbageCollectionAgeCutoff().isPresent()) {
+        blobDBString
+            .append("age cutoff: ")
+            .append(blobDBSettings.blobGarbageCollectionAgeCutoff().get())
+            .append("; ");
+      }
+      if (blobDBSettings.blobGarbageCollectionForceThreshold().isPresent()) {
+        blobDBString
+            .append("force threshold: ")
+            .append(blobDBSettings.blobGarbageCollectionForceThreshold().get());
+      }
+      lines.add(blobDBString.toString());
     }
 
     lines.add("");
@@ -413,6 +441,12 @@ public class ConfigurationOverviewBuilder {
     }
 
     return FramedLogMessage.generate(lines);
+  }
+
+  private boolean hasCustomBlobDBSettings() {
+    return blobDBSettings != null
+        && (blobDBSettings.blobGarbageCollectionAgeCutoff().isPresent()
+            || blobDBSettings.blobGarbageCollectionForceThreshold().isPresent());
   }
 
   private void detectJemalloc(final List<String> lines) {
