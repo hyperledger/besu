@@ -57,8 +57,8 @@ import org.apache.tuweni.bytes.Bytes;
 public class DebugCallTracerResult implements DebugTracerResult {
   private final String type;
   private final String from;
-  private final String to;
-  private final String value;
+  private String to;
+  private String value;
   private final String gas;
   private String gasUsed;
   private final String input;
@@ -66,6 +66,11 @@ public class DebugCallTracerResult implements DebugTracerResult {
   private String error;
   private String revertReason;
   private final List<DebugCallTracerResult> calls;
+
+  // Constants for gas calculations
+  private static final int CODE_DEPOSIT_GAS_PER_BYTE = 200;
+  private static final int CALL_STIPEND = 2300;
+  private static final int EIP_150_DIVISOR = 64;
 
   public DebugCallTracerResult(final TransactionTrace transactionTrace) {
     final Transaction tx = transactionTrace.getTransaction();
@@ -171,7 +176,8 @@ public class DebugCallTracerResult implements DebugTracerResult {
         }
 
         // Create new call based on opcode
-        final DebugCallTracerResult childCall = createCallResult(frame, opcodeString, parentCall);
+        final DebugCallTracerResult childCall =
+            createCallResult(frame, opcodeString, parentCall, nextFrame.get());
 
         // Add to parent's calls list
         parentCall.calls.add(childCall);
@@ -180,15 +186,67 @@ public class DebugCallTracerResult implements DebugTracerResult {
         callsByDepth.put(depth + 1, childCall);
 
         // Push to call stack with index for gas calculation
-        callStack.push(new CallStackEntry(i, depth + 1, childCall));
+        CallStackEntry entry = new CallStackEntry(i, depth + 1, childCall, frame.getGasRemaining());
+
+        // Set gas stipend for value-transferring CALL operations
+        if ("CALL".equals(opcodeString) && !Wei.ZERO.equals(frame.getValue())) {
+          entry.setGasStipend(CALL_STIPEND);
+        }
+
+        callStack.push(entry);
+      }
+      // Handle SELFDESTRUCT operations
+      else if ("SELFDESTRUCT".equals(opcodeString)) {
+        // Get the current call context
+        final DebugCallTracerResult currentCall = callsByDepth.get(depth);
+        if (currentCall != null) {
+          // Get the refund address from the stack
+          Address refundAddress = null;
+          if (frame.getStack().isPresent() && frame.getStack().get().length > 0) {
+            Bytes[] stack = frame.getStack().get();
+            refundAddress = Address.wrap(stack[stack.length - 1]);
+          }
+
+          // Create a SELFDESTRUCT call result
+          final DebugCallTracerResult selfDestructCall =
+              new DebugCallTracerResult(
+                  "SELFDESTRUCT",
+                  currentCall.to, // from address is the current contract
+                  refundAddress != null
+                      ? refundAddress.toHexString()
+                      : null, // to address is the refund address
+                  "0x0", // Initialize with zero value
+                  "0x0", // no gas allocation needed
+                  "0x" // no input data
+                  );
+
+          // Set the output to null since SELFDESTRUCT doesn't return data
+          selfDestructCall.output = null;
+
+          // Calculate gas used for the SELFDESTRUCT operation
+          long gasUsed = frame.getGasCost().orElse(0L);
+          selfDestructCall.gasUsed = "0x" + Long.toHexString(gasUsed);
+
+          // Get the balance being transferred if available
+          if (frame.getMaybeRefunds().isPresent() && refundAddress != null) {
+            Wei balance = frame.getMaybeRefunds().get().getOrDefault(refundAddress, Wei.ZERO);
+            // Update the value field with the balance
+            selfDestructCall.value = balance.toShortHexString();
+          }
+
+          // Add to the current call's calls list
+          currentCall.calls.add(selfDestructCall);
+        }
       }
       // Handle return/revert operations
-      else if ("RETURN".equals(opcodeString) || "REVERT".equals(opcodeString)) {
+      else if ("RETURN".equals(opcodeString)
+          || "REVERT".equals(opcodeString)
+          || "STOP".equals(opcodeString)) {
         if (!callStack.isEmpty() && callStack.peek().getDepth() == depth) {
           final CallStackEntry entry = callStack.pop();
           final DebugCallTracerResult call = entry.getCall();
 
-          if ("RETURN".equals(opcodeString)) {
+          if ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString)) {
             // Set output data on successful return
             final Bytes outputData = frame.getOutputData();
             call.output = outputData != null ? outputData.toHexString() : "0x";
@@ -198,7 +256,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
               // Contract address should be set if available
               final Address recipient = frame.getRecipient();
               if (recipient != null) {
-                call.updateContractAddress(recipient.toHexString());
+                call.to = recipient.toHexString();
               }
             }
           } else {
@@ -208,35 +266,122 @@ public class DebugCallTracerResult implements DebugTracerResult {
 
             // Get revert reason if available
             final Optional<Bytes> revertReason = frame.getRevertReason();
-            if (revertReason.isPresent()) {
+            if (revertReason.isPresent() && !revertReason.get().isEmpty()) {
               call.revertReason = revertReason.get().toHexString();
             }
           }
 
-          // Calculate gas used - check for precompiled contract first
-          if (frame.getPrecompiledGasCost().isPresent()) {
-            // Use precompiled contract gas cost if available
-            call.gasUsed = "0x" + Long.toHexString(frame.getPrecompiledGasCost().getAsLong());
-          } else {
-            // Calculate gas used from start frame to current frame
-            final TraceFrame startFrame = frames.get(entry.getStartFrameIndex());
-            long startGas = startFrame.getGasRemaining();
-            long endGas = frame.getGasRemaining();
-            long gasUsed = startGas - endGas;
+          // Calculate gas used for this call
+          calculateGasUsed(frames, entry, frame, opcodeString);
 
-            // Add any gas cost from the final operation (RETURN/REVERT)
-            if (frame.getGasCost().isPresent()) {
-              gasUsed += frame.getGasCost().getAsLong();
-            }
+          // Remove from tracking
+          callsByDepth.remove(depth);
+        }
+      }
+      // Handle exceptional halts
+      else if (frame.getExceptionalHaltReason().isPresent()) {
+        if (!callStack.isEmpty() && callStack.peek().getDepth() == depth) {
+          final CallStackEntry entry = callStack.pop();
+          final DebugCallTracerResult call = entry.getCall();
 
-            call.gasUsed = "0x" + Long.toHexString(gasUsed);
-          }
+          // Set error message
+          call.error =
+              frame
+                  .getExceptionalHaltReason()
+                  .map(ExceptionalHaltReason::getDescription)
+                  .orElse("execution failed");
+
+          // Calculate gas used for this call
+          calculateGasUsed(frames, entry, frame, opcodeString);
 
           // Remove from tracking
           callsByDepth.remove(depth);
         }
       }
     }
+
+    // Handle any remaining calls in the stack (could happen if trace is incomplete)
+    while (!callStack.isEmpty()) {
+      final CallStackEntry entry = callStack.pop();
+      final DebugCallTracerResult call = entry.getCall();
+
+      // Mark as failed with unknown error
+      call.error = "execution incomplete";
+
+      // Use all available gas as gasUsed
+      long availableGas = Long.decode(call.gas);
+      call.gasUsed = "0x" + Long.toHexString(availableGas);
+    }
+  }
+
+  /**
+   * Calculate the gas used for a call and set it on the call result.
+   *
+   * @param frames the list of trace frames
+   * @param entry the call stack entry
+   * @param currentFrame the current frame (RETURN/REVERT)
+   * @param opcodeString the opcode string
+   */
+  private void calculateGasUsed(
+      final List<TraceFrame> frames,
+      final CallStackEntry entry,
+      final TraceFrame currentFrame,
+      final String opcodeString) {
+
+    final DebugCallTracerResult call = entry.getCall();
+
+    // Check for precompiled contract first
+    if (currentFrame.getPrecompiledGasCost().isPresent()) {
+      // Use precompiled contract gas cost if available
+      call.gasUsed = "0x" + Long.toHexString(currentFrame.getPrecompiledGasCost().getAsLong());
+      return;
+    }
+
+    // Get the starting frame
+    final TraceFrame startFrame = frames.get(entry.getStartFrameIndex());
+
+    // Basic gas calculation
+    long startGas = entry.getInitialGas();
+    long endGas = currentFrame.getGasRemaining();
+    long gasUsed = startGas - endGas;
+
+    // Add cost of the final operation if present
+    if (currentFrame.getGasCost().isPresent()) {
+      gasUsed += currentFrame.getGasCost().getAsLong();
+    }
+
+    // Account for gas refunds
+    long gasRefund = currentFrame.getGasRefund();
+    if (gasRefund > 0) {
+      // Only apply refund up to a maximum of gasUsed / 5
+      long maxRefund = gasUsed / 5; // TODO: protocolSpec.getGasCalculator().getMaxRefundQuotient()
+      gasRefund = Math.min(gasRefund, maxRefund);
+      gasUsed -= gasRefund;
+    }
+
+    // Handle special cases for different call types
+
+    // For CREATE operations, add code deposit cost on successful return
+    if (("CREATE".equals(call.type) || "CREATE2".equals(call.type))
+        && "RETURN".equals(opcodeString)) {
+      final Bytes outputData = currentFrame.getOutputData();
+      if (outputData != null && !outputData.isEmpty()) {
+        // Code deposit costs 200 gas per byte
+        gasUsed += (long) outputData.size() * CODE_DEPOSIT_GAS_PER_BYTE;
+      }
+    }
+
+    // Adjust for call stipends if applicable
+    if (entry.getGasStipend() > 0
+        && ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString))) {
+      // Only subtract stipend if the call was successful
+      gasUsed = Math.max(0, gasUsed - entry.getGasStipend());
+    }
+
+    // Ensure gas used is not negative
+    gasUsed = Math.max(0, gasUsed);
+
+    call.gasUsed = "0x" + Long.toHexString(gasUsed);
   }
 
   /**
@@ -270,17 +415,24 @@ public class DebugCallTracerResult implements DebugTracerResult {
         || "CREATE2".equals(opcodeString);
   }
 
-  private DebugCallTracerResult createCallResult(
-      final TraceFrame frame, final String opcodeString, final DebugCallTracerResult parentCall) {
+  private boolean isSelfDestructOp(final String opcodeString) {
+    return "SELFDESTRUCT".equals(opcodeString);
+  }
 
-    // Determine call type
-    final String callType;
-    if (isCallOp(opcodeString)) {
-      // For valid opcodes, use the opcode string directly as the call type
-      callType = opcodeString;
-    } else {
-      callType = "UNKNOWN";
-    }
+  /**
+   * Create a call result object based on the trace frame and opcode.
+   *
+   * @param frame the current trace frame
+   * @param opcodeString the opcode string
+   * @param parentCall the parent call result
+   * @param nextFrame the next frame at the call's depth
+   * @return a new call result object
+   */
+  private DebugCallTracerResult createCallResult(
+      final TraceFrame frame,
+      final String opcodeString,
+      final DebugCallTracerResult parentCall,
+      final TraceFrame nextFrame) {
 
     // Determine from address (caller)
     final String from = parentCall.to;
@@ -288,13 +440,17 @@ public class DebugCallTracerResult implements DebugTracerResult {
     // Determine to address (callee)
     final String to;
     if (isCreateOp(opcodeString)) {
-      // For CREATE/CREATE2, generate the contract address that will be created
-      // Or we'll update it later when we have the actual address from the return frame
-      to = null;
+      // For CREATE/CREATE2, we'll set the address later when we have the actual address
+      // For now, use the expected contract address if we can calculate it
+      if (frame.getRecipient() != null) {
+        to = frame.getRecipient().toHexString();
+      } else {
+        to = null;
+      }
     } else {
-      // For other calls, use the recipient address from the frame if available
-      final Address recipient = frame.getRecipient();
-      to = recipient != null ? recipient.toHexString() : null;
+      // For other calls, get the recipient from the next frame
+      // For other calls, get the recipient from the next frame
+      to = nextFrame.getRecipient() != null ? nextFrame.getRecipient().toHexString() : null;
     }
 
     // Determine value
@@ -305,41 +461,66 @@ public class DebugCallTracerResult implements DebugTracerResult {
     } else {
       // Use the value from the frame if available, otherwise default to 0
       final Wei frameValue = frame.getValue();
-      value = frameValue != null ? frameValue.toHexString() : "0x0";
+      value = frameValue != null ? frameValue.toShortHexString() : "0x0";
     }
 
     // Determine gas
-    final String gas = "0x" + Long.toHexString(frame.getGasRemaining());
+    // For calls, calculate the gas that will be available to the call
+    long gasRemaining = frame.getGasRemaining();
+    long gasCost = frame.getGasCost().orElse(0L);
+
+    // Calculate gas available to the call
+    long callGas;
+
+    // If we have stack information, extract the gas parameter
+    if (frame.getStack().isPresent() && frame.getStack().get().length > 0) {
+      // The gas parameter position depends on the opcode
+      int gasStackPos = 0;
+      if ("CALL".equals(opcodeString) || "CALLCODE".equals(opcodeString)) {
+        gasStackPos = 0; // First parameter is gas
+      } else if ("DELEGATECALL".equals(opcodeString) || "STATICCALL".equals(opcodeString)) {
+        gasStackPos = 0; // First parameter is gas
+      } else if ("CREATE".equals(opcodeString) || "CREATE2".equals(opcodeString)) {
+        // For CREATE, we need to calculate gas differently
+        callGas = gasRemaining - gasCost;
+        // No need to extract from stack
+        gasStackPos = -1;
+      }
+
+      if (gasStackPos >= 0 && frame.getStack().get().length > gasStackPos) {
+        callGas = frame.getStack().get()[gasStackPos].toLong();
+
+        // Apply EIP-150 gas cost rules
+        long maxCallGas = gasRemaining - gasCost;
+        if (callGas > maxCallGas) {
+          callGas = maxCallGas;
+        }
+
+        // For non-CREATE calls, apply the EIP-150 divisor
+        if (!isCreateOp(opcodeString)) {
+          callGas = callGas - (callGas / EIP_150_DIVISOR);
+        }
+      } else {
+        // Fallback if stack access is invalid
+        callGas = nextFrame.getGasRemaining();
+      }
+    } else {
+      // Fallback if stack not available - use the gas remaining in the next frame
+      callGas = nextFrame.getGasRemaining();
+    }
+
+    final String gas = "0x" + Long.toHexString(callGas);
 
     // Determine input data
-    final Bytes inputData = frame.getInputData();
+    final Bytes inputData = nextFrame.getInputData();
     final String input = inputData != null ? inputData.toHexString() : "0x";
 
     // Create and return the call result
-    return new DebugCallTracerResult(callType, from, to, value, gas, input);
+    return new DebugCallTracerResult(opcodeString, from, to, value, gas, input);
   }
 
   private boolean isCreateOp(final String opcodeString) {
     return "CREATE".equals(opcodeString) || "CREATE2".equals(opcodeString);
-  }
-
-  /**
-   * Update the contract address for CREATE/CREATE2 operations.
-   *
-   * @param address the contract address in hex string format
-   */
-  private void updateContractAddress(final String address) {
-    // This would be called after contract creation to update the 'to' field with the actual address
-    ((DebugCallTracerResultAccessor) this).updateToAddress(address);
-  }
-
-  /**
-   * Interface to allow updating of the 'to' field which is final. This is a workaround since we
-   * need to update the contract address after creation.
-   */
-  @JsonIgnoreType
-  private interface DebugCallTracerResultAccessor {
-    void updateToAddress(String address);
   }
 
   @JsonGetter("type")
@@ -407,12 +588,19 @@ public class DebugCallTracerResult implements DebugTracerResult {
     private final int startFrameIndex;
     private final int depth;
     private final DebugCallTracerResult call;
+    private final long initialGas;
+    private long gasStipend;
 
     public CallStackEntry(
-        final int startFrameIndex, final int depth, final DebugCallTracerResult call) {
+        final int startFrameIndex,
+        final int depth,
+        final DebugCallTracerResult call,
+        final long initialGas) {
       this.startFrameIndex = startFrameIndex;
       this.depth = depth;
       this.call = call;
+      this.initialGas = initialGas;
+      this.gasStipend = 0;
     }
 
     public int getStartFrameIndex() {
@@ -425,6 +613,18 @@ public class DebugCallTracerResult implements DebugTracerResult {
 
     public DebugCallTracerResult getCall() {
       return call;
+    }
+
+    public long getInitialGas() {
+      return initialGas;
+    }
+
+    public long getGasStipend() {
+      return gasStipend;
+    }
+
+    public void setGasStipend(long gasStipend) {
+      this.gasStipend = gasStipend;
     }
   }
 }
