@@ -82,14 +82,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   private static final long DEFAULT_TARGET_GAS_LIMIT = 36_000_000L;
   // testnets might have higher gas limits than mainnet
-  private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 36_000_000L;
+  private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
 
-  private static final Map<BigInteger, Long> TESTNET_CHAIN_IDS =
-      Map.of(
-          BigInteger.valueOf(11155111), 60_000_000L, // Sepolia
-          BigInteger.valueOf(17000), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Holesky
-          BigInteger.valueOf(560048), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Hoodi
-          BigInteger.valueOf(39438135), DEFAULT_TARGET_GAS_LIMIT_TESTNET // Ephemery
+  private static final List<BigInteger> TESTNET_CHAIN_IDS =
+      List.of(
+          BigInteger.valueOf(11155111), // Sepolia
+          BigInteger.valueOf(17000), // Holesky
+          BigInteger.valueOf(560048), // Hoodi
+          BigInteger.valueOf(39438135) // Ephemery
           );
 
   /** The Mining parameters. */
@@ -891,7 +891,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   private long getDefaultGasLimit(final ProtocolSchedule protocolSchedule) {
     return protocolSchedule
         .getChainId()
-        .map(TESTNET_CHAIN_IDS::get)
+        .filter(TESTNET_CHAIN_IDS::contains)
+        .map(id -> DEFAULT_TARGET_GAS_LIMIT_TESTNET)
         .orElse(DEFAULT_TARGET_GAS_LIMIT);
   }
 
