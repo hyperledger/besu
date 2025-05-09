@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHasher;
-
-import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -247,14 +244,6 @@ public class ClassicProtocolSpecs {
             evmConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .blockHeaderValidatorBuilder(
-            feeMarket ->
-                MainnetBlockHeaderValidator.createPgaBlockHeaderValidator(
-                    new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
-        .ommerHeaderValidatorBuilder(
-            feeMarket ->
-                MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
-                    new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .name("Thanos");
   }
 

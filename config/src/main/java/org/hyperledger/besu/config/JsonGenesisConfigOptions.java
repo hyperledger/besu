@@ -114,9 +114,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public String getConsensusEngine() {
-    if (isEthHash()) {
-      return ETHASH_CONFIG_KEY;
-    } else if (isIbft2()) {
+    if (isIbft2()) {
       return IBFT2_CONFIG_KEY;
     } else if (isIbftLegacy()) {
       return IBFT_LEGACY_CONFIG_KEY;
@@ -127,11 +125,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     } else {
       return "unknown";
     }
-  }
-
-  @Override
-  public boolean isEthHash() {
-    return configRoot.has(ETHASH_CONFIG_KEY);
   }
 
   @Override
@@ -439,11 +432,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public PowAlgorithm getPowAlgorithm() {
-    return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.UNSUPPORTED;
-  }
-
-  @Override
   public Optional<String> getEcCurve() {
     return JsonUtil.getString(configRoot, EC_CURVE_CONFIG_KEY);
   }
@@ -534,9 +522,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
-    }
-    if (isEthHash()) {
-      builder.put("ethash", getEthashConfigOptions().asMap());
     }
     if (isIbftLegacy()) {
       builder.put("ibft", getIbftLegacyConfigOptions().asMap());
