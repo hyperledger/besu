@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
@@ -47,6 +48,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -137,8 +139,11 @@ public class RespondingEthPeer {
     StatusMessage statusMessage =
         StatusMessage.builder()
             .protocolVersion(EthProtocol.LATEST.getVersion())
+            .networkId(BigInteger.ONE)
+            .genesisHash(gen.hash())
             .bestHash(chainHeadHash)
             .totalDifficulty(totalDifficulty)
+            .forkId(new ForkId(Hash.ZERO, 0))
             .build();
     peer.registerStatusReceived(statusMessage, peerConnection);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
