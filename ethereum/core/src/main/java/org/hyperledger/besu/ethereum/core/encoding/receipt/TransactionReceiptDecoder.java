@@ -55,12 +55,36 @@ public class TransactionReceiptDecoder {
    */
   public static TransactionReceipt readFrom(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
-    // The first byte indicates whether the receipt is typed (eth/68) or flat (eth/69).
-    if (!rlpInput.nextIsList()) {
-      return decodeTypedReceipt(rlpInput, revertReasonAllowed);
+    if (rlpInput.nextIsList()) {
+      if (isEth69Receipt(rlpInput)) {
+        return decodeEth69Receipt(rlpInput);
+      } else {
+        return decodeLegacyReceipt(rlpInput, revertReasonAllowed);
+      }
     } else {
-      return decodeFlatReceipt(rlpInput, revertReasonAllowed);
+      return decodeTypedReceipt(rlpInput, revertReasonAllowed);
     }
+  }
+
+  private static TransactionReceipt decodeLegacyReceipt(
+      final RLPInput input, final boolean revertReasonAllowed) {
+    input.enterList();
+    final RLPInput statusOrStateRootRlpInput = input.readAsRlp();
+    final long cumulativeGas = input.readLongScalar();
+    final boolean isCompacted = isNextNotBloomFilter(input);
+    LogsBloomFilter bloomFilter = null;
+    if (!isCompacted) {
+      bloomFilter = LogsBloomFilter.readFrom(input);
+    }
+    final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, isCompacted));
+    Optional<Bytes> revertReason = readMaybeRevertReason(input, revertReasonAllowed);
+    return createReceipt(
+        TransactionType.FRONTIER,
+        statusOrStateRootRlpInput,
+        cumulativeGas,
+        logs,
+        isCompacted ? LogsBloomFilter.builder().insertLogs(logs).build() : bloomFilter,
+        revertReason);
   }
 
   private static TransactionReceipt decodeTypedReceipt(
@@ -88,63 +112,17 @@ public class TransactionReceiptDecoder {
         transactionType, statusOrStateRoot, cumulativeGas, logs, bloomFilter, revertReason);
   }
 
-  private static TransactionReceipt decodeFlatReceipt(
-      final RLPInput rlpInput, final boolean revertReasonAllowed) {
-    rlpInput.enterList();
-    // Flat receipts can be either legacy or eth/69 receipts.
-    // To determine the type, we need to examine the logs' position, as the bloom filter cannot be
-    // used. This is because compacted legacy receipts also lack a bloom filter.
-    // The first element can be either the transaction type (eth/69 or stateRootOrStatus (eth/68
-    final RLPInput firstElement = rlpInput.readAsRlp();
-    // The second element can be either the state root or status (eth/68) or cumulative gas (eth/69)
-    final RLPInput secondElement = rlpInput.readAsRlp();
-    final boolean isCompacted = isNextNotBloomFilter(rlpInput);
-    LogsBloomFilter bloomFilter = null;
-    if (!isCompacted) {
-      bloomFilter = LogsBloomFilter.readFrom(rlpInput);
-    }
-    boolean isEth69Receipt = isCompacted && !rlpInput.nextIsList();
-    TransactionReceipt receipt;
-    if (isEth69Receipt) {
-      receipt = decodeEth69Receipt(rlpInput, firstElement, secondElement);
-    } else {
-      receipt =
-          decodeLegacyReceipt(
-              rlpInput, firstElement, secondElement, bloomFilter, revertReasonAllowed);
-    }
-    rlpInput.leaveList();
-    return receipt;
-  }
-
-  private static TransactionReceipt decodeEth69Receipt(
-      final RLPInput input, final RLPInput transactionByteRlp, final RLPInput statusOrStateRoot) {
-    int transactionByte = transactionByteRlp.readIntScalar();
+  private static TransactionReceipt decodeEth69Receipt(final RLPInput input) {
+    input.enterList();
+    int transactionByte = input.readIntScalar();
+    final RLPInput statusOrStateRoot = input.readAsRlp();
+    final long cumulativeGas = input.readLongScalar();
     final TransactionType transactionType =
         transactionByte == 0x00 ? TransactionType.FRONTIER : TransactionType.of(transactionByte);
-    final long cumulativeGas = input.readLongScalar();
     final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, false));
     final LogsBloomFilter bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
     return createReceipt(
         transactionType, statusOrStateRoot, cumulativeGas, logs, bloomFilter, Optional.empty());
-  }
-
-  private static TransactionReceipt decodeLegacyReceipt(
-      final RLPInput input,
-      final RLPInput statusOrStateRootRlpInput,
-      final RLPInput cumulativeGasRlpInput,
-      final LogsBloomFilter bloomFilter,
-      final boolean revertReasonAllowed) {
-    final long cumulativeGas = cumulativeGasRlpInput.readLongScalar();
-    final boolean isCompacted = bloomFilter == null;
-    final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, isCompacted));
-    Optional<Bytes> revertReason = readMaybeRevertReason(input, revertReasonAllowed);
-    return createReceipt(
-        TransactionType.FRONTIER,
-        statusOrStateRootRlpInput,
-        cumulativeGas,
-        logs,
-        isCompacted ? LogsBloomFilter.builder().insertLogs(logs).build() : bloomFilter,
-        revertReason);
   }
 
   private static TransactionReceipt createReceipt(
@@ -181,5 +159,18 @@ public class TransactionReceiptDecoder {
 
   private static boolean isNextNotBloomFilter(final RLPInput input) {
     return input.nextIsList() || input.nextSize() != LogsBloomFilter.BYTE_SIZE;
+  }
+
+  private static boolean isEth69Receipt(final RLPInput input) {
+    input.enterList();
+    input.skipNext();
+    input.skipNext();
+    boolean hasBloomFilter = !isNextNotBloomFilter(input);
+    if (hasBloomFilter) {
+      input.skipNext();
+    }
+    boolean isEth69 = !hasBloomFilter && !input.nextIsList();
+    input.reset();
+    return isEth69;
   }
 }
