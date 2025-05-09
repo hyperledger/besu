@@ -149,8 +149,8 @@ public class ChainDataPruner implements BlockAddedObserver {
                 logPreMergePruningProgress,
                 LOG_PRE_MERGE_PRUNING_PROGRESS_REPEAT_DELAY);
             if (expectedNewPruningMark == mergeBlock) {
-              LOG.info(
-                  "Done pruning pre-merge blocks. Unsubscribing from block added event observation");
+              LOG.info("Done pruning pre-merge blocks.");
+              LOG.debug("Unsubscribing from block added event observation");
               unsubscribeRunnable.run();
             }
           } catch (InterruptedException e) {
