@@ -398,7 +398,7 @@ public class EthCreateAccessListTest {
         .gasPrice(gasPrice)
         .value(Wei.ZERO)
         .input(Bytes.EMPTY)
-        .strict(false)
+        .strict(true)
         .build();
   }
 
