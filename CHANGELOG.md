@@ -2,6 +2,7 @@
 ## Unreleased
 ### Breaking Changes
 - Changes to gas estimation algorithm for `eth_estimateGas` and `eth_createAccessList` [#8478](https://github.com/hyperledger/besu/pull/8478) - if you require the previous behavior, specify `--estimate-gas-tolerance-ratio=0.0`
+- Transaction indexing is now disabled by default during the initial sync for snap sync and checkpoint sync. This will break RPCs that use transaction hash for historical queries.
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
