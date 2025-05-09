@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 ### Breaking Changes
+- Remove `MetricSystem::createLabelledGauge` deprecated since `24.12.0`, replace it with `MetricSystem::createLabelledSuppliedGauge` [#8299](https://github.com/hyperledger/besu/pull/8299)
 ### Upcoming Breaking Changes
 ### Additions and Improvements
 
