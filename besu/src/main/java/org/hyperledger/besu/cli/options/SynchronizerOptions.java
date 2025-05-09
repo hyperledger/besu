@@ -331,10 +331,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   @CommandLine.Option(
       names = SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
-      hidden = true,
       paramLabel = "<Boolean>",
       arity = "0..1",
-      description = "Enable transaction indexing during snap sync. (default: ${DEFAULT-VALUE})")
+      description =
+          "Enable transaction indexing during snap sync. Disabling this will improve initial syncing time and disk usage but RPCs that use transaction hash for historical queries will not work. (default: ${DEFAULT-VALUE})")
   private Boolean snapTransactionIndexingEnabled =
       SnapSyncConfiguration.DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
 
