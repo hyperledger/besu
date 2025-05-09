@@ -593,6 +593,7 @@ public class QbftBlockHeightManagerTest {
         new RoundChangeManager(3, 2, roundChangeMessageValidator, validators.get(2));
 
     when(finalState.isLocalNodeProposerForRound(any())).thenReturn(false);
+    when(finalState.isEarlyRoundChangeEnabled()).thenReturn(true);
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
