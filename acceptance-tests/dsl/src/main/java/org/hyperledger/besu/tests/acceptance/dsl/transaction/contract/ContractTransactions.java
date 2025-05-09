@@ -39,7 +39,10 @@ public class ContractTransactions {
   }
 
   public CallSmartContractFunction callSmartContract(
-      final String contractAddress, final String functionCall, final BigInteger gasLimit) {
-    return new CallSmartContractFunction(contractAddress, functionCall, gasLimit);
+      final String contractAddress,
+      final String functionCall,
+      final BigInteger gasLimit,
+      final BigInteger gasPrice) {
+    return new CallSmartContractFunction(contractAddress, functionCall, gasLimit, gasPrice);
   }
 }

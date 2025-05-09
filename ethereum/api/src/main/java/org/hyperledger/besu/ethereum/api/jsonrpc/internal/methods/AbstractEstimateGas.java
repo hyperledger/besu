@@ -56,7 +56,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     try {
-      return request.getOptionalParameter(1, BlockParameter.class).orElse(BlockParameter.LATEST);
+      return request.getOptionalParameter(1, BlockParameter.class).orElse(BlockParameter.PENDING);
     } catch (JsonRpcParameter.JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
@@ -183,11 +183,11 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
 
   protected static TransactionValidationParams getTransactionValidationParams(
       final JsonCallParameter callParams) {
-    final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
+    final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.TRUE);
 
     return isAllowExceedingBalance
         ? TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce()
-        : TransactionValidationParams.transactionSimulatorAllowFutureNonce();
+        : TransactionValidationParams.transactionSimulatorEstimateGasParams();
   }
 
   @VisibleForTesting

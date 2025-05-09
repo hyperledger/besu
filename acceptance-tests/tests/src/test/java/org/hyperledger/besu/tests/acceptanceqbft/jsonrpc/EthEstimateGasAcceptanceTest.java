@@ -31,7 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
-
+  private static final BigInteger GAS_PRICE = BigInteger.valueOf(10000000000L);
   private BesuNode node;
   private TestDepth testDepth;
 
@@ -87,7 +87,8 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
               contractTransactions.callSmartContract(
                   testDepth.getContractAddress(),
                   functionCall,
-                  estimateGas.getAmountUsed().subtract(BigInteger.ONE)));
+                  estimateGas.getAmountUsed().subtract(BigInteger.ONE),
+                  GAS_PRICE));
 
       node.verify(eth.expectSuccessfulTransactionReceipt(transactionTooLow.getTransactionHash()));
 
@@ -103,7 +104,10 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
       var transaction =
           node.execute(
               contractTransactions.callSmartContract(
-                  testDepth.getContractAddress(), functionCall, estimateGas.getAmountUsed()));
+                  testDepth.getContractAddress(),
+                  functionCall,
+                  estimateGas.getAmountUsed(),
+                  GAS_PRICE));
 
       node.verify(eth.expectSuccessfulTransactionReceipt(transaction.getTransactionHash()));
 
