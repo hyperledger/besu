@@ -25,7 +25,7 @@ import java.util.EnumSet;
 
 public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   DEFAULT("default".getBytes(StandardCharsets.UTF_8)),
-  BLOCKCHAIN(new byte[] {1}, EnumSet.allOf(DataStorageFormat.class), true, true, true),
+  BLOCKCHAIN(new byte[] {1}, EnumSet.allOf(DataStorageFormat.class), true, true, false),
   WORLD_STATE(new byte[] {2}, EnumSet.of(FOREST), false, true, false),
   PRIVATE_TRANSACTIONS(new byte[] {3}),
   PRIVATE_STATE(new byte[] {4}),
