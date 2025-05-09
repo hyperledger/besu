@@ -18,12 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -40,52 +38,22 @@ public class AccountPermissioningControllerTest {
   private AccountPermissioningController permissioningController;
 
   @Mock private AccountLocalConfigPermissioningController localConfigController;
-  @Mock private TransactionSmartContractPermissioningController smartContractController;
 
   @BeforeEach
   public void before() {
     permissioningController =
         new AccountPermissioningController(
-            Optional.of(localConfigController),
-            Optional.of(smartContractController),
-            Collections.emptyList());
+            Optional.of(localConfigController), Collections.emptyList());
   }
 
   @Test
   public void shouldOnlyCheckLocalConfigControllerWhenNotPersistingState() {
     when(localConfigController.isPermitted(any())).thenReturn(true);
 
-    boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), true, false);
+    boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), true);
 
     assertThat(isPermitted).isTrue();
 
     verify(localConfigController).isPermitted(any());
-    verifyNoInteractions(smartContractController);
-  }
-
-  @Test
-  public void shouldOnlyCheckLocalConfigAndSmartContractControllerWhenPersistingState() {
-    when(localConfigController.isPermitted(any())).thenReturn(true);
-    when(smartContractController.isPermitted(any())).thenReturn(true);
-
-    boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), true, true);
-
-    assertThat(isPermitted).isTrue();
-
-    verify(localConfigController).isPermitted(any());
-    verify(smartContractController).isPermitted(any());
-  }
-
-  @Test
-  public void shouldReturnFalseIfOneControllerPermitsAndTheOtherDoesNot() {
-    when(localConfigController.isPermitted(any())).thenReturn(true);
-    when(smartContractController.isPermitted(any())).thenReturn(false);
-
-    boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), true, true);
-
-    assertThat(isPermitted).isFalse();
-
-    verify(localConfigController).isPermitted(any());
-    verify(smartContractController).isPermitted(any());
   }
 }

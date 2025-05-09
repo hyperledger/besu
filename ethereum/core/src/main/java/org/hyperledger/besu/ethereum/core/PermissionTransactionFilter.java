@@ -16,6 +16,5 @@ package org.hyperledger.besu.ethereum.core;
 
 @FunctionalInterface
 public interface PermissionTransactionFilter {
-  boolean permitted(
-      Transaction transaction, boolean checkLocalPermissions, boolean checkOnchainPermissions);
+  boolean permitted(Transaction transaction, boolean checkLocalPermissions);
 }
