@@ -87,9 +87,10 @@ public class BlockHeaderValidator {
               boolean worked = rule.validate(header, parent, protocolContext);
               if (!worked) {
                 String canonicalName = rule.innerRuleClass().getCanonicalName();
-                LOG.debug(
-                    "{} rule failed",
-                    canonicalName == null ? rule.innerRuleClass().getName() : canonicalName);
+                LOG.warn(
+                    "{} rule failed (block: {})",
+                    canonicalName == null ? rule.innerRuleClass().getName() : canonicalName,
+                        header.getBlockHash().toShortLogString());
               }
               return worked;
             });
@@ -99,7 +100,7 @@ public class BlockHeaderValidator {
     final Optional<BlockHeader> parent =
         context.getBlockchain().getBlockHeader(header.getParentHash());
     if (parent.isEmpty()) {
-      LOG.trace("Invalid block header: cannot determine parent header");
+      LOG.warn("Invalid block header ({}): cannot determine parent header", header.getBlockHash().toShortLogString());
     }
     return parent;
   }
