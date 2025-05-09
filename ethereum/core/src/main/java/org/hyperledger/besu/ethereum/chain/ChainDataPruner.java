@@ -147,7 +147,7 @@ public class ChainDataPruner implements BlockAddedObserver {
             LogUtil.throttledLog(
                 () -> LOG.info("Pruned pre-merge blocks up to {}", expectedNewPruningMark),
                 logPreMergePruningProgress,
-                    LOG_PRE_MERGE_PRUNING_PROGRESS_REPEAT_DELAY_SECONDS);
+                LOG_PRE_MERGE_PRUNING_PROGRESS_REPEAT_DELAY_SECONDS);
             if (expectedNewPruningMark == mergeBlock) {
               LOG.info("Done pruning pre-merge blocks.");
               LOG.debug("Unsubscribing from block added event observation");
