@@ -67,9 +67,7 @@ public class PermissionTransactionValidator implements TransactionValidator {
       final Transaction transaction, final TransactionValidationParams validationParams) {
     if (validationParams.checkLocalPermissions() || validationParams.checkOnchainPermissions()) {
       return permissionTransactionFilter.permitted(
-          transaction,
-          validationParams.checkLocalPermissions(),
-          validationParams.checkOnchainPermissions());
+          transaction, validationParams.checkLocalPermissions());
     }
     return true;
   }
