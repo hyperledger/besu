@@ -620,7 +620,7 @@ public class MessageFrame {
    * @return The bytes in the specified range
    */
   public Bytes readMemory(final long offset, final long length) {
-    return readMutableMemory(offset, length, false).copy();
+    return memory.getBytes(offset, length);
   }
 
   /**

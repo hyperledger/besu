@@ -78,7 +78,7 @@ public class EOFCreateOperation extends AbstractCreateOperation {
   protected Bytes getInputData(final MessageFrame frame) {
     final long inputOffset = clampedToLong(frame.getStackItem(2));
     final long inputSize = clampedToLong(frame.getStackItem(3));
-    return frame.readMemory(inputOffset, inputSize);
+    return frame.readMutableMemory(inputOffset, inputSize);
   }
 
   @Override

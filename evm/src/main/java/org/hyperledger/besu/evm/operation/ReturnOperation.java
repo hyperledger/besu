@@ -46,7 +46,8 @@ public class ReturnOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    frame.setOutputData(frame.readMemory(from, length));
+    // can read from mutable memory as this frame's memory is going out of scope
+    frame.setOutputData(frame.readMutableMemory(from, length));
     frame.setState(MessageFrame.State.CODE_SUCCESS);
     return new OperationResult(cost, null);
   }

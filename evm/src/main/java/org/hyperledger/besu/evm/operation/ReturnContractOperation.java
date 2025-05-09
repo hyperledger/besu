@@ -63,7 +63,7 @@ public class ReturnContractOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.NONEXISTENT_CONTAINER);
     }
 
-    Bytes auxData = frame.readMemory(from, length);
+    Bytes auxData = frame.readMutableMemory(from, length);
     if (code.getDataSize() + auxData.size() > evm.getMaxCodeSize()) {
       return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
     }

@@ -48,7 +48,8 @@ public class RevertOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    final Bytes reason = frame.readMemory(from, length);
+    // can read from mutable memory as this frame's memory is going out of scope
+    final Bytes reason = frame.readMutableMemory(from, length);
     frame.setOutputData(reason);
     frame.setRevertReason(reason);
     frame.setState(MessageFrame.State.REVERT);
