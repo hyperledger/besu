@@ -1015,8 +1015,8 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
-        new ClearEmptyAccountStrategy.ClearEmptyAccountWithException(
-            List.of(Eip7709BlockHashProcessor.EIP_7709_HISTORY_STORAGE_ADDRESS));
+            new ClearEmptyAccountStrategy.ClearEmptyAccountWithException(
+                    List.of(Eip7709BlockHashProcessor.EIP_7709_HISTORY_STORAGE_ADDRESS));
     return shanghaiDefinition(
             chainId,
             enableRevertReason,
@@ -1025,33 +1025,43 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .gasCalculator(Eip4762GasCalculator::new)
-        .evmBuilder(
-            (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.verkle(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .transactionProcessorBuilder(
-            (gasCalculator,
-                feeMarket,
-                transactionValidatorFactory,
-                contractCreationProcessor,
-                messageCallProcessor) ->
-                MainnetTransactionProcessor.builder()
-                    .gasCalculator(gasCalculator)
-                    .transactionValidatorFactory(transactionValidatorFactory)
-                    .contractCreationProcessor(contractCreationProcessor)
-                    .messageCallProcessor(messageCallProcessor)
-                    .clearEmptyAccountStrategy(clearEmptyAccountStrategy)
-                    .warmCoinbase(true)
-                    .maxStackSize(evmConfiguration.evmStackSize())
-                    .feeMarket(feeMarket)
-                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
-                    .build())
-        .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
+            .gasCalculator(Eip4762GasCalculator::new)
+            .evmBuilder(
+                    (gasCalculator, jdCacheConfig) ->
+                            MainnetEVMs.verkle(
+                                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+            .transactionProcessorBuilder(
+                    (gasCalculator,
+                     feeMarket,
+                     transactionValidatorFactory,
+                     contractCreationProcessor,
+                     messageCallProcessor) ->
+                            MainnetTransactionProcessor.builder()
+                                    .gasCalculator(gasCalculator)
+                                    .transactionValidatorFactory(transactionValidatorFactory)
+                                    .contractCreationProcessor(contractCreationProcessor)
+                                    .messageCallProcessor(messageCallProcessor)
+                                    .clearEmptyAccountStrategy(clearEmptyAccountStrategy)
+                                    .warmCoinbase(true)
+                                    .maxStackSize(evmConfiguration.evmStackSize())
+                                    .feeMarket(feeMarket)
+                                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
+                                    .build())
+            .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
+            .executionWitnessValidator(new ExecutionWitnessValidator.AllowedExecutionWitness())
+            .blockHashProcessor(new Eip7709BlockHashProcessor())
+            .blockHeaderFunctions(new VerkleDevnetBlockHeaderFunctions())
+            .name("Verkle");
+    /*return pragueDefinition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
         .executionWitnessValidator(new ExecutionWitnessValidator.AllowedExecutionWitness())
-        .blockHashProcessor(new Eip7709BlockHashProcessor())
-        .blockHeaderFunctions(new VerkleDevnetBlockHeaderFunctions())
-        .name("Verkle");
+        .name("Verkle");*/
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(

@@ -173,6 +173,20 @@ public class WorldStateQueryParams {
     private Builder() {}
 
     /**
+     * Initializes the builder with values from an existing WorldStateQueryParams instance.
+     *
+     * @param params the existing WorldStateQueryParams to copy
+     * @return the builder
+     */
+    public Builder from(final WorldStateQueryParams params) {
+      this.blockHeader = params.getBlockHeader();
+      this.shouldWorldStateUpdateHead = params.shouldWorldStateUpdateHead();
+      this.blockHash = params.getBlockHash();
+      this.stateRoot = params.getStateRoot();
+      return this;
+    }
+
+    /**
      * Sets the block header.
      *
      * @param blockHeader the block header

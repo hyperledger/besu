@@ -24,7 +24,6 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
 import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -1153,8 +1152,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             worldStateHealerSupplier);
       }
       case VERKLE -> {
-        final Long verkleMilestone =
-            protocolSchedule.milestoneFor(HardforkId.MainnetHardforkId.VERKLE).get();
+        final Long verkleMilestone = 1746628224L;
         if (verkleMilestone == 0) {
           final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
               worldStateStorageCoordinator.getStrategy(VerkleWorldStateKeyValueStorage.class);

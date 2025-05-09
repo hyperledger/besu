@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.trielogs;
 
+import org.hyperledger.besu.datatypes.Hash;
+
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -28,6 +30,7 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public final class StateMigrationLog {
 
+  private final Hash firstBlockHash;
   private Optional<Bytes> nextAccount;
   private Optional<Bytes> nextStorageKey;
   private final long maxToConvert;
@@ -35,14 +38,17 @@ public final class StateMigrationLog {
   /**
    * Initializes the migration log with specific progress tracking parameters.
    *
+   * @param firstBlockHash The first block hash of the transition
    * @param nextAccount The next account to process.
    * @param nextStorageKey The next storage key to process.
    * @param maxToConvert The maximum number of elements to migrate per batch.
    */
   public StateMigrationLog(
+      final Hash firstBlockHash,
       final Optional<Bytes> nextAccount,
       final Optional<Bytes> nextStorageKey,
       final long maxToConvert) {
+    this.firstBlockHash = firstBlockHash;
     this.nextAccount = nextAccount;
     this.nextStorageKey = nextStorageKey;
     this.maxToConvert = maxToConvert;
@@ -53,8 +59,8 @@ public final class StateMigrationLog {
    *
    * @param maxToConvert The maximum number of elements to migrate per batch.
    */
-  public StateMigrationLog(final long maxToConvert) {
-    this(Optional.empty(), Optional.empty(), maxToConvert);
+  public StateMigrationLog(final Hash firstBlockHash, final long maxToConvert) {
+    this(firstBlockHash, Optional.empty(), Optional.empty(), maxToConvert);
   }
 
   /**
@@ -64,6 +70,15 @@ public final class StateMigrationLog {
    */
   public long getMaxToConvert() {
     return maxToConvert;
+  }
+
+  /**
+   * Retrieves the first block hash of the transition.
+   *
+   * @return The first blockhash of the transition.
+   */
+  public Hash getFirstBlockHash() {
+    return firstBlockHash;
   }
 
   /**

@@ -77,9 +77,7 @@ public class StateTransitionWorldState implements MutableWorldState, PathBasedWo
   @Override
   public void announceBlockToImport(final BlockHeader blockToImport) {
     // Determine if Verkle should be activated based on the fork timestamp.
-    if (migrationProgress.isMigrationInProgress()) {
-      this.isVerkleActive = blockToImport.getTimestamp() >= verkleForkTimeStamp;
-    }
+    this.isVerkleActive = blockToImport.getTimestamp() >= verkleForkTimeStamp;
     // Load the appropriate state accumulator.
     this.accumulator = loadAccumulator();
   }
@@ -107,7 +105,6 @@ public class StateTransitionWorldState implements MutableWorldState, PathBasedWo
           // notify verkle accumulator that the value was not found in verkle by creating a pmt
           // sourced
           // diff based value
-          System.out.println("pmt for " + address);
           verkleWorldState
               .getAccumulator()
               .getAccountsToUpdate()
@@ -197,6 +194,9 @@ public class StateTransitionWorldState implements MutableWorldState, PathBasedWo
       // If migration is in progress, perform conversion from Bonsai to Verkle
       if (migrationProgress.isMigrationInProgress()) {
         PatriciaToVerkleConverter.convert(bonsaiWorldState, verkleWorldState, migrationProgress);
+      }
+      if (migrationProgress.isMigrationInProgress()
+          || migrationProgress.isAccountsFullyMigrated()) {
         verkleWorldState.getAccumulator().setStateMigrationLog(Optional.of(migrationProgress));
       }
 

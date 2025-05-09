@@ -255,7 +255,7 @@ class LogRollingTests {
             new VerkleWorldStateKeyValueStorage(
                 provider,
                 new StemPreloader(),
-                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie());
@@ -273,7 +273,7 @@ class LogRollingTests {
             new VerkleWorldStateKeyValueStorage(
                 provider,
                 new StemPreloader(),
-                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie());
@@ -309,7 +309,7 @@ class LogRollingTests {
             new VerkleWorldStateKeyValueStorage(
                 provider,
                 new StemPreloader(),
-                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie());
@@ -335,7 +335,7 @@ class LogRollingTests {
             new VerkleWorldStateKeyValueStorage(
                 provider,
                 new StemPreloader(),
-                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie());
@@ -372,7 +372,7 @@ class LogRollingTests {
             new VerkleWorldStateKeyValueStorage(
                 provider,
                 new StemPreloader(),
-                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie());
@@ -405,7 +405,7 @@ class LogRollingTests {
             new VerkleWorldStateKeyValueStorage(
                 provider,
                 new StemPreloader(),
-                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie());
@@ -439,7 +439,7 @@ class LogRollingTests {
             new VerkleWorldStateKeyValueStorage(
                 provider,
                 new StemPreloader(),
-                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie());
@@ -484,7 +484,7 @@ class LogRollingTests {
             new VerkleWorldStateKeyValueStorage(
                 provider,
                 new StemPreloader(),
-                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie());
@@ -558,7 +558,7 @@ class LogRollingTests {
             new VerkleWorldStateKeyValueStorage(
                 provider,
                 new StemPreloader(),
-                DataStorageConfiguration.DEFAULT_VERKLE_CONFIG,
+                DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG,
                 new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie());

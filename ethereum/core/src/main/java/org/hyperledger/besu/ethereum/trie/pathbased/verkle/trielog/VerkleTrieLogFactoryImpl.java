@@ -43,6 +43,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
@@ -60,7 +61,6 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
     layer.setDataStorageFormat(dataStorageFormat);
     applyStateModification(layer, verkleWorldStateUpdateAccumulator, blockHeader);
     applyStateMigration(layer, verkleWorldStateUpdateAccumulator);
-    System.out.println(layer.dump());
     return layer;
   }
 
@@ -91,6 +91,7 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
     output.startList();
     maybeMigrationProgress.ifPresent(
         stateMigrationLog -> {
+          output.writeBytes(stateMigrationLog.getFirstBlockHash());
           output.writeBytes(stateMigrationLog.getNextAccount());
           output.writeBytes(stateMigrationLog.getNextStorageKey());
           output.writeLong(stateMigrationLog.getMaxToConvert());
@@ -176,6 +177,10 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
     final Hash blockHash = Hash.wrap(input.readBytes32());
     newLayer.setBlockHash(blockHash);
 
+    if (input.nextIsList()) {
+      return new InvalidTrieLogTypeException(blockHash, DataStorageFormat.BONSAI);
+    }
+
     DataStorageFormat dataStorageFormat = DataStorageFormat.fromValue(input.readInt());
     if (dataStorageFormat.equals(DataStorageFormat.VERKLE)) {
       newLayer.setDataStorageFormat(dataStorageFormat);
@@ -187,6 +192,7 @@ public class VerkleTrieLogFactoryImpl extends TrieLogFactoryImpl {
     if (stateMigrationLogListSize != 0) {
       StateMigrationLog migrationProgress =
           new StateMigrationLog(
+              input.readBytes(bytes -> Hash.wrap(Bytes32.wrap(bytes))),
               Optional.of(input.readBytes(Bytes::wrap)),
               Optional.of(input.readBytes(Bytes::wrap)),
               input.readLong());

@@ -19,7 +19,12 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.stateless.adapter.TrieKeyFactory;
+import org.hyperledger.besu.ethereum.stateless.adapter.TrieKeyUtils;
+import org.hyperledger.besu.ethereum.stateless.hasher.StemHasher;
+import org.hyperledger.besu.ethereum.stateless.util.Parameters;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
@@ -36,10 +41,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.verkle.cache.preloader.StemP
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.cache.preloader.VerklePreloader;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.storage.VerkleLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.storage.VerkleWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyFactory;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.StemHasher;
-import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 import org.hyperledger.besu.ethereum.verkletrie.VerkleTrie;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -113,6 +114,72 @@ public class VerkleWorldState extends PathBasedWorldState {
   }
 
   @Override
+  public void persist(final BlockHeader blockHeader) {
+    final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
+    LOG.atDebug()
+        .setMessage("Persist world state for block {}")
+        .addArgument(maybeBlockHeader)
+        .log();
+
+    final PathBasedWorldStateUpdateAccumulator<?> localCopy = accumulator.copy();
+
+    boolean success = false;
+
+    final PathBasedWorldStateKeyValueStorage.Updater stateUpdater =
+        worldStateKeyValueStorage.updater();
+    Runnable saveTrieLog = () -> {};
+
+    try {
+      final Hash calculatedRootHash;
+
+      if (blockHeader == null) {
+        // No block header: calculate root from current state unless storage is frozen
+        calculatedRootHash =
+            calculateRootHash(
+                isStorageFrozen ? Optional.empty() : Optional.of(stateUpdater), accumulator);
+      } else if (!worldStateConfig.isTrieDisabled()) {
+        // Normal case: calculate root using the block header
+        calculatedRootHash = unsafeRootHashUpdate(blockHeader, stateUpdater);
+      } else {
+        // Trie is disabled: fallback to block's root hash, assuming trusted context
+        calculatedRootHash = unsafeRootHashUpdate(blockHeader, stateUpdater);
+      }
+
+      // if we are persisted with a block header, and the prior state is the parent
+      // then persist the TrieLog for that transition.
+      // If specified but not a direct descendant simply store the new block hash.
+      if (blockHeader != null) {
+        verifyWorldStateRoot(calculatedRootHash, blockHeader);
+        saveTrieLog =
+            () -> {
+              trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
+              // not save a frozen state in the cache
+              if (!isStorageFrozen) {
+                cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
+              }
+            };
+        stateUpdater.saveWorldState(blockHeader.getHash(), calculatedRootHash);
+        worldStateBlockHash = blockHeader.getHash();
+        worldStateRootHash = calculatedRootHash;
+      } else {
+        stateUpdater.saveWorldState(Hash.ZERO, calculatedRootHash);
+        worldStateBlockHash = Hash.ZERO;
+        worldStateRootHash = calculatedRootHash;
+      }
+      success = true;
+    } finally {
+      if (success) {
+        stateUpdater.commit();
+        accumulator.reset();
+        saveTrieLog.run();
+      } else {
+        stateUpdater.rollback();
+        accumulator.reset();
+      }
+    }
+  }
+
+  @Override
   protected Hash calculateRootHash(
       final Optional<PathBasedWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final PathBasedWorldStateUpdateAccumulator<?> worldStateUpdater) {
@@ -147,7 +214,6 @@ public class VerkleWorldState extends PathBasedWorldState {
 
               // generate account triekeys
               final List<Bytes32> leafKeys = new ArrayList<>();
-              System.out.println("allo ? " + accountKey + " " + accountUpdate);
               if (accountUpdate != null && !accountUpdate.isUnchanged()) {
                 leafKeys.add(TrieKeyUtils.getAccountKeyTrieIndex());
                 if (accountUpdate.getPrior() == null) {
@@ -199,25 +265,36 @@ public class VerkleWorldState extends PathBasedWorldState {
               stemPreloader.preloadStems(accountKey, leafKeys);
             });
 
+    int cpt = 0;
     for (final Address accountKey : addressesToPersist) {
-      updateState(
-          accountKey,
-          stateTrie,
-          maybeStateUpdater,
-          stemPreloader.getStemHasherByAddress(accountKey),
-          worldStateUpdater);
+      cpt +=
+          updateState(
+              accountKey,
+              stateTrie,
+              maybeStateUpdater,
+              stemPreloader.getStemHasherByAddress(accountKey),
+              worldStateUpdater);
     }
+
+    System.out.println("had to update " + cpt);
 
     LOG.info("start commit ");
     maybeStateUpdater.ifPresent(
         verkleUpdater ->
             stateTrie.commit(
                 (location, hash, value) -> {
-                  writeTrieNode(
-                      VERKLE_TRIE_BRANCH_STORAGE,
-                      verkleUpdater.getWorldStateTransaction(),
-                      location,
-                      value);
+                  if (value == null) {
+                    removeTrieNode(
+                        VERKLE_TRIE_BRANCH_STORAGE,
+                        verkleUpdater.getWorldStateTransaction(),
+                        location);
+                  } else {
+                    writeTrieNode(
+                        VERKLE_TRIE_BRANCH_STORAGE,
+                        verkleUpdater.getWorldStateTransaction(),
+                        location,
+                        value);
+                  }
                 }));
 
     LOG.info("end commit ");
@@ -346,7 +423,7 @@ public class VerkleWorldState extends PathBasedWorldState {
     }
   }
 
-  private void updateState(
+  private int updateState(
       final Address accountKey,
       final VerkleTrie stateTrie,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
@@ -373,14 +450,14 @@ public class VerkleWorldState extends PathBasedWorldState {
         .getKeysForRemoval()
         .forEach(
             key -> {
-              System.out.println("remove key " + key);
+              // System.out.println("remove key " + key);
               stateTrie.remove(key);
             });
     leafBuilder
         .getNonStorageKeyValuesForUpdate()
         .forEach(
             (key, value) -> {
-              System.out.println("add key " + key + " leaf value " + value);
+              // System.out.println("add key " + key + " leaf value " + value);
               stateTrie.put(key, value);
             });
     leafBuilder
@@ -391,13 +468,9 @@ public class VerkleWorldState extends PathBasedWorldState {
               if (storageAccountUpdate == null) {
                 return;
               }
-              System.out.println(accountKey + " ");
-              storageAccountUpdate.forEach(
-                  (slotKey, value) -> {
-                    System.out.println(slotKey + " " + value);
-                  });
-              System.out.println(
+              /*System.out.println(
                   "add storage key " + pair.getFirst() + "  value " + pair.getSecond());
+              */
               Optional<PathBasedValue<UInt256>> storageUpdate =
                   Optional.ofNullable(storageAccountUpdate.get(storageSlotKey));
               stateTrie
@@ -408,6 +481,10 @@ public class VerkleWorldState extends PathBasedWorldState {
                               storage -> storage.setPrior(UInt256.fromBytes(bytes))),
                       () -> storageUpdate.ifPresent(storage -> storage.setPrior(null)));
             });
+
+    return leafBuilder.getKeysForRemoval().size()
+        + leafBuilder.getNonStorageKeyValuesForUpdate().size()
+        + leafBuilder.getStorageKeyValuesForUpdate().size();
   }
 
   public Set<Address> getAddressesToPersist(
@@ -462,6 +539,13 @@ public class VerkleWorldState extends PathBasedWorldState {
 
   private VerkleTrie createTrie(final NodeLoader nodeLoader, final Hash worldStateRootHash) {
     return new VerkleTrie(nodeLoader);
+  }
+
+  protected void removeTrieNode(
+      final SegmentIdentifier segmentId,
+      final SegmentedKeyValueStorageTransaction tx,
+      final Bytes location) {
+    tx.remove(segmentId, location.toArrayUnsafe());
   }
 
   protected void writeTrieNode(

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.transition;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.ethereum.stateless.adapter.TrieKeyUtils;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
@@ -24,7 +25,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.worldview.VerkleWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyUtils;
 import org.hyperledger.besu.plugin.services.trielogs.StateMigrationLog;
 
 import java.util.HashMap;
@@ -33,11 +33,14 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Converts accounts and storage from a Patricia Merkle Trie (Bonsai) WorldState to a Verkle-based
@@ -45,9 +48,12 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public class PatriciaToVerkleConverter {
 
+  private static final Logger LOG = LoggerFactory.getLogger(PatriciaToVerkleConverter.class);
+
   private static final Map<Bytes, Bytes> PRE_IMAGES = new HashMap<>();
 
   public static void addPreImage(final Bytes hash, final Bytes key) {
+    System.out.println("PREIMAGE " + key + " " + hash);
     PRE_IMAGES.put(hash, key);
   }
 
@@ -68,17 +74,32 @@ public class PatriciaToVerkleConverter {
         verkleWorldState.getAccumulator();
     final AtomicInteger convertedEntriesCount = new AtomicInteger(0);
 
+    LOG.atDebug().setMessage("Running migration from Bonsai to Verkle...").log();
+
     bonsaiWorldState
         .getWorldStateStorage()
         .streamFlatAccounts(
             migrationProgress.getNextAccountAndReset(),
             account -> {
               final Hash accountHash = Hash.wrap(account.getFirst());
-              final Address address = Address.wrap(PRE_IMAGES.get(accountHash));
+              final Address address;
+
+                address = Address.wrap(PRE_IMAGES.computeIfAbsent(accountHash, __ -> {
+                    try {
+                    return DebugPreImageClient.getPreImage(accountHash);
+                } catch (Exception e) {
+                    LOG.atError()
+                            .setMessage("Error retrieving preimage for account: {}")
+                            .addArgument(accountHash)
+                            .log();
+                    throw new RuntimeException(e);
+                }
+            }));
+
 
               final BonsaiAccount merkleAccount =
                   BonsaiAccount.fromRLP(bonsaiWorldState, address, account.getSecond(), false);
-
+              LOG.atTrace().setMessage("Migrating account: {}").addArgument(address).log();
               if (!merkleAccount.isStorageEmpty()
                   && !migrationProgress.isStorageAccountFullyMigrated()) {
                 migrateStorage(
@@ -102,6 +123,7 @@ public class PatriciaToVerkleConverter {
 
     if (!migrationProgress.hasNextAccount()) {
       migrationProgress.markAccountsFullyMigrated();
+      LOG.atDebug().setMessage("All accounts have been fully migrated.").log();
     }
   }
 
@@ -125,6 +147,12 @@ public class PatriciaToVerkleConverter {
       final StateMigrationLog migrationProgress,
       final AtomicInteger convertedEntriesCount,
       final Hash accountHash) {
+
+    LOG.atTrace()
+        .setMessage("Migrating storage for account: {}")
+        .addArgument(merkleAccount.getAddress())
+        .log();
+
     final NavigableMap<Bytes32, Bytes> storages =
         bonsaiWorldState
             .getWorldStateStorage()
@@ -142,6 +170,10 @@ public class PatriciaToVerkleConverter {
 
     if (!migrationProgress.hasNextStorage()) {
       migrationProgress.markStorageAccountFullyMigrated();
+      LOG.atTrace()
+          .setMessage("Storage migration completed for account: {}")
+          .addArgument(merkleAccount.getAddress())
+          .log();
     }
 
     final StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> storageMap =
@@ -155,20 +187,29 @@ public class PatriciaToVerkleConverter {
         .forEach(
             (entry) -> {
               final Hash slotHash = Hash.wrap(entry.getKey());
-              final StorageSlotKey storageSlotKey =
-                  new StorageSlotKey(
-                      slotHash, Optional.of(UInt256.fromBytes(PRE_IMAGES.get(slotHash))));
+              final StorageSlotKey storageSlotKey;
+
+                storageSlotKey =
+                        new StorageSlotKey(
+                                slotHash,
+                                Optional.of(UInt256.fromBytes(PRE_IMAGES.computeIfAbsent(slotHash, __ -> {
+                    try {
+                        return DebugPreImageClient.getPreImage(slotHash);
+                    } catch (Exception e) {
+                        LOG.atError()
+                                .setMessage("Error retrieving preimage for storage: {}")
+                                .addArgument(slotHash)
+                                .log();
+                        throw new RuntimeException(e);
+                    }}))));
 
               if (verkleWorldState
                   .getStorageValueByStorageSlotKey(merkleAccount.getAddress(), storageSlotKey)
                   .isEmpty()) {
-                System.out.println(
-                    "migrate storage "
-                        + merkleAccount.getAddress()
-                        + " "
-                        + entry.getKey()
-                        + " "
-                        + entry.getValue());
+                LOG.atTrace()
+                    .setMessage("Migrating storage slot: {}")
+                    .addArgument(storageSlotKey)
+                    .log();
                 storageMap.compute(
                     storageSlotKey,
                     (slotKey, existing) ->
@@ -204,6 +245,11 @@ public class PatriciaToVerkleConverter {
     if (convertedEntriesCount.get() < migrationProgress.getMaxToConvert()) {
       migrationProgress.clearNextStorageKey();
 
+      LOG.atTrace()
+          .setMessage("Processing account: {}")
+          .addArgument(merkleAccount.getAddress())
+          .log();
+
       final VerkleAccount verkleAccount =
           Optional.ofNullable((VerkleAccount) verkleWorldState.get(merkleAccount.getAddress()))
               .map(
@@ -228,8 +274,6 @@ public class PatriciaToVerkleConverter {
                             merkleAccount.getCode(),
                             merkleAccount.getCodeHash(),
                             false);
-                    ;
-                    System.out.println("migrate " + merkleAccount.getAddress());
 
                     verkleUpdateAccumulator
                         .getAccountsToUpdate()
@@ -256,10 +300,21 @@ public class PatriciaToVerkleConverter {
       }
 
       convertedEntriesCount.incrementAndGet();
+      LOG.atTrace()
+          .setMessage("Migrated account: {}")
+          .addArgument(merkleAccount.getAddress())
+          .log();
+
       return true;
     }
 
     migrationProgress.setNextAccount(accountHash);
+
+    LOG.atDebug()
+        .setMessage("Reached migration limit, pausing at account: {}")
+        .addArgument(accountHash)
+        .log();
+
     return false;
   }
 }

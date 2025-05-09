@@ -291,6 +291,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
+    final long gasUsed =
+        receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
+    if (blockHeader.getGasUsed() == gasUsed) {
+      System.out.println("CHECKER OK " + blockHeader.getHash());
+    } else {
+      System.out.println("CHECKER NOK " + blockHeader.getHash());
+    }
+
     return new BlockProcessingResult(
         Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)),
         parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());

@@ -41,7 +41,7 @@ dependencies {
   implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'org.bouncycastle:bcprov-jdk18on'
 
-  implementation ('org.hyperledger.besu:besu-verkle-trie') {
+  implementation ('org.hyperledger.besu:besu-stateless') {
     exclude group: 'org.hyperledger.besu.internal'
     exclude group: 'org.apache.tuweni'
   }

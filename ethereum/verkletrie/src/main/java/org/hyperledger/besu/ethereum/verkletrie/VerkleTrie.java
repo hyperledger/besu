@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.verkletrie;
 
+import org.hyperledger.besu.ethereum.stateless.StoredBatchedVerkleTrie;
+import org.hyperledger.besu.ethereum.stateless.VerkleTrieBatchHasher;
+import org.hyperledger.besu.ethereum.stateless.factory.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
-import org.hyperledger.besu.ethereum.trie.verkle.StoredBatchedVerkleTrie;
-import org.hyperledger.besu.ethereum.trie.verkle.VerkleTrieBatchHasher;
-import org.hyperledger.besu.ethereum.trie.verkle.factory.StoredNodeFactory;
 
 import java.util.Optional;
 
@@ -27,7 +27,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class VerkleTrie {
 
-  private final org.hyperledger.besu.ethereum.trie.verkle.StoredBatchedVerkleTrie<Bytes, Bytes>
+  private final org.hyperledger.besu.ethereum.stateless.StoredBatchedVerkleTrie<Bytes, Bytes>
       verkleTrie;
 
   private final StoredNodeFactory<Bytes> nodeFactory;

@@ -39,6 +39,7 @@ import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class GenesisWorldStateProvider {
 
   /**
@@ -54,7 +55,7 @@ public class GenesisWorldStateProvider {
       return createGenesisBonsaiWorldState();
     } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.VERKLE) {
-      return createGenesisVerkleWorldState(dataStorageConfiguration);
+      return createGenesisBonsaiWorldState();
     } else {
       return createGenesisForestWorldState();
     }
