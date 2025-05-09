@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 public class ChainDataPruner implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(ChainDataPruner.class);
-  private static final int LOG_PRE_MERGE_PRUNING_PROGRESS_REPEAT_DELAY = 300;
+  private static final int LOG_PRE_MERGE_PRUNING_PROGRESS_REPEAT_DELAY_SECONDS = 300;
 
   public static final int MAX_PRUNING_THREAD_QUEUE_SIZE = 16;
 
@@ -147,7 +147,7 @@ public class ChainDataPruner implements BlockAddedObserver {
             LogUtil.throttledLog(
                 () -> LOG.info("Pruned pre-merge blocks up to {}", expectedNewPruningMark),
                 logPreMergePruningProgress,
-                LOG_PRE_MERGE_PRUNING_PROGRESS_REPEAT_DELAY);
+                    LOG_PRE_MERGE_PRUNING_PROGRESS_REPEAT_DELAY_SECONDS);
             if (expectedNewPruningMark == mergeBlock) {
               LOG.info("Done pruning pre-merge blocks.");
               LOG.debug("Unsubscribing from block added event observation");
