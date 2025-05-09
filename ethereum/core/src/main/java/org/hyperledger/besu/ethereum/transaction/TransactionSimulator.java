@@ -414,7 +414,8 @@ public class TransactionSimulator {
         callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
 
     final ProcessableBlockHeader blockHeaderToProcess;
-    if (transactionValidationParams.isAllowExceedingBalance()
+    if ((transactionValidationParams.isAllowExceedingBalance()
+            || transactionValidationParams.allowUnderpriced())
         && processableHeader.getBaseFee().isPresent()) {
       blockHeaderToProcess =
           new BlockHeaderBuilder()

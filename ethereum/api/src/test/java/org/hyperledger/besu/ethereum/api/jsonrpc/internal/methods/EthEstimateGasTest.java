@@ -425,7 +425,7 @@ public class EthEstimateGasTest {
         .processOnPending(
             eq(modifiedLegacyTransactionCallParameter(Long.MAX_VALUE, Wei.ZERO, Optional.empty())),
             eq(Optional.empty()), // no account overrides
-            eq(TransactionValidationParams.transactionSimulatorAllowFutureNonce()),
+            eq(TransactionValidationParams.transactionSimulatorEstimateGasParams()),
             any(OperationTracer.class),
             eq(pendingBlockHeader));
   }
@@ -597,7 +597,7 @@ public class EthEstimateGasTest {
   }
 
   private JsonCallParameter defaultLegacyTransactionCallParameter(final Wei gasPrice) {
-    return legacyTransactionCallParameter(gasPrice, false);
+    return legacyTransactionCallParameter(gasPrice, true);
   }
 
   private JsonCallParameter legacyTransactionCallParameter(
@@ -642,7 +642,6 @@ public class EthEstimateGasTest {
         .withMaxFeePerGas(Wei.fromHexString("0x10"))
         .withValue(Wei.ZERO)
         .withInput(Bytes.EMPTY)
-        .withStrict(false)
         .withNonce(maybeNonce.map(UnsignedLongParameter::new).orElse(null))
         .build();
   }
