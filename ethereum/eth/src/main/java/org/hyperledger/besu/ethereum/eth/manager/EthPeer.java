@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
@@ -27,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
+import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
@@ -509,12 +509,9 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void registerStatusReceived(
-      final Hash hash,
-      final Difficulty td,
-      final int protocolVersion,
-      final PeerConnection connection) {
-    chainHeadState.statusReceived(hash, td);
-    lastProtocolVersion.set(protocolVersion);
+      final StatusMessage statusMessage, final PeerConnection connection) {
+    chainHeadState.statusReceived(statusMessage);
+    lastProtocolVersion.set(statusMessage.protocolVersion());
     statusHasBeenReceivedFromPeer.set(true);
     synchronized (this) {
       connection.setStatusReceived();
@@ -595,6 +592,11 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public void registerHeight(final Hash blockHash, final long height) {
     chainHeadState.update(blockHash, height);
+  }
+
+  public void registerBlockRange(
+      final Hash blockHash, final long height, final long earliestBlockHeight) {
+    chainHeadState.update(blockHash, height, earliestBlockHeight);
   }
 
   public int outstandingRequests() {

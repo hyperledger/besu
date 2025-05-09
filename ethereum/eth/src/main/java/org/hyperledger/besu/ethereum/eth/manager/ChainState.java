@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.util.Subscribers;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 
 public class ChainState implements ChainHeadEstimate {
@@ -26,6 +28,7 @@ public class ChainState implements ChainHeadEstimate {
   private final BestBlock bestBlock = new BestBlock();
   // The highest block that we've seen
   private volatile long estimatedHeight = 0L;
+  private volatile long earliestBlockHeight = 0L;
   private volatile boolean estimatedHeightKnown = false;
 
   private final Subscribers<EstimatedHeightListener> estimatedHeightListeners =
@@ -61,10 +64,33 @@ public class ChainState implements ChainHeadEstimate {
     return bestBlock;
   }
 
+  public void statusReceived(final StatusMessage statusMessage) {
+    synchronized (this) {
+      if (statusMessage.isEth69Compatible()) {
+        statusReceived(
+            statusMessage.bestHash(),
+            statusMessage.blockRange().orElseThrow().latestBlock(),
+            statusMessage.blockRange().orElseThrow().earliestBlock());
+      } else {
+        statusReceived(statusMessage.bestHash(), statusMessage.totalDifficulty().orElseThrow());
+      }
+    }
+  }
+
+  @VisibleForTesting
   public void statusReceived(final Hash bestBlockHash, final Difficulty bestBlockTotalDifficulty) {
     synchronized (this) {
       bestBlock.totalDifficulty = bestBlockTotalDifficulty;
       bestBlock.hash = bestBlockHash;
+    }
+  }
+
+  private void statusReceived(
+      final Hash bestBlockHash, final long bestBlockNumber, final long earliestBlockHeight) {
+    synchronized (this) {
+      this.bestBlock.hash = bestBlockHash;
+      this.bestBlock.number = bestBlockNumber;
+      this.earliestBlockHeight = earliestBlockHeight;
     }
   }
 
@@ -74,6 +100,16 @@ public class ChainState implements ChainHeadEstimate {
         bestBlock.number = blockNumber;
       }
       updateHeightEstimate(blockNumber);
+    }
+  }
+
+  public void update(final Hash blockHash, final long blockNumber, final long earliestBlockHeight) {
+    synchronized (this) {
+      if (bestBlock.hash.equals(blockHash)) {
+        bestBlock.number = blockNumber;
+      }
+      updateHeightEstimate(blockNumber);
+      this.earliestBlockHeight = earliestBlockHeight;
     }
   }
 
@@ -115,6 +151,7 @@ public class ChainState implements ChainHeadEstimate {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
+        .add("earliestBlockHeight", earliestBlockHeight)
         .add("estimatedHeight", estimatedHeight)
         .add("bestBlock", bestBlock)
         .toString();

@@ -180,7 +180,7 @@ final class DeFramer extends ByteToMessageDecoder {
         }
 
         // Check that we have shared caps
-        if (capabilityMultiplexer.getAgreedCapabilities().size() == 0) {
+        if (capabilityMultiplexer.getAgreedCapabilities().isEmpty()) {
           LOG.debug("Disconnecting because no capabilities are shared: {}", peerInfo);
           connectFuture.completeExceptionally(
               new IncompatiblePeerException("No shared capabilities"));
@@ -270,7 +270,7 @@ final class DeFramer extends ByteToMessageDecoder {
       }
     } else if (cause instanceof IOException) {
       // IO failures are routine when communicating with random peers across the network.
-      LOG.debug("IO error while processing incoming message", throwable);
+      LOG.debug("IO error while processing incoming message {}", throwable.getMessage());
     } else {
       LOG.error("Exception while processing incoming message", throwable);
     }

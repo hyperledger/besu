@@ -103,7 +103,6 @@ public class GetReceiptsFromPeerTask
       peer.recordUselessResponse("receipts");
       return Optional.of(emptyMap());
     }
-
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
     final List<List<TransactionReceipt>> receiptsByBlock = receiptsMessage.receipts();
     if (receiptsByBlock.isEmpty()) {
