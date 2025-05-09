@@ -48,7 +48,7 @@ public class ChainDataPruner implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     final long blockNumber = event.getBlock().getHeader().getNumber();
-    final long storedPruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
+    final long storedPruningMark = prunerStorage.getPruningMark().orElse(1L);
     if (blockNumber < storedPruningMark) {
       LOG.warn(
           "Block added event: "

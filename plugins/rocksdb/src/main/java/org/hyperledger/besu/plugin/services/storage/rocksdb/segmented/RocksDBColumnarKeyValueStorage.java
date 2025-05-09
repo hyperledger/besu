@@ -225,6 +225,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
             .setTtl(0)
             .setCompressionType(CompressionType.LZ4_COMPRESSION)
             .setTableFormatConfig(basedTableConfig)
+            .setPeriodicCompactionSeconds(configuration.getPeriodicCompactionSeconds())
             .setLevelCompactionDynamicLevelBytes(dynamicLevelBytes);
     if (segment.containsStaticData()) {
       options
@@ -278,6 +279,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
         .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
         .setEnv(Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()))
         .setMaxTotalWalSize(WAL_MAX_TOTAL_SIZE)
+        .setDeleteObsoleteFilesPeriodMicros(configuration.getDeleteObsoleteFilesPeriod())
         .setRecycleLogFileNum(WAL_MAX_TOTAL_SIZE / EXPECTED_WAL_FILE_SIZE);
   }
 
