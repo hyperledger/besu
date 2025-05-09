@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
+import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -133,8 +134,13 @@ public class RespondingEthPeer {
     ethPeers.registerNewConnection(peerConnection, peerValidators);
     final int before = ethPeers.peerCount();
     final EthPeer peer = ethPeers.peer(peerConnection);
-    peer.registerStatusReceived(
-        chainHeadHash, totalDifficulty, EthProtocol.LATEST.getVersion(), peerConnection);
+    StatusMessage statusMessage =
+        StatusMessage.builder()
+            .protocolVersion(EthProtocol.LATEST.getVersion())
+            .bestHash(chainHeadHash)
+            .totalDifficulty(totalDifficulty)
+            .build();
+    peer.registerStatusReceived(statusMessage, peerConnection);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
     if (addToEthPeers) {
       peer.registerStatusSent(peerConnection);

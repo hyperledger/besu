@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.util.Subscribers;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 
 public class ChainState implements ChainHeadEstimate {
@@ -62,6 +64,20 @@ public class ChainState implements ChainHeadEstimate {
     return bestBlock;
   }
 
+  public void statusReceived(final StatusMessage statusMessage) {
+    synchronized (this) {
+      if (statusMessage.isEth69Compatible()) {
+        statusReceived(
+            statusMessage.bestHash(),
+            statusMessage.blockRange().orElseThrow().latestBlock(),
+            statusMessage.blockRange().orElseThrow().earliestBlock());
+      } else {
+        statusReceived(statusMessage.bestHash(), statusMessage.totalDifficulty().orElseThrow());
+      }
+    }
+  }
+
+  @VisibleForTesting
   public void statusReceived(final Hash bestBlockHash, final Difficulty bestBlockTotalDifficulty) {
     synchronized (this) {
       bestBlock.totalDifficulty = bestBlockTotalDifficulty;
@@ -69,7 +85,7 @@ public class ChainState implements ChainHeadEstimate {
     }
   }
 
-  public void statusReceived(
+  private void statusReceived(
       final Hash bestBlockHash, final long bestBlockNumber, final long earliestBlockHeight) {
     synchronized (this) {
       this.bestBlock.hash = bestBlockHash;

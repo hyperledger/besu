@@ -136,6 +136,10 @@ public final class StatusMessage extends AbstractMessageData {
     return Optional.ofNullable(status().blockRange);
   }
 
+  public boolean isEth69Compatible() {
+    return protocolVersion() >= EthProtocolVersion.V69;
+  }
+
   private EthStatus status() {
     if (status == null) {
       final RLPInput input = RLP.input(data);

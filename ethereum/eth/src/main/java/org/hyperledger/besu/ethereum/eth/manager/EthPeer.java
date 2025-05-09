@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
@@ -510,26 +509,9 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void registerStatusReceived(
-      final Hash hash,
-      final Difficulty td,
-      final int protocolVersion,
-      final PeerConnection connection) {
-    chainHeadState.statusReceived(hash, td);
-    lastProtocolVersion.set(protocolVersion);
-    statusHasBeenReceivedFromPeer.set(true);
-    synchronized (this) {
-      connection.setStatusReceived();
-      maybeExecuteStatusesExchangedCallback(connection);
-    }
-  }
-
-  public void registerStatusReceived(
-      final Hash hash,
-      final int protocolVersion,
-      final StatusMessage.BlockRange blockRange,
-      final PeerConnection connection) {
-    chainHeadState.statusReceived(hash, blockRange.latestBlock(), blockRange.earliestBlock());
-    lastProtocolVersion.set(protocolVersion);
+      final StatusMessage statusMessage, final PeerConnection connection) {
+    chainHeadState.statusReceived(statusMessage);
+    lastProtocolVersion.set(statusMessage.protocolVersion());
     statusHasBeenReceivedFromPeer.set(true);
     synchronized (this) {
       connection.setStatusReceived();

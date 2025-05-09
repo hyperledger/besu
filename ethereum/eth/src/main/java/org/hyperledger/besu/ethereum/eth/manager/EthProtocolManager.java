@@ -429,11 +429,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         handleDisconnect(
             peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY, false);
       } else if (EthProtocol.isEth69Compatible(peer.getConnection().capability(EthProtocol.NAME))
-          && status.blockRange().isEmpty()) {
+          && !status.isEth69Compatible()) {
         LOG.atDebug()
-            .setMessage("{} sent eth/69 without block range {}")
+            .setMessage("{} sent invalid status message {}")
             .addArgument(peer::toString)
-            .addArgument(message::getConnection)
+            .addArgument(status::toString)
             .log();
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_INVALID_STATUS_MESSAGE);
       } else {
@@ -443,7 +443,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             .addArgument(status::toString)
             .addArgument(message::getConnection)
             .log();
-        registerStatusReceived(peer, status);
+        peer.registerStatusReceived(status, peer.getConnection());
       }
     } catch (final RLPException e) {
       LOG.atDebug()
@@ -454,24 +454,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       // Parsing errors can happen when clients broadcast network ids outside the int range,
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_UNPARSABLE_STATUS);
-    }
-  }
-
-  private void registerStatusReceived(final EthPeer peer, final StatusMessage status) {
-    // pre eth/69 status message
-    if (status.blockRange().isEmpty()) {
-      peer.registerStatusReceived(
-          status.bestHash(),
-          status.totalDifficulty().orElse(Difficulty.ZERO),
-          status.protocolVersion(),
-          peer.getConnection());
-      // eth/69 status message
-    } else {
-      peer.registerStatusReceived(
-          status.bestHash(),
-          status.protocolVersion(),
-          status.blockRange().get(),
-          peer.getConnection());
     }
   }
 
