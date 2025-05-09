@@ -26,7 +26,7 @@
 
 ### Additions and Improvements
 - Sepolia checkpoint block has been updated to the merge block [#8584](https://github.com/hyperledger/besu/pull/8584)
-- Add `--profile=PERFORMANCE` for high spec nodes: increases rocksdb cache and enables parallel transaction processing [#8560](https://github.com/hyperledger/besu/pull/8560)
+- Add experimental `--profile=PERFORMANCE` for high spec nodes: increases rocksdb cache and enables parallel transaction processing [#8560](https://github.com/hyperledger/besu/pull/8560)
 - Add `--profile=PERFORMANCE_RPC` for high spec RPC nodes: increases rocksdb cache and caches last 2048 blocks [#8560](https://github.com/hyperledger/besu/pull/8560)
 - Refine gas estimation algorithm for `eth_estimateGas` and `eth_createAccessList` [#8478](https://github.com/hyperledger/besu/pull/8478) including a new option to specify `--estimate-gas-tolerance-ratio`
 - Increase default target-gas-limit to 60M for Holesky and Sepolia [#8594](https://github.com/hyperledger/besu/pull/8594)
