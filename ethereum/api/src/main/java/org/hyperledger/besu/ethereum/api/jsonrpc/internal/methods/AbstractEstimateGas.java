@@ -171,7 +171,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
 
   protected static TransactionValidationParams getTransactionValidationParams(
       final CallParameter callParams) {
-    final boolean isAllowExceedingBalance = !callParams.getStrict().orElse(Boolean.FALSE);
+    final boolean isAllowExceedingBalance = !callParams.getStrict().orElse(Boolean.TRUE);
 
     return isAllowExceedingBalance
         ? TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce()
