@@ -58,7 +58,7 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
     cluster.start(minerNode, charlieNode);
 
     cluster.startNode(aliceNode);
-    aliceNode.awaitPeerDiscovery(net.awaitPeerCount(2, 60));
+    aliceNode.awaitPeerDiscovery(net.awaitPeerCount(2));
 
     cluster.startNode(bobNode);
     bobNode.awaitPeerDiscovery(net.awaitPeerCount(2));
