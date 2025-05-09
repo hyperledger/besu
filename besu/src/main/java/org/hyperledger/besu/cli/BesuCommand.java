@@ -133,6 +133,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
@@ -199,6 +200,7 @@ import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.BesuVersionUtils;
+import org.hyperledger.besu.util.EphemeryDatabaseReset;
 import org.hyperledger.besu.util.EphemeryGenesisUpdater;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -1672,6 +1674,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 ? GenesisConfig.fromSource(genesisConfigSource(genesisFile))
                 : GenesisConfig.fromResource(
                     Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
+
+    // Check if database reset is needed for Ephemery network
+    if (network.equals(EPHEMERY)) {
+      try {
+        long genesisTimestamp = effectiveGenesisFile.getTimestamp();
+        if (EphemeryDatabaseReset.isResetNeeded(genesisTimestamp)) {
+          logger.info("Ephemery network period has elapsed, resetting database");
+          // Get storage provider and reset database
+          StorageProvider storageProvider = getStorageProvider();
+          if (storageProvider instanceof PathBasedWorldStateKeyValueStorage) {
+            EphemeryDatabaseReset.resetDatabase(
+                (PathBasedWorldStateKeyValueStorage) storageProvider);
+            logger.info("Database reset completed for Ephemery network");
+          } else {
+            logger.warn("Cannot reset database - incompatible storage provider type");
+          }
+        }
+      } catch (Exception e) {
+        logger.error("Failed to reset database for Ephemery network: {}", e.getMessage());
+        logger.debug("Database reset failure", e);
+      }
+    }
+
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
