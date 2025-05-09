@@ -90,22 +90,22 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
-  public void disableLocalsDefault() {
+  public void noLocalPriorityDefault() {
     internalTestSuccess(config -> assertThat(config.getNoLocalPriority()).isFalse());
   }
 
   @Test
-  public void disableLocalsOn() {
+  public void noLocalPriorityOn() {
     internalTestSuccess(
         config -> assertThat(config.getNoLocalPriority()).isTrue(),
-        "--tx-pool-disable-locals=true");
+        "--tx-pool-no-local-priority=true");
   }
 
   @Test
-  public void disableLocalsOff() {
+  public void noLocalPriorityOff() {
     internalTestSuccess(
         config -> assertThat(config.getNoLocalPriority()).isFalse(),
-        "--tx-pool-disable-locals=false");
+        "--tx-pool-no-local-priority=false");
   }
 
   @Test

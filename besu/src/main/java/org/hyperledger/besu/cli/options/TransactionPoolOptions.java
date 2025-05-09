@@ -47,11 +47,6 @@ import picocli.CommandLine;
 /** The Transaction pool Cli stable options. */
 public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration> {
   private static final String TX_POOL_IMPLEMENTATION = "--tx-pool";
-
-  /** Use TX_POOL_NO_LOCAL_PRIORITY instead */
-  @Deprecated(forRemoval = true)
-  private static final String TX_POOL_DISABLE_LOCALS = "--tx-pool-disable-locals";
-
   private static final String TX_POOL_NO_LOCAL_PRIORITY = "--tx-pool-no-local-priority";
   private static final String TX_POOL_ENABLE_SAVE_RESTORE = "--tx-pool-enable-save-restore";
   private static final String TX_POOL_SAVE_FILE = "--tx-pool-save-file";
@@ -73,7 +68,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private TransactionPoolConfiguration.Implementation txPoolImplementation = LAYERED;
 
   @CommandLine.Option(
-      names = {TX_POOL_NO_LOCAL_PRIORITY, TX_POOL_DISABLE_LOCALS},
+      names = {TX_POOL_NO_LOCAL_PRIORITY},
       paramLabel = "<Boolean>",
       description =
           "Set to true if senders of transactions sent via RPC should not have priority (default: ${DEFAULT-VALUE})",
