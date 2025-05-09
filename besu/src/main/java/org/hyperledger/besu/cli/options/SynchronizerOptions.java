@@ -75,7 +75,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-trienode-count-per-request";
   private static final String SNAP_TRANSACTION_INDEXING_ENABLED_FLAG =
-      "--Xsnapsync-synchronizer-transaction-indexing-enabled";
+      "--snapsync-synchronizer-transaction-indexing-enabled";
 
   private static final String SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-flat-account-healed-count-per-request";
