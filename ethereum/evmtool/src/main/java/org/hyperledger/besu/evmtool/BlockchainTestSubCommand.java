@@ -18,6 +18,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.evmtool.BlockchainTestSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -35,7 +38,16 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQu
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountState;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.worldstate.WorldView;
+import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -45,10 +57,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -90,6 +105,8 @@ public class BlockchainTestSubCommand implements Runnable {
   // picocli does it magically
   @Parameters private final List<Path> blockchainTestFiles = new ArrayList<>();
 
+  BlockAwareOperationTracer blockAwareOperationTracer = BlockAwareOperationTracer.NO_TRACING;
+
   /**
    * Default constructor for the BlockchainTestSubCommand class. This constructor doesn't take any
    * arguments and initializes the parentCommand to null. PicoCLI requires this constructor.
@@ -106,6 +123,18 @@ public class BlockchainTestSubCommand implements Runnable {
 
   @Override
   public void run() {
+    if (parentCommand.showJsonResults) {
+      final OperationTracer tracer = // You should have picked Mercy.
+          new StandardJsonTracer(
+              parentCommand.out,
+              parentCommand.showMemory,
+              !parentCommand.hideStack,
+              parentCommand.showReturnData,
+              parentCommand.showStorage,
+              parentCommand.eip3155strict);
+      blockAwareOperationTracer = new TracerWrapper(tracer);
+    }
+
     // presume ethereum mainnet for reference and state tests
     SignatureAlgorithmFactory.setDefaultInstance();
     final ObjectMapper blockchainTestMapper = JsonUtils.createObjectMapper();
@@ -160,6 +189,9 @@ public class BlockchainTestSubCommand implements Runnable {
   }
 
   private void traceTestSpecs(final String test, final BlockchainReferenceTestCaseSpec spec) {
+    spec.getServiceManager()
+        .addService(BlockImportTracerProvider.class, __ -> blockAwareOperationTracer);
+
     if (testName != null && !testName.equals(test)) {
       parentCommand.out.println("Skipping test: " + test);
       return;
@@ -247,6 +279,82 @@ public class BlockchainTestSubCommand implements Runnable {
         parentCommand.out.println(
             "Journaled account configured and fork prior to the merge specified");
       }
+    }
+  }
+
+  static class TracerWrapper implements BlockAwareOperationTracer {
+    OperationTracer tracer;
+
+    public TracerWrapper(final OperationTracer tracer) {
+      this.tracer = tracer;
+    }
+
+    @Override
+    public void tracePreExecution(final MessageFrame frame) {
+      tracer.tracePreExecution(frame);
+    }
+
+    @Override
+    public void tracePostExecution(
+        final MessageFrame frame, final OperationResult operationResult) {
+      tracer.tracePostExecution(frame, operationResult);
+    }
+
+    @Override
+    public void tracePrecompileCall(
+        final MessageFrame frame, final long gasRequirement, final Bytes output) {
+      tracer.tracePrecompileCall(frame, gasRequirement, output);
+    }
+
+    @Override
+    public void traceAccountCreationResult(
+        final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
+      tracer.traceAccountCreationResult(frame, haltReason);
+    }
+
+    @Override
+    public void tracePrepareTransaction(final WorldView worldView, final Transaction transaction) {
+      tracer.tracePrepareTransaction(worldView, transaction);
+    }
+
+    @Override
+    public void traceStartTransaction(final WorldView worldView, final Transaction transaction) {
+      tracer.traceStartTransaction(worldView, transaction);
+    }
+
+    @Override
+    public void traceBeforeRewardTransaction(
+        final WorldView worldView, final Transaction tx, final Wei miningReward) {
+      tracer.traceBeforeRewardTransaction(worldView, tx, miningReward);
+    }
+
+    @Override
+    public void traceEndTransaction(
+        final WorldView worldView,
+        final Transaction tx,
+        final boolean status,
+        final Bytes output,
+        final List<Log> logs,
+        final long gasUsed,
+        final Set<Address> selfDestructs,
+        final long timeNs) {
+      tracer.traceEndTransaction(
+          worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
+    }
+
+    @Override
+    public void traceContextEnter(final MessageFrame frame) {
+      tracer.traceContextEnter(frame);
+    }
+
+    @Override
+    public void traceContextReEnter(final MessageFrame frame) {
+      tracer.traceContextReEnter(frame);
+    }
+
+    @Override
+    public void traceContextExit(final MessageFrame frame) {
+      tracer.traceContextExit(frame);
     }
   }
 }

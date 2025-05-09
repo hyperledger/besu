@@ -263,6 +263,20 @@ public class T8nExecutor {
               builder.codeDelegations(codeDelegations);
             }
 
+            if (txNode.has("initcodes")) {
+              JsonNode initcodesNode = txNode.get("initcodes");
+              if (!initcodesNode.isArray()) {
+                out.printf(
+                    "TX json node unparseable: expected initcodes to be an array - %s%n", txNode);
+                continue;
+              }
+              List<Bytes> initcodes = new ArrayList<>(initcodesNode.size());
+              for (JsonNode entryAsJson : initcodesNode) {
+                initcodes.add(Bytes.fromHexString(entryAsJson.asText()));
+              }
+              builder.initcodes(initcodes);
+            }
+
             if (txNode.has("blobVersionedHashes")) {
               JsonNode blobVersionedHashes = txNode.get("blobVersionedHashes");
               if (!blobVersionedHashes.isArray()) {

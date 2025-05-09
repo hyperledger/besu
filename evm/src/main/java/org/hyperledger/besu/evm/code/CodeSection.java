@@ -30,8 +30,8 @@ public final class CodeSection {
   /** The Outputs. */
   final int outputs;
 
-  /** The Max stack height. */
-  final int maxStackHeight;
+  /** The Max stack increase (beyond inputs). */
+  final int maxStackIncreae;
 
   /** The byte offset from the beginning of the container that the section starts at */
   final int entryPoint;
@@ -45,14 +45,14 @@ public final class CodeSection {
    * @param length the length
    * @param inputs the inputs
    * @param outputs the outputs
-   * @param maxStackHeight the max stack height
+   * @param maxStackIncrease the max stack increase beyond inputs
    * @param entryPoint the entry point
    */
   public CodeSection(
       final int length,
       final int inputs,
       final int outputs,
-      final int maxStackHeight,
+      final int maxStackIncrease,
       final int entryPoint) {
     this.length = length;
     this.inputs = inputs;
@@ -63,7 +63,7 @@ public final class CodeSection {
       this.outputs = outputs;
       returning = true;
     }
-    this.maxStackHeight = maxStackHeight;
+    this.maxStackIncreae = maxStackIncrease;
     this.entryPoint = entryPoint;
   }
 
@@ -104,12 +104,12 @@ public final class CodeSection {
   }
 
   /**
-   * Gets max stack height.
+   * Gets max stack increase beyond inputs.
    *
-   * @return the max stack height
+   * @return the max stack increase beyond inputs
    */
-  public int getMaxStackHeight() {
-    return maxStackHeight;
+  public int getMaxStackIncrease() {
+    return maxStackIncreae;
   }
 
   /**
@@ -129,11 +129,11 @@ public final class CodeSection {
     return length == that.length
         && inputs == that.inputs
         && outputs == that.outputs
-        && maxStackHeight == that.maxStackHeight;
+        && maxStackIncreae == that.getMaxStackIncrease();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(length, inputs, outputs, maxStackHeight);
+    return Objects.hash(length, inputs, outputs, maxStackIncreae);
   }
 }

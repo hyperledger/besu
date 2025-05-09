@@ -33,7 +33,7 @@ class CodeFactoryTest {
 
   @Test
   void invalidCodeInvalidMagic() {
-    invalidCodeForCreation("0xEFFF0101000302000400600000AABBCCDD");
+    invalidCodeForCreation("0xEFFF010100030200ff00600000AABBCCDD");
   }
 
   @Test
@@ -184,12 +184,12 @@ class CodeFactoryTest {
   @Test
   void invalidDataTruncated() {
     invalidCode(
-        "EF0001 010004 0200010001 040003 00 00800000 FE BEEF",
+        "EF0001 010004 0200010001 ff0003 00 00800000 FE BEEF",
         "Truncated data section when a complete section was required");
   }
 
   @Test
-  void validComboEOFCreateReturnContract() {
+  void validComboEOFCreateReturnCode() {
     validCode(
         """
             0x # EOF
@@ -198,14 +198,14 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               0011 # Code section 0 , 17 bytes
             030001 # Total subcontainers ( 1 )
-              0032 # Sub container 0, 50 byte
-            040000 # Data section length(  0 )
+              00000034 # Sub container 0, 50 byte
+             ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0004 # max stack:  4
-                   # Code section 0 - in=0 out=non-returning height=4
+              0004 # max stack increase:  4
+                   # Code section 0 - in=0 out=non-returning extra=4
               6000 # [0] PUSH1(0)
               6000 # [2] PUSH1(0)
               6000 # [4] PUSH1(0)
@@ -221,29 +221,29 @@ class CodeFactoryTest {
                 020001 # Total code sections ( 1 )
                   0006 # Code section 0 , 6 bytes
                 030001 # Total subcontainers ( 1 )
-                  0014 # Sub container 0, 20 byte
-                040000 # Data section length(  0 )   \s
+                  00000014 # Sub container 0, 20 byte
+                 ff0000 # Data section length(  0 )   \s
                     00 # Terminator (end of header)
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
-                       # Code section 0 - in=0 out=non-returning height=2
+                  0002 # max stack increase:  2
+                       # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
-                  ee00 # [4] RETURNCONTRACT(0)
+                  ee00 # [4] RETURNCODE(0)
                            # Subcontainer 0.0 starts here
                     ef0001 # Magic and Version ( 1 )
                     010004 # Types length ( 4 )
                     020001 # Total code sections ( 1 )
                       0001 # Code section 0 , 1 bytes
-                    040000 # Data section length(  0 )       \s
+                     ff0000 # Data section length(  0 )       \s
                         00 # Terminator (end of header)
                            # Code section 0 types
                         00 # 0 inputs\s
                         80 # 0 outputs  (Non-returning function)
-                      0000 # max stack:  0
-                           # Code section 0 - in=0 out=non-returning height=0
+                      0000 # max stack increase:  0
+                           # Code section 0 - in=0 out=non-returning extra=0
                         00 # [0] STOP
                            # Data section (empty)
                            # Subcontainer 0.0 ends
@@ -263,32 +263,32 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               000c # Code section 0 , 12 bytes
             030001 # Total subcontainers ( 1 )
-              0014 # Sub container 0, 20 byte
-            040000 # Data section length(  0 )
+              00000014 # Sub container 0, 20 byte
+             ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0002 # max stack:  2
-                   # Code section 0 - in=0 out=non-returning height=2
+              0002 # max stack increase:  2
+                   # Code section 0 - in=0 out=non-returning extra=2
             612015 # [0] PUSH2(0x2015)
               6001 # [3] PUSH1(1)
                 55 # [5] SSTORE
               6000 # [6] PUSH1(0)
               6000 # [8] PUSH1(0)
-              ee00 # [10] RETURNCONTRACT(0)
+              ee00 # [10] RETURNCODE(0)
                        # Subcontainer 0 starts here
                 ef0001 # Magic and Version ( 1 )
                 010004 # Types length ( 4 )
                 020001 # Total code sections ( 1 )
                   0001 # Code section 0 , 1 bytes
-                040000 # Data section length(  0 )   \s
+                 ff0000 # Data section length(  0 )   \s
                     00 # Terminator (end of header)
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0000 # max stack:  0
-                       # Code section 0 - in=0 out=non-returning height=0
+                  0000 # max stack increase:  0
+                       # Code section 0 - in=0 out=non-returning extra=0
                     00 # [0] STOP
                        # Data section (empty)
                        # Subcontainer 0 ends
@@ -306,32 +306,32 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               000c # Code section 0 , 12 bytes
             030001 # Total subcontainers ( 1 )
-              0018 # Sub container 0, 24 byte
-            040000 # Data section length(  0 )
+              00000018 # Sub container 0, 24 byte
+             ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0002 # max stack:  2
-                   # Code section 0 - in=0 out=non-returning height=2
+              0002 # max stack increase:  2
+                   # Code section 0 - in=0 out=non-returning extra=2
             612015 # [0] PUSH2(0x2015)
               6001 # [3] PUSH1(1)
                 55 # [5] SSTORE
               6000 # [6] PUSH1(0)
               6000 # [8] PUSH1(0)
-              ee00 # [10] RETURNCONTRACT(0)
+              ee00 # [10] RETURNCODE(0)
                        # Subcontainer 0 starts here
                 ef0001 # Magic and Version ( 1 )
                 010004 # Types length ( 4 )
                 020001 # Total code sections ( 1 )
                   0005 # Code section 0 , 5 bytes
-                040000 # Data section length(  0 )   \s
+                 ff0000 # Data section length(  0 )   \s
                     00 # Terminator (end of header)
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
-                       # Code section 0 - in=0 out=non-returning height=2
+                  0002 # max stack increase:  2
+                       # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
                     f3 # [4] RETURN
@@ -351,14 +351,14 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               0011 # Code section 0 , 17 bytes
             030001 # Total subcontainers ( 1 )
-              0018 # Sub container 0, 24 byte
-            040000 # Data section length(  0 )
+              00000018 # Sub container 0, 24 byte
+             ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0004 # max stack:  4
-                   # Code section 0 - in=0 out=non-returning height=4
+              0004 # max stack increase:  4
+                   # Code section 0 - in=0 out=non-returning extra=4
               6000 # [0] PUSH1(0)
               6000 # [2] PUSH1(0)
               6000 # [4] PUSH1(0)
@@ -373,13 +373,13 @@ class CodeFactoryTest {
                 010004 # Types length ( 4 )
                 020001 # Total code sections ( 1 )
                   0005 # Code section 0 , 5 bytes
-                040000 # Data section length(  0 )   \s
+                 ff0000 # Data section length(  0 )   \s
                     00 # Terminator (end of header)
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
-                       # Code section 0 - in=0 out=non-returning height=2
+                  0002 # max stack increase:  2
+                       # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
                     fd # [4] REVERT
@@ -390,7 +390,7 @@ class CodeFactoryTest {
   }
 
   @Test
-  void validComboReturncontractRevert() {
+  void validComboReturnCodeRevert() {
     validCode(
         """
             0x # EOF
@@ -399,32 +399,32 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               000c # Code section 0 , 12 bytes
             030001 # Total subcontainers ( 1 )
-              0018 # Sub container 0, 24 byte
-            040000 # Data section length(  0 )
+              00000018 # Sub container 0, 24 byte
+             ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0002 # max stack:  2
-                   # Code section 0 - in=0 out=non-returning height=2
+              0002 # max stack increase:  2
+                   # Code section 0 - in=0 out=non-returning extra=2
             612015 # [0] PUSH2(0x2015)
               6001 # [3] PUSH1(1)
                 55 # [5] SSTORE
               6000 # [6] PUSH1(0)
               6000 # [8] PUSH1(0)
-              ee00 # [10] RETURNCONTRACT(0)
+              ee00 # [10] RETURNCODE(0)
                        # Subcontainer 0 starts here
                 ef0001 # Magic and Version ( 1 )
                 010004 # Types length ( 4 )
                 020001 # Total code sections ( 1 )
                   0005 # Code section 0 , 5 bytes
-                040000 # Data section length(  0 )   \s
+                 ff0000 # Data section length(  0 )   \s
                     00 # Terminator (end of header)
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
-                       # Code section 0 - in=0 out=non-returning height=2
+                  0002 # max stack increase:  2
+                       # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
                     fd # [4] REVERT
@@ -444,14 +444,14 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               0011 # Code section 0 , 17 bytes
             030001 # Total subcontainers ( 1 )
-              0014 # Sub container 0, 20 byte
-            040000 # Data section length(  0 )
+              00000014 # Sub container 0, 20 byte
+            ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0004 # max stack:  4
-                   # Code section 0 - in=0 out=non-returning height=4
+              0004 # max stack increase:  4
+                   # Code section 0 - in=0 out=non-returning extra=4
               6000 # [0] PUSH1(0)
               6000 # [2] PUSH1(0)
               6000 # [4] PUSH1(0)
@@ -466,13 +466,13 @@ class CodeFactoryTest {
                 010004 # Types length ( 4 )
                 020001 # Total code sections ( 1 )
                   0001 # Code section 0 , 1 bytes
-                040000 # Data section length(  0 )   \s
+                 ff0000 # Data section length(  0 )   \s
                     00 # Terminator (end of header)
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0000 # max stack:  0
-                       # Code section 0 - in=0 out=non-returning height=0
+                  0000 # max stack increase:  0
+                       # Code section 0 - in=0 out=non-returning extra=0
                     00 # [0] STOP
                        # Data section (empty)
                        # Subcontainer 0 ends
@@ -491,14 +491,14 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               0011 # Code section 0 , 17 bytes
             030001 # Total subcontainers ( 1 )
-              0018 # Sub container 0, 24 byte
-            040000 # Data section length(  0 )
+              00000018 # Sub container 0, 24 byte
+             ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0004 # max stack:  4
-                   # Code section 0 - in=0 out=non-returning height=4
+              0004 # max stack increase:  4
+                   # Code section 0 - in=0 out=non-returning extra=4
               6000 # [0] PUSH1(0)
               6000 # [2] PUSH1(0)
               6000 # [4] PUSH1(0)
@@ -513,13 +513,13 @@ class CodeFactoryTest {
                 010004 # Types length ( 4 )
                 020001 # Total code sections ( 1 )
                   0005 # Code section 0 , 5 bytes
-                040000 # Data section length(  0 )   \s
+                 ff0000 # Data section length(  0 )   \s
                     00 # Terminator (end of header)
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
-                       # Code section 0 - in=0 out=non-returning height=2
+                  0002 # max stack increase:  2
+                       # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
                     f3 # [4] RETURN
@@ -531,7 +531,7 @@ class CodeFactoryTest {
   }
 
   @Test
-  void invalidReturncontractReturncontract() {
+  void invalidReturnCodeReturnCode() {
     invalidCode(
         """
             0x # EOF
@@ -540,49 +540,49 @@ class CodeFactoryTest {
             020001 # Total code sections ( 1 )
               000c # Code section 0 , 12 bytes
             030001 # Total subcontainers ( 1 )
-              0032 # Sub container 0, 50 byte
-            040000 # Data section length(  0 )
+              00000034 # Sub container 0, 50 byte
+             ff0000 # Data section length(  0 )
                 00 # Terminator (end of header)
                    # Code section 0 types
                 00 # 0 inputs\s
                 80 # 0 outputs  (Non-returning function)
-              0002 # max stack:  2
-                   # Code section 0 - in=0 out=non-returning height=2
+              0002 # max stack increase:  2
+                   # Code section 0 - in=0 out=non-returning extra=2
             612015 # [0] PUSH2(0x2015)
               6001 # [3] PUSH1(1)
                 55 # [5] SSTORE
               6000 # [6] PUSH1(0)
               6000 # [8] PUSH1(0)
-              ee00 # [10] RETURNCONTRACT(0)
+              ee00 # [10] RETURNCODE(0)
                        # Subcontainer 0 starts here
                 ef0001 # Magic and Version ( 1 )
                 010004 # Types length ( 4 )
                 020001 # Total code sections ( 1 )
                   0006 # Code section 0 , 6 bytes
                 030001 # Total subcontainers ( 1 )
-                  0014 # Sub container 0, 20 byte
-                040000 # Data section length(  0 )   \s
+                  00000014 # Sub container 0, 20 byte
+                 ff0000 # Data section length(  0 )   \s
                     00 # Terminator (end of header)
                        # Code section 0 types
                     00 # 0 inputs\s
                     80 # 0 outputs  (Non-returning function)
-                  0002 # max stack:  2
-                       # Code section 0 - in=0 out=non-returning height=2
+                  0002 # max stack increase:  2
+                       # Code section 0 - in=0 out=non-returning extra=2
                   6000 # [0] PUSH1(0)
                   6000 # [2] PUSH1(0)
-                  ee00 # [4] RETURNCONTRACT(0)
+                  ee00 # [4] RETURNCODE(0)
                            # Subcontainer 0.0 starts here
                     ef0001 # Magic and Version ( 1 )
                     010004 # Types length ( 4 )
                     020001 # Total code sections ( 1 )
                       0001 # Code section 0 , 1 bytes
-                    040000 # Data section length(  0 )       \s
+                     ff0000 # Data section length(  0 )       \s
                         00 # Terminator (end of header)
                            # Code section 0 types
                         00 # 0 inputs\s
                         80 # 0 outputs  (Non-returning function)
-                      0000 # max stack:  0
-                           # Code section 0 - in=0 out=non-returning height=0
+                      0000 # max stack increase:  0
+                           # Code section 0 - in=0 out=non-returning extra=0
                         00 # [0] STOP
                            # Data section (empty)
                            # Subcontainer 0.0 ends
@@ -614,7 +614,7 @@ class CodeFactoryTest {
 
   private static void invalidCodeForCreation(final String str) {
     EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
-    Code code = evm.getCodeForCreation(bytesFromPrettyPrint(str));
+    Code code = evm.getCodeForCreation(bytesFromPrettyPrint(str), evm.getMaxEOFVersion());
     assertThat(code.isValid()).isFalse();
   }
 }

@@ -132,7 +132,7 @@ class EofCreateOperationTest {
     assertThat(calculatedTopic).isEqualTo("0xc0de");
 
     assertThat(createFrame.getCreates())
-        .containsExactly(Address.fromHexString("0x8c308e96997a8052e3aaab5af624cb827218687a"));
+        .containsExactly(Address.fromHexString("0x99868bcbddbed8504efec0e2986f63ef08f0fe9a"));
   }
 
   private MessageFrame testMemoryFrame(final Code code, final Bytes initData) {

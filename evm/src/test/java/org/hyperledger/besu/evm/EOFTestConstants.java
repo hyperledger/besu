@@ -27,8 +27,8 @@ public class EOFTestConstants {
                    020001 # Total code sections ( 1 )
                      0009 # Code section 0 , 9 bytes
                    030001 # Total subcontainers ( 1 )
-                     0014 # Sub container 0, 20 byte
-                   040000 # Data section length(  0 )
+                     00000014 # Sub container 0, 20 byte
+                    ff0000 # Data section length(  0 )
                        00 # Terminator (end of header)
                           # Code section 0 types
                        00 # 0 inputs\s
@@ -42,13 +42,13 @@ public class EOFTestConstants {
                        a1 # [4] LOG1
                        5f # [5] PUSH0
                        5f # [6] PUSH0
-                     ee00 # [7] RETURNCONTRACT(0)
+                     ee00 # [7] RETURNCODE(0)
                               # Subcontainer 0 starts here
                        ef0001 # Magic and Version ( 1 )
                        010004 # Types length ( 4 )
                        020001 # Total code sections ( 1 )
                          0001 # Code section 0 , 1 bytes
-                       040000 # Data section length(  0 )
+                        ff0000 # Data section length(  0 )
                            00 # Terminator (end of header)
                               # Code section 0 types
                            00 # 0 inputs
@@ -58,7 +58,7 @@ public class EOFTestConstants {
                            00 # [0] STOP
                    """);
 
-  public static Bytes EOF_CREATE_CONTRACT =
+  public static final Bytes EOF_CREATE_CONTRACT =
       bytesFromPrettyPrint(
           String.format(
               """
@@ -67,8 +67,8 @@ public class EOFTestConstants {
                       020001 # Total code sections ( 1 )
                         000e # Code section 0 , 14 bytes
                       030001 # Total subcontainers ( 1 )
-                      %04x # Subcontainer 0 size ?
-                      040000 # Data section length(  0 )
+                      %08x # Subcontainer 0 size ?
+                       ff0000 # Data section length(  0 )
                           00 # Terminator (end of header)
                              # Code section 0 types
                           00 # 0 inputs\s
@@ -78,11 +78,11 @@ public class EOFTestConstants {
                       61c0de # [0] PUSH2(0xc0de)
                           5f # [3] PUSH0
                           52 # [4] MSTORE
-                        6002 # [5] PUSH1(2)
-                        601e # [7] PUSH1 30
-                          5f # [9] PUSH0
+                          5f # [5] PUSH0
+                        6002 # [6] PUSH1(2)
+                        601e # [8] PUSH1(30)
                           5f # [10] PUSH0
-                          ec00 # [11] EOFCREATE(0)
+                        ec00 # [11] EOFCREATE(0)
                           00 # [13] STOP
                              # Data section (empty)
                           %s # subcontainer

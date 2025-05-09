@@ -69,6 +69,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
 
+import com.google.errorprone.annotations.InlineMe;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -377,7 +378,7 @@ public class EVM {
     checkNotNull(codeHash);
     Code result = codeCache.getIfPresent(codeHash);
     if (result == null) {
-      result = getCodeUncached(codeBytes);
+      result = getCodeUncached(codeBytes, getMaxEOFVersion());
       codeCache.put(codeHash, result);
     }
     return result;
@@ -390,7 +391,18 @@ public class EVM {
    * @return the code
    */
   public Code getCodeUncached(final Bytes codeBytes) {
-    return codeFactory.createCode(codeBytes);
+    return getCodeUncached(codeBytes, getMaxEOFVersion());
+  }
+
+  /**
+   * Gets code skipping the code cache.
+   *
+   * @param codeBytes the code bytes
+   * @param maxRequestedVersion the maximum version to return, will restrict EVM range.
+   * @return the code
+   */
+  public Code getCodeUncached(final Bytes codeBytes, final int maxRequestedVersion) {
+    return codeFactory.createCode(codeBytes, false, maxRequestedVersion);
   }
 
   /**
@@ -399,8 +411,21 @@ public class EVM {
    * @param codeBytes the code bytes
    * @return the code
    */
-  public Code getCodeForCreation(final Bytes codeBytes) {
-    return codeFactory.createCode(codeBytes, true);
+  @Deprecated(forRemoval = true)
+  @InlineMe(replacement = "this.getCodeForCreation(codeBytes, this.getMaxEOFVersion())")
+  public final Code getCodeForCreation(final Bytes codeBytes) {
+    return getCodeForCreation(codeBytes, getMaxEOFVersion());
+  }
+
+  /**
+   * Gets code for creation. Skips code cache and allows for extra data after EOF contracts.
+   *
+   * @param codeBytes the code bytes
+   * @param maxRequestedVersion the maximum EOF Version
+   * @return the code
+   */
+  public Code getCodeForCreation(final Bytes codeBytes, final int maxRequestedVersion) {
+    return codeFactory.createCode(codeBytes, true, maxRequestedVersion);
   }
 
   /**

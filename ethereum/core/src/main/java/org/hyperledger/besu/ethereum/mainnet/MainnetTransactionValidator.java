@@ -67,6 +67,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
   private final int maxInitcodeSize;
 
+  private static final int MAX_INITCODE_COUNT = 256;
+
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
@@ -109,6 +111,12 @@ public class MainnetTransactionValidator implements TransactionValidator {
         if (!blobsResult.isValid()) {
           return blobsResult;
         }
+      }
+    } else if (transaction.getType().equals(TransactionType.INITCODE)) {
+      ValidationResult<TransactionInvalidReason> initcodeTransactionResult =
+          validateInitcodeTransaction(transaction);
+      if (!initcodeTransactionResult.isValid()) {
+        return initcodeTransactionResult;
       }
     }
 
@@ -259,7 +267,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
         Math.max(
             gasCalculator.transactionIntrinsicGasCost(transaction, baselineGas),
             gasCalculator.transactionFloorCost(
-                transaction.getPayload(), transaction.getPayloadZeroBytes()));
+                transaction.getPayloadSize(), transaction.getPayloadZeroBytes()));
 
     if (Long.compareUnsigned(intrinsicGasCostOrFloor, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
@@ -479,5 +487,31 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     dig[0] = VersionedHash.SHA256_VERSION_ID;
     return new VersionedHash(Bytes32.wrap(dig));
+  }
+
+  public ValidationResult<TransactionInvalidReason> validateInitcodeTransaction(
+      final Transaction transaction) {
+    List<Bytes> initCodes = transaction.getInitCodes().get();
+    if (transaction.getTo().isEmpty() && initCodes.size() != 1) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_INITCODE_CREATE_SIZE,
+          "Initcode transactions with an empty 'to' field must have only one initcode");
+    }
+    if (initCodes.size() > MAX_INITCODE_COUNT) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_INITCODE_LIST,
+          "Initcode transactions must have no more than "
+              + MAX_INITCODE_COUNT
+              + " initcode entries");
+    }
+    for (Bytes initcode : initCodes) {
+      if (initcode.size() > maxInitcodeSize) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_INITCODE_LIST,
+            "Initcode list entries cannot be larger than " + maxInitcodeSize);
+      }
+    }
+
+    return ValidationResult.valid();
   }
 }

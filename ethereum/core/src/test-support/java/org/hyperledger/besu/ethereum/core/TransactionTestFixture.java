@@ -71,6 +71,7 @@ public class TransactionTestFixture {
   private Optional<BigInteger> v = Optional.empty();
   private Optional<List<org.hyperledger.besu.datatypes.CodeDelegation>> codeDelegations =
       Optional.empty();
+  private Optional<List<Bytes>> initcode;
 
   public Transaction createTransaction(final KeyPair keys) {
     final Transaction.Builder builder = Transaction.builder();
@@ -112,6 +113,14 @@ public class TransactionTestFixture {
         builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
         builder.accessList(accessListEntries.orElse(List.of()));
         builder.codeDelegations(codeDelegations.orElse(List.of(CODE_DELEGATION)));
+        break;
+      case INITCODE:
+        builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
+        builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
+        builder.accessList(accessListEntries.orElse(List.of()));
+        builder.initcodes(
+            initcode.orElse(
+                List.of(Bytes.fromHexString("0xef00010100040200010001040000000080000000"))));
         break;
     }
 
@@ -228,5 +237,10 @@ public class TransactionTestFixture {
         address,
         nonce,
         CodeDelegationSignature.create(signature.getR(), signature.getS(), signature.getRecId()));
+  }
+
+  public TransactionTestFixture initcode(final List<Bytes> initcode) {
+    this.initcode = Optional.ofNullable(initcode);
+    return this;
   }
 }

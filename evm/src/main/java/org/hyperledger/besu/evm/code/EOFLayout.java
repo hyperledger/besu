@@ -87,8 +87,11 @@ public record EOFLayout(
   /** sub-EOF subContainers for create */
   static final int SECTION_CONTAINER = 0x03;
 
+  /** formerly data, now nothing */
+  static final int SECTION_RESERVED = 0x04;
+
   /** data */
-  static final int SECTION_DATA = 0x04;
+  static final int SECTION_DATA = 0xff;
 
   /** The Max supported section. */
   static final int MAX_SUPPORTED_VERSION = 1;
@@ -314,12 +317,12 @@ public record EOFLayout(
       }
       containerSectionSizes = new int[containerSectionCount];
       for (int i = 0; i < containerSectionCount; i++) {
-        int size = readUnsignedShort(inputStream);
+        long size = readUnsignedInt(inputStream);
         if (size <= 0) {
           return invalidLayout(
               step.container, version, "Invalid container section size for section " + i);
         }
-        containerSectionSizes[i] = size;
+        containerSectionSizes[i] = (int) size;
       }
     } else {
       containerSectionCount = 0;
@@ -366,7 +369,7 @@ public record EOFLayout(
     if (containerSectionCount > 0) {
       pos +=
           3 // subcontainer header
-              + (containerSectionCount * 2); // subcontainer sizes
+              + (containerSectionCount * 4); // subcontainer sizes
     }
 
     for (int i = 0; i < codeSectionCount; i++) {
@@ -452,6 +455,23 @@ public record EOFLayout(
       return -1;
     } else {
       return inputStream.read() << 8 | inputStream.read();
+    }
+  }
+
+  /**
+   * Read unsigned int (4 bytes).
+   *
+   * @param inputStream the input stream
+   * @return the int
+   */
+  static long readUnsignedInt(final ByteArrayInputStream inputStream) {
+    if (inputStream.available() < 4) {
+      return -1;
+    } else {
+      return ((long) inputStream.read() << 24)
+          | ((long) inputStream.read() << 16)
+          | ((long) inputStream.read() << 8)
+          | (inputStream.read());
     }
   }
 
@@ -588,7 +608,7 @@ public record EOFLayout(
         out.writeByte(SECTION_CONTAINER);
         out.writeShort(subContainers.length);
         for (EOFLayout container : subContainers) {
-          out.writeShort(container.container.size());
+          out.writeInt(container.container.size());
         }
       }
 
@@ -616,7 +636,7 @@ public record EOFLayout(
         } else {
           out.writeByte(0x80);
         }
-        out.writeShort(cs.maxStackHeight);
+        out.writeShort(cs.maxStackIncreae);
       }
 
       // Code sections
@@ -700,11 +720,11 @@ public record EOFLayout(
       out.printf("03%04x # Total subcontainers ( %1$d )%n", subContainers.length);
       for (int i = 0; i < subContainers.length; i++) {
         out.print(prefix);
-        out.printf("  %04x # Sub container %d, %1$d byte%n", subContainers[i].container.size(), i);
+        out.printf("  %08x # Sub container %d, %1$d byte%n", subContainers[i].container.size(), i);
       }
     }
     out.print(prefix);
-    out.printf("04%04x # Data section length(  %1$d )", dataLength);
+    out.printf("ff%04x # Data section length(  %1$d )", dataLength);
     if (dataLength != data.size()) {
       out.printf(" (actual size %d)", data.size());
     }
@@ -725,15 +745,15 @@ public record EOFLayout(
           cs.getOutputs(),
           cs.isReturning() ? "" : " (Non-returning function)");
       out.print(prefix);
-      out.printf("  %04x # max stack:  %1$d%n", cs.getMaxStackHeight());
+      out.printf("  %04x # max stack increase:  %1$d%n", cs.getMaxStackIncrease());
     }
     byte[] byteCode = container.toArray();
     for (int i = 0; i < codeSections.length; i++) {
       CodeSection cs = getCodeSection(i);
       out.print(prefix);
       out.printf(
-          "       # Code section %d - in=%d out=%s height=%d%n",
-          i, cs.inputs, cs.isReturning() ? cs.outputs : "non-returning", cs.maxStackHeight);
+          "       # Code section %d - in=%d out=%s max_increase=%d%n",
+          i, cs.inputs, cs.isReturning() ? cs.outputs : "non-returning", cs.maxStackIncreae);
       int pc = cs.getEntryPoint();
       int endPc = pc + cs.getLength();
       while (pc < endPc) {

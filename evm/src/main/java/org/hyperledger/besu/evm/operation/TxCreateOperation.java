@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
@@ -31,20 +30,18 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** The Create2 operation. */
-public class EOFCreateOperation extends AbstractCreateOperation {
+public class TxCreateOperation extends AbstractCreateOperation {
 
-  /** Opcode 0xEC for operation EOFCREATE */
-  public static final int OPCODE = 0xec;
-
-  private static final Bytes PREFIX = Bytes.fromHexString("0xFF");
+  /** Opcode 0xEC for operation TXCREATE */
+  public static final int OPCODE = 0xed;
 
   /**
-   * Instantiates a new EOFCreate operation.
+   * Instantiates a new TXCreate operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public EOFCreateOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "EOFCREATE", 4, 1, gasCalculator, 1, 1);
+  public TxCreateOperation(final GasCalculator gasCalculator) {
+    super(OPCODE, "TXCREATE", 5, 1, gasCalculator, 0, 1);
   }
 
   @Override
@@ -57,31 +54,23 @@ public class EOFCreateOperation extends AbstractCreateOperation {
   }
 
   @Override
-  public Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
-    return calculateEOFAddress(frame.getRecipientAddress(), getSalt(frame));
-  }
-
-  /**
-   * Calculates the address for TXCREATE and EOFCREATE. `keccak256(0xff || address32 || salt)` or,
-   * with 20 byte address `keccak256(0xff000000000000000000000000 || address || salt)`
-   *
-   * @param sender the sender address
-   * @param salt the salt
-   * @return the contract address
-   */
-  public static Address calculateEOFAddress(final Address sender, final Bytes32 salt) {
-    final Bytes32 senderASE = Bytes32.leftPad(sender);
-    final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, senderASE, salt));
-    return Address.extract(hash);
+  public Address generateTargetContractAddress(final MessageFrame frame, final Code _code) {
+    return EOFCreateOperation.calculateEOFAddress(frame.getRecipientAddress(), getSalt(frame));
   }
 
   @Override
   protected Code getInitCode(final MessageFrame frame, final EVM evm) {
-    final Code code = frame.getCode();
-    int startIndex = frame.getPC() + 1;
-    final int initContainerIndex = code.readU8(startIndex);
-
-    return code.getSubContainer(initContainerIndex, null, evm).orElse(null);
+    Bytes bytes = frame.getInitCodeByHash(getInitcodeHash(frame));
+    if (bytes == null) {
+      return null;
+    }
+    // getCodeForCreation will not error on extra data past end of code
+    Code code = evm.getCodeUncached(bytes);
+    if (code.isValid() && code.getEofVersion() > 0) {
+      return code;
+    } else {
+      return null;
+    }
   }
 
   @Override
@@ -92,27 +81,32 @@ public class EOFCreateOperation extends AbstractCreateOperation {
   }
 
   @Override
-  protected int getPcIncrement() {
-    return 2;
-  }
-
-  @Override
   protected long getInputOffset(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(1));
-  }
-
-  @Override
-  protected long getInputSize(final MessageFrame frame) {
     return clampedToLong(frame.getStackItem(2));
   }
 
   @Override
+  protected long getInputSize(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(3));
+  }
+
+  @Override
   protected Wei getValue(final MessageFrame frame) {
-    return Wei.wrap(frame.getStackItem(3));
+    return Wei.wrap(frame.getStackItem(4));
   }
 
   @Override
   protected Bytes32 getSalt(final MessageFrame frame) {
+    return Bytes32.leftPad(frame.getStackItem(1));
+  }
+
+  /**
+   * The Initcode hash to create
+   *
+   * @param frame the message frame
+   * @return the hashcode of the initcode in the initcode transaction
+   */
+  protected Bytes32 getInitcodeHash(final MessageFrame frame) {
     return Bytes32.leftPad(frame.getStackItem(0));
   }
 }

@@ -246,6 +246,6 @@ public abstract class AbstractMessageProcessor {
    * @return the code from evm
    */
   public Code getCodeFromEVMForCreation(final Bytes codeBytes) {
-    return evm.getCodeForCreation(codeBytes);
+    return evm.getCodeForCreation(codeBytes, 0);
   }
 }

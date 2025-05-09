@@ -29,10 +29,13 @@ public enum TransactionType {
   /** Blob transaction type. */
   BLOB(0x03),
   /** Eip7702 transaction type. */
-  DELEGATE_CODE(0x04);
+  DELEGATE_CODE(0x04),
+  // Transaction Type 0x05 is reserved for delegate code magic, per EIP-7702
+  /** EOF InitCode transaciton, EIP-7620 */
+  INITCODE(0X06);
 
   private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
-      Set.of(ACCESS_LIST, EIP1559, BLOB, DELEGATE_CODE);
+      Set.of(ACCESS_LIST, EIP1559, BLOB, DELEGATE_CODE, INITCODE);
 
   private static final EnumSet<TransactionType> LEGACY_FEE_MARKET_TRANSACTION_TYPES =
       EnumSet.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST);
@@ -86,7 +89,8 @@ public enum TransactionType {
               TransactionType.ACCESS_LIST,
               TransactionType.EIP1559,
               TransactionType.BLOB,
-              TransactionType.DELEGATE_CODE
+              TransactionType.DELEGATE_CODE,
+              TransactionType.INITCODE,
             })
         .filter(transactionType -> transactionType.typeValue == serializedTypeValue)
         .findFirst()
@@ -139,6 +143,15 @@ public enum TransactionType {
    */
   public boolean supportsDelegateCode() {
     return this.equals(DELEGATE_CODE);
+  }
+
+  /**
+   * Does transaction type support delegate code.
+   *
+   * @return the boolean
+   */
+  public boolean supportsInitcode() {
+    return this.equals(INITCODE);
   }
 
   /**

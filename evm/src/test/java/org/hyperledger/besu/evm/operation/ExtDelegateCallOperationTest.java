@@ -49,11 +49,11 @@ public class ExtDelegateCallOperationTest {
   public static final Code LEGACY_CODE =
       EOF_EVM.getCodeUncached(Bytes.of(ExtDelegateCallOperation.OPCODE, 1));
   public static final Code SIMPLE_EOF =
-      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
+      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001ff0000000080000000"));
   public static final Code SIMPLE_LEGACY = EOF_EVM.getCodeUncached(Bytes.fromHexString("0x00"));
   public static final Code EMPTY_CODE = EOF_EVM.getCodeUncached(Bytes.fromHexString(""));
   public static final Code INVALID_EOF =
-      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000023"));
+      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001ff0000000080000023"));
   private static final Address CONTRACT_ADDRESS = Address.fromHexString("0xc0de");
 
   static Iterable<Arguments> data() {

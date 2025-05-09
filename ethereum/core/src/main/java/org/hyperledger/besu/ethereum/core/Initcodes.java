@@ -14,25 +14,41 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.List;
 import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class Payload {
-  private final Bytes payloadBytes;
+public class Initcodes {
+  private final List<Bytes> initcodeBytes;
 
   private Integer zeroBytes = null;
+  private Integer totalSize = null;
 
-  public Payload(final Bytes payloadBytes) {
-    this.payloadBytes = payloadBytes;
+  public Initcodes(final List<Bytes> initcodeBytes) {
+    checkNotNull(initcodeBytes);
+    this.initcodeBytes = initcodeBytes;
   }
 
-  public Bytes getPayloadBytes() {
-    return payloadBytes;
+  public Initcodes detatchedCopy() {
+    return new Initcodes(initcodeBytes.stream().map(Bytes::copy).toList());
+  }
+
+  public List<Bytes> getInitcodeBytes() {
+    return initcodeBytes;
+  }
+
+  public int getTotalSize() {
+    if (totalSize == null) {
+      totalSize = initcodeBytes.stream().mapToInt(Bytes::size).sum();
+    }
+    return totalSize;
   }
 
   public int getZeroBytesCount() {
-    if (payloadBytes == null) {
+    if (initcodeBytes == null || initcodeBytes.isEmpty()) {
       return 0;
     }
 
@@ -47,27 +63,33 @@ public class Payload {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final Payload payload = (Payload) o;
-    return Objects.equals(payloadBytes, payload.payloadBytes);
+    final Initcodes initcodes = (Initcodes) o;
+    return Objects.equals(initcodeBytes, initcodes.initcodeBytes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(payloadBytes);
+    return Objects.hash(initcodeBytes);
   }
 
   @Override
   public String toString() {
-    return "Payload{" + "payloadBytes=" + payloadBytes + '}';
+    return "Payload{" + "initcodeBytes=" + initcodeBytes + '}';
   }
 
   private int computeZeroBytes() {
     int zeros = 0;
-    for (byte b : payloadBytes.toArrayUnsafe()) {
-      if (b == 0) {
-        zeros += 1;
+    for (final Bytes bytes : initcodeBytes) {
+      for (byte b : bytes.toArrayUnsafe()) {
+        if (b == 0) {
+          zeros += 1;
+        }
       }
     }
     return zeros;
+  }
+
+  public int count() {
+    return initcodeBytes.size();
   }
 }

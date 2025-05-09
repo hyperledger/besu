@@ -20,6 +20,7 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -41,13 +42,13 @@ public class Create2Operation extends AbstractCreateOperation {
    * @param gasCalculator the gas calculator
    */
   public Create2Operation(final GasCalculator gasCalculator) {
-    super(0xF5, "CREATE2", 4, 1, gasCalculator, 0);
+    super(0xF5, "CREATE2", 4, 1, gasCalculator, 0, 0);
   }
 
   @Override
   public long cost(final MessageFrame frame, final Supplier<Code> unused) {
-    final int inputOffset = clampedToInt(frame.getStackItem(1));
-    final int inputSize = clampedToInt(frame.getStackItem(2));
+    final long inputOffset = getInputOffset(frame);
+    final int inputSize = clampedToInt(getInputSize(frame));
     return clampedAdd(
         clampedAdd(
             gasCalculator().txCreateCost(),
@@ -59,7 +60,7 @@ public class Create2Operation extends AbstractCreateOperation {
   @Override
   public Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
     final Address sender = frame.getRecipientAddress();
-    final Bytes32 salt = Bytes32.leftPad(frame.getStackItem(3));
+    final Bytes32 salt = getSalt(frame);
     final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt, initcode.getCodeHash()));
     return Address.extract(hash);
   }
@@ -71,6 +72,26 @@ public class Create2Operation extends AbstractCreateOperation {
     final Bytes inputData = frame.readMemory(inputOffset, inputSize);
     // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
     // addresses disk loading delay, and we already have the code.
-    return evm.getCodeUncached(inputData);
+    return evm.getCodeUncached(inputData, evm.getMaxEOFVersion());
+  }
+
+  @Override
+  protected long getInputOffset(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(1));
+  }
+
+  @Override
+  protected long getInputSize(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(2));
+  }
+
+  @Override
+  protected Wei getValue(final MessageFrame frame) {
+    return Wei.wrap(frame.getStackItem(0));
+  }
+
+  @Override
+  protected Bytes32 getSalt(final MessageFrame frame) {
+    return Bytes32.leftPad(frame.getStackItem(3));
   }
 }

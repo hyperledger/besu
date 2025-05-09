@@ -78,6 +78,8 @@ public class StateTestVersionedTransaction {
   @JsonDeserialize(contentAs = org.hyperledger.besu.ethereum.core.CodeDelegation.class)
   private final List<org.hyperledger.besu.datatypes.CodeDelegation> authorizationList;
 
+  private final List<Bytes> initcodes;
+
   /**
    * Constructor for populating a mock transaction with json data.
    *
@@ -108,7 +110,8 @@ public class StateTestVersionedTransaction {
       @JsonProperty("maxFeePerBlobGas") final String maxFeePerBlobGas,
       @JsonProperty("blobVersionedHashes") final List<String> blobVersionedHashes,
       @JsonProperty("authorizationList")
-          final List<org.hyperledger.besu.datatypes.CodeDelegation> authorizationList) {
+          final List<org.hyperledger.besu.datatypes.CodeDelegation> authorizationList,
+      @JsonProperty("initcodes") final String[] initcodes) {
 
     this.nonce = Bytes.fromHexStringLenient(nonce).toLong();
     this.gasPrice = Optional.ofNullable(gasPrice).map(Wei::fromHexString).orElse(null);
@@ -130,6 +133,7 @@ public class StateTestVersionedTransaction {
         Optional.ofNullable(maxFeePerBlobGas).map(Wei::fromHexString).orElse(null);
     this.blobVersionedHashes = blobVersionedHashes;
     this.authorizationList = authorizationList;
+    this.initcodes = parseArray(initcodes, Bytes::fromHexString);
   }
 
   private static <T> List<T> parseArray(final String[] array, final Function<String, T> parseFct) {
@@ -177,6 +181,7 @@ public class StateTestVersionedTransaction {
       return null;
     }
     Optional.ofNullable(authorizationList).ifPresent(transactionBuilder::codeDelegations);
+    Optional.ofNullable(initcodes).ifPresent(transactionBuilder::initcodes);
 
     transactionBuilder.guessType();
     if (transactionBuilder.getTransactionType().requiresChainId()) {
