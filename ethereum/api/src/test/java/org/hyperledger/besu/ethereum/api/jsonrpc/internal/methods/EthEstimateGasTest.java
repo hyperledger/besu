@@ -441,7 +441,7 @@ public class EthEstimateGasTest {
         .processOnPending(
             eq(
                 modifiedLegacyTransactionCallParameter(
-                    Long.MAX_VALUE, Wei.ZERO, OptionalLong.empty(), Optional.of(true))),
+                    Long.MAX_VALUE, Wei.ZERO)),
             eq(Optional.empty()), // no account overrides
             eq(TransactionValidationParams.transactionSimulatorAllowFutureNonce()),
             any(OperationTracer.class),
@@ -627,17 +627,20 @@ public class EthEstimateGasTest {
     return mockTxSimResult;
   }
 
-  private CallParameter defaultLegacyTransactionCallParameter(final Wei gasPrice) {
-    return legacyTransactionCallParameter(gasPrice, Optional.empty());
+  private JsonCallParameter defaultLegacyTransactionCallParameter(final Wei gasPrice) {
+    return legacyTransactionCallParameter(gasPrice, false);
   }
 
-  private CallParameter legacyTransactionCallParameter(
-      final Wei gasPrice, final Optional<Boolean> maybeStrict) {
-    return ImmutableCallParameter.builder()
-        .sender(Address.fromHexString("0x0"))
-        .to(Address.fromHexString("0x0"))
-        .gasPrice(gasPrice)
-        .strict(maybeStrict)
+  private JsonCallParameter legacyTransactionCallParameter(
+      final Wei gasPrice, final boolean isStrict) {
+    return new JsonCallParameter.JsonCallParameterBuilder()
+        .withFrom(Address.fromHexString("0x0"))
+        .withTo(Address.fromHexString("0x0"))
+        .withGas(0L)
+        .withGasPrice(gasPrice)
+        .withValue(Wei.ZERO)
+        .withInput(Bytes.EMPTY)
+        .withStrict(isStrict)
         .build();
   }
 
