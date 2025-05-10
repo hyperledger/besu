@@ -43,9 +43,25 @@ public class LogUtil {
       final String logMessage,
       final AtomicBoolean shouldLog,
       final int logRepeatDelay) {
-
     if (shouldLog.compareAndSet(true, false)) {
       logger.accept(logMessage);
+
+      final Runnable runnable = () -> shouldLog.set(true);
+      executor.schedule(runnable, logRepeatDelay, TimeUnit.SECONDS);
+    }
+  }
+
+  /**
+   * Throttles logging to a given logger.
+   *
+   * @param logAction a Runnable which performs the actual log call
+   * @param shouldLog AtomicBoolean to track whether the message should be logged
+   * @param logRepeatDelay delay in seconds between repeated logs
+   */
+  public static void throttledLog(
+      final Runnable logAction, final AtomicBoolean shouldLog, final int logRepeatDelay) {
+    if (shouldLog.compareAndSet(true, false)) {
+      logAction.run();
 
       final Runnable runnable = () -> shouldLog.set(true);
       executor.schedule(runnable, logRepeatDelay, TimeUnit.SECONDS);
