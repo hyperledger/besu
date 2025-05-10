@@ -17,8 +17,11 @@ package org.hyperledger.besu.cli.subcommands.storage;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -91,7 +94,6 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
     LOG.info("Prune range size: {}", pruneRangeSize);
 
     try (BesuController besuController = storageSubCommand.besuCommand.buildController()) {
-
       BlockchainStorage blockchainStorage =
           besuController
               .getStorageProvider()
@@ -99,6 +101,9 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
                   besuController.getProtocolSchedule(),
                   besuController.getStorageProvider().createVariablesStorage(),
                   besuController.getDataStorageConfiguration());
+
+      // Required by getBlockBody -> TransactionDecoder.decodeRLP -> new Transaction
+      SignatureAlgorithmFactory.setDefaultInstance();
 
       try (ExecutorService executor = Executors.newFixedThreadPool(threads)) {
         // cannot prune genesis block so start at 1
@@ -136,12 +141,22 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
     long headerNumber = startBlockNumber;
     do {
       final Optional<Hash> maybeBlockHash = blockchainStorage.getBlockHash(headerNumber);
-      if (maybeBlockHash.isEmpty()) {
-        continue;
+      if (maybeBlockHash.isPresent()) {
+        final Hash blockHash = maybeBlockHash.get();
+        final Optional<BlockBody> blockBody = blockchainStorage.getBlockBody(blockHash);
+        if (blockBody.isPresent()) {
+          updater.removeTransactionReceipts(blockHash);
+          updater.removeTotalDifficulty(blockHash);
+          blockBody
+              .map((bb) -> bb.getTransactions())
+              .ifPresent(
+                  (transactions) ->
+                      transactions.stream()
+                          .map(Transaction::getHash)
+                          .forEach((th) -> updater.removeTransactionLocation(th)));
+          updater.removeBlockBody(blockHash);
+        }
       }
-      final Hash h = maybeBlockHash.get();
-      updater.removeTransactionReceipts(h);
-      updater.removeBlockBody(h);
     } while (++headerNumber < endBlockNumber);
     updater.commit();
     LOG.info(
