@@ -1030,11 +1030,11 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
-    final var osakaBlobSchedule =
+    final var futureEipsBlobSchedule =
         genesisConfigOptions
             .getBlobScheduleOptions()
-            .flatMap(BlobScheduleOptions::getOsaka)
-            .orElse(BlobScheduleOptions.BlobSchedule.OSAKA_DEFAULT);
+            .flatMap(BlobScheduleOptions::getFutureEips)
+            .orElse(BlobScheduleOptions.BlobSchedule.FUTURE_EIPS_DEFAULT);
 
     ProtocolSpecBuilder protocolSpecBuilder =
         osakaDefinition(
@@ -1067,8 +1067,8 @@ public abstract class MainnetProtocolSpecs {
         chainId,
         evmConfiguration,
         protocolSpecBuilder,
-        osakaBlobSchedule.getTarget(),
-        osakaBlobSchedule.getMax());
+        futureEipsBlobSchedule.getTarget(),
+        futureEipsBlobSchedule.getMax());
   }
 
   static ProtocolSpecBuilder experimentalEipsDefinition(
