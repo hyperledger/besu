@@ -981,6 +981,46 @@ public abstract class MainnetProtocolSpecs {
         .name("Osaka");
   }
 
+  private static ProtocolSpecBuilder addEOF(
+      final GenesisConfigOptions genesisConfigOptions,
+      final Optional<BigInteger> chainId,
+      final EvmConfiguration evmConfiguration,
+      final ProtocolSpecBuilder protocolSpecBuilder,
+      final int targetBlobsPerBlock,
+      final int maxBlobsPerBlock) {
+
+    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+    final java.util.function.Supplier<GasCalculator> eofGasCalcSupplier =
+        () -> new EOFGasCalculator(targetBlobsPerBlock);
+    return protocolSpecBuilder
+        // EIP-7692 EOF v1 Gas calculator
+        .gasCalculator(eofGasCalcSupplier)
+        .gasLimitCalculatorBuilder(
+            feeMarket ->
+                new OsakaTargetingGasLimitCalculator(
+                    londonForkBlockNumber,
+                    (BaseFeeMarket) feeMarket,
+                    eofGasCalcSupplier.get(),
+                    maxBlobsPerBlock))
+        // EIP-7692 EOF v1 EVM and opcodes
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.futureEips(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // EIP-7698 EOF v1 creation transaction
+        .contractCreationProcessorBuilder(
+            evm ->
+                new ContractCreationProcessor(
+                    evm,
+                    true,
+                    List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
+                    1,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        .blockHeaderValidatorBuilder(
+            fm ->
+                MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(fm, eofGasCalcSupplier));
+  }
+
   static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
@@ -1029,46 +1069,6 @@ public abstract class MainnetProtocolSpecs {
         protocolSpecBuilder,
         osakaBlobSchedule.getTarget(),
         osakaBlobSchedule.getMax());
-  }
-
-  private static ProtocolSpecBuilder addEOF(
-      final GenesisConfigOptions genesisConfigOptions,
-      final Optional<BigInteger> chainId,
-      final EvmConfiguration evmConfiguration,
-      final ProtocolSpecBuilder protocolSpecBuilder,
-      final int targetBlobsPerBlock,
-      final int maxBlobsPerBlock) {
-
-    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
-    final java.util.function.Supplier<GasCalculator> eofGasCalcSupplier =
-        () -> new EOFGasCalculator(targetBlobsPerBlock);
-    return protocolSpecBuilder
-        // EIP-7692 EOF v1 Gas calculator
-        .gasCalculator(eofGasCalcSupplier)
-        .gasLimitCalculatorBuilder(
-            feeMarket ->
-                new OsakaTargetingGasLimitCalculator(
-                    londonForkBlockNumber,
-                    (BaseFeeMarket) feeMarket,
-                    eofGasCalcSupplier.get(),
-                    maxBlobsPerBlock))
-        // EIP-7692 EOF v1 EVM and opcodes
-        .evmBuilder(
-            (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.futureEips(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        // EIP-7698 EOF v1 creation transaction
-        .contractCreationProcessorBuilder(
-            evm ->
-                new ContractCreationProcessor(
-                    evm,
-                    true,
-                    List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
-                    1,
-                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-        .blockHeaderValidatorBuilder(
-            fm ->
-                MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(fm, eofGasCalcSupplier));
   }
 
   static ProtocolSpecBuilder experimentalEipsDefinition(
