@@ -1029,13 +1029,11 @@ public abstract class MainnetProtocolSpecs {
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-
     final var futureEipsBlobSchedule =
         genesisConfigOptions
             .getBlobScheduleOptions()
             .flatMap(BlobScheduleOptions::getFutureEips)
             .orElse(BlobScheduleOptions.BlobSchedule.FUTURE_EIPS_DEFAULT);
-
     ProtocolSpecBuilder protocolSpecBuilder =
         osakaDefinition(
                 chainId,
@@ -1045,23 +1043,9 @@ public abstract class MainnetProtocolSpecs {
                 miningConfiguration,
                 isParallelTxProcessingEnabled,
                 metricsSystem)
-            // Use Future EIP configured EVM
-            .evmBuilder(
-                (gasCalculator, jdCacheConfig) ->
-                    MainnetEVMs.futureEips(
-                        gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-            // change contract call creator to accept EOF code
-            .contractCreationProcessorBuilder(
-                evm ->
-                    new ContractCreationProcessor(
-                        evm,
-                        true,
-                        List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
-                        1,
-                        SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-            // use future configured precompiled contracts
             .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
             .name("FutureEips");
+
     return addEOF(
         genesisConfigOptions,
         chainId,
