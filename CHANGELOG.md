@@ -4,6 +4,7 @@
 - Remove `MetricSystem::createLabelledGauge` deprecated since `24.12.0`, replace it with `MetricSystem::createLabelledSuppliedGauge` [#8299](https://github.com/hyperledger/besu/pull/8299)
 ### Upcoming Breaking Changes
 ### Additions and Improvements
+- Increase default target-gas-limit to 60M for Ephemery [#8622](https://github.com/hyperledger/besu/pull/8622)
 
 ## 25.5.0
 ### Breaking Changes
