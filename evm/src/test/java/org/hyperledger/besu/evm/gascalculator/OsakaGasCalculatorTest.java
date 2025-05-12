@@ -39,13 +39,6 @@ class OsakaGasCalculatorTest {
     assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
   }
 
-  @Test
-  void testNewConstants() {
-    CancunGasCalculator cancunGas = new CancunGasCalculator();
-    assertThat(osakaGasCalculator.getMinCalleeGas()).isGreaterThan(cancunGas.getMinCalleeGas());
-    assertThat(osakaGasCalculator.getMinRetainedGas()).isGreaterThan(cancunGas.getMinRetainedGas());
-  }
-
   @ParameterizedTest(
       name = "{index} - parent gas {0}, used gas {1}, blob target {2} new excess {3}")
   @MethodSource("blobGasses")

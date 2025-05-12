@@ -47,7 +47,7 @@ class CodeV0Test {
 
   @BeforeEach
   void startUp() {
-    evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+    evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
   }
 
   @Test
