@@ -35,6 +35,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the callTracer result format as specified in Geth documentation:
@@ -55,10 +57,12 @@ import org.apache.tuweni.units.bigints.UInt256;
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DebugCallTracerResult implements DebugTracerResult {
+  private static final Logger LOG = LoggerFactory.getLogger(DebugCallTracerResult.class);
+
   private final String type;
   private final String from;
-  private String to;
-  private String value;
+  private final String to;
+  private final String value;
   private final BigInteger gas;
   private BigInteger gasUsed;
   private final String input;
@@ -142,12 +146,15 @@ public class DebugCallTracerResult implements DebugTracerResult {
       return;
     }
 
+    LOG.info("Processing {} trace frames", frames.size());
+
     Deque<DebugCallTracerResult> stack = new ArrayDeque<>();
     stack.push(this);
     int prevDepth = 0;
 
     for (TraceFrame frame : frames) {
       String opcode = frame.getOpcode();
+      LOG.info("Processing opcode: {} depth: {}", opcode, frame.getDepth());
       int currentDepth = frame.getDepth();
 
       // Entering a nested call/create
