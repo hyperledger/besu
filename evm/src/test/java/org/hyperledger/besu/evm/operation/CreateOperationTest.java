@@ -218,7 +218,7 @@ class CreateOperationTest {
 
   @Test
   void eofV1CannotCall() {
-    final EVM pragueEvm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+    final EVM pragueEvm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
@@ -247,7 +247,7 @@ class CreateOperationTest {
       final UInt256 memoryLength,
       final UInt256 value,
       final int depth) {
-    final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+    final EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)

@@ -94,7 +94,7 @@ public class EOFTestSubCommand implements Runnable {
     }
     ProtocolSpec protocolSpec =
         ReferenceTestProtocolSchedules.getInstance()
-            .geSpecByName(fork == null ? EvmSpecVersion.OSAKA.getName() : fork);
+            .geSpecByName(fork == null ? EvmSpecVersion.FUTURE_EIPS.getName() : fork);
     evm = protocolSpec.getEvm();
 
     final JavaType javaType =
@@ -181,7 +181,7 @@ public class EOFTestSubCommand implements Runnable {
             continue;
           }
           TestResult actualResult;
-          if (evmVersion.ordinal() < EvmSpecVersion.OSAKA.ordinal()) {
+          if (evmVersion.ordinal() < EvmSpecVersion.FUTURE_EIPS.ordinal()) {
             actualResult = failed("EOF_InvalidCode");
           } else {
             actualResult = considerCode(code);
