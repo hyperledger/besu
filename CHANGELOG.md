@@ -2,7 +2,7 @@
 ## Unreleased
 ### Breaking Changes
 - Remove `MetricSystem::createLabelledGauge` deprecated since `24.12.0`, replace it with `MetricSystem::createLabelledSuppliedGauge` [#8299](https://github.com/hyperledger/besu/pull/8299)
-- Remove then deprecated `--tx-pool-disable-locals` option, use `--tx-pool-no-local-priority`, instead. [#8614](https://github.com/hyperledger/besu/pull/8614)
+- Remove the deprecated `--tx-pool-disable-locals` option, use `--tx-pool-no-local-priority`, instead. [#8614](https://github.com/hyperledger/besu/pull/8614)
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
