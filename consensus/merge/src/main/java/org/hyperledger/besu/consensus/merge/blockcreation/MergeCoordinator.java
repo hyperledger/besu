@@ -90,7 +90,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           BigInteger.valueOf(11155111), NEXT_STEP_TARGET_GAS_LIMIT_TESTNET, // Sepolia
           BigInteger.valueOf(17000), NEXT_STEP_TARGET_GAS_LIMIT_TESTNET, // Holesky
           BigInteger.valueOf(560048), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Hoodi
-          BigInteger.valueOf(39438135), DEFAULT_TARGET_GAS_LIMIT_TESTNET // Ephemery
+          BigInteger.valueOf(39438135), NEXT_STEP_TARGET_GAS_LIMIT_TESTNET // Ephemery
           );
 
   /** The Mining parameters. */
