@@ -7,7 +7,7 @@
     "--coinbase",
     "4444588443C3A91288C5002483449ABA1054192B",
     "--fork",
-    "Osaka"
+    "FutureEips"
   ],
   "stdin": "",
   "stdout": [
@@ -18,6 +18,6 @@
     {"pc":37,"section":0,"op":96,"immediate":"0x01","gas":"0x2540be3f0","gasCost":"0x3","memSize":0,"stack":["0x2015"],"depth":1,"functionDepth":1,"refund":0,"opName":"PUSH1"},
     {"pc":39,"section":0,"op":85,"gas":"0x2540be3ed","gasCost":"0x5654","memSize":0,"stack":["0x2015","0x1"],"depth":1,"functionDepth":1,"refund":0,"opName":"SSTORE"},
     {"pc":40,"section":0,"op":0,"gas":"0x2540b8d99","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"functionDepth":1,"refund":0,"opName":"STOP"},
-    {"stateRoot":"0x761f723ceabb467d438fe74abf025c10bf65592b84ec389850038eb572f2b0fa","output":"0x","gasUsed":"0x5667","pass":true,"fork":"Osaka"}
+    {"stateRoot":"0x761f723ceabb467d438fe74abf025c10bf65592b84ec389850038eb572f2b0fa","output":"0x","gasUsed":"0x5667","pass":true,"fork":"FutureEips"}
   ]
 }

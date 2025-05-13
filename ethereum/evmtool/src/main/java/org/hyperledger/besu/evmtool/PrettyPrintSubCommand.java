@@ -97,7 +97,7 @@ public class PrettyPrintSubCommand implements Runnable {
         parentCommand.out.println("Invalid hex string: " + e.getMessage());
         continue;
       }
-      String fork = EvmSpecVersion.OSAKA.getName();
+      String fork = EvmSpecVersion.FUTURE_EIPS.getName();
       if (parentCommand.hasFork()) {
         fork = parentCommand.getFork();
       }
