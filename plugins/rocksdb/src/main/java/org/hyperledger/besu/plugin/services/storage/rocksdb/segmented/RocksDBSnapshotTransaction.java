@@ -21,7 +21,6 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;

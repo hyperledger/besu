@@ -25,8 +25,8 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.PrintStream;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;

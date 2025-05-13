@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBloc
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,15 +35,11 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
 
   private final MainnetTransactionProcessor transactionProcessor;
   private final Executor executor;
-  private final Optional<OperationTimer> finishToApplyTimer;
 
   public ParallelTransactionPreprocessing(
-      final MainnetTransactionProcessor transactionProcessor,
-      final Executor executor,
-      final Optional<OperationTimer> finishToApplyTimer) {
+      final MainnetTransactionProcessor transactionProcessor, final Executor executor) {
     this.transactionProcessor = transactionProcessor;
     this.executor = executor;
-    this.finishToApplyTimer = finishToApplyTimer;
   }
 
   @Override
@@ -69,8 +64,7 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
           blockHashLookup,
           blobGasPrice,
           privateMetadataUpdater,
-          executor,
-          finishToApplyTimer);
+          executor);
       return Optional.of(
           new ParallelizedPreProcessingContext(parallelizedConcurrentTransactionProcessor));
     }

@@ -104,8 +104,8 @@ import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.preload.PreloadService;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import java.io.Closeable;
 import java.math.BigInteger;
@@ -614,7 +614,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 .map(BesuComponent::getPreloader)
                 .orElseGet(() -> new PreloadService(metricsSystem));
 
-    // final PreloadService preloadService = new PreloadService(metricsSystem);
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
