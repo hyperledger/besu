@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import java.util.Arrays;
 
 import io.opentelemetry.api.trace.Span;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +55,8 @@ public class BaseJsonRpcProcessor implements JsonRpcProcessor {
     } catch (final MultiTenancyValidationException e) {
       return new JsonRpcUnauthorizedResponse(id, RpcErrorType.UNAUTHORIZED);
     } catch (final RuntimeException e) {
-      // final JsonArray params = JsonObject.mapFrom(request.getRequest()).getJsonArray("params");
-      // LOG.error(String.format("Error processing method: %s %s", method.getName(), params), e);
+      final JsonArray params = JsonObject.mapFrom(request.getRequest()).getJsonArray("params");
+      LOG.error(String.format("Error processing method: %s %s", method.getName(), params), e);
       return new JsonRpcErrorResponse(id, RpcErrorType.INTERNAL_ERROR);
     }
   }

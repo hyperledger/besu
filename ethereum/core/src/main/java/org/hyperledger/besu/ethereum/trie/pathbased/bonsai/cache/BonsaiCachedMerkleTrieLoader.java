@@ -70,8 +70,6 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
 
   public BonsaiCachedMerkleTrieLoader(
       final ObservableMetricsSystem metricsSystem, final Preloader preloader) {
-    // LOG.info("Creating BonsaiCachedMerkleTrieLoader " + this);
-    // Thread.dumpStack();
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "accountsNodes", accountNodes);
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "storageNodes", storageNodes);
 
@@ -125,7 +123,6 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       final BonsaiWorldStateKeyValueStorage storage,
       final Hash worldStateRootHash,
       final Address account) {
-    LOG.error("cacheAccountNodes >> should not get here");
     final OperationTimer.TimingContext timer = accountPreloadTimer.startTimer();
     final long subscriptionId = storage.subscribe(this);
     try {
@@ -196,8 +193,6 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       final BonsaiWorldStateKeyValueStorage storage,
       final Address account,
       final StorageSlotKey slotKey) {
-    LOG.error("cacheStorageNodes >> should not get here");
-
     final OperationTimer.TimingContext timer = storagePreloadTimer.startTimer();
     final long subscriptionId = storage.subscribe(this);
     try {

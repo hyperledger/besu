@@ -43,7 +43,6 @@ public class PreloadService implements Preloader {
 
   public PreloadService(final MetricsSystem metricsSystem) {
     LOG.info("Creating PreloadService " + this);
-    // Thread.dumpStack();
     LabelledMetric<Counter> outputCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.BLOCK_PROCESSING,
@@ -71,7 +70,6 @@ public class PreloadService implements Preloader {
 
   @Override
   public synchronized void enqueueRequest(final PreloadTask request) {
-    // LOG.info("PreloadService >> enqueueRequest");
     if (!processing) {
       throw new IllegalStateException("Cannot enqueue; PreloadService not running");
     }
@@ -81,7 +79,6 @@ public class PreloadService implements Preloader {
 
   @Override
   public synchronized Task<PreloadTask> dequeueRequest() {
-    // LOG.info("PreloadService >> dequeueRequest");
     while (processing && queue.isEmpty()) {
       try {
         wait();
@@ -102,7 +99,6 @@ public class PreloadService implements Preloader {
   }
 
   public void start(final EthScheduler scheduler) {
-    LOG.info("PreloadService >> start");
     if (processing) {
       throw new IllegalStateException("PreloadService already started");
     }

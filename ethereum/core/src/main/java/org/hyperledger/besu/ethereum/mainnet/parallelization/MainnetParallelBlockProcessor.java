@@ -37,7 +37,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Optional;
 import java.util.concurrent.Executor;
@@ -52,7 +51,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
 
   private final Optional<Counter> confirmedParallelizedTransactionCounter;
   private final Optional<Counter> conflictingButCachedTransactionCounter;
-  private final Optional<OperationTimer> finishToApplyTimer;
 
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
   private static final Executor executor = Executors.newFixedThreadPool(NCPU);
@@ -85,15 +83,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
                 BesuMetricCategory.BLOCK_PROCESSING,
                 "conflicted_transactions_counter",
                 "Counter for the number of conflicted transactions during block processing"));
-    this.finishToApplyTimer =
-        Optional.of(
-            metricsSystem
-                .createLabelledTimer(
-                    BesuMetricCategory.BLOCK_PROCESSING,
-                    "finish_to_apply_latency_seconds",
-                    "Time from transaction preprocessing finish to result application",
-                    "database")
-                .labels("besu"));
   }
 
   @Override
@@ -158,8 +147,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             worldState,
             block,
             Optional.empty(),
-            new ParallelTransactionPreprocessing(
-                transactionProcessor, executor, finishToApplyTimer));
+            new ParallelTransactionPreprocessing(transactionProcessor, executor));
 
     if (blockProcessingResult.isFailed()) {
       // Fallback to non-parallel processing if there is a block processing exception .

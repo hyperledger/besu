@@ -35,7 +35,6 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,8 +108,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
       final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
-      final Executor executor,
-      final Optional<OperationTimer> finishToApplyTimer) {
+      final Executor executor) {
 
     completableFuturesForBackgroundTransactions = new CompletableFuture[transactions.size()];
     for (int i = 0; i < transactions.size(); i++) {
@@ -129,8 +127,7 @@ public class ParallelizedConcurrentTransactionProcessor {
                   miningBeneficiary,
                   blockHashLookup,
                   blobGasPrice,
-                  privateMetadataUpdater,
-                  finishToApplyTimer),
+                  privateMetadataUpdater),
           executor);
     }
   }
@@ -144,8 +141,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
-      final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
-      final Optional<OperationTimer> finishToApplyTimer) {
+      final Optional<PrivateMetadataUpdater> privateMetadataUpdater) {
     final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
     if (chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
       BonsaiWorldState ws =
@@ -197,10 +193,6 @@ public class ParallelizedConcurrentTransactionProcessor {
         // commit the accumulator in order to apply all the modifications
 
         ws.getAccumulator().commit();
-
-        if (finishToApplyTimer.isPresent()) {
-          contextBuilder.timingContext(finishToApplyTimer.get().startTimer());
-        }
 
         if (result.isSuccessful()) {
           ws.enableCacheMerkleTrieLoader();
@@ -269,7 +261,6 @@ public class ParallelizedConcurrentTransactionProcessor {
      * If `parallelizedTransactionContext` is not null, it means that the transaction had time to complete in the background.
      */
     if (parallelizedTransactionContext != null) {
-      parallelizedTransactionContext.timingContext().stopTimer();
       final PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator =
           parallelizedTransactionContext.transactionAccumulator();
       final TransactionProcessingResult transactionProcessingResult =

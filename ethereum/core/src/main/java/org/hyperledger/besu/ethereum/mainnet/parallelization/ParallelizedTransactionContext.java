@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Objects;
 
@@ -26,20 +25,17 @@ public final class ParallelizedTransactionContext {
   private final TransactionProcessingResult transactionProcessingResult;
   private final boolean isMiningBeneficiaryTouchedPreRewardByTransaction;
   private final Wei miningBeneficiaryReward;
-  private final OperationTimer.TimingContext timingContext;
 
   public ParallelizedTransactionContext(
       final PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator,
       final TransactionProcessingResult transactionProcessingResult,
       final boolean isMiningBeneficiaryTouchedPreRewardByTransaction,
-      final Wei miningBeneficiaryReward,
-      final OperationTimer.TimingContext timingContext) {
+      final Wei miningBeneficiaryReward) {
     this.transactionAccumulator = transactionAccumulator;
     this.transactionProcessingResult = transactionProcessingResult;
     this.isMiningBeneficiaryTouchedPreRewardByTransaction =
         isMiningBeneficiaryTouchedPreRewardByTransaction;
     this.miningBeneficiaryReward = miningBeneficiaryReward;
-    this.timingContext = timingContext;
   }
 
   public PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator() {
@@ -56,10 +52,6 @@ public final class ParallelizedTransactionContext {
 
   public Wei miningBeneficiaryReward() {
     return miningBeneficiaryReward;
-  }
-
-  public OperationTimer.TimingContext timingContext() {
-    return timingContext;
   }
 
   @Override
@@ -105,7 +97,6 @@ public final class ParallelizedTransactionContext {
     private TransactionProcessingResult transactionProcessingResult;
     private boolean isMiningBeneficiaryTouchedPreRewardByTransaction;
     private Wei miningBeneficiaryReward = Wei.ZERO;
-    private OperationTimer.TimingContext timingContext;
 
     public Builder transactionAccumulator(
         final PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator) {
@@ -131,18 +122,12 @@ public final class ParallelizedTransactionContext {
       return this;
     }
 
-    public Builder timingContext(final OperationTimer.TimingContext timingContext) {
-      this.timingContext = timingContext;
-      return this;
-    }
-
     public ParallelizedTransactionContext build() {
       return new ParallelizedTransactionContext(
           transactionAccumulator,
           transactionProcessingResult,
           isMiningBeneficiaryTouchedPreRewardByTransaction,
-          miningBeneficiaryReward,
-          timingContext);
+          miningBeneficiaryReward);
     }
   }
 }

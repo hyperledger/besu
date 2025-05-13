@@ -16,21 +16,13 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization.preload;
 
 import org.hyperledger.besu.services.tasks.Task;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class NoOpPreloader implements Preloader {
 
-  private static final Logger LOG = LoggerFactory.getLogger(NoOpPreloader.class);
-
   @Override
-  public void enqueueRequest(final PreloadTask request) {
-    LOG.info("NoOpPreloader >> enqueueRequest");
-  }
+  public void enqueueRequest(final PreloadTask request) {}
 
   @Override
   public Task<PreloadTask> dequeueRequest() {
-    LOG.info("NoOpPreloader >> dequeueRequest");
     return null;
   }
 
