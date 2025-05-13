@@ -32,6 +32,12 @@ public class RocksDBCLIOptions {
   /** The constant DEFAULT_IS_HIGH_SPEC. */
   public static final boolean DEFAULT_IS_HIGH_SPEC = false;
 
+  /** The constant DEFAULT_PERIODIC_COMPACTION_INTERVAL. */
+  public static final int DEFAULT_PERIODIC_COMPACTION_INTERVAL = 0;
+
+  /** Period in microseconds to delete obsolete files */
+  public static final long DEFAULT_DELETE_OBSOLETE_FILES_PERIOD = 6 * 3600 * 1_000_000L;
+
   /** The constant MAX_OPEN_FILES_FLAG. */
   public static final String MAX_OPEN_FILES_FLAG = "--Xplugin-rocksdb-max-open-files";
 
@@ -44,6 +50,31 @@ public class RocksDBCLIOptions {
 
   /** The constant IS_HIGH_SPEC. */
   public static final String IS_HIGH_SPEC = "--Xplugin-rocksdb-high-spec-enabled";
+
+  /** The constant PERIODIC_COMPACTION_SECONDS_FLAG. */
+  public static final String PERIODIC_COMPACTION_SECONDS_FLAG =
+      "--Xplugin-rocksdb-periodic-compaction-seconds";
+
+  /** The constant DELETE_OBSOLETE_FILES_PERIOD_FLAG. */
+  public static final String DELETE_OBSOLETE_FILES_PERIOD_FLAG =
+      "--Xplugin-rocksdb-delete-obsolete-files-period";
+
+  // Add these fields with CommandLine options
+  @CommandLine.Option(
+      names = {PERIODIC_COMPACTION_SECONDS_FLAG},
+      hidden = true,
+      defaultValue = "0",
+      paramLabel = "<INTEGER>",
+      description = "Periodic compaction seconds (default: ${DEFAULT-VALUE})")
+  int periodicCompactionSeconds;
+
+  @CommandLine.Option(
+      names = {DELETE_OBSOLETE_FILES_PERIOD_FLAG},
+      hidden = true,
+      defaultValue = "21600000000",
+      paramLabel = "<LONG>",
+      description = "Period in microseconds to delete obsolete files (default: ${DEFAULT-VALUE})")
+  long deleteObsoleteFilesPeriod;
 
   /** The Max open files. */
   @CommandLine.Option(
@@ -104,6 +135,8 @@ public class RocksDBCLIOptions {
     options.cacheCapacity = config.getCacheCapacity();
     options.backgroundThreadCount = config.getBackgroundThreadCount();
     options.isHighSpec = config.isHighSpec();
+    options.periodicCompactionSeconds = config.getPeriodicCompactionSeconds();
+    options.deleteObsoleteFilesPeriod = config.getDeleteObsoleteFilesPeriod();
     return options;
   }
 
@@ -114,7 +147,12 @@ public class RocksDBCLIOptions {
    */
   public RocksDBFactoryConfiguration toDomainObject() {
     return new RocksDBFactoryConfiguration(
-        maxOpenFiles, backgroundThreadCount, cacheCapacity, isHighSpec);
+        maxOpenFiles,
+        backgroundThreadCount,
+        cacheCapacity,
+        isHighSpec,
+        periodicCompactionSeconds,
+        deleteObsoleteFilesPeriod);
   }
 
   /**
@@ -133,6 +171,8 @@ public class RocksDBCLIOptions {
         .add("cacheCapacity", cacheCapacity)
         .add("backgroundThreadCount", backgroundThreadCount)
         .add("isHighSpec", isHighSpec)
+        .add("periodicCompactionSeconds", periodicCompactionSeconds)
+        .add("deleteObsoleteFilesPeriod", deleteObsoleteFilesPeriod)
         .toString();
   }
 }

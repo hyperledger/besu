@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_DELETE_OBSOLETE_FILES_PERIOD;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
@@ -30,6 +31,8 @@ public class RocksDBConfigurationBuilder {
   private long cacheCapacity = DEFAULT_CACHE_CAPACITY;
   private int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
   private boolean isHighSpec = DEFAULT_IS_HIGH_SPEC;
+  private int periodicCompactionSeconds = 0;
+  private long deleteObsoleteFilesPeriod = DEFAULT_DELETE_OBSOLETE_FILES_PERIOD;
 
   /** Instantiates a new Rocks db configuration builder. */
   public RocksDBConfigurationBuilder() {}
@@ -101,6 +104,30 @@ public class RocksDBConfigurationBuilder {
   }
 
   /**
+   * Sets the period for periodic compaction.
+   *
+   * @param periodicCompactionSeconds the period in seconds
+   * @return the rocks db configuration builder
+   */
+  public RocksDBConfigurationBuilder periodicCompactionSeconds(
+      final int periodicCompactionSeconds) {
+    this.periodicCompactionSeconds = periodicCompactionSeconds;
+    return this;
+  }
+
+  /**
+   * Sets the period for deleting obsolete files.
+   *
+   * @param deleteObsoleteFilesPeriod the period in microseconds
+   * @return the rocks db configuration builder
+   */
+  public RocksDBConfigurationBuilder deleteObsoleteFilesPeriod(
+      final long deleteObsoleteFilesPeriod) {
+    this.deleteObsoleteFilesPeriod = deleteObsoleteFilesPeriod;
+    return this;
+  }
+
+  /**
    * From.
    *
    * @param configuration the configuration
@@ -111,7 +138,9 @@ public class RocksDBConfigurationBuilder {
         .backgroundThreadCount(configuration.getBackgroundThreadCount())
         .cacheCapacity(configuration.getCacheCapacity())
         .maxOpenFiles(configuration.getMaxOpenFiles())
-        .isHighSpec(configuration.isHighSpec());
+        .isHighSpec(configuration.isHighSpec())
+        .periodicCompactionSeconds(configuration.getPeriodicCompactionSeconds())
+        .deleteObsoleteFilesPeriod(configuration.getDeleteObsoleteFilesPeriod());
   }
 
   /**
@@ -121,6 +150,13 @@ public class RocksDBConfigurationBuilder {
    */
   public RocksDBConfiguration build() {
     return new RocksDBConfiguration(
-        databaseDir, maxOpenFiles, backgroundThreadCount, cacheCapacity, label, isHighSpec);
+        databaseDir,
+        maxOpenFiles,
+        backgroundThreadCount,
+        cacheCapacity,
+        label,
+        isHighSpec,
+        periodicCompactionSeconds,
+        deleteObsoleteFilesPeriod);
   }
 }

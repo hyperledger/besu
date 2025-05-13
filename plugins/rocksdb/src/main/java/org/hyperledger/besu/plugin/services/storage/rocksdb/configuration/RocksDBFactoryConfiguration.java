@@ -21,6 +21,8 @@ public class RocksDBFactoryConfiguration {
   private final int backgroundThreadCount;
   private final long cacheCapacity;
   private final boolean isHighSpec;
+  private final int periodicCompactionSeconds;
+  private final long deleteObsoleteFilesPeriod;
 
   /**
    * Instantiates a new RocksDb factory configuration.
@@ -29,16 +31,22 @@ public class RocksDBFactoryConfiguration {
    * @param backgroundThreadCount the background thread count
    * @param cacheCapacity the cache capacity
    * @param isHighSpec the is high spec
+   * @param periodicCompactionSeconds the period in seconds to run compaction
+   * @param deleteObsoleteFilesPeriod the period in microseconds to delete obsolete files
    */
   public RocksDBFactoryConfiguration(
       final int maxOpenFiles,
       final int backgroundThreadCount,
       final long cacheCapacity,
-      final boolean isHighSpec) {
+      final boolean isHighSpec,
+      final int periodicCompactionSeconds,
+      final long deleteObsoleteFilesPeriod) {
     this.backgroundThreadCount = backgroundThreadCount;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
     this.isHighSpec = isHighSpec;
+    this.periodicCompactionSeconds = periodicCompactionSeconds;
+    this.deleteObsoleteFilesPeriod = deleteObsoleteFilesPeriod;
   }
 
   /**
@@ -75,5 +83,23 @@ public class RocksDBFactoryConfiguration {
    */
   public boolean isHighSpec() {
     return isHighSpec;
+  }
+
+  /**
+   * Gets periodic compaction seconds.
+   *
+   * @return the periodic compaction seconds
+   */
+  public int getPeriodicCompactionSeconds() {
+    return periodicCompactionSeconds;
+  }
+
+  /**
+   * Gets delete obsolete files period.
+   *
+   * @return the delete obsolete files period
+   */
+  public long getDeleteObsoleteFilesPeriod() {
+    return deleteObsoleteFilesPeriod;
   }
 }
