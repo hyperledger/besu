@@ -2817,18 +2817,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PathBasedExtraStorageConfiguration subStorageConfiguration =
           getDataStorageConfiguration().getPathBasedExtraStorageConfiguration();
       if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
-        builder.setLimitTrieLogsEnabled();
-        builder.setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad());
-        builder.setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
+        builder
+            .setLimitTrieLogsEnabled()
+            .setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad())
+            .setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
       }
     }
 
-    builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());
-
-    builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
-    builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
-
-    builder.setPluginContext(this.besuPluginContext);
+    builder
+        .setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled())
+        .setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation())
+        .setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode())
+        .setPluginContext(this.besuPluginContext)
+        .setBlobDBSettings(rocksDBPlugin.getBlobDBSettings());
 
     return builder.build();
   }
