@@ -124,6 +124,6 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
         traceTypes.contains(TraceType.STATE_DIFF),
         false,
         traceTypes.contains(TraceType.TRACE) || traceTypes.contains(TraceType.VM_TRACE),
-        traceTypes.contains(TraceType.TRACE) || traceTypes.contains(TraceType.VM_TRACE));
+        false);
   }
 }

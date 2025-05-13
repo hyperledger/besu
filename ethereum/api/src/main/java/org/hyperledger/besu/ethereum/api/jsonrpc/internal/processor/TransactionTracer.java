@@ -104,7 +104,7 @@ public class TransactionTracer {
         transactionTraceParams
             .map(TransactionTraceParams::traceOptions)
             .map(TraceOptions::traceStatelessAccessWitness)
-            .orElse(false);
+            .orElse(TraceOptions.DEFAULT.traceStatelessAccessWitness());
 
     if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
       throw new RuntimeException(

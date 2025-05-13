@@ -1,0 +1,1210 @@
+{
+  "request": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "method": "debug_traceTransaction",
+    "params": [
+      "0xa29f9d6a4f183f4c22c4857544a9a6b69c48d7bb8a97652be06e50bb69470666",
+      {
+        "enableStatelessAccessWitness":true
+      }
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+      "gas": 23870,
+      "failed": false,
+      "returnValue": "f000000000000000000000000000000000000000000000000000000000000002",
+      "structLogs": [
+        {
+          "pc": 0,
+          "op": "PUSH1",
+          "gas": 16755710,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 2,
+          "op": "PUSH1",
+          "gas": 16755707,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x20"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 4,
+          "op": "PUSH1",
+          "gas": 16755704,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 6,
+          "op": "CALLDATASIZE",
+          "gas": 16755701,
+          "gasCost": 2,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 7,
+          "op": "SUB",
+          "gas": 16755699,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20",
+            "0x40"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 8,
+          "op": "DUP1",
+          "gas": 16755696,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 9,
+          "op": "PUSH1",
+          "gas": 16755693,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20",
+            "0x20"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 11,
+          "op": "PUSH1",
+          "gas": 16755690,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20",
+            "0x20",
+            "0x20"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 13,
+          "op": "CALLDATACOPY",
+          "gas": 16755687,
+          "gasCost": 9,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20",
+            "0x20",
+            "0x20",
+            "0x0"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 14,
+          "op": "PUSH1",
+          "gas": 16755678,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 16,
+          "op": "CALLVALUE",
+          "gas": 16755675,
+          "gasCost": 2,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20",
+            "0x0"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 17,
+          "op": "PUSH1",
+          "gas": 16755673,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20",
+            "0x0",
+            "0x0"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 19,
+          "op": "CALLDATALOAD",
+          "gas": 16755670,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20",
+            "0x0",
+            "0x0",
+            "0x0"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 20,
+          "op": "GAS",
+          "gas": 16755667,
+          "gasCost": 2,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20",
+            "0x0",
+            "0x0",
+            "0x30000000000000000000000000000000000000"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "statelessAccessWitness": {
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 21,
+          "op": "CALL",
+          "gas": 16755665,
+          "gasCost": 16493891,
+          "depth": 1,
+          "stack": [
+            "0x20",
+            "0x0",
+            "0x20",
+            "0x0",
+            "0x0",
+            "0x30000000000000000000000000000000000000",
+            "0xffabd1"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 0,
+          "op": "PUSH1",
+          "gas": 16491591,
+          "gasCost": 3,
+          "depth": 2,
+          "stack": [],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 2,
+          "op": "CALLDATALOAD",
+          "gas": 16491588,
+          "gasCost": 3,
+          "depth": 2,
+          "stack": [
+            "0x0"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 3,
+          "op": "PUSH1",
+          "gas": 16491585,
+          "gasCost": 3,
+          "depth": 2,
+          "stack": [
+            "0xf000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 5,
+          "op": "ADD",
+          "gas": 16491582,
+          "gasCost": 3,
+          "depth": 2,
+          "stack": [
+            "0xf000000000000000000000000000000000000000000000000000000000000001",
+            "0x1"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 6,
+          "op": "PUSH1",
+          "gas": 16491579,
+          "gasCost": 3,
+          "depth": 2,
+          "stack": [
+            "0xf000000000000000000000000000000000000000000000000000000000000002"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 8,
+          "op": "MSTORE",
+          "gas": 16491576,
+          "gasCost": 6,
+          "depth": 2,
+          "stack": [
+            "0xf000000000000000000000000000000000000000000000000000000000000002",
+            "0x0"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000002"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 9,
+          "op": "PUSH1",
+          "gas": 16491570,
+          "gasCost": 3,
+          "depth": 2,
+          "stack": [],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000002"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 11,
+          "op": "PUSH1",
+          "gas": 16491567,
+          "gasCost": 3,
+          "depth": 2,
+          "stack": [
+            "0x20"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000002"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 13,
+          "op": "RETURN",
+          "gas": 16491564,
+          "gasCost": 0,
+          "depth": 2,
+          "stack": [
+            "0x20",
+            "0x0"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000002"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 22,
+          "op": "PUSH1",
+          "gas": 16753338,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x1"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000002"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 24,
+          "op": "PUSH1",
+          "gas": 16753335,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x1",
+            "0x20"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000002"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        },
+        {
+          "pc": 26,
+          "op": "RETURN",
+          "gas": 16753332,
+          "gasCost": 0,
+          "depth": 1,
+          "stack": [
+            "0x1",
+            "0x20",
+            "0x0"
+          ],
+          "memory": [
+            "0xf000000000000000000000000000000000000000000000000000000000000002"
+          ],
+          "statelessAccessWitness": {
+            "0x0030000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0x0040000000000000000000000000000000000000": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x80"
+              }
+            ],
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": [
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x0"
+              },
+              {
+                "treeIndex": "0x0",
+                "subIndex": "0x1"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "statusCode": 200
+}
