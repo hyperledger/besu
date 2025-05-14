@@ -8,6 +8,7 @@
 ### Additions and Improvements
 - `--Xplugin-rocksdb-blockchain-blob-garbage-collection-enabled` Adds ability to enabled BlobDB GC for BLOCKCHAIN column family [#8599](https://github.com/hyperledger/besu/pull/8599)
 - `--Xplugin-rocksdb-blob-garbage-collection-age-cutoff`, `--Xplugin-rocksdb-blob-garbage-collection-force-threshold` BlobDB GC config options [#8599](https://github.com/hyperledger/besu/pull/8599)
+- Estimate gas on pending block by default [#8627](https://github.com/hyperledger/besu/pull/8627)
 
 ## 25.5.0
 ### Breaking Changes
