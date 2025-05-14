@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static org.hyperledger.besu.datatypes.BlobsWithCommitments.KZG_WITH_CELL_PROOFS;
+import static org.hyperledger.besu.datatypes.BlobsWithCommitments.KZG_WITH_PROOFS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Blob;
@@ -39,9 +41,18 @@ public class BlobPooledTransactionEncoder {
     }
     out.startList();
     BlobTransactionEncoder.encode(transaction, out);
+    if (blobsWithCommitments.get().getVersionId() == KZG_WITH_CELL_PROOFS) {
+      out.writeInt(blobsWithCommitments.get().getVersionId());
+    }
     out.writeList(blobsWithCommitments.get().getBlobs(), Blob::writeTo);
     out.writeList(blobsWithCommitments.get().getKzgCommitments(), KZGCommitment::writeTo);
-    out.writeList(blobsWithCommitments.get().getKzgProofs(), KZGProof::writeTo);
+
+    if (blobsWithCommitments.get().getVersionId() == KZG_WITH_PROOFS) {
+      out.writeList(blobsWithCommitments.get().getKzgProofs(), KZGProof::writeTo);
+    }
+    if (blobsWithCommitments.get().getVersionId() == KZG_WITH_CELL_PROOFS) {
+      out.writeList(blobsWithCommitments.get().getKzgCellProofs(), KZGProof::writeTo);
+    }
     out.endList();
   }
 }

@@ -1468,9 +1468,11 @@ public class Transaction
     }
 
     public Builder kzgBlobs(
+        final int versionId,
         final List<KZGCommitment> kzgCommitments,
         final List<Blob> blobs,
-        final List<KZGProof> kzgProofs) {
+        final List<KZGProof> kzgProofs,
+        final List<KZGProof> kzgCellProofs) {
       if (this.versionedHashes == null || this.versionedHashes.isEmpty()) {
         this.versionedHashes =
             kzgCommitments.stream()
@@ -1478,7 +1480,8 @@ public class Transaction
                 .toList();
       }
       this.blobsWithCommitments =
-          new BlobsWithCommitments(kzgCommitments, blobs, kzgProofs, versionedHashes);
+          new BlobsWithCommitments(
+              versionId, kzgCommitments, blobs, kzgProofs, kzgCellProofs, versionedHashes);
       return this;
     }
 

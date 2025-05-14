@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.datatypes.BlobsWithCommitments.CELL_PROOFS_PER_BLOB;
+import static org.hyperledger.besu.datatypes.BlobsWithCommitments.KZG_WITH_CELL_PROOFS;
+import static org.hyperledger.besu.datatypes.BlobsWithCommitments.KZG_WITH_PROOFS;
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
@@ -449,24 +452,71 @@ public class MainnetTransactionValidator implements TransactionValidator {
                     .toList())
             .toArrayUnsafe();
 
-    final byte[] kzgProofs =
-        Bytes.wrap(
-                blobsWithCommitments.getKzgProofs().stream()
-                    .map(kp -> (Bytes) kp.getData())
-                    .toList())
-            .toArrayUnsafe();
-
-    final boolean kzgVerification =
-        CKZG4844JNI.verifyBlobKzgProofBatch(
-            blobs, kzgCommitments, kzgProofs, blobsWithCommitments.getBlobs().size());
-
-    if (!kzgVerification) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_BLOBS,
-          "transaction blobs kzg proof verification failed");
+    if (blobsWithCommitments.getVersionId() == KZG_WITH_PROOFS) {
+      final byte[] kzgProofs =
+          Bytes.wrap(
+                  blobsWithCommitments.getKzgProofs().stream()
+                      .map(kp -> (Bytes) kp.getData())
+                      .toList())
+              .toArrayUnsafe();
+      final boolean kzgVerification =
+          CKZG4844JNI.verifyBlobKzgProofBatch(
+              blobs, kzgCommitments, kzgProofs, blobsWithCommitments.getBlobs().size());
+      if (!kzgVerification) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_BLOBS,
+            "transaction blobs kzg proof verification failed");
+      }
     }
 
+    if (blobsWithCommitments.getVersionId() == KZG_WITH_CELL_PROOFS) {
+      final byte[] kzgCellProofs =
+          Bytes.wrap(
+                  blobsWithCommitments.getKzgCellProofs().stream()
+                      .map(kp -> (Bytes) kp.getData())
+                      .toList())
+              .toArrayUnsafe();
+
+      final byte[] commitments = extendArray(kzgCommitments, CELL_PROOFS_PER_BLOB);
+
+      long[] cellIndices = new long[kzgCellProofs.length];
+      byte[] cells = new byte[kzgCellProofs.length];
+      int currentIndex = 0;
+
+      for (Blob blob : blobsWithCommitments.getBlobs()) {
+        byte[] cellsArray = CKZG4844JNI.computeCells(blob.getData().toArray());
+        if (cellsArray == null) {
+          return ValidationResult.invalid(
+              TransactionInvalidReason.INVALID_BLOBS, "error computing cells for blob");
+        }
+        for (int index = 0; index < cellsArray.length; index++) {
+          cells[currentIndex] = cellsArray[index];
+          cellIndices[currentIndex] = index;
+          currentIndex++;
+        }
+      }
+      final boolean kzgVerification =
+          CKZG4844JNI.verifyCellKzgProofBatch(commitments, cellIndices, cells, kzgCellProofs);
+      if (!kzgVerification) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_BLOBS,
+            "transaction blobs kzg cell proof verification failed");
+      }
+    }
     return ValidationResult.valid();
+  }
+
+  // todo move to a proper class
+  private static byte[] extendArray(byte[] array, int extension) {
+    int newSize = array.length * extension;
+    byte[] extendedArray = new byte[newSize];
+    int index = 0;
+    for (byte element : array) {
+      for (int i = 0; i < extension; i++) {
+        extendedArray[index++] = element;
+      }
+    }
+    return extendedArray;
   }
 
   private VersionedHash hashCommitment(final KZGCommitment commitment) {

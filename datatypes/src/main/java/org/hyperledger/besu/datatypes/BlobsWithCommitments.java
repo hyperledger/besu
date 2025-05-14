@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,49 +22,127 @@ import java.util.Objects;
 /** A class to hold the blobs, commitments, proofs and versioned hashes for a set of blobs. */
 public class BlobsWithCommitments {
 
+  public static final int KZG_WITH_PROOFS = 0;
+  public static final int KZG_WITH_CELL_PROOFS = 1;
+  public static final int CELL_PROOFS_PER_BLOB = 128;
+
   /**
    * A record to hold the blob, commitment, proof and versioned hash for a blob.
    *
+   * @param versionId version id for the sidecar
    * @param blob The blob
    * @param kzgCommitment The commitment
    * @param kzgProof The proof
+   * @param kzgCellProof The cell proof
    * @param versionedHash The versioned hash
    */
   public record BlobQuad(
-      Blob blob, KZGCommitment kzgCommitment, KZGProof kzgProof, VersionedHash versionedHash) {}
+      int versionId,
+      Blob blob,
+      KZGCommitment kzgCommitment,
+      KZGProof kzgProof,
+      KZGProof kzgCellProof,
+      VersionedHash versionedHash) {}
 
   private final List<BlobQuad> blobQuads;
+  private final int versionId;
 
-  /**
-   * A class to hold the blobs, commitments and proofs for a set of blobs.
-   *
-   * @param kzgCommitments commitments for the blobs
-   * @param blobs list of blobs to be committed to
-   * @param kzgProofs proofs for the commitments
-   * @param versionedHashes hashes of the commitments
-   */
   public BlobsWithCommitments(
       final List<KZGCommitment> kzgCommitments,
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
       final List<VersionedHash> versionedHashes) {
+    this(KZG_WITH_PROOFS, kzgCommitments, blobs, kzgProofs, List.of(), versionedHashes);
+  }
+
+  /**
+   * A class to hold the blobs, commitments, proofs, cell proofs, version IDs, and versioned hashes
+   * for a set of blobs.
+   *
+   * @param versionId version id for the sidecar
+   * @param kzgCommitments commitments for the blobs
+   * @param blobs list of blobs to be committed to
+   * @param kzgProofs proofs for the commitments
+   * @param kzgCellProofs cell proofs for the commitments
+   * @param versionedHashes hashes of the commitments
+   */
+  public BlobsWithCommitments(
+      final int versionId,
+      final List<KZGCommitment> kzgCommitments,
+      final List<Blob> blobs,
+      final List<KZGProof> kzgProofs,
+      final List<KZGProof> kzgCellProofs,
+      final List<VersionedHash> versionedHashes) {
     if (blobs.isEmpty()) {
       throw new InvalidParameterException(
           "There needs to be a minimum of one blob in a blob transaction with commitments");
     }
+    switch (versionId) {
+      case KZG_WITH_PROOFS:
+        validateBlobWithCommitmentsV0(
+            kzgCommitments, blobs, kzgProofs, kzgCellProofs, versionedHashes);
+        break;
+      case KZG_WITH_CELL_PROOFS:
+        validateBlobWithCommitmentsV1(
+            kzgCommitments, blobs, kzgProofs, kzgCellProofs, versionedHashes);
+        break;
+      default:
+        throw new InvalidParameterException("Invalid kzg version");
+    }
+
+    List<BlobQuad> toBuild = new ArrayList<>(blobs.size());
+    for (int i = 0; i < blobs.size(); i++) {
+      toBuild.add(
+          new BlobQuad(
+              versionId,
+              blobs.get(i),
+              kzgCommitments.get(i),
+              kzgProofs.get(i),
+              kzgCellProofs.get(i),
+              versionedHashes.get(i)));
+    }
+    this.blobQuads = toBuild;
+    this.versionId = versionId;
+  }
+
+  private void validateBlobWithCommitmentsV0(
+      final List<KZGCommitment> kzgCommitments,
+      final List<Blob> blobs,
+      final List<KZGProof> kzgProofs,
+      final List<KZGProof> kzgCellProofs,
+      final List<VersionedHash> versionedHashes) {
     if (blobs.size() != kzgCommitments.size()
         || blobs.size() != kzgProofs.size()
         || blobs.size() != versionedHashes.size()) {
       throw new InvalidParameterException(
           "There must be an equal number of blobs, commitments, proofs, and versioned hashes");
     }
-    List<BlobQuad> toBuild = new ArrayList<>(blobs.size());
-    for (int i = 0; i < blobs.size(); i++) {
-      toBuild.add(
-          new BlobQuad(
-              blobs.get(i), kzgCommitments.get(i), kzgProofs.get(i), versionedHashes.get(i)));
+    if (!kzgCellProofs.isEmpty()) {
+      throw new InvalidParameterException("Version 0 does not support cell proofs");
     }
-    this.blobQuads = toBuild;
+  }
+
+  private void validateBlobWithCommitmentsV1(
+      final List<KZGCommitment> kzgCommitments,
+      final List<Blob> blobs,
+      final List<KZGProof> kzgProofs,
+      final List<KZGProof> kzgCellProofs,
+      final List<VersionedHash> versionedHashes) {
+    if (blobs.size() != kzgCommitments.size() || blobs.size() != versionedHashes.size()) {
+      throw new InvalidParameterException(
+          "There must be an equal number of blobs, commitments and versioned hashes");
+    }
+    if (!kzgProofs.isEmpty()) {
+      throw new InvalidParameterException("Version 1 does not support proofs");
+    }
+    int expectedCellProofsTotal = CELL_PROOFS_PER_BLOB * blobs.size();
+    if (kzgCellProofs.size() != expectedCellProofsTotal) {
+      String error =
+          String.format(
+              "Invalid number of cell proofs, expected %s, got %s",
+              expectedCellProofsTotal, kzgCellProofs.size());
+      throw new InvalidParameterException(error);
+    }
   }
 
   /**
@@ -74,6 +152,7 @@ public class BlobsWithCommitments {
    */
   public BlobsWithCommitments(final List<BlobQuad> quads) {
     this.blobQuads = quads;
+    this.versionId = quads.getFirst().versionId;
   }
 
   /**
@@ -104,6 +183,15 @@ public class BlobsWithCommitments {
   }
 
   /**
+   * Get the cell proofs.
+   *
+   * @return the cell proofs
+   */
+  public List<KZGProof> getKzgCellProofs() {
+    return blobQuads.stream().map(BlobQuad::kzgCellProof).toList();
+  }
+
+  /**
    * Get the hashes.
    *
    * @return the hashes
@@ -119,6 +207,10 @@ public class BlobsWithCommitments {
    */
   public List<BlobQuad> getBlobQuads() {
     return blobQuads;
+  }
+
+  public int getVersionId() {
+    return versionId;
   }
 
   @Override
