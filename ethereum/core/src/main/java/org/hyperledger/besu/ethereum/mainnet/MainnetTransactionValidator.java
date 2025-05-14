@@ -507,7 +507,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
   }
 
   // todo move to a proper class
-  private static byte[] extendArray(byte[] array, int extension) {
+  private static byte[] extendArray(final byte[] array, final int extension) {
     int newSize = array.length * extension;
     byte[] extendedArray = new byte[newSize];
     int index = 0;

@@ -72,7 +72,7 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public String getName() {
-    return "engine_getBlobsV1";
+    return "engine_getBlobsV2";
   }
 
   @Override
