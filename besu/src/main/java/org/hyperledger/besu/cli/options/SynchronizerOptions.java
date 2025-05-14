@@ -64,6 +64,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String WORLD_STATE_TASK_CACHE_SIZE_FLAG =
       "--Xsynchronizer-world-state-task-cache-size";
 
+  // Regular (stable) flag
+  private static final String SNAP_SERVER_ENABLED_FLAG = "--snapsync-server-enabled";
+  // Deprecated experimental flag
+  private static final String SNAP_SERVER_ENABLED_EXPERIMENTAL_FLAG = "--Xsnapsync-server-enabled";
+
   private static final String SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG =
       "--Xsnapsync-synchronizer-pivot-block-window-validity";
   private static final String SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG =
@@ -82,8 +87,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request";
-
-  private static final String SNAP_SERVER_ENABLED_FLAG = "--Xsnapsync-server-enabled";
 
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
@@ -298,11 +301,20 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   @CommandLine.Option(
       names = SNAP_SERVER_ENABLED_FLAG,
+      paramLabel = "<Boolean>",
+      arity = "0..1",
+      description = "Enable snap sync server capability (default: ${DEFAULT-VALUE})")
+  private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
+
+  @CommandLine.Option(
+      names = SNAP_SERVER_ENABLED_EXPERIMENTAL_FLAG,
       hidden = true,
       paramLabel = "<Boolean>",
       arity = "0..1",
-      description = "Snap sync server enabled (default: ${DEFAULT-VALUE})")
-  private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
+      description =
+          "Deprecated: Use --snapsync-server-enabled instead. Will be removed in a future release.")
+  private Boolean snapsyncServerEnabledExperimental =
+      SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
 
   @CommandLine.Option(
       names = {CHECKPOINT_POST_MERGE_FLAG},
@@ -462,7 +474,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
-            .isSnapServerEnabled(snapsyncServerEnabled)
+            .isSnapServerEnabled(snapsyncServerEnabled || snapsyncServerEnabledExperimental)
             .isSnapSyncTransactionIndexingEnabled(snapTransactionIndexingEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
