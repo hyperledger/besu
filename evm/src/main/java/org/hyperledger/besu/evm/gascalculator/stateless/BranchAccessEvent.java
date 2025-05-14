@@ -19,8 +19,15 @@ import org.hyperledger.besu.datatypes.Address;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-final class BranchAccessEvent extends AccessEvent<Address> {
+/** The access event corresponding to a branch (stem) access in the stateless trie. */
+public final class BranchAccessEvent extends AccessEvent<Address> {
 
+  /**
+   * The constructor.
+   *
+   * @param key address of the account being accessed.
+   * @param index stateless trie index of the branch being accessed, also called stem hash.
+   */
   public BranchAccessEvent(final Address key, final UInt256 index) {
     super(key, index);
   }
@@ -28,11 +35,6 @@ final class BranchAccessEvent extends AccessEvent<Address> {
   @Override
   public AccessEvent<?> getBranchEvent() {
     return this;
-  }
-
-  @Override
-  public String toShortString() {
-    return String.format("{addr=%s,treeIndex=%s}", key, getIndex().toShortHexString());
   }
 
   @Override

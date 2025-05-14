@@ -344,7 +344,12 @@ public abstract class AbstractIsolationTests {
       final List<Transaction> transactions, final BlockHeader forHeader) {
     return TestBlockCreator.forHeader(
             protocolContext, protocolSchedule, transactionPool, ethScheduler)
-        .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis(), forHeader)
+        .createBlock(
+            Optional.of(transactions),
+            Optional.of(Collections.emptyList()),
+            Optional.of(Collections.emptyList()),
+            System.currentTimeMillis(),
+            forHeader)
         .getBlock();
   }
 

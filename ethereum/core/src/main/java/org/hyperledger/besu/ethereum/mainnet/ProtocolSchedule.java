@@ -35,7 +35,7 @@ public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
             .number(parentBlockHeader.getNumber() + 1)
             .timestamp(timestampForNextBlock)
             .parentHash(parentBlockHeader.getHash())
-            .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+            .blockHeaderFunctions(getByBlockHeader(parentBlockHeader).getBlockHeaderFunctions())
             .buildBlockHeader();
     return getByBlockHeader(nextBlockHeader);
   }
