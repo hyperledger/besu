@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -70,7 +69,6 @@ public class DebugCallTracerResult implements DebugTracerResult {
   private String error;
   private String revertReason;
   private final List<DebugCallTracerResult> calls;
-  private final GasCalculator gasCalculator;
 
   private static final Set<String> CALL_OPCODES =
       Set.of("CALL", "CALLCODE", "DELEGATECALL", "STATICCALL", "CREATE", "CREATE2");
@@ -78,9 +76,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
       Set.of("STOP", "RETURN", "REVERT", "INVALID", "SELFDESTRUCT");
   private static final int EIP_150_DIVISOR = 64;
 
-  public DebugCallTracerResult(
-      final TransactionTrace transactionTrace, final GasCalculator gasCalculator) {
-    this.gasCalculator = gasCalculator;
+  public DebugCallTracerResult(final TransactionTrace transactionTrace) {
     final Transaction tx = transactionTrace.getTransaction();
     final TransactionProcessingResult result = transactionTrace.getResult();
     this.calls = new ArrayList<>();
@@ -127,8 +123,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
       final String to,
       final String value,
       final BigInteger gas,
-      final String input,
-      final GasCalculator gasCalculator) {
+      final String input) {
     this.type = type;
     this.from = from;
     this.to = to;
@@ -136,7 +131,6 @@ public class DebugCallTracerResult implements DebugTracerResult {
     this.gas = gas;
     this.input = input;
     this.calls = new ArrayList<>();
-    this.gasCalculator = gasCalculator;
   }
 
   private void processTraceFrames(final TransactionTrace transactionTrace) {
@@ -167,8 +161,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
                 extractToAddress(frame, opcode),
                 frame.getValue().toShortHexString(),
                 extractGas(frame, opcode),
-                extractInput(frame),
-                gasCalculator);
+                extractInput(frame));
         parent.calls.add(child);
         stack.push(child);
       }

@@ -144,8 +144,8 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                               .thenProcess("executeTransaction", executeTransactionStep)
                               .thenProcessAsyncOrdered(
                                   "debugTraceTransactionStep",
-                                  DebugTraceTransactionStepFactory.create(
-                                      traceOptions.tracerType(), protocolSpec.getGasCalculator()),
+                                  DebugTraceTransactionStepFactory.createAsync(
+                                      traceOptions.tracerType()),
                                   4)
                               .andFinishWith("collect_results", tracesList::add);
 

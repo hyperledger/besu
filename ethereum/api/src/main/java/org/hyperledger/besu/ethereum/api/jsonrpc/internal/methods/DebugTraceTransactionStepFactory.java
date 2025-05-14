@@ -19,47 +19,64 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugCallTrace
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStructLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.debug.TracerType;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+
 /**
  * Factory for creating transaction steps for various tracers.
  *
- * <p>This factory provides a method to create a {@link Function} that processes a {@link
- * TransactionTrace} and returns a {@link CompletableFuture} containing a {@link
- * DebugTraceTransactionResult} with the appropriate tracer result based on the specified {@link
- * TracerType}.
+ * <p>This factory provides methods to create functions that process a {@link TransactionTrace} and
+ * return a {@link DebugTraceTransactionResult} with the appropriate tracer result based on the
+ * specified {@link TracerType}. Both synchronous and asynchronous processing options are available
+ * through the {@code create} and {@code createAsync} methods respectively.
  */
 public class DebugTraceTransactionStepFactory {
 
   /**
    * Creates a function that processes a {@link TransactionTrace} and returns a {@link
-   * CompletableFuture} containing a {@link DebugTraceTransactionResult} with the appropriate tracer
-   * result based on the specified {@link TracerType}.
+   * DebugTraceTransactionResult} with the appropriate tracer result based on the specified {@link
+   * TracerType}.
    *
    * @param tracerType the type of tracer to use for processing the transaction trace
-   * @param gasCalculator the gas calculator to use for the call tracer
    * @return a function that processes a {@link TransactionTrace} and returns a {@link
-   *     CompletableFuture} containing a {@link DebugTraceTransactionResult} with the appropriate
-   *     tracer result
+   *     DebugTraceTransactionResult} with the appropriate tracer result
    */
-  public static Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> create(
-      final TracerType tracerType, final GasCalculator gasCalculator) {
+  public static Function<TransactionTrace, DebugTraceTransactionResult> create(
+      final TracerType tracerType) {
     return switch (tracerType) {
       case DEFAULT_TRACER ->
           transactionTrace -> {
             var result = new DebugStructLoggerTracerResult(transactionTrace);
-            return CompletableFuture.completedFuture(
-                new DebugTraceTransactionResult(transactionTrace, result));
+            return new DebugTraceTransactionResult(transactionTrace, result);
           };
-      case CALL_TRACER, FLAT_CALL_TRACER ->
+      case CALL_TRACER ->
           transactionTrace -> {
-            var result = new DebugCallTracerResult(transactionTrace, gasCalculator);
-            return CompletableFuture.completedFuture(
-                new DebugTraceTransactionResult(transactionTrace, result));
+            var result = new DebugCallTracerResult(transactionTrace);
+            return new DebugTraceTransactionResult(transactionTrace, result);
           };
+      case FLAT_CALL_TRACER ->
+          transactionTrace ->
+              new DebugTraceTransactionResult(transactionTrace, new NotYetImplemented());
     };
+  }
+
+  /**
+   * Creates a function that processes a {@link TransactionTrace} asynchronously and returns a
+   * {@link CompletableFuture} containing a {@link DebugTraceTransactionResult}.
+   */
+  public static Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>>
+      createAsync(final TracerType tracerType) {
+    return transactionTrace ->
+        CompletableFuture.supplyAsync(() -> create(tracerType).apply(transactionTrace));
+  }
+
+  static class NotYetImplemented {
+    @JsonGetter("error")
+    public String getError() {
+      return "Not Yet Implemented";
+    }
   }
 }

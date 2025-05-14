@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -128,8 +127,6 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                               protocolSpec,
                               block);
 
-                      final GasCalculator gasCalculator = protocolSpec.getGasCalculator();
-
                       Pipeline<TransactionTrace> traceBlockPipeline =
                           createPipelineFrom(
                                   "getTransactions",
@@ -141,8 +138,8 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                               .thenProcess("executeTransaction", executeTransactionStep)
                               .thenProcessAsyncOrdered(
                                   "debugTraceTransactionStep",
-                                  DebugTraceTransactionStepFactory.create(
-                                      traceOptions.tracerType(), gasCalculator),
+                                  DebugTraceTransactionStepFactory.createAsync(
+                                      traceOptions.tracerType()),
                                   4)
                               .andFinishWith("collect_results", tracesList::add);
 
