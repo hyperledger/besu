@@ -111,7 +111,11 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     final BlockCreator blockCreator = this.blockCreatorFactory.apply(parentHeader);
     final long timestamp = scheduler.getNextTimestamp(parentHeader).timestampForHeader();
     return blockCreator.createBlock(
-      Optional.of(transactions), Optional.of(ommers), Optional.of(Collections.emptyList()), timestamp, parentHeader);
+        Optional.of(transactions),
+        Optional.of(ommers),
+        Optional.of(Collections.emptyList()),
+        timestamp,
+        parentHeader);
   }
 
   /**

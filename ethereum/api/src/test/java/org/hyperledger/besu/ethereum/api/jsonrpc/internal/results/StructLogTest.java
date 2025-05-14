@@ -74,17 +74,18 @@ public class StructLogTest {
     final AccessEvent<?>[] statelessAccessWitness =
         new LeafAccessEvent[] {
           new LeafAccessEvent(
-            new BranchAccessEvent(Address.fromHexString("0x02"), UInt256.ZERO), UInt256.fromHexString("0x80")),
+              new BranchAccessEvent(Address.fromHexString("0x02"), UInt256.ZERO),
+              UInt256.fromHexString("0x80")),
           new LeafAccessEvent(
               new BranchAccessEvent(Address.fromHexString("0x01"), UInt256.ZERO), UInt256.ZERO),
           new LeafAccessEvent(
-            new BranchAccessEvent(Address.fromHexString("0x02"), UInt256.ZERO), UInt256.ZERO),
+              new BranchAccessEvent(Address.fromHexString("0x02"), UInt256.ZERO), UInt256.ZERO),
           new LeafAccessEvent(
-            new BranchAccessEvent(Address.fromHexString("0x02"), UInt256.ONE), UInt256.ZERO),
+              new BranchAccessEvent(Address.fromHexString("0x02"), UInt256.ONE), UInt256.ZERO),
           new LeafAccessEvent(
-            new BranchAccessEvent(Address.fromHexString("0x01"), UInt256.ZERO), UInt256.ONE),
+              new BranchAccessEvent(Address.fromHexString("0x01"), UInt256.ZERO), UInt256.ONE),
           new LeafAccessEvent(
-            new BranchAccessEvent(Address.fromHexString("0x02"), UInt256.ZERO), UInt256.ONE),
+              new BranchAccessEvent(Address.fromHexString("0x02"), UInt256.ZERO), UInt256.ONE),
         };
 
     // Mock TraceFrame behaviors
@@ -133,19 +134,19 @@ public class StructLogTest {
                 "1", "2233333",
                 "2", "4455667"));
     assertThat(structLog.reason()).isEqualTo("0x1");
-    assertThat(structLog.statelessAccessWitness()).isEqualTo(
-      Map.of(
-        "0x0000000000000000000000000000000000000001",
-        List.of(
-          Map.of("treeIndex", "0x0", "subIndex", "0x0"),
-          Map.of("treeIndex", "0x0", "subIndex", "0x1")),
-        "0x0000000000000000000000000000000000000002",
-        List.of(
-          Map.of("treeIndex", "0x0", "subIndex", "0x0"),
-          Map.of("treeIndex", "0x0", "subIndex", "0x1"),
-          Map.of("treeIndex", "0x0", "subIndex", "0x80"),
-          Map.of("treeIndex", "0x1", "subIndex", "0x0"))
-        ));
+    assertThat(structLog.statelessAccessWitness())
+        .isEqualTo(
+            Map.of(
+                "0x0000000000000000000000000000000000000001",
+                List.of(
+                    Map.of("treeIndex", "0x0", "subIndex", "0x0"),
+                    Map.of("treeIndex", "0x0", "subIndex", "0x1")),
+                "0x0000000000000000000000000000000000000002",
+                List.of(
+                    Map.of("treeIndex", "0x0", "subIndex", "0x0"),
+                    Map.of("treeIndex", "0x0", "subIndex", "0x1"),
+                    Map.of("treeIndex", "0x0", "subIndex", "0x80"),
+                    Map.of("treeIndex", "0x1", "subIndex", "0x0"))));
   }
 
   @Test

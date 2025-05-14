@@ -68,8 +68,11 @@ public class StructLog {
                 a ->
                     Arrays.stream(a).map(bytes -> toCompactHex(bytes, true)).toArray(String[]::new))
             .orElse(null);
-    statelessAccessWitness = traceFrame.getStatelessAccessWitness()
-      .map(StructLog::formatStatelessAccessWitness).orElse(null);
+    statelessAccessWitness =
+        traceFrame
+            .getStatelessAccessWitness()
+            .map(StructLog::formatStatelessAccessWitness)
+            .orElse(null);
     op = traceFrame.getOpcode();
     pc = traceFrame.getPc();
     stack =
@@ -84,20 +87,24 @@ public class StructLog {
     reason = traceFrame.getRevertReason().map(bytes -> toCompactHex(bytes, true)).orElse(null);
   }
 
-  private static Map<String, List<Map<String, String>>> formatStatelessAccessWitness(final List<AccessEvent<?>> accessEvents) {
+  private static Map<String, List<Map<String, String>>> formatStatelessAccessWitness(
+      final List<AccessEvent<?>> accessEvents) {
     final Map<String, List<Map<String, String>>> formattedWitness = new TreeMap<>();
     accessEvents.forEach(
-      accessEvent -> {
-        final String address = Objects.toString(accessEvent.getBranchEvent().getKey());
-        LinkedHashMap<String, String> indices = new LinkedHashMap<>();
-        indices.put("treeIndex", accessEvent.getBranchEvent().getIndex().toQuantityHexString());
-        indices.put("subIndex", accessEvent.getIndex().toQuantityHexString());
-        formattedWitness.computeIfAbsent(address, v -> new ArrayList<>()).add(indices);
-      }
-    );
-    formattedWitness.values().forEach(list -> list.sort(
-      Comparator.comparing((Map<String, String> map) -> map.get("treeIndex")).thenComparing(map -> map.get("subIndex"))
-    ));
+        accessEvent -> {
+          final String address = Objects.toString(accessEvent.getBranchEvent().getKey());
+          LinkedHashMap<String, String> indices = new LinkedHashMap<>();
+          indices.put("treeIndex", accessEvent.getBranchEvent().getIndex().toQuantityHexString());
+          indices.put("subIndex", accessEvent.getIndex().toQuantityHexString());
+          formattedWitness.computeIfAbsent(address, v -> new ArrayList<>()).add(indices);
+        });
+    formattedWitness
+        .values()
+        .forEach(
+            list ->
+                list.sort(
+                    Comparator.comparing((Map<String, String> map) -> map.get("treeIndex"))
+                        .thenComparing(map -> map.get("subIndex"))));
     return formattedWitness;
   }
 

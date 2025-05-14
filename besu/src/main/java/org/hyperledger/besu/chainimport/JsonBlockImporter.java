@@ -164,7 +164,10 @@ public class JsonBlockImporter {
           block.getHash());
     } else {
       throw new IllegalStateException(
-          "Newly created block " + block.getHeader().getNumber() + " failed validation. Reason: " + importResult.getMessage());
+          "Newly created block "
+              + block.getHeader().getNumber()
+              + " failed validation. Reason: "
+              + importResult.getMessage());
     }
   }
 

@@ -182,10 +182,12 @@ public class BlockchainSetupUtil {
         default -> dataStorageConfiguration = DataStorageConfiguration.DEFAULT_CONFIG;
       }
 
-      final GenesisState genesisState = GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule);
+      final GenesisState genesisState =
+          GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule);
       final BlockHeaderFunctions blockHeaderFunctions =
-        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
-      final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock(), blockHeaderFunctions);
+          ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
+      final MutableBlockchain blockchain =
+          createInMemoryBlockchain(genesisState.getBlock(), blockHeaderFunctions);
       WorldStateArchive worldArchive;
       switch (storageFormat) {
         case BONSAI -> worldArchive = createBonsaiInMemoryWorldStateArchive(blockchain);

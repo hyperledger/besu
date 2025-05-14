@@ -141,28 +141,28 @@ tasks.register('generateTestBlockchain') {
         main = 'org.hyperledger.besu.Besu'
         classpath = configurations.testResourceGeneration
         args = [
-                "--logging=ERROR",
-                "--data-path=$dataPath",
-                "--genesis-file=$srcFiles/genesis.json",
-                "blocks",
-                "import",
-                "--format=JSON",
-                "--from=$srcFiles/blocks.json",
-                "--start-time=1438269971"
+          "--logging=ERROR",
+          "--data-path=$dataPath",
+          "--genesis-file=$srcFiles/genesis.json",
+          "blocks",
+          "import",
+          "--format=JSON",
+          "--from=$srcFiles/blocks.json",
+          "--start-time=1438269971"
         ]
       }
       javaexec {
         main = 'org.hyperledger.besu.Besu'
         classpath = configurations.testResourceGeneration
         args = [
-                "--logging=ERROR",
-                "--data-path=$dataPath",
-                "--genesis-file=$srcFiles/genesis.json",
-                "blocks",
-                "export",
-                "--format=RLP",
-                "--start-block=0",
-                "--to=$outputFiles/blocks.bin"
+          "--logging=ERROR",
+          "--data-path=$dataPath",
+          "--genesis-file=$srcFiles/genesis.json",
+          "blocks",
+          "export",
+          "--format=RLP",
+          "--start-block=0",
+          "--to=$outputFiles/blocks.bin"
         ]
       }
     }
@@ -174,30 +174,30 @@ tasks.register('generateTestBlockchain') {
         main = 'org.hyperledger.besu.Besu'
         classpath = configurations.testResourceGeneration
         args = [
-                "--logging=ERROR",
-                "--data-path=$dataPath",
-                "--genesis-file=$srcFiles/genesis-verkle.json",
-                "--data-storage-format=VERKLE",
-                "blocks",
-                "import",
-                "--format=JSON",
-                "--from=$srcFiles/blocks.json",
-                "--start-time=1438269971"
+          "--logging=ERROR",
+          "--data-path=$dataPath",
+          "--genesis-file=$srcFiles/genesis-verkle.json",
+          "--data-storage-format=VERKLE",
+          "blocks",
+          "import",
+          "--format=JSON",
+          "--from=$srcFiles/blocks.json",
+          "--start-time=1438269971"
         ]
       }
       javaexec {
         main = 'org.hyperledger.besu.Besu'
         classpath = configurations.testResourceGeneration
         args = [
-                "--logging=ERROR",
-                "--data-path=$dataPath",
-                "--genesis-file=$srcFiles/genesis-verkle.json",
-                "--data-storage-format=VERKLE",
-                "blocks",
-                "export",
-                "--format=RLP",
-                "--start-block=0",
-                "--to=$outputFiles/blocks-verkle.bin"
+          "--logging=ERROR",
+          "--data-path=$dataPath",
+          "--genesis-file=$srcFiles/genesis-verkle.json",
+          "--data-storage-format=VERKLE",
+          "blocks",
+          "export",
+          "--format=RLP",
+          "--start-block=0",
+          "--to=$outputFiles/blocks-verkle.bin"
         ]
       }
     }

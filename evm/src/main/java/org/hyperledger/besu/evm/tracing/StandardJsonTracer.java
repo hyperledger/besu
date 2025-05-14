@@ -237,12 +237,19 @@ public class StandardJsonTracer implements OperationTracer {
     if (showStatelessAccessWitness) {
       sb.append(",\"statelessAccessWitness\": {");
       sb.append(
-      messageFrame.getAccessWitness().getLeafAccesses().stream().map(
-        accessEvent ->
-          "{\"" + accessEvent.getBranchEvent().getKey() + "\"," +
-          "\"" + accessEvent.getBranchEvent().getIndex().toQuantityHexString() + "\"," +
-          "\"" + accessEvent.getIndex().toQuantityHexString() + "\"}"
-      ).collect(Collectors.joining(",")));
+          messageFrame.getAccessWitness().getLeafAccesses().stream()
+              .map(
+                  accessEvent ->
+                      "{\""
+                          + accessEvent.getBranchEvent().getKey()
+                          + "\","
+                          + "\""
+                          + accessEvent.getBranchEvent().getIndex().toQuantityHexString()
+                          + "\","
+                          + "\""
+                          + accessEvent.getIndex().toQuantityHexString()
+                          + "\"}")
+              .collect(Collectors.joining(",")));
       sb.append("}");
     }
 
