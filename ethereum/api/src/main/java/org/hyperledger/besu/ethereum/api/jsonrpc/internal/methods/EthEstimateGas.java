@@ -58,33 +58,40 @@ public class EthEstimateGas extends AbstractEstimateGas {
       final JsonRpcRequestContext requestContext,
       final CallParameter callParams,
       final ProcessableBlockHeader blockHeader,
-      final TransactionSimulationFunction simulationFunction) {
+      final TransactionSimulationFunction simulationFunction,
+      final long gasLimitUpperBound) {
 
-    final long gasLimit = blockHeader.getGasLimit();
-    LOG.debug(
-        "Processing transaction with tolerance {}; callParams: {}",
-        estimateGasToleranceRatio,
-        callParams);
-
+    // Optimistic simulation - get min transaction cost from GasCalculator
+    final long minTxCost = getBlockchainQueries().getMinimumTransactionCost(blockHeader);
     if (attemptOptimisticSimulationWithMinimumBlockGasUsed(
-        blockHeader, callParams, simulationFunction, OperationTracer.NO_TRACING)) {
-      // Optimistic simulation - get gas min from GasCalculator
-      final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);
+        callParams, simulationFunction, OperationTracer.NO_TRACING, minTxCost)) {
+      LOG.atDebug()
+          .setMessage("[{}] Optimistic simulation with min tx gas cost {} successful")
+          .addArgument(LOG_ID::get)
+          .addArgument(minTxCost)
+          .log();
       return Quantity.create(minTxCost);
     }
 
     final var maybeResult =
         simulationFunction.simulate(
-            overrideGasLimit(callParams, blockHeader.getGasLimit()), OperationTracer.NO_TRACING);
+            overrideGasLimit(callParams, gasLimitUpperBound), OperationTracer.NO_TRACING);
 
     final Optional<JsonRpcErrorResponse> maybeErrorResponse =
         validateSimulationResult(requestContext, maybeResult);
     if (maybeErrorResponse.isPresent()) {
+      LOG.atDebug()
+          .setMessage(
+              "[{}] Simulation with gas limit upper bound {} failed with error response: {}")
+          .addArgument(LOG_ID::get)
+          .addArgument(gasLimitUpperBound)
+          .addArgument(maybeErrorResponse.get()::toString)
+          .log();
       return maybeErrorResponse.get();
     }
 
     final var result = maybeResult.get();
-    long high = gasLimit;
+    long high = gasLimitUpperBound;
     long mid;
 
     long low = result.result().getEstimateGasUsedByTransaction() - 1;
@@ -100,24 +107,49 @@ public class EthEstimateGas extends AbstractEstimateGas {
       low = optimisticGasLimit;
     }
 
+    int iteration = 1;
+
     while (low + 1 < high) {
       // check if we are close enough
-      if (estimateGasToleranceRatio > 0
-          && (double) (high - low) / high < estimateGasToleranceRatio) {
-        break;
+      if (estimateGasToleranceRatio > 0) {
+        double currentRatio = (double) (high - low) / high;
+        if (currentRatio < estimateGasToleranceRatio) {
+          LOG.atTrace()
+              .setMessage("[{}]-[{}] Estimation within tolerance of {}, high {}, low {}, ratio {}")
+              .addArgument(LOG_ID::get)
+              .addArgument(iteration)
+              .addArgument(estimateGasToleranceRatio)
+              .addArgument(high)
+              .addArgument(low)
+              .addArgument(currentRatio)
+              .log();
+          break;
+        }
       }
       mid = (low + high) / 2;
       var binarySearchResult =
           simulationFunction.simulate(
               overrideGasLimit(callParams, mid), OperationTracer.NO_TRACING);
 
+      LOG.atTrace()
+          .setMessage("[{}]-[{}] Simulation with gas limit {}, high {}, low {}, result {}")
+          .addArgument(LOG_ID::get)
+          .addArgument(iteration)
+          .addArgument(mid)
+          .addArgument(high)
+          .addArgument(low)
+          .addArgument(binarySearchResult)
+          .log();
+
       if (binarySearchResult.isEmpty() || !binarySearchResult.get().isSuccessful()) {
         low = mid;
       } else {
         high = mid;
       }
+      ++iteration;
     }
 
+    LOG.atDebug().setMessage("[{}] Returning {}").addArgument(LOG_ID::get).addArgument(high).log();
     return Quantity.create(high);
   }
 
@@ -125,7 +157,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
       final JsonRpcRequestContext requestContext,
       final Optional<TransactionSimulatorResult> maybeResult) {
     if (maybeResult.isEmpty()) {
-      LOG.error("No result after simulating transaction.");
+      LOG.error("[{}] No result after simulating transaction.", LOG_ID.get());
       return Optional.of(
           new JsonRpcErrorResponse(
               requestContext.getRequest().getId(), RpcErrorType.INTERNAL_ERROR));

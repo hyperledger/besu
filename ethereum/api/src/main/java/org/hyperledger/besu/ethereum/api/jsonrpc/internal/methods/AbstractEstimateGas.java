@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonCallParameterUtil.validateAndGetCallParams;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StateOverrideMap;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -42,9 +44,11 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
-
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractEstimateGas.class);
   protected final TransactionSimulator transactionSimulator;
 
   public AbstractEstimateGas(
@@ -67,25 +71,47 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
       final JsonRpcRequestContext requestContext,
       final CallParameter callParams,
       final ProcessableBlockHeader blockHeader,
-      final TransactionSimulationFunction simulationFunction);
+      final TransactionSimulationFunction simulationFunction,
+      final long gasLimitUpperBound);
 
   @Override
   protected Object pendingResult(final JsonRpcRequestContext requestContext) {
     final JsonCallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
+    LOG.atDebug()
+        .setMessage("[{}] Processing on pending block, callParams: {}")
+        .addArgument(LOG_ID::get)
+        .addArgument(jsonCallParameter)
+        .log();
     final var validationParams = getTransactionValidationParams(jsonCallParameter);
     final var maybeStateOverrides = getAddressStateOverrideMap(requestContext);
     final var pendingBlockHeader = transactionSimulator.simulatePendingBlockHeader();
+    final var gasLimitUpperBound =
+        calculateGasLimitUpperBound(
+            jsonCallParameter,
+            pendingBlockHeader.getParentHash(),
+            pendingBlockHeader.getGasLimit());
     final TransactionSimulationFunction simulationFunction =
         (cp, op) ->
             transactionSimulator.processOnPending(
                 cp, maybeStateOverrides, validationParams, op, pendingBlockHeader);
-    return simulate(requestContext, jsonCallParameter, pendingBlockHeader, simulationFunction);
+    return simulate(
+        requestContext,
+        jsonCallParameter,
+        pendingBlockHeader,
+        simulationFunction,
+        gasLimitUpperBound);
   }
 
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext requestContext, final long blockNumber) {
     final JsonCallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
+    LOG.atDebug()
+        .setMessage("[{}] Processing on block {}, callParams: {}")
+        .addArgument(LOG_ID::get)
+        .addArgument(blockNumber)
+        .addArgument(jsonCallParameter)
+        .log();
     final Optional<BlockHeader> maybeBlockHeader = blockHeader(blockNumber);
     final Optional<RpcErrorType> jsonRpcError = validateBlockHeader(maybeBlockHeader);
     if (jsonRpcError.isPresent()) {
@@ -100,11 +126,15 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
       final BlockHeader blockHeader) {
     final var validationParams = getTransactionValidationParams(jsonCallParameter);
     final var maybeStateOverrides = getAddressStateOverrideMap(requestContext);
+    final var gasLimitUpperBound =
+        calculateGasLimitUpperBound(
+            jsonCallParameter, blockHeader.getHash(), blockHeader.getGasLimit());
     final TransactionSimulationFunction simulationFunction =
         (cp, op) ->
             transactionSimulator.process(
                 cp, maybeStateOverrides, validationParams, op, blockHeader);
-    return simulate(requestContext, jsonCallParameter, blockHeader, simulationFunction);
+    return simulate(
+        requestContext, jsonCallParameter, blockHeader, simulationFunction, gasLimitUpperBound);
   }
 
   private Optional<BlockHeader> blockHeader(final long blockNumber) {
@@ -202,13 +232,10 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   }
 
   protected boolean attemptOptimisticSimulationWithMinimumBlockGasUsed(
-      final ProcessableBlockHeader blockHeader,
       final CallParameter callParams,
       final TransactionSimulationFunction simulationFunction,
-      final OperationTracer operationTracer) {
-
-    // Optimistic simulation - get min transaction cost from GasCalculator
-    final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);
+      final OperationTracer operationTracer,
+      final long minTxCost) {
 
     // If the transaction is a plain value transfer, try minTxCost. It is likely to succeed.
     if (callParams.getPayload() == null || (callParams.getPayload().isEmpty())) {
@@ -218,6 +245,50 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
           && maybeSimpleTransferResult.get().isSuccessful();
     }
     return false;
+  }
+
+  protected long calculateGasLimitUpperBound(
+      final JsonCallParameter callParameters, final Hash blockHash, final long maxTxGasLimit) {
+    if (callParameters.getFrom() != null) {
+      final var blockchainQueries = getBlockchainQueries();
+      final var sender = callParameters.getFrom();
+      final var maxGasPrice = calculateTxMaxGasPrice(callParameters);
+      LOG.atTrace()
+          .setMessage("[{}] Calculated max gas price {}")
+          .addArgument(LOG_ID::get)
+          .addArgument(maxGasPrice)
+          .log();
+      if (maxGasPrice != null) {
+        final Wei balance = blockchainQueries.accountBalance(sender, blockHash).orElse(Wei.ZERO);
+        if (balance.greaterThan(Wei.ZERO)) {
+          final var value = callParameters.getValue();
+          final var balanceForGas = value == null ? balance : balance.subtract(value);
+          final var gasLimitForBalance = balanceForGas.divide(maxGasPrice).toUInt256().toLong();
+          if (gasLimitForBalance < maxTxGasLimit) {
+            final var gasLimitUpperBound = gasLimitForBalance;
+            LOG.atDebug()
+                .setMessage(
+                    "[{}] Calculated gasLimitUpperBound {}; gasLimitForBalance {}, balance {}, value {}, balanceForGas {}, maxGasPrice {}, maxTxGasLimit {}")
+                .addArgument(LOG_ID::get)
+                .addArgument(gasLimitUpperBound)
+                .addArgument(gasLimitForBalance)
+                .addArgument(balance::toHumanReadableString)
+                .addArgument(value::toHumanReadableString)
+                .addArgument(balanceForGas::toHumanReadableString)
+                .addArgument(maxGasPrice::toHumanReadableString)
+                .addArgument(maxTxGasLimit)
+                .log();
+            return gasLimitUpperBound;
+          }
+        }
+      }
+    }
+
+    return maxTxGasLimit;
+  }
+
+  private Wei calculateTxMaxGasPrice(final JsonCallParameter callParameters) {
+    return callParameters.getMaxFeePerGas().orElseGet(callParameters::getGasPrice);
   }
 
   protected interface TransactionSimulationFunction {

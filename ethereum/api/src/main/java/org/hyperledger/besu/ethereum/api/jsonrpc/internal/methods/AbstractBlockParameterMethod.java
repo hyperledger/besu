@@ -24,13 +24,19 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
-
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractBlockParameterMethod.class);
+  private static final AtomicLong LOG_SEQUENCE = new AtomicLong();
+  protected static final ThreadLocal<Long> LOG_ID =
+      ThreadLocal.withInitial(() -> LOG_SEQUENCE.getAndIncrement());
   protected final Supplier<BlockchainQueries> blockchainQueriesSupplier;
 
   protected AbstractBlockParameterMethod(final BlockchainQueries blockchainQueries) {
@@ -99,6 +105,12 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    if (LOG.isDebugEnabled()) {
+      // no matter if it overflows, since it is only used to correlate logs for this request,
+      // so we only print callParameters once at the beginning, and we can reference them using
+      // the logId.
+      LOG_ID.set(LOG_SEQUENCE.incrementAndGet());
+    }
     Object response = findResultByParamType(requestContext);
 
     if (response instanceof JsonRpcErrorResponse) {
