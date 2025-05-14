@@ -1,6 +1,8 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.operation.AbstractCallOperation.LEGACY_FAILURE_STACK_ITEM;
+import static org.hyperledger.besu.evm.operation.AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM;
 import static org.hyperledger.besu.evm.operation.AbstractExtCallOperation.EOF1_EXCEPTION_STACK_ITEM;
 import static org.hyperledger.besu.evm.operation.AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM;
 
@@ -31,9 +33,8 @@ public class PayOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    Code callingCode = frame.getCode();
-    if (callingCode.getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
+    if (frame.isStatic()) {
+      return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
 
     final Bytes toAddressBytes = frame.getStackItem(0);
@@ -49,10 +50,6 @@ public class PayOperation extends AbstractOperation {
 
     final boolean accountIsWarm = frame.warmUpAddress(to);
 
-    if (frame.isStatic()) {
-      return new OperationResult(cost(to, hasValue, recipient, accountIsWarm), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    }
-
     final long cost = cost(to, hasValue, recipient, accountIsWarm);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
@@ -60,14 +57,14 @@ public class PayOperation extends AbstractOperation {
 
     if (!hasValue || Objects.equals(frame.getSenderAddress(), to)) {
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(EOF1_SUCCESS_STACK_ITEM);
-      return new OperationResult(cost(to, hasValue, recipient, accountIsWarm), null);
+      frame.pushStackItem(LEGACY_SUCCESS_STACK_ITEM);
+      return new OperationResult(cost, null);
     }
 
     final MutableAccount senderAccount = frame.getWorldUpdater().getSenderAccount(frame);
     if (value.compareTo(senderAccount.getBalance()) > 0) {
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(EOF1_EXCEPTION_STACK_ITEM);
+      frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       return new OperationResult(cost, null);
     }
 
@@ -76,7 +73,7 @@ public class PayOperation extends AbstractOperation {
     recipientAccount.incrementBalance(value);
 
     frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItem(EOF1_SUCCESS_STACK_ITEM);
+    frame.pushStackItem(LEGACY_SUCCESS_STACK_ITEM);
     return new OperationResult(cost, null);
   }
 
@@ -86,14 +83,13 @@ public class PayOperation extends AbstractOperation {
       cost = gasCalculator().callValueTransferGasCost();
     }
     if (accountIsWarm
-      //TODO: what about precompile accounts?
       || gasCalculator().isPrecompile(to)) {
       return clampedAdd(cost, gasCalculator().getWarmStorageReadCost());
     }
 
     cost = clampedAdd(cost, gasCalculator().getColdAccountAccessCost());
 
-    if (recipient == null) {
+    if (recipient == null && hasValue) {
       cost = clampedAdd(cost, gasCalculator().newAccountGasCost());
     }
 
