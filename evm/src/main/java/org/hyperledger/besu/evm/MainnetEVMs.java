@@ -1094,6 +1094,9 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerPragueOperations(registry, gasCalculator, chainID);
+
+    // EIP-5920 PAY opcode
+    registry.put(new PayOperation(gasCalculator));
   }
 
   private static void registerEOFOperations(
@@ -1135,9 +1138,6 @@ public class MainnetEVMs {
     // EIP-7620 EOF Create and Return Contract operation
     registry.put(new EOFCreateOperation(gasCalculator));
     registry.put(new ReturnContractOperation(gasCalculator));
-
-    // EIP-5920 PAY opcode
-    registry.put(new PayOperation(gasCalculator));
   }
 
   /**

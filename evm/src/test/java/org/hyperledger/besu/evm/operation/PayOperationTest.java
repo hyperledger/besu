@@ -1,24 +1,21 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -26,11 +23,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class PayOperationTest {
   private static final Address SENDER_ADDRESS = Address.fromHexString("0xc0ff");
   private static final Address RECIPIENT_ADDRESS = Address.fromHexString("0xc0de");
-  private static final EVM EOF_EVM = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
-  private static final Code LEGACY_CODE =
-    EOF_EVM.getCodeUncached(Bytes.wrap(Bytes.of(PayOperation.OPCODE), RECIPIENT_ADDRESS, Wei.ZERO));
-  private static final Code SIMPLE_EOF =
-    EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
+  private static final EVM EVM_INSTANCE = mock(EVM.class);
 
   private SimpleWorld worldUpdater;
 
@@ -59,7 +52,7 @@ public class PayOperationTest {
         5000,
         100,
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         true),
       Arguments.of(
         "sender == recipient",
@@ -68,7 +61,7 @@ public class PayOperationTest {
         5000,
         100,
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         false),
       Arguments.of(
         "cold address",
@@ -77,16 +70,16 @@ public class PayOperationTest {
         7300,
         2600,
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         false),
       Arguments.of(
-        "cold address - no account",
+        "cold address - no account and zero value",
         SENDER_ADDRESS,
         Address.fromHexString("0x341a2e456a2c23ca9a8c7d765521bcee2188d66a"),
         30000,
-        27600,
+        2600,
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         false));
   }
 
@@ -107,7 +100,6 @@ public class PayOperationTest {
       new TestMessageFrameBuilder()
         .sender(senderAddress)
         .initialGas(initialGas)
-        .code(SIMPLE_EOF)
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(Wei.ZERO)
@@ -118,7 +110,7 @@ public class PayOperationTest {
       frame.warmUpAddress(recipientAddress);
     }
 
-    var result = operation.execute(frame, EOF_EVM);
+    var result = operation.execute(frame, EVM_INSTANCE);
 
     assertThat(result.getGasCost()).isEqualTo(chargedGas);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
@@ -154,7 +146,7 @@ public class PayOperationTest {
         10000,
         9100,
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         Wei.of(1000),
         Wei.of(2000),
         Wei.of(1000),
@@ -168,7 +160,7 @@ public class PayOperationTest {
         40000,
         9100,
         null,
-        AbstractExtCallOperation.EOF1_EXCEPTION_STACK_ITEM,
+        AbstractCallOperation.LEGACY_FAILURE_STACK_ITEM,
         Wei.of(1000),
         Wei.of(500),
         Wei.of(500),
@@ -182,7 +174,7 @@ public class PayOperationTest {
         10000,
         9100,
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         Wei.of(1000),
         Wei.of(2000),
         Wei.of(2000),
@@ -196,7 +188,7 @@ public class PayOperationTest {
         12000,
         11600,
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         Wei.of(1000),
         Wei.of(2000),
         Wei.of(1000),
@@ -210,7 +202,7 @@ public class PayOperationTest {
         40000,
         36600,
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         Wei.of(1000),
         Wei.of(2000),
         Wei.of(1000),
@@ -218,13 +210,13 @@ public class PayOperationTest {
         Wei.of(1000),
         false),
       Arguments.of(
-        "cold address precompile",
+        "precompile address",
         SENDER_ADDRESS,
         Address.fromHexString("0x01"),
         10000,
         9100,
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         Wei.of(1000),
         Wei.of(2000),
         Wei.of(1000),
@@ -255,7 +247,6 @@ public class PayOperationTest {
       new TestMessageFrameBuilder()
         .sender(senderAddress)
         .initialGas(initialGas)
-        .code(SIMPLE_EOF)
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(valueSent)
@@ -273,7 +264,7 @@ public class PayOperationTest {
       recipientAccount.setBalance(initialRecipientBalance);
     }
 
-    var result = operation.execute(frame, EOF_EVM);
+    var result = operation.execute(frame, EVM_INSTANCE);
 
     assertThat(result.getGasCost()).isEqualTo(chargedGas);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
@@ -290,67 +281,62 @@ public class PayOperationTest {
         "no value in static context",
         SENDER_ADDRESS,
         101,
-        100,
+        0,
         ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
         RECIPIENT_ADDRESS,
         Wei.of(0),
         Wei.of(2000),
         Wei.of(2000),
         Wei.of(1000),
-        Wei.of(1000),
-        true),
+        Wei.of(1000)),
       Arguments.of(
         "sender == recipient static context",
         RECIPIENT_ADDRESS,
         10000,
-        9100,
+        0,
         ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
         RECIPIENT_ADDRESS,
         Wei.of(1000),
         Wei.of(2000),
         Wei.of(2000),
         Wei.of(2000),
-        Wei.of(2000),
-        true),
+        Wei.of(2000)),
       Arguments.of(
         "value in static context",
         SENDER_ADDRESS,
         9200,
-        9100,
+        0,
         ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
         RECIPIENT_ADDRESS,
         Wei.of(1000),
         Wei.of(2000),
         Wei.of(2000),
         Wei.of(1000),
+        Wei.of(1000)),
+      Arguments.of(
+        "no value in static context",
+        SENDER_ADDRESS,
+        9200,
+        0,
+        ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
+        RECIPIENT_ADDRESS,
+        Wei.ZERO,
+        Wei.of(2000),
+        Wei.of(2000),
         Wei.of(1000),
-        true),
+        Wei.of(1000)),
       Arguments.of(
         "no gas in static context",
         SENDER_ADDRESS,
         9000,
-        9100,
+        0,
         ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
         RECIPIENT_ADDRESS,
         Wei.of(1),
         Wei.of(2000),
         Wei.of(2000),
         Wei.of(1000),
-        Wei.of(1000),
-        true),
-      Arguments.of(
-        "value in non-static context",
-        SENDER_ADDRESS,
-        9101,
-        9100,
-        null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
-        Wei.of(1000),
-        Wei.of(2000),
-        Wei.of(1000),
-        Wei.of(1000),
-        Wei.of(2000),
-        false));
+        Wei.of(1000)));
   }
 
   @ParameterizedTest
@@ -366,8 +352,7 @@ public class PayOperationTest {
     final Wei initialSenderBalance,
     final Wei senderBalance,
     final Wei initialRecipientBalance,
-    final Wei recipientBalance,
-    final boolean isStatic) {
+    final Wei recipientBalance) {
 
     final PayOperation operation = new PayOperation(new OsakaGasCalculator());
 
@@ -375,23 +360,21 @@ public class PayOperationTest {
       new TestMessageFrameBuilder()
         .sender(senderAddress)
         .initialGas(initialGas)
-        .code(SIMPLE_EOF)
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(valueSent)
         .pushStackItem(RECIPIENT_ADDRESS)
         .worldUpdater(worldUpdater)
-        .isStatic(isStatic)
+        .isStatic(true)
         .build();
 
-    //TODO: add extra cold account case
     frame.warmUpAddress(RECIPIENT_ADDRESS);
     MutableAccount senderAccount = worldUpdater.getAccount(SENDER_ADDRESS);
     senderAccount.setBalance(initialSenderBalance);
     MutableAccount recipientAccount = worldUpdater.getAccount(RECIPIENT_ADDRESS);
     recipientAccount.setBalance(initialRecipientBalance);
 
-    var result = operation.execute(frame, EOF_EVM);
+    var result = operation.execute(frame, EVM_INSTANCE);
 
     assertThat(result.getGasCost()).isEqualTo(chargedGas);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
@@ -408,19 +391,19 @@ public class PayOperationTest {
         "2 byte address",
         Bytes.fromHexString("0xd66a"),
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         36600L),
       Arguments.of(
         "exact 20 byte address",
         Bytes.fromHexString("0x341a2e456a2c23ca9a8c7d765521bcee2188d66a"),
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         36600L),
       Arguments.of(
         "21 byte address with leading zero",
         Bytes.fromHexString("0x00341a2e456a2c23ca9a8c7d765521bcee2188d66a"),
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         36600L),
       Arguments.of(
         "exact 21 bytes address",
@@ -432,7 +415,7 @@ public class PayOperationTest {
         "20 bytes address padded to 32 bytes",
         Bytes.fromHexString("0x341a2e456a2c23ca9a8c7d765521bcee2188d66a", 32),
         null,
-        AbstractExtCallOperation.EOF1_SUCCESS_STACK_ITEM,
+        AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM,
         36600L),
       Arguments.of(
         "22 byte address size padded to 32 bytes",
@@ -456,7 +439,6 @@ public class PayOperationTest {
       new TestMessageFrameBuilder()
         .sender(SENDER_ADDRESS)
         .initialGas(Long.MAX_VALUE)
-        .code(SIMPLE_EOF)
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(Bytes.EMPTY)
         .pushStackItem(Wei.of(1000))
@@ -467,34 +449,11 @@ public class PayOperationTest {
     MutableAccount senderAccount = worldUpdater.getAccount(SENDER_ADDRESS);
     senderAccount.setBalance(Wei.of(2000));
 
-    var result = operation.execute(frame, EOF_EVM);
+    var result = operation.execute(frame, EVM_INSTANCE);
 
     assertThat(result.getGasCost()).isEqualTo(gasCost);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
 
     assertThat(frame.getStackItem(0)).isEqualTo(stackItem);
-  }
-
-  @Test
-  void legacyTest() {
-    final PayOperation operation = new PayOperation(new OsakaGasCalculator());
-
-    final var messageFrame =
-      new TestMessageFrameBuilder()
-        .initialGas(400000)
-        .code(LEGACY_CODE)
-        .pushStackItem(Bytes.EMPTY)
-        .pushStackItem(Bytes.EMPTY)
-        .pushStackItem(Wei.ZERO)
-        .pushStackItem(RECIPIENT_ADDRESS)
-        .worldUpdater(worldUpdater)
-        .build();
-    messageFrame.warmUpAddress(RECIPIENT_ADDRESS);
-    worldUpdater.getAccount(RECIPIENT_ADDRESS).setCode(SIMPLE_EOF.getBytes());
-
-    var result = operation.execute(messageFrame, EOF_EVM);
-
-    assertThat(result.getGasCost()).isZero();
-    assertThat(result.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_OPERATION);
   }
 }
