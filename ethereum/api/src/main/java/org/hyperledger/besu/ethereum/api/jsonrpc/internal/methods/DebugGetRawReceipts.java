@@ -70,7 +70,7 @@ public class DebugGetRawReceipts extends AbstractBlockParameterOrBlockHashMethod
                 RLP.encode(
                         output ->
                             TransactionReceiptEncoder.writeTo(
-                                receipt, output, TransactionReceiptEncodingConfiguration.NETWORK))
+                                receipt, output, TransactionReceiptEncodingConfiguration.DEFAULT))
                     .toHexString())
         .toArray(String[]::new);
   }

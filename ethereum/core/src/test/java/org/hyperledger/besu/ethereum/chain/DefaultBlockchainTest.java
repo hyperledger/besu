@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -1113,5 +1115,84 @@ public class DefaultBlockchainTest {
             0,
             dataDirectory,
             numberOfBlocksToCache);
+  }
+
+  @Test
+  void testGetEarliestBlockNumber() {
+    final long earliestBlockNumber = 3L;
+    final long lastBlockNumber = 5L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(earliestBlockNumber, lastBlockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(earliestBlockNumber);
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWhenNoBlocksExist() {
+    DefaultBlockchain blockchain = mockMutableBlockchain(0L, 0L);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWithSingleBlock() {
+    final long blockNumber = 2L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(blockNumber, blockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(blockNumber);
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWithSingleBlockIsGenesis() {
+    final long blockNumber = 1L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(blockNumber, blockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(BlockHeader.GENESIS_BLOCK_NUMBER);
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWithAllBlocks() {
+    final long earliestBlockNumber = 0L;
+    final long lastBlockNumber = 10L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(earliestBlockNumber, lastBlockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(earliestBlockNumber);
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWithWholeChainIsGenesis() {
+    final long earliestBlockNumber = 1L;
+    final long lastBlockNumber = 10L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(earliestBlockNumber, lastBlockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(BlockHeader.GENESIS_BLOCK_NUMBER);
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWhenChainHeadIsEarliest() {
+    final long blockNumber = 5L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(blockNumber, blockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(blockNumber);
+  }
+
+  private DefaultBlockchain mockMutableBlockchain(
+      final long earliestBlockNumber, final long lastBlockNumber) {
+    DefaultBlockchain blockchain = mock(DefaultBlockchain.class);
+    when(blockchain.getEarliestBlockNumber()).thenCallRealMethod();
+    for (long i = earliestBlockNumber; i <= lastBlockNumber; i++) {
+      Block block = mock(Block.class);
+      BlockHeader blockHeader = mock(BlockHeader.class);
+      when(blockHeader.getNumber()).thenReturn(i);
+      when(block.getHeader()).thenReturn(blockHeader);
+      when(blockchain.getBlockByNumber(i)).thenReturn(Optional.of(block));
+    }
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(lastBlockNumber);
+    return blockchain;
   }
 }

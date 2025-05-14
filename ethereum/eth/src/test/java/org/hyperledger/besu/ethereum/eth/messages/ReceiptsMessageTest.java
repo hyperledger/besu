@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
@@ -27,9 +28,17 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public final class ReceiptsMessageTest {
+  @Test
+  public void testReceiptsMessageEth68() {
+    roundTripTest(TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
+  }
 
   @Test
-  public void roundTripTest() {
+  public void testReceiptsMessageEth69() {
+    roundTripTest(TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION);
+  }
+
+  public void roundTripTest(final TransactionReceiptEncodingConfiguration encodingConfiguration) {
     // Generate some data
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final List<List<TransactionReceipt>> receipts = new ArrayList<>();
@@ -45,7 +54,7 @@ public final class ReceiptsMessageTest {
 
     // Perform round-trip transformation
     // Create specific message, copy it to a generic message, then read back into a specific format
-    final MessageData initialMessage = ReceiptsMessage.create(receipts);
+    final MessageData initialMessage = ReceiptsMessage.create(receipts, encodingConfiguration);
     final MessageData raw = new RawMessage(EthProtocolMessages.RECEIPTS, initialMessage.getData());
     final ReceiptsMessage message = ReceiptsMessage.readFrom(raw);
 

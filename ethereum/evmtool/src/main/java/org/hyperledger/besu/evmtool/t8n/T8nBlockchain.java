@@ -110,6 +110,11 @@ public class T8nBlockchain implements Blockchain {
   }
 
   @Override
+  public Optional<Long> getEarliestBlockNumber() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public long getChainHeadBlockNumber() {
     throw new NonDeterministicOperationException(CHAIN_HEAD_ERROR);
   }

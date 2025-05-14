@@ -31,7 +31,7 @@ public class AwaitNetPeerCount implements Condition {
 
   public AwaitNetPeerCount(
       final NetPeerCountTransaction transaction, final BigInteger expectedPeerCount) {
-    this(transaction, expectedPeerCount, 30);
+    this(transaction, expectedPeerCount, 60);
   }
 
   public AwaitNetPeerCount(

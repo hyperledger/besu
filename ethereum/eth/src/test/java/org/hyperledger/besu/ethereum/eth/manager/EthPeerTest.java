@@ -25,6 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthPeerTestUtil;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
@@ -89,7 +90,9 @@ public class EthPeerTest {
     final ResponseStreamSupplier getStream =
         (peer) -> peer.getReceipts(asList(gen.hash(), gen.hash()));
     final MessageData targetMessage =
-        ReceiptsMessage.create(singletonList(gen.receipts(gen.block())));
+        ReceiptsMessage.create(
+            singletonList(gen.receipts(gen.block())),
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
     final MessageData otherMessage = BlockHeadersMessage.create(asList(gen.header(), gen.header()));
 
     messageStream(getStream, targetMessage, otherMessage);
@@ -233,7 +236,9 @@ public class EthPeerTest {
     final EthMessage otherMessage =
         new EthMessage(
             peer,
-            ReceiptsMessage.create(singletonList(gen.receipts(gen.block())))
+            ReceiptsMessage.create(
+                    singletonList(gen.receipts(gen.block())),
+                    TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION)
                 .wrapMessageData(BigInteger.ONE));
 
     // Set up stream for headers
