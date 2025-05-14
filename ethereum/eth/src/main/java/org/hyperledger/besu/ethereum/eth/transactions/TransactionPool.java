@@ -477,7 +477,9 @@ public class TransactionPool implements BlockAddedObserver {
           TransactionInvalidReason.PLUGIN_TX_POOL_VALIDATOR, maybePluginInvalid.get());
     }
 
-    try (final var worldState =
+    //TODO reactivate before merge
+    return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
+    /*try (final var worldState =
         protocolContext
             .getWorldStateArchive()
             .getWorldState(withBlockHeaderAndNoUpdateNodeHead(chainHeadBlockHeader))
@@ -495,7 +497,7 @@ public class TransactionPool implements BlockAddedObserver {
       return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
     } catch (Exception ex) {
       return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
-    }
+    }*/
   }
 
   private TransactionInvalidReason validatePrice(
@@ -599,6 +601,7 @@ public class TransactionPool implements BlockAddedObserver {
     void onTransactionsAdded(Collection<Transaction> transactions);
   }
 
+  @SuppressWarnings("unused")
   private static class ValidationResultAndAccount {
     final ValidationResult<TransactionInvalidReason> result;
     final Optional<Account> maybeAccount;

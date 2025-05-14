@@ -211,7 +211,7 @@ public class StateTransitionWorldState implements MutableWorldState, PathBasedWo
 
       // Generate pre-images for Bonsai state transition
       // TODO (this should be removed in final version)
-      generatePreImagesForBonsai();
+      //generatePreImagesForBonsai();
 
       // Persist Bonsai world state
       bonsaiWorldState.persist(blockHeader);
@@ -228,6 +228,7 @@ public class StateTransitionWorldState implements MutableWorldState, PathBasedWo
    * hashes. It is currently used for pre-image generation and should be removed in the final
    * version.
    */
+  @SuppressWarnings("unused")
   private void generatePreImagesForBonsai() {
     bonsaiWorldState
         .getAccumulator()

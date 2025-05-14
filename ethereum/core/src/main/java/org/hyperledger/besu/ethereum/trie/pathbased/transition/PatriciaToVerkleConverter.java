@@ -50,7 +50,7 @@ public class PatriciaToVerkleConverter {
 
   private static final Logger LOG = LoggerFactory.getLogger(PatriciaToVerkleConverter.class);
 
-  private static final Map<Bytes, Bytes> PRE_IMAGES = new HashMap<>();
+  private static final Map<Bytes, Bytes> PRE_IMAGES = new ConcurrentHashMap<>();
 
   public static void addPreImage(final Bytes hash, final Bytes key) {
     System.out.println("PREIMAGE " + key + " " + hash);

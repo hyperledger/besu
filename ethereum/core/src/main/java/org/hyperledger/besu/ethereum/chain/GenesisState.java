@@ -113,7 +113,7 @@ public final class GenesisState {
       final DataStorageConfiguration dataStorageConfiguration,
       final GenesisConfig genesisConfig,
       final ProtocolSchedule protocolSchedule) {
-    final var genesisStateRoot = calculateGenesisStateRoot(dataStorageConfiguration, genesisConfig);
+    final var genesisStateRoot = calculateGenesisStateRoot(dataStorageConfiguration, genesisConfig, protocolSchedule);
     final Block block =
         new Block(
             buildHeader(genesisConfig, genesisStateRoot, protocolSchedule),
@@ -178,8 +178,8 @@ public final class GenesisState {
   }
 
   private static Hash calculateGenesisStateRoot(
-      final DataStorageConfiguration dataStorageConfiguration, final GenesisConfig genesisConfig) {
-    try (var worldState = createGenesisWorldState(dataStorageConfiguration)) {
+          final DataStorageConfiguration dataStorageConfiguration, final GenesisConfig genesisConfig, final ProtocolSchedule protocolSchedule) {
+    try (var worldState = createGenesisWorldState(dataStorageConfiguration, protocolSchedule, genesisConfig)) {
       writeAccountsTo(worldState, genesisConfig.streamAllocations(), null);
       return worldState.rootHash();
     } catch (Exception e) {

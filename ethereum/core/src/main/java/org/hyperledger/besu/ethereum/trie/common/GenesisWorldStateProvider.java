@@ -16,7 +16,10 @@ package org.hyperledger.besu.ethereum.trie.common;
 
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 
+import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
@@ -38,6 +41,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @SuppressWarnings("unused")
 public class GenesisWorldStateProvider {
@@ -46,16 +50,23 @@ public class GenesisWorldStateProvider {
    * Creates a Genesis world state based on the provided data storage format.
    *
    * @param dataStorageConfiguration the data storage configuration to use
+   * @param protocolSchedule protocolSchedule
+   * @param genesisConfig genesisConfig
    * @return a mutable world state for the Genesis block
    */
   public static MutableWorldState createGenesisWorldState(
-      final DataStorageConfiguration dataStorageConfiguration) {
+          final DataStorageConfiguration dataStorageConfiguration, final ProtocolSchedule protocolSchedule, final GenesisConfig genesisConfig) {
     if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.BONSAI) {
       return createGenesisBonsaiWorldState();
     } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.VERKLE) {
-      return createGenesisBonsaiWorldState();
+      final boolean isVerkleGenesis = protocolSchedule.milestoneFor(HardforkId.MainnetHardforkId.VERKLE).filter(milestone -> milestone==0 || genesisConfig.getTimestamp()>=milestone).isPresent();
+      if(isVerkleGenesis){
+        return createGenesisVerkleWorldState(dataStorageConfiguration);
+      }else {
+        return createGenesisBonsaiWorldState();
+      }
     } else {
       return createGenesisForestWorldState();
     }

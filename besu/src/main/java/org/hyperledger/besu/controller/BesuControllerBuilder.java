@@ -24,6 +24,7 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
 import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -586,7 +587,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
 
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
-        storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration);
+            createWorldStateStorageCoordinator(dataStorageConfiguration, storageProvider, protocolSchedule, genesisConfig);
+
+
 
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(
@@ -830,6 +833,31 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         dataStorageConfiguration,
         transactionSimulator);
   }
+
+  private WorldStateStorageCoordinator createWorldStateStorageCoordinator(
+          final DataStorageConfiguration dataStorageConfiguration,
+          final StorageProvider storageProvider,
+          final ProtocolSchedule protocolSchedule,
+          final GenesisConfig genesisConfig) {
+
+    final DataStorageFormat format = dataStorageConfiguration.getDataStorageFormat();
+
+    if (format.equals(DataStorageFormat.FOREST) || format.equals(DataStorageFormat.BONSAI)) {
+      return new WorldStateStorageCoordinator(storageProvider.createWorldStateStorage(dataStorageConfiguration));
+    }
+
+    final boolean isVerkleGenesis = protocolSchedule
+            .milestoneFor(HardforkId.MainnetHardforkId.VERKLE)
+            .filter(milestone -> milestone == 0 || genesisConfig.getTimestamp() >= milestone)
+            .isPresent();
+
+    if (isVerkleGenesis) {
+      return new WorldStateStorageCoordinator(storageProvider.createWorldStateStorage(dataStorageConfiguration));
+    }
+
+    return new WorldStateStorageCoordinator(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG));
+  }
+
 
   private GenesisState getGenesisState(
       final Optional<BlockHeader> maybeGenesisBlockHeader,
@@ -1152,7 +1180,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             worldStateHealerSupplier);
       }
       case VERKLE -> {
-        final Long verkleMilestone = 1746628224L;
+        final Long verkleMilestone = 1747212934L;
         if (verkleMilestone == 0) {
           final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
               worldStateStorageCoordinator.getStrategy(VerkleWorldStateKeyValueStorage.class);
@@ -1167,10 +1195,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               evmConfiguration);
         } else {
           final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
-              storageProvider
-                  .createWorldStateStorageCoordinator(
-                      DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
-                  .getStrategy(BonsaiWorldStateKeyValueStorage.class);
+                  worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
 
           final BonsaiWorldStateProvider bonsaiWorldStateProvider =
               new BonsaiWorldStateProvider(
@@ -1185,8 +1210,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                   evmConfiguration,
                   worldStateHealerSupplier);
 
+
           final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
-              worldStateStorageCoordinator.getStrategy(VerkleWorldStateKeyValueStorage.class);
+                  storageProvider
+                          .createWorldStateStorageCoordinator(
+                                  DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG)
+                          .getStrategy(VerkleWorldStateKeyValueStorage.class);
 
           final VerkleWorldStateProvider verkleWorldStateProvider =
               new VerkleWorldStateProvider(

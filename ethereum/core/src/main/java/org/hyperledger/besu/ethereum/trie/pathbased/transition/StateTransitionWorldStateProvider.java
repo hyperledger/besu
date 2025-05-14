@@ -87,7 +87,6 @@ public class StateTransitionWorldStateProvider implements WorldStateArchive {
             .filter(log -> log.getDataStorageFormat() == DataStorageFormat.VERKLE)
             .flatMap(TrieLog::getStateMigrationLog)
             .orElse(new StateMigrationLog(params.getBlockHash(), 5000));
-    System.out.println(migrationLog.getFirstBlockHash());
 
     final BlockHeader bonsaiTarget =
         blockchain.getBlockHeader(migrationLog.getFirstBlockHash()).orElseThrow();
