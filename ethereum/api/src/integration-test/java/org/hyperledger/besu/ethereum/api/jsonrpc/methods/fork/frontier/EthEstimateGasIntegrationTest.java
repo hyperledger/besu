@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.nio.charset.StandardCharsets;
@@ -132,7 +133,7 @@ public class EthEstimateGasIntegrationTest {
   }
 
   @Test
-  public void shouldNotIgnoreSenderBalanceAccountWhenStrictModeDisabledAndThrowError() {
+  public void shouldNotIgnoreSenderBalanceAccountAndThrowError() {
     final CallParameter callParameter =
         ImmutableCallParameter.builder()
             .sender(Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"))
@@ -141,16 +142,11 @@ public class EthEstimateGasIntegrationTest {
             .input(
                 Bytes.fromHexString(
                     "0x608060405234801561001057600080fd5b50610157806100206000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633bdab8bf146100515780639ae97baa14610068575b600080fd5b34801561005d57600080fd5b5061006661007f565b005b34801561007457600080fd5b5061007d6100b9565b005b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60016040518082815260200191505060405180910390a1565b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60026040518082815260200191505060405180910390a17fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60036040518082815260200191505060405180910390a15600a165627a7a7230582010ddaa52e73a98c06dbcd22b234b97206c1d7ed64a7c048e10c2043a3d2309cb0029"))
-            .strict(true)
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter);
-    final ValidationResult<TransactionInvalidReason> validationResult =
-        ValidationResult.invalid(
-            TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-            "transaction up-front cost 0x1cc31b3333167018 exceeds transaction sender account balance 0x140");
-    final JsonRpcError rpcError = JsonRpcError.from(validationResult);
-    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);

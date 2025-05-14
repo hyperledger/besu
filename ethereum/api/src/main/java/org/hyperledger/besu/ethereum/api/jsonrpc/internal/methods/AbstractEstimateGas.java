@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.CallParameterUtil.validateAndGetCallParams;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StateOverrideMap;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -45,7 +47,6 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
-
   protected final TransactionSimulator transactionSimulator;
 
   public AbstractEstimateGas(
@@ -68,7 +69,9 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
       final JsonRpcRequestContext requestContext,
       final CallParameter callParams,
       final ProcessableBlockHeader blockHeader,
-      final TransactionSimulationFunction simulationFunction);
+      final TransactionSimulationFunction simulationFunction,
+      final long gasLimitUpperBound,
+      final long minTxCost);
 
   @Override
   protected Object pendingResult(final JsonRpcRequestContext requestContext) {
@@ -76,11 +79,26 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final var validationParams = getTransactionValidationParams(callParameter);
     final var maybeStateOverrides = getAddressStateOverrideMap(requestContext);
     final var pendingBlockHeader = transactionSimulator.simulatePendingBlockHeader();
+    final var minTxCost = getBlockchainQueries().getMinimumTransactionCost(pendingBlockHeader);
+    final var gasLimitUpperBound =
+        calculateGasLimitUpperBound(
+            jsonCallParameter,
+            pendingBlockHeader.getParentHash(),
+            pendingBlockHeader.getGasLimit());
+    if (gasLimitUpperBound < minTxCost) {
+      return errorResponse(requestContext, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+    }
     final TransactionSimulationFunction simulationFunction =
         (cp, op) ->
             transactionSimulator.processOnPending(
                 cp, maybeStateOverrides, validationParams, op, pendingBlockHeader);
-    return simulate(requestContext, callParameter, pendingBlockHeader, simulationFunction);
+    return simulate(
+        requestContext,
+        callParameter,
+        pendingBlockHeader,
+        simulationFunction,
+        gasLimitUpperBound,
+        minTxCost);
   }
 
   @Override
@@ -101,11 +119,24 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
       final BlockHeader blockHeader) {
     final var validationParams = getTransactionValidationParams(callParameter);
     final var maybeStateOverrides = getAddressStateOverrideMap(requestContext);
+    final var minTxCost = getBlockchainQueries().getMinimumTransactionCost(blockHeader);
+    final var gasLimitUpperBound =
+        calculateGasLimitUpperBound(
+            jsonCallParameter, blockHeader.getHash(), blockHeader.getGasLimit());
+    if (gasLimitUpperBound < minTxCost) {
+      return errorResponse(requestContext, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+    }
     final TransactionSimulationFunction simulationFunction =
         (cp, op) ->
             transactionSimulator.process(
                 cp, maybeStateOverrides, validationParams, op, blockHeader);
-    return simulate(requestContext, callParameter, blockHeader, simulationFunction);
+    return simulate(
+        requestContext,
+        callParameter,
+        blockHeader,
+        simulationFunction,
+        gasLimitUpperBound,
+        minTxCost);
   }
 
   private Optional<BlockHeader> blockHeader(final long blockNumber) {
@@ -190,13 +221,10 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   }
 
   protected boolean attemptOptimisticSimulationWithMinimumBlockGasUsed(
-      final ProcessableBlockHeader blockHeader,
+      final long minTxCost,
       final CallParameter callParams,
       final TransactionSimulationFunction simulationFunction,
       final OperationTracer operationTracer) {
-
-    // Optimistic simulation - get min transaction cost from GasCalculator
-    final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);
 
     // If the transaction is a plain value transfer, try minTxCost. It is likely to succeed.
     if (callParams.getPayload().isEmpty() || callParams.getPayload().get().equals(Bytes.EMPTY)) {
@@ -206,6 +234,34 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
           && maybeSimpleTransferResult.get().isSuccessful();
     }
     return false;
+  }
+
+  private long calculateGasLimitUpperBound(
+      final JsonCallParameter callParameters, final Hash blockHash, final long maxTxGasLimit) {
+    if (callParameters.getFrom() != null && callParameters.isMaybeStrict().orElse(Boolean.TRUE)) {
+      final var blockchainQueries = getBlockchainQueries();
+      final var sender = callParameters.getFrom();
+      final var maxGasPrice = calculateTxMaxGasPrice(callParameters);
+      if (maxGasPrice != null) {
+        final var maybeBalance = blockchainQueries.accountBalance(sender, blockHash);
+        if (maybeBalance.isEmpty() || maybeBalance.get().equals(Wei.ZERO)) {
+          return 0;
+        }
+        final var balance = maybeBalance.get();
+        final var value = callParameters.getValue();
+        final var balanceForGas = value == null ? balance : balance.subtract(value);
+        final var gasLimitForBalance = balanceForGas.divide(maxGasPrice);
+        return gasLimitForBalance.fitsLong()
+            ? Math.min(gasLimitForBalance.toLong(), maxTxGasLimit)
+            : maxTxGasLimit;
+      }
+    }
+
+    return maxTxGasLimit;
+  }
+
+  private Wei calculateTxMaxGasPrice(final JsonCallParameter callParameters) {
+    return callParameters.getMaxFeePerGas().orElseGet(callParameters::getGasPrice);
   }
 
   protected interface TransactionSimulationFunction {
