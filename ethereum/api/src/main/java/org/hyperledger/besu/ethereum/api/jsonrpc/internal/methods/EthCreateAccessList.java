@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CreateAccessLi
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.tracing.AccessListOperationTracer;
@@ -125,17 +126,12 @@ public class EthCreateAccessList extends AbstractEstimateGas {
       final CallParameter callParams,
       final long gasLimit,
       final List<AccessListEntry> accessListEntries) {
-    return new CallParameter(
-        callParams.getFrom(),
-        callParams.getTo(),
-        gasLimit,
-        callParams.getGasPrice(),
-        callParams.getMaxPriorityFeePerGas(),
-        callParams.getMaxFeePerGas(),
-        callParams.getValue(),
-        callParams.getPayload(),
-        Optional.of(accessListEntries),
-        callParams.getNonce());
+
+    return ImmutableCallParameter.builder()
+        .from(callParams)
+        .gasLimit(gasLimit)
+        .accessList(accessListEntries)
+        .build();
   }
 
   private record AccessListSimulatorResult(

@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.account.TransactionPermissioningProvider;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -115,9 +116,11 @@ public class TransactionSmartContractPermissioningController
     LOG.trace("Account permissioning - Smart Contract : Checking transaction {}", transactionHash);
 
     this.checkCounter.inc();
-    final Bytes payload = createPayload(transaction);
     final CallParameter callParams =
-        new CallParameter(null, contractAddress, -1, null, null, payload);
+        ImmutableCallParameter.builder()
+            .to(contractAddress)
+            .payload(createPayload(transaction))
+            .build();
 
     final Optional<Boolean> contractExists =
         transactionSimulator.doesAddressExistAtHead(contractAddress);

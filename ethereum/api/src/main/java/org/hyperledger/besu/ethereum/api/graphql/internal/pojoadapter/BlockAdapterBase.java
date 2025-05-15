@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -347,17 +348,16 @@ public class BlockAdapterBase extends AdapterBase {
       valueParam = Wei.of(value);
     }
     final CallParameter param =
-        new CallParameter(
-            from,
-            to,
-            gasParam,
-            gasPriceParam,
-            maxPriorityFeePerGas,
-            maxFeePerGas,
-            valueParam,
-            data,
-            Optional.empty(),
-            Optional.empty());
+        ImmutableCallParameter.builder()
+            .sender(from)
+            .to(to)
+            .gasLimit(gasParam)
+            .gasPrice(gasPriceParam)
+            .maxPriorityFeePerGas(maxPriorityFeePerGas)
+            .maxFeePerGas(maxFeePerGas)
+            .value(valueParam)
+            .payload(data)
+            .build();
 
     return transactionSimulator.process(
         param,

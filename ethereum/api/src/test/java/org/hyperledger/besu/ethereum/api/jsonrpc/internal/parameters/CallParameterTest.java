@@ -17,13 +17,15 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-public class JsonCallParameterTest {
+public class CallParameterTest {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -36,7 +38,7 @@ public class JsonCallParameterTest {
         }
         """;
 
-    final JsonCallParameter callParameter = objectMapper.readValue(json, JsonCallParameter.class);
+    final CallParameter callParameter = objectMapper.readValue(json, CallParameter.class);
 
     assertThat(callParameter.getGasLimit()).isEqualTo(Long.MAX_VALUE);
   }
@@ -50,7 +52,7 @@ public class JsonCallParameterTest {
         }
         """;
 
-    final JsonCallParameter callParameter = objectMapper.readValue(json, JsonCallParameter.class);
+    final CallParameter callParameter = objectMapper.readValue(json, CallParameter.class);
 
     assertThat(callParameter.getPayload()).isEqualTo(Bytes.fromHexString("0x1234"));
   }
@@ -64,7 +66,7 @@ public class JsonCallParameterTest {
             }
             """;
 
-    final JsonCallParameter callParameter = objectMapper.readValue(json, JsonCallParameter.class);
+    final CallParameter callParameter = objectMapper.readValue(json, CallParameter.class);
 
     assertThat(callParameter.getPayload()).isEqualTo(Bytes.fromHexString("0x1234"));
   }
@@ -79,7 +81,7 @@ public class JsonCallParameterTest {
             }
             """;
 
-    final JsonCallParameter callParameter = objectMapper.readValue(json, JsonCallParameter.class);
+    final CallParameter callParameter = objectMapper.readValue(json, CallParameter.class);
 
     assertThat(callParameter.getPayload()).isEqualTo(Bytes.fromHexString("0x1234"));
   }
@@ -95,7 +97,7 @@ public class JsonCallParameterTest {
             """;
 
     assertThatExceptionOfType(JsonMappingException.class)
-        .isThrownBy(() -> objectMapper.readValue(json, JsonCallParameter.class))
+        .isThrownBy(() -> objectMapper.readValue(json, CallParameter.class))
         .withMessageContaining("problem: Only one of 'input' or 'data' should be provided");
   }
 
@@ -111,7 +113,7 @@ public class JsonCallParameterTest {
             }
             """;
 
-    final JsonCallParameter callParameter = objectMapper.readValue(json, JsonCallParameter.class);
+    final CallParameter callParameter = objectMapper.readValue(json, CallParameter.class);
 
     assertThat(callParameter.getGasLimit()).isEqualTo(150);
   }

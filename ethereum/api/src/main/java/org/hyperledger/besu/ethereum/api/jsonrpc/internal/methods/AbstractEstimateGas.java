@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonCallParameterUtil.validateAndGetCallParams;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.CallParameterUtil.validateAndGetCallParams;
 
 import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -34,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -71,21 +71,21 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
 
   @Override
   protected Object pendingResult(final JsonRpcRequestContext requestContext) {
-    final JsonCallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
-    final var validationParams = getTransactionValidationParams(jsonCallParameter);
+    final CallParameter callParameter = validateAndGetCallParams(requestContext);
+    final var validationParams = getTransactionValidationParams(callParameter);
     final var maybeStateOverrides = getAddressStateOverrideMap(requestContext);
     final var pendingBlockHeader = transactionSimulator.simulatePendingBlockHeader();
     final TransactionSimulationFunction simulationFunction =
         (cp, op) ->
             transactionSimulator.processOnPending(
                 cp, maybeStateOverrides, validationParams, op, pendingBlockHeader);
-    return simulate(requestContext, jsonCallParameter, pendingBlockHeader, simulationFunction);
+    return simulate(requestContext, callParameter, pendingBlockHeader, simulationFunction);
   }
 
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext requestContext, final long blockNumber) {
-    final JsonCallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
+    final CallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
     final Optional<BlockHeader> maybeBlockHeader = blockHeader(blockNumber);
     final Optional<RpcErrorType> jsonRpcError = validateBlockHeader(maybeBlockHeader);
     if (jsonRpcError.isPresent()) {
@@ -96,15 +96,15 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
 
   private Object resultByBlockHeader(
       final JsonRpcRequestContext requestContext,
-      final JsonCallParameter jsonCallParameter,
+      final CallParameter callParameter,
       final BlockHeader blockHeader) {
-    final var validationParams = getTransactionValidationParams(jsonCallParameter);
+    final var validationParams = getTransactionValidationParams(callParameter);
     final var maybeStateOverrides = getAddressStateOverrideMap(requestContext);
     final TransactionSimulationFunction simulationFunction =
         (cp, op) ->
             transactionSimulator.process(
                 cp, maybeStateOverrides, validationParams, op, blockHeader);
-    return simulate(requestContext, jsonCallParameter, blockHeader, simulationFunction);
+    return simulate(requestContext, callParameter, blockHeader, simulationFunction);
   }
 
   private Optional<BlockHeader> blockHeader(final long blockNumber) {
@@ -130,20 +130,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   }
 
   protected CallParameter overrideGasLimit(final CallParameter callParams, final long gasLimit) {
-    return new CallParameter(
-        callParams.getChainId(),
-        callParams.getFrom(),
-        callParams.getTo(),
-        gasLimit,
-        callParams.getGasPrice(),
-        callParams.getMaxPriorityFeePerGas(),
-        callParams.getMaxFeePerGas(),
-        callParams.getValue(),
-        callParams.getPayload(),
-        callParams.getAccessList(),
-        callParams.getMaxFeePerBlobGas(),
-        callParams.getBlobVersionedHashes(),
-        callParams.getNonce());
+    return ImmutableCallParameter.builder().from(callParams).gasLimit(gasLimit).build();
   }
 
   protected JsonRpcErrorResponse errorResponse(
@@ -182,8 +169,8 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   }
 
   protected static TransactionValidationParams getTransactionValidationParams(
-      final JsonCallParameter callParams) {
-    final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
+      final CallParameter callParams) {
+    final boolean isAllowExceedingBalance = !callParams.getStrict().orElse(Boolean.FALSE);
 
     return isAllowExceedingBalance
         ? TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce()

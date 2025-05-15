@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -331,8 +332,14 @@ public class FlexiblePrivacyController extends AbstractRestrictedPrivacyControll
   }
 
   CallParameter buildCallParams(final Bytes methodCall) {
-    return new CallParameter(
-        Address.ZERO, FLEXIBLE_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
+    return ImmutableCallParameter.builder()
+        .sender(Address.ZERO)
+        .to(FLEXIBLE_PRIVACY_PROXY)
+        .gasLimit(3000000)
+        .gasPrice(Wei.of(1000))
+        .value(Wei.ZERO)
+        .payload(methodCall)
+        .build();
   }
 
   ReceiveResponse retrieveTransaction(final String enclaveKey, final String privacyUserId) {

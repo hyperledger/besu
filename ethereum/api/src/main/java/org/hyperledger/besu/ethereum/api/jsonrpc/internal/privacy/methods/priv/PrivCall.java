@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -31,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 @Deprecated(since = "24.12.0")
@@ -66,7 +66,7 @@ public class PrivCall extends AbstractBlockParameterMethod {
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
-    final JsonCallParameter callParams = validateAndGetCallParams(request);
+    final CallParameter callParams = validateAndGetCallParams(request);
     final String privacyGroupId;
     try {
       privacyGroupId = request.getRequiredParameter(0, String.class);
@@ -113,10 +113,10 @@ public class PrivCall extends AbstractBlockParameterMethod {
     return new JsonRpcError(JsonRpcErrorConverter.convertTransactionInvalidReason(reason));
   }
 
-  private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
-    final JsonCallParameter callParams;
+  private CallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
+    final CallParameter callParams;
     try {
-      callParams = request.getRequiredParameter(1, JsonCallParameter.class);
+      callParams = request.getRequiredParameter(1, CallParameter.class);
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid call parameters (index 1)", RpcErrorType.INVALID_CALL_PARAMS);

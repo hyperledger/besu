@@ -16,24 +16,24 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JsonCallParameterUtil {
-  private static final Logger LOG = LoggerFactory.getLogger(JsonCallParameterUtil.class);
+public class CallParameterUtil {
+  private static final Logger LOG = LoggerFactory.getLogger(CallParameterUtil.class);
 
-  private JsonCallParameterUtil() {}
+  private CallParameterUtil() {}
 
-  public static JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
-    final JsonCallParameter callParams;
+  public static CallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
+    final CallParameter callParams;
     try {
-      callParams = request.getRequiredParameter(0, JsonCallParameter.class);
+      callParams = request.getRequiredParameter(0, CallParameter.class);
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid call parameters (index 0)", RpcErrorType.INVALID_CALL_PARAMS);

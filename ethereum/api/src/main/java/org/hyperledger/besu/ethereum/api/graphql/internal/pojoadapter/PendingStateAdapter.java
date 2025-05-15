@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
@@ -160,7 +161,14 @@ public class PendingStateAdapter extends AdapterBase {
       valueParam = Wei.of(value);
     }
     final CallParameter param =
-        new CallParameter(from, to, gasParam, gasPriceParam, valueParam, data);
+        ImmutableCallParameter.builder()
+            .sender(from)
+            .to(to)
+            .gasLimit(gasParam)
+            .gasPrice(gasPriceParam)
+            .value(valueParam)
+            .payload(data)
+            .build();
 
     return transactionSimulator.process(
         param,
