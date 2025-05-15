@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Arrays;
@@ -93,23 +93,24 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST);
     }
 
-    final List<BlobAndProofV1> result = getBlobV1Result(versionedHashes);
+    final List<BlobAndProofV2> result = getBlobV2Result(versionedHashes);
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
-  private @Nonnull List<BlobAndProofV1> getBlobV1Result(final VersionedHash[] versionedHashes) {
+  private @Nonnull List<BlobAndProofV2> getBlobV2Result(final VersionedHash[] versionedHashes) {
     return Arrays.stream(versionedHashes)
         .map(transactionPool::getBlobQuad)
-        .map(this::getBlobAndProofV1)
+        .map(this::getBlobAndProofV2)
         .toList();
   }
 
-  private @Nullable BlobAndProofV1 getBlobAndProofV1(final BlobsWithCommitments.BlobQuad bq) {
+  private @Nullable BlobAndProofV2 getBlobAndProofV2(final BlobsWithCommitments.BlobQuad bq) {
     if (bq == null) {
       return null;
     }
-    return new BlobAndProofV1(
-        bq.blob().getData().toHexString(), bq.kzgProof().getData().toHexString());
+    return new BlobAndProofV2(
+        bq.blob().getData().toHexString(),
+        bq.kzgCellProof().stream().map(p -> p.getData().toHexString()).toList());
   }
 }

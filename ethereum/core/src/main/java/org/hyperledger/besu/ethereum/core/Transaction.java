@@ -1246,9 +1246,18 @@ public class Transaction
         blobsWithCommitments.getKzgProofs().stream()
             .map(proof -> new KZGProof(proof.getData().copy()))
             .toList();
+    final var detachedCellProofs =
+        blobsWithCommitments.getKzgCellProofs().stream()
+            .map(proof -> new KZGProof(proof.getData().copy()))
+            .toList();
 
     return new BlobsWithCommitments(
-        detachedCommitments, detachedBlobs, detachedProofs, versionedHashes);
+        blobsWithCommitments.getVersionId(),
+        detachedCommitments,
+        detachedBlobs,
+        detachedProofs,
+        detachedCellProofs,
+        versionedHashes);
   }
 
   public static class Builder {

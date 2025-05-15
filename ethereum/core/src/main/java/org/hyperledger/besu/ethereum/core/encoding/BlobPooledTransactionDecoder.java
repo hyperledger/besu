@@ -45,27 +45,27 @@ public class BlobPooledTransactionDecoder {
    * @return the decoded transaction
    */
   public static Transaction decode(final RLPInput input) {
-    input.enterList();
-    int versionId = 0;
-    final Transaction.Builder builder = Transaction.builder();
-    BlobTransactionDecoder.readTransactionPayloadInner(builder, input);
+      input.enterList();
+      int versionId = 0;
+      final Transaction.Builder builder = Transaction.builder();
+      BlobTransactionDecoder.readTransactionPayloadInner(builder, input);
 
-    boolean hasVersionId = !input.nextIsList();
-    if (hasVersionId) {
-      versionId = input.readIntScalar();
-    }
-    List<Blob> blobs = input.readList(Blob::readFrom);
-    List<KZGCommitment> commitments = input.readList(KZGCommitment::readFrom);
+      boolean hasVersionId = !input.nextIsList();
+      if (hasVersionId) {
+        versionId = input.readIntScalar();
+      }
+      List<Blob> blobs = input.readList(Blob::readFrom);
+      List<KZGCommitment> commitments = input.readList(KZGCommitment::readFrom);
 
-    List<KZGProof> proofs = new ArrayList<>();
-    if (versionId == KZG_WITH_PROOFS) {
-      proofs = input.readList(KZGProof::readFrom);
-    }
-    List<KZGProof> cellProofs = new ArrayList<>();
-    if (versionId == KZG_WITH_CELL_PROOFS) {
-      cellProofs = input.readList(KZGProof::readFrom);
-    }
-    input.leaveList();
-    return builder.kzgBlobs(versionId, commitments, blobs, proofs, cellProofs).build();
+      List<KZGProof> proofs = new ArrayList<>();
+      if (versionId == KZG_WITH_PROOFS) {
+        proofs = input.readList(KZGProof::readFrom);
+      }
+      List<KZGProof> cellProofs = new ArrayList<>();
+      if (versionId == KZG_WITH_CELL_PROOFS) {
+        cellProofs = input.readList(KZGProof::readFrom);
+      }
+      input.leaveList();
+      return builder.kzgBlobs(versionId, commitments, blobs, proofs, cellProofs).build();
   }
 }

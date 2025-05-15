@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes48;
+
 /** A class to hold the blobs, commitments, proofs and versioned hashes for a set of blobs. */
 public class BlobsWithCommitments {
 
@@ -41,7 +44,7 @@ public class BlobsWithCommitments {
       Blob blob,
       KZGCommitment kzgCommitment,
       KZGProof kzgProof,
-      KZGProof kzgCellProof,
+      List<KZGProof> kzgCellProof,
       VersionedHash versionedHash) {}
 
   private final List<BlobQuad> blobQuads;
@@ -77,32 +80,47 @@ public class BlobsWithCommitments {
       throw new InvalidParameterException(
           "There needs to be a minimum of one blob in a blob transaction with commitments");
     }
+    List<BlobQuad> toBuild = new ArrayList<>(blobs.size());
     switch (versionId) {
       case KZG_WITH_PROOFS:
         validateBlobWithCommitmentsV0(
             kzgCommitments, blobs, kzgProofs, kzgCellProofs, versionedHashes);
+        // todo improve this constructor
+        for (int i = 0; i < blobs.size(); i++) {
+          toBuild.add(
+              new BlobQuad(
+                  versionId,
+                  blobs.get(i),
+                  kzgCommitments.get(i),
+                  kzgProofs.get(i),
+                  List.of(),
+                  versionedHashes.get(i)));
+        }
         break;
       case KZG_WITH_CELL_PROOFS:
         validateBlobWithCommitmentsV1(
-            kzgCommitments, blobs, kzgProofs, kzgCellProofs, versionedHashes);
+            kzgCommitments, blobs, kzgCellProofs, versionedHashes);
+        for (int i = 0; i < blobs.size(); i++) {
+          // todo improve this constructor
+          toBuild.add(
+              new BlobQuad(
+                  versionId,
+                  blobs.get(i),
+                  kzgCommitments.get(i),
+                  new KZGProof(Bytes48.leftPad(Bytes.EMPTY)),
+                  extractCellProofs(kzgCellProofs, i),
+                  versionedHashes.get(i)));
+        }
         break;
       default:
         throw new InvalidParameterException("Invalid kzg version");
     }
-
-    List<BlobQuad> toBuild = new ArrayList<>(blobs.size());
-    for (int i = 0; i < blobs.size(); i++) {
-      toBuild.add(
-          new BlobQuad(
-              versionId,
-              blobs.get(i),
-              kzgCommitments.get(i),
-              kzgProofs.get(i),
-              kzgCellProofs.get(i),
-              versionedHashes.get(i)));
-    }
     this.blobQuads = toBuild;
     this.versionId = versionId;
+  }
+
+  private static List<KZGProof> extractCellProofs(final List<KZGProof> proofList, final int index) {
+    return proofList.subList(index * CELL_PROOFS_PER_BLOB, (index + 1) * CELL_PROOFS_PER_BLOB);
   }
 
   private void validateBlobWithCommitmentsV0(
@@ -125,15 +143,11 @@ public class BlobsWithCommitments {
   private void validateBlobWithCommitmentsV1(
       final List<KZGCommitment> kzgCommitments,
       final List<Blob> blobs,
-      final List<KZGProof> kzgProofs,
       final List<KZGProof> kzgCellProofs,
       final List<VersionedHash> versionedHashes) {
     if (blobs.size() != kzgCommitments.size() || blobs.size() != versionedHashes.size()) {
       throw new InvalidParameterException(
           "There must be an equal number of blobs, commitments and versioned hashes");
-    }
-    if (!kzgProofs.isEmpty()) {
-      throw new InvalidParameterException("Version 1 does not support proofs");
     }
     int expectedCellProofsTotal = CELL_PROOFS_PER_BLOB * blobs.size();
     if (kzgCellProofs.size() != expectedCellProofsTotal) {
@@ -188,7 +202,7 @@ public class BlobsWithCommitments {
    * @return the cell proofs
    */
   public List<KZGProof> getKzgCellProofs() {
-    return blobQuads.stream().map(BlobQuad::kzgCellProof).toList();
+    return blobQuads.stream().flatMap(blobQuad -> blobQuad.kzgCellProof().stream()).toList();
   }
 
   /**

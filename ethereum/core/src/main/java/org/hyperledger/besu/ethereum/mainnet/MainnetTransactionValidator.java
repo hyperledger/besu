@@ -39,6 +39,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -55,7 +56,6 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
  * {@link Transaction}.
  */
 public class MainnetTransactionValidator implements TransactionValidator {
-
   public static final BigInteger TWO_POW_256 = BigInteger.TWO.pow(256);
 
   private final GasCalculator gasCalculator;
@@ -67,6 +67,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
   private final Optional<BigInteger> chainId;
 
   private final Set<TransactionType> acceptedTransactionTypes;
+  private final Set<Integer> acceptedBlobVersions;
 
   private final int maxInitcodeSize;
 
@@ -77,6 +78,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
+      final Set<Integer> acceptedBlobVersions,
       final int maxInitcodeSize) {
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
@@ -84,6 +86,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
+    this.acceptedBlobVersions = acceptedBlobVersions;
     this.maxInitcodeSize = maxInitcodeSize;
   }
 
@@ -396,6 +399,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     return ValidationResult.valid();
   }
 
+  @SuppressWarnings("UnusedVariable")
   public ValidationResult<TransactionInvalidReason> validateTransactionsBlobs(
       final Transaction transaction) {
 
@@ -452,6 +456,11 @@ public class MainnetTransactionValidator implements TransactionValidator {
                     .toList())
             .toArrayUnsafe();
 
+    if (!acceptedBlobVersions.contains(blobsWithCommitments.getVersionId())) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS, "invalid blob version");
+    }
+
     if (blobsWithCommitments.getVersionId() == KZG_WITH_PROOFS) {
       final byte[] kzgProofs =
           Bytes.wrap(
@@ -470,33 +479,36 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     if (blobsWithCommitments.getVersionId() == KZG_WITH_CELL_PROOFS) {
-      final byte[] kzgCellProofs =
+      final Bytes kzgCellProofs =
           Bytes.wrap(
-                  blobsWithCommitments.getKzgCellProofs().stream()
-                      .map(kp -> (Bytes) kp.getData())
-                      .toList())
-              .toArrayUnsafe();
+              blobsWithCommitments.getKzgCellProofs().stream()
+                  .map(kp -> (Bytes) kp.getData())
+                  .toList());
 
-      final byte[] commitments = extendArray(kzgCommitments, CELL_PROOFS_PER_BLOB);
+      final byte[] commitments =
+          extendArray(blobsWithCommitments.getKzgCommitments(), CELL_PROOFS_PER_BLOB);
 
-      long[] cellIndices = new long[kzgCellProofs.length];
-      byte[] cells = new byte[kzgCellProofs.length];
-      int currentIndex = 0;
-
-      for (Blob blob : blobsWithCommitments.getBlobs()) {
-        byte[] cellsArray = CKZG4844JNI.computeCells(blob.getData().toArray());
+      long[] cellIndices = new long[CELL_PROOFS_PER_BLOB * blobsWithCommitments.getBlobs().size()];
+      List<Bytes> cells = new ArrayList<>();
+      for (int blobIndex = 0; blobIndex < blobsWithCommitments.getBlobs().size(); blobIndex++) {
+        byte[] cellsArray =
+            CKZG4844JNI.computeCells(
+                blobsWithCommitments.getBlobs().get(blobIndex).getData().toArray());
         if (cellsArray == null) {
           return ValidationResult.invalid(
               TransactionInvalidReason.INVALID_BLOBS, "error computing cells for blob");
         }
-        for (int index = 0; index < cellsArray.length; index++) {
-          cells[currentIndex] = cellsArray[index];
-          cellIndices[currentIndex] = index;
-          currentIndex++;
+        cells.add(Bytes.wrap(cellsArray));
+        for (int index = 0; index < CELL_PROOFS_PER_BLOB; index++) {
+          int cellIndex = blobIndex * CELL_PROOFS_PER_BLOB + index;
+          cellIndices[cellIndex] = index;
         }
       }
+
+      var cellsByte = Bytes.wrap(cells.stream().toList()).toArrayUnsafe();
       final boolean kzgVerification =
-          CKZG4844JNI.verifyCellKzgProofBatch(commitments, cellIndices, cells, kzgCellProofs);
+          CKZG4844JNI.verifyCellKzgProofBatch(
+              commitments, cellIndices, cellsByte, kzgCellProofs.toArrayUnsafe());
       if (!kzgVerification) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_BLOBS,
@@ -507,16 +519,16 @@ public class MainnetTransactionValidator implements TransactionValidator {
   }
 
   // todo move to a proper class
-  private static byte[] extendArray(final byte[] array, final int extension) {
-    int newSize = array.length * extension;
-    byte[] extendedArray = new byte[newSize];
-    int index = 0;
-    for (byte element : array) {
+  private static byte[] extendArray(final List<KZGCommitment> commitments, final int extension) {
+    int newSize = commitments.size() * extension;
+    ArrayList<KZGCommitment> extendedCommitments = new ArrayList<>(newSize);
+    for (KZGCommitment kzgCommitment : commitments) {
       for (int i = 0; i < extension; i++) {
-        extendedArray[index++] = element;
+        extendedCommitments.add(new KZGCommitment(kzgCommitment.getData()));
       }
     }
-    return extendedArray;
+    return Bytes.wrap(extendedCommitments.stream().map(kc -> (Bytes) kc.getData()).toList())
+        .toArrayUnsafe();
   }
 
   private VersionedHash hashCommitment(final KZGCommitment commitment) {

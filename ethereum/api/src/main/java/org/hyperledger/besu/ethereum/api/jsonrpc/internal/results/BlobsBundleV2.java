@@ -31,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@JsonPropertyOrder({"commitments", "cellproofs", "blobs"})
+@JsonPropertyOrder({"commitments", "proofs", "blobs"})
 public class BlobsBundleV2 {
 
   private static final Logger LOG = LoggerFactory.getLogger(BlobsBundleV2.class);
@@ -70,8 +70,8 @@ public class BlobsBundleV2 {
             .map(Bytes::toString)
             .collect(Collectors.toList());
 
-    LOG.debug(
-        "BlobsBundleV1: totalTxs: {}, blobTxs: {}, commitments: {}, cell proofs: {}, blobs: {}",
+    LOG.info(
+        "BlobsBundleV2: totalTxs: {}, blobTxs: {}, commitments: {}, cell proofs: {}, blobs: {}",
         transactions.size(),
         blobsWithCommitments.size(),
         commitments.size(),
@@ -81,7 +81,7 @@ public class BlobsBundleV2 {
 
   public BlobsBundleV2(
       final List<String> commitments, final List<String> cellProfs, final List<String> blobs) {
-    if (blobs.size() != commitments.size() || blobs.size() != cellProfs.size()) {
+    if (blobs.size() != commitments.size()) {
       throw new InvalidParameterException(
           "There must be an equal number of blobs, commitments and proofs");
     }
