@@ -80,6 +80,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -221,7 +222,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** When enabled, round changes on f+1 RC messages from higher rounds */
   protected boolean isEarlyRoundChangeEnabled = false;
 
-  protected PreloadService preloadService;
+  protected Optional<Preloader> preloadService = Optional.empty();
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -583,6 +584,16 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(besuComponent, "Must supply a BesuComponent");
     prepForBuild();
 
+    final EthScheduler scheduler =
+        new EthScheduler(
+            syncConfig.getDownloaderParallelism(),
+            syncConfig.getTransactionsParallelism(),
+            syncConfig.getComputationParallelism(),
+            metricsSystem);
+
+    // TODO: We are passing this through a field to createProtocolSchedule, can this be avoided
+    preloadService = Optional.of(new PreloadService(scheduler.getServicesExecutor()));
+
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
@@ -610,25 +621,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataDirectory.toString(),
             numberOfBlocksToCache);
 
-    final EthScheduler scheduler =
-        new EthScheduler(
-            syncConfig.getDownloaderParallelism(),
-            syncConfig.getTransactionsParallelism(),
-            syncConfig.getComputationParallelism(),
-            metricsSystem);
-
-    // final PreloadService preloadService =
-    //     (PreloadService)
-    //         besuComponent
-    //             .map(BesuComponent::getPreloader)
-    //             .orElseGet(() -> new PreloadService(scheduler.getServicesExecutor()));
-    preloadService = new PreloadService(scheduler.getServicesExecutor());
-
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
             .orElseGet(() -> new BonsaiCachedMerkleTrieLoader(metricsSystem));
-    // preloadService.setBonsaiCachedMerkleTrieLoader(bonsaiCachedMerkleTrieLoader);
 
     final var worldStateHealerSupplier = new AtomicReference<WorldStateHealer>();
 
@@ -844,8 +840,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         ethPeers,
         storageProvider,
         dataStorageConfiguration,
-        transactionSimulator,
-        preloadService);
+        transactionSimulator);
   }
 
   private GenesisState getGenesisState(

@@ -104,7 +104,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         badBlockManager,
         isParallelTxProcessingEnabled,
         metricsSystem,
-        Optional.of(preloadService));
+        preloadService);
   }
 
   @Override
