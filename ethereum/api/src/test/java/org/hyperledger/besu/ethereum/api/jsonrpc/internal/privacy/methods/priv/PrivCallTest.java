@@ -28,7 +28,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -39,6 +38,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 
 import java.util.Optional;
 
@@ -74,13 +74,13 @@ public class PrivCallTest {
 
   @Test
   public void shouldThrowInvalidJsonRpcParametersExceptionWhenMissingToField() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder()
-            .withFrom(Address.fromHexString("0x0"))
-            .withGas(0L)
-            .withGasPrice(Wei.ZERO)
-            .withValue(Wei.ZERO)
-            .withInput(Bytes.EMPTY)
+    final CallParameter callParameter =
+        ImmutableCallParameter.builder()
+            .sender(Address.fromHexString("0x0"))
+            .gasLimit(0L)
+            .gasPrice(Wei.ZERO)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
             .build();
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
 
@@ -105,10 +105,8 @@ public class PrivCallTest {
 
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder()
-            .withTo(Address.fromHexString("0x0"))
-            .build();
+    final CallParameter callParameter =
+        ImmutableCallParameter.builder().to(Address.fromHexString("0x0")).build();
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -176,14 +174,14 @@ public class PrivCallTest {
         .hasMessage("Invalid privacy group ID parameter (index 0)");
   }
 
-  private JsonCallParameter callParameter() {
-    return new JsonCallParameter.JsonCallParameterBuilder()
-        .withFrom(Address.fromHexString("0x0"))
-        .withTo(Address.fromHexString("0x0"))
-        .withGas(0L)
-        .withGasPrice(Wei.ZERO)
-        .withValue(Wei.ZERO)
-        .withInput(Bytes.EMPTY)
+  private CallParameter callParameter() {
+    return ImmutableCallParameter.builder()
+        .sender(Address.fromHexString("0x0"))
+        .to(Address.fromHexString("0x0"))
+        .gasLimit(0L)
+        .gasPrice(Wei.ZERO)
+        .value(Wei.ZERO)
+        .payload(Bytes.EMPTY)
         .build();
   }
 

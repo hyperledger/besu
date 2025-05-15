@@ -29,7 +29,6 @@ import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -43,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -596,54 +596,51 @@ public class EthEstimateGasTest {
     return mockTxSimResult;
   }
 
-  private JsonCallParameter defaultLegacyTransactionCallParameter(final Wei gasPrice) {
+  private CallParameter defaultLegacyTransactionCallParameter(final Wei gasPrice) {
     return legacyTransactionCallParameter(gasPrice, false);
   }
 
-  private JsonCallParameter legacyTransactionCallParameter(
-      final Wei gasPrice, final boolean isStrict) {
-    return new JsonCallParameter.JsonCallParameterBuilder()
-        .withFrom(Address.fromHexString("0x0"))
-        .withTo(Address.fromHexString("0x0"))
-        .withGas(0L)
-        .withGasPrice(gasPrice)
-        .withValue(Wei.ZERO)
-        .withInput(Bytes.EMPTY)
-        .withStrict(isStrict)
+  private CallParameter legacyTransactionCallParameter(final Wei gasPrice, final boolean isStrict) {
+    return ImmutableCallParameter.builder()
+        .sender(Address.fromHexString("0x0"))
+        .to(Address.fromHexString("0x0"))
+        .gasLimit(0L)
+        .gasPrice(gasPrice)
+        .value(Wei.ZERO)
+        .payload(Bytes.EMPTY)
+        .strict(isStrict)
         .build();
   }
 
   private CallParameter modifiedLegacyTransactionCallParameter(
       final long gasLimit, final Wei gasPrice, final Optional<Long> maybeNonce) {
-    return new CallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        gasLimit,
-        gasPrice,
-        Optional.empty(),
-        Optional.empty(),
-        Wei.ZERO,
-        Bytes.EMPTY,
-        Optional.empty(),
-        maybeNonce);
+    return ImmutableCallParameter.builder()
+        .sender(Address.fromHexString("0x0"))
+        .to(Address.fromHexString("0x0"))
+        .gasLimit(gasLimit)
+        .gasPrice(gasPrice)
+        .value(Wei.ZERO)
+        .payload(Bytes.EMPTY)
+        .nonce(maybeNonce.orElse(null))
+        .build();
   }
 
   private CallParameter eip1559TransactionCallParameter() {
     return eip1559TransactionCallParameter(Optional.empty(), Optional.empty());
   }
 
-  private JsonCallParameter eip1559TransactionCallParameter(
+  private CallParameter eip1559TransactionCallParameter(
       final Optional<Wei> maybeGasPrice, final Optional<Long> maybeNonce) {
-    return new JsonCallParameter.JsonCallParameterBuilder()
-        .withFrom(Address.fromHexString("0x0"))
-        .withTo(Address.fromHexString("0x0"))
-        .withGasPrice(maybeGasPrice.orElse(Wei.ZERO))
-        .withMaxPriorityFeePerGas(Wei.fromHexString("0x10"))
-        .withMaxFeePerGas(Wei.fromHexString("0x10"))
-        .withValue(Wei.ZERO)
-        .withInput(Bytes.EMPTY)
-        .withStrict(false)
-        .withNonce(maybeNonce.map(UnsignedLongParameter::new).orElse(null))
+    return ImmutableCallParameter.builder()
+        .sender(Address.fromHexString("0x0"))
+        .to(Address.fromHexString("0x0"))
+        .gasPrice(maybeGasPrice.orElse(Wei.ZERO))
+        .maxPriorityFeePerGas(Wei.fromHexString("0x10"))
+        .maxFeePerGas(Wei.fromHexString("0x10"))
+        .value(Wei.ZERO)
+        .payload(Bytes.EMPTY)
+        .strict(false)
+        .nonce(maybeNonce.orElse(null))
         .build();
   }
 
@@ -654,17 +651,17 @@ public class EthEstimateGasTest {
 
   private CallParameter modifiedEip1559TransactionCallParameter(
       final long gasLimit, final Optional<Wei> gasPrice, final Optional<Long> maybeNonce) {
-    return new CallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        gasLimit,
-        gasPrice.orElse(Wei.ZERO),
-        Optional.of(Wei.fromHexString("0x10")),
-        Optional.of(Wei.fromHexString("0x10")),
-        Wei.ZERO,
-        Bytes.EMPTY,
-        Optional.empty(),
-        maybeNonce);
+    return ImmutableCallParameter.builder()
+        .sender(Address.fromHexString("0x0"))
+        .to(Address.fromHexString("0x0"))
+        .gasLimit(gasLimit)
+        .gasPrice(gasPrice.orElse(Wei.ZERO))
+        .maxPriorityFeePerGas(Wei.fromHexString("0x10"))
+        .maxFeePerGas(Wei.fromHexString("0x10"))
+        .value(Wei.ZERO)
+        .payload(Bytes.EMPTY)
+        .nonce(maybeNonce.orElse(null))
+        .build();
   }
 
   private JsonRpcRequestContext ethEstimateGasRequest(final CallParameter callParameter) {

@@ -28,7 +28,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -40,6 +39,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -390,15 +390,15 @@ public class EthCreateAccessListTest {
     when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
   }
 
-  private JsonCallParameter legacyTransactionCallParameter(final Wei gasPrice) {
-    return new JsonCallParameter.JsonCallParameterBuilder()
-        .withFrom(Address.fromHexString("0x0"))
-        .withTo(Address.fromHexString("0x0"))
-        .withGas(0L)
-        .withGasPrice(gasPrice)
-        .withValue(Wei.ZERO)
-        .withInput(Bytes.EMPTY)
-        .withStrict(Boolean.FALSE)
+  private CallParameter legacyTransactionCallParameter(final Wei gasPrice) {
+    return ImmutableCallParameter.builder()
+        .sender(Address.fromHexString("0x0"))
+        .to(Address.fromHexString("0x0"))
+        .gasLimit(0L)
+        .gasPrice(gasPrice)
+        .value(Wei.ZERO)
+        .payload(Bytes.EMPTY)
+        .strict(false)
         .build();
   }
 
@@ -415,18 +415,18 @@ public class EthCreateAccessListTest {
     return eip1559TransactionCallParameter(Optional.empty(), accessListEntries);
   }
 
-  private JsonCallParameter eip1559TransactionCallParameter(
+  private CallParameter eip1559TransactionCallParameter(
       final Optional<Wei> gasPrice, final List<AccessListEntry> accessListEntries) {
-    return new JsonCallParameter.JsonCallParameterBuilder()
-        .withFrom(Address.fromHexString("0x0"))
-        .withTo(Address.fromHexString("0x0"))
-        .withGasPrice(gasPrice.orElse(null))
-        .withMaxFeePerGas(Wei.fromHexString("0x10"))
-        .withMaxPriorityFeePerGas(Wei.fromHexString("0x10"))
-        .withValue(Wei.ZERO)
-        .withInput(Bytes.EMPTY)
-        .withStrict(Boolean.FALSE)
-        .withAccessList(accessListEntries)
+    return ImmutableCallParameter.builder()
+        .sender(Address.fromHexString("0x0"))
+        .to(Address.fromHexString("0x0"))
+        .gasPrice(gasPrice.orElse(null))
+        .maxFeePerGas(Wei.fromHexString("0x10"))
+        .maxPriorityFeePerGas(Wei.fromHexString("0x10"))
+        .value(Wei.ZERO)
+        .payload(Bytes.EMPTY)
+        .strict(false)
+        .accessList(accessListEntries)
         .build();
   }
 

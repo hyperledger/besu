@@ -24,10 +24,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CreateAccessListResult;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.nio.charset.StandardCharsets;
@@ -79,11 +80,10 @@ public class EthCreateAccessListIntegrationTest {
                     UInt256.fromHexString(
                         "0x0000000000000000000000000000000000000000000000000000000000000003"))));
 
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder()
-            .withFrom(Address.fromHexString("0x658bdf435d810c91414ec09147daa6db62406379"))
-            .withTo(Address.fromHexString("0xbb00000000000000000000000000000000000000"))
-            .withAccessList(null)
+    final CallParameter callParameter =
+        ImmutableCallParameter.builder()
+            .sender(Address.fromHexString("0x658bdf435d810c91414ec09147daa6db62406379"))
+            .to(Address.fromHexString("0xbb00000000000000000000000000000000000000"))
             .build();
 
     assertAccessListExpectedResult(callParameter, expectedAccessListEntryList, expectedGasUsed);
@@ -102,11 +102,11 @@ public class EthCreateAccessListIntegrationTest {
                     UInt256.fromHexString(
                         "0x0000000000000000000000000000000000000000000000000000000000000003"))));
 
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder()
-            .withFrom(Address.fromHexString("0x658bdf435d810c91414ec09147daa6db62406379"))
-            .withTo(Address.fromHexString("0xbb00000000000000000000000000000000000000"))
-            .withAccessList(expectedAccessListEntryList)
+    final CallParameter callParameter =
+        ImmutableCallParameter.builder()
+            .sender(Address.fromHexString("0x658bdf435d810c91414ec09147daa6db62406379"))
+            .to(Address.fromHexString("0xbb00000000000000000000000000000000000000"))
+            .accessList(expectedAccessListEntryList)
             .build();
 
     assertAccessListExpectedResult(callParameter, expectedAccessListEntryList, expectedGasUsed);
@@ -117,11 +117,11 @@ public class EthCreateAccessListIntegrationTest {
     final long expectedGasUsed = 0x5208;
     final List<AccessListEntry> expectedAccessListEntryList = new ArrayList<>();
 
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder()
-            .withFrom(Address.fromHexString("0x658bdf435d810c91414ec09147daa6db62406379"))
-            .withTo(Address.fromHexString("0x0100000000000000000000000000000000000000"))
-            .withAccessList(expectedAccessListEntryList)
+    final CallParameter callParameter =
+        ImmutableCallParameter.builder()
+            .sender(Address.fromHexString("0x658bdf435d810c91414ec09147daa6db62406379"))
+            .to(Address.fromHexString("0x0100000000000000000000000000000000000000"))
+            .accessList(expectedAccessListEntryList)
             .build();
 
     assertAccessListExpectedResult(callParameter, expectedAccessListEntryList, expectedGasUsed);
@@ -132,11 +132,10 @@ public class EthCreateAccessListIntegrationTest {
     final long expectedGasUsed = 0x520b;
     final List<AccessListEntry> expectedAccessListEntryList = new ArrayList<>();
 
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder()
-            .withFrom(Address.fromHexString("0x658bdf435d810c91414ec09147daa6db62406379"))
-            .withTo(Address.fromHexString("0xaa00000000000000000000000000000000000000"))
-            .withAccessList(null)
+    final CallParameter callParameter =
+        ImmutableCallParameter.builder()
+            .sender(Address.fromHexString("0x658bdf435d810c91414ec09147daa6db62406379"))
+            .to(Address.fromHexString("0xaa00000000000000000000000000000000000000"))
             .build();
 
     assertAccessListExpectedResult(callParameter, expectedAccessListEntryList, expectedGasUsed);
@@ -144,8 +143,7 @@ public class EthCreateAccessListIntegrationTest {
 
   @Test
   public void shouldReturnExpectedValueForEmptyCallParameter() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder().build();
+    final CallParameter callParameter = ImmutableCallParameter.builder().build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse =
@@ -158,11 +156,11 @@ public class EthCreateAccessListIntegrationTest {
 
   @Test
   public void shouldReturnExpectedValueForTransfer() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder()
-            .withFrom(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
-            .withTo(Address.fromHexString("0x8888f1f195afa192cfee860698584c030f4c9db1"))
-            .withValue(Wei.ZERO)
+    final CallParameter callParameter =
+        ImmutableCallParameter.builder()
+            .sender(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
+            .to(Address.fromHexString("0x8888f1f195afa192cfee860698584c030f4c9db1"))
+            .value(Wei.ZERO)
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter);
@@ -176,10 +174,10 @@ public class EthCreateAccessListIntegrationTest {
 
   @Test
   public void shouldReturnExpectedValueForContractDeploy() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder()
-            .withFrom(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
-            .withInput(
+    final CallParameter callParameter =
+        ImmutableCallParameter.builder()
+            .sender(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
+            .payload(
                 Bytes.fromHexString(
                     "0x608060405234801561001057600080fd5b50610157806100206000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633bdab8bf146100515780639ae97baa14610068575b600080fd5b34801561005d57600080fd5b5061006661007f565b005b34801561007457600080fd5b5061007d6100b9565b005b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60016040518082815260200191505060405180910390a1565b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60026040518082815260200191505060405180910390a17fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60036040518082815260200191505060405180910390a15600a165627a7a7230582010ddaa52e73a98c06dbcd22b234b97206c1d7ed64a7c048e10c2043a3d2309cb0029"))
             .build();
@@ -195,15 +193,15 @@ public class EthCreateAccessListIntegrationTest {
 
   @Test
   public void shouldIgnoreSenderBalanceAccountWhenStrictModeDisabledAndReturnExpectedValue() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder()
-            .withFrom(Address.fromHexString("0x0000000000000000000000000000000000000000"))
-            .withGas(1L)
-            .withGasPrice(Wei.fromHexString("0x9999999999"))
-            .withInput(
+    final CallParameter callParameter =
+        ImmutableCallParameter.builder()
+            .sender(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+            .gasLimit(1L)
+            .gasPrice(Wei.fromHexString("0x9999999999"))
+            .payload(
                 Bytes.fromHexString(
                     "0x608060405234801561001057600080fd5b50610157806100206000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633bdab8bf146100515780639ae97baa14610068575b600080fd5b34801561005d57600080fd5b5061006661007f565b005b34801561007457600080fd5b5061007d6100b9565b005b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60016040518082815260200191505060405180910390a1565b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60026040518082815260200191505060405180910390a17fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60036040518082815260200191505060405180910390a15600a165627a7a7230582010ddaa52e73a98c06dbcd22b234b97206c1d7ed64a7c048e10c2043a3d2309cb0029"))
-            .withStrict(false)
+            .strict(false)
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter);
@@ -217,8 +215,8 @@ public class EthCreateAccessListIntegrationTest {
 
   @Test
   public void shouldReturnExpectedValueForInsufficientGas() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder().withGas(1L).build();
+    final CallParameter callParameter = ImmutableCallParameter.builder().gasLimit(1L).build();
+
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new CreateAccessListResult(new ArrayList<>(), 0xcf08));
@@ -229,7 +227,7 @@ public class EthCreateAccessListIntegrationTest {
   }
 
   private void assertAccessListExpectedResult(
-      final JsonCallParameter callParameter,
+      final CallParameter callParameter,
       final List<AccessListEntry> accessList,
       final long gasUsed) {
     final JsonRpcRequestContext request = requestWithParams(callParameter);

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
+
 import java.io.IOException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -55,7 +57,7 @@ class TraceCallParameterDeserializer extends StdDeserializer<TraceCallParameterT
     final ObjectMapper mapper = new ObjectMapper();
     final JsonNode tupleNode = p.getCodec().readTree(p);
     return new TraceCallParameterTuple(
-        mapper.readValue(tupleNode.get(0).toString(), JsonCallParameter.class),
+        mapper.readValue(tupleNode.get(0).toString(), CallParameter.class),
         mapper.readValue(tupleNode.get(1).toString(), TraceTypeParameter.class));
   }
 }

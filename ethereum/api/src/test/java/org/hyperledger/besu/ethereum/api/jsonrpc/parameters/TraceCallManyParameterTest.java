@@ -76,11 +76,11 @@ public class TraceCallManyParameterTest {
         mapper.readValue(requestParamsJson, TraceCallManyParameter[].class);
 
     assertThat(parameter[0].getTuple()).isNotNull();
-    assertThat(parameter[0].getTuple().getJsonCallParameter()).isNotNull();
-    assertThat(parameter[0].getTuple().getJsonCallParameter().getFrom())
-        .isEqualTo(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
-    assertThat(parameter[2].getTuple().getJsonCallParameter().getTo())
-        .isEqualTo(Address.fromHexString("0x0010000000000000000000000000000000000000"));
+    assertThat(parameter[0].getTuple().getCallParameter()).isNotNull();
+    assertThat(parameter[0].getTuple().getCallParameter().getSender())
+        .contains(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+    assertThat(parameter[2].getTuple().getCallParameter().getTo())
+        .contains(Address.fromHexString("0x0010000000000000000000000000000000000000"));
     assertThat(parameter[1].getTuple().getTraceTypeParameter().getTraceTypes()).hasSize(1);
     assertThat(parameter[1].getTuple().getTraceTypeParameter().getTraceTypes())
         .contains(TraceTypeParameter.TraceType.TRACE);
