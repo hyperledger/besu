@@ -74,7 +74,7 @@ public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
     }
   }
 
-  private static int bitLength(final BigInteger n) {
+  protected static int bitLength(final BigInteger n) {
     return n.compareTo(BigInteger.ZERO) == 0 ? 0 : (n.bitLength() - 1);
   }
 }
