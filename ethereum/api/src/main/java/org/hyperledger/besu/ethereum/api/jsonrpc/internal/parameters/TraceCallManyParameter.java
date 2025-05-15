@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 public class TraceCallManyParameter {
   TraceCallParameterTuple params;
@@ -42,6 +43,7 @@ public class TraceCallManyParameter {
 }
 
 class TraceCallParameterDeserializer extends StdDeserializer<TraceCallParameterTuple> {
+  private static final ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module());
 
   public TraceCallParameterDeserializer(final Class<?> vc) {
     super(vc);
@@ -54,7 +56,6 @@ class TraceCallParameterDeserializer extends StdDeserializer<TraceCallParameterT
   @Override
   public TraceCallParameterTuple deserialize(final JsonParser p, final DeserializationContext ctxt)
       throws IOException {
-    final ObjectMapper mapper = new ObjectMapper();
     final JsonNode tupleNode = p.getCodec().readTree(p);
     return new TraceCallParameterTuple(
         mapper.readValue(tupleNode.get(0).toString(), CallParameter.class),

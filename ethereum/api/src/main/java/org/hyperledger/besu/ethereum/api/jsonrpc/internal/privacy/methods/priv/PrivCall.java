@@ -121,7 +121,7 @@ public class PrivCall extends AbstractBlockParameterMethod {
       throw new InvalidJsonRpcParameters(
           "Invalid call parameters (index 1)", RpcErrorType.INVALID_CALL_PARAMS);
     }
-    if (callParams.getTo() == null) {
+    if (callParams.getTo().isEmpty()) {
       throw new InvalidJsonRpcParameters(
           "Missing \"to\" field in call arguments", RpcErrorType.INVALID_CALL_PARAMS);
     }

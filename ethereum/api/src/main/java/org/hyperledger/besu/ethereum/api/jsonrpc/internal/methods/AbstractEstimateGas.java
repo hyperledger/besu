@@ -42,6 +42,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
 
@@ -85,13 +86,13 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext requestContext, final long blockNumber) {
-    final CallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
+    final CallParameter callParameter = validateAndGetCallParams(requestContext);
     final Optional<BlockHeader> maybeBlockHeader = blockHeader(blockNumber);
     final Optional<RpcErrorType> jsonRpcError = validateBlockHeader(maybeBlockHeader);
     if (jsonRpcError.isPresent()) {
       return errorResponse(requestContext, jsonRpcError.get());
     }
-    return resultByBlockHeader(requestContext, jsonCallParameter, maybeBlockHeader.get());
+    return resultByBlockHeader(requestContext, callParameter, maybeBlockHeader.get());
   }
 
   private Object resultByBlockHeader(
@@ -198,7 +199,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);
 
     // If the transaction is a plain value transfer, try minTxCost. It is likely to succeed.
-    if (callParams.getPayload().isEmpty()) {
+    if (callParams.getPayload().isEmpty() || callParams.getPayload().get().equals(Bytes.EMPTY)) {
       var maybeSimpleTransferResult =
           simulationFunction.simulate(overrideGasLimit(callParams, minTxCost), operationTracer);
       return maybeSimpleTransferResult.isPresent()

@@ -64,6 +64,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -207,7 +208,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
@@ -238,7 +239,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
@@ -274,7 +275,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
@@ -310,7 +311,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
 
@@ -344,7 +345,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
 
@@ -381,7 +382,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
@@ -503,7 +504,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
@@ -545,7 +546,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
@@ -634,7 +635,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
@@ -665,7 +666,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
@@ -695,7 +696,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
 
@@ -729,7 +730,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
 
@@ -747,8 +748,8 @@ public class TransactionSimulatorTest {
   public void shouldUseRpcGasCapWhenGasLimitNotPresent() {
     // generate call parameters that do not specify a gas limit,
     // expect the rpc gas cap to be used for simulation
-
-    final CallParameter callParameter = eip1559TransactionCallParameterBuilder().gas(-1L).build();
+    final CallParameter callParameter =
+        eip1559TransactionCallParameterBuilder().gas(OptionalLong.empty()).build();
 
     mockBlockchainAndWorldState(callParameter);
     mockProtocolSpecForProcessWithWorldUpdater();
@@ -758,13 +759,12 @@ public class TransactionSimulatorTest {
             .type(TransactionType.EIP1559)
             .chainId(BigInteger.ONE)
             .nonce(1L)
-            .gasLimit(callParameter.getGas().orElseThrow())
             .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
             .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .gasLimit(GAS_CAP)
             .build();
@@ -781,8 +781,8 @@ public class TransactionSimulatorTest {
   public void shouldUseDefaultRpcGasCapWhenGasLimitNotPresent() {
     // generate call parameters that do not specify a gas limit,
     // expect the default rpc gas cap to be used for simulation
-
-    final CallParameter callParameter = eip1559TransactionCallParameterBuilder().gas(-1L).build();
+    final CallParameter callParameter =
+        eip1559TransactionCallParameterBuilder().gas(OptionalLong.empty()).build();
 
     mockBlockchainAndWorldState(callParameter);
     mockProtocolSpecForProcessWithWorldUpdater();
@@ -792,13 +792,12 @@ public class TransactionSimulatorTest {
             .type(TransactionType.EIP1559)
             .chainId(BigInteger.ONE)
             .nonce(1L)
-            .gasLimit(callParameter.getGas().orElseThrow())
             .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
             .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .gasLimit(ApiConfiguration.DEFAULT_GAS_CAP)
             .build();
@@ -862,7 +861,7 @@ public class TransactionSimulatorTest {
         .to(callParameter.getTo().orElseThrow())
         .sender(callParameter.getSender().orElseThrow())
         .value(callParameter.getValue().orElseThrow())
-        .payload(callParameter.getInput().orElseThrow())
+        .payload(callParameter.getPayload().orElseThrow())
         .maxFeePerBlobGas(callParameter.getMaxFeePerBlobGas().orElseThrow())
         .versionedHashes(callParameter.getBlobVersionedHashes().orElseThrow())
         .signature(FAKE_SIGNATURE)
@@ -966,11 +965,15 @@ public class TransactionSimulatorTest {
   private ImmutableCallParameter.Builder legacyTransactionCallParameterBuilder() {
     return ImmutableCallParameter.builder()
         .sender(Address.fromHexString("0x0"))
-        .to(Address.fromHexString("0x0"));
+        .to(Address.fromHexString("0x0"))
+        .gasPrice(Wei.ZERO)
+        .value(Wei.ZERO)
+        .input(Bytes.EMPTY);
   }
 
   private ImmutableCallParameter.Builder eip1559TransactionCallParameterBuilder() {
     return legacyTransactionCallParameterBuilder()
+        .gasPrice(Optional.empty())
         .maxFeePerGas(Wei.ZERO)
         .maxPriorityFeePerGas(Wei.ZERO);
   }
@@ -1012,7 +1015,7 @@ public class TransactionSimulatorTest {
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getInput().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
@@ -1033,7 +1036,7 @@ public class TransactionSimulatorTest {
     assertThat(actual.getMaxPriorityFeePerGas()).isEqualTo(expected.getMaxPriorityFeePerGas());
     assertThat(actual.getMaxFeePerGas()).isEqualTo(expected.getMaxFeePerGas());
     assertThat(actual.getValue()).isEqualTo(expected.getValue());
-    assertThat(actual.getInput()).isEqualTo(expected.getInput());
+    assertThat(actual.getPayload()).isEqualTo(expected.getPayload());
     assertThat(actual.getAccessList()).isEqualTo(expected.getAccessList());
     assertThat(actual.getMaxFeePerBlobGas()).isEqualTo(expected.getMaxFeePerBlobGas());
     assertThat(actual.getBlobVersionedHashes()).isEqualTo(expected.getBlobVersionedHashes());
