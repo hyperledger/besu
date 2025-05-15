@@ -27,6 +27,7 @@ public class BlobsWithCommitments {
 
   public static final int KZG_WITH_PROOFS = 0;
   public static final int KZG_WITH_CELL_PROOFS = 1;
+
   public static final int CELL_PROOFS_PER_BLOB = 128;
 
   /**
@@ -98,8 +99,7 @@ public class BlobsWithCommitments {
         }
         break;
       case KZG_WITH_CELL_PROOFS:
-        validateBlobWithCommitmentsV1(
-            kzgCommitments, blobs, kzgCellProofs, versionedHashes);
+        validateBlobWithCommitmentsV1(kzgCommitments, blobs, kzgCellProofs, versionedHashes);
         for (int i = 0; i < blobs.size(); i++) {
           // todo improve this constructor
           toBuild.add(

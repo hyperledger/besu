@@ -977,23 +977,23 @@ public abstract class MainnetProtocolSpecs {
                     (BaseFeeMarket) feeMarket,
                     osakaGasCalculator.get(),
                     osakaBlobSchedule.getMax()))
-      // change to accept EIP-7702 transactions
-      .transactionValidatorFactoryBuilder(
-        (evm, gasLimitCalculator, feeMarket) ->
-          new TransactionValidatorFactory(
-            evm.getGasCalculator(),
-            gasLimitCalculator,
-            feeMarket,
-            true,
-            chainId,
-            Set.of(
-              TransactionType.FRONTIER,
-              TransactionType.ACCESS_LIST,
-              TransactionType.EIP1559,
-              TransactionType.BLOB,
-              TransactionType.DELEGATE_CODE),
-            Set.of(BlobsWithCommitments.KZG_WITH_CELL_PROOFS),
-            evm.getMaxInitcodeSize()))
+        // change to accept EIP-7702 transactions
+        .transactionValidatorFactoryBuilder(
+            (evm, gasLimitCalculator, feeMarket) ->
+                new TransactionValidatorFactory(
+                    evm.getGasCalculator(),
+                    gasLimitCalculator,
+                    feeMarket,
+                    true,
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559,
+                        TransactionType.BLOB,
+                        TransactionType.DELEGATE_CODE),
+                    Set.of(BlobsWithCommitments.KZG_WITH_CELL_PROOFS),
+                    evm.getMaxInitcodeSize()))
         .blockHeaderValidatorBuilder(
             fm -> MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(fm, osakaGasCalculator))
         .name("Osaka");
