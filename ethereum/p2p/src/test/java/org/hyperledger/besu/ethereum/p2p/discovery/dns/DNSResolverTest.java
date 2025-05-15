@@ -22,7 +22,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-class DNSEntryTest {
+class DNSResolverTest {
   @BeforeAll
   static void setup() {
     Security.addProvider(new BouncyCastleProvider());
@@ -32,7 +32,7 @@ class DNSEntryTest {
   void enrTreeRootIsParsed() {
     final String txtRecord =
         "\"enrtree-root:v1 e=KVKZLGARGADDZSMCF65QQMEWLE l=FDXN3SN67NA5DKA4J2GOK7BVQI seq=919 sig=braPmdwMk-g65lQxums6hEy553s3bWMoecW0QQ0IdykIoM9i3We0bxFT0IDONPaFcRePcN-yaOpt8GBfeQ4qDAE\"";
-    final DNSEntry entry = DNSEntry.readDNSEntry(txtRecord);
+    final DNSEntry entry = DNSResolver.readDNSEntry(txtRecord);
     assertThat(entry).isInstanceOf(DNSEntry.ENRTreeRoot.class);
     final DNSEntry.ENRTreeRoot enrTreeRoot = (DNSEntry.ENRTreeRoot) entry;
     assertThat(enrTreeRoot.enrRoot()).isEqualTo("KVKZLGARGADDZSMCF65QQMEWLE");
@@ -48,7 +48,7 @@ class DNSEntryTest {
             + "SZCFDMTYOERMIVOUXEWXSGDVEY,FZ26UT4LSG7D2NRX7SV6P3S6BI,7TWNYLCOQ7FEM4IG65WOTL4MVE,"
             + "6OJXGI7NJUESOLL2OZPS4B\" \"EC6Q,437FN4NSGMGFQLAXYWPX5JNACI,FCA7LN6NCO5IAWPG5FH7LX6XJA,"
             + "EYBOZ2NZSHDWDSNHV66XASXOHM,FUVRJMMMKJMCL4L4EBEOWCSOFA\"";
-    final DNSEntry entry = DNSEntry.readDNSEntry(txtRecord);
+    final DNSEntry entry = DNSResolver.readDNSEntry(txtRecord);
 
     assertThat(entry).isInstanceOf(DNSEntry.ENRTree.class);
     assertThat(((DNSEntry.ENRTree) entry).entries())
