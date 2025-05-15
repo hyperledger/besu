@@ -928,11 +928,15 @@ public abstract class MainnetProtocolSpecs {
             .blockHashProcessor(new PragueBlockHashProcessor())
             .name("Prague");
     try {
-      RequestContractAddresses requestContractAddresses =
+      final RequestContractAddresses requestContractAddresses =
           RequestContractAddresses.fromGenesis(genesisConfigOptions);
 
-      pragueSpecBuilder.requestProcessorCoordinator(
-          pragueRequestsProcessors(requestContractAddresses));
+      // if the request contract addresses are all zero, don't add the request processor as we might
+      // not be on a POS chain
+      if (!requestContractAddresses.areAllZero()) {
+        pragueSpecBuilder.requestProcessorCoordinator(
+            pragueRequestsProcessors(requestContractAddresses));
+      }
     } catch (NoSuchElementException nsee) {
       LOG.warn("Prague definitions require system contract addresses in genesis");
       throw nsee;

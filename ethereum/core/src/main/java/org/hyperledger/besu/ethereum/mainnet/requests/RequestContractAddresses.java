@@ -62,4 +62,10 @@ public class RequestContractAddresses {
   public Address getConsolidationRequestContractAddress() {
     return consolidationRequestContractAddress;
   }
+
+  public boolean areAllZero() {
+    return withdrawalRequestContractAddress.isZero()
+        && depositContractAddress.isZero()
+        && consolidationRequestContractAddress.isZero();
+  }
 }
