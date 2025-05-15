@@ -551,7 +551,7 @@ public class TransactionSimulator {
       final Supplier<SECPSignature> signatureSupplier) {
 
     final Wei value = callParams.getValue().orElse(Wei.ZERO);
-    final Bytes payload = callParams.getInput().orElse(Bytes.EMPTY);
+    final Bytes payload = callParams.getPayload().orElse(Bytes.EMPTY);
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
@@ -670,7 +670,7 @@ public class TransactionSimulator {
     // Return true if all gas price parameters are empty
     if (callParams.getMaxPriorityFeePerGas().isEmpty()
         && callParams.getMaxFeePerGas().isEmpty()
-        && callParams.getGasPrice() == null) {
+        && callParams.getGasPrice().isEmpty()) {
       return true;
     }
 

@@ -19,8 +19,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.json.ChainIdDeserializer;
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
-import org.hyperledger.besu.ethereum.core.json.OptionalGasDeserializer;
+import org.hyperledger.besu.ethereum.core.json.OptionalUnsignedLongDeserializer;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 import org.immutables.value.Value;
@@ -37,13 +39,15 @@ import org.immutables.value.Value;
 @JsonDeserialize(as = ImmutableCallParameter.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class CallParameter {
+  @JsonDeserialize(contentUsing = ChainIdDeserializer.class)
   public abstract Optional<BigInteger> getChainId();
 
+  @JsonProperty("from")
   public abstract Optional<Address> getSender();
 
   public abstract Optional<Address> getTo();
 
-  @JsonDeserialize(using = OptionalGasDeserializer.class)
+  @JsonDeserialize(using = OptionalUnsignedLongDeserializer.class)
   public abstract OptionalLong getGas();
 
   public abstract Optional<Wei> getMaxPriorityFeePerGas();
@@ -60,6 +64,7 @@ public abstract class CallParameter {
 
   public abstract Optional<List<VersionedHash>> getBlobVersionedHashes();
 
+  @JsonDeserialize(using = OptionalUnsignedLongDeserializer.class)
   public abstract OptionalLong getNonce();
 
   public abstract Optional<Boolean> getStrict();

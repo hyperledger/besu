@@ -25,42 +25,51 @@ import java.io.IOException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import org.junit.jupiter.api.BeforeEach;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.junit.jupiter.api.Test;
 
 public class TraceCallManyParameterTest {
   static final String emptyParamsJson = "[]";
   static final String invalidJson = "[[\"invalid\"],[\"invalid\"]]";
   static final String requestParamsJson =
-      "[ [ {\n"
-          + "      \"from\" : \"0xfe3b557e8fb62b89f4916b721be55ceb828dbd73\",\n"
-          + "      \"value\" : \"0x0\",\n"
-          + "      \"to\" : \"0x0010000000000000000000000000000000000000\",\n"
-          + "      \"gas\" : \"0xfffff2\",\n"
-          + "      \"gasPrice\" : \"0xef\",\n"
-          + "      \"data\" : \"0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002\"\n"
-          + "    }, [ \"trace\" ] ], [ {\n"
-          + "      \"from\" : \"0x627306090abab3a6e1400e9345bc60c78a8bef57\",\n"
-          + "      \"value\" : \"0x0\",\n"
-          + "      \"to\" : \"0x0010000000000000000000000000000000000000\",\n"
-          + "      \"gas\" : \"0xfffff2\",\n"
-          + "      \"gasPrice\" : \"0xef\",\n"
-          + "      \"data\" : \"0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004\"\n"
-          + "    }, [ \"trace\" ] ], [ {\n"
-          + "      \"from\" : \"0x627306090abab3a6e1400e9345bc60c78a8bef57\",\n"
-          + "      \"value\" : \"0x0\",\n"
-          + "      \"to\" : \"0x0010000000000000000000000000000000000000\",\n"
-          + "      \"gas\" : \"0xfffff2\",\n"
-          + "      \"gasPrice\" : \"0xef\",\n"
-          + "      \"data\" : \"0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000\"\n"
-          + "    }, [ \"trace\" ] ] ]";
+      """
+          [
+            [
+              {
+                "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+                "value" : "0x0",
+                "to" : "0x0010000000000000000000000000000000000000",
+                "gas" : "0xfffff2",
+                "gasPrice" : "0xef",
+                "data" : "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002"
+              },
+              [ "trace" ]
+            ],
+            [
+              {
+                "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+                "value" : "0x0",
+                "to" : "0x0010000000000000000000000000000000000000",
+                "gas" : "0xfffff2",
+                "gasPrice" : "0xef",
+                "data" : "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004"
+              },
+              [ "trace" ]
+            ],
+            [
+              {
+                "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+                "value" : "0x0",
+                "to" : "0x0010000000000000000000000000000000000000",
+                "gas" : "0xfffff2",
+                "gasPrice" : "0xef",
+                "data" : "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+              },
+              [ "trace" ]
+            ]
+          ]""";
 
-  private ObjectMapper mapper;
-
-  @BeforeEach
-  public void setup() {
-    mapper = new ObjectMapper();
-  }
+  private final ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module());
 
   @Test
   public void testEmptyParamJsonParsesCorrectly() throws IOException {
@@ -87,7 +96,7 @@ public class TraceCallManyParameterTest {
   }
 
   @Test
-  public void testInvalidJsonDoesNotParse() throws IOException {
+  public void testInvalidJsonDoesNotParse() {
     assertThatExceptionOfType(MismatchedInputException.class)
         .isThrownBy(() -> mapper.readValue(invalidJson, TraceCallManyParameter[].class));
   }

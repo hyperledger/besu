@@ -420,13 +420,13 @@ public class EthCreateAccessListTest {
     return ImmutableCallParameter.builder()
         .sender(Address.fromHexString("0x0"))
         .to(Address.fromHexString("0x0"))
-        .gasPrice(gasPrice.orElse(null))
+        .gasPrice(gasPrice)
         .maxFeePerGas(Wei.fromHexString("0x10"))
         .maxPriorityFeePerGas(Wei.fromHexString("0x10"))
         .value(Wei.ZERO)
         .input(Bytes.EMPTY)
         .strict(false)
-        .accessList(accessListEntries)
+        .accessList(Optional.ofNullable(accessListEntries))
         .build();
   }
 

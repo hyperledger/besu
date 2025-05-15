@@ -23,14 +23,14 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.apache.tuweni.units.bigints.UInt64s;
 
-public class OptionalGasDeserializer extends StdDeserializer<OptionalLong> {
+public class OptionalUnsignedLongDeserializer extends StdDeserializer<OptionalLong> {
   private static final UInt64 GAS_MAX_VALUE = UInt64.valueOf(Long.MAX_VALUE);
 
-  public OptionalGasDeserializer() {
+  public OptionalUnsignedLongDeserializer() {
     this(null);
   }
 
-  public OptionalGasDeserializer(final Class<?> vc) {
+  public OptionalUnsignedLongDeserializer(final Class<?> vc) {
     super(vc);
   }
 

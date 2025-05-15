@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.Function;
 
 import com.google.common.primitives.Longs;
@@ -317,12 +318,15 @@ public class BlockAdapterBase extends AdapterBase {
 
   private Optional<CallResult> executeCall(final DataFetchingEnvironment environment) {
     final Map<String, Object> callData = environment.getArgument("data");
-    final Address from = (Address) callData.get("from");
-    final Address to = (Address) callData.get("to");
-    final Long gas = (Long) callData.get("gas");
-    final UInt256 gasPrice = (UInt256) callData.get("gasPrice");
-    final UInt256 value = (UInt256) callData.get("value");
-    final Bytes data = (Bytes) callData.get("data");
+    final Optional<Address> from = Optional.ofNullable((Address) callData.get("from"));
+    final Optional<Address> to = Optional.ofNullable((Address) callData.get("to"));
+    final var gasParam = callData.get("gas");
+    final OptionalLong gas =
+        gasParam != null ? OptionalLong.of((Long) gasParam) : OptionalLong.empty();
+    final Optional<Wei> gasPrice =
+        Optional.ofNullable((UInt256) callData.get("gasPrice")).map(Wei::of);
+    final Optional<Wei> value = Optional.ofNullable((UInt256) callData.get("value")).map(Wei::of);
+    final Optional<Bytes> data = Optional.ofNullable((Bytes) callData.get("data"));
     final Optional<Wei> maxFeePerGas =
         Optional.ofNullable((UInt256) callData.get("maxFeePerGas")).map(Wei::of);
     final Optional<Wei> maxPriorityFeePerGas =
@@ -335,32 +339,20 @@ public class BlockAdapterBase extends AdapterBase {
     final TransactionSimulator transactionSimulator =
         environment.getGraphQlContext().get(GraphQLContextType.TRANSACTION_SIMULATOR);
 
-    long gasParam = -1;
-    Wei gasPriceParam = null;
-    Wei valueParam = null;
-    if (gas != null) {
-      gasParam = gas;
-    }
-    if (gasPrice != null) {
-      gasPriceParam = Wei.of(gasPrice);
-    }
-    if (value != null) {
-      valueParam = Wei.of(value);
-    }
-    final CallParameter param =
+    final CallParameter callParameters =
         ImmutableCallParameter.builder()
             .sender(from)
             .to(to)
-            .gas(gasParam)
-            .gasPrice(gasPriceParam)
+            .gas(gas)
+            .gasPrice(gasPrice)
+            .value(value)
             .maxPriorityFeePerGas(maxPriorityFeePerGas)
             .maxFeePerGas(maxFeePerGas)
-            .value(valueParam)
             .input(data)
             .build();
 
     return transactionSimulator.process(
-        param,
+        callParameters,
         TransactionValidationParams.transactionSimulatorAllowExceedingBalance(),
         OperationTracer.NO_TRACING,
         (mutableWorldState, transactionSimulatorResult) ->
