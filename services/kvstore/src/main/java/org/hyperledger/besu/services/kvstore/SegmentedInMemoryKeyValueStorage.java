@@ -150,30 +150,19 @@ public class SegmentedInMemoryKeyValueStorage
   }
 
   @Override
-  public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys)
+  public List<Optional<byte[]>> multiget(final SegmentIdentifier segment, final List<byte[]> keys)
       throws StorageException {
-    if (segments.size() != keys.size()) {
-      throw new IllegalArgumentException("The segments and keys lists must have the same length");
-    }
-    final List<byte[]> results = new ArrayList<>(Collections.nCopies(keys.size(), null));
-
-    final Map<SegmentIdentifier, List<Integer>> segmentToIndices = new HashMap<>();
-    for (int i = 0; i < segments.size(); i++) {
-      segmentToIndices.computeIfAbsent(segments.get(i), s -> new ArrayList<>()).add(i);
-    }
+    final List<Optional<byte[]>> results = new ArrayList<>(keys.size());
 
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      for (Map.Entry<SegmentIdentifier, List<Integer>> entry : segmentToIndices.entrySet()) {
-        final SegmentIdentifier segment = entry.getKey();
-        final NavigableMap<Bytes, Optional<byte[]>> segmentMap =
-            hashValueStore.computeIfAbsent(segment, s -> newSegmentMap());
-        for (Integer index : entry.getValue()) {
-          final byte[] key = keys.get(index);
-          final Optional<byte[]> value = segmentMap.getOrDefault(Bytes.wrap(key), Optional.empty());
-          results.set(index, value.orElse(null));
-        }
+      final NavigableMap<Bytes, Optional<byte[]>> segmentMap =
+          hashValueStore.computeIfAbsent(segment, s -> newSegmentMap());
+
+      for (byte[] key : keys) {
+        final Optional<byte[]> value = segmentMap.getOrDefault(Bytes.wrap(key), Optional.empty());
+        results.add(value);
       }
     } finally {
       lock.unlock();

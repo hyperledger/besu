@@ -134,13 +134,13 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
 
       List<byte[]> markerKeys =
           markers.stream().map(i -> path.slice(0, i).toArrayUnsafe()).collect(Collectors.toList());
-      List<byte[]> markerValues = storage.getMultipleKeys(markerKeys);
+      List<Optional<byte[]>> markerValues = storage.getMultipleKeys(markerKeys);
 
       Set<Integer> liveMarkers = new HashSet<>();
       for (int k = 0; k < markers.size(); k++) {
-        byte[] raw = markerValues.get(k);
-        if (raw != null) {
-          Bytes node = Bytes.wrap(raw);
+        Optional<byte[]> raw = markerValues.get(k);
+        if (raw.isPresent()) {
+          Bytes node = Bytes.wrap(raw.get());
           accountNodes.put(Hash.hash(node), node);
           liveMarkers.add(markers.get(k));
         }
@@ -159,10 +159,10 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       }
 
       if (!secondKeys.isEmpty()) {
-        List<byte[]> secondValues = storage.getMultipleKeys(secondKeys);
-        for (byte[] raw : secondValues) {
-          if (raw != null) {
-            Bytes node = Bytes.wrap(raw);
+        List<Optional<byte[]>> secondValues = storage.getMultipleKeys(secondKeys);
+        for (Optional<byte[]> raw : secondValues) {
+          if (raw.isPresent()) {
+            Bytes node = Bytes.wrap(raw.get());
             accountNodes.put(Hash.hash(node), node);
           }
         }
@@ -207,13 +207,13 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
           markers.stream()
               .map(i -> Bytes.concatenate(accountHash, path.slice(0, i)).toArrayUnsafe())
               .collect(Collectors.toList());
-      List<byte[]> markerValues = storage.getMultipleKeys(markerKeys);
+      List<Optional<byte[]>> markerValues = storage.getMultipleKeys(markerKeys);
 
       Set<Integer> liveMarkers = new HashSet<>();
       for (int k = 0; k < markers.size(); k++) {
-        byte[] raw = markerValues.get(k);
-        if (raw != null) {
-          Bytes node = Bytes.wrap(raw);
+        Optional<byte[]> raw = markerValues.get(k);
+        if (raw.isPresent()) {
+          Bytes node = Bytes.wrap(raw.get());
           storageNodes.put(Hash.hash(node), node);
           liveMarkers.add(markers.get(k));
         }
@@ -232,10 +232,10 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       }
 
       if (!secondKeys.isEmpty()) {
-        List<byte[]> secondValues = storage.getMultipleKeys(secondKeys);
-        for (byte[] raw : secondValues) {
-          if (raw != null) {
-            Bytes node = Bytes.wrap(raw);
+        List<Optional<byte[]>> secondValues = storage.getMultipleKeys(secondKeys);
+        for (Optional<byte[]> raw : secondValues) {
+          if (raw.isPresent()) {
+            Bytes node = Bytes.wrap(raw.get());
             storageNodes.put(Hash.hash(node), node);
           }
         }
@@ -294,7 +294,7 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
         for (int i : markers) firstPassKeys.add(slices.get(i).toArrayUnsafe());
       }
 
-      List<byte[]> firstValues = storage.getMultipleKeys(firstPassKeys);
+      List<Optional<byte[]>> firstValues = storage.getMultipleKeys(firstPassKeys);
 
       List<byte[]> secondPassKeys = new ArrayList<>();
       List<Boolean> secondPassIsAccount = new ArrayList<>();
@@ -307,9 +307,9 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
         Set<Integer> live = new HashSet<>();
 
         for (int m : markers) {
-          byte[] val = firstValues.get(keyIdx++);
-          if (val != null) {
-            Bytes node = Bytes.wrap(val);
+          Optional<byte[]> val = firstValues.get(keyIdx++);
+          if (val.isPresent()) {
+            Bytes node = Bytes.wrap(val.get());
             if (isAccount) accountNodes.put(Hash.hash(node), node);
             else storageNodes.put(Hash.hash(node), node);
             live.add(m);
@@ -328,11 +328,11 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       }
 
       if (!secondPassKeys.isEmpty()) {
-        List<byte[]> secondValues = storage.getMultipleKeys(secondPassKeys);
+        List<Optional<byte[]>> secondValues = storage.getMultipleKeys(secondPassKeys);
         for (int i = 0; i < secondValues.size(); i++) {
-          byte[] val = secondValues.get(i);
+          Optional<byte[]> val = secondValues.get(i);
           if (val != null) {
-            Bytes node = Bytes.wrap(val);
+            Bytes node = Bytes.wrap(val.get());
             if (secondPassIsAccount.get(i)) accountNodes.put(Hash.hash(node), node);
             else storageNodes.put(Hash.hash(node), node);
           }

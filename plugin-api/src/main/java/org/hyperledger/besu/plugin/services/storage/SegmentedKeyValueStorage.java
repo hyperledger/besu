@@ -39,8 +39,7 @@ public interface SegmentedKeyValueStorage extends Closeable {
    */
   Optional<byte[]> get(SegmentIdentifier segment, byte[] key) throws StorageException;
 
-  // TODO: Rather return List<Optional<byte[]>>
-  public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys)
+  public List<Optional<byte[]>> multiget(final SegmentIdentifier segment, final List<byte[]> keys)
       throws StorageException;
 
   /**

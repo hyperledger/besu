@@ -130,12 +130,8 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
   }
 
-  public List<byte[]> getMultipleKeys(final List<byte[]> keys) {
-    List<SegmentIdentifier> listSegments = new ArrayList<>(keys.size());
-    for (int i = 0; i < keys.size(); i++) {
-      listSegments.add(TRIE_BRANCH_STORAGE);
-    }
-    return composedWorldStateStorage.multiget(listSegments, keys);
+  public List<Optional<byte[]>> getMultipleKeys(final List<byte[]> keys) {
+    return composedWorldStateStorage.multiget(TRIE_BRANCH_STORAGE, keys);
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(

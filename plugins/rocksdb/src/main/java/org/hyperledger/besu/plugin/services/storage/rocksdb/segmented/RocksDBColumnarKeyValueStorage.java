@@ -420,16 +420,22 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   }
 
   @Override
-  public List<byte[]> multiget(final List<SegmentIdentifier> segments, final List<byte[]> keys)
+  public List<Optional<byte[]>> multiget(final SegmentIdentifier segment, final List<byte[]> keys)
       throws StorageException {
     throwIfClosed();
-    List<ColumnFamilyHandle> columnFamilyHandleList = new ArrayList<>(segments.size());
-    for (int i = 0; i < segments.size(); i++) {
-      columnFamilyHandleList.add(safeColumnHandle(segments.get(i)));
-    }
-    try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      List<byte[]> result = getDB().multiGetAsList(readOptions, columnFamilyHandleList, keys);
-      return result != null ? result : Collections.emptyList();
+    final ColumnFamilyHandle columnHandle = safeColumnHandle(segment);
+    try (final OperationTimer.TimingContext ignored = metrics.getMultiReadLatency().startTimer()) {
+      List<byte[]> rawResult = getDB().multiGetAsList(readOptions,
+                                                      Collections.nCopies(keys.size(), columnHandle),
+                                                      keys);
+      if (rawResult == null) {
+        return Collections.nCopies(keys.size(), Optional.empty());
+      }
+      List<Optional<byte[]>> result = new ArrayList<>(rawResult.size());
+      for (byte[] value : rawResult) {
+        result.add(Optional.ofNullable(value));
+      }
+      return result;
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
