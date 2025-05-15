@@ -358,7 +358,7 @@ public class TransactionSimulator {
       final Address miningBeneficiary) {
 
     final long simulationGasCap =
-        calculateSimulationGasCap(callParams.getGasLimit(), processableHeader.getGasLimit());
+        calculateSimulationGasCap(callParams.getGas(), processableHeader.getGasLimit());
 
     MainnetTransactionProcessor transactionProcessor =
         simulationTransactionProcessorFactory.getTransactionProcessor(
@@ -551,7 +551,7 @@ public class TransactionSimulator {
       final Supplier<SECPSignature> signatureSupplier) {
 
     final Wei value = callParams.getValue().orElse(Wei.ZERO);
-    final Bytes payload = callParams.getPayload().orElse(Bytes.EMPTY);
+    final Bytes payload = callParams.getInput().orElse(Bytes.EMPTY);
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()

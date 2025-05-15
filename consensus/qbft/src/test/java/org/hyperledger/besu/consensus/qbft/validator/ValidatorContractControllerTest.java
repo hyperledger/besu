@@ -73,7 +73,7 @@ public class ValidatorContractControllerTest {
             List.of(),
             List.of(new TypeReference<DynamicArray<org.web3j.abi.datatypes.Address>>() {}));
     final Bytes payload = Bytes.fromHexString(FunctionEncoder.encode(getValidatorsFunction));
-    callParameter = ImmutableCallParameter.builder().to(CONTRACT_ADDRESS).payload(payload).build();
+    callParameter = ImmutableCallParameter.builder().to(CONTRACT_ADDRESS).input(payload).build();
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
     qbftConfigOptions.setValidatorContractAddress(Optional.of(CONTRACT_ADDRESS.toHexString()));

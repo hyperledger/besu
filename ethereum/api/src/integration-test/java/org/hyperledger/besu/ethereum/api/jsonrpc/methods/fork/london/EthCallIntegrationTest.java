@@ -71,7 +71,7 @@ public class EthCallIntegrationTest {
         ImmutableCallParameter.builder()
             .sender(Address.fromHexString("0xdeadbeef00000000000000000000000000000000"))
             .to(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
-            .payload(Bytes.fromHexString("0x2e64cec1"))
+            .input(Bytes.fromHexString("0x2e64cec1"))
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
@@ -91,7 +91,7 @@ public class EthCallIntegrationTest {
             .sender(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
             .to(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
             .gasPrice(Wei.fromHexString("0x10000000000000"))
-            .payload(Bytes.fromHexString("0x2e64cec1"))
+            .input(Bytes.fromHexString("0x2e64cec1"))
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
@@ -115,7 +115,7 @@ public class EthCallIntegrationTest {
             .sender(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
             .to(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
             .gasPrice(Wei.fromHexString("0x3B9ACA01"))
-            .payload(Bytes.fromHexString("0x2e64cec1"))
+            .input(Bytes.fromHexString("0x2e64cec1"))
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
@@ -135,7 +135,7 @@ public class EthCallIntegrationTest {
             .sender(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
             .to(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
             .gasPrice(Wei.fromHexString("0x0A"))
-            .payload(Bytes.fromHexString("0x2e64cec1"))
+            .input(Bytes.fromHexString("0x2e64cec1"))
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
@@ -160,7 +160,7 @@ public class EthCallIntegrationTest {
             .sender(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
             .to(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
             .maxFeePerGas(Wei.fromHexString("0x3B9ACA01"))
-            .payload(Bytes.fromHexString("0x2e64cec1"))
+            .input(Bytes.fromHexString("0x2e64cec1"))
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
@@ -181,7 +181,7 @@ public class EthCallIntegrationTest {
             .sender(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
             .to(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
             .maxFeePerGas(Wei.fromHexString("0x3B9ACA01"))
-            .payload(Bytes.fromHexString("0x2e64cec1"))
+            .input(Bytes.fromHexString("0x2e64cec1"))
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
@@ -204,7 +204,7 @@ public class EthCallIntegrationTest {
             .to(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
             .maxPriorityFeePerGas(Wei.fromHexString("0x3B9ACA00"))
             .maxFeePerGas(Wei.fromHexString("0x3B9ACA01"))
-            .payload(Bytes.fromHexString("0x2e64cec1"))
+            .input(Bytes.fromHexString("0x2e64cec1"))
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
@@ -224,7 +224,7 @@ public class EthCallIntegrationTest {
             .sender(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
             .to(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
             .maxFeePerGas(Wei.fromHexString("0x0A"))
-            .payload(Bytes.fromHexString("0x2e64cec1"))
+            .input(Bytes.fromHexString("0x2e64cec1"))
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
@@ -248,7 +248,7 @@ public class EthCallIntegrationTest {
             .to(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
             .maxPriorityFeePerGas(Wei.fromHexString("0x3B9ACA02"))
             .maxFeePerGas(Wei.fromHexString("0x3B9ACA01"))
-            .payload(Bytes.fromHexString("0x2e64cec1"))
+            .input(Bytes.fromHexString("0x2e64cec1"))
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
@@ -272,7 +272,7 @@ public class EthCallIntegrationTest {
             .sender(Address.fromHexString("0xdeadbeef00000000000000000000000000000000"))
             .to(Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"))
             .maxFeePerGas(Wei.fromHexString("0x3B9ACA01"))
-            .payload(Bytes.fromHexString("0x2e64cec1"))
+            .input(Bytes.fromHexString("0x2e64cec1"))
             .build();
 
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");

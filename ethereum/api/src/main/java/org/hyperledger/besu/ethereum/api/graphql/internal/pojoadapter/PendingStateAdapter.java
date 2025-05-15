@@ -164,10 +164,10 @@ public class PendingStateAdapter extends AdapterBase {
         ImmutableCallParameter.builder()
             .sender(from)
             .to(to)
-            .gasLimit(gasParam)
+            .gas(gasParam)
             .gasPrice(gasPriceParam)
             .value(valueParam)
-            .payload(data)
+            .input(data)
             .build();
 
     return transactionSimulator.process(

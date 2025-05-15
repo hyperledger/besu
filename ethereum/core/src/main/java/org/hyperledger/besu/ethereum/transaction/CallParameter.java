@@ -19,56 +19,91 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
+import org.hyperledger.besu.ethereum.core.json.OptionalGasDeserializer;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 import org.immutables.value.Value;
 
 // Represents parameters for eth_call and eth_estimateGas JSON-RPC methods.
 @Value.Immutable
-@JsonDeserialize
-public interface CallParameter {
-  Optional<BigInteger> getChainId();
+@JsonDeserialize(as = ImmutableCallParameter.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public abstract class CallParameter {
+  public abstract Optional<BigInteger> getChainId();
 
-  Optional<Address> getSender();
+  public abstract Optional<Address> getSender();
 
-  Optional<Address> getTo();
+  public abstract Optional<Address> getTo();
 
-  OptionalLong getGasLimit();
+  @JsonDeserialize(using = OptionalGasDeserializer.class)
+  public abstract OptionalLong getGas();
 
-  Optional<Wei> getMaxPriorityFeePerGas();
+  public abstract Optional<Wei> getMaxPriorityFeePerGas();
 
-  Optional<Wei> getMaxFeePerGas();
+  public abstract Optional<Wei> getMaxFeePerGas();
 
-  Optional<Wei> getMaxFeePerBlobGas();
+  public abstract Optional<Wei> getMaxFeePerBlobGas();
 
-  Optional<Wei> getGasPrice();
+  public abstract Optional<Wei> getGasPrice();
 
-  Optional<Wei> getValue();
+  public abstract Optional<Wei> getValue();
 
-  Optional<Bytes> getPayload();
+  public abstract Optional<List<AccessListEntry>> getAccessList();
 
-  Optional<List<AccessListEntry>> getAccessList();
+  public abstract Optional<List<VersionedHash>> getBlobVersionedHashes();
 
-  Optional<List<VersionedHash>> getBlobVersionedHashes();
+  public abstract OptionalLong getNonce();
 
-  OptionalLong getNonce();
+  public abstract Optional<Boolean> getStrict();
 
-  Optional<Boolean> getStrict();
+  /**
+   * 'input' is mutually exclusive with 'data', so it needs special handling. This method is only
+   * used to deserialize the 'input' field, always use getPayload() to get the value.
+   */
+  @JsonDeserialize(contentUsing = HexStringDeserializer.class)
+  protected abstract Optional<Bytes> getInput();
 
-  static CallParameter fromTransaction(final Transaction tx) {
+  /**
+   * 'data' is mutually exclusive with 'input', so it needs special handling. This method is only
+   * used to deserialize the 'data' field, always use getPayload() to get the value.
+   */
+  @JsonDeserialize(contentUsing = HexStringDeserializer.class)
+  protected abstract Optional<Bytes> getData();
+
+  @Value.Check
+  protected void check() {
+    if (getInput().isPresent() && getData().isPresent() && !getInput().equals(getData())) {
+      throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");
+    }
+  }
+
+  /**
+   * Returns either the 'input' or 'data' field, depending on which is present, or empty if neither
+   * is present.
+   *
+   * @return the payload, or empty if none is present.
+   */
+  @Value.Derived
+  public Optional<Bytes> getPayload() {
+    return getInput().or(this::getData);
+  }
+
+  public static CallParameter fromTransaction(final Transaction tx) {
     final var builder =
         ImmutableCallParameter.builder()
             .chainId(tx.getChainId())
             .sender(tx.getSender())
-            .gasLimit(tx.getGasLimit())
+            .gas(tx.getGasLimit())
             .value(tx.getValue())
-            .payload(tx.getPayload())
+            .input(tx.getPayload())
             .nonce(tx.getNonce());
 
     tx.getTo().ifPresent(builder::to);
@@ -83,14 +118,14 @@ public interface CallParameter {
     return builder.build();
   }
 
-  static CallParameter fromTransaction(final org.hyperledger.besu.datatypes.Transaction tx) {
+  public static CallParameter fromTransaction(final org.hyperledger.besu.datatypes.Transaction tx) {
     final var builder =
         ImmutableCallParameter.builder()
             .chainId(tx.getChainId())
             .sender(tx.getSender())
-            .gasLimit(tx.getGasLimit())
+            .gas(tx.getGasLimit())
             .value(Wei.fromQuantity(tx.getValue()))
-            .payload(tx.getPayload())
+            .input(tx.getPayload())
             .nonce(tx.getNonce());
 
     tx.getTo().ifPresent(builder::to);

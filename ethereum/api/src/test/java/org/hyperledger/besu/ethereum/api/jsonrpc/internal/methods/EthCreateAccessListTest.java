@@ -394,10 +394,10 @@ public class EthCreateAccessListTest {
     return ImmutableCallParameter.builder()
         .sender(Address.fromHexString("0x0"))
         .to(Address.fromHexString("0x0"))
-        .gasLimit(0L)
+        .gas(0L)
         .gasPrice(gasPrice)
         .value(Wei.ZERO)
-        .payload(Bytes.EMPTY)
+        .input(Bytes.EMPTY)
         .strict(false)
         .build();
   }
@@ -424,7 +424,7 @@ public class EthCreateAccessListTest {
         .maxFeePerGas(Wei.fromHexString("0x10"))
         .maxPriorityFeePerGas(Wei.fromHexString("0x10"))
         .value(Wei.ZERO)
-        .payload(Bytes.EMPTY)
+        .input(Bytes.EMPTY)
         .strict(false)
         .accessList(accessListEntries)
         .build();

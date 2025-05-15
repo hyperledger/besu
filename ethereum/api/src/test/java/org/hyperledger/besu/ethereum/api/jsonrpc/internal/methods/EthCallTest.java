@@ -531,12 +531,12 @@ public class EthCallTest {
     return ImmutableCallParameter.builder()
         .sender(Address.fromHexString("0x0"))
         .to(Address.fromHexString("0x0"))
-        .gasLimit(0L)
+        .gas(0L)
         .gasPrice(gasPrice)
         .maxFeePerGas(maxFeesPerGas)
         .maxPriorityFeePerGas(maxPriorityFeesPerGas)
         .value(Wei.ZERO)
-        .payload(Bytes.EMPTY)
+        .input(Bytes.EMPTY)
         .build();
   }
 

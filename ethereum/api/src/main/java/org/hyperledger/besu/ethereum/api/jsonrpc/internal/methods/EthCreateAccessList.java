@@ -129,7 +129,7 @@ public class EthCreateAccessList extends AbstractEstimateGas {
 
     return ImmutableCallParameter.builder()
         .from(callParams)
-        .gasLimit(gasLimit)
+        .gas(gasLimit)
         .accessList(accessListEntries)
         .build();
   }

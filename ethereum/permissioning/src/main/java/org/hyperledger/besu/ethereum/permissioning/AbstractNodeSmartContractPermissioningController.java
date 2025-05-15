@@ -106,6 +106,6 @@ public abstract class AbstractNodeSmartContractPermissioningController
 
   protected CallParameter buildCallParameters(final Bytes payload) {
     // Call parameters for simulation don't need other parameters, only the address and the payload
-    return ImmutableCallParameter.builder().to(contractAddress).payload(payload).build();
+    return ImmutableCallParameter.builder().to(contractAddress).input(payload).build();
   }
 }
