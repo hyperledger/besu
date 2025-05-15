@@ -26,8 +26,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Byzantium gas calculator. */
 public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
+  protected static final int WORD_SIZE = 32;
   private static final int GQUADDIVISOR = 20;
-  private static final int WORD_SIZE = 32;
   private static final int BITS_IN_BYTE = 8;
 
   /** The constant MAX_FIRST_EXPONENT_BYTES. */
