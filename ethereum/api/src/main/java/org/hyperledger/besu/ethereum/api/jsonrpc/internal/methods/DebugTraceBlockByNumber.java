@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -88,7 +89,7 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
 
-    final TraceOptions traceOptions;
+    final TraceOptions<? extends TracerConfig> traceOptions;
     try {
       traceOptions =
           request
@@ -131,8 +132,7 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                               debugOperationTracer,
                               protocolSpec,
                               block);
-                      DebugTraceTransactionStep debugTraceTransactionStep =
-                          new DebugTraceTransactionStep();
+
                       Pipeline<TransactionTrace> traceBlockPipeline =
                           createPipelineFrom(
                                   "getTransactions",
@@ -143,7 +143,10 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                                   "debug_trace_block_by_number")
                               .thenProcess("executeTransaction", executeTransactionStep)
                               .thenProcessAsyncOrdered(
-                                  "debugTraceTransactionStep", debugTraceTransactionStep, 4)
+                                  "debugTraceTransactionStep",
+                                  DebugTraceTransactionStepFactory.createAsync(
+                                      traceOptions.tracerType()),
+                                  4)
                               .andFinishWith("collect_results", tracesList::add);
 
                       try {
