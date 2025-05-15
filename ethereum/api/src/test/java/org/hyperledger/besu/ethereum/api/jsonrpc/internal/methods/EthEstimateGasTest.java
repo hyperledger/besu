@@ -626,10 +626,10 @@ public class EthEstimateGasTest {
     return ImmutableCallParameter.builder()
         .sender(Address.fromHexString("0x0"))
         .to(Address.fromHexString("0x0"))
-        .gasLimit(0L)
+        .gas(0L)
         .gasPrice(gasPrice)
         .value(Wei.ZERO)
-        .payload(Bytes.EMPTY)
+        .input(Bytes.EMPTY)
         .strict(isStrict)
         .build();
   }
@@ -639,10 +639,10 @@ public class EthEstimateGasTest {
     return ImmutableCallParameter.builder()
         .sender(Address.fromHexString("0x0"))
         .to(Address.fromHexString("0x0"))
-        .gasLimit(gasLimit)
+        .gas(gasLimit)
         .gasPrice(gasPrice)
         .value(Wei.ZERO)
-        .payload(Bytes.EMPTY)
+        .input(Bytes.EMPTY)
         .nonce(maybeNonce.orElse(null))
         .build();
   }
@@ -660,7 +660,7 @@ public class EthEstimateGasTest {
         .maxPriorityFeePerGas(Wei.fromHexString("0x10"))
         .maxFeePerGas(Wei.fromHexString("0x10"))
         .value(Wei.ZERO)
-        .payload(Bytes.EMPTY)
+        .input(Bytes.EMPTY)
         .strict(false)
         .nonce(maybeNonce.orElse(null))
         .build();
@@ -676,12 +676,12 @@ public class EthEstimateGasTest {
     return ImmutableCallParameter.builder()
         .sender(Address.fromHexString("0x0"))
         .to(Address.fromHexString("0x0"))
-        .gasLimit(gasLimit)
+        .gas(gasLimit)
         .gasPrice(gasPrice.orElse(Wei.ZERO))
         .maxPriorityFeePerGas(Wei.fromHexString("0x10"))
         .maxFeePerGas(Wei.fromHexString("0x10"))
         .value(Wei.ZERO)
-        .payload(Bytes.EMPTY)
+        .input(Bytes.EMPTY)
         .nonce(maybeNonce.orElse(null))
         .build();
   }

@@ -77,10 +77,10 @@ public class PrivCallTest {
     final CallParameter callParameter =
         ImmutableCallParameter.builder()
             .sender(Address.fromHexString("0x0"))
-            .gasLimit(0L)
+            .gas(0L)
             .gasPrice(Wei.ZERO)
             .value(Wei.ZERO)
-            .payload(Bytes.EMPTY)
+            .input(Bytes.EMPTY)
             .build();
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
 
@@ -178,10 +178,10 @@ public class PrivCallTest {
     return ImmutableCallParameter.builder()
         .sender(Address.fromHexString("0x0"))
         .to(Address.fromHexString("0x0"))
-        .gasLimit(0L)
+        .gas(0L)
         .gasPrice(Wei.ZERO)
         .value(Wei.ZERO)
-        .payload(Bytes.EMPTY)
+        .input(Bytes.EMPTY)
         .build();
   }
 

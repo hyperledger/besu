@@ -92,7 +92,7 @@ public class ValidatorContractController {
       final long blockNumber, final Function function, final Address contractAddress) {
     final Bytes payload = Bytes.fromHexString(FunctionEncoder.encode(function));
     final CallParameter callParams =
-        ImmutableCallParameter.builder().to(contractAddress).payload(payload).build();
+        ImmutableCallParameter.builder().to(contractAddress).input(payload).build();
     final TransactionValidationParams transactionValidationParams =
         TransactionValidationParams.transactionSimulatorAllowExceedingBalance();
     return transactionSimulator.process(

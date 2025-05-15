@@ -119,7 +119,7 @@ public class TransactionSmartContractPermissioningController
     final CallParameter callParams =
         ImmutableCallParameter.builder()
             .to(contractAddress)
-            .payload(createPayload(transaction))
+            .input(createPayload(transaction))
             .build();
 
     final Optional<Boolean> contractExists =

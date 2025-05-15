@@ -130,7 +130,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   }
 
   protected CallParameter overrideGasLimit(final CallParameter callParams, final long gasLimit) {
-    return ImmutableCallParameter.builder().from(callParams).gasLimit(gasLimit).build();
+    return ImmutableCallParameter.builder().from(callParams).gas(gasLimit).build();
   }
 
   protected JsonRpcErrorResponse errorResponse(
@@ -198,7 +198,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);
 
     // If the transaction is a plain value transfer, try minTxCost. It is likely to succeed.
-    if (callParams.getPayload() == null || (callParams.getPayload().isEmpty())) {
+    if (callParams.getPayload().isEmpty()) {
       var maybeSimpleTransferResult =
           simulationFunction.simulate(overrideGasLimit(callParams, minTxCost), operationTracer);
       return maybeSimpleTransferResult.isPresent()

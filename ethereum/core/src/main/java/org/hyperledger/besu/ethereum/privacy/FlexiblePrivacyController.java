@@ -335,10 +335,10 @@ public class FlexiblePrivacyController extends AbstractRestrictedPrivacyControll
     return ImmutableCallParameter.builder()
         .sender(Address.ZERO)
         .to(FLEXIBLE_PRIVACY_PROXY)
-        .gasLimit(3000000)
+        .gas(3000000)
         .gasPrice(Wei.of(1000))
         .value(Wei.ZERO)
-        .payload(methodCall)
+        .input(methodCall)
         .build();
   }
 

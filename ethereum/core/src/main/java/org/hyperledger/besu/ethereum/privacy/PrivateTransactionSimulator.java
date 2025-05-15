@@ -157,7 +157,7 @@ public class PrivateTransactionSimulator {
     final Address senderAddress = callParams.getSender().orElse(DEFAULT_FROM);
     final Account sender = disposablePrivateState.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
-    final long gasLimit = callParams.getGasLimit().orElse(header.getGasLimit());
+    final long gasLimit = callParams.getGas().orElse(header.getGasLimit());
     final Wei gasPrice = callParams.getGasPrice().orElse(Wei.ZERO);
     final Wei value = callParams.getValue().orElse(Wei.ZERO);
     final Bytes payload = callParams.getPayload().orElse(Bytes.EMPTY);

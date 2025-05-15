@@ -12,22 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
+package org.hyperledger.besu.ethereum.transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import org.hyperledger.besu.ethereum.transaction.CallParameter;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 public class CallParameterTest {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new Jdk8Module());
 
   @Test
   public void acceptsAndCapMaxValueForGas() throws JsonProcessingException {
@@ -40,7 +39,7 @@ public class CallParameterTest {
 
     final CallParameter callParameter = objectMapper.readValue(json, CallParameter.class);
 
-    assertThat(callParameter.getGasLimit()).isEqualTo(Long.MAX_VALUE);
+    assertThat(callParameter.getGas()).hasValue(Long.MAX_VALUE);
   }
 
   @Test
@@ -54,7 +53,7 @@ public class CallParameterTest {
 
     final CallParameter callParameter = objectMapper.readValue(json, CallParameter.class);
 
-    assertThat(callParameter.getPayload()).isEqualTo(Bytes.fromHexString("0x1234"));
+    assertThat(callParameter.getPayload()).contains(Bytes.fromHexString("0x1234"));
   }
 
   @Test
@@ -68,7 +67,7 @@ public class CallParameterTest {
 
     final CallParameter callParameter = objectMapper.readValue(json, CallParameter.class);
 
-    assertThat(callParameter.getPayload()).isEqualTo(Bytes.fromHexString("0x1234"));
+    assertThat(callParameter.getPayload()).contains(Bytes.fromHexString("0x1234"));
   }
 
   @Test
@@ -83,7 +82,7 @@ public class CallParameterTest {
 
     final CallParameter callParameter = objectMapper.readValue(json, CallParameter.class);
 
-    assertThat(callParameter.getPayload()).isEqualTo(Bytes.fromHexString("0x1234"));
+    assertThat(callParameter.getPayload()).contains(Bytes.fromHexString("0x1234"));
   }
 
   @Test
@@ -115,6 +114,6 @@ public class CallParameterTest {
 
     final CallParameter callParameter = objectMapper.readValue(json, CallParameter.class);
 
-    assertThat(callParameter.getGasLimit()).isEqualTo(150);
+    assertThat(callParameter.getGas()).hasValue(150);
   }
 }

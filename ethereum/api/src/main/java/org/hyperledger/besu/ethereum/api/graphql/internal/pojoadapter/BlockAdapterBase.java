@@ -351,12 +351,12 @@ public class BlockAdapterBase extends AdapterBase {
         ImmutableCallParameter.builder()
             .sender(from)
             .to(to)
-            .gasLimit(gasParam)
+            .gas(gasParam)
             .gasPrice(gasPriceParam)
             .maxPriorityFeePerGas(maxPriorityFeePerGas)
             .maxFeePerGas(maxFeePerGas)
             .value(valueParam)
-            .payload(data)
+            .input(data)
             .build();
 
     return transactionSimulator.process(
