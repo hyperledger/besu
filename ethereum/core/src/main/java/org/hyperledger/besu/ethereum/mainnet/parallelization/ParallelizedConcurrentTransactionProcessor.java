@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.PreloadTask;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.StoragePreloadRequest;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
@@ -64,6 +65,8 @@ public class ParallelizedConcurrentTransactionProcessor {
 
   private CompletableFuture<Void>[] completableFuturesForBackgroundTransactions;
 
+  private final Optional<Preloader> preloadService;
+
   /**
    * Constructs a PreloadConcurrentTransactionProcessor with a specified transaction processor. This
    * processor is responsible for the individual processing of transactions.
@@ -71,9 +74,10 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @param transactionProcessor The transaction processor for processing individual transactions.
    */
   public ParallelizedConcurrentTransactionProcessor(
-      final MainnetTransactionProcessor transactionProcessor) {
+      final MainnetTransactionProcessor transactionProcessor, final Optional<Preloader> preloadService) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = new TransactionCollisionDetector();
+    this.preloadService = preloadService;
   }
 
   @VisibleForTesting
@@ -82,6 +86,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final TransactionCollisionDetector transactionCollisionDetector) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = transactionCollisionDetector;
+    this.preloadService = Optional.empty();
   }
 
   /**
@@ -194,11 +199,9 @@ public class ParallelizedConcurrentTransactionProcessor {
 
         ws.getAccumulator().commit();
 
-        if (result.isSuccessful()) {
+        if (result.isSuccessful() && preloadService.isPresent()) {
           ws.enableCacheMerkleTrieLoader();
-          ws.getBonsaiCachedMerkleTrieLoader()
-              .getPreloader()
-              .enqueueRequest(createPreloadTask(ws.getAccumulator()));
+          preloadService.get().enqueueRequest(createPreloadTask(ws.getAccumulator()));
           ws.disableCacheMerkleTrieLoader();
         }
 

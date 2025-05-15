@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -32,6 +33,7 @@ public class MainnetProtocolSpecFactory {
   private final MiningConfiguration miningConfiguration;
   private final boolean isParallelTxProcessingEnabled;
   private final MetricsSystem metricsSystem;
+  private final Optional<Preloader> preloadService;
 
   public MainnetProtocolSpecFactory(
       final Optional<BigInteger> chainId,
@@ -40,7 +42,8 @@ public class MainnetProtocolSpecFactory {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<Preloader> preloadService) {
     this.chainId = chainId;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.ecip1017EraRounds = ecip1017EraRounds;
@@ -48,36 +51,37 @@ public class MainnetProtocolSpecFactory {
     this.miningConfiguration = miningConfiguration;
     this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
     this.metricsSystem = metricsSystem;
+    this.preloadService = preloadService;
   }
 
   public ProtocolSpecBuilder frontierDefinition() {
     return MainnetProtocolSpecs.frontierDefinition(
-        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem, preloadService);
   }
 
   public ProtocolSpecBuilder homesteadDefinition() {
     return MainnetProtocolSpecs.homesteadDefinition(
-        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem, preloadService);
   }
 
   public ProtocolSpecBuilder daoRecoveryInitDefinition() {
     return MainnetProtocolSpecs.daoRecoveryInitDefinition(
-        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem, preloadService);
   }
 
   public ProtocolSpecBuilder daoRecoveryTransitionDefinition() {
     return MainnetProtocolSpecs.daoRecoveryTransitionDefinition(
-        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem, preloadService);
   }
 
   public ProtocolSpecBuilder tangerineWhistleDefinition() {
     return MainnetProtocolSpecs.tangerineWhistleDefinition(
-        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem, preloadService);
   }
 
   public ProtocolSpecBuilder spuriousDragonDefinition() {
     return MainnetProtocolSpecs.spuriousDragonDefinition(
-        chainId, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        chainId, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem, preloadService);
   }
 
   public ProtocolSpecBuilder byzantiumDefinition() {
@@ -86,7 +90,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder constantinopleDefinition() {
@@ -95,7 +100,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder petersburgDefinition() {
@@ -104,7 +110,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder istanbulDefinition() {
@@ -113,7 +120,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder muirGlacierDefinition() {
@@ -122,7 +130,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder berlinDefinition() {
@@ -131,7 +140,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder londonDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -142,7 +152,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder arrowGlacierDefinition(
@@ -154,7 +165,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder grayGlacierDefinition(
@@ -166,7 +178,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder parisDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -177,7 +190,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder shanghaiDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -188,7 +202,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder cancunDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -199,7 +214,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder cancunEOFDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -210,7 +226,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -221,7 +238,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   public ProtocolSpecBuilder osakaDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -232,7 +250,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   /**
@@ -254,7 +273,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   /**
@@ -276,7 +296,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        preloadService);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////

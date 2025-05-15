@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache;
 
-import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -29,7 +28,7 @@ public class BonsaiCachedMerkleTrieLoaderModule {
   @Provides
   @Singleton
   BonsaiCachedMerkleTrieLoader provideCachedMerkleTrieLoaderModule(
-      final MetricsSystem metricsSystem, final Preloader preloader) {
-    return new BonsaiCachedMerkleTrieLoader((ObservableMetricsSystem) metricsSystem, preloader);
+      final MetricsSystem metricsSystem) {
+    return new BonsaiCachedMerkleTrieLoader((ObservableMetricsSystem) metricsSystem);
   }
 }

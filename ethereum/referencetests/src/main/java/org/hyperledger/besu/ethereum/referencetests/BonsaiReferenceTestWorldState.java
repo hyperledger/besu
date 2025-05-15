@@ -225,7 +225,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
 
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
-        new BonsaiCachedMerkleTrieLoader(metricsSystem, new NoOpPreloader());
+        new BonsaiCachedMerkleTrieLoader(metricsSystem);
     final TrieLogManager trieLogManager = new ReferenceTestsInMemoryTrieLogManager();
 
     final BonsaiPreImageProxy preImageProxy =

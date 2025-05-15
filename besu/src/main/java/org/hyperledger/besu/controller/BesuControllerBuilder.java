@@ -221,6 +221,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** When enabled, round changes on f+1 RC messages from higher rounds */
   protected boolean isEarlyRoundChangeEnabled = false;
 
+  protected PreloadService preloadService;
+
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
 
@@ -608,17 +610,25 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataDirectory.toString(),
             numberOfBlocksToCache);
 
-    final PreloadService preloadService =
-        (PreloadService)
-            besuComponent
-                .map(BesuComponent::getPreloader)
-                .orElseGet(() -> new PreloadService(metricsSystem));
+    final EthScheduler scheduler =
+        new EthScheduler(
+            syncConfig.getDownloaderParallelism(),
+            syncConfig.getTransactionsParallelism(),
+            syncConfig.getComputationParallelism(),
+            metricsSystem);
+
+    // final PreloadService preloadService =
+    //     (PreloadService)
+    //         besuComponent
+    //             .map(BesuComponent::getPreloader)
+    //             .orElseGet(() -> new PreloadService(scheduler.getServicesExecutor()));
+    preloadService = new PreloadService(scheduler.getServicesExecutor());
 
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
-            .orElseGet(() -> new BonsaiCachedMerkleTrieLoader(metricsSystem, preloadService));
-    preloadService.setBonsaiCachedMerkleTrieLoader(bonsaiCachedMerkleTrieLoader);
+            .orElseGet(() -> new BonsaiCachedMerkleTrieLoader(metricsSystem));
+    // preloadService.setBonsaiCachedMerkleTrieLoader(bonsaiCachedMerkleTrieLoader);
 
     final var worldStateHealerSupplier = new AtomicReference<WorldStateHealer>();
 
@@ -681,13 +691,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
-
-    final EthScheduler scheduler =
-        new EthScheduler(
-            syncConfig.getDownloaderParallelism(),
-            syncConfig.getTransactionsParallelism(),
-            syncConfig.getComputationParallelism(),
-            metricsSystem);
 
     Optional<Checkpoint> checkpoint = Optional.empty();
     if (genesisConfigOptions.getCheckpointOptions().isValid()) {

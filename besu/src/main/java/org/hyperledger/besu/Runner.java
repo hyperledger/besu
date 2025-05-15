@@ -179,9 +179,6 @@ public class Runner implements AutoCloseable {
       }
       besuController.getMiningCoordinator().start();
       transactionPoolEvictionService.start();
-      besuController
-          .getPreloadService()
-          .start(besuController.getProtocolManager().ethContext().getScheduler());
 
       LOG.info("Ethereum main loop is up.");
       // we write these values to disk to be able to access them during the acceptance tests
@@ -212,7 +209,6 @@ public class Runner implements AutoCloseable {
     metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
     ethStatsService.ifPresent(EthStatsService::stop);
     besuController.getMiningCoordinator().stop();
-    besuController.getPreloadService().stop();
     waitForServiceToStop("Mining Coordinator", besuController.getMiningCoordinator()::awaitStop);
     stratumServer.ifPresent(server -> waitForServiceToStop("Stratum", server::stop));
     if (networkRunner.getNetwork().isP2pEnabled()) {

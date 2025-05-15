@@ -14,20 +14,14 @@
  */
 package org.hyperledger.besu.preload;
 
-import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ExecutorService;
 
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.PreloadTask;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
-import org.hyperledger.besu.services.pipeline.Pipeline;
-import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
-import org.hyperledger.besu.services.tasks.Task;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,108 +29,25 @@ public class PreloadService implements Preloader {
 
   private static final Logger LOG = LoggerFactory.getLogger(PreloadService.class);
 
-  private final Pipeline<Task<PreloadTask>> pipeline;
-  private volatile boolean processing = false;
   private BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
 
-  private static final InMemoryTaskQueue<PreloadTask> queue = new InMemoryTaskQueue<>();
+  protected final ExecutorService servicesExecutor;
+  private final Collection<CompletableFuture<?>> pendingFutures = new ConcurrentLinkedDeque<>();
 
-  public PreloadService(final MetricsSystem metricsSystem) {
+  public PreloadService(final ExecutorService servicesExecutor) {
     LOG.info("Creating PreloadService " + this);
-    LabelledMetric<Counter> outputCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.BLOCK_PROCESSING,
-            "preload_tasks_processed_counter",
-            "Counter for the processed preload tasks",
-            "step",
-            "action");
-    this.pipeline =
-        createPipelineFrom(
-                "dequeuePreloadTask",
-                new TaskQueueIterator(this, () -> this.dequeueRequest()),
-                10,
-                outputCounter,
-                true,
-                "dequeuePreloadTask")
-            .thenProcessInParallel(
-                "processPreloadTask",
-                task -> {
-                  bonsaiCachedMerkleTrieLoader.processPreloadTask(task.getData());
-                  return task;
-                },
-                5)
-            .andFinishWith("preloadComplete", task -> {});
+    this.servicesExecutor = servicesExecutor;
   }
 
   @Override
   public synchronized void enqueueRequest(final PreloadTask request) {
-    if (!processing) {
-      throw new IllegalStateException("Cannot enqueue; PreloadService not running");
-    }
-    queue.add(request);
-    notifyAll();
-  }
-
-  @Override
-  public synchronized Task<PreloadTask> dequeueRequest() {
-    while (processing && queue.isEmpty()) {
-      try {
-        wait();
-      } catch (InterruptedException ie) {
-        Thread.currentThread().interrupt();
-        return null;
-      }
-    }
-    if (!processing) {
-      return null;
-    }
-    return queue.remove();
+    final CompletableFuture<Void> syncFuture = CompletableFuture.runAsync(() -> bonsaiCachedMerkleTrieLoader.processPreloadTask(request), servicesExecutor);
+    pendingFutures.add(syncFuture);
+    syncFuture.whenComplete((r, t) -> pendingFutures.remove(syncFuture));
   }
 
   @Override
   public synchronized void clearQueue() {
-    queue.clear();
-  }
-
-  public void start(final EthScheduler scheduler) {
-    if (processing) {
-      throw new IllegalStateException("PreloadService already started");
-    }
-    processing = true;
-    scheduler
-        .startPipeline(pipeline)
-        .whenComplete(
-            (nothing, error) -> {
-              if (error != null) {
-                LOG.error("Preload pipeline terminated with error", error);
-              } else {
-                LOG.info("Preload pipeline cleanly shut down");
-              }
-              synchronized (PreloadService.this) {
-                processing = false;
-                PreloadService.this.notifyAll();
-              }
-            });
-  }
-
-  public synchronized void stop() {
-    LOG.info("PreloadService >> stop");
-    queue.clear();
-    pipeline.abort();
-    if (!processing) {
-      return;
-    }
-    processing = false;
-    notifyAll();
-  }
-
-  public boolean isProcessing() {
-    return processing;
-  }
-
-  // TODO: Solve better
-  public void setBonsaiCachedMerkleTrieLoader(
-      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader) {
-    this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    pendingFutures.forEach(future -> future.cancel(true));
   }
 }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyCalculators;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -54,7 +55,8 @@ public class MainnetProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<Preloader> preloadService) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
           config,
@@ -76,7 +78,8 @@ public class MainnetProtocolSchedule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem)
+            metricsSystem,
+            preloadService)
         .createProtocolSchedule();
   }
 
@@ -108,7 +111,8 @@ public class MainnetProtocolSchedule {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        Optional.empty());
   }
 
   /**
@@ -137,7 +141,8 @@ public class MainnetProtocolSchedule {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        Optional.empty());
   }
 
   /**
@@ -164,6 +169,7 @@ public class MainnetProtocolSchedule {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        Optional.empty());
   }
 }

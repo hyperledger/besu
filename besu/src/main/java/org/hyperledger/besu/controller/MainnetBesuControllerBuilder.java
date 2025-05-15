@@ -103,7 +103,8 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         super.miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        Optional.of(preloadService));
   }
 
   @Override

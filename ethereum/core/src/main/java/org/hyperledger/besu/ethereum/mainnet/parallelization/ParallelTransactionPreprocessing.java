@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.Preprocessin
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor.ParallelizedPreProcessingContext;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -35,11 +36,13 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
 
   private final MainnetTransactionProcessor transactionProcessor;
   private final Executor executor;
+  private final Optional<Preloader> preloadService;
 
   public ParallelTransactionPreprocessing(
-      final MainnetTransactionProcessor transactionProcessor, final Executor executor) {
+      final MainnetTransactionProcessor transactionProcessor, final Executor executor, final Optional<Preloader> preloadService) {
     this.transactionProcessor = transactionProcessor;
     this.executor = executor;
+    this.preloadService = preloadService;
   }
 
   @Override
@@ -53,7 +56,7 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
       final Wei blobGasPrice) {
     if ((protocolContext.getWorldStateArchive() instanceof PathBasedWorldStateProvider)) {
       ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =
-          new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
+          new ParallelizedConcurrentTransactionProcessor(transactionProcessor, preloadService);
       // runAsyncBlock, if activated, facilitates the non-blocking parallel execution
       // of transactions in the background through an optimistic strategy.
       parallelizedConcurrentTransactionProcessor.runAsyncBlock(

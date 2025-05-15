@@ -109,7 +109,8 @@ public class MergeProtocolSchedule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem)
+            metricsSystem,
+            Optional.empty())
         .createProtocolSchedule();
   }
 

@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.PreloadTask;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.StoragePreloadRequest;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -66,14 +65,10 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
   private final Counter accountCacheMissCounter;
   private final Counter storageCacheMissCounter;
 
-  private final Preloader preloader;
-
   public BonsaiCachedMerkleTrieLoader(
-      final ObservableMetricsSystem metricsSystem, final Preloader preloader) {
+      final ObservableMetricsSystem metricsSystem) {
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "accountsNodes", accountNodes);
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "storageNodes", storageNodes);
-
-    this.preloader = preloader;
 
     accountPreloadTimer =
         metricsSystem
@@ -381,9 +376,5 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
                     accountHash, location, nodeHash);
               });
     }
-  }
-
-  public Preloader getPreloader() {
-    return preloader;
   }
 }

@@ -17,14 +17,13 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.NoOpPreloader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 public class NoopBonsaiCachedMerkleTrieLoader extends BonsaiCachedMerkleTrieLoader {
 
   public NoopBonsaiCachedMerkleTrieLoader() {
-    super(new NoOpMetricsSystem(), new NoOpPreloader());
+    super(new NoOpMetricsSystem());
   }
 
   @Override

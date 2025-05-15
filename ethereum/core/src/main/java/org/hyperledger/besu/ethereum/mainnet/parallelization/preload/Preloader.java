@@ -14,13 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.parallelization.preload;
 
-import org.hyperledger.besu.services.tasks.Task;
-
 public interface Preloader {
 
   public void enqueueRequest(final PreloadTask request);
-
-  public Task<PreloadTask> dequeueRequest();
 
   public void clearQueue();
 }

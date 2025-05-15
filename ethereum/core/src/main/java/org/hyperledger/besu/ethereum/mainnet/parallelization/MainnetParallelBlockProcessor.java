@@ -28,10 +28,10 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -55,6 +55,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
   private static final Executor executor = Executors.newFixedThreadPool(NCPU);
 
+  private final Optional<Preloader> preloadService;
+
   public MainnetParallelBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
@@ -62,7 +64,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<Preloader> preloadService) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
@@ -83,6 +86,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
                 BesuMetricCategory.BLOCK_PROCESSING,
                 "conflicted_transactions_counter",
                 "Counter for the number of conflicted transactions during block processing"));
+
+    this.preloadService = preloadService;
   }
 
   @Override
@@ -137,8 +142,9 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final Block block) {
-    BonsaiWorldState ws = (BonsaiWorldState) worldState;
-    ws.getBonsaiCachedMerkleTrieLoader().getPreloader().clearQueue();
+    if (preloadService.isPresent()) {
+      preloadService.get().clearQueue();
+    }
 
     final BlockProcessingResult blockProcessingResult =
         super.processBlock(
@@ -147,7 +153,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             worldState,
             block,
             Optional.empty(),
-            new ParallelTransactionPreprocessing(transactionProcessor, executor));
+            new ParallelTransactionPreprocessing(transactionProcessor, executor, preloadService));
 
     if (blockProcessingResult.isFailed()) {
       // Fallback to non-parallel processing if there is a block processing exception .
@@ -168,9 +174,11 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       implements ProtocolSpecBuilder.BlockProcessorBuilder {
 
     final MetricsSystem metricsSystem;
+    final Optional<Preloader> preloadService;
 
-    public ParallelBlockProcessorBuilder(final MetricsSystem metricsSystem) {
+    public ParallelBlockProcessorBuilder(final MetricsSystem metricsSystem, final Optional<Preloader> preloadService) {
       this.metricsSystem = metricsSystem;
+      this.preloadService = preloadService;
     }
 
     @Override
@@ -188,7 +196,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           miningBeneficiaryCalculator,
           skipZeroBlockRewards,
           protocolSchedule,
-          metricsSystem);
+          metricsSystem,
+          preloadService);
     }
   }
 }

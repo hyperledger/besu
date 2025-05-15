@@ -77,7 +77,8 @@ public class ProtocolScheduleModule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem);
+            metricsSystem,
+            Optional.empty());
 
     return builder;
   }

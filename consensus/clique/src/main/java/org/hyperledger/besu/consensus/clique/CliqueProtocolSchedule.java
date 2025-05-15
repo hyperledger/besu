@@ -116,7 +116,8 @@ public class CliqueProtocolSchedule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem)
+            metricsSystem,
+            Optional.empty())
         .createProtocolSchedule();
   }
 

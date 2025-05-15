@@ -319,6 +319,10 @@ public class EthScheduler {
     return new OrderedProcessor<>(processor);
   }
 
+  public ExecutorService getServicesExecutor() {
+    return servicesExecutor;
+  }
+
   /**
    * This class is a way to execute a set of tasks, one by one, in a strict order, without blocking
    * the caller in case there are still previous tasks queued

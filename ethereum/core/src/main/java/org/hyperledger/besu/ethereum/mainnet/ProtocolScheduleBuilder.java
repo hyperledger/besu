@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -52,6 +53,7 @@ public class ProtocolScheduleBuilder {
   private final boolean isParallelTxProcessingEnabled;
   private final MetricsSystem metricsSystem;
   private final MiningConfiguration miningConfiguration;
+  private final Optional<Preloader> preloadService;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -63,7 +65,8 @@ public class ProtocolScheduleBuilder {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<Preloader> preloadService) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
@@ -74,6 +77,7 @@ public class ProtocolScheduleBuilder {
     this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
     this.metricsSystem = metricsSystem;
     this.miningConfiguration = miningConfiguration;
+    this.preloadService = preloadService;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -95,7 +99,8 @@ public class ProtocolScheduleBuilder {
                 config.getContractSizeLimit(), OptionalInt.empty(), config.getEvmStackSize()),
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            metricsSystem);
+            metricsSystem,
+            preloadService);
 
     validateForkOrdering();
 

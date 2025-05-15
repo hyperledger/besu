@@ -17,12 +17,10 @@ package org.hyperledger.besu.components;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.preload.PreloaderModule;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import javax.inject.Named;
@@ -38,7 +36,6 @@ import org.slf4j.Logger;
       BesuCommandModule.class,
       MetricsSystemModule.class,
       BonsaiCachedMerkleTrieLoaderModule.class,
-      PreloaderModule.class,
       BesuPluginContextModule.class,
       BlobCacheModule.class
     })
@@ -57,8 +54,6 @@ public interface BesuComponent {
    * @return CachedMerkleTrieLoader
    */
   BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader();
-
-  Preloader getPreloader();
 
   /**
    * a metrics system that is observable by a Prometheus or OTEL metrics collection subsystem

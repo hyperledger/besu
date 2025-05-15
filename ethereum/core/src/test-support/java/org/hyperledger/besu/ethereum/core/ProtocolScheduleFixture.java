@@ -42,7 +42,8 @@ public class ProtocolScheduleFixture {
           MiningConfiguration.newDefault(),
           new BadBlockManager(),
           false,
-          new NoOpMetricsSystem());
+          new NoOpMetricsSystem(),
+          Optional.empty());
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
     return getGenesisConfigOptions("/mainnet.json");

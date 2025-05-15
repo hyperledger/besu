@@ -195,7 +195,8 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                new NoOpMetricsSystem())
+                new NoOpMetricsSystem(),
+                Optional.empty())
             .createProtocolSchedule();
   }
 }

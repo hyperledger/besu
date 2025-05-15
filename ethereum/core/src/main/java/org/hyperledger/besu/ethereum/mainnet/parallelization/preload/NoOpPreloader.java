@@ -14,17 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.parallelization.preload;
 
-import org.hyperledger.besu.services.tasks.Task;
-
 public class NoOpPreloader implements Preloader {
 
   @Override
   public void enqueueRequest(final PreloadTask request) {}
-
-  @Override
-  public Task<PreloadTask> dequeueRequest() {
-    return null;
-  }
 
   @Override
   public void clearQueue() {}
