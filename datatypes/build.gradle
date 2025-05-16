@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-datatypes'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -49,7 +49,6 @@ publishing {
   publications {
     mavenJava(MavenPublication) {
       groupId 'org.hyperledger.besu'
-      artifactId 'besu-datatypes'
       pom {
         name = 'Besu Datatypes'
         description = 'Cross-module datatypes'
