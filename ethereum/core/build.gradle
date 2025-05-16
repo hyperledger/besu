@@ -45,7 +45,6 @@ dependencies {
   implementation project(':metrics:core')
   implementation project(':plugin-api')
   implementation project(':services:kvstore')
-  implementation project(':services:tasks')
 
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
