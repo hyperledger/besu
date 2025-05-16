@@ -136,8 +136,7 @@ class AbstractBlockProcessorIntegrationTest {
             BlockHeader::getCoinbase,
             false,
             protocolSchedule,
-            new NoOpMetricsSystem(),
-            Optional.empty());
+            new NoOpMetricsSystem());
 
     return Stream.of(
         Arguments.of("sequential", sequentialBlockProcessor),
@@ -262,7 +261,7 @@ class AbstractBlockProcessorIntegrationTest {
             worldStateParallel,
             block,
             Optional.empty(),
-            new ParallelTransactionPreprocessing(transactionProcessor, Runnable::run, Optional.empty()));
+            new ParallelTransactionPreprocessing(transactionProcessor, Runnable::run));
 
     BlockProcessingResult sequentialResult =
         blockProcessor.processBlock(protocolContext, blockchain, worldStateSequential, block);

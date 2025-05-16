@@ -30,11 +30,13 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -65,8 +67,9 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
   private final Counter accountCacheMissCounter;
   private final Counter storageCacheMissCounter;
 
-  public BonsaiCachedMerkleTrieLoader(
-      final ObservableMetricsSystem metricsSystem) {
+  private final Collection<CompletableFuture<?>> pendingFutures = new ConcurrentLinkedDeque<>();
+
+  public BonsaiCachedMerkleTrieLoader(final ObservableMetricsSystem metricsSystem) {
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "accountsNodes", accountNodes);
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "storageNodes", storageNodes);
 
@@ -376,5 +379,17 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
                     accountHash, location, nodeHash);
               });
     }
+  }
+
+  public synchronized void enqueueRequest(final PreloadTask request) {
+    // TODO: Inject executor from EthScheduler
+    final CompletableFuture<Void> syncFuture =
+        CompletableFuture.runAsync(() -> this.processPreloadTask(request));
+    pendingFutures.add(syncFuture);
+    syncFuture.whenComplete((r, t) -> pendingFutures.remove(syncFuture));
+  }
+
+  public synchronized void clearQueue() {
+    pendingFutures.forEach(future -> future.cancel(true));
   }
 }

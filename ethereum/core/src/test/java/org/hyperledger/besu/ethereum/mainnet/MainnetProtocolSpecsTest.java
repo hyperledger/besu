@@ -21,7 +21,6 @@ import org.hyperledger.besu.config.BlobScheduleOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -57,7 +56,6 @@ public class MainnetProtocolSpecsTest {
   private final boolean enableRevertReason = false;
   private final boolean isParallelTxProcessingEnabled = false;
   private final long londonForkBlockNumber = 0L;
-  private final Optional<Preloader> preloadService = Optional.empty();
 
   @BeforeEach
   public void setUp() {
@@ -90,8 +88,7 @@ public class MainnetProtocolSpecsTest {
                     evmConfiguration,
                     miningConfiguration,
                     isParallelTxProcessingEnabled,
-                    metricsSystem,
-                    preloadService))
+                    metricsSystem))
         .withMessageContaining("Withdrawal Request Contract Address not found");
   }
 
@@ -114,8 +111,7 @@ public class MainnetProtocolSpecsTest {
                     evmConfiguration,
                     miningConfiguration,
                     isParallelTxProcessingEnabled,
-                    metricsSystem,
-                    preloadService))
+                    metricsSystem))
         .withMessageContaining("Withdrawal Request Contract Address not found");
   }
 
@@ -139,8 +135,7 @@ public class MainnetProtocolSpecsTest {
                     evmConfiguration,
                     miningConfiguration,
                     isParallelTxProcessingEnabled,
-                    metricsSystem,
-                    preloadService))
+                    metricsSystem))
         .withMessageContaining("Deposit Contract Address not found");
   }
 
@@ -165,8 +160,7 @@ public class MainnetProtocolSpecsTest {
                     evmConfiguration,
                     miningConfiguration,
                     isParallelTxProcessingEnabled,
-                    metricsSystem,
-                    preloadService))
+                    metricsSystem))
         .withMessageContaining("Consolidation Request Contract Address not found");
   }
 }

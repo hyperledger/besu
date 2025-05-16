@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.PreloadTask;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.NoOpMerkleTrie;
@@ -63,7 +64,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class BonsaiWorldState extends PathBasedWorldState {
 
   private final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
-  private final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoaderNoOp;
+  private static final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoaderNoOp =
+      new NoopBonsaiCachedMerkleTrieLoader();
   private boolean cacheEnabled;
 
   public BonsaiWorldState(
@@ -89,7 +91,6 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final WorldStateConfig worldStateConfig) {
     super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager, worldStateConfig);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
-    this.bonsaiCachedMerkleTrieLoaderNoOp = new NoopBonsaiCachedMerkleTrieLoader();
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.setAccumulator(
         new BonsaiWorldStateUpdateAccumulator(
@@ -462,8 +463,16 @@ public class BonsaiWorldState extends PathBasedWorldState {
     this.cacheEnabled = true;
   }
 
-  public BonsaiCachedMerkleTrieLoader getBonsaiCachedMerkleTrieLoader() {
+  protected BonsaiCachedMerkleTrieLoader getBonsaiCachedMerkleTrieLoader() {
     return cacheEnabled ? bonsaiCachedMerkleTrieLoader : bonsaiCachedMerkleTrieLoaderNoOp;
+  }
+
+  public void enqueuePreloadTask(final PreloadTask preloadTask) {
+    bonsaiCachedMerkleTrieLoader.enqueueRequest(preloadTask);
+  }
+
+  public void clearPreloadQueue() {
+    bonsaiCachedMerkleTrieLoader.clearQueue();
   }
 
   private MerkleTrie<Bytes, Bytes> createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {

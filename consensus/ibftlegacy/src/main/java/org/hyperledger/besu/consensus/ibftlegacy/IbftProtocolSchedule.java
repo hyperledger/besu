@@ -71,8 +71,7 @@ public class IbftProtocolSchedule {
             null,
             new BadBlockManager(),
             false,
-            null,
-            Optional.empty())
+            null)
         .createProtocolSchedule();
   }
 

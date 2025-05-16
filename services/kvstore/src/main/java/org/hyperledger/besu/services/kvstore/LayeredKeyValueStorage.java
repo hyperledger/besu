@@ -107,7 +107,8 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   @Override
   public List<Optional<byte[]>> multiget(final SegmentIdentifier segment, final List<byte[]> keys)
       throws StorageException {
-    List<Optional<byte[]>> results = new ArrayList<>(Collections.nCopies(keys.size(), Optional.empty()));
+    List<Optional<byte[]>> results =
+        new ArrayList<>(Collections.nCopies(keys.size(), Optional.empty()));
     List<Integer> missingIndices = new ArrayList<>();
     List<byte[]> missingKeys = new ArrayList<>();
 

@@ -99,8 +99,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
                 miningConfiguration,
                 badBlockManager,
                 isParallelTxProcessingEnabled,
-                metricsSystem,
-                Optional.empty())
+                metricsSystem)
             .createProtocolSchedule();
     return new BftProtocolSchedule((DefaultProtocolSchedule) protocolSchedule);
   }

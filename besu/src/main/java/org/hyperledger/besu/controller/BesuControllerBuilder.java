@@ -80,7 +80,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -105,7 +104,6 @@ import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-import org.hyperledger.besu.preload.PreloadService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import java.io.Closeable;
@@ -221,8 +219,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** When enabled, round changes on f+1 RC messages from higher rounds */
   protected boolean isEarlyRoundChangeEnabled = false;
-
-  protected Optional<Preloader> preloadService = Optional.empty();
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -584,16 +580,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(besuComponent, "Must supply a BesuComponent");
     prepForBuild();
 
-    final EthScheduler scheduler =
-        new EthScheduler(
-            syncConfig.getDownloaderParallelism(),
-            syncConfig.getTransactionsParallelism(),
-            syncConfig.getComputationParallelism(),
-            metricsSystem);
-
-    // TODO: We are passing this through a field to createProtocolSchedule, can this be avoided
-    preloadService = Optional.of(new PreloadService(scheduler.getServicesExecutor()));
-
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
@@ -620,7 +606,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString(),
             numberOfBlocksToCache);
-
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
@@ -687,6 +672,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
+
+    final EthScheduler scheduler =
+        new EthScheduler(
+            syncConfig.getDownloaderParallelism(),
+            syncConfig.getTransactionsParallelism(),
+            syncConfig.getComputationParallelism(),
+            metricsSystem);
 
     Optional<Checkpoint> checkpoint = Optional.empty();
     if (genesisConfigOptions.getCheckpointOptions().isValid()) {

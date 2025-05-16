@@ -71,8 +71,7 @@ class ProtocolScheduleBuilderTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            Optional.empty());
+            new NoOpMetricsSystem());
   }
 
   @Test
@@ -274,8 +273,7 @@ class ProtocolScheduleBuilderTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            Optional.empty());
+            new NoOpMetricsSystem());
 
     return new MilestoneStreamingProtocolSchedule(
         (DefaultProtocolSchedule) builder.createProtocolSchedule());

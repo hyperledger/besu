@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.Preloader;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.PreloadTask;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.StoragePreloadRequest;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
@@ -65,8 +64,6 @@ public class ParallelizedConcurrentTransactionProcessor {
 
   private CompletableFuture<Void>[] completableFuturesForBackgroundTransactions;
 
-  private final Optional<Preloader> preloadService;
-
   /**
    * Constructs a PreloadConcurrentTransactionProcessor with a specified transaction processor. This
    * processor is responsible for the individual processing of transactions.
@@ -74,10 +71,9 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @param transactionProcessor The transaction processor for processing individual transactions.
    */
   public ParallelizedConcurrentTransactionProcessor(
-      final MainnetTransactionProcessor transactionProcessor, final Optional<Preloader> preloadService) {
+      final MainnetTransactionProcessor transactionProcessor) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = new TransactionCollisionDetector();
-    this.preloadService = preloadService;
   }
 
   @VisibleForTesting
@@ -86,7 +82,6 @@ public class ParallelizedConcurrentTransactionProcessor {
       final TransactionCollisionDetector transactionCollisionDetector) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = transactionCollisionDetector;
-    this.preloadService = Optional.empty();
   }
 
   /**
@@ -149,78 +144,78 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Optional<PrivateMetadataUpdater> privateMetadataUpdater) {
     final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
     if (chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
-      BonsaiWorldState ws =
+      try (BonsaiWorldState ws =
           (BonsaiWorldState)
               protocolContext
                   .getWorldStateArchive()
                   .getWorldState(
                       WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(chainHeadHeader))
-                  .orElse(null);
-      if (ws != null) {
-        ws.disableCacheMerkleTrieLoader();
-        final ParallelizedTransactionContext.Builder contextBuilder =
-            new ParallelizedTransactionContext.Builder();
-        final PathBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
-            (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
-        final TransactionProcessingResult result =
-            transactionProcessor.processTransaction(
-                roundWorldStateUpdater,
-                blockHeader,
-                transaction.detachedCopy(),
-                miningBeneficiary,
-                new OperationTracer() {
-                  @Override
-                  public void traceBeforeRewardTransaction(
-                      final WorldView worldView,
-                      final org.hyperledger.besu.datatypes.Transaction tx,
-                      final Wei miningReward) {
-                    /*
-                     * This part checks if the mining beneficiary's account was accessed before increasing its balance for rewards.
-                     * Indeed, if the transaction has interacted with the address to read or modify it,
-                     * it means that the value is necessary for the proper execution of the transaction and will therefore be considered in collision detection.
-                     * If this is not the case, we can ignore this address during conflict detection.
-                     */
-                    if (transactionCollisionDetector
-                        .getAddressesTouchedByTransaction(
-                            transaction, Optional.of(roundWorldStateUpdater))
-                        .contains(miningBeneficiary)) {
-                      contextBuilder.isMiningBeneficiaryTouchedPreRewardByTransaction(true);
-                    }
-                    contextBuilder.miningBeneficiaryReward(miningReward);
-                  }
-                },
-                blockHashLookup,
-                true,
-                TransactionValidationParams.processingBlock(),
-                privateMetadataUpdater,
-                blobGasPrice);
-
-        // commit the accumulator in order to apply all the modifications
-
-        ws.getAccumulator().commit();
-
-        if (result.isSuccessful() && preloadService.isPresent()) {
-          ws.enableCacheMerkleTrieLoader();
-          preloadService.get().enqueueRequest(createPreloadTask(ws.getAccumulator()));
+                  .orElse(null)) {
+        if (ws != null) {
           ws.disableCacheMerkleTrieLoader();
-        }
+          final ParallelizedTransactionContext.Builder contextBuilder =
+              new ParallelizedTransactionContext.Builder();
+          final PathBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
+              (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
+          final TransactionProcessingResult result =
+              transactionProcessor.processTransaction(
+                  roundWorldStateUpdater,
+                  blockHeader,
+                  transaction.detachedCopy(),
+                  miningBeneficiary,
+                  new OperationTracer() {
+                    @Override
+                    public void traceBeforeRewardTransaction(
+                        final WorldView worldView,
+                        final org.hyperledger.besu.datatypes.Transaction tx,
+                        final Wei miningReward) {
+                      /*
+                       * This part checks if the mining beneficiary's account was accessed before increasing its balance for rewards.
+                       * Indeed, if the transaction has interacted with the address to read or modify it,
+                       * it means that the value is necessary for the proper execution of the transaction and will therefore be considered in collision detection.
+                       * If this is not the case, we can ignore this address during conflict detection.
+                       */
+                      if (transactionCollisionDetector
+                          .getAddressesTouchedByTransaction(
+                              transaction, Optional.of(roundWorldStateUpdater))
+                          .contains(miningBeneficiary)) {
+                        contextBuilder.isMiningBeneficiaryTouchedPreRewardByTransaction(true);
+                      }
+                      contextBuilder.miningBeneficiaryReward(miningReward);
+                    }
+                  },
+                  blockHashLookup,
+                  true,
+                  TransactionValidationParams.processingBlock(),
+                  privateMetadataUpdater,
+                  blobGasPrice);
 
-        contextBuilder
-            .transactionAccumulator(ws.getAccumulator())
-            .transactionProcessingResult(result);
+          // commit the accumulator in order to apply all the modifications
+          ws.getAccumulator().commit();
 
-        final ParallelizedTransactionContext parallelizedTransactionContext =
-            contextBuilder.build();
-        if (!parallelizedTransactionContext.isMiningBeneficiaryTouchedPreRewardByTransaction()) {
-          /*
-           * If the address of the mining beneficiary has been touched only for adding rewards,
-           * we remove it from the accumulator to avoid a false positive collision.
-           * The balance will be increased during the sequential processing.
-           */
-          roundWorldStateUpdater.getAccountsToUpdate().remove(miningBeneficiary);
+          if (result.isSuccessful()) {
+            ws.enqueuePreloadTask(createPreloadTask(ws));
+          }
+
+          contextBuilder
+              .transactionAccumulator(ws.getAccumulator())
+              .transactionProcessingResult(result);
+
+          final ParallelizedTransactionContext parallelizedTransactionContext =
+              contextBuilder.build();
+          if (!parallelizedTransactionContext.isMiningBeneficiaryTouchedPreRewardByTransaction()) {
+            /*
+             * If the address of the mining beneficiary has been touched only for adding rewards,
+             * we remove it from the accumulator to avoid a false positive collision.
+             * The balance will be increased during the sequential processing.
+             */
+            roundWorldStateUpdater.getAccountsToUpdate().remove(miningBeneficiary);
+          }
+          parallelizedTransactionContextByLocation.put(
+              transactionLocation, parallelizedTransactionContext);
         }
-        parallelizedTransactionContextByLocation.put(
-            transactionLocation, parallelizedTransactionContext);
+      } catch (Exception ex) {
+        // no op as failing to get worldstate
       }
     }
   }
@@ -304,15 +299,15 @@ public class ParallelizedConcurrentTransactionProcessor {
     return Optional.empty();
   }
 
-  private PreloadTask createPreloadTask(final PathBasedWorldStateUpdateAccumulator<?> accumulator) {
+  private PreloadTask createPreloadTask(final BonsaiWorldState ws) {
     List<Address> accountPreloads = new ArrayList<>();
     List<StoragePreloadRequest> storagePreloads = new ArrayList<>();
 
-    for (Address addr : accumulator.getAccountsToUpdate().keySet()) {
+    for (Address addr : ws.getAccumulator().getAccountsToUpdate().keySet()) {
       accountPreloads.add(addr);
     }
 
-    accumulator
+    ws.getAccumulator()
         .getStorageToUpdate()
         .forEach(
             (address, storageMap) -> {
@@ -321,6 +316,6 @@ public class ParallelizedConcurrentTransactionProcessor {
               }
             });
 
-    return new PreloadTask(accountPreloads, storagePreloads, accumulator.getWorldStateStorage());
+    return new PreloadTask(accountPreloads, storagePreloads, ws.getWorldStateStorage());
   }
 }

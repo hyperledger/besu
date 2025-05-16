@@ -19,8 +19,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.Optional;
-
 import javax.inject.Named;
 
 import dagger.Module;
@@ -48,6 +46,6 @@ public class ProtocolSpecModule {
       final boolean isParalleltxEnabled,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.frontierDefinition(
-        evmConfiguration, isParalleltxEnabled, metricsSystem, Optional.empty());
+        evmConfiguration, isParalleltxEnabled, metricsSystem);
   }
 }

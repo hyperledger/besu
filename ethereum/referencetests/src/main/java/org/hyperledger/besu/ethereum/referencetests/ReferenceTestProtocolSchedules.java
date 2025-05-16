@@ -153,8 +153,7 @@ public class ReferenceTestProtocolSchedules {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            Optional.empty())
+            new NoOpMetricsSystem())
         .createProtocolSchedule();
   }
 

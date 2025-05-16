@@ -54,8 +54,7 @@ public class FixedDifficultyProtocolSchedule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem,
-            Optional.empty())
+            metricsSystem)
         .createProtocolSchedule();
   }
 

@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import javax.inject.Singleton;
-
 import dagger.Module;
 import dagger.Provides;
 
@@ -26,7 +24,6 @@ import dagger.Provides;
 public class BonsaiCachedMerkleTrieLoaderModule {
 
   @Provides
-  @Singleton
   BonsaiCachedMerkleTrieLoader provideCachedMerkleTrieLoaderModule(
       final MetricsSystem metricsSystem) {
     return new BonsaiCachedMerkleTrieLoader((ObservableMetricsSystem) metricsSystem);

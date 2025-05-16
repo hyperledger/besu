@@ -59,7 +59,7 @@ public class ClassicProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            evmConfiguration, isParallelTxProcessingEnabled, metricsSystem, Optional.empty())
+            evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
         .blockHeaderValidatorBuilder(
             feeMarket -> MainnetBlockHeaderValidator.createClassicValidator())
         .name("ClassicRecoveryInit");
@@ -71,7 +71,7 @@ public class ClassicProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            evmConfiguration, isParallelTxProcessingEnabled, metricsSystem, Optional.empty())
+            evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
         .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorFactoryBuilder(
