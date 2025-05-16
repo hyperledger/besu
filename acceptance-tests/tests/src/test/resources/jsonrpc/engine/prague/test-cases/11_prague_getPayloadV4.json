@@ -3,7 +3,7 @@
     "jsonrpc": "2.0",
     "method": "engine_getPayloadV4",
     "params": [
-      "0x282643aeecfdbccf"
+      "0x282643eeb0ecd631"
     ],
     "id": 67
   },
@@ -12,12 +12,12 @@
     "id": 67,
     "result": {
       "executionPayload": {
-        "parentHash": "0x14ba5ec415d827d9cab33e6097b307131e8119a1cd7dc1f6a4de088ebfa4c1b6",
+        "parentHash": "0x9c93ae6e647584baeedfd4b53a1b17870797e9a7bd221f8e126a0cf11105064c",
         "feeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-        "stateRoot": "0xade3c29cae771ddfa994d3d2994f3bcbe084bc7bb23cdbb9bd7e35b39f007841",
+        "stateRoot": "0x9ecda840c4b6b80bc4d1b483f9c5eb26b50f659cc74676c9f0c097dc774434f3",
         "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "gasLimit": "0x1c9c380",
+        "gasLimit": "0x1ca35ef",
         "gasUsed": "0x0",
         "timestamp": "0x30",
         "extraData": "0x",
@@ -29,7 +29,7 @@
         "withdrawals": [],
         "blockNumber": "0x3",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-        "blockHash": "0x9f157012bdc439f5fe2bb3b4236eb07043e35d16256557d73e80a95d20054929"
+        "blockHash": "0x92166cdc0fead978bcdc54ae9d9f2b803c65beb50350aa54baab12bb248b87cc"
       },
       "blockValue": "0x0",
       "blobsBundle": {
@@ -38,11 +38,7 @@
         "blobs": []
       },
       "shouldOverrideBuilder": false,
-      "executionRequests": [
-        "0x",
-        "0x",
-        "0x"
-      ]
+      "executionRequests": [ ]
     }
   },
   "statusCode": 200
