@@ -31,7 +31,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
-
+  private static final BigInteger GAS_PRICE = BigInteger.valueOf(10000000000L);
   final List<SimpleEntry<Integer, Long>> testCase = new ArrayList<>();
 
   @Test
@@ -44,8 +44,9 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
                 b.genesisConfigProvider(GenesisConfigurationFactory::createDevLondonGenesisConfig)
                     .devMode(false));
     cluster.start(node);
-    final TestDepth testDepth =
-        node.execute(contractTransactions.createSmartContract(TestDepth.class));
+    final var deployContract = contractTransactions.createSmartContract(TestDepth.class);
+    deployContract.setGasPrice(GAS_PRICE);
+    final TestDepth testDepth = node.execute(deployContract);
 
     // taken from geth
     testCase.add(new SimpleEntry<>(1, 45554L));
@@ -86,7 +87,7 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
       var transactionTooLow =
           node.execute(
               contractTransactions.callSmartContract(
-                  testDepth.getContractAddress(), functionCall, gasTooLow));
+                  testDepth.getContractAddress(), functionCall, gasTooLow, GAS_PRICE));
 
       node.verify(eth.expectSuccessfulTransactionReceipt(transactionTooLow.getTransactionHash()));
 
@@ -102,7 +103,10 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
       var transaction =
           node.execute(
               contractTransactions.callSmartContract(
-                  testDepth.getContractAddress(), functionCall, estimateGas.getAmountUsed()));
+                  testDepth.getContractAddress(),
+                  functionCall,
+                  estimateGas.getAmountUsed(),
+                  GAS_PRICE));
 
       node.verify(eth.expectSuccessfulTransactionReceipt(transaction.getTransactionHash()));
 
