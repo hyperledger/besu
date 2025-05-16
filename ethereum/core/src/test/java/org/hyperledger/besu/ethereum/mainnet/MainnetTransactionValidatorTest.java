@@ -99,6 +99,7 @@ public class MainnetTransactionValidatorTest {
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
+        Set.of(BlobsWithCommitments.KZG_WITH_PROOFS),
         maxInitcodeSize);
   }
 
@@ -401,6 +402,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            Set.of(BlobsWithCommitments.KZG_WITH_PROOFS),
             Integer.MAX_VALUE);
 
     final Transaction transaction =

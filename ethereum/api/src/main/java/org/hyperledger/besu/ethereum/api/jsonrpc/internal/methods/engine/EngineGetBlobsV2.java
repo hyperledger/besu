@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -100,12 +100,12 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
 
   private @Nonnull List<BlobAndProofV2> getBlobV2Result(final VersionedHash[] versionedHashes) {
     return Arrays.stream(versionedHashes)
-        .map(transactionPool::getBlobQuad)
+        .map(transactionPool::getBlobProofBundle)
         .map(this::getBlobAndProofV2)
         .toList();
   }
 
-  private @Nullable BlobAndProofV2 getBlobAndProofV2(final BlobsWithCommitments.BlobQuad bq) {
+  private @Nullable BlobAndProofV2 getBlobAndProofV2(final BlobProofBundle bq) {
     if (bq == null) {
       return null;
     }

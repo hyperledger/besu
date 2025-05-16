@@ -328,7 +328,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     System.out.println("BlobsWithCommitments size: " + cl.instanceSize());
     final ClassLayout rl = ClassLayout.parseInstance(bwc.getBlobs());
     System.out.println(rl.toPrintable());
-    System.out.println("BlobQuad size:" + rl.instanceSize());
+    System.out.println("BlobProofBundle size:" + rl.instanceSize());
 
     assertThat(cl.instanceSize() + rl.instanceSize()).isEqualTo(BLOBS_WITH_COMMITMENTS_SIZE);
   }
