@@ -32,8 +32,8 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The PAY operation */
 public class PayOperation extends AbstractOperation {
-  static final int OPCODE = 0xfc;
 
   /**
    * Instantiates a new Abstract operation.
@@ -41,7 +41,7 @@ public class PayOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public PayOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "PAY", 2, 1, gasCalculator);
+    super(0xfc, "PAY", 2, 1, gasCalculator);
   }
 
   @Override
