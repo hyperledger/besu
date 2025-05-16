@@ -20,6 +20,9 @@ contract TestDepth {
     function depth(uint256 y) public {
         // bool result;
         if (y > 0) {
+            // Store the current value of y in x during each iteration to ensure we do a SSTORE
+            x = y;
+
             bytes memory call = abi.encodeWithSignature("depth(uint256)", --y);
             (bool result,) = address(this).delegatecall(call);
             require(result);

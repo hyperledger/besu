@@ -19,8 +19,6 @@ import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
 /**
  * Gas Calculator for Osaka
  *
- * <p>Placeholder for new gas schedule items. If Osaka finalzies without changes this can be removed
- *
  * <UL>
  *   <LI>TBD
  * </UL>
@@ -29,9 +27,6 @@ public class OsakaGasCalculator extends PragueGasCalculator {
 
   /** The default mainnet target blobs per block for Osaka */
   private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_OSAKA = 9;
-
-  static final long MIN_RETAINED_GAS = 5_000;
-  static final long MIN_CALLEE_GAS = 2300;
 
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
@@ -55,15 +50,5 @@ public class OsakaGasCalculator extends PragueGasCalculator {
    */
   protected OsakaGasCalculator(final int maxPrecompile, final int targetBlobsPerBlock) {
     super(maxPrecompile, targetBlobsPerBlock);
-  }
-
-  @Override
-  public long getMinRetainedGas() {
-    return MIN_RETAINED_GAS;
-  }
-
-  @Override
-  public long getMinCalleeGas() {
-    return MIN_CALLEE_GAS;
   }
 }

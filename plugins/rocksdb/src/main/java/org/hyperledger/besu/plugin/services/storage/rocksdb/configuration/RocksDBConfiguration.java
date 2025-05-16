@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 /** The Rocks db configuration. */
 public class RocksDBConfiguration {
@@ -25,6 +26,9 @@ public class RocksDBConfiguration {
   private final int backgroundThreadCount;
   private final long cacheCapacity;
   private final boolean isHighSpec;
+  private final boolean isBlockchainGarbageCollectionEnabled;
+  private final Optional<Double> blobGarbageCollectionAgeCutoff;
+  private final Optional<Double> blobGarbageCollectionForceThreshold;
 
   /**
    * Instantiates a new RocksDb configuration.
@@ -35,6 +39,10 @@ public class RocksDBConfiguration {
    * @param cacheCapacity the cache capacity
    * @param label the label
    * @param isHighSpec the is high spec
+   * @param isBlockchainGarbageCollectionEnabled the garbage collection enabled for the BLOCKCHAIN
+   *     column family
+   * @param blobGarbageCollectionAgeCutoff the blob garbage collection age cutoff
+   * @param blobGarbageCollectionForceThreshold the blob garbage collection force threshold
    */
   public RocksDBConfiguration(
       final Path databaseDir,
@@ -42,13 +50,19 @@ public class RocksDBConfiguration {
       final int backgroundThreadCount,
       final long cacheCapacity,
       final String label,
-      final boolean isHighSpec) {
+      final boolean isHighSpec,
+      final boolean isBlockchainGarbageCollectionEnabled,
+      final Optional<Double> blobGarbageCollectionAgeCutoff,
+      final Optional<Double> blobGarbageCollectionForceThreshold) {
     this.backgroundThreadCount = backgroundThreadCount;
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
     this.label = label;
     this.isHighSpec = isHighSpec;
+    this.isBlockchainGarbageCollectionEnabled = isBlockchainGarbageCollectionEnabled;
+    this.blobGarbageCollectionAgeCutoff = blobGarbageCollectionAgeCutoff;
+    this.blobGarbageCollectionForceThreshold = blobGarbageCollectionForceThreshold;
   }
 
   /**
@@ -103,5 +117,32 @@ public class RocksDBConfiguration {
    */
   public boolean isHighSpec() {
     return isHighSpec;
+  }
+
+  /**
+   * Is blockchain garbage collection enabled.
+   *
+   * @return the boolean
+   */
+  public boolean isBlockchainGarbageCollectionEnabled() {
+    return isBlockchainGarbageCollectionEnabled;
+  }
+
+  /**
+   * Gets blob garbage collection age cutoff.
+   *
+   * @return the blob garbage collection age cutoff
+   */
+  public Optional<Double> getBlobGarbageCollectionAgeCutoff() {
+    return blobGarbageCollectionAgeCutoff;
+  }
+
+  /**
+   * Gets blob garbage collection force threshold.
+   *
+   * @return the blob garbage collection force threshold
+   */
+  public Optional<Double> getBlobGarbageCollectionForceThreshold() {
+    return blobGarbageCollectionForceThreshold;
   }
 }
