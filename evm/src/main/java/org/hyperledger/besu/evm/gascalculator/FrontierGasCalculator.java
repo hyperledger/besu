@@ -74,7 +74,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long CALL_VALUE_TRANSFER_GAS_COST = 9_000L;
 
-  private static final long ADDITIONAL_CALL_STIPEND = 2_300L;
+  /** additional call stipend to be used for gas estimate calculations */
+  public static final long ADDITIONAL_CALL_STIPEND = 2_300L;
 
   private static final long NEW_ACCOUNT_GAS_COST = 25_000L;
 

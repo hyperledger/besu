@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Optional;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -101,7 +102,10 @@ public class PrivacyTestModule {
                             DEFAULT_MAX_OPEN_FILES,
                             DEFAULT_BACKGROUND_THREAD_COUNT,
                             DEFAULT_CACHE_CAPACITY,
-                            DEFAULT_IS_HIGH_SPEC),
+                            DEFAULT_IS_HIGH_SPEC,
+                            false,
+                            Optional.empty(),
+                            Optional.empty()),
                     Arrays.asList(KeyValueSegmentIdentifier.values()),
                     RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
         .withCommonConfiguration(besuConfiguration)
