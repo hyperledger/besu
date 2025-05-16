@@ -49,6 +49,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
@@ -357,7 +358,7 @@ public class TransactionSimulator {
       final Address miningBeneficiary) {
 
     final long simulationGasCap =
-        calculateSimulationGasCap(callParams.getGasLimit(), processableHeader.getGasLimit());
+        calculateSimulationGasCap(callParams.getGas(), processableHeader.getGasLimit());
 
     MainnetTransactionProcessor transactionProcessor =
         simulationTransactionProcessorFactory.getTransactionProcessor(
@@ -410,8 +411,7 @@ public class TransactionSimulator {
       final Supplier<SECPSignature> signatureSupplier) {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(processableHeader);
-    final Address senderAddress =
-        callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
+    final Address senderAddress = callParams.getSender().orElse(DEFAULT_FROM);
 
     final ProcessableBlockHeader blockHeaderToProcess;
     if (transactionValidationParams.isAllowExceedingBalance()
@@ -501,11 +501,12 @@ public class TransactionSimulator {
                             UInt256.fromHexString(key), UInt256.fromHexString(value))));
   }
 
-  public long calculateSimulationGasCap(final long userProvidedGasLimit, final long blockGasLimit) {
+  public long calculateSimulationGasCap(
+      final OptionalLong maybeUserProvidedGasLimit, final long blockGasLimit) {
     final long simulationGasCap;
 
-    // when not set gas limit is -1
-    if (userProvidedGasLimit >= 0) {
+    if (maybeUserProvidedGasLimit.isPresent()) {
+      long userProvidedGasLimit = maybeUserProvidedGasLimit.getAsLong();
       if (rpcGasCap > 0 && userProvidedGasLimit > rpcGasCap) {
         LOG.trace(
             "User provided gas limit {} is bigger than the value of rpc-gas-cap {}, setting simulation gas cap to the latter",
@@ -549,18 +550,19 @@ public class TransactionSimulator {
       final Wei blobGasPrice,
       final Supplier<SECPSignature> signatureSupplier) {
 
-    final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
-    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
+    final Wei value = callParams.getValue().orElse(Wei.ZERO);
+    final Bytes payload = callParams.getPayload().orElse(Bytes.EMPTY);
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
             .nonce(nonce)
             .gasLimit(gasLimit)
-            .to(callParams.getTo())
             .sender(senderAddress)
             .value(value)
             .payload(payload)
             .signature(signatureSupplier.get());
+
+    callParams.getTo().ifPresent(transactionBuilder::to);
 
     // Set access list if present
     callParams.getAccessList().ifPresent(transactionBuilder::accessList);
@@ -577,7 +579,7 @@ public class TransactionSimulator {
       maxPriorityFeePerGas = Wei.ZERO;
       maxFeePerBlobGas = Wei.ZERO;
     } else {
-      gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
+      gasPrice = callParams.getGasPrice().orElse(Wei.ZERO);
       maxFeePerGas = callParams.getMaxFeePerGas().orElse(gasPrice);
       maxPriorityFeePerGas = callParams.getMaxPriorityFeePerGas().orElse(gasPrice);
       maxFeePerBlobGas = callParams.getMaxFeePerBlobGas().orElse(blobGasPrice);
@@ -668,7 +670,7 @@ public class TransactionSimulator {
     // Return true if all gas price parameters are empty
     if (callParams.getMaxPriorityFeePerGas().isEmpty()
         && callParams.getMaxFeePerGas().isEmpty()
-        && callParams.getGasPrice() == null) {
+        && callParams.getGasPrice().isEmpty()) {
       return true;
     }
 

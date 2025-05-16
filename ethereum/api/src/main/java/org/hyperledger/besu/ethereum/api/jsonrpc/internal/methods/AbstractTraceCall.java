@@ -18,12 +18,12 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -55,8 +55,7 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext requestContext, final long blockNumber) {
-    final JsonCallParameter callParams =
-        JsonCallParameterUtil.validateAndGetCallParams(requestContext);
+    final CallParameter callParams = CallParameterUtil.validateAndGetCallParams(requestContext);
     final TraceOptions traceOptions = getTraceOptions(requestContext);
     final String blockNumberString = String.valueOf(blockNumber);
     LOG.atTrace()

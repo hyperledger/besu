@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -84,7 +84,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected Object resultByBlockHeader(
       final JsonRpcRequestContext request, final BlockHeader header) {
-    JsonCallParameter callParams = JsonCallParameterUtil.validateAndGetCallParams(request);
+    CallParameter callParams = CallParameterUtil.validateAndGetCallParams(request);
     Optional<StateOverrideMap> maybeStateOverrides = getAddressStateOverrideMap(request);
     // TODO implement for block overrides
 
@@ -157,16 +157,16 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   }
 
   private TransactionValidationParams buildTransactionValidationParams(
-      final BlockHeader header, final JsonCallParameter callParams) {
+      final BlockHeader header, final CallParameter callParams) {
 
     final boolean isAllowExceedingBalance;
     // if it is not set explicitly whether we want a strict check of the balance or not. this will
     // be decided according to the provided parameters
-    if (callParams.isMaybeStrict().isEmpty()) {
+    if (callParams.getStrict().isEmpty()) {
       isAllowExceedingBalance = isAllowExceedingBalanceAutoSelection(header, callParams);
 
     } else {
-      isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
+      isAllowExceedingBalance = !callParams.getStrict().orElse(Boolean.FALSE);
     }
     return isAllowExceedingBalance
         ? TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce()
@@ -174,10 +174,9 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   }
 
   private boolean isAllowExceedingBalanceAutoSelection(
-      final BlockHeader header, final JsonCallParameter callParams) {
+      final BlockHeader header, final CallParameter callParams) {
 
-    boolean isZeroGasPrice =
-        callParams.getGasPrice() == null || Wei.ZERO.equals(callParams.getGasPrice());
+    boolean isZeroGasPrice = callParams.getGasPrice().map(Wei.ZERO::equals).orElse(true);
 
     if (header.getBaseFee().isPresent()) {
       if (callParams.getBlobVersionedHashes().isPresent()

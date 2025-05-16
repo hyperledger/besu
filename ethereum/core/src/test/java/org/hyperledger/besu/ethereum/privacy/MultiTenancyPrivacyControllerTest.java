@@ -24,11 +24,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.evm.log.Log;
 
 import java.util.ArrayList;
@@ -260,10 +259,7 @@ public class MultiTenancyPrivacyControllerTest {
                     LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
     final Optional<TransactionProcessingResult> result =
         multiTenancyPrivacyController.simulatePrivateTransaction(
-            PRIVACY_GROUP_ID,
-            ENCLAVE_PUBLIC_KEY1,
-            new CallParameter(Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY),
-            1);
+            PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1, ImmutableCallParameter.builder().build(), 1);
 
     assertThat(result).isPresent();
     assertThat(result.get().getValidationResult().isValid()).isTrue();
@@ -282,8 +278,7 @@ public class MultiTenancyPrivacyControllerTest {
                 multiTenancyPrivacyController.simulatePrivateTransaction(
                     PRIVACY_GROUP_ID,
                     ENCLAVE_PUBLIC_KEY2,
-                    new CallParameter(
-                        Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY),
+                    ImmutableCallParameter.builder().build(),
                     1))
         .hasMessage("Privacy group must contain the enclave public key");
   }

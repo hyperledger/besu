@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -231,7 +232,13 @@ public class FlexiblePrivacyGroupContract {
   }
 
   private CallParameter buildCallParams(final Bytes methodCall) {
-    return new CallParameter(
-        Address.ZERO, FLEXIBLE_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
+    return ImmutableCallParameter.builder()
+        .sender(Address.ZERO)
+        .to(FLEXIBLE_PRIVACY_PROXY)
+        .gas(3000000)
+        .gasPrice(Wei.of(1000))
+        .value(Wei.ZERO)
+        .input(methodCall)
+        .build();
   }
 }
