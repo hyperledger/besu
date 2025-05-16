@@ -15,7 +15,6 @@
 package org.hyperledger.besu.cli.options;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
@@ -258,32 +257,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
           commandLine,
           "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
               + "or specify mining is enabled (--miner-enabled)");
-    }
-
-    // Check that block producer options work
-    if (!isMergeEnabled && genesisConfigOptions.isEthHash()) {
-      CommandLineUtils.checkOptionDependencies(
-          logger,
-          commandLine,
-          "--miner-enabled",
-          !isMiningEnabled,
-          asList(
-              "--miner-coinbase",
-              "--min-gas-price",
-              "--min-priority-fee",
-              "--min-block-occupancy-ratio",
-              "--miner-extra-data"));
-
-      // Check that mining options are able to work
-      CommandLineUtils.checkOptionDependencies(
-          logger,
-          commandLine,
-          "--miner-enabled",
-          !isMiningEnabled,
-          asList(
-              "--miner-stratum-enabled",
-              "--Xminer-remote-sealers-limit",
-              "--Xminer-remote-sealers-hashrate-ttl"));
     }
 
     if (unstableOptions.posBlockCreationMaxTime <= 0

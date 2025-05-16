@@ -17,7 +17,6 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -354,9 +353,7 @@ public class BesuController implements java.io.Closeable {
         return createConsensusScheduleBesuControllerBuilder(genesisConfig);
       }
 
-      if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
-        builder = new MainnetBesuControllerBuilder();
-      } else if (configOptions.isIbft2()) {
+      if (configOptions.isIbft2()) {
         builder = new IbftBesuControllerBuilder();
       } else if (configOptions.isIbftLegacy()) {
         throw new IllegalStateException(
@@ -366,7 +363,7 @@ public class BesuController implements java.io.Closeable {
       } else if (configOptions.isClique()) {
         builder = new CliqueBesuControllerBuilder();
       } else {
-        throw new IllegalArgumentException("Unknown consensus mechanism defined");
+        builder = new MainnetBesuControllerBuilder();
       }
 
       // wrap with TransitionBesuControllerBuilder if we have a terminal total difficulty:
