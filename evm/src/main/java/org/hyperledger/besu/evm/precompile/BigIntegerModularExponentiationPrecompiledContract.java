@@ -99,10 +99,21 @@ public class BigIntegerModularExponentiationPrecompiledContract
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
+    // https://eips.ethereum.org/EIPS/eip-7823
+    // We introduce an upper bound to the inputs of the precompile,
+    // each of the length inputs (length_of_BASE, length_of_EXPONENT and length_of_MODULUS)
+    // MUST be less than or equal to 8192 bits (1024 bytes).
+    final long length_of_BASE = baseLength(input);
+    final long length_of_EXPONENT = exponentLength(input);
+    final long length_of_MODULUS = modulusLength(input);
+    if (length_of_BASE > 8192 || length_of_EXPONENT > 8192 || length_of_MODULUS > 8192) {
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+    }
     if (useNative) {
-      return computeNative(input);
+      return computeNative(input, length_of_MODULUS);
     } else {
-      return computeDefault(input);
+      return computeDefault(input, length_of_BASE, length_of_EXPONENT, length_of_MODULUS);
     }
   }
 
@@ -113,10 +124,14 @@ public class BigIntegerModularExponentiationPrecompiledContract
    * @return the precompile contract result
    */
   @Nonnull
-  public PrecompileContractResult computeDefault(final Bytes input) {
-    final int baseLength = clampedToInt(baseLength(input));
-    final int exponentLength = clampedToInt(exponentLength(input));
-    final int modulusLength = clampedToInt(modulusLength(input));
+  public PrecompileContractResult computeDefault(
+      final Bytes input,
+      final long length_of_BASE,
+      final long length_of_EXPONENT,
+      final long length_of_MODULUS) {
+    final int baseLength = clampedToInt(length_of_BASE);
+    final int exponentLength = clampedToInt(length_of_EXPONENT);
+    final int modulusLength = clampedToInt(length_of_MODULUS);
     // If baseLength and modulusLength are zero
     // we could have a massively overflowing exp because it wouldn't have been filtered out at the
     // gas cost phase
@@ -247,8 +262,9 @@ public class BigIntegerModularExponentiationPrecompiledContract
    * @param input the input
    * @return the precompile contract result
    */
-  public PrecompileContractResult computeNative(final @Nonnull Bytes input) {
-    final int modulusLength = clampedToInt(modulusLength(input));
+  public PrecompileContractResult computeNative(
+      final @Nonnull Bytes input, final long length_of_MODULUS) {
+    final int modulusLength = clampedToInt(length_of_MODULUS);
     final IntByReference o_len = new IntByReference(modulusLength);
 
     final byte[] result = new byte[modulusLength];
