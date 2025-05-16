@@ -43,8 +43,9 @@
       ]
     },
     "checkpoint": {
-      "hash": "0x36fb89fba5b7857cf0ca78b5a9625b4043ff4555dfce9b7bcdcdd758a11eb946",
-      "number": 1735371,
+      "comment": "Start sync from first proof of stake block",
+      "hash": "0x229f6b18ca1552f1d5146deceb5387333f40dc6275aebee3f2c5c4ece07d02db",
+      "number": 1450409,
       "totalDifficulty": "0x3c656d23029ab0"
     }
   },
