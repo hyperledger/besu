@@ -38,6 +38,9 @@ public interface TransactionValidationParams {
   TransactionValidationParams transactionSimulatorParamsAllowFutureNonce =
       ImmutableTransactionValidationParams.of(true, false, false, false, false, true);
 
+  TransactionValidationParams transactionSimulatorEstimateGasParams =
+      ImmutableTransactionValidationParams.of(true, false, true, false, false, true);
+
   TransactionValidationParams transactionSimulatorAllowExceedingBalanceParams =
       ImmutableTransactionValidationParams.of(false, true, false, false, false, true);
 
@@ -80,6 +83,10 @@ public interface TransactionValidationParams {
 
   static TransactionValidationParams transactionSimulatorAllowFutureNonce() {
     return transactionSimulatorParamsAllowFutureNonce;
+  }
+
+  static TransactionValidationParams transactionSimulatorEstimateGasParams() {
+    return transactionSimulatorEstimateGasParams;
   }
 
   static TransactionValidationParams transactionSimulatorAllowExceedingBalance() {
