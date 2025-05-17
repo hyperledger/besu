@@ -60,6 +60,8 @@ dependencies {
   implementation project(':plugin-api')
   implementation project(':plugins:rocksdb')
   implementation project(':services:kvstore')
+  implementation project(':services:pipeline')
+  implementation project(':services:tasks')
   implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -79,7 +81,7 @@ dependencies {
   implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'org.hibernate.validator:hibernate-validator'
-  implementation 'org.rocksdb:rocksdbjni'
+  implementation 'io.github.mirgee:rocksdbjni'
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
   implementation 'io.consensys.protocols:jc-kzg-4844'

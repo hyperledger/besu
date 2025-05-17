@@ -104,6 +104,7 @@ import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.preload.PreloadService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import java.io.Closeable;
@@ -606,10 +607,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString(),
             numberOfBlocksToCache);
+
+    final PreloadService preloadService =
+        (PreloadService)
+            besuComponent
+                .map(BesuComponent::getPreloader)
+                .orElseGet(() -> new PreloadService(metricsSystem));
+
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
-            .orElseGet(() -> new BonsaiCachedMerkleTrieLoader(metricsSystem));
+            .orElseGet(() -> new BonsaiCachedMerkleTrieLoader(metricsSystem, preloadService));
+    preloadService.setBonsaiCachedMerkleTrieLoader(bonsaiCachedMerkleTrieLoader);
 
     final var worldStateHealerSupplier = new AtomicReference<WorldStateHealer>();
 
@@ -832,7 +841,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         ethPeers,
         storageProvider,
         dataStorageConfiguration,
-        transactionSimulator);
+        transactionSimulator,
+        preloadService);
   }
 
   private GenesisState getGenesisState(
