@@ -1249,7 +1249,7 @@ public class Transaction
             .toList();
     final var detachedCellProofs =
         blobsWithCommitments.getKzgCellProofs().stream()
-            .map(proof -> new KZGCellProof(proof.getData().copy()))
+            .map(cellProof -> new KZGCellProof(cellProof.getData().copy()))
             .toList();
 
     return new BlobsWithCommitments(
