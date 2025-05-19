@@ -49,10 +49,12 @@ public class LogOperation extends AbstractOperation {
     final long dataLocation = clampedToLong(frame.popStackItem());
     final long numBytes = clampedToLong(frame.popStackItem());
 
-    final long cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
     if (frame.isStatic()) {
-      return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else if (frame.getRemainingGas() < cost) {
+      return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    }
+
+    final long cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
+    if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
