@@ -148,7 +148,7 @@ public class BlobsWithCommitments {
    */
   public BlobsWithCommitments(final List<BlobProofBundle> blobProofBundles) {
     this.blobProofBundles = blobProofBundles;
-    this.versionId = blobProofBundles.get(0).versionId();
+    this.versionId = blobProofBundles.getFirst().versionId();
   }
 
   /**

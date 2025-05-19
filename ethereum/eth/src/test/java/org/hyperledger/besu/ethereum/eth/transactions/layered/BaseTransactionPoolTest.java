@@ -230,7 +230,6 @@ public class BaseTransactionPoolTest {
                 kgzCommitments,
                 blobs,
                 kzgProofs,
-                List.of(),
                 versionHashes);
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
       } else if (type.supportsDelegateCode()) {
