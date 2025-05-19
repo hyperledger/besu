@@ -19,13 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /** A class to hold the blobs, commitments, proofs and versioned hashes for a set of blobs. */
 public class BlobsWithCommitments {
-
-  public static final int KZG_WITH_PROOFS = 0;
-  public static final int KZG_WITH_CELL_PROOFS = 1;
-
-  public static final int CELL_PROOFS_PER_BLOB = 128;
 
   private final List<BlobProofBundle> blobProofBundles;
   private final int versionId;
@@ -35,7 +32,13 @@ public class BlobsWithCommitments {
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
       final List<VersionedHash> versionedHashes) {
-    this(KZG_WITH_PROOFS, kzgCommitments, blobs, kzgProofs, List.of(), versionedHashes);
+    this(
+        BlobProofBundle.VERSION_0_KZG_PROOFS,
+        kzgCommitments,
+        blobs,
+        kzgProofs,
+        List.of(),
+        versionedHashes);
   }
 
   /**
@@ -71,10 +74,10 @@ public class BlobsWithCommitments {
               .kzgCommitment(kzgCommitments.get(i))
               .versionedHash(versionedHashes.get(i));
       switch (versionId) {
-        case KZG_WITH_PROOFS:
+        case BlobProofBundle.VERSION_0_KZG_PROOFS:
           builder.kzgProof(kzgProofs.get(i));
           break;
-        case KZG_WITH_CELL_PROOFS:
+        case BlobProofBundle.VERSION_1_KZG_CELL_PROOFS:
           builder.kzgCellProof(extractCellProofs(kzgCellProofs, i));
           break;
         default:
@@ -87,56 +90,64 @@ public class BlobsWithCommitments {
   }
 
   private static List<KZGProof> extractCellProofs(final List<KZGProof> proofList, final int index) {
-    return proofList.subList(index * CELL_PROOFS_PER_BLOB, (index + 1) * CELL_PROOFS_PER_BLOB);
+    return proofList.subList(
+        index * BlobProofBundle.CELL_PROOFS_PER_BLOB,
+        (index + 1) * BlobProofBundle.CELL_PROOFS_PER_BLOB);
   }
 
-  private void validateBlobWithCommitments(
+  @VisibleForTesting
+  public static void validateBlobWithCommitments(
       final int versionId,
       final List<KZGCommitment> kzgCommitments,
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
       final List<KZGProof> kzgCellProofs,
       final List<VersionedHash> versionedHashes) {
+    if (blobs.size() != kzgCommitments.size()) {
+      String error =
+          String.format(
+              "Invalid number of kzgCommitments, expected %s, got %s",
+              blobs.size(), kzgCommitments.size());
+      throw new InvalidParameterException(error);
+    }
+    if (blobs.size() != versionedHashes.size()) {
+      String error =
+          String.format(
+              "Invalid number of versionedHashes, expected %s, got %s",
+              blobs.size(), versionedHashes.size());
+      throw new InvalidParameterException(error);
+    }
     switch (versionId) {
-      case KZG_WITH_PROOFS:
-        validateBlobWithCommitmentsV0(
-            kzgCommitments, blobs, kzgProofs, kzgCellProofs, versionedHashes);
+      case BlobProofBundle.VERSION_0_KZG_PROOFS:
+        validateBlobWithCommitmentsV0(blobs, kzgProofs, kzgCellProofs);
         break;
-      case KZG_WITH_CELL_PROOFS:
-        validateBlobWithCommitmentsV1(kzgCommitments, blobs, kzgCellProofs, versionedHashes);
+      case BlobProofBundle.VERSION_1_KZG_CELL_PROOFS:
+        validateBlobWithCommitmentsV1(blobs, kzgProofs, kzgCellProofs);
         break;
       default:
         throw new InvalidParameterException("Invalid kzg version");
     }
   }
 
-  private void validateBlobWithCommitmentsV0(
-      final List<KZGCommitment> kzgCommitments,
-      final List<Blob> blobs,
-      final List<KZGProof> kzgProofs,
-      final List<KZGProof> kzgCellProofs,
-      final List<VersionedHash> versionedHashes) {
-    if (blobs.size() != kzgCommitments.size()
-        || blobs.size() != kzgProofs.size()
-        || blobs.size() != versionedHashes.size()) {
-      throw new InvalidParameterException(
-          "There must be an equal number of blobs, commitments, proofs, and versioned hashes");
+  private static void validateBlobWithCommitmentsV0(
+      final List<Blob> blobs, final List<KZGProof> kzgProofs, final List<KZGProof> kzgCellProofs) {
+    if (blobs.size() != kzgProofs.size()) {
+      String error =
+          String.format(
+              "Invalid number of kzgProofs, expected %s, got %s", blobs.size(), kzgProofs.size());
+      throw new InvalidParameterException(error);
     }
     if (!kzgCellProofs.isEmpty()) {
       throw new InvalidParameterException("Version 0 does not support cell proofs");
     }
   }
 
-  private void validateBlobWithCommitmentsV1(
-      final List<KZGCommitment> kzgCommitments,
-      final List<Blob> blobs,
-      final List<KZGProof> kzgCellProofs,
-      final List<VersionedHash> versionedHashes) {
-    if (blobs.size() != kzgCommitments.size() || blobs.size() != versionedHashes.size()) {
-      throw new InvalidParameterException(
-          "There must be an equal number of blobs, commitments and versioned hashes");
+  private static void validateBlobWithCommitmentsV1(
+      final List<Blob> blobs, final List<KZGProof> kzgProofs, final List<KZGProof> kzgCellProofs) {
+    if (!kzgProofs.isEmpty()) {
+      throw new InvalidParameterException("Version 1 does not support kzgProofs");
     }
-    int expectedCellProofsTotal = CELL_PROOFS_PER_BLOB * blobs.size();
+    int expectedCellProofsTotal = BlobProofBundle.CELL_PROOFS_PER_BLOB * blobs.size();
     if (kzgCellProofs.size() != expectedCellProofsTotal) {
       String error =
           String.format(

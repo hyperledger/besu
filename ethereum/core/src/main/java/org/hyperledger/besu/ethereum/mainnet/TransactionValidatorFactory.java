@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
@@ -76,7 +76,7 @@ public class TransactionValidatorFactory {
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
-        Set.of(BlobsWithCommitments.KZG_WITH_PROOFS),
+        Set.of(BlobProofBundle.VERSION_0_KZG_PROOFS),
         maxInitcodeSize);
   }
 

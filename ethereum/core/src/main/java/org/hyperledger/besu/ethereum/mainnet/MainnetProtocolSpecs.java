@@ -22,7 +22,7 @@ import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -992,7 +992,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.EIP1559,
                         TransactionType.BLOB,
                         TransactionType.DELEGATE_CODE),
-                    Set.of(BlobsWithCommitments.KZG_WITH_CELL_PROOFS),
+                    Set.of(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS),
                     evm.getMaxInitcodeSize()))
         .blockHeaderValidatorBuilder(
             fm -> MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(fm, osakaGasCalculator))

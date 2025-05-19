@@ -16,63 +16,19 @@ package org.hyperledger.besu.datatypes;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public final class BlobProofBundle {
-  private final int versionId;
-  private final Blob blob;
-  private final KZGCommitment kzgCommitment;
-  private final KZGProof kzgProof;
-  private final List<KZGProof> kzgCellProof;
-  private final VersionedHash versionedHash;
+public record BlobProofBundle(
+    int versionId,
+    Blob blob,
+    KZGCommitment kzgCommitment,
+    KZGProof kzgProof,
+    List<KZGProof> kzgCellProof,
+    VersionedHash versionedHash) {
 
-  /**
-   * @param versionId version id for the sidecar
-   * @param blob The blob
-   * @param kzgCommitment The commitment
-   * @param kzgProof The proof
-   * @param kzgCellProof The cell proof
-   * @param versionedHash The versioned hash
-   */
-  private BlobProofBundle(
-      final int versionId,
-      final Blob blob,
-      final KZGCommitment kzgCommitment,
-      final KZGProof kzgProof,
-      final List<KZGProof> kzgCellProof,
-      final VersionedHash versionedHash) {
-    this.versionId = versionId;
-    this.blob = blob;
-    this.kzgCommitment = kzgCommitment;
-    this.kzgProof = kzgProof;
-    this.kzgCellProof = kzgCellProof;
-    this.versionedHash = versionedHash;
-  }
-
-  public int versionId() {
-    return versionId;
-  }
-
-  public Blob blob() {
-    return blob;
-  }
-
-  public KZGCommitment kzgCommitment() {
-    return kzgCommitment;
-  }
-
-  public KZGProof kzgProof() {
-    return kzgProof;
-  }
-
-  public List<KZGProof> kzgCellProof() {
-    return kzgCellProof;
-  }
-
-  public VersionedHash versionedHash() {
-    return versionedHash;
-  }
+  public static final int VERSION_0_KZG_PROOFS = 0;
+  public static final int VERSION_1_KZG_CELL_PROOFS = 1;
+  public static final int CELL_PROOFS_PER_BLOB = 128;
 
   public static Builder builder() {
     return new Builder();
@@ -84,7 +40,7 @@ public final class BlobProofBundle {
     private Blob blob;
     private KZGCommitment kzgCommitment;
     private KZGProof kzgProof;
-    private List<KZGProof> kzgCellProof = new ArrayList<>();
+    private List<KZGProof> kzgCellProof;
     private VersionedHash versionedHash;
 
     public Builder versionId(final int versionId) {
@@ -121,7 +77,7 @@ public final class BlobProofBundle {
       checkState(kzgCommitment != null, "kzgCommitment must not be empty");
       checkState(versionedHash != null, "versionedHash must not be empty");
       checkState(blob != null, "kzgCommitment must not be empty");
-      if (versionId == 0 && kzgCellProof != null && !kzgCellProof.isEmpty()) {
+      if (versionId == 0 && kzgCellProof != null) {
         throw new IllegalStateException("'kzgCellProof' must be empty when 'versionId' is 0.");
       }
       if (versionId == 1 && kzgProof != null) {

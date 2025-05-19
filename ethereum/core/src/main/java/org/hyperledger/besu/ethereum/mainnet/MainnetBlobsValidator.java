@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.datatypes.BlobsWithCommitments.CELL_PROOFS_PER_BLOB;
-import static org.hyperledger.besu.datatypes.BlobsWithCommitments.KZG_WITH_CELL_PROOFS;
-import static org.hyperledger.besu.datatypes.BlobsWithCommitments.KZG_WITH_PROOFS;
+import static org.hyperledger.besu.datatypes.BlobProofBundle.CELL_PROOFS_PER_BLOB;
+import static org.hyperledger.besu.datatypes.BlobProofBundle.VERSION_0_KZG_PROOFS;
+import static org.hyperledger.besu.datatypes.BlobProofBundle.VERSION_1_KZG_CELL_PROOFS;
 
 import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -88,11 +89,11 @@ public class MainnetBlobsValidator {
       }
     }
 
-    if (blobsWithCommitments.getVersionId() == KZG_WITH_PROOFS) {
+    if (blobsWithCommitments.getVersionId() == VERSION_0_KZG_PROOFS) {
       return validateBlobWithProof(blobsWithCommitments);
     }
 
-    if (blobsWithCommitments.getVersionId() == KZG_WITH_CELL_PROOFS) {
+    if (blobsWithCommitments.getVersionId() == VERSION_1_KZG_CELL_PROOFS) {
       return validateBlobWithCellProof(blobsWithCommitments);
     }
     return ValidationResult.valid();
@@ -135,27 +136,26 @@ public class MainnetBlobsValidator {
                 .toList());
 
     final byte[] commitments = extendCommitments(blobsWithCommitments.getKzgCommitments());
-
     long[] cellIndices = new long[CELL_PROOFS_PER_BLOB * blobsWithCommitments.getBlobs().size()];
     List<Bytes> cells = new ArrayList<>();
     for (int blobIndex = 0; blobIndex < blobsWithCommitments.getBlobs().size(); blobIndex++) {
-      byte[] cellsArray =
+      byte[] blobCells =
           CKZG4844JNI.computeCells(
               blobsWithCommitments.getBlobs().get(blobIndex).getData().toArray());
-      if (cellsArray == null) {
+      if (blobCells == null) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_BLOBS, "error computing cells for blob");
       }
-      cells.add(Bytes.wrap(cellsArray));
+      cells.add(Bytes.wrap(blobCells));
       for (int index = 0; index < CELL_PROOFS_PER_BLOB; index++) {
         int cellIndex = blobIndex * CELL_PROOFS_PER_BLOB + index;
         cellIndices[cellIndex] = index;
       }
     }
-    var cellsByte = Bytes.wrap(cells.stream().toList()).toArrayUnsafe();
+    var cellsByteArray = Bytes.wrap(cells.stream().toList()).toArrayUnsafe();
     final boolean kzgVerification =
         CKZG4844JNI.verifyCellKzgProofBatch(
-            commitments, cellIndices, cellsByte, kzgCellProofs.toArrayUnsafe());
+            commitments, cellIndices, cellsByteArray, kzgCellProofs.toArrayUnsafe());
     if (!kzgVerification) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
@@ -165,10 +165,10 @@ public class MainnetBlobsValidator {
   }
 
   private static byte[] extendCommitments(final List<KZGCommitment> commitments) {
-    int newSize = commitments.size() * BlobsWithCommitments.CELL_PROOFS_PER_BLOB;
+    int newSize = commitments.size() * BlobProofBundle.CELL_PROOFS_PER_BLOB;
     ArrayList<KZGCommitment> extendedCommitments = new ArrayList<>(newSize);
     for (KZGCommitment kzgCommitment : commitments) {
-      for (int i = 0; i < BlobsWithCommitments.CELL_PROOFS_PER_BLOB; i++) {
+      for (int i = 0; i < BlobProofBundle.CELL_PROOFS_PER_BLOB; i++) {
         extendedCommitments.add(new KZGCommitment(kzgCommitment.getData()));
       }
     }
@@ -176,7 +176,7 @@ public class MainnetBlobsValidator {
         .toArrayUnsafe();
   }
 
-  private VersionedHash hashCommitment(final KZGCommitment commitment) {
+  public static VersionedHash hashCommitment(final KZGCommitment commitment) {
     final SHA256Digest digest = new SHA256Digest();
     digest.update(commitment.getData().toArrayUnsafe(), 0, commitment.getData().size());
 
