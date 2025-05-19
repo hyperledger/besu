@@ -47,7 +47,6 @@ import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
