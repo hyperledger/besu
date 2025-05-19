@@ -121,8 +121,10 @@ public class EngineGetBlobsV1Test {
     for (int i = 0; i < versionedHashes.length; i++) {
       assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getBlob()))
           .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).blob().getData());
+      assertThat(blobsWithCommitments.getBlobProofBundles().get(i).kzgProof().size()).isEqualTo(1);
       assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getProof()))
-          .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).kzgProof().getData());
+          .isEqualTo(
+              blobsWithCommitments.getBlobProofBundles().get(i).kzgProof().getFirst().getData());
     }
   }
 
@@ -151,8 +153,11 @@ public class EngineGetBlobsV1Test {
       if (i != 1) {
         assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getBlob()))
             .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).blob().getData());
+        assertThat(blobsWithCommitments.getBlobProofBundles().get(i).kzgProof().size())
+            .isEqualTo(1);
         assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getProof()))
-            .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).kzgProof().getData());
+            .isEqualTo(
+                blobsWithCommitments.getBlobProofBundles().get(i).kzgProof().getFirst().getData());
       } else {
         assertThat(blobAndProofV1s.get(i)).isNull();
       }
