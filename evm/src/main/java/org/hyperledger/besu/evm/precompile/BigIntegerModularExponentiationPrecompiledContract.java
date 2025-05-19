@@ -148,14 +148,8 @@ public class BigIntegerModularExponentiationPrecompiledContract
     }
   }
 
-  /**
-   * Compute default precompile contract.
-   *
-   * @param input the input
-   * @return the precompile contract result
-   */
   @Nonnull
-  public PrecompileContractResult computeDefault(
+  private PrecompileContractResult computeDefault(
       final Bytes input,
       final long length_of_BASE,
       final long length_of_EXPONENT,
@@ -287,13 +281,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
     return clampedMultiply(n, n);
   }
 
-  /**
-   * Compute native precompile contract.
-   *
-   * @param input the input
-   * @return the precompile contract result
-   */
-  public PrecompileContractResult computeNative(
+  private PrecompileContractResult computeNative(
       final @Nonnull Bytes input, final long length_of_MODULUS) {
     final int modulusLength = clampedToInt(length_of_MODULUS);
     final IntByReference o_len = new IntByReference(modulusLength);
