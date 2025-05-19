@@ -149,8 +149,8 @@ public class BonsaiWorldState extends PathBasedWorldState {
     final MerkleTrie<Bytes, Bytes> accountTrie =
         createTrie(
             (location, hash) ->
-                this.getBonsaiCachedMerkleTrieLoader()
-                    .getAccountStateTrieNode(getWorldStateStorage(), location, hash),
+                bonsaiCachedMerkleTrieLoader.getAccountStateTrieNode(
+                    getWorldStateStorage(), location, hash),
             worldStateRootHash);
 
     // for manicured tries and composting, collect branches here (not implemented)
@@ -254,8 +254,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final MerkleTrie<Bytes, Bytes> storageTrie =
           createTrie(
               (location, key) ->
-                  this.getBonsaiCachedMerkleTrieLoader()
-                      .getAccountStorageTrieNode(
+                  bonsaiCachedMerkleTrieLoader.getAccountStorageTrieNode(
                           getWorldStateStorage(), updatedAddressHash, location, key),
               storageRoot);
 
