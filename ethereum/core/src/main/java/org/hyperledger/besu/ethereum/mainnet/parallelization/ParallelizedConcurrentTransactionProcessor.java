@@ -283,12 +283,12 @@ public class ParallelizedConcurrentTransactionProcessor {
         }
         return Optional.of(transactionProcessingResult);
       } else {
-        bonsaiWorldState.enableCacheMerkleTrieLoader();
         blockAccumulator.importPriorStateFromSource(transactionAccumulator);
         if (conflictingButCachedTransactionCounter.isPresent())
           conflictingButCachedTransactionCounter.get().inc();
         // If there is a conflict, we return an empty result to signal the block processor to
         // re-execute the transaction.
+        bonsaiWorldState.enableCacheMerkleTrieLoader();
         return Optional.empty();
       }
     } else {
@@ -299,6 +299,7 @@ public class ParallelizedConcurrentTransactionProcessor {
         completableFuturesForBackgroundTransaction.cancel(true);
       }
     }
+    bonsaiWorldState.enableCacheMerkleTrieLoader();
     return Optional.empty();
   }
 

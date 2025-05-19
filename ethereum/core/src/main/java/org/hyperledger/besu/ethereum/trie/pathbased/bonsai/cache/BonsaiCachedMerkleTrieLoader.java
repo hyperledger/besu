@@ -39,6 +39,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -65,6 +67,7 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
   private final Counter accountCacheMissCounter;
   private final Counter storageCacheMissCounter;
 
+  private ExecutorService preloadExecutor = ForkJoinPool.commonPool();
   private final Collection<CompletableFuture<?>> pendingFutures = new ConcurrentLinkedDeque<>();
 
   public BonsaiCachedMerkleTrieLoader(final ObservableMetricsSystem metricsSystem) {
@@ -110,8 +113,10 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Hash worldStateRootHash,
       final Address account) {
-    CompletableFuture.runAsync(
-        () -> cacheAccountNodes(worldStateKeyValueStorage, worldStateRootHash, account));
+    final CompletableFuture<Void> syncFuture =
+        CompletableFuture.runAsync(() -> cacheAccountNodes(worldStateKeyValueStorage, worldStateRootHash, account), preloadExecutor);
+    pendingFutures.add(syncFuture);
+    syncFuture.whenComplete((r, t) -> pendingFutures.remove(syncFuture));
   }
 
   @VisibleForTesting
@@ -146,8 +151,10 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Address account,
       final StorageSlotKey slotKey) {
-    CompletableFuture.runAsync(
-        () -> cacheStorageNodes(worldStateKeyValueStorage, account, slotKey));
+    final CompletableFuture<Void> syncFuture =
+        CompletableFuture.runAsync(() -> cacheStorageNodes(worldStateKeyValueStorage, account, slotKey), preloadExecutor);
+    pendingFutures.add(syncFuture);
+    syncFuture.whenComplete((r, t) -> pendingFutures.remove(syncFuture));
   }
 
   @VisibleForTesting
@@ -270,7 +277,7 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
         List<Optional<byte[]>> secondValues = storage.getMultipleKeys(secondPassKeys);
         for (int i = 0; i < secondValues.size(); i++) {
           Optional<byte[]> val = secondValues.get(i);
-          if (val != null) {
+          if (val.isPresent()) {
             Bytes node = Bytes.wrap(val.get());
             if (secondPassIsAccount.get(i)) accountNodes.put(Hash.hash(node), node);
             else storageNodes.put(Hash.hash(node), node);
@@ -318,10 +325,19 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
   }
 
   public synchronized void enqueueRequest(final PreloadTask request) {
-    // TODO: Inject executor from EthScheduler
     final CompletableFuture<Void> syncFuture =
-        CompletableFuture.runAsync(() -> this.processPreloadTask(request));
+        CompletableFuture.runAsync(() -> this.processPreloadTask(request), preloadExecutor);
     pendingFutures.add(syncFuture);
     syncFuture.whenComplete((r, t) -> pendingFutures.remove(syncFuture));
   }
+
+  public long preloadQueueSize() {
+    return pendingFutures.size();
+  }
+
+  // TODO: Solve better
+  public void setPreloadExecutor(final ExecutorService preloadExecutor) {
+    this.preloadExecutor = preloadExecutor;
+  }
+
 }

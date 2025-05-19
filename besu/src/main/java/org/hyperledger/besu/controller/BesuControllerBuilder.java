@@ -117,6 +117,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -606,10 +607,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString(),
             numberOfBlocksToCache);
+
+    final EthScheduler scheduler =
+        new EthScheduler(
+            syncConfig.getDownloaderParallelism(),
+            syncConfig.getTransactionsParallelism(),
+            syncConfig.getComputationParallelism(),
+            metricsSystem);
+
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
             .orElseGet(() -> new BonsaiCachedMerkleTrieLoader(metricsSystem));
+    bonsaiCachedMerkleTrieLoader.setPreloadExecutor(scheduler.getSyncWorkerExecutor());
 
     final var worldStateHealerSupplier = new AtomicReference<WorldStateHealer>();
 
@@ -672,13 +682,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
-
-    final EthScheduler scheduler =
-        new EthScheduler(
-            syncConfig.getDownloaderParallelism(),
-            syncConfig.getTransactionsParallelism(),
-            syncConfig.getComputationParallelism(),
-            metricsSystem);
 
     Optional<Checkpoint> checkpoint = Optional.empty();
     if (genesisConfigOptions.getCheckpointOptions().isValid()) {

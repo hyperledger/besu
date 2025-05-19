@@ -311,6 +311,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     blockTracer.traceEndBlock(blockHeader, blockBody);
 
     try {
+      // TODO: Remove or replace with a metric
+      if (worldState instanceof BonsaiWorldState) {
+        LOG.info("Preload queue length: " + ((BonsaiWorldState) worldState).preloadQueueSize());
+      }
       worldState.persist(blockHeader);
     } catch (MerkleTrieException e) {
       LOG.trace("Merkle trie exception during Transaction processing ", e);

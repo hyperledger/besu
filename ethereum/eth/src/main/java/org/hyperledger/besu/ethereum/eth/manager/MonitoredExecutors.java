@@ -101,7 +101,7 @@ public class MonitoredExecutors {
         (rejectedExecutionHandler, threadFactory) ->
             new ThreadPoolExecutor(
                 corePoolSize,
-                Integer.MAX_VALUE,
+                20,
                 60L,
                 TimeUnit.SECONDS,
                 new SynchronousQueue<Runnable>(),
