@@ -866,7 +866,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         throw new InvalidConfigurationException(
             "Supplied genesis block does not match chain data stored in "
                 + dataDirectory
-                + ".\n"
+                + "\n"
                 + "Please specify a different data directory with --data-path, specify the original genesis file with "
                 + "--genesis-file or supply a testnet/mainnet option with --network.");
       }
