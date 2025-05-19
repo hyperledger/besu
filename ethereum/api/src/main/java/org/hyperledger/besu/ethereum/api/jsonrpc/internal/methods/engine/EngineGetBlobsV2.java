@@ -35,28 +35,6 @@ import javax.annotation.Nullable;
 
 import io.vertx.core.Vertx;
 
-/**
- * #### Specification
- *
- * <p>1. Given an array of blob versioned hashes client software **MUST** respond with an array of
- * `BlobAndProofV1` objects with matching versioned hashes, respecting the order of versioned hashes
- * in the input array.
- *
- * <p>2. Client software **MUST** place responses in the order given in the request, using `null`
- * for any missing blobs. For instance, if the request is `[A_versioned_hash, B_versioned_hash,
- * C_versioned_hash]` and client software has data for blobs `A` and `C`, but doesn't have data for
- * `B`, the response **MUST** be `[A, null, C]`.
- *
- * <p>3. Client software **MUST** support request sizes of at least 128 blob versioned hashes. The
- * client **MUST** return `-38004: Too large request` error if the number of requested blobs is too
- * large.
- *
- * <p>4. Client software **MAY** return an array of all `null` entries if syncing or otherwise
- * unable to serve blob pool data.
- *
- * <p>5. Callers **MUST** consider that execution layer clients may prune old blobs from their pool,
- * and will respond with `null` if a blob has been pruned.
- */
 public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
 
   private final TransactionPool transactionPool;

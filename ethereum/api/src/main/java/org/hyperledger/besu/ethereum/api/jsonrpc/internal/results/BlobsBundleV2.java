@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.KZGCellProof;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
-import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -77,17 +76,6 @@ public class BlobsBundleV2 {
         commitments.size(),
         cellProfs.size(),
         blobs.size());
-  }
-
-  public BlobsBundleV2(
-      final List<String> commitments, final List<String> cellProfs, final List<String> blobs) {
-    if (blobs.size() != commitments.size()) {
-      throw new InvalidParameterException(
-          "There must be an equal number of blobs, commitments and proofs");
-    }
-    this.commitments = commitments;
-    this.cellProfs = cellProfs;
-    this.blobs = blobs;
   }
 
   @JsonGetter("commitments")
