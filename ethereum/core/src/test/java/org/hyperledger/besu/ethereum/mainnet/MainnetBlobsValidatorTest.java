@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.KZGCellProof;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -121,7 +122,7 @@ public class MainnetBlobsValidatorTest {
     List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
     List<KZGCommitment> kzgCommitments = List.of(mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGProof> kzgCellProofs = Collections.emptyList();
+    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 
@@ -146,7 +147,7 @@ public class MainnetBlobsValidatorTest {
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGProof> kzgCellProofs = Collections.emptyList();
+    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes = List.of(mock(VersionedHash.class));
 
     InvalidParameterException exception =
@@ -170,7 +171,7 @@ public class MainnetBlobsValidatorTest {
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class));
-    List<KZGProof> kzgCellProofs = Collections.emptyList();
+    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 
@@ -195,7 +196,7 @@ public class MainnetBlobsValidatorTest {
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGProof> kzgCellProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
+    List<KZGCellProof> kzgCellProofs = List.of(mock(KZGCellProof.class), mock(KZGCellProof.class));
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 
@@ -219,7 +220,7 @@ public class MainnetBlobsValidatorTest {
     List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
     List<KZGCommitment> kzgCommitments = List.of(mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGProof> kzgCellProofs = Collections.emptyList();
+    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 
@@ -244,7 +245,7 @@ public class MainnetBlobsValidatorTest {
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGProof> kzgCellProofs = Collections.emptyList();
+    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes = List.of(mock(VersionedHash.class));
 
     InvalidParameterException exception =
@@ -268,7 +269,7 @@ public class MainnetBlobsValidatorTest {
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGProof> kzgCellProofs = Collections.emptyList();
+    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 
@@ -291,8 +292,8 @@ public class MainnetBlobsValidatorTest {
     List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
-    List<KZGProof> kzgCellProofs = List.of(mock(KZGProof.class));
     List<KZGProof> kzgProofs = Collections.emptyList();
+    List<KZGCellProof> kzgCellProofs = List.of(mock(KZGCellProof.class));
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 

@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.KZGCellProof;
 import org.hyperledger.besu.datatypes.KZGCommitment;
-import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.security.InvalidParameterException;
@@ -59,7 +59,7 @@ public class BlobsBundleV2 {
     this.cellProfs =
         blobsWithCommitments.stream()
             .flatMap(b -> b.getKzgCellProofs().stream())
-            .map(KZGProof::getData)
+            .map(KZGCellProof::getData)
             .map(Bytes::toString)
             .collect(Collectors.toList());
 

@@ -23,7 +23,7 @@ public record BlobProofBundle(
     Blob blob,
     KZGCommitment kzgCommitment,
     KZGProof kzgProof,
-    List<KZGProof> kzgCellProof,
+    List<KZGCellProof> kzgCellProof,
     VersionedHash versionedHash) {
 
   public static final int VERSION_0_KZG_PROOFS = 0;
@@ -40,7 +40,7 @@ public record BlobProofBundle(
     private Blob blob;
     private KZGCommitment kzgCommitment;
     private KZGProof kzgProof;
-    private List<KZGProof> kzgCellProof;
+    private List<KZGCellProof> kzgCellProof;
     private VersionedHash versionedHash;
 
     public Builder versionId(final int versionId) {
@@ -63,7 +63,7 @@ public record BlobProofBundle(
       return this;
     }
 
-    public Builder kzgCellProof(final List<KZGProof> kzgCellProof) {
+    public Builder kzgCellProof(final List<KZGCellProof> kzgCellProof) {
       this.kzgCellProof = kzgCellProof;
       return this;
     }

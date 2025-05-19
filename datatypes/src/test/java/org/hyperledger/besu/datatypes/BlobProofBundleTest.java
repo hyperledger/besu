@@ -30,7 +30,8 @@ public class BlobProofBundleTest {
   final Blob blob = new Blob(Bytes.EMPTY);
   final KZGCommitment kzgCommitment = new KZGCommitment(Bytes48.ZERO);
   final VersionedHash versionedHash = DEFAULT_VERSIONED_HASH;
-  KZGProof kzgProof = new KZGProof(Bytes48.ZERO); // Replace with actual KZGProof initialization
+  KZGProof kzgProof = new KZGProof(Bytes48.ZERO);
+  KZGCellProof kZGCellProof = new KZGCellProof(Bytes48.ZERO);
 
   @Test
   void shouldSucceedWithValidInputs() {
@@ -106,7 +107,7 @@ public class BlobProofBundleTest {
                     .blob(blob)
                     .kzgCommitment(kzgCommitment)
                     .versionedHash(versionedHash)
-                    .kzgCellProof(Collections.singletonList(kzgProof))
+                    .kzgCellProof(Collections.singletonList(kZGCellProof))
                     .build());
     assertEquals("'kzgCellProof' must be empty when 'versionId' is 0.", exception.getMessage());
   }

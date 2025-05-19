@@ -30,6 +30,7 @@ import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.KZGCellProof;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.Sha256Hash;
@@ -1248,7 +1249,7 @@ public class Transaction
             .toList();
     final var detachedCellProofs =
         blobsWithCommitments.getKzgCellProofs().stream()
-            .map(proof -> new KZGProof(proof.getData().copy()))
+            .map(proof -> new KZGCellProof(proof.getData().copy()))
             .toList();
 
     return new BlobsWithCommitments(
@@ -1481,7 +1482,7 @@ public class Transaction
         final List<KZGCommitment> kzgCommitments,
         final List<Blob> blobs,
         final List<KZGProof> kzgProofs,
-        final List<KZGProof> kzgCellProofs) {
+        final List<KZGCellProof> kzgCellProofs) {
       if (this.versionedHashes == null || this.versionedHashes.isEmpty()) {
         this.versionedHashes =
             kzgCommitments.stream()
