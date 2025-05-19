@@ -52,13 +52,42 @@ public class BigIntegerModularExponentiationPrecompiledContract
   private static final int EXPONENT_LENGTH_OFFSET = 32;
   private static final int MODULUS_LENGTH_OFFSET = 64;
 
+  private static final long BYZANTIUM_UPPER_BOUND = Long.MAX_VALUE;
+  private static final long OSAKA_UPPER_BOUND = 8192L;
+  private final long upperBound;
+
   /**
    * Instantiates a new BigInteger modular exponentiation precompiled contract.
    *
    * @param gasCalculator the gas calculator
    */
-  public BigIntegerModularExponentiationPrecompiledContract(final GasCalculator gasCalculator) {
+  private BigIntegerModularExponentiationPrecompiledContract(
+      final GasCalculator gasCalculator, final long upperBound) {
     super("BigIntModExp", gasCalculator);
+    this.upperBound = upperBound;
+  }
+
+  /**
+   * Create the Byzantium BigIntegerModularExponentiationPrecompiledContract.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the BigIntegerModularExponentiationPrecompiledContract
+   */
+  public static BigIntegerModularExponentiationPrecompiledContract byzantium(
+      final GasCalculator gasCalculator) {
+    return new BigIntegerModularExponentiationPrecompiledContract(
+        gasCalculator, BYZANTIUM_UPPER_BOUND);
+  }
+
+  /**
+   * Create the Osaka BigIntegerModularExponentiationPrecompiledContract. Introduced in EIP-7823
+   *
+   * @param gasCalculator the gas calculator
+   * @return the BigIntegerModularExponentiationPrecompiledContract
+   */
+  public static BigIntegerModularExponentiationPrecompiledContract osaka(
+      final GasCalculator gasCalculator) {
+    return new BigIntegerModularExponentiationPrecompiledContract(gasCalculator, OSAKA_UPPER_BOUND);
   }
 
   /** Disable native Arithmetic libraries. */
@@ -106,7 +135,9 @@ public class BigIntegerModularExponentiationPrecompiledContract
     final long length_of_BASE = baseLength(input);
     final long length_of_EXPONENT = exponentLength(input);
     final long length_of_MODULUS = modulusLength(input);
-    if (length_of_BASE > 8192 || length_of_EXPONENT > 8192 || length_of_MODULUS > 8192) {
+    if (length_of_BASE > upperBound
+        || length_of_EXPONENT > upperBound
+        || length_of_MODULUS > upperBound) {
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
