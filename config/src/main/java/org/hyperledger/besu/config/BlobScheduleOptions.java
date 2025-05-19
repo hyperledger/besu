@@ -28,6 +28,7 @@ public class BlobScheduleOptions {
   private static final String CANCUN_KEY = "cancun";
   private static final String PRAGUE_KEY = "prague";
   private static final String OSAKA_KEY = "osaka";
+  private static final String FUTURE_EIPS_KEY = "future_eips";
 
   /**
    * Instantiates a new Blob Schedule config options.
@@ -66,6 +67,16 @@ public class BlobScheduleOptions {
   }
 
   /**
+   * Gets future eips blob schedule.
+   *
+   * @return the future eips blob schedule
+   */
+  public Optional<BlobSchedule> getFutureEips() {
+    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, FUTURE_EIPS_KEY)
+        .map(BlobSchedule::new);
+  }
+
+  /**
    * As map.
    *
    * @return the map
@@ -75,6 +86,7 @@ public class BlobScheduleOptions {
     getCancun().ifPresent(bs -> builder.put(CANCUN_KEY, bs.asMap()));
     getPrague().ifPresent(bs -> builder.put(PRAGUE_KEY, bs.asMap()));
     getOsaka().ifPresent(bs -> builder.put(OSAKA_KEY, bs.asMap()));
+    getFutureEips().ifPresent(bs -> builder.put(FUTURE_EIPS_KEY, bs.asMap()));
     return builder.build();
   }
 
@@ -92,6 +104,9 @@ public class BlobScheduleOptions {
 
     /** The constant OSAKA_DEFAULT. */
     public static final BlobSchedule OSAKA_DEFAULT = new BlobSchedule(9, 12, 5007716);
+
+    /** The constant FUTURE_EIPS_DEFAULT. */
+    public static final BlobSchedule FUTURE_EIPS_DEFAULT = OSAKA_DEFAULT;
 
     /**
      * Instantiates a new Blob schedule.

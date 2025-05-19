@@ -1093,8 +1093,6 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerPragueOperations(registry, gasCalculator, chainID);
-
-    registerEOFOperations(registry, gasCalculator);
   }
 
   private static void registerEOFOperations(
@@ -1461,6 +1459,8 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
     registerFutureEipsOperations(operationRegistry, gasCalculator, chainId);
+
+    registerEOFOperations(operationRegistry, gasCalculator);
     return operationRegistry;
   }
 
