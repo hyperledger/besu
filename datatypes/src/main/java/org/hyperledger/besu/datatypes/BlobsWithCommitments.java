@@ -22,22 +22,22 @@ import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 
-/** A class to hold the blobs, commitments, proofs and versioned hashes for a set of blobs. */
+/** A class to hold the blobs, commitments, proofs, and versioned hashes for a set of blobs. */
 public class BlobsWithCommitments {
 
   private final List<BlobProofBundle> blobProofBundles;
   private final int versionId;
 
   /**
-   * A class to hold the blobs, commitments, proofs, cell proofs, version IDs, and versioned hashes
-   * for a set of blobs.
+   * Constructs a {@link BlobsWithCommitments} instance.
    *
-   * @param versionId version id for the sidecar
-   * @param kzgCommitments commitments for the blobs
-   * @param blobs list of blobs to be committed to
-   * @param kzgProofs proofs for the commitments
-   * @param kzgCellProofs cell proofs for the commitments
-   * @param versionedHashes hashes of the commitments
+   * @param versionId version ID for the sidecar.
+   * @param kzgCommitments commitments for the blobs.
+   * @param blobs list of blobs to be committed to.
+   * @param kzgProofs proofs for the commitments.
+   * @param kzgCellProofs cell proofs for the commitments.
+   * @param versionedHashes hashes of the commitments.
+   * @throws InvalidParameterException if the input parameters are invalid.
    */
   public BlobsWithCommitments(
       final int versionId,
@@ -76,6 +76,13 @@ public class BlobsWithCommitments {
     this.versionId = versionId;
   }
 
+  /**
+   * Extracts cell proofs for a specific blob index.
+   *
+   * @param proofList the list of cell proofs.
+   * @param index the index of the blob.
+   * @return the list of cell proofs for the specified blob.
+   */
   private static List<KZGCellProof> extractCellProofs(
       final List<KZGCellProof> proofList, final int index) {
     return proofList.subList(
@@ -83,6 +90,17 @@ public class BlobsWithCommitments {
         (index + 1) * BlobProofBundle.CELL_PROOFS_PER_BLOB);
   }
 
+  /**
+   * Validates the input parameters for constructing a {@link BlobsWithCommitments}.
+   *
+   * @param versionId the version ID.
+   * @param kzgCommitments the list of KZG commitments.
+   * @param blobs the list of blobs.
+   * @param kzgProofs the list of KZG proofs.
+   * @param kzgCellProofs the list of KZG cell proofs.
+   * @param versionedHashes the list of versioned hashes.
+   * @throws InvalidParameterException if the input parameters are invalid.
+   */
   @VisibleForTesting
   public static void validateBlobWithCommitments(
       final int versionId,
@@ -117,6 +135,14 @@ public class BlobsWithCommitments {
     }
   }
 
+  /**
+   * Validates the input parameters for version 0 KZG proofs.
+   *
+   * @param blobs the list of blobs.
+   * @param kzgProofs the list of KZG proofs.
+   * @param kzgCellProofs the list of KZG cell proofs.
+   * @throws InvalidParameterException if the input parameters are invalid.
+   */
   private static void validateBlobWithCommitmentsV0(
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
@@ -132,6 +158,14 @@ public class BlobsWithCommitments {
     }
   }
 
+  /**
+   * Validates the input parameters for version 1 KZG cell proofs.
+   *
+   * @param blobs the list of blobs.
+   * @param kzgProofs the list of KZG proofs.
+   * @param kzgCellProofs the list of KZG cell proofs.
+   * @throws InvalidParameterException if the input parameters are invalid.
+   */
   private static void validateBlobWithCommitmentsV1(
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
@@ -150,19 +184,19 @@ public class BlobsWithCommitments {
   }
 
   /**
-   * Construct the class from a list of BlobProofBundles.
+   * Constructs a {@link BlobsWithCommitments} instance from a list of {@link BlobProofBundle}.
    *
-   * @param blobProofBundles the list of blob proof bundles to be attached to the transaction
+   * @param blobProofBundles the list of blob proof bundles to be attached to the transaction.
    */
   public BlobsWithCommitments(final List<BlobProofBundle> blobProofBundles) {
     this.blobProofBundles = blobProofBundles;
-    this.versionId = blobProofBundles.getFirst().versionId();
+    this.versionId = blobProofBundles.get(0).versionId();
   }
 
   /**
    * Get the blobs.
    *
-   * @return the blobs
+   * @return the blobs.
    */
   public List<Blob> getBlobs() {
     return blobProofBundles.stream().map(BlobProofBundle::blob).toList();
@@ -171,7 +205,7 @@ public class BlobsWithCommitments {
   /**
    * Get the commitments.
    *
-   * @return the commitments
+   * @return the commitments.
    */
   public List<KZGCommitment> getKzgCommitments() {
     return blobProofBundles.stream().map(BlobProofBundle::kzgCommitment).toList();
@@ -180,7 +214,7 @@ public class BlobsWithCommitments {
   /**
    * Get the proofs.
    *
-   * @return the proofs
+   * @return the proofs.
    */
   public List<KZGProof> getKzgProofs() {
     return blobProofBundles.stream()
@@ -193,7 +227,7 @@ public class BlobsWithCommitments {
   /**
    * Get the cell proofs.
    *
-   * @return the cell proofs
+   * @return the cell proofs.
    */
   public List<KZGCellProof> getKzgCellProofs() {
     return blobProofBundles.stream()
@@ -210,21 +244,26 @@ public class BlobsWithCommitments {
   /**
    * Get the hashes.
    *
-   * @return the hashes
+   * @return the hashes.
    */
   public List<VersionedHash> getVersionedHashes() {
     return blobProofBundles.stream().map(BlobProofBundle::versionedHash).toList();
   }
 
   /**
-   * Get the list of BlobProofBundles.
+   * Get the list of {@link BlobProofBundle}.
    *
-   * @return blob quads
+   * @return the blob proof bundles.
    */
   public List<BlobProofBundle> getBlobProofBundles() {
     return blobProofBundles;
   }
 
+  /**
+   * Get the version ID.
+   *
+   * @return the version ID.
+   */
   public int getVersionId() {
     return versionId;
   }
