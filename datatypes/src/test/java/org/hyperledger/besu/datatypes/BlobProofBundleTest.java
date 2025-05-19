@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Collections;
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
@@ -34,20 +35,41 @@ public class BlobProofBundleTest {
   KZGCellProof kZGCellProof = new KZGCellProof(Bytes48.ZERO);
 
   @Test
-  void shouldSucceedWithValidInputs() {
+  void shouldSucceedWithValidInputsV0() {
     BlobProofBundle bundle =
         BlobProofBundle.builder()
             .versionId(0)
             .blob(blob)
             .kzgCommitment(kzgCommitment)
             .versionedHash(versionedHash)
+            .kzgProof(kzgProof)
             .build();
 
     assertEquals(0, bundle.versionId());
     assertEquals(blob, bundle.blob());
     assertEquals(kzgCommitment, bundle.kzgCommitment());
     assertEquals(versionedHash, bundle.versionedHash());
+    assertEquals(kzgProof, bundle.kzgProof());
     assertNull(bundle.kzgCellProof());
+  }
+
+  @Test
+  void shouldSucceedWithValidInputsV1() {
+    List<KZGCellProof> kzgCellProof = List.of(kZGCellProof);
+    BlobProofBundle bundle =
+        BlobProofBundle.builder()
+            .versionId(1)
+            .blob(blob)
+            .kzgCommitment(kzgCommitment)
+            .versionedHash(versionedHash)
+            .kzgCellProof(kzgCellProof)
+            .build();
+    assertEquals(1, bundle.versionId());
+    assertEquals(blob, bundle.blob());
+    assertEquals(kzgCommitment, bundle.kzgCommitment());
+    assertEquals(versionedHash, bundle.versionedHash());
+    assertEquals(kzgCellProof, bundle.kzgCellProof());
+    assertNull(bundle.kzgProof());
   }
 
   @Test
@@ -97,7 +119,7 @@ public class BlobProofBundleTest {
   }
 
   @Test
-  void shouldThrowsExceptionWhenKzgCellProofNotEmptyForVersionIdZero() {
+  void shouldThrowsExceptionWhenKzgCellProofNotEmpty_V0() {
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
@@ -113,7 +135,22 @@ public class BlobProofBundleTest {
   }
 
   @Test
-  void shouldThrowsExceptionWhenKzgProofNotEmptyForVersionIdOne() {
+  void shouldThrowsExceptionWhenKzgProofNotEmpty_V0() {
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () ->
+                BlobProofBundle.builder()
+                    .versionId(BlobProofBundle.VERSION_0_KZG_PROOFS)
+                    .blob(blob)
+                    .kzgCommitment(kzgCommitment)
+                    .versionedHash(versionedHash)
+                    .build());
+    assertEquals("'kzgProof' must not be empty when 'versionId' is 0.", exception.getMessage());
+  }
+
+  @Test
+  void shouldThrowsExceptionWhenKzgProofNotEmpty_V1() {
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
@@ -126,5 +163,20 @@ public class BlobProofBundleTest {
                     .kzgProof(kzgProof)
                     .build());
     assertEquals("'kzgProof' must be empty when 'versionId' is 1.", exception.getMessage());
+  }
+
+  @Test
+  void shouldThrowsExceptionWhenKzgCellProofNotEmpty_V1() {
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () ->
+                BlobProofBundle.builder()
+                    .versionId(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS)
+                    .blob(blob)
+                    .kzgCommitment(kzgCommitment)
+                    .versionedHash(versionedHash)
+                    .build());
+    assertEquals("'kzgCellProof' must not be empty when 'versionId' is 1.", exception.getMessage());
   }
 }

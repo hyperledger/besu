@@ -145,8 +145,14 @@ public record BlobProofBundle(
       if (versionId == 0 && kzgCellProof != null) {
         throw new IllegalStateException("'kzgCellProof' must be empty when 'versionId' is 0.");
       }
+      if (versionId == 0 && kzgProof == null) {
+        throw new IllegalStateException("'kzgProof' must not be empty when 'versionId' is 0.");
+      }
       if (versionId == 1 && kzgProof != null) {
         throw new IllegalStateException("'kzgProof' must be empty when 'versionId' is 1.");
+      }
+      if (versionId == 1 && kzgCellProof == null) {
+        throw new IllegalStateException("'kzgCellProof' must not be empty when 'versionId' is 1.");
       }
       return new BlobProofBundle(
           versionId, blob, kzgCommitment, kzgProof, kzgCellProof, versionedHash);
