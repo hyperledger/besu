@@ -45,7 +45,9 @@ public class DebugTraceTransactionStepFactory {
    */
   public static Function<TransactionTrace, DebugTraceTransactionResult> create(
       final String tracerType) {
-    return switch (tracerType) {
+    // Normalize null values to empty string
+    final String normalizedTracerType = tracerType == null ? "" : tracerType;
+    return switch (normalizedTracerType) {
       case "" ->
           transactionTrace -> {
             var result = new DebugStructLoggerTracerResult(transactionTrace);

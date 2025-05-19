@@ -141,6 +141,7 @@ public class DebugTraceTransactionTest {
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
         new TransactionTrace(transaction, result, traceFrames);
+    when(transaction.getHash()).thenReturn(transactionHash);
     when(transaction.getGasLimit()).thenReturn(100L);
     when(result.getGasRemaining()).thenReturn(27L);
     when(result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
