@@ -93,7 +93,7 @@ public class BlobProofBundleTest {
                     .versionedHash(versionedHash)
                     .kzgCellProof(Collections.emptyList())
                     .build());
-    assertEquals("kzgCommitment must not be empty", exception.getMessage());
+    assertEquals("blob must not be empty", exception.getMessage());
   }
 
   @Test
