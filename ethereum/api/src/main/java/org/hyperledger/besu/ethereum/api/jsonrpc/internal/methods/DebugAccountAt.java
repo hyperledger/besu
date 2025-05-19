@@ -119,7 +119,8 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
                       .trace(
                           mutableWorldState,
                           blockHash,
-                          new DebugOperationTracer(new TraceOptions(false, true, true), false))
+                          new DebugOperationTracer(
+                              new TraceOptions(false, true, true, false), false))
                       .map(BlockTrace::getTransactionTraces)
                       .orElse(Collections.emptyList())
                       .stream()

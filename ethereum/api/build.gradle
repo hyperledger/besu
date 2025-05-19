@@ -129,14 +129,12 @@ artifacts { testSupportArtifacts testSupportJar }
 
 tasks.register('generateTestBlockchain') {
   def srcFiles = 'src/test/resources/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data'
-  def dataPath = new File("$buildDir/generated/data")
-  def blocksBin = "$buildDir/resources/test/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data/blocks.bin"
-  inputs.dir(srcFiles)
-  outputs.file(blocksBin)
+  def outputFiles = "$buildDir/resources/test/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data/"
   dependsOn(configurations.testResourceGeneration)
   dependsOn(processTestResources)
   doLast {
-    if(!dataPath.exists()) {
+    def dataPath = new File("$buildDir/generated/data/bonsai")
+    if (!dataPath.exists()) {
       mkdir(dataPath)
 
       javaexec {
@@ -164,7 +162,42 @@ tasks.register('generateTestBlockchain') {
           "export",
           "--format=RLP",
           "--start-block=0",
-          "--to=$blocksBin"
+          "--to=$outputFiles/blocks.bin"
+        ]
+      }
+    }
+
+    dataPath = new File("$buildDir/generated/data/verkle")
+    if (!dataPath.exists()) {
+      mkdir(dataPath)
+      javaexec {
+        main = 'org.hyperledger.besu.Besu'
+        classpath = configurations.testResourceGeneration
+        args = [
+          "--logging=ERROR",
+          "--data-path=$dataPath",
+          "--genesis-file=$srcFiles/genesis-verkle.json",
+          "--data-storage-format=VERKLE",
+          "blocks",
+          "import",
+          "--format=JSON",
+          "--from=$srcFiles/blocks.json",
+          "--start-time=1438269971"
+        ]
+      }
+      javaexec {
+        main = 'org.hyperledger.besu.Besu'
+        classpath = configurations.testResourceGeneration
+        args = [
+          "--logging=ERROR",
+          "--data-path=$dataPath",
+          "--genesis-file=$srcFiles/genesis-verkle.json",
+          "--data-storage-format=VERKLE",
+          "blocks",
+          "export",
+          "--format=RLP",
+          "--start-block=0",
+          "--to=$outputFiles/blocks-verkle.bin"
         ]
       }
     }

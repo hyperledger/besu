@@ -290,11 +290,13 @@ public abstract class AccessEvent<T> {
   public abstract String costSchedulePrettyPrint();
 
   /**
-   * Prints a shorter version of {@code toString()}.
+   * Get the key that is associated with this access event.
    *
-   * @return the string
+   * @return the type T that represents the key.
    */
-  public abstract String toShortString();
+  public T getKey() {
+    return key;
+  }
 
   /**
    * Get the stateless tree index corresponding to this access event.

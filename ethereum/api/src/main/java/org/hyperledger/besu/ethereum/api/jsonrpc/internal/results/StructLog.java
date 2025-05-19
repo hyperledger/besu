@@ -14,9 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -27,7 +32,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-@JsonPropertyOrder({"pc", "op", "gas", "gasCost", "depth", "stack", "memory", "storage"})
+@JsonPropertyOrder({
+  "pc",
+  "op",
+  "gas",
+  "gasCost",
+  "depth",
+  "stack",
+  "memory",
+  "storage",
+  "statelessAccessWitness"
+})
 public class StructLog {
 
   private static final char[] hexChars = "0123456789abcdef".toCharArray();
@@ -39,6 +54,7 @@ public class StructLog {
   private final int pc;
   private final String[] stack;
   private final Object storage;
+  private final Object statelessAccessWitness;
   private final String reason;
 
   public StructLog(final TraceFrame traceFrame) {
@@ -52,6 +68,11 @@ public class StructLog {
                 a ->
                     Arrays.stream(a).map(bytes -> toCompactHex(bytes, true)).toArray(String[]::new))
             .orElse(null);
+    statelessAccessWitness =
+        traceFrame
+            .getStatelessAccessWitness()
+            .map(StructLog::formatStatelessAccessWitness)
+            .orElse(null);
     op = traceFrame.getOpcode();
     pc = traceFrame.getPc();
     stack =
@@ -64,6 +85,27 @@ public class StructLog {
 
     storage = traceFrame.getStorage().map(StructLog::formatStorage).orElse(null);
     reason = traceFrame.getRevertReason().map(bytes -> toCompactHex(bytes, true)).orElse(null);
+  }
+
+  private static Map<String, List<Map<String, String>>> formatStatelessAccessWitness(
+      final List<AccessEvent<?>> accessEvents) {
+    final Map<String, List<Map<String, String>>> formattedWitness = new TreeMap<>();
+    accessEvents.forEach(
+        accessEvent -> {
+          final String address = Objects.toString(accessEvent.getBranchEvent().getKey());
+          LinkedHashMap<String, String> indices = new LinkedHashMap<>();
+          indices.put("treeIndex", accessEvent.getBranchEvent().getIndex().toQuantityHexString());
+          indices.put("subIndex", accessEvent.getIndex().toQuantityHexString());
+          formattedWitness.computeIfAbsent(address, v -> new ArrayList<>()).add(indices);
+        });
+    formattedWitness
+        .values()
+        .forEach(
+            list ->
+                list.sort(
+                    Comparator.comparing((Map<String, String> map) -> map.get("treeIndex"))
+                        .thenComparing(map -> map.get("subIndex"))));
+    return formattedWitness;
   }
 
   private static Map<String, String> formatStorage(final Map<UInt256, UInt256> storage) {
@@ -116,6 +158,12 @@ public class StructLog {
     return storage;
   }
 
+  @JsonGetter("statelessAccessWitness")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public Object statelessAccessWitness() {
+    return statelessAccessWitness;
+  }
+
   @JsonGetter("reason")
   @JsonInclude(JsonInclude.Include.NON_NULL)
   public String reason() {
@@ -138,12 +186,13 @@ public class StructLog {
         && Arrays.equals(memory, structLog.memory)
         && Objects.equals(op, structLog.op)
         && Arrays.equals(stack, structLog.stack)
-        && Objects.equals(storage, structLog.storage);
+        && Objects.equals(storage, structLog.storage)
+        && Objects.equals(statelessAccessWitness, structLog.statelessAccessWitness);
   }
 
   @Override
   public int hashCode() {
-    int result = Objects.hash(depth, gas, gasCost, op, pc, storage);
+    int result = Objects.hash(depth, gas, gasCost, op, pc, storage, statelessAccessWitness);
     result = 31 * result + Arrays.hashCode(memory);
     result = 31 * result + Arrays.hashCode(stack);
     return result;

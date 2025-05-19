@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.debug;
 
+import org.hyperledger.besu.datatypes.AccessEvent;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
@@ -22,6 +23,7 @@ import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -54,6 +56,7 @@ public class TraceFrame {
   private final Optional<Code> maybeCode;
   private final int stackItemsProduced;
   private final Optional<Bytes[]> stackPostExecution;
+  private final Optional<List<AccessEvent<?>>> statelessAccessWitness;
 
   private long gasRemainingPostExecution;
   private final boolean virtualOperation;
@@ -77,6 +80,7 @@ public class TraceFrame {
       final Optional<Bytes[]> stack,
       final Optional<Bytes[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
+      final Optional<List<AccessEvent<?>>> statelessAccessWitness,
       final WorldUpdater worldUpdater,
       final Optional<Bytes> revertReason,
       final Optional<Map<Address, Wei>> maybeRefunds,
@@ -101,6 +105,7 @@ public class TraceFrame {
     this.stack = stack;
     this.memory = memory;
     this.storage = storage;
+    this.statelessAccessWitness = statelessAccessWitness;
     this.worldUpdater = worldUpdater;
     this.revertReason = revertReason;
     this.maybeRefunds = maybeRefunds;
@@ -177,6 +182,10 @@ public class TraceFrame {
     return storage;
   }
 
+  public Optional<List<AccessEvent<?>>> getStatelessAccessWitness() {
+    return statelessAccessWitness;
+  }
+
   public WorldUpdater getWorldUpdater() {
     return worldUpdater;
   }
@@ -201,6 +210,7 @@ public class TraceFrame {
         .add("stack", stack)
         .add("memory", memory)
         .add("storage", storage)
+        .add("statelessAccessWitness", statelessAccessWitness)
         .toString();
   }
 

@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Joiner;
 import org.apache.tuweni.bytes.Bytes;
@@ -40,6 +41,7 @@ public class StandardJsonTracer implements OperationTracer {
   private final boolean showStack;
   private final boolean showReturnData;
   private final boolean showStorage;
+  private final boolean showStatelessAccessWitness;
   private int pc;
   private int section;
   private List<String> stack;
@@ -58,18 +60,21 @@ public class StandardJsonTracer implements OperationTracer {
    * @param showStack show the stack in trace lines
    * @param showReturnData show return data in trace lines
    * @param showStorage show the updated storage
+   * @param showStatelessAccessWitness show accesses to the stateless witness
    */
   public StandardJsonTracer(
       final PrintWriter out,
       final boolean showMemory,
       final boolean showStack,
       final boolean showReturnData,
-      final boolean showStorage) {
+      final boolean showStorage,
+      final boolean showStatelessAccessWitness) {
     this.out = out;
     this.showMemory = showMemory;
     this.showStack = showStack;
     this.showReturnData = showReturnData;
     this.showStorage = showStorage;
+    this.showStatelessAccessWitness = showStatelessAccessWitness;
   }
 
   /**
@@ -80,19 +85,22 @@ public class StandardJsonTracer implements OperationTracer {
    * @param showStack show the stack in trace lines
    * @param showReturnData show return data in trace lines
    * @param showStorage show updated storage
+   * @param showStatelessAccessWitness show accesses to the stateless witness
    */
   public StandardJsonTracer(
       final PrintStream out,
       final boolean showMemory,
       final boolean showStack,
       final boolean showReturnData,
-      final boolean showStorage) {
+      final boolean showStorage,
+      final boolean showStatelessAccessWitness) {
     this(
         new PrintWriter(out, true, StandardCharsets.UTF_8),
         showMemory,
         showStack,
         showReturnData,
-        showStorage);
+        showStorage,
+        showStatelessAccessWitness);
   }
 
   /**
@@ -224,6 +232,25 @@ public class StandardJsonTracer implements OperationTracer {
       sb.append(",\"error\":\"")
           .append(messageFrame.getRevertReason().get().toHexString())
           .append("\"");
+    }
+
+    if (showStatelessAccessWitness) {
+      sb.append(",\"statelessAccessWitness\": {");
+      sb.append(
+          messageFrame.getAccessWitness().getLeafAccesses().stream()
+              .map(
+                  accessEvent ->
+                      "{\""
+                          + accessEvent.getBranchEvent().getKey()
+                          + "\","
+                          + "\""
+                          + accessEvent.getBranchEvent().getIndex().toQuantityHexString()
+                          + "\","
+                          + "\""
+                          + accessEvent.getIndex().toQuantityHexString()
+                          + "\"}")
+              .collect(Collectors.joining(",")));
+      sb.append("}");
     }
 
     sb.append(storageString).append("}");

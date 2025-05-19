@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.stateless.NoopAccessWitness;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ public class MessageFrameTestFixture {
   private static final int maxStackSize = DEFAULT_MAX_STACK_SIZE;
 
   private MessageFrame parentFrame;
-  private AccessWitness accessWitness;
+  private AccessWitness accessWitness = NoopAccessWitness.get();
   private MessageFrame.Type type = MessageFrame.Type.MESSAGE_CALL;
   private Optional<Blockchain> blockchain = Optional.empty();
   private Optional<WorldUpdater> worldUpdater = Optional.empty();
@@ -193,6 +194,7 @@ public class MessageFrameTestFixture {
                             .getBlockHashProcessor()
                             .createBlockHashLookup(localBlockchain, localBlockHeader)))
             .maxStackSize(maxStackSize)
+            .accessWitness(accessWitness)
             .build();
     stackItems.forEach(frame::pushStackItem);
     return frame;

@@ -17,10 +17,12 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -175,7 +177,9 @@ public class DefaultProtocolScheduleTest {
   @Test
   public void getForNextBlockHeader_shouldGetHeaderForNextBlockNumber() {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+    when(spec1.getBlockHeaderFunctions()).thenReturn(mock(BlockHeaderFunctions.class));
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+    when(spec2.getBlockHeaderFunctions()).thenReturn(mock(BlockHeaderFunctions.class));
 
     final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putBlockNumberMilestone(0, spec1);
@@ -192,7 +196,9 @@ public class DefaultProtocolScheduleTest {
   @Test
   public void getForNextBlockHeader_shouldGetHeaderForNextTimestamp() {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+    when(spec1.getBlockHeaderFunctions()).thenReturn(mock(BlockHeaderFunctions.class));
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+    when(spec2.getBlockHeaderFunctions()).thenReturn(mock(BlockHeaderFunctions.class));
 
     final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putBlockNumberMilestone(0, spec1);
