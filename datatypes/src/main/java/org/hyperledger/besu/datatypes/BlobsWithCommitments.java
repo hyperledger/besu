@@ -184,11 +184,12 @@ public class BlobsWithCommitments {
    */
   public List<KZGProof> getKzgProofs() {
     return blobProofBundles.stream()
-      .filter(Objects::nonNull)
-      .map(BlobProofBundle::kzgProof)
-      .filter(Objects::nonNull)
-      .toList();
+        .filter(Objects::nonNull)
+        .map(BlobProofBundle::kzgProof)
+        .filter(Objects::nonNull)
+        .toList();
   }
+
   /**
    * Get the cell proofs.
    *
@@ -196,13 +197,14 @@ public class BlobsWithCommitments {
    */
   public List<KZGCellProof> getKzgCellProofs() {
     return blobProofBundles.stream()
-      .filter(Objects::nonNull)
-      .flatMap(blobProofBundle -> {
-        List<KZGCellProof> proofStream = blobProofBundle.kzgCellProof();
-        return proofStream != null ? proofStream.stream() : Stream.empty();
-      })
-      .filter(Objects::nonNull)
-      .toList();
+        .filter(Objects::nonNull)
+        .flatMap(
+            blobProofBundle -> {
+              List<KZGCellProof> proofStream = blobProofBundle.kzgCellProof();
+              return proofStream != null ? proofStream.stream() : Stream.empty();
+            })
+        .filter(Objects::nonNull)
+        .toList();
   }
 
   /**
