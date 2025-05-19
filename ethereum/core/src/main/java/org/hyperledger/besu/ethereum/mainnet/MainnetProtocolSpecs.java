@@ -978,6 +978,7 @@ public abstract class MainnetProtocolSpecs {
                     osakaBlobSchedule.getMax()))
         .blockHeaderValidatorBuilder(
             fm -> MainnetBlockHeaderValidator.blobAwareBlockHeaderValidator(fm, osakaGasCalculator))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
         .name("Osaka");
   }
 

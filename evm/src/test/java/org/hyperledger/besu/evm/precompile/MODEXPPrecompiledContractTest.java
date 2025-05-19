@@ -32,9 +32,9 @@ class MODEXPPrecompiledContractTest {
   @Mock private MessageFrame messageFrame;
 
   private final BigIntegerModularExponentiationPrecompiledContract byzantiumContract =
-      new BigIntegerModularExponentiationPrecompiledContract(new ByzantiumGasCalculator());
+      BigIntegerModularExponentiationPrecompiledContract.byzantium(new ByzantiumGasCalculator());
   private final BigIntegerModularExponentiationPrecompiledContract berlinContract =
-      new BigIntegerModularExponentiationPrecompiledContract(new BerlinGasCalculator());
+      BigIntegerModularExponentiationPrecompiledContract.byzantium(new BerlinGasCalculator());
 
   MODEXPPrecompiledContractTest() {}
 
