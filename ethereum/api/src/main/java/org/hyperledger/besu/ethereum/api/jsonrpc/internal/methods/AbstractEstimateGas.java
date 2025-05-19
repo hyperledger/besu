@@ -82,9 +82,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final var minTxCost = getBlockchainQueries().getMinimumTransactionCost(pendingBlockHeader);
     final var gasLimitUpperBound =
         calculateGasLimitUpperBound(
-            jsonCallParameter,
-            pendingBlockHeader.getParentHash(),
-            pendingBlockHeader.getGasLimit());
+            callParameter, pendingBlockHeader.getParentHash(), pendingBlockHeader.getGasLimit());
     if (gasLimitUpperBound < minTxCost) {
       return errorResponse(requestContext, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
     }
@@ -122,7 +120,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final var minTxCost = getBlockchainQueries().getMinimumTransactionCost(blockHeader);
     final var gasLimitUpperBound =
         calculateGasLimitUpperBound(
-            jsonCallParameter, blockHeader.getHash(), blockHeader.getGasLimit());
+            callParameter, blockHeader.getHash(), blockHeader.getGasLimit());
     if (gasLimitUpperBound < minTxCost) {
       return errorResponse(requestContext, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
     }
@@ -237,18 +235,17 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   }
 
   private long calculateGasLimitUpperBound(
-      final JsonCallParameter callParameters, final Hash blockHash, final long maxTxGasLimit) {
-    if (callParameters.getFrom() != null && callParameters.isMaybeStrict().orElse(Boolean.TRUE)) {
-      final var blockchainQueries = getBlockchainQueries();
-      final var sender = callParameters.getFrom();
+      final CallParameter callParameters, final Hash blockHash, final long maxTxGasLimit) {
+    if (callParameters.getSender().isPresent() && callParameters.getStrict().orElse(Boolean.TRUE)) {
+      final var sender = callParameters.getSender().get();
       final var maxGasPrice = calculateTxMaxGasPrice(callParameters);
-      if (maxGasPrice != null) {
-        final var maybeBalance = blockchainQueries.accountBalance(sender, blockHash);
+      if (!maxGasPrice.equals(Wei.ZERO)) {
+        final var maybeBalance = getBlockchainQueries().accountBalance(sender, blockHash);
         if (maybeBalance.isEmpty() || maybeBalance.get().equals(Wei.ZERO)) {
           return 0;
         }
         final var balance = maybeBalance.get();
-        final var value = callParameters.getValue();
+        final var value = callParameters.getValue().orElse(Wei.ZERO);
         final var balanceForGas = value == null ? balance : balance.subtract(value);
         final var gasLimitForBalance = balanceForGas.divide(maxGasPrice);
         return gasLimitForBalance.fitsLong()
@@ -260,8 +257,10 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     return maxTxGasLimit;
   }
 
-  private Wei calculateTxMaxGasPrice(final JsonCallParameter callParameters) {
-    return callParameters.getMaxFeePerGas().orElseGet(callParameters::getGasPrice);
+  private Wei calculateTxMaxGasPrice(final CallParameter callParameters) {
+    return callParameters
+        .getMaxFeePerGas()
+        .orElseGet(() -> callParameters.getGasPrice().orElse(Wei.ZERO));
   }
 
   protected interface TransactionSimulationFunction {
