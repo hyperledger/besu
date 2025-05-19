@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.security.InvalidParameterException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -121,7 +120,6 @@ public class MainnetBlobsValidatorTest {
     List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
     List<KZGCommitment> kzgCommitments = List.of(mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 
@@ -134,7 +132,6 @@ public class MainnetBlobsValidatorTest {
                     kzgCommitments,
                     blobs,
                     kzgProofs,
-                    kzgCellProofs,
                     versionedHashes));
 
     assertEquals("Invalid number of kzgCommitments, expected 2, got 1", exception.getMessage());
@@ -146,7 +143,6 @@ public class MainnetBlobsValidatorTest {
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes = List.of(mock(VersionedHash.class));
 
     InvalidParameterException exception =
@@ -158,7 +154,6 @@ public class MainnetBlobsValidatorTest {
                     kzgCommitments,
                     blobs,
                     kzgProofs,
-                    kzgCellProofs,
                     versionedHashes));
 
     assertEquals("Invalid number of versionedHashes, expected 2, got 1", exception.getMessage());
@@ -170,7 +165,6 @@ public class MainnetBlobsValidatorTest {
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class));
-    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 
@@ -183,7 +177,6 @@ public class MainnetBlobsValidatorTest {
                     kzgCommitments,
                     blobs,
                     kzgProofs,
-                    kzgCellProofs,
                     versionedHashes));
 
     assertEquals("Invalid number of kzgProofs, expected 2, got 1", exception.getMessage());
@@ -194,8 +187,8 @@ public class MainnetBlobsValidatorTest {
     List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
-    List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGCellProof> kzgCellProofs = List.of(mock(KZGCellProof.class), mock(KZGCellProof.class));
+    List<KZGProof> kzgProofs =
+        List.of(mock(KZGProof.class), mock(KZGProof.class), mock(KZGProof.class));
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 
@@ -208,10 +201,9 @@ public class MainnetBlobsValidatorTest {
                     kzgCommitments,
                     blobs,
                     kzgProofs,
-                    kzgCellProofs,
                     versionedHashes));
 
-    assertEquals("Version 0 does not support cell proofs", exception.getMessage());
+    assertEquals("Invalid number of kzgProofs, expected 2, got 3", exception.getMessage());
   }
 
   @Test
@@ -219,7 +211,6 @@ public class MainnetBlobsValidatorTest {
     List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
     List<KZGCommitment> kzgCommitments = List.of(mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 
@@ -232,7 +223,6 @@ public class MainnetBlobsValidatorTest {
                     kzgCommitments,
                     blobs,
                     kzgProofs,
-                    kzgCellProofs,
                     versionedHashes));
 
     assertEquals("Invalid number of kzgCommitments, expected 2, got 1", exception.getMessage());
@@ -244,7 +234,6 @@ public class MainnetBlobsValidatorTest {
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes = List.of(mock(VersionedHash.class));
 
     InvalidParameterException exception =
@@ -256,7 +245,6 @@ public class MainnetBlobsValidatorTest {
                     kzgCommitments,
                     blobs,
                     kzgProofs,
-                    kzgCellProofs,
                     versionedHashes));
 
     assertEquals("Invalid number of versionedHashes, expected 2, got 1", exception.getMessage());
@@ -268,7 +256,6 @@ public class MainnetBlobsValidatorTest {
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
     List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<KZGCellProof> kzgCellProofs = Collections.emptyList();
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 
@@ -281,9 +268,8 @@ public class MainnetBlobsValidatorTest {
                     kzgCommitments,
                     blobs,
                     kzgProofs,
-                    kzgCellProofs,
                     versionedHashes));
-    assertEquals("Version 1 does not support kzgProofs", exception.getMessage());
+    assertEquals("Invalid number of cell proofs, expected 256, got 2", exception.getMessage());
   }
 
   @Test
@@ -291,8 +277,7 @@ public class MainnetBlobsValidatorTest {
     List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
     List<KZGCommitment> kzgCommitments =
         List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
-    List<KZGProof> kzgProofs = Collections.emptyList();
-    List<KZGCellProof> kzgCellProofs = List.of(mock(KZGCellProof.class));
+    List<KZGProof> kzgProofs = List.of(mock(KZGProof.class));
     List<VersionedHash> versionedHashes =
         List.of(mock(VersionedHash.class), mock(VersionedHash.class));
 
@@ -305,7 +290,6 @@ public class MainnetBlobsValidatorTest {
                     kzgCommitments,
                     blobs,
                     kzgProofs,
-                    kzgCellProofs,
                     versionedHashes));
 
     int expectedCellsSize = blobs.size() * CELL_PROOFS_PER_BLOB;

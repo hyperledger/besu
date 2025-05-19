@@ -594,7 +594,6 @@ public class MainnetTransactionValidatorTest {
                         List.of(new KZGCommitment(Bytes48.ZERO)),
                         List.of(new Blob(Bytes.EMPTY)),
                         List.of(new KZGProof(Bytes48.ZERO)),
-                        List.of(),
                         List.of(VersionedHash.DEFAULT_VERSIONED_HASH))))
             .versionedHashes(Optional.of(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)))
             .createTransaction(senderKeys);
