@@ -40,7 +40,6 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -84,36 +83,7 @@ public class PermissionTransactionValidatorTest extends MainnetTransactionValida
   }
 
   @Test
-  public void shouldPropagateCorrectStateChangeParamToTransactionFilter() {
-    final ArgumentCaptor<Boolean> stateChangeLocalParamCaptor =
-        ArgumentCaptor.forClass(Boolean.class);
-    final ArgumentCaptor<Boolean> stateChangeOnchainParamCaptor =
-        ArgumentCaptor.forClass(Boolean.class);
-    final PermissionTransactionFilter permissionTransactionFilter =
-        mock(PermissionTransactionFilter.class);
-    when(permissionTransactionFilter.permitted(
-            any(Transaction.class),
-            stateChangeLocalParamCaptor.capture(),
-            stateChangeOnchainParamCaptor.capture()))
-        .thenReturn(true);
-
-    final TransactionValidator baseValidator =
-        createTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    final TransactionValidator validator =
-        new PermissionTransactionValidator(baseValidator, permissionTransactionFilter);
-
-    final TransactionValidationParams validationParams =
-        ImmutableTransactionValidationParams.builder().checkOnchainPermissions(true).build();
-
-    validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
-
-    assertThat(stateChangeLocalParamCaptor.getValue()).isTrue();
-    assertThat(stateChangeOnchainParamCaptor.getValue()).isTrue();
-  }
-
-  @Test
-  public void shouldNotCheckAccountPermissionIfBothValidationParamsCheckPermissionsAreFalse() {
+  public void shouldNotCheckAccountPermissionIfValidationParamsCheckPermissionsFalse() {
     final PermissionTransactionFilter permissionTransactionFilter =
         mock(PermissionTransactionFilter.class);
 
@@ -124,10 +94,7 @@ public class PermissionTransactionValidatorTest extends MainnetTransactionValida
         new PermissionTransactionValidator(baseValidator, permissionTransactionFilter);
 
     final TransactionValidationParams validationParams =
-        ImmutableTransactionValidationParams.builder()
-            .checkOnchainPermissions(false)
-            .checkLocalPermissions(false)
-            .build();
+        ImmutableTransactionValidationParams.builder().checkLocalPermissions(false).build();
 
     validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
 
@@ -151,7 +118,7 @@ public class PermissionTransactionValidatorTest extends MainnetTransactionValida
   private PermissionTransactionFilter transactionFilter(final boolean permitted) {
     final PermissionTransactionFilter permissionTransactionFilter =
         mock(PermissionTransactionFilter.class);
-    when(permissionTransactionFilter.permitted(any(Transaction.class), anyBoolean(), anyBoolean()))
+    when(permissionTransactionFilter.permitted(any(Transaction.class), anyBoolean()))
         .thenReturn(permitted);
     return permissionTransactionFilter;
   }

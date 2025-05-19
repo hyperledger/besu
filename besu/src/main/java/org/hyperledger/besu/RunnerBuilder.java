@@ -668,7 +668,7 @@ public class RunnerBuilder {
 
     final PeerPermissions peerPermissions =
         nodePermissioningController
-            .map(nodePC -> new PeerPermissionsAdapter(nodePC, bootnodes, context.getBlockchain()))
+            .map(nodePC -> new PeerPermissionsAdapter(nodePC, context.getBlockchain()))
             .map(nodePerms -> PeerPermissions.combine(nodePerms, defaultPeerPermissions))
             .orElse(defaultPeerPermissions);
 
@@ -1156,7 +1156,7 @@ public class RunnerBuilder {
       final NodePermissioningController nodePermissioningController =
           new NodePermissioningControllerFactory()
               .create(
-                  new PermissioningConfiguration(Optional.empty(), Optional.empty()),
+                  new PermissioningConfiguration(Optional.empty()),
                   synchronizer,
                   fixedNodes,
                   localNodeId,
@@ -1179,8 +1179,7 @@ public class RunnerBuilder {
     if (permissioningConfiguration.isPresent()
         || permissioningService.getTransactionPermissioningProviders().size() > 0) {
       final PermissioningConfiguration configuration =
-          permissioningConfiguration.orElse(
-              new PermissioningConfiguration(Optional.empty(), Optional.empty()));
+          permissioningConfiguration.orElse(new PermissioningConfiguration(Optional.empty()));
       final Optional<AccountPermissioningController> accountPermissioningController =
           AccountPermissioningControllerFactory.create(
               configuration,
