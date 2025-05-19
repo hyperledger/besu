@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.fail;
 
 import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
@@ -85,7 +86,13 @@ public class BlobTestFixture {
       proofs.add(blobTriplet.kzgProof());
       versionedHashes.add(blobTriplet.versionedHash());
     }
-    return new BlobsWithCommitments(commitments, blobs, proofs, versionedHashes);
+    return new BlobsWithCommitments(
+        BlobProofBundle.VERSION_0_KZG_PROOFS,
+        commitments,
+        blobs,
+        proofs,
+        List.of(),
+        versionedHashes);
   }
 
   private VersionedHash hashCommitment(final KZGCommitment commitment) {

@@ -590,9 +590,11 @@ public class MainnetTransactionValidatorTest {
             .blobsWithCommitments(
                 Optional.of(
                     new BlobsWithCommitments(
+                        BlobProofBundle.VERSION_0_KZG_PROOFS,
                         List.of(new KZGCommitment(Bytes48.ZERO)),
                         List.of(new Blob(Bytes.EMPTY)),
                         List.of(new KZGProof(Bytes48.ZERO)),
+                        List.of(),
                         List.of(VersionedHash.DEFAULT_VERSIONED_HASH))))
             .versionedHashes(Optional.of(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)))
             .createTransaction(senderKeys);

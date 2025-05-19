@@ -29,6 +29,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
@@ -46,6 +47,7 @@ import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
@@ -206,7 +208,13 @@ class BlobSizeTransactionSelectorTest {
             IntStream.range(0, blobCount).mapToObj(i -> new Blob(Bytes.random(32 * 4096))).toList();
         tx.versionedHashes(Optional.of(versionHashes));
         final var blobsWithCommitments =
-            new BlobsWithCommitments(kgzCommitments, blobs, kzgProofs, versionHashes);
+            new BlobsWithCommitments(
+                BlobProofBundle.VERSION_0_KZG_PROOFS,
+                kgzCommitments,
+                blobs,
+                kzgProofs,
+                List.of(),
+                versionHashes);
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
       } else {
         fail("At least 1 blob is required for blob tx type");

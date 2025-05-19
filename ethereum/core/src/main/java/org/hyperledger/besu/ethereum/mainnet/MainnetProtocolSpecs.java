@@ -767,6 +767,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559,
                         TransactionType.BLOB),
+                    Set.of(BlobProofBundle.VERSION_0_KZG_PROOFS),
                     evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(
@@ -892,6 +893,7 @@ public abstract class MainnetProtocolSpecs {
                             TransactionType.EIP1559,
                             TransactionType.BLOB,
                             TransactionType.DELEGATE_CODE),
+                        Set.of(BlobProofBundle.VERSION_0_KZG_PROOFS),
                         evm.getMaxInitcodeSize()))
             // CodeDelegationProcessor
             .transactionProcessorBuilder(

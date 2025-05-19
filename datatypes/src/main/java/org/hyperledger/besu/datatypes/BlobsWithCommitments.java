@@ -27,20 +27,6 @@ public class BlobsWithCommitments {
   private final List<BlobProofBundle> blobProofBundles;
   private final int versionId;
 
-  public BlobsWithCommitments(
-      final List<KZGCommitment> kzgCommitments,
-      final List<Blob> blobs,
-      final List<KZGProof> kzgProofs,
-      final List<VersionedHash> versionedHashes) {
-    this(
-        BlobProofBundle.VERSION_0_KZG_PROOFS,
-        kzgCommitments,
-        blobs,
-        kzgProofs,
-        List.of(),
-        versionedHashes);
-  }
-
   /**
    * A class to hold the blobs, commitments, proofs, cell proofs, version IDs, and versioned hashes
    * for a set of blobs.

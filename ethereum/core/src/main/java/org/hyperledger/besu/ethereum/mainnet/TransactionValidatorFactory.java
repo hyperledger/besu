@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
@@ -31,6 +30,7 @@ import com.google.common.base.Suppliers;
 public class TransactionValidatorFactory {
 
   private volatile Supplier<TransactionValidator> transactionValidatorSupplier;
+  private static final Set<Integer> NO_BLOB = Set.of();
 
   public TransactionValidatorFactory(
       final GasCalculator gasCalculator,
@@ -76,7 +76,7 @@ public class TransactionValidatorFactory {
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
-        Set.of(BlobProofBundle.VERSION_0_KZG_PROOFS),
+        NO_BLOB,
         maxInitcodeSize);
   }
 
