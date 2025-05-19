@@ -388,8 +388,4 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
     pendingFutures.add(syncFuture);
     syncFuture.whenComplete((r, t) -> pendingFutures.remove(syncFuture));
   }
-
-  public synchronized void clearQueue() {
-    pendingFutures.forEach(future -> future.cancel(true));
-  }
 }

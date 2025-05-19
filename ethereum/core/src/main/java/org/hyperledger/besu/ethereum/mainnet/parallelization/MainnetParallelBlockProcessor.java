@@ -137,10 +137,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final Block block) {
-    // TODO: This is an issue when processing multiple blocks in parallel. Is it necessary /
-    // helpful? If so, solve, if not, remove
-    ((BonsaiWorldState) worldState).clearPreloadQueue();
-
     final BlockProcessingResult blockProcessingResult =
         super.processBlock(
             protocolContext,
