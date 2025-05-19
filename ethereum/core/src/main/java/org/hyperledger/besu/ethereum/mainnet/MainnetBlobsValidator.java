@@ -131,9 +131,7 @@ public class MainnetBlobsValidator {
       final BlobsWithCommitments blobsWithCommitments) {
     final Bytes kzgCellProofs =
         Bytes.wrap(
-            blobsWithCommitments.getKzgCellProofs().stream()
-                .map(kp -> (Bytes) kp.getData())
-                .toList());
+            blobsWithCommitments.getKzgProofs().stream().map(kp -> (Bytes) kp.getData()).toList());
 
     final byte[] commitments = extendCommitments(blobsWithCommitments.getKzgCommitments());
     long[] cellIndices = new long[CELL_PROOFS_PER_BLOB * blobsWithCommitments.getBlobs().size()];

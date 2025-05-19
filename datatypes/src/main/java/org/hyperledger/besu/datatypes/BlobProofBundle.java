@@ -25,15 +25,13 @@ import java.util.List;
  * @param blob the blob being proven.
  * @param kzgCommitment the KZG commitment for the blob.
  * @param kzgProof the KZG proof for the blob.
- * @param kzgCellProof the KZG cell proof for the blob.
  * @param versionedHash the versioned hash of the blob.
  */
 public record BlobProofBundle(
     int versionId,
     Blob blob,
     KZGCommitment kzgCommitment,
-    KZGProof kzgProof,
-    List<KZGCellProof> kzgCellProof,
+    List<KZGProof> kzgProof,
     VersionedHash versionedHash) {
 
   /** Version ID for KZG proofs. */
@@ -59,8 +57,7 @@ public record BlobProofBundle(
     private int versionId;
     private Blob blob;
     private KZGCommitment kzgCommitment;
-    private KZGProof kzgProof;
-    private List<KZGCellProof> kzgCellProof;
+    private List<KZGProof> kzgProof;
     private VersionedHash versionedHash;
 
     /** Default constructor for the builder. */
@@ -105,19 +102,8 @@ public record BlobProofBundle(
      * @param kzgProof the KZG proof.
      * @return the builder instance.
      */
-    public Builder kzgProof(final KZGProof kzgProof) {
+    public Builder kzgProof(final List<KZGProof> kzgProof) {
       this.kzgProof = kzgProof;
-      return this;
-    }
-
-    /**
-     * Sets the list of KZG cell proofs.
-     *
-     * @param kzgCellProof the list of KZG cell proofs.
-     * @return the builder instance.
-     */
-    public Builder kzgCellProof(final List<KZGCellProof> kzgCellProof) {
-      this.kzgCellProof = kzgCellProof;
       return this;
     }
 
@@ -142,20 +128,14 @@ public record BlobProofBundle(
       checkState(kzgCommitment != null, "kzgCommitment must not be empty");
       checkState(versionedHash != null, "versionedHash must not be empty");
       checkState(blob != null, "blob must not be empty");
-      if (versionId == 0 && kzgCellProof != null) {
-        throw new IllegalStateException("'kzgCellProof' must be empty when 'versionId' is 0.");
+      checkState(kzgProof != null, "kzgProof must not be empty");
+      if (versionId == 0 && kzgProof.size() != 1) {
+        throw new IllegalStateException("'Invalid kzgProof' size for versionId 0.");
       }
-      if (versionId == 0 && kzgProof == null) {
-        throw new IllegalStateException("'kzgProof' must not be empty when 'versionId' is 0.");
+      if (versionId == 1 && kzgProof.size() != CELL_PROOFS_PER_BLOB) {
+        throw new IllegalStateException("'Invalid kzgProof' size for versionId 1.");
       }
-      if (versionId == 1 && kzgProof != null) {
-        throw new IllegalStateException("'kzgProof' must be empty when 'versionId' is 1.");
-      }
-      if (versionId == 1 && kzgCellProof == null) {
-        throw new IllegalStateException("'kzgCellProof' must not be empty when 'versionId' is 1.");
-      }
-      return new BlobProofBundle(
-          versionId, blob, kzgCommitment, kzgProof, kzgCellProof, versionedHash);
+      return new BlobProofBundle(versionId, blob, kzgCommitment, kzgProof, versionedHash);
     }
   }
 }

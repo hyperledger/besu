@@ -105,8 +105,7 @@ public class TransactionTestFixture {
               blobs.get().getVersionId(),
               blobs.get().getKzgCommitments(),
               blobs.get().getBlobs(),
-              blobs.get().getKzgProofs(),
-              blobs.get().getKzgCellProofs());
+              blobs.get().getKzgProofs());
         } else versionedHashes.ifPresent(builder::versionedHashes);
         break;
       case DELEGATE_CODE:

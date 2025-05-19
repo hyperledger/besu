@@ -87,12 +87,7 @@ public class BlobTestFixture {
       versionedHashes.add(blobTriplet.versionedHash());
     }
     return new BlobsWithCommitments(
-        BlobProofBundle.VERSION_0_KZG_PROOFS,
-        commitments,
-        blobs,
-        proofs,
-        List.of(),
-        versionedHashes);
+        BlobProofBundle.VERSION_0_KZG_PROOFS, commitments, blobs, proofs, versionedHashes);
   }
 
   private VersionedHash hashCommitment(final KZGCommitment commitment) {

@@ -16,7 +16,6 @@ package org.hyperledger.besu.datatypes;
 
 import static org.hyperledger.besu.datatypes.VersionedHash.DEFAULT_VERSIONED_HASH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Collections;
@@ -31,8 +30,9 @@ public class BlobProofBundleTest {
   final Blob blob = new Blob(Bytes.EMPTY);
   final KZGCommitment kzgCommitment = new KZGCommitment(Bytes48.ZERO);
   final VersionedHash versionedHash = DEFAULT_VERSIONED_HASH;
-  KZGProof kzgProof = new KZGProof(Bytes48.ZERO);
-  KZGCellProof kZGCellProof = new KZGCellProof(Bytes48.ZERO);
+  List<KZGProof> kzgProofs = List.of(new KZGProof(Bytes48.ZERO));
+  List<KZGProof> kzgCellProofs =
+      Collections.nCopies(BlobProofBundle.CELL_PROOFS_PER_BLOB, new KZGProof(Bytes48.ZERO));
 
   @Test
   void shouldSucceedWithValidInputsV0() {
@@ -42,34 +42,31 @@ public class BlobProofBundleTest {
             .blob(blob)
             .kzgCommitment(kzgCommitment)
             .versionedHash(versionedHash)
-            .kzgProof(kzgProof)
+            .kzgProof(kzgProofs)
             .build();
 
     assertEquals(0, bundle.versionId());
     assertEquals(blob, bundle.blob());
     assertEquals(kzgCommitment, bundle.kzgCommitment());
     assertEquals(versionedHash, bundle.versionedHash());
-    assertEquals(kzgProof, bundle.kzgProof());
-    assertNull(bundle.kzgCellProof());
+    assertEquals(kzgProofs, bundle.kzgProof());
   }
 
   @Test
   void shouldSucceedWithValidInputsV1() {
-    List<KZGCellProof> kzgCellProof = List.of(kZGCellProof);
     BlobProofBundle bundle =
         BlobProofBundle.builder()
             .versionId(1)
             .blob(blob)
             .kzgCommitment(kzgCommitment)
             .versionedHash(versionedHash)
-            .kzgCellProof(kzgCellProof)
+            .kzgProof(kzgCellProofs)
             .build();
     assertEquals(1, bundle.versionId());
     assertEquals(blob, bundle.blob());
     assertEquals(kzgCommitment, bundle.kzgCommitment());
     assertEquals(versionedHash, bundle.versionedHash());
-    assertEquals(kzgCellProof, bundle.kzgCellProof());
-    assertNull(bundle.kzgProof());
+    assertEquals(kzgCellProofs, bundle.kzgProof());
   }
 
   @Test
@@ -82,7 +79,7 @@ public class BlobProofBundleTest {
                     .versionId(0)
                     .blob(blob)
                     .versionedHash(versionedHash)
-                    .kzgCellProof(Collections.emptyList())
+                    .kzgProof(kzgProofs)
                     .build());
     assertEquals("kzgCommitment must not be empty", exception.getMessage());
   }
@@ -97,7 +94,7 @@ public class BlobProofBundleTest {
                   .versionId(0)
                   .blob(blob)
                   .kzgCommitment(kzgCommitment)
-                  .kzgCellProof(Collections.emptyList())
+                  .kzgProof(kzgProofs)
                   .build();
             });
     assertEquals("versionedHash must not be empty", exception.getMessage());
@@ -113,7 +110,6 @@ public class BlobProofBundleTest {
                     .versionId(0)
                     .kzgCommitment(kzgCommitment)
                     .versionedHash(versionedHash)
-                    .kzgCellProof(Collections.emptyList())
                     .build());
     assertEquals("blob must not be empty", exception.getMessage());
   }
@@ -129,9 +125,8 @@ public class BlobProofBundleTest {
                     .blob(blob)
                     .kzgCommitment(kzgCommitment)
                     .versionedHash(versionedHash)
-                    .kzgCellProof(Collections.singletonList(kZGCellProof))
                     .build());
-    assertEquals("'kzgCellProof' must be empty when 'versionId' is 0.", exception.getMessage());
+    assertEquals("kzgProof must not be empty", exception.getMessage());
   }
 
   @Test
@@ -146,7 +141,7 @@ public class BlobProofBundleTest {
                     .kzgCommitment(kzgCommitment)
                     .versionedHash(versionedHash)
                     .build());
-    assertEquals("'kzgProof' must not be empty when 'versionId' is 0.", exception.getMessage());
+    assertEquals("kzgProof must not be empty", exception.getMessage());
   }
 
   @Test
@@ -160,9 +155,8 @@ public class BlobProofBundleTest {
                     .blob(blob)
                     .kzgCommitment(kzgCommitment)
                     .versionedHash(versionedHash)
-                    .kzgProof(kzgProof)
                     .build());
-    assertEquals("'kzgProof' must be empty when 'versionId' is 1.", exception.getMessage());
+    assertEquals("kzgProof must not be empty", exception.getMessage());
   }
 
   @Test
@@ -177,6 +171,6 @@ public class BlobProofBundleTest {
                     .kzgCommitment(kzgCommitment)
                     .versionedHash(versionedHash)
                     .build());
-    assertEquals("'kzgCellProof' must not be empty when 'versionId' is 1.", exception.getMessage());
+    assertEquals("kzgProof must not be empty", exception.getMessage());
   }
 }

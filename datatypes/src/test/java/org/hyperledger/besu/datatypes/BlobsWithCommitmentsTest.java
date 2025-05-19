@@ -34,7 +34,6 @@ public class BlobsWithCommitmentsTest {
                         List.of(),
                         List.of(),
                         List.of(),
-                        List.of(),
                         List.of()))
             .getMessage();
     final String expectedMessage =

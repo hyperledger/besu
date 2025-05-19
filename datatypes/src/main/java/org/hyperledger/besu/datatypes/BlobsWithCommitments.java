@@ -35,7 +35,6 @@ public class BlobsWithCommitments {
    * @param kzgCommitments commitments for the blobs.
    * @param blobs list of blobs to be committed to.
    * @param kzgProofs proofs for the commitments.
-   * @param kzgCellProofs cell proofs for the commitments.
    * @param versionedHashes hashes of the commitments.
    * @throws InvalidParameterException if the input parameters are invalid.
    */
@@ -44,7 +43,6 @@ public class BlobsWithCommitments {
       final List<KZGCommitment> kzgCommitments,
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
-      final List<KZGCellProof> kzgCellProofs,
       final List<VersionedHash> versionedHashes) {
     if (blobs.isEmpty()) {
       throw new InvalidParameterException(
@@ -52,8 +50,7 @@ public class BlobsWithCommitments {
     }
     List<BlobProofBundle> toBuild = new ArrayList<>(blobs.size());
     for (int i = 0; i < blobs.size(); i++) {
-      validateBlobWithCommitments(
-          versionId, kzgCommitments, blobs, kzgProofs, kzgCellProofs, versionedHashes);
+      validateBlobWithCommitments(versionId, kzgCommitments, blobs, kzgProofs, versionedHashes);
       BlobProofBundle.Builder builder =
           BlobProofBundle.builder()
               .versionId(versionId)
@@ -62,10 +59,10 @@ public class BlobsWithCommitments {
               .versionedHash(versionedHashes.get(i));
       switch (versionId) {
         case BlobProofBundle.VERSION_0_KZG_PROOFS:
-          builder.kzgProof(kzgProofs.get(i));
+          builder.kzgProof(List.of(kzgProofs.get(i)));
           break;
         case BlobProofBundle.VERSION_1_KZG_CELL_PROOFS:
-          builder.kzgCellProof(extractCellProofs(kzgCellProofs, i));
+          builder.kzgProof(extractCellProofs(kzgProofs, i));
           break;
         default:
           throw new InvalidParameterException("Invalid kzg version");
@@ -83,8 +80,7 @@ public class BlobsWithCommitments {
    * @param index the index of the blob.
    * @return the list of cell proofs for the specified blob.
    */
-  private static List<KZGCellProof> extractCellProofs(
-      final List<KZGCellProof> proofList, final int index) {
+  private static List<KZGProof> extractCellProofs(final List<KZGProof> proofList, final int index) {
     return proofList.subList(
         index * BlobProofBundle.CELL_PROOFS_PER_BLOB,
         (index + 1) * BlobProofBundle.CELL_PROOFS_PER_BLOB);
@@ -97,7 +93,6 @@ public class BlobsWithCommitments {
    * @param kzgCommitments the list of KZG commitments.
    * @param blobs the list of blobs.
    * @param kzgProofs the list of KZG proofs.
-   * @param kzgCellProofs the list of KZG cell proofs.
    * @param versionedHashes the list of versioned hashes.
    * @throws InvalidParameterException if the input parameters are invalid.
    */
@@ -107,7 +102,6 @@ public class BlobsWithCommitments {
       final List<KZGCommitment> kzgCommitments,
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
-      final List<KZGCellProof> kzgCellProofs,
       final List<VersionedHash> versionedHashes) {
     if (blobs.size() != kzgCommitments.size()) {
       String error =
@@ -125,10 +119,10 @@ public class BlobsWithCommitments {
     }
     switch (versionId) {
       case BlobProofBundle.VERSION_0_KZG_PROOFS:
-        validateBlobWithCommitmentsV0(blobs, kzgProofs, kzgCellProofs);
+        validateBlobWithCommitmentsV0(blobs, kzgProofs);
         break;
       case BlobProofBundle.VERSION_1_KZG_CELL_PROOFS:
-        validateBlobWithCommitmentsV1(blobs, kzgProofs, kzgCellProofs);
+        validateBlobWithCommitmentsV1(blobs, kzgProofs);
         break;
       default:
         throw new InvalidParameterException("Invalid kzg version");
@@ -140,21 +134,15 @@ public class BlobsWithCommitments {
    *
    * @param blobs the list of blobs.
    * @param kzgProofs the list of KZG proofs.
-   * @param kzgCellProofs the list of KZG cell proofs.
    * @throws InvalidParameterException if the input parameters are invalid.
    */
   private static void validateBlobWithCommitmentsV0(
-      final List<Blob> blobs,
-      final List<KZGProof> kzgProofs,
-      final List<KZGCellProof> kzgCellProofs) {
+      final List<Blob> blobs, final List<KZGProof> kzgProofs) {
     if (blobs.size() != kzgProofs.size()) {
       String error =
           String.format(
               "Invalid number of kzgProofs, expected %s, got %s", blobs.size(), kzgProofs.size());
       throw new InvalidParameterException(error);
-    }
-    if (!kzgCellProofs.isEmpty()) {
-      throw new InvalidParameterException("Version 0 does not support cell proofs");
     }
   }
 
@@ -163,22 +151,16 @@ public class BlobsWithCommitments {
    *
    * @param blobs the list of blobs.
    * @param kzgProofs the list of KZG proofs.
-   * @param kzgCellProofs the list of KZG cell proofs.
    * @throws InvalidParameterException if the input parameters are invalid.
    */
   private static void validateBlobWithCommitmentsV1(
-      final List<Blob> blobs,
-      final List<KZGProof> kzgProofs,
-      final List<KZGCellProof> kzgCellProofs) {
-    if (!kzgProofs.isEmpty()) {
-      throw new InvalidParameterException("Version 1 does not support kzgProofs");
-    }
+      final List<Blob> blobs, final List<KZGProof> kzgProofs) {
     int expectedCellProofsTotal = BlobProofBundle.CELL_PROOFS_PER_BLOB * blobs.size();
-    if (kzgCellProofs.size() != expectedCellProofsTotal) {
+    if (kzgProofs.size() != expectedCellProofsTotal) {
       String error =
           String.format(
               "Invalid number of cell proofs, expected %s, got %s",
-              expectedCellProofsTotal, kzgCellProofs.size());
+              expectedCellProofsTotal, kzgProofs.size());
       throw new InvalidParameterException(error);
     }
   }
@@ -219,22 +201,9 @@ public class BlobsWithCommitments {
   public List<KZGProof> getKzgProofs() {
     return blobProofBundles.stream()
         .filter(Objects::nonNull)
-        .map(BlobProofBundle::kzgProof)
-        .filter(Objects::nonNull)
-        .toList();
-  }
-
-  /**
-   * Get the cell proofs.
-   *
-   * @return the cell proofs.
-   */
-  public List<KZGCellProof> getKzgCellProofs() {
-    return blobProofBundles.stream()
-        .filter(Objects::nonNull)
         .flatMap(
             blobProofBundle -> {
-              List<KZGCellProof> proofStream = blobProofBundle.kzgCellProof();
+              List<KZGProof> proofStream = blobProofBundle.kzgProof();
               return proofStream != null ? proofStream.stream() : Stream.empty();
             })
         .filter(Objects::nonNull)

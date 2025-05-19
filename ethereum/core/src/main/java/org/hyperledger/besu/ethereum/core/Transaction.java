@@ -30,7 +30,6 @@ import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.KZGCellProof;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.Sha256Hash;
@@ -1247,17 +1246,11 @@ public class Transaction
         blobsWithCommitments.getKzgProofs().stream()
             .map(proof -> new KZGProof(proof.getData().copy()))
             .toList();
-    final var detachedCellProofs =
-        blobsWithCommitments.getKzgCellProofs().stream()
-            .map(cellProof -> new KZGCellProof(cellProof.getData().copy()))
-            .toList();
-
     return new BlobsWithCommitments(
         blobsWithCommitments.getVersionId(),
         detachedCommitments,
         detachedBlobs,
         detachedProofs,
-        detachedCellProofs,
         versionedHashes);
   }
 
@@ -1481,8 +1474,7 @@ public class Transaction
         final int versionId,
         final List<KZGCommitment> kzgCommitments,
         final List<Blob> blobs,
-        final List<KZGProof> kzgProofs,
-        final List<KZGCellProof> kzgCellProofs) {
+        final List<KZGProof> kzgProofs) {
       if (this.versionedHashes == null || this.versionedHashes.isEmpty()) {
         this.versionedHashes =
             kzgCommitments.stream()
@@ -1490,8 +1482,7 @@ public class Transaction
                 .toList();
       }
       this.blobsWithCommitments =
-          new BlobsWithCommitments(
-              versionId, kzgCommitments, blobs, kzgProofs, kzgCellProofs, versionedHashes);
+          new BlobsWithCommitments(versionId, kzgCommitments, blobs, kzgProofs, versionedHashes);
       return this;
     }
 
