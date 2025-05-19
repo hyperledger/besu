@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.StructLogTracerConfig;
+import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.debug.TracerType;
@@ -167,7 +167,7 @@ public class TraceFilter extends TraceBlock {
                   final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
                   final TraceOptions<? extends TracerConfig> traceOptions =
                       new TraceOptions<>(
-                          TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, true));
+                          TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, true));
                   DebugOperationTracer debugOperationTracer =
                       new DebugOperationTracer(traceOptions, false);
                   ExecuteTransactionStep executeTransactionStep =

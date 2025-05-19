@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.debug.StructLogTracerConfig;
+import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.debug.TracerType;
@@ -148,7 +148,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
               final TransactionSource transactionSource = new TransactionSource(block);
               final TraceOptions<? extends TracerConfig> traceOptions =
                   new TraceOptions<>(
-                      TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, true));
+                      TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, true));
               final DebugOperationTracer debugOperationTracer =
                   new DebugOperationTracer(traceOptions, false);
               final ExecuteTransactionStep executeTransactionStep =

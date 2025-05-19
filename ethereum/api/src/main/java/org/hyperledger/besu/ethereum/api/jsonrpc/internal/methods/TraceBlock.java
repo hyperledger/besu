@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.debug.StructLogTracerConfig;
+import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -131,7 +131,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
               DebugOperationTracer debugOperationTracer =
                   new DebugOperationTracer(
                       new TraceOptions<>(
-                          TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, true)),
+                          TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, true)),
                       false);
               ExecuteTransactionStep executeTransactionStep =
                   new ExecuteTransactionStep(

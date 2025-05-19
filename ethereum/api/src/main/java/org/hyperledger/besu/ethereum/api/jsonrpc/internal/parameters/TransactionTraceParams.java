@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.debug.CallTracerConfig;
-import org.hyperledger.besu.ethereum.debug.StructLogTracerConfig;
+import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.debug.TracerType;
@@ -80,7 +80,7 @@ public interface TransactionTraceParams {
     var tracerConfig =
         switch (tracerType) {
           case DEFAULT_TRACER ->
-              new StructLogTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
+              new DefaultTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
           case CALL_TRACER, FLAT_CALL_TRACER -> {
             var tracerConfigMap = tracerConfig();
             if (tracerConfigMap == null) {

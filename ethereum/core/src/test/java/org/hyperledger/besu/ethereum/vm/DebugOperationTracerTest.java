@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.debug.StructLogTracerConfig;
+import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerConfig;
@@ -121,7 +121,7 @@ class DebugOperationTracerTest {
         traceFrame(
             frame,
             new TraceOptions<>(
-                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, true)),
+                TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, true)),
             false);
     assertThat(traceFrame.getStack()).isPresent();
     assertThat(traceFrame.getStack().get()).containsExactly(stackItem1, stackItem2, stackItem3);
@@ -133,7 +133,7 @@ class DebugOperationTracerTest {
         traceFrame(
             validMessageFrame(),
             new TraceOptions<>(
-                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, false)),
+                TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, false)),
             false);
     assertThat(traceFrame.getStack()).isEmpty();
   }
@@ -151,7 +151,7 @@ class DebugOperationTracerTest {
         traceFrame(
             frame,
             new TraceOptions<>(
-                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, true, false)),
+                TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, true, false)),
             false);
     assertThat(traceFrame.getMemory()).isPresent();
     assertThat(traceFrame.getMemory().get()).containsExactly(word1, word2, word3);
@@ -163,7 +163,7 @@ class DebugOperationTracerTest {
         traceFrame(
             validMessageFrame(),
             new TraceOptions<>(
-                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, false)),
+                TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, false)),
             false);
     assertThat(traceFrame.getMemory()).isEmpty();
   }
@@ -176,7 +176,7 @@ class DebugOperationTracerTest {
         traceFrame(
             frame,
             new TraceOptions<>(
-                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(true, false, false)),
+                TracerType.DEFAULT_TRACER, new DefaultTracerConfig(true, false, false)),
             false);
     assertThat(traceFrame.getStorage()).isPresent();
     assertThat(traceFrame.getStorage()).contains(updatedStorage);
@@ -188,7 +188,7 @@ class DebugOperationTracerTest {
         traceFrame(
             validMessageFrame(),
             new TraceOptions<>(
-                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, false)),
+                TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, false)),
             false);
     assertThat(traceFrame.getStorage()).isEmpty();
   }
@@ -199,7 +199,7 @@ class DebugOperationTracerTest {
         traceFrame(
             validCallFrame(),
             new TraceOptions<>(
-                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, false)),
+                TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, false)),
             false);
     assertThat(traceFrame.getGasCost()).isEqualTo(OptionalLong.of(20));
   }
@@ -210,7 +210,7 @@ class DebugOperationTracerTest {
         traceFrame(
             validCallFrame(),
             new TraceOptions<>(
-                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, false)),
+                TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, false)),
             true);
     assertThat(traceFrame.getGasCost()).isEqualTo(OptionalLong.of(1020L));
   }
@@ -221,13 +221,13 @@ class DebugOperationTracerTest {
         traceFrame(
             validMessageFrame(),
             new TraceOptions<>(
-                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, false)),
+                TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, false)),
             false);
     final TraceFrame flagEnabledTracer =
         traceFrame(
             validMessageFrame(),
             new TraceOptions<>(
-                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, false)),
+                TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, false)),
             true);
 
     assertThat(flagEnabledTracer.getGasCost()).isEqualTo(flagDisabledTracer.getGasCost());
@@ -241,7 +241,7 @@ class DebugOperationTracerTest {
     final DebugOperationTracer tracer =
         new DebugOperationTracer(
             new TraceOptions<>(
-                TracerType.DEFAULT_TRACER, new StructLogTracerConfig(true, true, true)),
+                TracerType.DEFAULT_TRACER, new DefaultTracerConfig(true, true, true)),
             false);
     tracer.tracePostExecution(
         frame, new OperationResult(50L, ExceptionalHaltReason.INSUFFICIENT_GAS));
@@ -255,8 +255,7 @@ class DebugOperationTracerTest {
   private TraceFrame traceFrame(final MessageFrame frame) {
     return traceFrame(
         frame,
-        new TraceOptions<>(
-            TracerType.DEFAULT_TRACER, new StructLogTracerConfig(false, false, false)),
+        new TraceOptions<>(TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, false)),
         false);
   }
 

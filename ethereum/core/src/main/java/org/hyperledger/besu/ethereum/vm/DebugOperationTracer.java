@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.debug.StructLogTracerConfig;
+import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerConfig;
@@ -236,7 +236,7 @@ public class DebugOperationTracer implements OperationTracer {
 
   private boolean isDefaultTracerAndStorageDisabled() {
     return options.tracerType() == TracerType.DEFAULT_TRACER
-        && !((StructLogTracerConfig) options.config()).traceStorage();
+        && !((DefaultTracerConfig) options.config()).traceStorage();
   }
 
   private Optional<Bytes[]> captureMemory(final MessageFrame frame) {
@@ -253,7 +253,7 @@ public class DebugOperationTracer implements OperationTracer {
 
   private boolean isDefaultTracerAndMemoryDisabled() {
     return options.tracerType() == TracerType.DEFAULT_TRACER
-        && !((StructLogTracerConfig) options.config()).traceMemory();
+        && !((DefaultTracerConfig) options.config()).traceMemory();
   }
 
   private Optional<Bytes[]> captureStack(final MessageFrame frame) {
@@ -271,7 +271,7 @@ public class DebugOperationTracer implements OperationTracer {
 
   private boolean isDefaultTracerAndStackDisabled() {
     return options.tracerType() == TracerType.DEFAULT_TRACER
-        && !((StructLogTracerConfig) options.config()).traceStack();
+        && !((DefaultTracerConfig) options.config()).traceStack();
   }
 
   public List<TraceFrame> getTraceFrames() {
