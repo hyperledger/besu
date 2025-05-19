@@ -31,7 +31,7 @@ class InternalClient implements FuzzingClient {
 
   public InternalClient(final String clientName) {
     this.name = clientName;
-    this.evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+    this.evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
   }
 
   @Override

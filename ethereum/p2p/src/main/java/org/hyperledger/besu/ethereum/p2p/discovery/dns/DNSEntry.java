@@ -14,10 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
-import static org.hyperledger.besu.ethereum.p2p.discovery.dns.KVReader.readKV;
-
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,39 +31,6 @@ import org.bouncycastle.math.ec.ECPoint;
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
 /** Intermediate format to write DNS entries */
 public interface DNSEntry {
-
-  /**
-   * Read a DNS entry from a String.
-   *
-   * @param serialized the serialized form of a DNS entry
-   * @return DNS entry if found
-   * @throws IllegalArgumentException if the record cannot be read
-   */
-  static DNSEntry readDNSEntry(final String serialized) {
-    final String record = trimQuotes(serialized);
-    final String prefix = getPrefix(record);
-    return switch (prefix) {
-      case "enrtree-root" -> new ENRTreeRoot(readKV(record));
-      case "enrtree-branch" -> new ENRTree(record.substring(prefix.length() + 1));
-      case "enr" -> new ENRNode(readKV(record));
-      case "enrtree" -> new ENRTreeLink(record);
-      default ->
-          throw new IllegalArgumentException(
-              serialized + " should contain enrtree-branch, enr, enrtree-root or enrtree");
-    };
-  }
-
-  private static String trimQuotes(final String str) {
-    if (str.startsWith("\"") && str.endsWith("\"")) {
-      return str.substring(1, str.length() - 1);
-    }
-    return str;
-  }
-
-  private static String getPrefix(final String input) {
-    final String[] parts = input.split(":", 2);
-    return parts.length > 0 ? parts[0] : "";
-  }
 
   /** Represents a node in the ENR record. */
   class ENRNode implements DNSEntry {
@@ -82,7 +48,8 @@ public interface DNSEntry {
       }
       nodeRecord =
           Optional.ofNullable(attrs.get("enr"))
-              .map(Base64URLSafe::decode)
+              .map(Base64.getUrlDecoder()::decode)
+              .map(Bytes::wrap)
               .map(EthereumNodeRecord::fromRLP)
               .orElseThrow(() -> new IllegalArgumentException("Invalid ENR record"));
     }
