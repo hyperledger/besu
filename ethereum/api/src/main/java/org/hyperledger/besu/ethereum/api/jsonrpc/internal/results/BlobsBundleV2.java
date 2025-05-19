@@ -69,7 +69,7 @@ public class BlobsBundleV2 {
             .map(Bytes::toString)
             .collect(Collectors.toList());
 
-    LOG.info(
+    LOG.debug(
         "BlobsBundleV2: totalTxs: {}, blobTxs: {}, commitments: {}, cell proofs: {}, blobs: {}",
         transactions.size(),
         blobsWithCommitments.size(),
