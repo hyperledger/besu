@@ -1,19 +1,48 @@
 # Changelog
 ## Unreleased
 ### Breaking Changes
-- Changes to gas estimation algorithm for `eth_estimateGas` and `eth_createAccessList` [#8478](https://github.com/hyperledger/besu/pull/8478) - if you require the previous behavior, specify `--estimate-gas-tolerance-ratio=0.0`
+- Remove `MetricSystem::createLabelledGauge` deprecated since `24.12.0`, replace it with `MetricSystem::createLabelledSuppliedGauge` [#8299](https://github.com/hyperledger/besu/pull/8299)
+- Remove the deprecated `--tx-pool-disable-locals` option, use `--tx-pool-no-local-priority`, instead. [#8614](https://github.com/hyperledger/besu/pull/8614)
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
+- `--Xplugin-rocksdb-blockchain-blob-garbage-collection-enabled` Adds ability to enabled BlobDB GC for BLOCKCHAIN column family [#8599](https://github.com/hyperledger/besu/pull/8599)
+- `--Xplugin-rocksdb-blob-garbage-collection-age-cutoff`, `--Xplugin-rocksdb-blob-garbage-collection-force-threshold` BlobDB GC config options [#8599](https://github.com/hyperledger/besu/pull/8599)
+- Update discovery library to 25.4.0 [#8635](https://github.com/hyperledger/besu/pull/8635)
+- Increase default target-gas-limit to 60M for Ephemery [#8622](https://github.com/hyperledger/besu/pull/8622)
+
+## 25.5.0
+### Breaking Changes
+- Changes to gas estimation algorithm for `eth_estimateGas` and `eth_createAccessList` [#8478](https://github.com/hyperledger/besu/pull/8478) - if you require the previous behavior, specify `--estimate-gas-tolerance-ratio=0.0`
+
+### Upcoming Breaking Changes
+- `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
+- `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated, use `--Xbonsai-full-flat-db-enabled` instead.
+- `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-log-pruning-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
+- `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - Tessera privacy
+    - Smart-contract-based (onchain) permissioning
+    - Proof of Work consensus
+    - Fast Sync
+- Transaction indexing will be disabled by default in a future release for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries.
+- Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that in order to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
+
+### Additions and Improvements
 - Sepolia checkpoint block has been updated to the merge block [#8584](https://github.com/hyperledger/besu/pull/8584)
-- Add `--profile=PERFORMANCE` for high spec nodes: increases rocksdb cache and enables parallel transaction processing [#8560](https://github.com/hyperledger/besu/pull/8560)
+- Add experimental `--profile=PERFORMANCE` for high spec nodes: increases rocksdb cache and enables parallel transaction processing [#8560](https://github.com/hyperledger/besu/pull/8560)
 - Add `--profile=PERFORMANCE_RPC` for high spec RPC nodes: increases rocksdb cache and caches last 2048 blocks [#8560](https://github.com/hyperledger/besu/pull/8560)
 - Refine gas estimation algorithm for `eth_estimateGas` and `eth_createAccessList` [#8478](https://github.com/hyperledger/besu/pull/8478) including a new option to specify `--estimate-gas-tolerance-ratio`
+- Increase default target-gas-limit to 60M for Holesky and Sepolia [#8594](https://github.com/hyperledger/besu/pull/8594)
+- Add support for [Pyroscope](https://grafana.com/docs/pyroscope/latest/) to Docker image [#8510](https://github.com/hyperledger/besu/pull/8510)
 
 #### Dependencies
 - update jc-kzg-4844 dependency from 2.0.0 to 2.1.1
+
 ### Bug fixes
-- fix block import tracing, refactor BlockProcessor interface [#8549](https://github.com/hyperledger/besu/pull/8549)
+- Fix block import tracing, refactor BlockProcessor interface [#8549](https://github.com/hyperledger/besu/pull/8549)
 - Shorten and standardise log labels in AbstractEngineNewPayload and AbstractEngineForkchoiceUpdated [#8568](https://github.com/hyperledger/besu/pull/8568)
 
 ## 25.4.1

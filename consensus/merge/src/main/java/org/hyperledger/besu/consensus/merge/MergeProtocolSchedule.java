@@ -144,8 +144,8 @@ public class MergeProtocolSchedule {
       final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications) {
     // Any post-Paris fork can rely on the MainnetProtocolSpec definitions again
     // Must allow for config to skip Shanghai and go straight to a later fork.
-    if (config.getForkBlockTimestamps().size() > 0) {
-      postMergeModifications.put(config.getForkBlockTimestamps().get(0), Function.identity());
+    if (!config.getForkBlockTimestamps().isEmpty()) {
+      postMergeModifications.put(config.getForkBlockTimestamps().getFirst(), Function.identity());
     }
   }
 }
