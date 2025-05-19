@@ -404,14 +404,16 @@ public class EthEstimateGasTest {
   @Test
   public void shouldIgnoreSenderBalanceAccountWhenStrictModeDisabled() {
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO, false));
+        ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO, Optional.of(false)));
     mockTransientProcessorResultGasEstimate(MIN_TX_GAS_COST, false, true, pendingBlockHeader);
 
     method.response(request);
 
     verify(transactionSimulator)
         .processOnPending(
-            eq(modifiedLegacyTransactionCallParameter(Long.MAX_VALUE, Wei.ZERO, OptionalLong.empty())),
+            eq(
+                modifiedLegacyTransactionCallParameter(
+                    Long.MAX_VALUE, Wei.ZERO, OptionalLong.empty(), Optional.of(false))),
             eq(Optional.empty()), // no account overrides
             eq(
                 TransactionValidationParams
@@ -437,7 +439,9 @@ public class EthEstimateGasTest {
 
     verify(transactionSimulator)
         .processOnPending(
-            eq(modifiedLegacyTransactionCallParameter(Long.MAX_VALUE, Wei.ZERO, , OptionalLong.empty(), Optional.of(true))),
+            eq(
+                modifiedLegacyTransactionCallParameter(
+                    Long.MAX_VALUE, Wei.ZERO, OptionalLong.empty(), Optional.of(true))),
             eq(Optional.empty()), // no account overrides
             eq(TransactionValidationParams.transactionSimulatorAllowFutureNonce()),
             any(OperationTracer.class),
@@ -565,14 +569,18 @@ public class EthEstimateGasTest {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
     if (blockHeader == pendingBlockHeader) {
       when(transactionSimulator.processOnPending(
-              eq(modifiedLegacyTransactionCallParameter(MIN_TX_GAS_COST, gasPrice, maybeNonce, maybeStrict)),
+              eq(
+                  modifiedLegacyTransactionCallParameter(
+                      MIN_TX_GAS_COST, gasPrice, maybeNonce, maybeStrict)),
               eq(Optional.empty()), // no account overrides
               any(TransactionValidationParams.class),
               any(OperationTracer.class),
               eq(blockHeader)))
           .thenReturn(Optional.of(mockTxSimResult));
       when(transactionSimulator.processOnPending(
-              eq(modifiedLegacyTransactionCallParameter(Long.MAX_VALUE, gasPrice, maybeNonce, maybeStrict)),
+              eq(
+                  modifiedLegacyTransactionCallParameter(
+                      Long.MAX_VALUE, gasPrice, maybeNonce, maybeStrict)),
               eq(Optional.empty()), // no account overrides
               any(TransactionValidationParams.class),
               any(OperationTracer.class),
@@ -587,9 +595,7 @@ public class EthEstimateGasTest {
           .thenReturn(Optional.of(mockTxSimResult));
       // for testing different combination of gasPrice params
       when(transactionSimulator.processOnPending(
-              eq(
-                  modifiedEip1559TransactionCallParameter(
-                      MIN_TX_GAS_COST, Optional.of(gasPrice), maybeNonce, maybeStrict)),
+              eq(modifiedEip1559TransactionCallParameter(MIN_TX_GAS_COST, maybeNonce)),
               eq(Optional.empty()), // no account overrides
               any(TransactionValidationParams.class),
               any(OperationTracer.class),
@@ -597,9 +603,7 @@ public class EthEstimateGasTest {
           .thenReturn(Optional.of(mockTxSimResult));
 
       when(transactionSimulator.processOnPending(
-              eq(
-                  modifiedEip1559TransactionCallParameter(
-                      Long.MAX_VALUE, Optional.of(gasPrice), maybeNonce, maybeStrict)),
+              eq(modifiedEip1559TransactionCallParameter(Long.MAX_VALUE, maybeNonce)),
               eq(Optional.empty()), // no account overrides
               any(TransactionValidationParams.class),
               any(OperationTracer.class),
