@@ -21,5 +21,4 @@ package org.hyperledger.besu.ethereum.debug;
  * @param traceMemory Used by opcode tracer to enable memory capture
  * @param traceStack Used by opcode tracer to enable stack capture
  */
-public record DefaultTracerConfig(boolean traceStorage, boolean traceMemory, boolean traceStack)
-    implements TracerConfig {}
+public record DefaultTracerConfig(boolean traceStorage, boolean traceMemory, boolean traceStack) {}

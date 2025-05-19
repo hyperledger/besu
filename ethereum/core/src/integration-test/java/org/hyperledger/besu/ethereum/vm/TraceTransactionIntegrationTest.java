@@ -32,9 +32,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.debug.TracerConfig;
-import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -130,9 +127,8 @@ public class TraceTransactionIntegrationTest {
     createTransactionUpdater.commit();
 
     // Now call the transaction to execute the SSTORE.
-    final TraceOptions<? extends TracerConfig> traceOptions =
-        new TraceOptions<>(TracerType.DEFAULT_TRACER, new DefaultTracerConfig(true, true, true));
-    final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions, false);
+    final DebugOperationTracer tracer =
+        new DebugOperationTracer(new DefaultTracerConfig(true, true, true), false);
     final Transaction executeTransaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
@@ -176,9 +172,8 @@ public class TraceTransactionIntegrationTest {
 
   @Test
   public void shouldTraceContractCreation() {
-    final TraceOptions<? extends TracerConfig> traceOptions =
-        new TraceOptions<>(TracerType.DEFAULT_TRACER, new DefaultTracerConfig(true, true, true));
-    final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions, false);
+    final DebugOperationTracer tracer =
+        new DebugOperationTracer(new DefaultTracerConfig(true, true, true), false);
     final Transaction transaction =
         Transaction.readFrom(
             new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));

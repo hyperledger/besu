@@ -14,11 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.ethereum.debug.CallTracerConfig;
 import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.debug.TracerConfig;
-import org.hyperledger.besu.ethereum.debug.TracerType;
 
 import java.util.LinkedHashMap;
 import javax.annotation.Nullable;
@@ -67,34 +64,16 @@ public interface TransactionTraceParams {
   @Nullable
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @SuppressWarnings("NonApiType") // to allow for LinkedHashMap instead of default Guava Map
-  LinkedHashMap<String, Boolean> tracerConfig();
+  LinkedHashMap<String, Object> tracerConfig();
 
   /**
    * Convert JSON-RPC parameters to a {@link TraceOptions} object.
    *
    * @return TraceOptions object containing the tracer type and configuration.
    */
-  default TraceOptions<? extends TracerConfig> traceOptions() {
-    // TODO: Validate how does invalid tracer name is handled
-    var tracerType = TracerType.fromString(tracer());
-    var tracerConfig =
-        switch (tracerType) {
-          case DEFAULT_TRACER ->
-              new DefaultTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
-          case CALL_TRACER, FLAT_CALL_TRACER -> {
-            var tracerConfigMap = tracerConfig();
-            if (tracerConfigMap == null) {
-              // TODO: Confirm geth defaults
-              yield new CallTracerConfig(true, true);
-            } else {
-              var onlyTopCall = tracerConfigMap.getOrDefault("onlyTopCall", true);
-              var withLog = tracerConfigMap.getOrDefault("withLog", true);
-
-              yield new CallTracerConfig(
-                  onlyTopCall != null ? onlyTopCall : true, withLog != null ? withLog : true);
-            }
-          }
-        };
-    return new TraceOptions<>(tracerType, tracerConfig);
+  default TraceOptions traceOptions() {
+    var defaultTracerConfig =
+        new DefaultTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
+    return new TraceOptions(tracer(), defaultTracerConfig, tracerConfig());
   }
 }

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -58,7 +57,7 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
       final JsonRpcRequestContext requestContext, final long blockNumber) {
     final JsonCallParameter callParams =
         JsonCallParameterUtil.validateAndGetCallParams(requestContext);
-    final TraceOptions<? extends TracerConfig> traceOptions = getTraceOptions(requestContext);
+    final TraceOptions traceOptions = getTraceOptions(requestContext);
     final String blockNumberString = String.valueOf(blockNumber);
     LOG.atTrace()
         .setMessage("Received RPC rpcName={} callParams={} block={} traceTypes={}")
@@ -75,7 +74,8 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), BLOCK_NOT_FOUND);
     }
 
-    final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions, recordChildCallGas);
+    final DebugOperationTracer tracer =
+        new DebugOperationTracer(traceOptions.defaultTracerConfig(), recordChildCallGas);
     return transactionSimulator
         .process(
             callParams,
@@ -87,8 +87,7 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
             () -> new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
   }
 
-  protected abstract TraceOptions<? extends TracerConfig> getTraceOptions(
-      final JsonRpcRequestContext requestContext);
+  protected abstract TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext);
 
   protected abstract PreCloseStateHandler<Object> getSimulatorResultHandler(
       final JsonRpcRequestContext requestContext, final DebugOperationTracer tracer);

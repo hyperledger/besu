@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugCallTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStructLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
-import org.hyperledger.besu.ethereum.debug.TracerType;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -30,45 +29,51 @@ import com.fasterxml.jackson.annotation.JsonGetter;
  *
  * <p>This factory provides methods to create functions that process a {@link TransactionTrace} and
  * return a {@link DebugTraceTransactionResult} with the appropriate tracer result based on the
- * specified {@link TracerType}. Both synchronous and asynchronous processing options are available
- * through the {@code create} and {@code createAsync} methods respectively.
+ * specified tracer type. Both synchronous and asynchronous processing options are available through
+ * the {@code create} and {@code createAsync} methods respectively.
  */
 public class DebugTraceTransactionStepFactory {
 
   /**
    * Creates a function that processes a {@link TransactionTrace} and returns a {@link
-   * DebugTraceTransactionResult} with the appropriate tracer result based on the specified {@link
-   * TracerType}.
+   * DebugTraceTransactionResult} with the appropriate tracer result based on the specified tracer
+   * type.
    *
    * @param tracerType the type of tracer to use for processing the transaction trace
    * @return a function that processes a {@link TransactionTrace} and returns a {@link
    *     DebugTraceTransactionResult} with the appropriate tracer result
    */
   public static Function<TransactionTrace, DebugTraceTransactionResult> create(
-      final TracerType tracerType) {
+      final String tracerType) {
     return switch (tracerType) {
-      case DEFAULT_TRACER ->
+      case "" ->
           transactionTrace -> {
             var result = new DebugStructLoggerTracerResult(transactionTrace);
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
-      case CALL_TRACER ->
+      case "callTracer" ->
           transactionTrace -> {
             var result = new DebugCallTracerResult(transactionTrace);
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
-      case FLAT_CALL_TRACER ->
+      // TODO: Load via "plugin" system, and then raise an error if not found
+      default ->
           transactionTrace ->
               new DebugTraceTransactionResult(transactionTrace, new NotYetImplemented());
     };
   }
 
   /**
-   * Creates a function that processes a {@link TransactionTrace} asynchronously and returns a
-   * {@link CompletableFuture} containing a {@link DebugTraceTransactionResult}.
+   * Creates an asynchronous function that processes a {@link TransactionTrace} and returns a {@link
+   * DebugTraceTransactionResult} with the appropriate tracer result based on the specified tracer
+   * type.
+   *
+   * @param tracerType the type of tracer to use for processing the transaction trace
+   * @return an asynchronous function that processes a {@link TransactionTrace} and returns a {@link
+   *     DebugTraceTransactionResult} with the appropriate tracer result
    */
   public static Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>>
-      createAsync(final TracerType tracerType) {
+      createAsync(final String tracerType) {
     return transactionTrace ->
         CompletableFuture.supplyAsync(() -> create(tracerType).apply(transactionTrace));
   }

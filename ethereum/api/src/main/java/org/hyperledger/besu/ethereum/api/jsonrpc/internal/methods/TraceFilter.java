@@ -37,9 +37,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.debug.TracerConfig;
-import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -165,11 +162,8 @@ public class TraceFilter extends TraceBlock {
                   final MainnetTransactionProcessor transactionProcessor =
                       protocolSpec.getTransactionProcessor();
                   final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
-                  final TraceOptions<? extends TracerConfig> traceOptions =
-                      new TraceOptions<>(
-                          TracerType.DEFAULT_TRACER, new DefaultTracerConfig(false, false, true));
                   DebugOperationTracer debugOperationTracer =
-                      new DebugOperationTracer(traceOptions, false);
+                      new DebugOperationTracer(new DefaultTracerConfig(false, false, true), false);
                   ExecuteTransactionStep executeTransactionStep =
                       new ExecuteTransactionStep(
                           chainUpdater,

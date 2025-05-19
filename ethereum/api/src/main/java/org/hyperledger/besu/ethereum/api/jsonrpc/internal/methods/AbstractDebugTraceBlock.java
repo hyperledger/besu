@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.debug.TracerConfig;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -77,9 +76,8 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
     return blockchainQueriesSupplier.get();
   }
 
-  protected TraceOptions<? extends TracerConfig> getTraceOptions(
-      final JsonRpcRequestContext requestContext) {
-    final TraceOptions<? extends TracerConfig> traceOptions;
+  protected TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext) {
+    final TraceOptions traceOptions;
     try {
       traceOptions =
           requestContext
@@ -97,7 +95,7 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
 
   protected Collection<DebugTraceTransactionResult> getTraces(
       final JsonRpcRequestContext requestContext,
-      final TraceOptions<? extends TracerConfig> traceOptions,
+      final TraceOptions traceOptions,
       final Optional<Block> maybeBlock) {
     return maybeBlock
         .flatMap(
@@ -117,7 +115,7 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
 
                       TransactionSource transactionSource = new TransactionSource(block);
                       DebugOperationTracer debugOperationTracer =
-                          new DebugOperationTracer(traceOptions, true);
+                          new DebugOperationTracer(traceOptions.defaultTracerConfig(), true);
                       ExecuteTransactionStep executeTransactionStep =
                           new ExecuteTransactionStep(
                               chainUpdater,

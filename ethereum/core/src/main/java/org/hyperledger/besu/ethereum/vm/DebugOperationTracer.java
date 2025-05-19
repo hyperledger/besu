@@ -18,9 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.debug.TracerConfig;
-import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -42,7 +39,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
 
-  private final TraceOptions<? extends TracerConfig> options;
+  private final DefaultTracerConfig options;
 
   /**
    * A flag to indicate if call operations should trace just the operation cost (false, Geth style,
@@ -67,8 +64,7 @@ public class DebugOperationTracer implements OperationTracer {
    * @param recordChildCallGas A flag on whether to produce geth style (true) or parity style
    *     (false) gas amounts for call operations
    */
-  public DebugOperationTracer(
-      final TraceOptions<? extends TracerConfig> options, final boolean recordChildCallGas) {
+  public DebugOperationTracer(final DefaultTracerConfig options, final boolean recordChildCallGas) {
     this.options = options;
     this.recordChildCallGas = recordChildCallGas;
   }
@@ -218,7 +214,7 @@ public class DebugOperationTracer implements OperationTracer {
   }
 
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {
-    if (isDefaultTracerAndStorageDisabled()) {
+    if (!options.traceStorage()) {
       return Optional.empty();
     }
 
@@ -234,13 +230,8 @@ public class DebugOperationTracer implements OperationTracer {
     }
   }
 
-  private boolean isDefaultTracerAndStorageDisabled() {
-    return options.tracerType() == TracerType.DEFAULT_TRACER
-        && !((DefaultTracerConfig) options.config()).traceStorage();
-  }
-
   private Optional<Bytes[]> captureMemory(final MessageFrame frame) {
-    if (isDefaultTracerAndMemoryDisabled() || frame.memoryWordSize() == 0) {
+    if (!options.traceMemory() || frame.memoryWordSize() == 0) {
       return Optional.empty();
     }
 
@@ -251,13 +242,8 @@ public class DebugOperationTracer implements OperationTracer {
     return Optional.of(memoryContents);
   }
 
-  private boolean isDefaultTracerAndMemoryDisabled() {
-    return options.tracerType() == TracerType.DEFAULT_TRACER
-        && !((DefaultTracerConfig) options.config()).traceMemory();
-  }
-
   private Optional<Bytes[]> captureStack(final MessageFrame frame) {
-    if (isDefaultTracerAndStackDisabled()) {
+    if (!options.traceStack()) {
       return Optional.empty();
     }
 
@@ -267,11 +253,6 @@ public class DebugOperationTracer implements OperationTracer {
       stackContents[i] = frame.getStackItem(stackContents.length - i - 1);
     }
     return Optional.of(stackContents);
-  }
-
-  private boolean isDefaultTracerAndStackDisabled() {
-    return options.tracerType() == TracerType.DEFAULT_TRACER
-        && !((DefaultTracerConfig) options.config()).traceStack();
   }
 
   public List<TraceFrame> getTraceFrames() {
