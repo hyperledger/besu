@@ -23,8 +23,10 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.PreloadTask;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.preload.StoragePreloadRequest;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -37,19 +39,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
-
-  private static final Logger LOG = LoggerFactory.getLogger(BonsaiCachedMerkleTrieLoader.class);
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
   private static final int STORAGE_CACHE_SIZE = 200_000;
@@ -118,63 +116,29 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
 
   @VisibleForTesting
   public void cacheAccountNodes(
-      final BonsaiWorldStateKeyValueStorage storage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Hash worldStateRootHash,
       final Address account) {
-    final OperationTimer.TimingContext timer = accountPreloadTimer.startTimer();
-    final long subscriptionId = storage.subscribe(this);
+    OperationTimer.TimingContext timer = accountPreloadTimer.startTimer();
+    final long storageSubscriberId = worldStateKeyValueStorage.subscribe(this);
     try {
-      Bytes path = bytesToPath(account.addressHash());
-      int size = path.size();
-
-      List<Integer> markers = new ArrayList<>();
-      for (int idx = 0; idx < size; idx += STRIDE) {
-        markers.add(idx);
-      }
-      if (markers.get(markers.size() - 1) != size - 1) {
-        markers.add(size - 1);
-      }
-
-      List<byte[]> markerKeys =
-          markers.stream().map(i -> path.slice(0, i).toArrayUnsafe()).collect(Collectors.toList());
-      List<Optional<byte[]>> markerValues = storage.getMultipleKeys(markerKeys);
-
-      Set<Integer> liveMarkers = new HashSet<>();
-      for (int k = 0; k < markers.size(); k++) {
-        Optional<byte[]> raw = markerValues.get(k);
-        if (raw.isPresent()) {
-          Bytes node = Bytes.wrap(raw.get());
-          accountNodes.put(Hash.hash(node), node);
-          liveMarkers.add(markers.get(k));
-        }
-      }
-
-      List<byte[]> secondKeys = new ArrayList<>();
-      for (int m = 0; m < markers.size() - 1; m++) {
-        int start = markers.get(m);
-        int end = markers.get(m + 1);
-        if (!liveMarkers.contains(start) || end - start <= 1) {
-          continue;
-        }
-        for (int i = start + 1; i < end; i++) {
-          secondKeys.add(path.slice(0, i).toArrayUnsafe());
-        }
-      }
-
-      if (!secondKeys.isEmpty()) {
-        List<Optional<byte[]>> secondValues = storage.getMultipleKeys(secondKeys);
-        for (Optional<byte[]> raw : secondValues) {
-          if (raw.isPresent()) {
-            Bytes node = Bytes.wrap(raw.get());
-            accountNodes.put(Hash.hash(node), node);
-          }
-        }
-      }
-    } catch (Exception ex) {
-      LOG.error("Error caching account nodes", ex);
+      final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
+          new StoredMerklePatriciaTrie<>(
+              (location, hash) -> {
+                Optional<Bytes> node =
+                    getAccountStateTrieNode(worldStateKeyValueStorage, location, hash);
+                node.ifPresent(bytes -> accountNodes.put(Hash.hash(bytes), bytes));
+                return node;
+              },
+              worldStateRootHash,
+              Function.identity(),
+              Function.identity());
+      accountTrie.get(account.addressHash());
+    } catch (MerkleTrieException e) {
+      // ignore exception for the cache
     } finally {
-      storage.unSubscribe(subscriptionId);
-      timer.close();
+      worldStateKeyValueStorage.unSubscribe(storageSubscriberId);
+      timer.stopTimer();
     }
   }
 
@@ -188,66 +152,38 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
 
   @VisibleForTesting
   public void cacheStorageNodes(
-      final BonsaiWorldStateKeyValueStorage storage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Address account,
       final StorageSlotKey slotKey) {
-    final OperationTimer.TimingContext timer = storagePreloadTimer.startTimer();
-    final long subscriptionId = storage.subscribe(this);
+    OperationTimer.TimingContext timer = storagePreloadTimer.startTimer();
+    final Hash accountHash = account.addressHash();
+    final long storageSubscriberId = worldStateKeyValueStorage.subscribe(this);
     try {
-      Bytes path = bytesToPath(slotKey.getSlotHash());
-      Bytes accountHash = account.addressHash();
-      int size = path.size();
-
-      List<Integer> markers = new ArrayList<>();
-      for (int idx = 0; idx < size; idx += STRIDE) {
-        markers.add(idx);
-      }
-      if (markers.get(markers.size() - 1) != size - 1) {
-        markers.add(size - 1);
-      }
-
-      List<byte[]> markerKeys =
-          markers.stream()
-              .map(i -> Bytes.concatenate(accountHash, path.slice(0, i)).toArrayUnsafe())
-              .collect(Collectors.toList());
-      List<Optional<byte[]>> markerValues = storage.getMultipleKeys(markerKeys);
-
-      Set<Integer> liveMarkers = new HashSet<>();
-      for (int k = 0; k < markers.size(); k++) {
-        Optional<byte[]> raw = markerValues.get(k);
-        if (raw.isPresent()) {
-          Bytes node = Bytes.wrap(raw.get());
-          storageNodes.put(Hash.hash(node), node);
-          liveMarkers.add(markers.get(k));
-        }
-      }
-
-      List<byte[]> secondKeys = new ArrayList<>();
-      for (int m = 0; m < markers.size() - 1; m++) {
-        int start = markers.get(m);
-        int end = markers.get(m + 1);
-        if (!liveMarkers.contains(start) || end - start <= 1) {
-          continue;
-        }
-        for (int i = start + 1; i < end; i++) {
-          secondKeys.add(Bytes.concatenate(accountHash, path.slice(0, i)).toArrayUnsafe());
-        }
-      }
-
-      if (!secondKeys.isEmpty()) {
-        List<Optional<byte[]>> secondValues = storage.getMultipleKeys(secondKeys);
-        for (Optional<byte[]> raw : secondValues) {
-          if (raw.isPresent()) {
-            Bytes node = Bytes.wrap(raw.get());
-            storageNodes.put(Hash.hash(node), node);
-          }
-        }
-      }
-    } catch (Exception ex) {
-      LOG.error("Error caching storage nodes", ex);
+      worldStateKeyValueStorage
+          .getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY))
+          .ifPresent(
+              storageRoot -> {
+                try {
+                  final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+                      new StoredMerklePatriciaTrie<>(
+                          (location, hash) -> {
+                            Optional<Bytes> node =
+                                getAccountStorageTrieNode(
+                                    worldStateKeyValueStorage, accountHash, location, hash);
+                            node.ifPresent(bytes -> storageNodes.put(Hash.hash(bytes), bytes));
+                            return node;
+                          },
+                          Hash.hash(storageRoot),
+                          Function.identity(),
+                          Function.identity());
+                  storageTrie.get(slotKey.getSlotHash());
+                } catch (MerkleTrieException e) {
+                  // ignore exception for the cache
+                }
+              });
     } finally {
-      storage.unSubscribe(subscriptionId);
-      timer.close();
+      timer.stopTimer();
+      worldStateKeyValueStorage.unSubscribe(storageSubscriberId);
     }
   }
 

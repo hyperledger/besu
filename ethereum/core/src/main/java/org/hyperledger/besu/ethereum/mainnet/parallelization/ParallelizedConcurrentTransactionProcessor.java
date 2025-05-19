@@ -250,6 +250,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final int transactionLocation,
       final Optional<Counter> confirmedParallelizedTransactionCounter,
       final Optional<Counter> conflictingButCachedTransactionCounter) {
+    final BonsaiWorldState bonsaiWorldState = (BonsaiWorldState) worldState;
     final PathBasedWorldState pathBasedWorldState = (PathBasedWorldState) worldState;
     final PathBasedWorldStateUpdateAccumulator blockAccumulator =
         (PathBasedWorldStateUpdateAccumulator) pathBasedWorldState.updater();
@@ -267,6 +268,7 @@ public class ParallelizedConcurrentTransactionProcessor {
           transactionCollisionDetector.hasCollision(
               transaction, miningBeneficiary, parallelizedTransactionContext, blockAccumulator);
       if (transactionProcessingResult.isSuccessful() && !hasCollision) {
+        bonsaiWorldState.disableCacheMerkleTrieLoader();
         Wei reward = parallelizedTransactionContext.miningBeneficiaryReward();
         if (!reward.isZero() || !transactionProcessor.getClearEmptyAccounts()) {
           blockAccumulator.getOrCreate(miningBeneficiary).incrementBalance(reward);
@@ -281,6 +283,7 @@ public class ParallelizedConcurrentTransactionProcessor {
         }
         return Optional.of(transactionProcessingResult);
       } else {
+        bonsaiWorldState.enableCacheMerkleTrieLoader();
         blockAccumulator.importPriorStateFromSource(transactionAccumulator);
         if (conflictingButCachedTransactionCounter.isPresent())
           conflictingButCachedTransactionCounter.get().inc();

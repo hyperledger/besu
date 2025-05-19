@@ -66,7 +66,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
   private final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
   private static final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoaderNoOp =
       new NoopBonsaiCachedMerkleTrieLoader();
-  private boolean cacheEnabled;
+  private boolean cacheEnabled = true;
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
