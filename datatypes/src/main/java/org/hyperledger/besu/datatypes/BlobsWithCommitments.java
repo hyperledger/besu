@@ -18,7 +18,6 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -119,49 +118,26 @@ public class BlobsWithCommitments {
     }
     switch (versionId) {
       case BlobProofBundle.VERSION_0_KZG_PROOFS:
-        validateBlobWithCommitmentsV0(blobs, kzgProofs);
+        if (blobs.size() != kzgProofs.size()) {
+          String error =
+              String.format(
+                  "Invalid number of kzgProofs, expected %s, got %s",
+                  blobs.size(), kzgProofs.size());
+          throw new InvalidParameterException(error);
+        }
         break;
       case BlobProofBundle.VERSION_1_KZG_CELL_PROOFS:
-        validateBlobWithCommitmentsV1(blobs, kzgProofs);
+        int expectedCellProofsTotal = BlobProofBundle.CELL_PROOFS_PER_BLOB * blobs.size();
+        if (kzgProofs.size() != expectedCellProofsTotal) {
+          String error =
+              String.format(
+                  "Invalid number of cell proofs, expected %s, got %s",
+                  expectedCellProofsTotal, kzgProofs.size());
+          throw new InvalidParameterException(error);
+        }
         break;
       default:
         throw new InvalidParameterException("Invalid kzg version");
-    }
-  }
-
-  /**
-   * Validates the input parameters for version 0 KZG proofs.
-   *
-   * @param blobs the list of blobs.
-   * @param kzgProofs the list of KZG proofs.
-   * @throws InvalidParameterException if the input parameters are invalid.
-   */
-  private static void validateBlobWithCommitmentsV0(
-      final List<Blob> blobs, final List<KZGProof> kzgProofs) {
-    if (blobs.size() != kzgProofs.size()) {
-      String error =
-          String.format(
-              "Invalid number of kzgProofs, expected %s, got %s", blobs.size(), kzgProofs.size());
-      throw new InvalidParameterException(error);
-    }
-  }
-
-  /**
-   * Validates the input parameters for version 1 KZG cell proofs.
-   *
-   * @param blobs the list of blobs.
-   * @param kzgProofs the list of KZG proofs.
-   * @throws InvalidParameterException if the input parameters are invalid.
-   */
-  private static void validateBlobWithCommitmentsV1(
-      final List<Blob> blobs, final List<KZGProof> kzgProofs) {
-    int expectedCellProofsTotal = BlobProofBundle.CELL_PROOFS_PER_BLOB * blobs.size();
-    if (kzgProofs.size() != expectedCellProofsTotal) {
-      String error =
-          String.format(
-              "Invalid number of cell proofs, expected %s, got %s",
-              expectedCellProofsTotal, kzgProofs.size());
-      throw new InvalidParameterException(error);
     }
   }
 
@@ -200,13 +176,7 @@ public class BlobsWithCommitments {
    */
   public List<KZGProof> getKzgProofs() {
     return blobProofBundles.stream()
-        .filter(Objects::nonNull)
-        .flatMap(
-            blobProofBundle -> {
-              List<KZGProof> proofStream = blobProofBundle.kzgProof();
-              return proofStream != null ? proofStream.stream() : Stream.empty();
-            })
-        .filter(Objects::nonNull)
+        .flatMap(blobProofBundle -> blobProofBundle.kzgProof().stream())
         .toList();
   }
 
