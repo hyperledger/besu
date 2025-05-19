@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.permissioning;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -105,6 +106,6 @@ public abstract class AbstractNodeSmartContractPermissioningController
 
   protected CallParameter buildCallParameters(final Bytes payload) {
     // Call parameters for simulation don't need other parameters, only the address and the payload
-    return new CallParameter(null, contractAddress, -1, null, null, payload);
+    return ImmutableCallParameter.builder().to(contractAddress).input(payload).build();
   }
 }
