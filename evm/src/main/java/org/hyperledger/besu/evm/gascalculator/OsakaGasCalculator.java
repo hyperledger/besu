@@ -105,6 +105,13 @@ public class OsakaGasCalculator extends PragueGasCalculator {
     return Math.max(gasRequirement, 500L);
   }
 
+  /**
+   * Adjusted exponent length.
+   *
+   * @param exponentLength the exponent length
+   * @param firstExpBytes the first exp bytes
+   * @return the long
+   */
   public static long adjustedExponentLength(
       final long exponentLength, final BigInteger firstExpBytes) {
     final int bitLength = bitLength(firstExpBytes);
