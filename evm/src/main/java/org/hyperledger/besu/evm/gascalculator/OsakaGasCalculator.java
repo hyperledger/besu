@@ -14,16 +14,17 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.apache.tuweni.bytes.Bytes;
+import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
+
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
 import java.math.BigInteger;
 
-import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
-import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
-import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Gas Calculator for Osaka
@@ -65,16 +66,16 @@ public class OsakaGasCalculator extends PragueGasCalculator {
   public long modExpGasCost(final Bytes input) {
     final long baseLength = BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
     final long exponentLength =
-            BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
+        BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
     final long modulusLength =
-            BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
+        BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
     final long exponentOffset =
-            clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
+        clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
 
     final long maxLength = Math.max(modulusLength, baseLength);
     long multiplicationComplexity = (maxLength + 7L) / 8L;
     multiplicationComplexity =
-            Words.clampedMultiply(multiplicationComplexity, multiplicationComplexity);
+        Words.clampedMultiply(multiplicationComplexity, multiplicationComplexity);
     if (maxLength > 32) {
       multiplicationComplexity *= 2;
     }
@@ -89,14 +90,14 @@ public class OsakaGasCalculator extends PragueGasCalculator {
     }
 
     final long firstExponentBytesCap =
-            Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
+        Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
     final BigInteger firstExpBytes =
-            BigIntegerModularExponentiationPrecompiledContract.extractParameter(
-                    input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
+        BigIntegerModularExponentiationPrecompiledContract.extractParameter(
+            input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
     final long adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
 
     long gasRequirement =
-            clampedMultiply(multiplicationComplexity, Math.max(adjustedExponentLength, 1L));
+        clampedMultiply(multiplicationComplexity, Math.max(adjustedExponentLength, 1L));
     if (gasRequirement != Long.MAX_VALUE) {
       gasRequirement /= 3;
     }
@@ -105,9 +106,9 @@ public class OsakaGasCalculator extends PragueGasCalculator {
   }
 
   public static long adjustedExponentLength(
-          final long exponentLength, final BigInteger firstExpBytes) {
+      final long exponentLength, final BigInteger firstExpBytes) {
     final int bitLength = bitLength(firstExpBytes);
-    if (exponentLength <=  WORD_SIZE) {
+    if (exponentLength <= WORD_SIZE) {
       return bitLength;
     } else {
       return clampedAdd(clampedMultiply(16, (exponentLength - WORD_SIZE)), bitLength);
