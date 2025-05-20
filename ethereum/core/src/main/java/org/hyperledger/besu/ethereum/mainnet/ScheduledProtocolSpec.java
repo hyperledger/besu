@@ -43,7 +43,6 @@ public interface ScheduledProtocolSpec {
       return String.format("%s:%d", name, milestone);
     }
   }
-  ;
 
   class TimestampProtocolSpec implements ScheduledProtocolSpec {
 
