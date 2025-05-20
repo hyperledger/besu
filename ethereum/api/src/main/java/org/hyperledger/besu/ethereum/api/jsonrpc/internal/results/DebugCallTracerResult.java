@@ -70,15 +70,17 @@ public class DebugCallTracerResult implements DebugTracerResult {
   private String revertReason;
   private final List<DebugCallTracerResult> calls;
 
-  private static final Set<String> CALL_OPCODES =
-      Set.of("CALL", "CALLCODE", "DELEGATECALL", "STATICCALL", "CREATE", "CREATE2");
-  private static final Set<String> RETURN_OPCODES =
-      Set.of("STOP", "RETURN", "REVERT", "INVALID", "SELFDESTRUCT");
+  private static final Set<String> MESSAGE_CALL_OPCODES =
+      Set.of("CALL", "CALLCODE", "DELEGATECALL", "STATICCALL");
+  private static final Set<String> CREATE_OPCODES = Set.of("CREATE", "CREATE2");
+  private static final String SELFDESTRUCT_OPCODE = "SELFDESTRUCT";
+  private static final Set<String> RETURN_OPCODES = Set.of("STOP", "RETURN", "REVERT", "INVALID");
+
   private static final int EIP_150_DIVISOR = 64;
 
   public DebugCallTracerResult(final TransactionTrace transactionTrace) {
-    final Transaction tx = transactionTrace.getTransaction();
-    final TransactionProcessingResult result = transactionTrace.getResult();
+    Transaction tx = transactionTrace.getTransaction();
+    TransactionProcessingResult result = transactionTrace.getResult();
     this.calls = new ArrayList<>();
 
     // Root call init
@@ -133,40 +135,54 @@ public class DebugCallTracerResult implements DebugTracerResult {
     this.calls = new ArrayList<>();
   }
 
-  private void processTraceFrames(final TransactionTrace transactionTrace) {
-    List<TraceFrame> frames = transactionTrace.getTraceFrames();
+  private void processTraceFrames(final TransactionTrace txTrace) {
+    List<TraceFrame> frames = txTrace.getTraceFrames();
     if (frames == null || frames.isEmpty()) {
-      // nothing to do; root already initialized
       return;
     }
-
-    LOG.info("Processing {} trace frames", frames.size());
 
     Deque<DebugCallTracerResult> stack = new ArrayDeque<>();
     stack.push(this);
 
     for (TraceFrame frame : frames) {
-      String opcode = frame.getOpcode();
-      LOG.info("Processing opcode: {} at depth: {}", opcode, frame.getDepth());
-      // Entering a nested call/create
-      if (CALL_OPCODES.contains(opcode)) {
+      String op = frame.getOpcode();
+
+      // Handle selfdestruct as a terminal leaf
+      if (SELFDESTRUCT_OPCODE.equals(op)) {
         DebugCallTracerResult parent = stack.peek();
+        Bytes[] stk = frame.getStack().orElseThrow();
+        String refundTo = Address.wrap(stk[stk.length - 1]).toHexString();
+        DebugCallTracerResult sd =
+            new DebugCallTracerResult(
+                SELFDESTRUCT_OPCODE,
+                parent.getTo(),
+                refundTo,
+                frame.getValue().toShortHexString(),
+                BigInteger.valueOf(frame.getGasRemaining()),
+                "0x");
+        parent.calls.add(sd);
+        continue;
+      }
+
+      // Enter nested CALL/CREATE
+      if (MESSAGE_CALL_OPCODES.contains(op) || CREATE_OPCODES.contains(op)) {
+        DebugCallTracerResult parent = stack.peek();
+        String fromAddr = "DELEGATECALL".equals(op) ? parent.getFrom() : parent.getTo();
         DebugCallTracerResult child =
             new DebugCallTracerResult(
-                opcode,
-                parent.to, // set from address
-                extractToAddress(frame, opcode),
+                op,
+                fromAddr,
+                extractToAddress(frame, op),
                 frame.getValue().toShortHexString(),
-                extractGas(frame, opcode),
+                extractGas(frame, op),
                 extractInput(frame));
         parent.calls.add(child);
         stack.push(child);
       }
 
-      // Exiting a call
-      if (RETURN_OPCODES.contains(opcode) && stack.size() > 1) {
+      // Exit on normal returns
+      if (RETURN_OPCODES.contains(op) && stack.size() > 1) {
         DebugCallTracerResult done = stack.pop();
-        // gasUsed (precompiled or normal)
         if (frame.getPrecompiledGasCost().isPresent()) {
           done.gasUsed = BigInteger.valueOf(frame.getPrecompiledGasCost().getAsLong());
         } else {
@@ -179,22 +195,36 @@ public class DebugCallTracerResult implements DebugTracerResult {
       }
     }
 
-    // Ensure root has gasUsed/output if missing
+    // Ensure root gasUsed/output
     if (this.gasUsed == null) {
-      long used = transactionTrace.getGasLimit() - transactionTrace.getResult().getGasRemaining();
+      long used = txTrace.getGasLimit() - txTrace.getResult().getGasRemaining();
       this.gasUsed = BigInteger.valueOf(used);
-      this.output = transactionTrace.getResult().getOutput().toHexString();
+      this.output = txTrace.getResult().getOutput().toHexString();
     }
   }
 
   private String extractToAddress(final TraceFrame frame, final String opcode) {
-    if ("CREATE".equals(opcode) || "CREATE2".equals(opcode)) {
-      // TODO: Test and Fix CREATE2 address calculation
-      return Address.contractAddress(frame.getRecipient(), frame.getValue().toLong()).toHexString();
-    } else {
+    if (MESSAGE_CALL_OPCODES.contains(opcode)) {
       Bytes[] stack = frame.getStack().orElseThrow();
-      return Address.wrap(stack[stack.length - 2]).toHexString();
+      int toIndex;
+      switch (opcode) {
+        case "CALL":
+        case "CALLCODE":
+          toIndex = stack.length - 6;
+          break;
+        case "DELEGATECALL":
+        case "STATICCALL":
+          toIndex = stack.length - 5;
+          break;
+        default:
+          throw new IllegalStateException("Unexpected message-call opcode: " + opcode);
+      }
+      return Address.wrap(stack[toIndex]).toHexString();
     }
+    if (CREATE_OPCODES.contains(opcode)) {
+      return frame.getRecipient().toHexString();
+    }
+    throw new IllegalArgumentException("Opcode not supported by extractToAddress: " + opcode);
   }
 
   private BigInteger extractGas(final TraceFrame frame, final String opcode) {
