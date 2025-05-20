@@ -144,15 +144,12 @@ public class DebugCallTracerResult implements DebugTracerResult {
 
     Deque<DebugCallTracerResult> stack = new ArrayDeque<>();
     stack.push(this);
-    int prevDepth = 0;
 
     for (TraceFrame frame : frames) {
       String opcode = frame.getOpcode();
-      LOG.info("Processing opcode: {} depth: {}", opcode, frame.getDepth());
-      int currentDepth = frame.getDepth();
-
+      LOG.info("Processing opcode: {} at depth: {}", opcode, frame.getDepth());
       // Entering a nested call/create
-      if (CALL_OPCODES.contains(opcode) && currentDepth > prevDepth) {
+      if (CALL_OPCODES.contains(opcode)) {
         DebugCallTracerResult parent = stack.peek();
         DebugCallTracerResult child =
             new DebugCallTracerResult(
@@ -167,7 +164,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
       }
 
       // Exiting a call
-      if (RETURN_OPCODES.contains(opcode) && stack.size() > 1 && currentDepth < prevDepth) {
+      if (RETURN_OPCODES.contains(opcode) && stack.size() > 1) {
         DebugCallTracerResult done = stack.pop();
         // gasUsed (precompiled or normal)
         if (frame.getPrecompiledGasCost().isPresent()) {
@@ -180,8 +177,6 @@ public class DebugCallTracerResult implements DebugTracerResult {
         frame.getExceptionalHaltReason().ifPresent(r -> done.error = r.getDescription());
         frame.getRevertReason().ifPresent(r -> done.revertReason = r.toHexString());
       }
-
-      prevDepth = currentDepth;
     }
 
     // Ensure root has gasUsed/output if missing
