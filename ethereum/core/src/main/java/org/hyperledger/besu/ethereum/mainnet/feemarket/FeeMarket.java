@@ -68,6 +68,20 @@ public interface FeeMarket {
     return new PragueFeeMarket(londonForkBlockNumber, baseFeePerGasOverride, baseFeeUpdateFraction);
   }
 
+  static BaseFeeMarket osaka(
+          final long londonForkBlockNumber,
+          final Optional<Wei> baseFeePerGasOverride,
+          final long baseFeeUpdateFraction) {
+    return new OsakaFeeMarket(londonForkBlockNumber, baseFeePerGasOverride, baseFeeUpdateFraction);
+  }
+
+  static BaseFeeMarket osaka(
+          final long londonForkBlockNumber,
+          final Optional<Wei> baseFeePerGasOverride) {
+    return new OsakaFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
+  }
+
+
   static BaseFeeMarket zeroBaseFee(final long londonForkBlockNumber) {
     return new ZeroBaseFeeMarket(londonForkBlockNumber);
   }
