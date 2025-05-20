@@ -34,8 +34,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the callTracer result format as specified in Geth documentation:
@@ -56,8 +54,6 @@ import org.slf4j.LoggerFactory;
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DebugCallTracerResult implements DebugTracerResult {
-  private static final Logger LOG = LoggerFactory.getLogger(DebugCallTracerResult.class);
-
   private final String type;
   private final String from;
   private final String to;
@@ -172,7 +168,7 @@ public class DebugCallTracerResult implements DebugTracerResult {
             new DebugCallTracerResult(
                 op,
                 fromAddr,
-                extractToAddress(frame, op),
+                extractToAddress(frame),
                 frame.getValue().toShortHexString(),
                 extractGas(frame, op),
                 extractInput(frame));
@@ -203,28 +199,8 @@ public class DebugCallTracerResult implements DebugTracerResult {
     }
   }
 
-  private String extractToAddress(final TraceFrame frame, final String opcode) {
-    if (MESSAGE_CALL_OPCODES.contains(opcode)) {
-      Bytes[] stack = frame.getStack().orElseThrow();
-      int toIndex;
-      switch (opcode) {
-        case "CALL":
-        case "CALLCODE":
-          toIndex = stack.length - 6;
-          break;
-        case "DELEGATECALL":
-        case "STATICCALL":
-          toIndex = stack.length - 5;
-          break;
-        default:
-          throw new IllegalStateException("Unexpected message-call opcode: " + opcode);
-      }
-      return Address.wrap(stack[toIndex]).toHexString();
-    }
-    if (CREATE_OPCODES.contains(opcode)) {
-      return frame.getRecipient().toHexString();
-    }
-    throw new IllegalArgumentException("Opcode not supported by extractToAddress: " + opcode);
+  private String extractToAddress(final TraceFrame frame) {
+    return frame.getRecipient() != null ? frame.getRecipient().toHexString() : "0x0";
   }
 
   private BigInteger extractGas(final TraceFrame frame, final String opcode) {
