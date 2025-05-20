@@ -1,0 +1,101 @@
+{
+  "cli": [
+    "state-test",
+    "stdin",
+    "--trace",
+    "--trace.memory",
+    "--trace.stack",
+    "--trace.returndata",
+    "--notime"
+  ],
+  "stdin": {
+    "pay-opcode-test": {
+      "env": {
+        "currentCoinbase": "0000000000000000000000000000000000000000",
+        "currentDifficulty": "0x0",
+        "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000020000",
+        "currentGasLimit": "0x02540be400",
+        "currentNumber": "0x0",
+        "currentTimestamp": "0x0",
+        "previousHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "currentBaseFee": "0x07"
+      },
+      "pre": {
+				"0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+						"nonce": "0x00",
+						"balance": "0x3635c9adc5dea00000",
+						"code": "0x",
+						"storage": {}
+				},
+				"0x8a0a19589531694250d570040a0c4b74576919b8": {
+						"nonce": "0x00",
+						"balance": "0x00",
+						"code": "0x6002600101",
+						"storage": {}
+				},
+				"0xd94f5374fce5edbc8e2a8697c15331677e6ebf0c": {
+						"nonce": "0x00",
+						"balance": "0x6c6b935b8bbd400000",
+						"code": "0x6010738a0a19589531694250d570040a0c4b74576919b8fc50738a0a19589531694250d570040a0c4b74576919b83100",
+						"storage": {}
+				}
+      },
+      "transaction": {
+        "gasPrice": "0x0a",
+        "nonce": "0x0",
+        "to": "0xd94f5374fce5edbc8e2a8697c15331677e6ebf0c",
+        "data": [
+          "0x1234abcd"
+        ],
+        "gasLimit": [
+          "0x05f5e100"
+        ],
+        "value": [
+          "0x0"
+        ],
+				"sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+      },
+      "out": "0x",
+      "post": {
+        "Osaka": [
+          {
+            "hash": "0x1c79be4314256c8c880927fb7f1606d417438dd364a5d4c07981cd4497ac97ae",
+            "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+            "indexes": {
+              "data": 0,
+              "gas": 0,
+              "value": 0
+            }
+          }
+        ],
+        "Prague": [
+          {
+            "hash": "0x390e9d8ebf02b7a28b9ccd00bfeb7b20a79f0269d0f6089907fdf636c43e7042",
+            "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+            "indexes": {
+              "data": 0,
+              "gas": 0,
+              "value": 0
+            }
+          }
+        ]
+      }
+    }
+  },
+  "stdout": [
+		{"pc":0,"op":96,"gas":"0x5f58eb8","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":2,"op":115,"gas":"0x5f58eb5","gasCost":"0x3","memSize":0,"stack":["0x10"],"depth":1,"refund":0,"opName":"PUSH20"},
+    {"pc":23,"op":252,"gas":"0x5f58eb2","gasCost":"0x2d50","memSize":0,"stack":["0x10","0x8a0a19589531694250d570040a0c4b74576919b8"],"depth":1,"refund":0,"opName":"PAY"},
+    {"pc":24,"op":80,"gas":"0x5f56162","gasCost":"0x2","memSize":0,"stack":["0x1"],"depth":1,"refund":0,"opName":"POP"},
+    {"pc":25,"op":115,"gas":"0x5f56160","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH20"},
+    {"pc":46,"op":49,"gas":"0x5f5615d","gasCost":"0x64","memSize":0,"stack":["0x8a0a19589531694250d570040a0c4b74576919b8"],"depth":1,"refund":0,"opName":"BALANCE"},
+    {"pc":47,"op":0,"gas":"0x5f560f9","gasCost":"0x0","memSize":0,"stack":["0x10"],"depth":1,"refund":0,"opName":"STOP"},
+    {"output":"","gasUsed":"0x8007","test":"pay-opcode-test","fork":"Osaka","d":0,"g":0,"v":0,"stateRoot":"0x1c79be4314256c8c880927fb7f1606d417438dd364a5d4c07981cd4497ac97ae","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true},
+
+		{"pc":0,"op":96,"gas":"0x5f58eb8","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":2,"op":115,"gas":"0x5f58eb5","gasCost":"0x3","memSize":0,"stack":["0x10"],"depth":1,"refund":0,"opName":"PUSH20"},
+    {"pc":23,"op":252,"gas":"0x5f58eb2","gasCost":"0x0","memSize":0,"stack":["0x10","0x8a0a19589531694250d570040a0c4b74576919b8"],"depth":1,"refund":0,"opName":"INVALID","error":"Invalid opcode: 0xfc"},
+    {"output":"","gasUsed":"0x5f5e100","test":"pay-opcode-test","fork":"Prague","d":0,"g":0,"v":0,"stateRoot":"0x390e9d8ebf02b7a28b9ccd00bfeb7b20a79f0269d0f6089907fdf636c43e7042","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true,"error":"Invalid opcode: 0xfc"}
+	]
+}
