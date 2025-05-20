@@ -414,8 +414,7 @@ public class TransactionSimulator {
     final Address senderAddress = callParams.getSender().orElse(DEFAULT_FROM);
 
     final ProcessableBlockHeader blockHeaderToProcess;
-    if ((transactionValidationParams.isAllowExceedingBalance()
-            || transactionValidationParams.allowUnderpriced())
+    if (transactionValidationParams.isAllowExceedingBalance()
         && processableHeader.getBaseFee().isPresent()) {
       blockHeaderToProcess =
           new BlockHeaderBuilder()

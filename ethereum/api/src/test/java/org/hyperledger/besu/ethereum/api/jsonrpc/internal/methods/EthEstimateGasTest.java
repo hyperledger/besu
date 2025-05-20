@@ -444,7 +444,7 @@ public class EthEstimateGasTest {
                 modifiedLegacyTransactionCallParameter(
                     Long.MAX_VALUE, Wei.ZERO, OptionalLong.empty(), Optional.empty())),
             eq(Optional.empty()), // no account overrides
-            eq(TransactionValidationParams.transactionSimulatorEstimateGasParams()),
+            eq(TransactionValidationParams.transactionSimulatorAllowUnderpricedAndFutureNonce()),
             any(OperationTracer.class),
             eq(pendingBlockHeader));
   }

@@ -204,7 +204,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
 
     return isAllowExceedingBalance
         ? TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce()
-        : TransactionValidationParams.transactionSimulatorEstimateGasParams();
+        : TransactionValidationParams.transactionSimulatorAllowUnderpricedAndFutureNonce();
   }
 
   @VisibleForTesting
