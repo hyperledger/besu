@@ -22,8 +22,8 @@ import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 
 @SuppressWarnings("UnusedMethod")
 public class Benchmarks {
