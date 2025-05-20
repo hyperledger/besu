@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import org.hyperledger.besu.datatypes.BlobProofBundle;
+import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobsBundleV2;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Arrays;
@@ -33,9 +35,14 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import ethereum.ckzg4844.CKZG4844JNI;
+import ethereum.ckzg4844.CellsAndProofs;
 import io.vertx.core.Vertx;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(EngineGetBlobsV2.class);
 
   private final TransactionPool transactionPool;
 
@@ -87,11 +94,30 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
     if (bq == null) {
       return null;
     }
-    if (bq.versionId() != BlobProofBundle.VERSION_1_KZG_CELL_PROOFS) {
-      return null;
+    BlobProofBundle toReturn = bq;
+    if (bq.versionId() == BlobProofBundle.VERSION_0_KZG_PROOFS) {
+      LOG.info(
+          "BlobProofBundle {} versionId is 0. Converting to version {}",
+          bq.versionedHash(),
+          BlobProofBundle.VERSION_1_KZG_CELL_PROOFS);
+      CellsAndProofs cellProofs =
+          CKZG4844JNI.computeCellsAndKzgProofs(bq.blob().getData().toArray());
+      List<KZGProof> kzgCellProofs = extractKZGProofs(cellProofs.getProofs());
+      toReturn =
+          BlobProofBundle.builder()
+              .versionId(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS)
+              .blob(bq.blob())
+              .kzgCommitment(bq.kzgCommitment())
+              .kzgProof(kzgCellProofs)
+              .versionedHash(bq.versionedHash())
+              .build();
     }
     return new BlobAndProofV2(
-        bq.blob().getData().toHexString(),
-        bq.kzgProof().stream().map(p -> p.getData().toHexString()).toList());
+        toReturn.blob().getData().toHexString(),
+        toReturn.kzgProof().stream().map(p -> p.getData().toHexString()).toList());
+  }
+
+  public static List<KZGProof> extractKZGProofs(final byte[] input) {
+    return BlobsBundleV2.extractKZGProofs(input);
   }
 }

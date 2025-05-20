@@ -41,7 +41,7 @@ public class BlobPooledTransactionEncoder {
     out.startList();
     BlobTransactionEncoder.encode(transaction, out);
     if (blobsWithCommitments.get().getVersionId() == VERSION_1_KZG_CELL_PROOFS) {
-      out.writeInt(blobsWithCommitments.get().getVersionId());
+      out.writeIntScalar(blobsWithCommitments.get().getVersionId());
     }
     out.writeList(blobsWithCommitments.get().getBlobs(), Blob::writeTo);
     out.writeList(blobsWithCommitments.get().getKzgCommitments(), KZGCommitment::writeTo);

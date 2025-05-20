@@ -212,11 +212,12 @@ public class BlobsWithCommitments {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     BlobsWithCommitments that = (BlobsWithCommitments) o;
-    return Objects.equals(getBlobProofBundles(), that.getBlobProofBundles());
+    return versionId == that.versionId
+        && Objects.equals(getBlobProofBundles(), that.getBlobProofBundles());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getBlobProofBundles());
+    return Objects.hash(getBlobProofBundles(), versionId);
   }
 }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.BlobProofBundle.VERSION_0_KZG_PROOFS;
 import static org.hyperledger.besu.ethereum.core.TransactionTestFixture.createSignedCodeDelegation;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 
@@ -112,6 +113,7 @@ public class BaseTransactionPoolTest {
         Wei.of(5000L).multiply(gasFeeMultiplier).divide(10),
         0,
         blobCount,
+        VERSION_0_KZG_PROOFS,
         null,
         keys);
   }
@@ -138,11 +140,28 @@ public class BaseTransactionPoolTest {
             randomizeTxType.nextInt(txSize < blobTransaction0.getSize() ? 3 : 4)];
 
     final Transaction baseTx =
-        createTransaction(txType, nonce, maxGasPrice, maxGasPrice.divide(10), 0, 1, null, keys);
+        createTransaction(
+            txType,
+            nonce,
+            maxGasPrice,
+            maxGasPrice.divide(10),
+            0,
+            1,
+            VERSION_0_KZG_PROOFS,
+            null,
+            keys);
     final int payloadSize = txSize - baseTx.getSize();
 
     return createTransaction(
-        txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, null, keys);
+        txType,
+        nonce,
+        maxGasPrice,
+        maxGasPrice.divide(10),
+        payloadSize,
+        1,
+        VERSION_0_KZG_PROOFS,
+        null,
+        keys);
   }
 
   protected Transaction createTransaction(
@@ -155,7 +174,7 @@ public class BaseTransactionPoolTest {
           createTransaction(txType, nonce, maxGasPrice, payloadSize, null, keys);
       case BLOB ->
           createTransaction(
-              txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, null, keys);
+              txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, 0, null, keys);
       case DELEGATE_CODE ->
           createTransaction(
               txType, nonce, maxGasPrice, payloadSize, List.of(CODE_DELEGATION_SENDER_1), keys);
@@ -170,7 +189,15 @@ public class BaseTransactionPoolTest {
       final List<CodeDelegation> codeDelegations,
       final KeyPair keys) {
     return createTransaction(
-        type, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 0, codeDelegations, keys);
+        type,
+        nonce,
+        maxGasPrice,
+        maxGasPrice.divide(10),
+        payloadSize,
+        0,
+        VERSION_0_KZG_PROOFS,
+        codeDelegations,
+        keys);
   }
 
   protected Transaction createTransaction(
@@ -180,10 +207,18 @@ public class BaseTransactionPoolTest {
       final Wei maxPriorityFeePerGas,
       final int payloadSize,
       final int blobCount,
+      final int blobVersionId,
       final List<CodeDelegation> codeDelegations,
       final KeyPair keys) {
     return prepareTransaction(
-            type, nonce, maxGasPrice, maxPriorityFeePerGas, payloadSize, blobCount, codeDelegations)
+            type,
+            nonce,
+            maxGasPrice,
+            maxPriorityFeePerGas,
+            payloadSize,
+            blobCount,
+            blobVersionId,
+            codeDelegations)
         .createTransaction(keys);
   }
 
@@ -194,6 +229,7 @@ public class BaseTransactionPoolTest {
       final Wei maxPriorityFeePerGas,
       final int payloadSize,
       final int blobCount,
+      final int blobVersionId,
       final List<CodeDelegation> codeDelegations) {
 
     var tx =
@@ -219,18 +255,20 @@ public class BaseTransactionPoolTest {
             IntStream.range(0, blobCount)
                 .mapToObj(i -> new KZGCommitment(Bytes48.random()))
                 .toList();
-        final var kzgProofs =
-            IntStream.range(0, blobCount).mapToObj(i -> new KZGProof(Bytes48.random())).toList();
+        int totalKzgProofs =
+            blobVersionId == VERSION_0_KZG_PROOFS
+                ? blobCount
+                : blobCount * BlobProofBundle.CELL_PROOFS_PER_BLOB;
+        final List<KZGProof> kzgProofs =
+            IntStream.range(0, totalKzgProofs)
+                .mapToObj(i -> new KZGProof(Bytes48.random()))
+                .toList();
         final var blobs =
             IntStream.range(0, blobCount).mapToObj(i -> new Blob(Bytes.random(32 * 4096))).toList();
         tx.versionedHashes(Optional.of(versionHashes));
         final var blobsWithCommitments =
             new BlobsWithCommitments(
-                BlobProofBundle.VERSION_0_KZG_PROOFS,
-                kgzCommitments,
-                blobs,
-                kzgProofs,
-                versionHashes);
+                blobVersionId, kgzCommitments, blobs, kzgProofs, versionHashes);
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
       } else if (type.supportsDelegateCode()) {
         tx.codeDelegations(codeDelegations);
@@ -250,6 +288,10 @@ public class BaseTransactionPoolTest {
         originalTransaction.getMaxGasPrice().multiply(2).divide(10),
         0,
         1,
+        originalTransaction
+            .getBlobsWithCommitments()
+            .map(BlobsWithCommitments::getVersionId)
+            .orElse(0),
         originalTransaction.getCodeDelegationList().orElse(null),
         keys);
   }

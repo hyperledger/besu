@@ -15,18 +15,23 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import ethereum.ckzg4844.CKZG4844JNI;
+import ethereum.ckzg4844.CellsAndProofs;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes48;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +49,8 @@ public class BlobsBundleV2 {
     final List<BlobsWithCommitments> blobsWithCommitments =
         transactions.stream()
             .map(Transaction::getBlobsWithCommitments)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .flatMap(Optional::stream)
+            .map(this::mapBlobWithCommitments)
             .toList();
 
     this.commitments =
@@ -69,7 +74,7 @@ public class BlobsBundleV2 {
             .map(Bytes::toString)
             .collect(Collectors.toList());
 
-    LOG.debug(
+    LOG.info(
         "BlobsBundleV2: totalTxs: {}, blobTxs: {}, commitments: {}, cell proofs: {}, blobs: {}",
         transactions.size(),
         blobsWithCommitments.size(),
@@ -91,5 +96,40 @@ public class BlobsBundleV2 {
   @JsonGetter("blobs")
   public List<String> getBlobs() {
     return blobs;
+  }
+
+  @SuppressWarnings("UnusedVariable")
+  private BlobsWithCommitments mapBlobWithCommitments(
+      final BlobsWithCommitments blobsWithCommitments) {
+    if (blobsWithCommitments.getVersionId() == BlobProofBundle.VERSION_1_KZG_CELL_PROOFS) {
+      return blobsWithCommitments;
+    }
+    LOG.info(
+        "BlobProofBundle {} versionId is 0. Converting to version {}",
+        blobsWithCommitments.getVersionedHashes(),
+        BlobProofBundle.VERSION_1_KZG_CELL_PROOFS);
+    List<KZGProof> kzgCellProofs = new ArrayList<>();
+    for (Blob blob : blobsWithCommitments.getBlobs()) {
+      CellsAndProofs cellProofs = CKZG4844JNI.computeCellsAndKzgProofs(blob.getData().toArray());
+      kzgCellProofs.addAll(extractKZGProofs(cellProofs.getProofs()));
+    }
+    return new BlobsWithCommitments(
+        BlobProofBundle.VERSION_1_KZG_CELL_PROOFS,
+        blobsWithCommitments.getKzgCommitments(),
+        blobsWithCommitments.getBlobs(),
+        kzgCellProofs,
+        blobsWithCommitments.getVersionedHashes());
+  }
+
+  public static List<KZGProof> extractKZGProofs(final byte[] input) {
+    List<KZGProof> chunks = new ArrayList<>();
+    int chunkSize = Bytes48.SIZE;
+    int totalChunks = input.length / chunkSize;
+    for (int i = 0; i < totalChunks; i++) {
+      byte[] chunk = new byte[chunkSize];
+      System.arraycopy(input, i * chunkSize, chunk, 0, chunkSize);
+      chunks.add(new KZGProof(Bytes48.wrap(chunk)));
+    }
+    return chunks;
   }
 }
