@@ -938,6 +938,9 @@ public abstract class MainnetProtocolSpecs {
                 .flatMap(BlobScheduleOptions::getOsaka)
                 .orElse(BlobSchedule.OSAKA_DEFAULT))
         .gasCalculator(blobSchedule -> new OsakaGasCalculator(blobSchedule.getTarget()))
+        .evmBuilder(
+            (gasCalculator, __) ->
+                MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .gasLimitCalculatorBuilder(
             (feeMarket, gasCalculator, blobSchedule) ->
                 new OsakaTargetingGasLimitCalculator(
