@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.config.BlobScheduleOptions;
+import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -43,7 +43,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
     this(
         londonForkBlockNumber,
         baseFeePerGasOverride,
-        BlobScheduleOptions.BlobSchedule.CANCUN_DEFAULT.getBaseFeeUpdateFraction());
+        BlobSchedule.CANCUN_DEFAULT.getBaseFeeUpdateFraction());
   }
 
   @Override
