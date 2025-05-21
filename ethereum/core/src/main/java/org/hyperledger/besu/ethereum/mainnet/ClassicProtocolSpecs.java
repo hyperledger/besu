@@ -248,11 +248,11 @@ public class ClassicProtocolSpecs {
             isParallelTxProcessingEnabled,
             metricsSystem)
         .blockHeaderValidatorBuilder(
-            (feeMarket, __) ->
+            (feeMarket, gasCalculator) ->
                 MainnetBlockHeaderValidator.createPgaBlockHeaderValidator(
                     new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .ommerHeaderValidatorBuilder(
-            (feeMarket, __) ->
+            (feeMarket, gasCalculator) ->
                 MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
                     new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .name("Thanos");
