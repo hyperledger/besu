@@ -89,6 +89,7 @@ public class BlobSchedule {
 
   /** A class that represents a BlobSchedule where all methods throw an exception. */
   public static class NoBlobSchedule extends BlobSchedule {
+    /** Constructs a NoBlobSchedule */
     public NoBlobSchedule() {
       super(0, 0, 0);
     }
