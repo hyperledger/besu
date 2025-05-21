@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsProcessor.pragueRequestsProcessors;
 
+import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.config.BlobScheduleOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
@@ -693,7 +694,7 @@ public abstract class MainnetProtocolSpecs {
         genesisConfigOptions
             .getBlobScheduleOptions()
             .flatMap(BlobScheduleOptions::getCancun)
-            .orElse(BlobScheduleOptions.BlobSchedule.CANCUN_DEFAULT);
+            .orElse(BlobSchedule.CANCUN_DEFAULT);
 
     final BaseFeeMarket cancunFeeMarket;
     if (genesisConfigOptions.isZeroBaseFee()) {
@@ -810,7 +811,7 @@ public abstract class MainnetProtocolSpecs {
         genesisConfigOptions
             .getBlobScheduleOptions()
             .flatMap(BlobScheduleOptions::getPrague)
-            .orElse(BlobScheduleOptions.BlobSchedule.PRAGUE_DEFAULT);
+            .orElse(BlobSchedule.PRAGUE_DEFAULT);
 
     ProtocolSpecBuilder pragueSpecBuilder =
         cancunDefinition(
@@ -930,7 +931,7 @@ public abstract class MainnetProtocolSpecs {
         genesisConfigOptions
             .getBlobScheduleOptions()
             .flatMap(BlobScheduleOptions::getOsaka)
-            .orElse(BlobScheduleOptions.BlobSchedule.OSAKA_DEFAULT);
+            .orElse(BlobSchedule.OSAKA_DEFAULT);
 
     return pragueDefinition(
             chainId,

@@ -15,12 +15,11 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.config.BlobScheduleOptions.BlobSchedule.NO_BLOBS;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
 
-import org.hyperledger.besu.config.BlobScheduleOptions;
+import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -51,7 +50,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class ProtocolSpecBuilder {
-  private Function<BlobScheduleOptions.BlobSchedule, GasCalculator> gasCalculatorBuilder;
+  private Function<BlobSchedule, GasCalculator> gasCalculatorBuilder;
   private GasLimitCalculatorBuilder gasLimitCalculatorBuilder;
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
@@ -88,14 +87,14 @@ public class ProtocolSpecBuilder {
   private RequestProcessorCoordinator requestProcessorCoordinator;
   protected BlockHashProcessor blockHashProcessor;
   private FeeMarketBuilder feeMarketBuilder = (__) -> FeeMarket.legacy();
-  private BlobScheduleOptions.BlobSchedule blobSchedule = NO_BLOBS;
+  private BlobSchedule blobSchedule = new BlobSchedule.NoBlobSchedule();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
   private boolean isReplayProtectionSupported = false;
 
   public ProtocolSpecBuilder gasCalculator(
-      final Function<BlobScheduleOptions.BlobSchedule, GasCalculator> gasCalculatorBuilder) {
+      final Function<BlobSchedule, GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
     return this;
   }
@@ -247,7 +246,7 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder blobSchedule(final BlobScheduleOptions.BlobSchedule blobSchedule) {
+  public ProtocolSpecBuilder blobSchedule(final BlobSchedule blobSchedule) {
     this.blobSchedule = blobSchedule;
     return this;
   }
@@ -517,7 +516,7 @@ public class ProtocolSpecBuilder {
   }
 
   public interface FeeMarketBuilder {
-    FeeMarket apply(BlobScheduleOptions.BlobSchedule blobSchedule);
+    FeeMarket apply(BlobSchedule blobSchedule);
   }
 
   public interface BlockHeaderValidatorBuilder {
@@ -526,9 +525,7 @@ public class ProtocolSpecBuilder {
 
   public interface GasLimitCalculatorBuilder {
     GasLimitCalculator apply(
-        FeeMarket feeMarket,
-        GasCalculator gasCalculator,
-        BlobScheduleOptions.BlobSchedule blobSchedule);
+        FeeMarket feeMarket, GasCalculator gasCalculator, BlobSchedule blobSchedule);
   }
 
   public interface BlockImporterBuilder {
