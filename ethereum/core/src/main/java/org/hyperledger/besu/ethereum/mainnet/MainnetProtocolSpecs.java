@@ -690,26 +690,20 @@ public abstract class MainnetProtocolSpecs {
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
 
-    final var cancunBlobSchedule =
-        genesisConfigOptions
-            .getBlobScheduleOptions()
-            .flatMap(BlobScheduleOptions::getCancun)
-            .orElse(BlobSchedule.CANCUN_DEFAULT);
-
-    final BaseFeeMarket cancunFeeMarket;
-    if (genesisConfigOptions.isZeroBaseFee()) {
-      cancunFeeMarket = FeeMarket.zeroBaseFee(londonForkBlockNumber);
-    } else if (genesisConfigOptions.isFixedBaseFee()) {
-      cancunFeeMarket =
-          FeeMarket.fixedBaseFee(
-              londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
-    } else {
-      cancunFeeMarket =
-          FeeMarket.cancun(
-              londonForkBlockNumber,
-              genesisConfigOptions.getBaseFeePerGas(),
-              cancunBlobSchedule.getBaseFeeUpdateFraction());
-    }
+    final ProtocolSpecBuilder.FeeMarketBuilder cancunFeeMarketBuilder =
+        (blobSchedule) -> {
+          if (genesisConfigOptions.isZeroBaseFee()) {
+            return FeeMarket.zeroBaseFee(londonForkBlockNumber);
+          } else if (genesisConfigOptions.isFixedBaseFee()) {
+            return FeeMarket.fixedBaseFee(
+                londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
+          } else {
+            return FeeMarket.cancun(
+                londonForkBlockNumber,
+                genesisConfigOptions.getBaseFeePerGas(),
+                blobSchedule.getBaseFeeUpdateFraction());
+          }
+        };
 
     return shanghaiDefinition(
             chainId,
@@ -719,8 +713,12 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .feeMarketBuilder(blobSchedule -> cancunFeeMarket)
-        .blobSchedule(cancunBlobSchedule)
+        .feeMarketBuilder(cancunFeeMarketBuilder)
+        .blobSchedule(
+            genesisConfigOptions
+                .getBlobScheduleOptions()
+                .flatMap(BlobScheduleOptions::getCancun)
+                .orElse(BlobSchedule.CANCUN_DEFAULT))
         // gas calculator for EIP-4844 blob gas
         .gasCalculator(blobSchedule -> new CancunGasCalculator(blobSchedule.getTarget()))
         // gas limit with EIP-4844 max blob gas per block
@@ -807,11 +805,6 @@ public abstract class MainnetProtocolSpecs {
       final MetricsSystem metricsSystem) {
 
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
-    final var pragueBlobSchedule =
-        genesisConfigOptions
-            .getBlobScheduleOptions()
-            .flatMap(BlobScheduleOptions::getPrague)
-            .orElse(BlobSchedule.PRAGUE_DEFAULT);
 
     ProtocolSpecBuilder pragueSpecBuilder =
         cancunDefinition(
@@ -822,7 +815,11 @@ public abstract class MainnetProtocolSpecs {
                 miningConfiguration,
                 isParallelTxProcessingEnabled,
                 metricsSystem)
-            .blobSchedule(pragueBlobSchedule)
+            .blobSchedule(
+                genesisConfigOptions
+                    .getBlobScheduleOptions()
+                    .flatMap(BlobScheduleOptions::getPrague)
+                    .orElse(BlobSchedule.PRAGUE_DEFAULT))
             .feeMarketBuilder(
                 blobSchedule -> {
                   if (genesisConfigOptions.isZeroBaseFee()) {
@@ -927,12 +924,6 @@ public abstract class MainnetProtocolSpecs {
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
 
-    final var osakaBlobSchedule =
-        genesisConfigOptions
-            .getBlobScheduleOptions()
-            .flatMap(BlobScheduleOptions::getOsaka)
-            .orElse(BlobSchedule.OSAKA_DEFAULT);
-
     return pragueDefinition(
             chainId,
             enableRevertReason,
@@ -941,7 +932,11 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .blobSchedule(osakaBlobSchedule)
+        .blobSchedule(
+            genesisConfigOptions
+                .getBlobScheduleOptions()
+                .flatMap(BlobScheduleOptions::getOsaka)
+                .orElse(BlobSchedule.OSAKA_DEFAULT))
         .gasCalculator(blobSchedule -> new OsakaGasCalculator(blobSchedule.getTarget()))
         .gasLimitCalculatorBuilder(
             (feeMarket, gasCalculator, blobSchedule) ->
