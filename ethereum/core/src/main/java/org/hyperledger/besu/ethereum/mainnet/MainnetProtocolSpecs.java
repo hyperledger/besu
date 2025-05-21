@@ -722,7 +722,7 @@ public abstract class MainnetProtocolSpecs {
         .feeMarketBuilder(blobSchedule -> cancunFeeMarket)
         .blobSchedule(cancunBlobSchedule)
         // gas calculator for EIP-4844 blob gas
-        .gasCalculator(blobSchedule -> new CancunGasCalculator(cancunBlobSchedule.getTarget()))
+        .gasCalculator(blobSchedule -> new CancunGasCalculator(blobSchedule.getTarget()))
         // gas limit with EIP-4844 max blob gas per block
         .gasLimitCalculatorBuilder(
             (feeMarket, gasCalculator, blobSchedule) ->
