@@ -26,7 +26,7 @@ WORKDIR /opt/besu
 
 
 COPY --chown=besu:besu besu /opt/besu/
-ADD --chown=besu:besu https://github.com/grafana/pyroscope-java/releases/download/v0.18.1/pyroscope.jar /opt/besu/pyroscope/pyroscope.jar
+ADD --chown=besu:besu https://github.com/grafana/pyroscope-java/releases/download/v2.1.2/pyroscope.jar /opt/besu/pyroscope/pyroscope.jar
 ADD --chown=besu:besu pyroscope.properties /etc/besu/pyroscope.properties
 
 # Expose services ports
@@ -51,10 +51,8 @@ ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 # Use `BESU_OPTS=-javaagent:/opt/besu/pyroscope/pyroscope.jar` to enable pyroscope
 ENV PYROSCOPE_CONFIGURATION_FILE=/etc/besu/pyroscope.properties
 
-
 ENV OLDPATH="${PATH}"
 ENV PATH="/opt/besu/bin:${OLDPATH}"
-
 
 # The entry script just sets permissions as needed based on besu config
 # and is replaced by the besu process running as besu user.
