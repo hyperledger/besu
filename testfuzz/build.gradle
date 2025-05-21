@@ -31,6 +31,7 @@ jar {
 }
 
 dependencies {
+  implementation platform(project(':platform-internal')) // only here we need JaCoCo at runtime
   implementation project(':besu')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')

@@ -37,16 +37,17 @@ dependencies {
   implementation project(':plugin-api')
   implementation project(':util')
 
+  compileOnly 'org.junit.jupiter:junit-jupiter'
+  compileOnly 'org.assertj:assertj-core'
+  compileOnly 'org.mockito:mockito-core'
+
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
   implementation 'com.google.guava:guava'
   implementation 'com.squareup.okhttp3:okhttp'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.junit.jupiter:junit-jupiter'
   implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'io.consensys.tuweni:tuweni-io'
   implementation 'io.consensys.tuweni:tuweni-toml'
-  implementation 'org.assertj:assertj-core'
-  implementation 'org.mockito:mockito-core'
   implementation 'org.web3j:core'
 }

@@ -117,7 +117,7 @@ licenseReport {
   ]
 }
 
-configure(allprojects - project(':platform')) {
+configure(allprojects - project(':platform') - project(':platform-internal')) {
   apply plugin: 'java-library'
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
@@ -182,12 +182,29 @@ configure(allprojects - project(':platform')) {
     }
   }
 
+  configurations {
+    testSupportAnnotationProcessor.extendsFrom annotationProcessor
+    testSupportImplementation.extendsFrom implementation
+    integrationTestAnnotationProcessor.extendsFrom annotationProcessor
+    integrationTestImplementation.extendsFrom implementation
+    testSupportArtifacts
+    referenceTestImplementation
+  }
+
   dependencies {
     api platform(project(':platform'))
+    compileOnly platform(project(':platform-internal'))
+    testImplementation platform(project(':platform-internal'))
 
-    annotationProcessor(platform(project(':platform')))
+    annotationProcessor platform(project(':platform'))
+    annotationProcessor platform(project(':platform-internal'))
 
-    testAnnotationProcessor(platform(project(':platform')))
+    testAnnotationProcessor platform(project(':platform'))
+    testAnnotationProcessor platform(project(':platform-internal'))
+
+    testSupportImplementation platform(project(':platform-internal'))
+    integrationTestImplementation platform(project(':platform-internal'))
+    referenceTestImplementation platform(project(':platform-internal'))
 
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
@@ -486,7 +503,7 @@ subprojects {
     dependencies { testImplementation sourceSets.testSupport.output }
 
     task testSupportJar(type: Jar) {
-      archiveBaseName = calculateArtifactId(project) + '-support-test'
+      archiveBaseName = calculateArtifactId(project)
       archiveClassifier = 'test-support'
       from sourceSets.testSupport.output
     }
@@ -604,15 +621,6 @@ subprojects {
   tasks.withType(JavaCompile) {
     options.fork = true
     options.incremental = true
-  }
-
-
-  configurations {
-    testSupportAnnotationProcessor.extendsFrom annotationProcessor
-    testSupportImplementation.extendsFrom implementation
-    integrationTestAnnotationProcessor.extendsFrom annotationProcessor
-    integrationTestImplementation.extendsFrom implementation
-    testSupportArtifacts
   }
 
   if (file('src/jmh').directory) {
