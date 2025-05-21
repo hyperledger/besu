@@ -123,7 +123,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return new ProtocolSpecBuilder()
-        .gasCalculator((__) -> new FrontierGasCalculator())
+        .gasCalculator(blobSchedule -> new FrontierGasCalculator())
         .gasLimitCalculatorBuilder(
             (feeMarket, gasCalculator, blobSchedule) -> new FrontierTargetingGasLimitCalculator())
         .evmBuilder(MainnetEVMs::frontier)
@@ -205,7 +205,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return frontierDefinition(evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
-        .gasCalculator((__) -> new HomesteadGasCalculator())
+        .gasCalculator(blobSchedule -> new HomesteadGasCalculator())
         .evmBuilder(MainnetEVMs::homestead)
         .contractCreationProcessorBuilder(
             evm ->
@@ -270,7 +270,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return homesteadDefinition(evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
-        .gasCalculator((__) -> new TangerineWhistleGasCalculator())
+        .gasCalculator(blobSchedule -> new TangerineWhistleGasCalculator())
         .name("TangerineWhistle");
   }
 
@@ -282,7 +282,7 @@ public abstract class MainnetProtocolSpecs {
     return tangerineWhistleDefinition(
             evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
         .isReplayProtectionSupported(true)
-        .gasCalculator((__) -> new SpuriousDragonGasCalculator())
+        .gasCalculator(blobSchedule -> new SpuriousDragonGasCalculator())
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(
             (evm, precompileContractRegistry) ->
@@ -330,7 +330,7 @@ public abstract class MainnetProtocolSpecs {
       final MetricsSystem metricsSystem) {
     return spuriousDragonDefinition(
             chainId, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
-        .gasCalculator((__) -> new ByzantiumGasCalculator())
+        .gasCalculator(blobSchedule -> new ByzantiumGasCalculator())
         .evmBuilder(MainnetEVMs::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
@@ -368,7 +368,7 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled,
             metricsSystem)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
-        .gasCalculator((__) -> new ConstantinopleGasCalculator())
+        .gasCalculator(blobSchedule -> new ConstantinopleGasCalculator())
         .evmBuilder(MainnetEVMs::constantinople)
         .blockReward(CONSTANTINOPLE_BLOCK_REWARD)
         .name("Constantinople");
@@ -386,7 +386,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .gasCalculator((__) -> new PetersburgGasCalculator())
+        .gasCalculator(blobSchedule -> new PetersburgGasCalculator())
         .name("Petersburg");
   }
 
@@ -402,7 +402,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .gasCalculator((__) -> new IstanbulGasCalculator())
+        .gasCalculator(blobSchedule -> new IstanbulGasCalculator())
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.istanbul(
@@ -447,7 +447,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .gasCalculator((__) -> new BerlinGasCalculator())
+        .gasCalculator(blobSchedule -> new BerlinGasCalculator())
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
@@ -635,7 +635,7 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled,
             metricsSystem)
         // gas calculator has new code to support EIP-3860 limit and meter initcode
-        .gasCalculator((__) -> new ShanghaiGasCalculator())
+        .gasCalculator(blobSchedule -> new ShanghaiGasCalculator())
         // EVM has a new operation for EIP-3855 PUSH0 instruction
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->

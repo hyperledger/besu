@@ -50,13 +50,9 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.apache.commons.lang3.function.TriFunction;
-
 public class ProtocolSpecBuilder {
   private Function<BlobScheduleOptions.BlobSchedule, GasCalculator> gasCalculatorBuilder;
-  private TriFunction<
-          FeeMarket, GasCalculator, BlobScheduleOptions.BlobSchedule, GasLimitCalculator>
-      gasLimitCalculatorBuilder;
+  private GasLimitCalculatorBuilder gasLimitCalculatorBuilder;
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
 
@@ -66,10 +62,8 @@ public class ProtocolSpecBuilder {
   private EvmConfiguration evmConfiguration;
   private BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder;
   private TransactionValidatorFactoryBuilder transactionValidatorFactoryBuilder;
-  private BiFunction<FeeMarket, GasCalculator, BlockHeaderValidator.Builder>
-      blockHeaderValidatorBuilder;
-  private BiFunction<FeeMarket, GasCalculator, BlockHeaderValidator.Builder>
-      ommerHeaderValidatorBuilder;
+  private BlockHeaderValidatorBuilder blockHeaderValidatorBuilder;
+  private BlockHeaderValidatorBuilder ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
   private Function<EVM, ContractCreationProcessor> contractCreationProcessorBuilder;
   private Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
@@ -107,9 +101,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder gasLimitCalculatorBuilder(
-      final TriFunction<
-              FeeMarket, GasCalculator, BlobScheduleOptions.BlobSchedule, GasLimitCalculator>
-          gasLimitCalculatorBuilder) {
+      final GasLimitCalculatorBuilder gasLimitCalculatorBuilder) {
     this.gasLimitCalculatorBuilder = gasLimitCalculatorBuilder;
     return this;
   }
@@ -153,15 +145,13 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder blockHeaderValidatorBuilder(
-      final BiFunction<FeeMarket, GasCalculator, BlockHeaderValidator.Builder>
-          blockHeaderValidatorBuilder) {
+      final BlockHeaderValidatorBuilder blockHeaderValidatorBuilder) {
     this.blockHeaderValidatorBuilder = blockHeaderValidatorBuilder;
     return this;
   }
 
   public ProtocolSpecBuilder ommerHeaderValidatorBuilder(
-      final BiFunction<FeeMarket, GasCalculator, BlockHeaderValidator.Builder>
-          ommerHeaderValidatorBuilder) {
+      final BlockHeaderValidatorBuilder ommerHeaderValidatorBuilder) {
     this.ommerHeaderValidatorBuilder = ommerHeaderValidatorBuilder;
     return this;
   }
@@ -479,8 +469,7 @@ public class ProtocolSpecBuilder {
   }
 
   private BlockHeaderValidator createBlockHeaderValidator(
-      final BiFunction<FeeMarket, GasCalculator, BlockHeaderValidator.Builder>
-          blockHeaderValidatorBuilder,
+      final BlockHeaderValidatorBuilder blockHeaderValidatorBuilder,
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator) {
     return blockHeaderValidatorBuilder
@@ -529,6 +518,17 @@ public class ProtocolSpecBuilder {
 
   public interface FeeMarketBuilder {
     FeeMarket apply(BlobScheduleOptions.BlobSchedule blobSchedule);
+  }
+
+  public interface BlockHeaderValidatorBuilder {
+    BlockHeaderValidator.Builder apply(FeeMarket feeMarket, GasCalculator gasCalculator);
+  }
+
+  public interface GasLimitCalculatorBuilder {
+    GasLimitCalculator apply(
+        FeeMarket feeMarket,
+        GasCalculator gasCalculator,
+        BlobScheduleOptions.BlobSchedule blobSchedule);
   }
 
   public interface BlockImporterBuilder {
