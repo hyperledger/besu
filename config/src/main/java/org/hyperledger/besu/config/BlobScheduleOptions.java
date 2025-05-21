@@ -96,6 +96,9 @@ public class BlobScheduleOptions {
     private final int max;
     private final int baseFeeUpdateFraction;
 
+    /** The constant PRAGUE_DEFAULT. */
+    public static final BlobSchedule NO_BLOBS = new BlobSchedule(0, 0, 3338477);
+
     /** The constant CANCUN_DEFAULT. */
     public static final BlobSchedule CANCUN_DEFAULT = new BlobSchedule(3, 6, 3338477);
 
@@ -104,9 +107,6 @@ public class BlobScheduleOptions {
 
     /** The constant OSAKA_DEFAULT. */
     public static final BlobSchedule OSAKA_DEFAULT = new BlobSchedule(9, 12, 5007716);
-
-    /** The constant FUTURE_EIPS_DEFAULT. */
-    public static final BlobSchedule FUTURE_EIPS_DEFAULT = OSAKA_DEFAULT;
 
     /**
      * Instantiates a new Blob schedule.
