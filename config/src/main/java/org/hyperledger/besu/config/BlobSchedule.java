@@ -20,10 +20,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /** The Blob schedule for a particular fork. */
 public class BlobSchedule {
-  private final int target;
-  private final int max;
-  private final int baseFeeUpdateFraction;
-
   /** The constant CANCUN_DEFAULT. */
   public static final BlobSchedule CANCUN_DEFAULT = new BlobSchedule(3, 6, 3338477);
 
@@ -33,16 +29,20 @@ public class BlobSchedule {
   /** The constant OSAKA_DEFAULT. */
   public static final BlobSchedule OSAKA_DEFAULT = new BlobSchedule(9, 12, 5007716);
 
+  private final int target;
+  private final int max;
+  private final int baseFeeUpdateFraction;
+
   /**
    * Instantiates a new Blob schedule.
    *
    * @param blobScheduleConfigRoot the blob schedule config root
    */
   public BlobSchedule(final ObjectNode blobScheduleConfigRoot) {
-    this.target = JsonUtil.getInt(blobScheduleConfigRoot, "target").orElseThrow();
-    this.max = JsonUtil.getInt(blobScheduleConfigRoot, "max").orElseThrow();
-    this.baseFeeUpdateFraction =
-        JsonUtil.getInt(blobScheduleConfigRoot, "basefeeupdatefraction").orElseThrow();
+    this(
+        JsonUtil.getInt(blobScheduleConfigRoot, "target").orElseThrow(),
+        JsonUtil.getInt(blobScheduleConfigRoot, "max").orElseThrow(),
+        JsonUtil.getInt(blobScheduleConfigRoot, "basefeeupdatefraction").orElseThrow());
   }
 
   private BlobSchedule(final int target, final int max, final int baseFeeUpdateFraction) {

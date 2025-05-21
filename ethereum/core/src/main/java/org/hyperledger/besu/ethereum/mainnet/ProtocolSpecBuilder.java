@@ -477,6 +477,7 @@ public class ProtocolSpecBuilder {
         .build();
   }
 
+  @FunctionalInterface
   public interface TransactionProcessorBuilder {
     MainnetTransactionProcessor apply(
         GasCalculator gasCalculator,
@@ -486,6 +487,7 @@ public class ProtocolSpecBuilder {
         MessageCallProcessor messageCallProcessor);
   }
 
+  @FunctionalInterface
   public interface PrivateTransactionProcessorBuilder {
     PrivateTransactionProcessor apply(
         TransactionValidatorFactory transactionValidatorFactory,
@@ -494,10 +496,12 @@ public class ProtocolSpecBuilder {
         PrivateTransactionValidator privateTransactionValidator);
   }
 
+  @FunctionalInterface
   public interface PrivateTransactionValidatorBuilder {
     PrivateTransactionValidator apply();
   }
 
+  @FunctionalInterface
   public interface BlockProcessorBuilder {
     BlockProcessor apply(
         MainnetTransactionProcessor transactionProcessor,
@@ -508,6 +512,7 @@ public class ProtocolSpecBuilder {
         ProtocolSchedule protocolSchedule);
   }
 
+  @FunctionalInterface
   public interface BlockValidatorBuilder {
     BlockValidator apply(
         BlockHeaderValidator blockHeaderValidator,
@@ -515,23 +520,28 @@ public class ProtocolSpecBuilder {
         BlockProcessor blockProcessor);
   }
 
+  @FunctionalInterface
   public interface FeeMarketBuilder {
     FeeMarket apply(BlobSchedule blobSchedule);
   }
 
+  @FunctionalInterface
   public interface BlockHeaderValidatorBuilder {
     BlockHeaderValidator.Builder apply(FeeMarket feeMarket, GasCalculator gasCalculator);
   }
 
+  @FunctionalInterface
   public interface GasLimitCalculatorBuilder {
     GasLimitCalculator apply(
         FeeMarket feeMarket, GasCalculator gasCalculator, BlobSchedule blobSchedule);
   }
 
+  @FunctionalInterface
   public interface BlockImporterBuilder {
     BlockImporter apply(BlockValidator blockValidator);
   }
 
+  @FunctionalInterface
   public interface TransactionValidatorFactoryBuilder {
     TransactionValidatorFactory apply(
         EVM evm, GasLimitCalculator gasLimitCalculator, FeeMarket feeMarket);
