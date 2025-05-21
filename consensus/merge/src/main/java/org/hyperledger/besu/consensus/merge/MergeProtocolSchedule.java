@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -135,7 +136,8 @@ public class MergeProtocolSchedule {
         .name("Paris");
   }
 
-  private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
+  private static BlockHeaderValidator.Builder getBlockHeaderValidator(
+      final FeeMarket feeMarket, final GasCalculator gasCalculator) {
     return MergeValidationRulesetFactory.mergeBlockHeaderValidator(feeMarket);
   }
 
