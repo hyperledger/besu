@@ -300,21 +300,14 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SnapSyncConfiguration.DEFAULT_LOCAL_FLAT_STORAGE_COUNT_TO_HEAL_PER_REQUEST;
 
   @CommandLine.Option(
-      names = SNAP_SERVER_ENABLED_FLAG,
-      paramLabel = "<Boolean>",
-      arity = "0..1",
-      description = "Enable snap sync server capability (default: ${DEFAULT-VALUE})")
-  private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
-
-  @CommandLine.Option(
-      names = SNAP_SERVER_ENABLED_EXPERIMENTAL_FLAG,
+      names = {SNAP_SERVER_ENABLED_FLAG, SNAP_SERVER_ENABLED_EXPERIMENTAL_FLAG},
       hidden = true,
       paramLabel = "<Boolean>",
       arity = "0..1",
+      fallbackValue = "true",
       description =
-          "Deprecated: Use --snapsync-server-enabled instead. Will be removed in a future release.")
-  private Boolean snapsyncServerEnabledExperimental =
-      SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
+          "Enable snap sync server capability. Note: --Xsnapsync-server-enabled is deprecated and will be removed in a future release. --snapsync-server-enabled is used instead. (default: ${DEFAULT-VALUE})")
+  private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
 
   @CommandLine.Option(
       names = {CHECKPOINT_POST_MERGE_FLAG},
@@ -474,7 +467,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
-            .isSnapServerEnabled(snapsyncServerEnabled || snapsyncServerEnabledExperimental)
+            .isSnapServerEnabled(snapsyncServerEnabled)
             .isSnapSyncTransactionIndexingEnabled(snapTransactionIndexingEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
