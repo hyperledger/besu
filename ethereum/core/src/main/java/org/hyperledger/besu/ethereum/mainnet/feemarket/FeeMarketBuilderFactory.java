@@ -36,6 +36,7 @@ public class FeeMarketBuilderFactory {
    * @param londonForkBlockNumber the block number of the London fork
    * @param isZeroBaseFee whether to use zero base fee market
    * @param isFixedBaseFee whether to use fixed base fee market
+   * @param baseFeePerGasOverride optional base fee per gas
    * @param minTransactionGasPrice minimum gas price for transactions
    * @param feeMarketBuilder the feeMarketBuilder
    * @return a configured {@link ProtocolSpecBuilder.FeeMarketBuilder}
@@ -44,6 +45,7 @@ public class FeeMarketBuilderFactory {
       final long londonForkBlockNumber,
       final boolean isZeroBaseFee,
       final boolean isFixedBaseFee,
+      final Optional<Wei> baseFeePerGasOverride,
       final Wei minTransactionGasPrice,
       final FeeMarketBuilder feeMarketBuilder) {
     if (isZeroBaseFee) {
@@ -53,7 +55,6 @@ public class FeeMarketBuilderFactory {
       return blobSchedule -> FeeMarket.fixedBaseFee(londonForkBlockNumber, minTransactionGasPrice);
     }
     return blobSchedule ->
-        feeMarketBuilder.apply(
-            londonForkBlockNumber, Optional.of(minTransactionGasPrice), blobSchedule);
+        feeMarketBuilder.apply(londonForkBlockNumber, baseFeePerGasOverride, blobSchedule);
   }
 }

@@ -486,6 +486,7 @@ public abstract class MainnetProtocolSpecs {
                 londonForkBlockNumber,
                 genesisConfigOptions.isZeroBaseFee(),
                 genesisConfigOptions.isFixedBaseFee(),
+                genesisConfigOptions.getBaseFeePerGas(),
                 miningConfiguration.getMinTransactionGasPrice(),
                 FeeMarket::london))
         .gasCalculator(blobSchedule -> new LondonGasCalculator())
@@ -699,6 +700,7 @@ public abstract class MainnetProtocolSpecs {
                 londonForkBlockNumber,
                 genesisConfigOptions.isZeroBaseFee(),
                 genesisConfigOptions.isFixedBaseFee(),
+                genesisConfigOptions.getBaseFeePerGas(),
                 miningConfiguration.getMinTransactionGasPrice(),
                 FeeMarket::cancun))
         .blobSchedule(
