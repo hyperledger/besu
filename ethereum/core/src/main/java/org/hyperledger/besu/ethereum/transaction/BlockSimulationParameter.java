@@ -149,11 +149,10 @@ public class BlockSimulationParameter {
     Map<Address, Long> previousNonces = new HashMap<>();
     for (BlockStateCall call : blockStateCalls) {
       for (CallParameter callParameter : call.getCalls()) {
-        Address fromAddress = Optional.ofNullable(callParameter.getFrom()).orElse(DEFAULT_FROM);
-        Optional<Long> nonce = callParameter.getNonce();
+        Address fromAddress = callParameter.getSender().orElse(DEFAULT_FROM);
 
-        if (nonce.isPresent()) {
-          long currentNonce = nonce.get();
+        if (callParameter.getNonce().isPresent()) {
+          long currentNonce = callParameter.getNonce().getAsLong();
           if (previousNonces.containsKey(fromAddress)) {
             long previousNonce = previousNonces.get(fromAddress);
             if (currentNonce <= previousNonce) {

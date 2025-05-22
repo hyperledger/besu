@@ -343,7 +343,7 @@ public class MainnetTransactionValidatorTest {
         createTransactionValidator(
             gasCalculator,
             GasLimitCalculator.constant(),
-            FeeMarket.cancun(0L, Optional.empty()),
+            FeeMarket.cancunDefault(0L, Optional.empty()),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(
@@ -573,7 +573,7 @@ public class MainnetTransactionValidatorTest {
         createTransactionValidator(
             gasCalculator,
             GasLimitCalculator.constant(),
-            FeeMarket.cancun(0L, Optional.empty()),
+            FeeMarket.cancunDefault(0L, Optional.empty()),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559, TransactionType.BLOB),
@@ -617,7 +617,7 @@ public class MainnetTransactionValidatorTest {
         createTransactionValidator(
             gasCalculator,
             GasLimitCalculator.constant(),
-            FeeMarket.cancun(0L, Optional.empty()),
+            FeeMarket.cancunDefault(0L, Optional.empty()),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559, TransactionType.BLOB),
