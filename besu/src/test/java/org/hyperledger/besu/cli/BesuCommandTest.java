@@ -260,8 +260,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void callingUnstableSubCommandMustNotError() {
     parseCommand("-X");
     final String expectedOutputStart = "Unstable options";
-    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   // Testing default values
