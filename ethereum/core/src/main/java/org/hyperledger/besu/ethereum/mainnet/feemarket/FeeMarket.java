@@ -101,7 +101,7 @@ public interface FeeMarket {
   }
 
   /**
-   * Creates a Cancun fee market with default blob schedule parameters.
+   * Creates a Blob fee market with default Cancun blob schedule parameters.
    *
    * @param londonForkBlockNumber the block number at which the London fork activates.
    * @param baseFeePerGasOverride an optional override for the base fee per gas.
@@ -110,14 +110,14 @@ public interface FeeMarket {
   @VisibleForTesting
   static BaseFeeMarket cancunDefault(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
-    return new CancunFeeMarket(
+    return new BlobFeeMarket(
         londonForkBlockNumber,
         baseFeePerGasOverride,
         BlobSchedule.CANCUN_DEFAULT.getBaseFeeUpdateFraction());
   }
 
   /**
-   * Creates a Cancun fee market with the specified blob schedule parameters.
+   * Creates a Blob fee market with the specified blob schedule parameters.
    *
    * @param londonForkBlockNumber the block number at which the London fork activates.
    * @param baseFeePerGasOverride an optional override for the base fee per gas.
@@ -128,7 +128,7 @@ public interface FeeMarket {
       final long londonForkBlockNumber,
       final Optional<Wei> baseFeePerGasOverride,
       final BlobSchedule blobSchedule) {
-    return new CancunFeeMarket(
+    return new BlobFeeMarket(
         londonForkBlockNumber, baseFeePerGasOverride, blobSchedule.getBaseFeeUpdateFraction());
   }
 

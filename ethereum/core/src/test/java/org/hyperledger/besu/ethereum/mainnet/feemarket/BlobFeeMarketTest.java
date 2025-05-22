@@ -28,7 +28,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-class CancunFeeMarketTest {
+class BlobFeeMarketTest {
   private static final int BLOB_GAS_PER_BLOB = 131072;
 
   private static Stream<Arguments> provideBlobSchedules() {

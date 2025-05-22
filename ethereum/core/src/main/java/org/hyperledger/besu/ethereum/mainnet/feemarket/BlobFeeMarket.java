@@ -23,13 +23,13 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CancunFeeMarket extends LondonFeeMarket {
-  private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
+public class BlobFeeMarket extends LondonFeeMarket {
+  private static final Logger LOG = LoggerFactory.getLogger(BlobFeeMarket.class);
   protected static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
 
   private final BigInteger baseFeeUpdateFraction;
 
-  CancunFeeMarket(
+  BlobFeeMarket(
       final long londonForkBlockNumber,
       final Optional<Wei> baseFeePerGasOverride,
       final long baseFeeUpdateFraction) {
