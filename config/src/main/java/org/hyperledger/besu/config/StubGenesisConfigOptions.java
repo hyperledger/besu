@@ -725,26 +725,56 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     return this;
   }
 
+  /**
+   * BPO1 time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions bpo1Time(final long timestamp) {
     bpo1Time = OptionalLong.of(timestamp);
     return this;
   }
 
+  /**
+   * BPO2 time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions bpo2Time(final long timestamp) {
     bpo2Time = OptionalLong.of(timestamp);
     return this;
   }
 
+  /**
+   * BPO3 time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions bpo3Time(final long timestamp) {
     bpo3Time = OptionalLong.of(timestamp);
     return this;
   }
 
+  /**
+   * BPO4 time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions bpo4Time(final long timestamp) {
     bpo4Time = OptionalLong.of(timestamp);
     return this;
   }
 
+  /**
+   * BPO5 time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions bpo5Time(final long timestamp) {
     bpo5Time = OptionalLong.of(timestamp);
     return this;

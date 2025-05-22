@@ -72,22 +72,47 @@ public class BlobScheduleOptions {
     return getBlobSchedule(OSAKA_KEY);
   }
 
+  /**
+   * Gets bpo1 blob schedule.
+   *
+   * @return the bpo1 blob schedule
+   */
   public Optional<BlobSchedule> getBpo1() {
     return getBlobSchedule(BPO1_KEY);
   }
 
+  /**
+   * Gets bpo2 blob schedule.
+   *
+   * @return the bpo2 blob schedule
+   */
   public Optional<BlobSchedule> getBpo2() {
     return getBlobSchedule(BPO2_KEY);
   }
 
+  /**
+   * Gets bpo3 blob schedule.
+   *
+   * @return the bpo3 blob schedule
+   */
   public Optional<BlobSchedule> getBpo3() {
     return getBlobSchedule(BPO3_KEY);
   }
 
+  /**
+   * Gets bpo4 blob schedule.
+   *
+   * @return the bpo4 blob schedule
+   */
   public Optional<BlobSchedule> getBpo4() {
     return getBlobSchedule(BPO4_KEY);
   }
 
+  /**
+   * Gets bpo5 blob schedule.
+   *
+   * @return the bpo5 blob schedule
+   */
   public Optional<BlobSchedule> getBpo5() {
     return getBlobSchedule(BPO5_KEY);
   }
