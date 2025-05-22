@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -24,30 +23,22 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CancunFeeMarket extends LondonFeeMarket {
-  private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
+public class BlobFeeMarket extends LondonFeeMarket {
+  private static final Logger LOG = LoggerFactory.getLogger(BlobFeeMarket.class);
   protected static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
 
   private final BigInteger baseFeeUpdateFraction;
 
-  CancunFeeMarket(
+  BlobFeeMarket(
       final long londonForkBlockNumber,
       final Optional<Wei> baseFeePerGasOverride,
       final long baseFeeUpdateFraction) {
     super(londonForkBlockNumber, baseFeePerGasOverride);
-
     this.baseFeeUpdateFraction = BigInteger.valueOf(baseFeeUpdateFraction);
   }
 
-  CancunFeeMarket(final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
-    this(
-        londonForkBlockNumber,
-        baseFeePerGasOverride,
-        BlobSchedule.CANCUN_DEFAULT.getBaseFeeUpdateFraction());
-  }
-
   @Override
-  public boolean implementsDataFee() {
+  public boolean implementsBlobFee() {
     return true;
   }
 
@@ -78,9 +69,5 @@ public class CancunFeeMarket extends LondonFeeMarket {
       ++i;
     }
     return output.divide(denominator);
-  }
-
-  protected BigInteger getBaseFeeUpdateFraction() {
-    return baseFeeUpdateFraction;
   }
 }
