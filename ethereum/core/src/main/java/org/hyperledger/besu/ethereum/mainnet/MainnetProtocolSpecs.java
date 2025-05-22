@@ -484,7 +484,7 @@ public abstract class MainnetProtocolSpecs {
         .feeMarketBuilder(
             createFeeMarket(
                 londonForkBlockNumber,
-                genesisConfigOptions.isFixedBaseFee(),
+                genesisConfigOptions.isZeroBaseFee(),
                 genesisConfigOptions.isFixedBaseFee(),
                 miningConfiguration.getMinTransactionGasPrice(),
                 FeeMarket::london))
@@ -697,7 +697,7 @@ public abstract class MainnetProtocolSpecs {
         .feeMarketBuilder(
             createFeeMarket(
                 londonForkBlockNumber,
-                genesisConfigOptions.isFixedBaseFee(),
+                genesisConfigOptions.isZeroBaseFee(),
                 genesisConfigOptions.isFixedBaseFee(),
                 miningConfiguration.getMinTransactionGasPrice(),
                 FeeMarket::cancun))
