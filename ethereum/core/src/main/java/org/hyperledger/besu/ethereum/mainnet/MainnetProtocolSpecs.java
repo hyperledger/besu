@@ -945,6 +945,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.DELEGATE_CODE),
                     Set.of(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS),
                     evm.getMaxInitcodeSize()))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
         .name("Osaka");
   }
 
