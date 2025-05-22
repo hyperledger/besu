@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -35,19 +34,11 @@ public class CancunFeeMarket extends LondonFeeMarket {
       final Optional<Wei> baseFeePerGasOverride,
       final long baseFeeUpdateFraction) {
     super(londonForkBlockNumber, baseFeePerGasOverride);
-
     this.baseFeeUpdateFraction = BigInteger.valueOf(baseFeeUpdateFraction);
   }
 
-  CancunFeeMarket(final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
-    this(
-        londonForkBlockNumber,
-        baseFeePerGasOverride,
-        BlobSchedule.CANCUN_DEFAULT.getBaseFeeUpdateFraction());
-  }
-
   @Override
-  public boolean implementsDataFee() {
+  public boolean implementsBlobFee() {
     return true;
   }
 
@@ -55,7 +46,8 @@ public class CancunFeeMarket extends LondonFeeMarket {
   public Wei blobGasPricePerGas(final BlobGas excessBlobGas) {
     final var blobGasPrice =
         Wei.of(
-            fakeExponential(BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), baseFeeUpdateFraction));
+            fakeExponential(
+                BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), getBaseFeeUpdateFraction()));
     LOG.atTrace()
         .setMessage("parentExcessBlobGas: {} blobGasPrice: {}")
         .addArgument(excessBlobGas::toShortHexString)

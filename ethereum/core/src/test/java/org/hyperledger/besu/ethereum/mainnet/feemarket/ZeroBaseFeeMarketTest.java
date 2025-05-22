@@ -141,8 +141,8 @@ public class ZeroBaseFeeMarketTest {
   }
 
   @Test
-  public void implementsDataFeedShouldReturnFalse() {
-    assertThat(zeroBaseFeeMarket.implementsDataFee()).isFalse();
+  public void implementsBlobFeedShouldReturnFalse() {
+    assertThat(zeroBaseFeeMarket.implementsBlobFee()).isFalse();
   }
 
   @Test

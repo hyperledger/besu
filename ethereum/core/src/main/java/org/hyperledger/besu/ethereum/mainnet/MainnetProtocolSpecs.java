@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarketFactory.createFeeMarket;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsProcessor.pragueRequestsProcessors;
 
 import org.hyperledger.besu.config.BlobSchedule;
@@ -474,24 +475,20 @@ public abstract class MainnetProtocolSpecs {
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber =
         genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
-    final BaseFeeMarket londonFeeMarket;
-    if (genesisConfigOptions.isZeroBaseFee()) {
-      londonFeeMarket = FeeMarket.zeroBaseFee(londonForkBlockNumber);
-    } else if (genesisConfigOptions.isFixedBaseFee()) {
-      londonFeeMarket =
-          FeeMarket.fixedBaseFee(
-              londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
-    } else {
-      londonFeeMarket =
-          FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
-    }
+
     return berlinDefinition(
             chainId,
             enableRevertReason,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .feeMarketBuilder(blobSchedule -> londonFeeMarket)
+        .feeMarketBuilder(
+            createFeeMarket(
+                londonForkBlockNumber,
+                genesisConfigOptions.isFixedBaseFee(),
+                genesisConfigOptions.isFixedBaseFee(),
+                miningConfiguration.getMinTransactionGasPrice(),
+                FeeMarket::london))
         .gasCalculator(blobSchedule -> new LondonGasCalculator())
         .gasLimitCalculatorBuilder(
             (feeMarket, gasCalculator, blobSchedule) ->
@@ -690,21 +687,6 @@ public abstract class MainnetProtocolSpecs {
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
 
-    final ProtocolSpecBuilder.FeeMarketBuilder cancunFeeMarketBuilder =
-        (blobSchedule) -> {
-          if (genesisConfigOptions.isZeroBaseFee()) {
-            return FeeMarket.zeroBaseFee(londonForkBlockNumber);
-          } else if (genesisConfigOptions.isFixedBaseFee()) {
-            return FeeMarket.fixedBaseFee(
-                londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
-          } else {
-            return FeeMarket.cancun(
-                londonForkBlockNumber,
-                genesisConfigOptions.getBaseFeePerGas(),
-                blobSchedule.getBaseFeeUpdateFraction());
-          }
-        };
-
     return shanghaiDefinition(
             chainId,
             enableRevertReason,
@@ -713,7 +695,13 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .feeMarketBuilder(cancunFeeMarketBuilder)
+        .feeMarketBuilder(
+            createFeeMarket(
+                londonForkBlockNumber,
+                genesisConfigOptions.isFixedBaseFee(),
+                genesisConfigOptions.isFixedBaseFee(),
+                miningConfiguration.getMinTransactionGasPrice(),
+                FeeMarket::cancun))
         .blobSchedule(
             genesisConfigOptions
                 .getBlobScheduleOptions()
@@ -820,20 +808,6 @@ public abstract class MainnetProtocolSpecs {
                     .getBlobScheduleOptions()
                     .flatMap(BlobScheduleOptions::getPrague)
                     .orElse(BlobSchedule.PRAGUE_DEFAULT))
-            .feeMarketBuilder(
-                blobSchedule -> {
-                  if (genesisConfigOptions.isZeroBaseFee()) {
-                    return FeeMarket.zeroBaseFee(londonForkBlockNumber);
-                  } else if (genesisConfigOptions.isFixedBaseFee()) {
-                    return FeeMarket.fixedBaseFee(
-                        londonForkBlockNumber, miningConfiguration.getMinTransactionGasPrice());
-                  } else {
-                    return FeeMarket.prague(
-                        londonForkBlockNumber,
-                        genesisConfigOptions.getBaseFeePerGas(),
-                        blobSchedule.getBaseFeeUpdateFraction());
-                  }
-                })
             .gasCalculator(
                 blobSchedule ->
                     new PragueGasCalculator(blobSchedule.getTarget()) // EIP-7691 6/9 blob increase

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,23 +16,33 @@ package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.datatypes.BlobGas;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class CancunFeeMarketTest {
-
   private static final int BLOB_GAS_PER_BLOB = 131072;
 
-  @Test
-  void dataPricePerGas() {
-    final BaseFeeMarket cancunFeeMarket = FeeMarket.cancun(0, Optional.empty());
+  private static Stream<Arguments> provideBlobSchedules() {
+    return Stream.of(
+        Arguments.of("Cancun", BlobSchedule.CANCUN_DEFAULT),
+        Arguments.of("Prague", BlobSchedule.PRAGUE_DEFAULT));
+  }
+
+  @ParameterizedTest(name = "{0} {1}")
+  @MethodSource("provideBlobSchedules")
+  void dataPricePerGas(final String name, final BlobSchedule blobSchedule) {
+    final BaseFeeMarket feeMarket = FeeMarket.cancun(0, Optional.empty(), blobSchedule);
     // when no excess blob gas, data price per gas is 1
-    assertEquals(1, cancunFeeMarket.blobGasPricePerGas(BlobGas.ZERO).getAsBigInteger().intValue());
+    assertEquals(1, feeMarket.blobGasPricePerGas(BlobGas.ZERO).getAsBigInteger().intValue());
 
     record BlobGasPricing(long excess, long price) {}
     List<BlobGasPricing> testVector = new ArrayList<>();
@@ -40,26 +50,25 @@ class CancunFeeMarketTest {
     int numBlobs = 1;
     long price = 1;
     while (price <= 1000) {
-      price = blobGasPrice(BlobGas.of(numBlobs * BLOB_GAS_PER_BLOB));
-      var testCase = new BlobGasPricing(numBlobs * BLOB_GAS_PER_BLOB, price);
+      price = blobGasPrice(BlobGas.of((long) numBlobs * BLOB_GAS_PER_BLOB), blobSchedule);
+      var testCase = new BlobGasPricing((long) numBlobs * BLOB_GAS_PER_BLOB, price);
       testVector.add(testCase);
       numBlobs++;
     }
 
-    testVector.stream()
-        .forEach(
-            blobGasPricing -> {
-              assertEquals(
-                  blobGasPricing.price,
-                  cancunFeeMarket
-                      .blobGasPricePerGas(BlobGas.of(blobGasPricing.excess))
-                      .getAsBigInteger()
-                      .intValue());
-            });
+    testVector.forEach(
+        blobGasPricing -> {
+          assertEquals(
+              blobGasPricing.price,
+              feeMarket
+                  .blobGasPricePerGas(BlobGas.of(blobGasPricing.excess))
+                  .getAsBigInteger()
+                  .intValue());
+        });
   }
 
-  private long blobGasPrice(final BlobGas excess) {
-    double dgufDenominator = 3338477;
+  private long blobGasPrice(final BlobGas excess, final BlobSchedule blobSchedule) {
+    double dgufDenominator = blobSchedule.getBaseFeeUpdateFraction();
     double fakeExpo = excess.getValue().longValue() / dgufDenominator;
     return (long) (1 * Math.exp(fakeExpo));
   }
