@@ -1,6 +1,6 @@
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.config.BlobScheduleOptions;
+import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.slf4j.Logger;
@@ -22,13 +22,11 @@ public class OsakaFeeMarket extends PragueFeeMarket {
         super(londonForkBlockNumber, baseFeePerGasOverride, baseFeeUpdateFraction);
     }
 
-    public OsakaFeeMarket(
-            final long londonForkBlockNumber,
-            final Optional<Wei> baseFeePerGasOverride) {
+    public OsakaFeeMarket(final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
         this(
                 londonForkBlockNumber,
                 baseFeePerGasOverride,
-                BlobScheduleOptions.BlobSchedule.PRAGUE_DEFAULT.getBaseFeeUpdateFraction());
+                BlobSchedule.OSAKA_DEFAULT.getBaseFeeUpdateFraction());
     }
 
     @Override

@@ -18,7 +18,7 @@ class OsakaFeeMarketTest {
     void dataPricePerGas() {
         final OsakaFeeMarket osakaFeeMarket = new OsakaFeeMarket(0, Optional.empty());
 
-        assertEquals(1, osakaFeeMarket.blobGasPricePerGas(BlobGas.ZERO).getAsBigInteger().intValue());
+        assertEquals(33554432, osakaFeeMarket.blobGasPricePerGas(BlobGas.ZERO).getAsBigInteger().intValue());
 
         record BlobGasPricing(long excess, long price) {}
         List<BlobGasPricing> testVector = new ArrayList<>();
@@ -46,7 +46,7 @@ class OsakaFeeMarketTest {
     private long blobGasPrice(final BlobGas excess) {
         double dgufDenominator = 5007716;
         double fakeExpo = excess.getValue().longValue() / dgufDenominator;
-        return (long) (1 * Math.exp(fakeExpo));
+        return (long) (Math.pow(2, 25) * Math.exp(fakeExpo));
     }
 }
 

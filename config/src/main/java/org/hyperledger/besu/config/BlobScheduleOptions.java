@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.config;
 
-import java.util.Map;
-import java.util.Optional;
-
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
+import java.util.Optional;
 
 /** The Blob Schedule config options. */
 public class BlobScheduleOptions {
