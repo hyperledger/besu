@@ -53,7 +53,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   private static final int MODULUS_LENGTH_OFFSET = 64;
 
   private static final long BYZANTIUM_UPPER_BOUND = Long.MAX_VALUE;
-  private static final long OSAKA_UPPER_BOUND = 8192L;
+  private static final long OSAKA_UPPER_BOUND = 1024L;
   private final long upperBound;
 
   /**
@@ -131,7 +131,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
     // https://eips.ethereum.org/EIPS/eip-7823
     // We introduce an upper bound to the inputs of the precompile,
     // each of the length inputs (length_of_BASE, length_of_EXPONENT and length_of_MODULUS)
-    // MUST be less than or equal to 8192 bits (1024 bytes).
+    // MUST be less than or equal to 1024 bytes.
     final long length_of_BASE = baseLength(input);
     final long length_of_EXPONENT = exponentLength(input);
     final long length_of_MODULUS = modulusLength(input);
