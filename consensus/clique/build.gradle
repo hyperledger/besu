@@ -16,7 +16,7 @@
 plugins { id 'java' }
 
 jar {
-  archiveBaseName = 'besu-clique'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,

@@ -1,3 +1,18 @@
+apply plugin: 'java-library'
+
+jar {
+  archiveBaseName = calculateArtifactId(project)
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
+      )
+  }
+}
+
 dependencies {
   implementation project(':besu')
   implementation project(':config')
