@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarketBuilderFactory.createFeeMarket;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsProcessor.pragueRequestsProcessors;
 
 import org.hyperledger.besu.config.BlobSchedule;
@@ -486,9 +485,10 @@ public abstract class MainnetProtocolSpecs {
                 londonForkBlockNumber,
                 genesisConfigOptions.isZeroBaseFee(),
                 genesisConfigOptions.isFixedBaseFee(),
-                genesisConfigOptions.getBaseFeePerGas(),
                 miningConfiguration.getMinTransactionGasPrice(),
-                FeeMarket::london))
+                (blobSchedule) ->
+                    FeeMarket.london(
+                        londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas())))
         .gasCalculator(blobSchedule -> new LondonGasCalculator())
         .gasLimitCalculatorBuilder(
             (feeMarket, gasCalculator, blobSchedule) ->
@@ -700,9 +700,12 @@ public abstract class MainnetProtocolSpecs {
                 londonForkBlockNumber,
                 genesisConfigOptions.isZeroBaseFee(),
                 genesisConfigOptions.isFixedBaseFee(),
-                genesisConfigOptions.getBaseFeePerGas(),
                 miningConfiguration.getMinTransactionGasPrice(),
-                FeeMarket::cancun))
+                (blobSchedule) ->
+                    FeeMarket.cancun(
+                        londonForkBlockNumber,
+                        genesisConfigOptions.getBaseFeePerGas(),
+                        blobSchedule)))
         .blobSchedule(
             genesisConfigOptions
                 .getBlobScheduleOptions()
@@ -1130,5 +1133,20 @@ public abstract class MainnetProtocolSpecs {
         throw new IllegalStateException(e);
       }
     }
+  }
+
+  static ProtocolSpecBuilder.FeeMarketBuilder createFeeMarket(
+      final long londonForkBlockNumber,
+      final boolean isZeroBaseFee,
+      final boolean isFixedBaseFee,
+      final Wei minTransactionGasPrice,
+      final ProtocolSpecBuilder.FeeMarketBuilder feeMarketBuilder) {
+    if (isZeroBaseFee) {
+      return blobSchedule -> FeeMarket.zeroBaseFee(londonForkBlockNumber);
+    }
+    if (isFixedBaseFee) {
+      return blobSchedule -> FeeMarket.fixedBaseFee(londonForkBlockNumber, minTransactionGasPrice);
+    }
+    return feeMarketBuilder;
   }
 }
