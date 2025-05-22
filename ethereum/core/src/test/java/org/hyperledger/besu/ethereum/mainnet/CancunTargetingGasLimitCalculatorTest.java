@@ -29,7 +29,7 @@ class CancunTargetingGasLimitCalculatorTest {
   void currentBlobGasLimitIs6Blobs() {
     var cancunTargetingGasLimitCalculator =
         new org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator(
-            0L, FeeMarket.cancun(0L, Optional.empty()), new CancunGasCalculator());
+            0L, FeeMarket.cancunDefault(0L, Optional.empty()), new CancunGasCalculator());
     assertThat(cancunTargetingGasLimitCalculator.currentBlobGasLimit()).isEqualTo(0xC0000);
   }
 
@@ -41,7 +41,7 @@ class CancunTargetingGasLimitCalculatorTest {
     int maxBlobs = 10;
     var cancunTargetingGasLimitCalculator =
         new CancunTargetingGasLimitCalculator(
-            0L, FeeMarket.cancun(0L, Optional.empty()), new CancunGasCalculator(), maxBlobs);
+            0L, FeeMarket.cancunDefault(0L, Optional.empty()), new CancunGasCalculator(), maxBlobs);
     // if maxBlobs = 10, then the gas limit would be 131072 * 10 = 1310720
     assertThat(cancunTargetingGasLimitCalculator.currentBlobGasLimit())
         .isEqualTo(blobGasPerBlob * maxBlobs);
@@ -58,7 +58,10 @@ class CancunTargetingGasLimitCalculatorTest {
     int maxBlobs = 10;
     var cancunTargetingGasLimitCalculator =
         new CancunTargetingGasLimitCalculator(
-            0L, FeeMarket.cancun(0L, Optional.empty()), new TestFutureGasCalculator(), maxBlobs);
+            0L,
+            FeeMarket.cancunDefault(0L, Optional.empty()),
+            new TestFutureGasCalculator(),
+            maxBlobs);
     // if maxBlobs = 10, then the gas limit would be 262144 * 10 = 2621440
     assertThat(cancunTargetingGasLimitCalculator.currentBlobGasLimit())
         .isEqualTo(blobGasPerBlob * maxBlobs);
