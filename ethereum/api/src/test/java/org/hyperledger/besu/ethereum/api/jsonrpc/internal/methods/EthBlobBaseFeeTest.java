@@ -58,7 +58,7 @@ public class EthBlobBaseFeeTest {
   /** Tests that the method returns the expected blob base fee */
   @Test
   public void shouldReturnBlobBaseFee() {
-    configureProtocolSpec(FeeMarket.cancun(5, Optional.empty()), new CancunGasCalculator());
+    configureProtocolSpec(FeeMarket.cancunDefault(5, Optional.empty()), new CancunGasCalculator());
     assertThat(requestBlobBaseFee().getResult()).isEqualTo("0x1");
   }
 
