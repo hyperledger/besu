@@ -6,6 +6,7 @@
 - Change in behavior, the non standard `strict` parameter of the `eth_estimateGas` method changed its default from `false` to `true`, for more accurate estimations. It is still possible to force the previous behavior, explicitly passing the `strict` parameter in the request, set to `false` [#8629](https://github.com/hyperledger/besu/pull/8629)
 
 ### Upcoming Breaking Changes
+- `--Xsnapsync-server-enabled` is deprecated, use `--snapsync-server-enabled` instead [#8512](https://github.com/hyperledger/besu/pull/8512)
 ### Additions and Improvements
 - Add eth/69 protocol for optional use by using the `--Xeth-capability-max=69` flag (currently defaults to 68) [#8519](https://github.com/hyperledger/besu/pull/8519)
 - `--Xplugin-rocksdb-blockchain-blob-garbage-collection-enabled` Adds ability to enabled BlobDB GC for BLOCKCHAIN column family [#8599](https://github.com/hyperledger/besu/pull/8599)
