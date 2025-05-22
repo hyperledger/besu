@@ -926,7 +926,8 @@ public abstract class MainnetProtocolSpecs {
                     (BaseFeeMarket) feeMarket,
                     gasCalculator,
                     blobSchedule.getMax()))
-        .name("Osaka");
+      .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
+      .name("Osaka");
   }
 
   private static ProtocolSpecBuilder addEOF(
