@@ -94,7 +94,7 @@ public class PathBasedExtraStorageOptions
       },
       arity = "1",
       description =
-          "Enables parallelization of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. (default: ${DEFAULT-VALUE})")
+          "Enables parallelization of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. Will be ignored if --data-storage-format is not bonsai (default: ${DEFAULT-VALUE})")
   private Boolean isParallelTxProcessingEnabled = DEFAULT_PARALLEL_TX_PROCESSING;
 
   @CommandLine.ArgGroup(validate = false)
@@ -168,12 +168,6 @@ public class PathBasedExtraStorageOptions
                   trieLogPruningWindowSize,
                   maxLayersToLoad));
         }
-      }
-    } else {
-      if (isParallelTxProcessingEnabled) {
-        throw new CommandLine.ParameterException(
-            commandLine,
-            "Transaction parallelization is not supported unless operating in a 'pathbased' mode, such as Bonsai.");
       }
     }
   }
