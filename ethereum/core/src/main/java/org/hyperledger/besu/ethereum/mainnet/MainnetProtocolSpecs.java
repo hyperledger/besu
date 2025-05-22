@@ -929,6 +929,126 @@ public abstract class MainnetProtocolSpecs {
         .name("Osaka");
   }
 
+  static ProtocolSpecBuilder bpo1Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    return osakaDefinition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
+        .blobSchedule(
+            genesisConfigOptions
+                .getBlobScheduleOptions()
+                .flatMap(BlobScheduleOptions::getBpo1)
+                .orElseThrow(() -> new IllegalStateException("BPO1 blob schedule not found")))
+        .name("BPO1");
+  }
+
+  static ProtocolSpecBuilder bpo2Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    return bpo1Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
+        .blobSchedule(
+            genesisConfigOptions
+                .getBlobScheduleOptions()
+                .flatMap(BlobScheduleOptions::getBpo2)
+                .orElseThrow(() -> new IllegalStateException("BPO2 blob schedule not found")))
+        .name("BPO2");
+  }
+
+  static ProtocolSpecBuilder bpo3Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    return osakaDefinition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
+        .blobSchedule(
+            genesisConfigOptions
+                .getBlobScheduleOptions()
+                .flatMap(BlobScheduleOptions::getBpo3)
+                .orElseThrow(() -> new IllegalStateException("BPO3 blob schedule not found")))
+        .name("BPO3");
+  }
+
+  static ProtocolSpecBuilder bpo4Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    return osakaDefinition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
+        .blobSchedule(
+            genesisConfigOptions
+                .getBlobScheduleOptions()
+                .flatMap(BlobScheduleOptions::getBpo4)
+                .orElseThrow(() -> new IllegalStateException("BPO4 blob schedule not found")))
+        .name("BPO4");
+  }
+
+  static ProtocolSpecBuilder bpo5Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    return bpo4Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
+        .blobSchedule(
+            genesisConfigOptions
+                .getBlobScheduleOptions()
+                .flatMap(BlobScheduleOptions::getBpo5)
+                .orElseThrow(() -> new IllegalStateException("BPO5 blob schedule not found")))
+        .name("BPO5");
+  }
+
   private static ProtocolSpecBuilder addEOF(
       final GenesisConfigOptions genesisConfigOptions,
       final Optional<BigInteger> chainId,
@@ -972,7 +1092,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder protocolSpecBuilder =
-        osakaDefinition(
+        bpo5Definition(
                 chainId,
                 enableRevertReason,
                 genesisConfigOptions,

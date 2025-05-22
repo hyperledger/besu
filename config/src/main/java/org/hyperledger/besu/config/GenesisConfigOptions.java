@@ -270,6 +270,16 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getOsakaTime();
 
+  OptionalLong getBpo1Time();
+
+  OptionalLong getBpo2Time();
+
+  OptionalLong getBpo3Time();
+
+  OptionalLong getBpo4Time();
+
+  OptionalLong getBpo5Time();
+
   /**
    * Gets future eips time.
    *
