@@ -75,9 +75,9 @@ public class PasswordSubCommandTest extends CommandTestAbstract {
   @Test
   public void passwordHashSubCommandVersionDisplaysVersion() {
     parseCommand("password", "hash", "--version");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8))
         .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test

@@ -152,15 +152,15 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   @Test
   public void callingPublicKeySubCommandWithoutSubSubcommandMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME);
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
   }
 
   @Test
   public void callingPublicKeySubCommandHelpMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
   }
 
   @Test
@@ -175,8 +175,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   @Test
   public void callingPublicKeyExportSubCommandHelpMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_USAGE);
   }
 
   @Test
@@ -194,8 +194,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME);
 
     final String expectedOutputStart = nodeKey.getPublicKey().toString();
-    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   @Test
@@ -237,8 +237,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         privateKeyFile.toString());
 
     final String expectedOutputStart = keyPair.getPublicKey().toString();
-    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   @Test
@@ -271,8 +271,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   @Test
   public void callingPublicKeyExportAddressSubCommandHelpMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE);
   }
 
   @Test
@@ -291,8 +291,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME);
 
     final String expectedOutputStart = Util.publicKeyToAddress(nodeKey.getPublicKey()).toString();
-    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   @Test
@@ -338,8 +338,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         privateKeyFile.toString());
 
     final String expectedOutputStart = Util.publicKeyToAddress(keyPair.getPublicKey()).toString();
-    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   @Test

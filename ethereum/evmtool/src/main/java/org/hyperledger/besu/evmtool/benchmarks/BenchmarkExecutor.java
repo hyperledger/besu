@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.EOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
@@ -144,9 +145,8 @@ public abstract class BenchmarkExecutor {
       case CANCUN -> new CancunGasCalculator();
       case CANCUN_EOF -> new OsakaGasCalculator();
       case PRAGUE -> new PragueGasCalculator();
-      case OSAKA -> new OsakaGasCalculator();
-      case AMSTERDAM, BOGOTA, POLIS, BANGKOK, FUTURE_EIPS, EXPERIMENTAL_EIPS ->
-          new OsakaGasCalculator();
+      case OSAKA, AMSTERDAM, BOGOTA, POLIS, BANGKOK, EXPERIMENTAL_EIPS -> new OsakaGasCalculator();
+      case FUTURE_EIPS -> new EOFGasCalculator();
     };
   }
 
