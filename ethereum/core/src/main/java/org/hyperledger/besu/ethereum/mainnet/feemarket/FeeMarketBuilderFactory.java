@@ -41,11 +41,11 @@ public class FeeMarketBuilderFactory {
    * @return a configured {@link ProtocolSpecBuilder.FeeMarketBuilder}
    */
   public static ProtocolSpecBuilder.FeeMarketBuilder createFeeMarket(
-      long londonForkBlockNumber,
-      boolean isZeroBaseFee,
-      boolean isFixedBaseFee,
-      Wei minTransactionGasPrice,
-      FeeMarketBuilder feeMarketBuilder) {
+      final long londonForkBlockNumber,
+      final boolean isZeroBaseFee,
+      final boolean isFixedBaseFee,
+      final Wei minTransactionGasPrice,
+      final FeeMarketBuilder feeMarketBuilder) {
     if (isZeroBaseFee) {
       return blobSchedule -> FeeMarket.zeroBaseFee(londonForkBlockNumber);
     }

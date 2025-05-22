@@ -46,8 +46,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
   public Wei blobGasPricePerGas(final BlobGas excessBlobGas) {
     final var blobGasPrice =
         Wei.of(
-            fakeExponential(
-                BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), getBaseFeeUpdateFraction()));
+            fakeExponential(BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), baseFeeUpdateFraction));
     LOG.atTrace()
         .setMessage("parentExcessBlobGas: {} blobGasPrice: {}")
         .addArgument(excessBlobGas::toShortHexString)
@@ -70,9 +69,5 @@ public class CancunFeeMarket extends LondonFeeMarket {
       ++i;
     }
     return output.divide(denominator);
-  }
-
-  protected BigInteger getBaseFeeUpdateFraction() {
-    return baseFeeUpdateFraction;
   }
 }
