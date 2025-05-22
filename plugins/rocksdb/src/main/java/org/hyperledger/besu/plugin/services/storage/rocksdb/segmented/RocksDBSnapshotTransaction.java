@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 
 /** The Rocks db snapshot transaction. */
 public class RocksDBSnapshotTransaction
-    implements SegmentedKeyValueStorageTransaction, AutoCloseable {
+        implements SegmentedKeyValueStorageTransaction, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBSnapshotTransaction.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
   private final RocksDBMetrics metrics;
@@ -60,9 +60,9 @@ public class RocksDBSnapshotTransaction
    * @param metrics the metrics
    */
   RocksDBSnapshotTransaction(
-      final OptimisticTransactionDB db,
-      final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper,
-      final RocksDBMetrics metrics) {
+          final OptimisticTransactionDB db,
+          final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper,
+          final RocksDBMetrics metrics) {
     this.metrics = metrics;
     this.db = db;
     this.columnFamilyMapper = columnFamilyMapper;
@@ -70,16 +70,16 @@ public class RocksDBSnapshotTransaction
     this.writeOptions = new WriteOptions();
     this.snapTx = db.beginTransaction(writeOptions);
     this.readOptions =
-        new ReadOptions().setVerifyChecksums(false).setSnapshot(snapshot.markAndUseSnapshot());
+            new ReadOptions().setVerifyChecksums(false).setSnapshot(snapshot.markAndUseSnapshot());
   }
 
   private RocksDBSnapshotTransaction(
-      final OptimisticTransactionDB db,
-      final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper,
-      final RocksDBMetrics metrics,
-      final RocksDBSnapshot snapshot,
-      final Transaction snapTx,
-      final ReadOptions readOptions) {
+          final OptimisticTransactionDB db,
+          final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper,
+          final RocksDBMetrics metrics,
+          final RocksDBSnapshot snapshot,
+          final Transaction snapTx,
+          final ReadOptions readOptions) {
     this.metrics = metrics;
     this.db = db;
     this.columnFamilyMapper = columnFamilyMapper;
@@ -98,9 +98,8 @@ public class RocksDBSnapshotTransaction
    */
   public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key) {
     throwIfClosed();
-
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      return Optional.ofNullable(snapTx.get(readOptions, columnFamilyMapper.apply(segmentId), key));
+      return Optional.ofNullable(snapshot.get(columnFamilyMapper.apply(segmentId), readOptions, key));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
@@ -159,7 +158,7 @@ public class RocksDBSnapshotTransaction
     throwIfClosed();
 
     final RocksIterator rocksIterator =
-        db.newIterator(columnFamilyMapper.apply(segmentId), readOptions);
+            db.newIterator(columnFamilyMapper.apply(segmentId), readOptions);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStream();
   }
@@ -174,7 +173,7 @@ public class RocksDBSnapshotTransaction
     throwIfClosed();
 
     final RocksIterator rocksIterator =
-        db.newIterator(columnFamilyMapper.apply(segmentId), readOptions);
+            db.newIterator(columnFamilyMapper.apply(segmentId), readOptions);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
   }
@@ -189,11 +188,11 @@ public class RocksDBSnapshotTransaction
    * @return A stream of key-value pairs starting from the specified key.
    */
   public Stream<Pair<byte[], byte[]>> streamFromKey(
-      final SegmentIdentifier segment, final byte[] startKey) {
+          final SegmentIdentifier segment, final byte[] startKey) {
     throwIfClosed();
 
     final RocksIterator rocksIterator =
-        db.newIterator(columnFamilyMapper.apply(segment), readOptions);
+            db.newIterator(columnFamilyMapper.apply(segment), readOptions);
     rocksIterator.seek(startKey);
     return RocksDbIterator.create(rocksIterator).toStream();
   }
@@ -210,16 +209,16 @@ public class RocksDBSnapshotTransaction
    * @return A stream of key-value pairs starting from the specified key.
    */
   public Stream<Pair<byte[], byte[]>> streamFromKey(
-      final SegmentIdentifier segment, final byte[] startKey, final byte[] endKey) {
+          final SegmentIdentifier segment, final byte[] startKey, final byte[] endKey) {
     throwIfClosed();
     final Bytes endKeyBytes = Bytes.wrap(endKey);
 
     final RocksIterator rocksIterator =
-        db.newIterator(columnFamilyMapper.apply(segment), readOptions);
+            db.newIterator(columnFamilyMapper.apply(segment), readOptions);
     rocksIterator.seek(startKey);
     return RocksDbIterator.create(rocksIterator)
-        .toStream()
-        .takeWhile(e -> endKeyBytes.compareTo(Bytes.wrap(e.getKey())) >= 0);
+            .toStream()
+            .takeWhile(e -> endKeyBytes.compareTo(Bytes.wrap(e.getKey())) >= 0);
   }
 
   @Override
@@ -257,7 +256,7 @@ public class RocksDBSnapshotTransaction
       var copySnapTx = db.beginTransaction(writeOptions);
       copySnapTx.rebuildFromWriteBatch(snapTx.getWriteBatch().getWriteBatch());
       return new RocksDBSnapshotTransaction(
-          db, columnFamilyMapper, metrics, snapshot, copySnapTx, copyReadOptions);
+              db, columnFamilyMapper, metrics, snapshot, copySnapTx, copyReadOptions);
     } catch (Exception ex) {
       LOG.error("Failed to copy snapshot transaction", ex);
       snapshot.unMarkSnapshot();
