@@ -23,7 +23,7 @@ import java.util.Optional;
 /**
  * Factory for creating {@link FeeMarket} instances used in protocol specification configuration.
  */
-public class FeeMarketFactory {
+public class FeeMarketBuilderFactory {
   @FunctionalInterface
   public interface FeeMarketBuilder {
     FeeMarket apply(
@@ -31,14 +31,13 @@ public class FeeMarketFactory {
   }
 
   /**
-   * Creates a {@link ProtocolSpecBuilder.FeeMarketBuilder} based on the given parameters. Supports
-   * selection among zero base fee, fixed base fee, or a custom builder.
+   * Creates a {@link ProtocolSpecBuilder.FeeMarketBuilder} based on the given parameters.
    *
    * @param londonForkBlockNumber the block number of the London fork
    * @param isZeroBaseFee whether to use zero base fee market
    * @param isFixedBaseFee whether to use fixed base fee market
    * @param minTransactionGasPrice minimum gas price for transactions
-   * @param feeMarketBuilder a custom fee market builder for non-default strategies
+   * @param feeMarketBuilder the feeMarketBuilder
    * @return a configured {@link ProtocolSpecBuilder.FeeMarketBuilder}
    */
   public static ProtocolSpecBuilder.FeeMarketBuilder createFeeMarket(

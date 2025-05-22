@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarketFactory.createFeeMarket;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarketBuilderFactory.createFeeMarket;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsProcessor.pragueRequestsProcessors;
 
 import org.hyperledger.besu.config.BlobSchedule;
@@ -475,7 +475,6 @@ public abstract class MainnetProtocolSpecs {
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber =
         genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
-
     return berlinDefinition(
             chainId,
             enableRevertReason,
