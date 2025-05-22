@@ -985,7 +985,7 @@ public abstract class MainnetProtocolSpecs {
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-    return osakaDefinition(
+    return bpo2Definition(
             chainId,
             enableRevertReason,
             genesisConfigOptions,
@@ -1009,7 +1009,7 @@ public abstract class MainnetProtocolSpecs {
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-    return osakaDefinition(
+    return bpo3Definition(
             chainId,
             enableRevertReason,
             genesisConfigOptions,
