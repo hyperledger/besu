@@ -87,6 +87,18 @@ public class BlobSchedule {
     return Map.of("target", target, "max", max, "baseFeeUpdateFraction", baseFeeUpdateFraction);
   }
 
+  @Override
+  public String toString() {
+    return "BlobSchedule{"
+        + "target="
+        + target
+        + ", max="
+        + max
+        + ", baseFeeUpdateFraction="
+        + baseFeeUpdateFraction
+        + '}';
+  }
+
   /** A class that represents a BlobSchedule where all methods throw an exception. */
   public static class NoBlobSchedule extends BlobSchedule {
     /** Constructs a NoBlobSchedule */
