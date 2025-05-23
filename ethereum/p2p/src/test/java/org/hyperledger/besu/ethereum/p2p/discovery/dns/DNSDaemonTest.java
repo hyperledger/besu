@@ -28,7 +28,6 @@ import io.vertx.junit5.VertxTestContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -98,7 +97,59 @@ class DNSDaemonTest {
     vertx.deployVerticle(dnsDaemon, options);
   }
 
-  @Disabled("test is flaky see https://github.com/hyperledger/besu/issues/8373")
+  @Test
+  @DisplayName("Test DNS Daemon with a mock DNS server and add in am invalid ENR")
+  void invalidEnrShouldNotCrashDaemon(final Vertx vertx, final VertxTestContext testContext) {
+    final Checkpoint checkpoint = testContext.checkpoint();
+    dnsDaemon =
+        new DNSDaemon(
+            holeskyEnr,
+            (seq, records) -> {
+              if (seq != EXPECTED_SEQ) {
+                testContext.failNow(
+                    String.format(
+                        "Expecting sequence to be %d in first pass but got: %d",
+                        EXPECTED_SEQ, seq));
+              }
+              if (records.size() != 115) {
+                testContext.failNow(
+                    "Expecting 115 records in first pass but got: " + records.size());
+              }
+              records.forEach(
+                  enr -> {
+                    try {
+                      // make sure enode url can be built from record
+                      EnodeURLImpl.builder()
+                          .ipAddress(enr.ip())
+                          .nodeId(enr.publicKey())
+                          .discoveryPort(enr.udp())
+                          .listeningPort(enr.tcp())
+                          .build();
+                    } catch (final Exception e) {
+                      testContext.failNow(e);
+                    }
+                  });
+              checkpoint.flag();
+            },
+            0,
+            1L,
+            0,
+            "localhost:" + mockDnsServerVerticle.port());
+
+    mockDnsServerVerticle.addTxtRecord(
+        "FDXN3SN67NA5DKA4J2GOK7BVQI.all.holesky.ethdisco.net",
+        "enrtree-branch:I56MJAJBMXTZZEPBQR6HWNAH7A");
+    mockDnsServerVerticle.addTxtRecord(
+        "I56MJAJBMXTZZEPBQR6HWNAH7A.all.holesky.ethdisco.net", "enr:-Lu4QMFaK");
+
+    final DeploymentOptions options =
+        new DeploymentOptions()
+            .setThreadingModel(ThreadingModel.VIRTUAL_THREAD)
+            .setWorkerPoolSize(1);
+    vertx.deployVerticle(dnsDaemon, options);
+  }
+
+  //  @Disabled("test is flaky see https://github.com/hyperledger/besu/issues/8373")
   @Test
   @DisplayName("Test DNS Daemon with periodic lookup to a mock DNS server")
   void testDNSDaemonPeriodic(final Vertx vertx, final VertxTestContext testContext)
