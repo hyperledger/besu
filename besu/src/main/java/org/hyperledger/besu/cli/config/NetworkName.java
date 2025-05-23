@@ -32,14 +32,14 @@ public enum NetworkName {
   MAINNET(
       "/mainnet.json",
       BigInteger.valueOf(1),
-      OptionalInt.of(15_537_393),
+      OptionalInt.of(15_537_394),
       true,
       NativeRequirement.MAINNET),
   /** Sepolia network name. */
   SEPOLIA(
       "/sepolia.json",
       BigInteger.valueOf(11155111),
-      OptionalInt.of(1_735_371),
+      OptionalInt.of(1_450_409),
       true,
       NativeRequirement.MAINNET),
   /** Holešky network name. */
@@ -81,33 +81,33 @@ public enum NetworkName {
 
   private final String genesisFile;
   private final BigInteger networkId;
-  private final OptionalInt mergeBlockNumber;
+  private final OptionalInt firstPosBlockNumber;
   private final boolean canSnapSync;
   private final String deprecationDate;
   private final Supplier<List<NativeRequirementResult>> nativeRequirements;
 
   NetworkName(
-      final String genesisFile, final BigInteger networkId, final OptionalInt mergeBlockNumber) {
-    this(genesisFile, networkId, mergeBlockNumber, true);
+      final String genesisFile, final BigInteger networkId, final OptionalInt firstPosBlockNumber) {
+    this(genesisFile, networkId, firstPosBlockNumber, true);
   }
 
   NetworkName(
       final String genesisFile,
       final BigInteger networkId,
-      final OptionalInt mergeBlockNumber,
+      final OptionalInt firstPosBlockNumber,
       final boolean canSnapSync) {
-    this(genesisFile, networkId, mergeBlockNumber, canSnapSync, Collections::emptyList);
+    this(genesisFile, networkId, firstPosBlockNumber, canSnapSync, Collections::emptyList);
   }
 
   NetworkName(
       final String genesisFile,
       final BigInteger networkId,
-      final OptionalInt mergeBlockNumber,
+      final OptionalInt firstPosBlockNumber,
       final boolean canSnapSync,
       final Supplier<List<NativeRequirementResult>> nativeRequirements) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
-    this.mergeBlockNumber = mergeBlockNumber;
+    this.firstPosBlockNumber = firstPosBlockNumber;
     this.canSnapSync = canSnapSync;
     // no deprecations planned
     this.deprecationDate = null;
@@ -137,8 +137,8 @@ public enum NetworkName {
    *
    * @return the optional merge block number
    */
-  public OptionalInt getMergeBlockNumber() {
-    return mergeBlockNumber;
+  public OptionalInt getFirstPosBlockNumber() {
+    return firstPosBlockNumber;
   }
 
   /**

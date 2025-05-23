@@ -1203,7 +1203,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         new ChainDataPrunerStorage(
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
-        network.getMergeBlockNumber().orElse(0),
+        network.getFirstPosBlockNumber().orElse(0),
         chainPrunerConfiguration.chainPruningEnabled()
             ? ChainDataPruner.Mode.CHAIN_PRUNING
             : (chainPrunerConfiguration.preMergePruningEnabled()
