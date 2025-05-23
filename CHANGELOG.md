@@ -3,6 +3,7 @@
 ### Breaking Changes
 - Remove `MetricSystem::createLabelledGauge` deprecated since `24.12.0`, replace it with `MetricSystem::createLabelledSuppliedGauge` [#8299](https://github.com/hyperledger/besu/pull/8299)
 - Remove the deprecated `--tx-pool-disable-locals` option, use `--tx-pool-no-local-priority`, instead. [#8614](https://github.com/hyperledger/besu/pull/8614)
+- Change in behavior, the non standard `strict` parameter of the `eth_estimateGas` method changed its default from `false` to `true`, for more accurate estimations. It is still possible to force the previous behavior, explicitly passing the `strict` parameter in the request, set to `false` [#8629](https://github.com/hyperledger/besu/pull/8629)
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
@@ -13,6 +14,7 @@
 - Increase default target-gas-limit to 60M for Ephemery [#8622](https://github.com/hyperledger/besu/pull/8622)
 - Estimate gas on pending block by default [#8627](https://github.com/hyperledger/besu/pull/8627)
 - Upgrade Gradle to 8.14 and related plugins [#8638](https://github.com/hyperledger/besu/pull/8638)
+- Make gas estimation strict by default [#8629](https://github.com/hyperledger/besu/pull/8629)
 
 ### Bug fixes
 - Fix `besu -X` unstable options help [#8662](https://github.com/hyperledger/besu/pull/8662)
