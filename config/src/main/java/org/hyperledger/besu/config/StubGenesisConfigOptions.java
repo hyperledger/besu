@@ -51,6 +51,12 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private OptionalLong cancunEOFTime = OptionalLong.empty();
   private OptionalLong pragueTime = OptionalLong.empty();
   private OptionalLong osakaTime = OptionalLong.empty();
+  private OptionalLong bpo1Time = OptionalLong.empty();
+  private OptionalLong bpo2Time = OptionalLong.empty();
+  private OptionalLong bpo3Time = OptionalLong.empty();
+  private OptionalLong bpo4Time = OptionalLong.empty();
+  private OptionalLong bpo5Time = OptionalLong.empty();
+
   private OptionalLong futureEipsTime = OptionalLong.empty();
   private OptionalLong experimentalEipsTime = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
@@ -259,6 +265,31 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public OptionalLong getOsakaTime() {
     return osakaTime;
+  }
+
+  @Override
+  public OptionalLong getBpo1Time() {
+    return bpo1Time;
+  }
+
+  @Override
+  public OptionalLong getBpo2Time() {
+    return bpo2Time;
+  }
+
+  @Override
+  public OptionalLong getBpo3Time() {
+    return bpo3Time;
+  }
+
+  @Override
+  public OptionalLong getBpo4Time() {
+    return bpo4Time;
+  }
+
+  @Override
+  public OptionalLong getBpo5Time() {
+    return bpo5Time;
   }
 
   @Override
@@ -691,6 +722,61 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions osakaTime(final long timestamp) {
     osakaTime = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  /**
+   * BPO1 time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions bpo1Time(final long timestamp) {
+    bpo1Time = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  /**
+   * BPO2 time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions bpo2Time(final long timestamp) {
+    bpo2Time = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  /**
+   * BPO3 time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions bpo3Time(final long timestamp) {
+    bpo3Time = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  /**
+   * BPO4 time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions bpo4Time(final long timestamp) {
+    bpo4Time = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  /**
+   * BPO5 time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions bpo5Time(final long timestamp) {
+    bpo5Time = OptionalLong.of(timestamp);
     return this;
   }
 
