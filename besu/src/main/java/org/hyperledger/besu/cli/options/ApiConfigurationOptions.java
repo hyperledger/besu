@@ -44,6 +44,11 @@ public class ApiConfigurationOptions {
   private final Double apiGasPricePercentile = 50.0;
 
   @CommandLine.Option(
+      names = {"--estimate-gas-tolerance-ratio"},
+      description = "Decimal ratio for eth_estimateGas tolerance (default: ${DEFAULT-VALUE})")
+  private final Double estimateGasToleranceRatio = 0.015;
+
+  @CommandLine.Option(
       names = {"--api-gas-price-max"},
       description = "Maximum gas price for eth_gasPrice (default: ${DEFAULT-VALUE})")
   private final Long apiGasPriceMax = 500_000_000_000L;
@@ -128,6 +133,7 @@ public class ApiConfigurationOptions {
             .gasPriceBlocks(apiGasPriceBlocks)
             .gasPricePercentile(apiGasPricePercentile)
             .gasPriceMax(Wei.of(apiGasPriceMax))
+            .estimateGasToleranceRatio(estimateGasToleranceRatio)
             .maxLogsRange(rpcMaxLogsRange)
             .gasCap(rpcGasCap)
             .isGasAndPriorityFeeLimitingEnabled(apiGasAndPriorityFeeLimitingEnabled)

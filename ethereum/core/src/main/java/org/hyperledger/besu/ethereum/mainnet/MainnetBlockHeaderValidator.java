@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ExtraDataMaxL
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.IncrementalTimestampRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.NoBlobRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.NoDifficultyRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.NoNonceRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkValidationRule;
@@ -36,7 +37,6 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMore
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -180,7 +180,8 @@ public final class MainnetBlockHeaderValidator {
         .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)));
   }
 
-  public static BlockHeaderValidator.Builder mergeBlockHeaderValidator(final FeeMarket feeMarket) {
+  public static BlockHeaderValidator.Builder mergeBlockHeaderValidator(
+      final FeeMarket feeMarket, final GasCalculator gasCalculator) {
 
     var baseFeeMarket = (BaseFeeMarket) feeMarket;
 
@@ -198,9 +199,14 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new IncrementalTimestampRule());
   }
 
+  public static BlockHeaderValidator.Builder noBlobBlockHeaderValidator(
+      final FeeMarket feeMarket, final GasCalculator gasCalculator) {
+    return mergeBlockHeaderValidator(feeMarket, gasCalculator).addRule(new NoBlobRule());
+  }
+
   public static BlockHeaderValidator.Builder blobAwareBlockHeaderValidator(
-      final FeeMarket feeMarket, final Supplier<GasCalculator> gasCalculator) {
-    return mergeBlockHeaderValidator(feeMarket)
-        .addRule(new BlobGasValidationRule(gasCalculator.get()));
+      final FeeMarket feeMarket, final GasCalculator gasCalculator) {
+    return mergeBlockHeaderValidator(feeMarket, gasCalculator)
+        .addRule(new BlobGasValidationRule(gasCalculator));
   }
 }

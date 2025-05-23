@@ -222,7 +222,7 @@ public abstract class CommandTestAbstract {
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected PicoCLIOptions cliOptions;
   @Mock protected NodeKey nodeKey;
-  @Mock protected BesuPluginContextImpl mockBesuPluginContext;
+  @Mock private BesuPluginContextImpl mockBesuPluginContext;
   @Mock protected MutableBlockchain mockMutableBlockchain;
   @Mock protected WorldStateArchive mockWorldStateArchive;
   @Mock protected TransactionPool mockTransactionPool;
@@ -365,13 +365,13 @@ public abstract class CommandTestAbstract {
         .thenReturn(Optional.of(() -> securityModule));
 
     lenient()
-        .when(mockBesuPluginContext.getService(PicoCLIOptions.class))
+        .when(getBesuPluginContext().getService(PicoCLIOptions.class))
         .thenReturn(Optional.of(cliOptions));
     lenient()
-        .when(mockBesuPluginContext.getService(StorageService.class))
+        .when(getBesuPluginContext().getService(StorageService.class))
         .thenReturn(Optional.of(storageService));
     lenient()
-        .when(mockBesuPluginContext.getService(TransactionSelectionService.class))
+        .when(getBesuPluginContext().getService(TransactionSelectionService.class))
         .thenReturn(Optional.of(txSelectionService));
   }
 
@@ -464,7 +464,7 @@ public abstract class CommandTestAbstract {
             (blockchain) -> rlpBlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
-            mockBesuPluginContext,
+            getBesuPluginContext(),
             environment,
             storageService,
             securityModuleService,
@@ -477,7 +477,7 @@ public abstract class CommandTestAbstract {
             (blockchain) -> rlpBlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
-            mockBesuPluginContext,
+            getBesuPluginContext(),
             environment,
             storageService,
             securityModuleService,
@@ -490,7 +490,7 @@ public abstract class CommandTestAbstract {
             (blockchain) -> rlpBlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
-            mockBesuPluginContext,
+            getBesuPluginContext(),
             environment,
             storageService,
             securityModuleService,
@@ -515,6 +515,10 @@ public abstract class CommandTestAbstract {
 
   protected Path createTempFile(final String filename, final String contents) throws IOException {
     return createTempFile(filename, contents.getBytes(UTF_8));
+  }
+
+  protected BesuPluginContextImpl getBesuPluginContext() {
+    return mockBesuPluginContext;
   }
 
   @CommandLine.Command

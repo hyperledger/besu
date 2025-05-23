@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -32,7 +33,6 @@ import java.util.OptionalLong;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -287,140 +287,232 @@ public class ProtocolScheduleBuilder {
   }
 
   private List<BuilderMapEntry> createMilestones(final MainnetProtocolSpecFactory specFactory) {
-    return Stream.of(
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.FRONTIER,
-                OptionalLong.of(0),
-                specFactory.frontierDefinition()),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.HOMESTEAD,
-                config.getHomesteadBlockNumber(),
-                specFactory.homesteadDefinition()),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.TANGERINE_WHISTLE,
-                config.getTangerineWhistleBlockNumber(),
-                specFactory.tangerineWhistleDefinition()),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.SPURIOUS_DRAGON,
-                config.getSpuriousDragonBlockNumber(),
-                specFactory.spuriousDragonDefinition()),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.BYZANTIUM,
-                config.getByzantiumBlockNumber(),
-                specFactory.byzantiumDefinition()),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.CONSTANTINOPLE,
-                config.getConstantinopleBlockNumber(),
-                specFactory.constantinopleDefinition()),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.PETERSBURG,
-                config.getPetersburgBlockNumber(),
-                specFactory.petersburgDefinition()),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.ISTANBUL,
-                config.getIstanbulBlockNumber(),
-                specFactory.istanbulDefinition()),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.MUIR_GLACIER,
-                config.getMuirGlacierBlockNumber(),
-                specFactory.muirGlacierDefinition()),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.BERLIN,
-                config.getBerlinBlockNumber(),
-                specFactory.berlinDefinition()),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.LONDON,
-                config.getLondonBlockNumber(),
-                specFactory.londonDefinition(config)),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.ARROW_GLACIER,
-                config.getArrowGlacierBlockNumber(),
-                specFactory.arrowGlacierDefinition(config)),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.GRAY_GLACIER,
-                config.getGrayGlacierBlockNumber(),
-                specFactory.grayGlacierDefinition(config)),
-            blockNumberMilestone(
-                HardforkId.MainnetHardforkId.PARIS,
-                config.getMergeNetSplitBlockNumber(),
-                specFactory.parisDefinition(config)),
-            // Timestamp Forks
-            timestampMilestone(
-                HardforkId.MainnetHardforkId.SHANGHAI,
-                config.getShanghaiTime(),
-                specFactory.shanghaiDefinition(config)),
-            timestampMilestone(
-                HardforkId.MainnetHardforkId.CANCUN,
-                config.getCancunTime(),
-                specFactory.cancunDefinition(config)),
-            timestampMilestone(
-                HardforkId.MainnetHardforkId.CANCUN_EOF,
-                config.getCancunEOFTime(),
-                specFactory.cancunEOFDefinition(config)),
-            timestampMilestone(
-                HardforkId.MainnetHardforkId.PRAGUE,
-                config.getPragueTime(),
-                specFactory.pragueDefinition(config)),
-            timestampMilestone(
-                MainnetHardforkId.OSAKA,
-                config.getOsakaTime(),
-                specFactory.osakaDefinition(config)),
-            timestampMilestone(
-                HardforkId.MainnetHardforkId.FUTURE_EIPS,
-                config.getFutureEipsTime(),
-                specFactory.futureEipsDefinition(config)),
-            timestampMilestone(
-                HardforkId.MainnetHardforkId.EXPERIMENTAL_EIPS,
-                config.getExperimentalEipsTime(),
-                specFactory.experimentalEipsDefinition(config)),
+    List<Optional<BuilderMapEntry>> retval = new ArrayList<>();
 
-            // Classic Milestones
-            blockNumberMilestone(
-                HardforkId.ClassicHardforkId.CLASSIC_TANGERINE_WHISTLE,
-                config.getEcip1015BlockNumber(),
-                specFactory.tangerineWhistleDefinition()),
-            blockNumberMilestone(
-                HardforkId.ClassicHardforkId.DIE_HARD,
-                config.getDieHardBlockNumber(),
-                specFactory.dieHardDefinition()),
-            blockNumberMilestone(
-                HardforkId.ClassicHardforkId.GOTHAM,
-                config.getGothamBlockNumber(),
-                specFactory.gothamDefinition()),
-            blockNumberMilestone(
-                HardforkId.ClassicHardforkId.DEFUSE_DIFFICULTY_BOMB,
-                config.getDefuseDifficultyBombBlockNumber(),
-                specFactory.defuseDifficultyBombDefinition()),
-            blockNumberMilestone(
-                HardforkId.ClassicHardforkId.ATLANTIS,
-                config.getAtlantisBlockNumber(),
-                specFactory.atlantisDefinition()),
-            blockNumberMilestone(
-                HardforkId.ClassicHardforkId.AGHARTA,
-                config.getAghartaBlockNumber(),
-                specFactory.aghartaDefinition()),
-            blockNumberMilestone(
-                HardforkId.ClassicHardforkId.PHOENIX,
-                config.getPhoenixBlockNumber(),
-                specFactory.phoenixDefinition()),
-            blockNumberMilestone(
-                HardforkId.ClassicHardforkId.THANOS,
-                config.getThanosBlockNumber(),
-                specFactory.thanosDefinition()),
-            blockNumberMilestone(
-                HardforkId.ClassicHardforkId.MAGNETO,
-                config.getMagnetoBlockNumber(),
-                specFactory.magnetoDefinition()),
-            blockNumberMilestone(
-                HardforkId.ClassicHardforkId.MYSTIQUE,
-                config.getMystiqueBlockNumber(),
-                specFactory.mystiqueDefinition()),
-            blockNumberMilestone(
-                HardforkId.ClassicHardforkId.SPIRAL,
-                config.getSpiralBlockNumber(),
-                specFactory.spiralDefinition()))
-        .flatMap(Optional::stream)
-        .toList();
+    retval.add(
+        blockNumberMilestone(
+            HardforkId.MainnetHardforkId.FRONTIER,
+            OptionalLong.of(0),
+            specFactory.frontierDefinition()));
+    if (config.getHomesteadBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.HOMESTEAD,
+              config.getHomesteadBlockNumber(),
+              specFactory.homesteadDefinition()));
+    }
+    if (config.getTangerineWhistleBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.TANGERINE_WHISTLE,
+              config.getTangerineWhistleBlockNumber(),
+              specFactory.tangerineWhistleDefinition()));
+    }
+    if (config.getSpuriousDragonBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.SPURIOUS_DRAGON,
+              config.getSpuriousDragonBlockNumber(),
+              specFactory.spuriousDragonDefinition()));
+    }
+    if (config.getByzantiumBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.BYZANTIUM,
+              config.getByzantiumBlockNumber(),
+              specFactory.byzantiumDefinition()));
+    }
+    if (config.getConstantinopleBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.CONSTANTINOPLE,
+              config.getConstantinopleBlockNumber(),
+              specFactory.constantinopleDefinition()));
+    }
+    if (config.getPetersburgBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.PETERSBURG,
+              config.getPetersburgBlockNumber(),
+              specFactory.petersburgDefinition()));
+    }
+    if (config.getIstanbulBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.ISTANBUL,
+              config.getIstanbulBlockNumber(),
+              specFactory.istanbulDefinition()));
+    }
+    if (config.getMuirGlacierBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.MUIR_GLACIER,
+              config.getMuirGlacierBlockNumber(),
+              specFactory.muirGlacierDefinition()));
+    }
+    if (config.getBerlinBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.BERLIN,
+              config.getBerlinBlockNumber(),
+              specFactory.berlinDefinition()));
+    }
+    if (config.getLondonBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.LONDON,
+              config.getLondonBlockNumber(),
+              specFactory.londonDefinition(config)));
+    }
+    if (config.getArrowGlacierBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.ARROW_GLACIER,
+              config.getArrowGlacierBlockNumber(),
+              specFactory.arrowGlacierDefinition(config)));
+    }
+    if (config.getGrayGlacierBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.GRAY_GLACIER,
+              config.getGrayGlacierBlockNumber(),
+              specFactory.grayGlacierDefinition(config)));
+    }
+    if (config.getMergeNetSplitBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.MainnetHardforkId.PARIS,
+              config.getMergeNetSplitBlockNumber(),
+              specFactory.parisDefinition(config)));
+    }
+    // Timestamp Forks
+    if (config.getShanghaiTime().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              HardforkId.MainnetHardforkId.SHANGHAI,
+              config.getShanghaiTime(),
+              specFactory.shanghaiDefinition(config)));
+    }
+    if (config.getCancunTime().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              HardforkId.MainnetHardforkId.CANCUN,
+              config.getCancunTime(),
+              specFactory.cancunDefinition(config)));
+    }
+    if (config.getCancunEOFTime().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              HardforkId.MainnetHardforkId.CANCUN_EOF,
+              config.getCancunEOFTime(),
+              specFactory.cancunEOFDefinition(config)));
+    }
+    if (config.getPragueTime().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              HardforkId.MainnetHardforkId.PRAGUE,
+              config.getPragueTime(),
+              specFactory.pragueDefinition(config)));
+    }
+    if (config.getOsakaTime().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              MainnetHardforkId.OSAKA, config.getOsakaTime(), specFactory.osakaDefinition(config)));
+    }
+    if (config.getFutureEipsTime().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              HardforkId.MainnetHardforkId.FUTURE_EIPS,
+              config.getFutureEipsTime(),
+              specFactory.futureEipsDefinition(config)));
+    }
+    if (config.getExperimentalEipsTime().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              HardforkId.MainnetHardforkId.EXPERIMENTAL_EIPS,
+              config.getExperimentalEipsTime(),
+              specFactory.experimentalEipsDefinition(config)));
+    }
+    // Classic Milestones
+    if (config.getEcip1015BlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.ClassicHardforkId.CLASSIC_TANGERINE_WHISTLE,
+              config.getEcip1015BlockNumber(),
+              specFactory.tangerineWhistleDefinition()));
+    }
+    if (config.getDieHardBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.ClassicHardforkId.DIE_HARD,
+              config.getDieHardBlockNumber(),
+              specFactory.dieHardDefinition()));
+    }
+    if (config.getGothamBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.ClassicHardforkId.GOTHAM,
+              config.getGothamBlockNumber(),
+              specFactory.gothamDefinition()));
+    }
+    if (config.getDefuseDifficultyBombBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.ClassicHardforkId.DEFUSE_DIFFICULTY_BOMB,
+              config.getDefuseDifficultyBombBlockNumber(),
+              specFactory.defuseDifficultyBombDefinition()));
+    }
+    if (config.getAtlantisBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.ClassicHardforkId.ATLANTIS,
+              config.getAtlantisBlockNumber(),
+              specFactory.atlantisDefinition()));
+    }
+    if (config.getAghartaBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.ClassicHardforkId.AGHARTA,
+              config.getAghartaBlockNumber(),
+              specFactory.aghartaDefinition()));
+    }
+    if (config.getPhoenixBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.ClassicHardforkId.PHOENIX,
+              config.getPhoenixBlockNumber(),
+              specFactory.phoenixDefinition()));
+    }
+    if (config.getThanosBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.ClassicHardforkId.THANOS,
+              config.getThanosBlockNumber(),
+              specFactory.thanosDefinition()));
+    }
+    if (config.getMagnetoBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.ClassicHardforkId.MAGNETO,
+              config.getMagnetoBlockNumber(),
+              specFactory.magnetoDefinition()));
+    }
+    if (config.getMystiqueBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.ClassicHardforkId.MYSTIQUE,
+              config.getMystiqueBlockNumber(),
+              specFactory.mystiqueDefinition()));
+    }
+    if (config.getSpiralBlockNumber().isPresent()) {
+      retval.add(
+          blockNumberMilestone(
+              HardforkId.ClassicHardforkId.SPIRAL,
+              config.getSpiralBlockNumber(),
+              specFactory.spiralDefinition()));
+    }
+
+    return retval.stream().flatMap(Optional::stream).toList();
   }
 
   private Optional<BuilderMapEntry> timestampMilestone(

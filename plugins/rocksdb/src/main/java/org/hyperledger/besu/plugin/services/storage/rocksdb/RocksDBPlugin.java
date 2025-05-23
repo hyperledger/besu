@@ -107,6 +107,15 @@ public class RocksDBPlugin implements BesuPlugin {
     return options.isHighSpec();
   }
 
+  /**
+   * Gets blob db settings.
+   *
+   * @return the blob db settings
+   */
+  public RocksDBCLIOptions.BlobDBSettings getBlobDBSettings() {
+    return options.getBlobDBSettings();
+  }
+
   private void createAndRegister(final StorageService service) {
     final List<SegmentIdentifier> segments = service.getAllSegmentIdentifiers();
 

@@ -1308,7 +1308,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
         || genesisConfigOptionsSupplier.get().getCancunEOFTime().isPresent()
         || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getOsakaTime().isPresent()) {
+        || genesisConfigOptionsSupplier.get().getOsakaTime().isPresent()
+        || genesisConfigOptionsSupplier.get().getFutureEipsTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -2509,18 +2510,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PathBasedExtraStorageConfiguration subStorageConfiguration =
           getDataStorageConfiguration().getPathBasedExtraStorageConfiguration();
       if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
-        builder.setLimitTrieLogsEnabled();
-        builder.setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad());
-        builder.setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
+        builder
+            .setLimitTrieLogsEnabled()
+            .setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad())
+            .setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
       }
     }
 
-    builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());
-
-    builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
-    builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
-
-    builder.setPluginContext(this.besuPluginContext);
+    builder
+        .setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled())
+        .setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation())
+        .setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode())
+        .setPluginContext(this.besuPluginContext)
+        .setHistoryExpiryPruneEnabled(getDataStorageConfiguration().getHistoryExpiryPruneEnabled())
+        .setBlobDBSettings(rocksDBPlugin.getBlobDBSettings());
 
     return builder.build();
   }

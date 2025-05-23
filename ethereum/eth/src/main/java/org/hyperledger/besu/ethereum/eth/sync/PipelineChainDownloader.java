@@ -172,7 +172,8 @@ public class PipelineChainDownloader implements ChainDownloader {
         .addArgument(() -> target.commonAncestor().getNumber())
         .addArgument(() -> target.commonAncestor().getBlockHash())
         .log();
-    currentDownloadPipeline = downloadPipelineFactory.createDownloadPipelineForSyncTarget(target);
+    currentDownloadPipeline =
+        downloadPipelineFactory.createDownloadPipelineForSyncTarget(syncState, target);
     return downloadPipelineFactory.startPipeline(
         scheduler, syncState, target, currentDownloadPipeline);
   }

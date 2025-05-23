@@ -552,7 +552,7 @@ public class MainnetTransactionProcessor {
       final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract) {
     // we need to look up the target account and its code, but do NOT charge gas for it
     final CodeDelegationAccount targetAccount =
-        getTargetAccount(worldUpdater, gasCalculator, contract);
+        getTargetAccount(worldUpdater, gasCalculator::isPrecompile, contract);
     warmAddressList.add(targetAccount.getTargetAddress());
 
     return messageCallProcessor.getCodeFromEVM(

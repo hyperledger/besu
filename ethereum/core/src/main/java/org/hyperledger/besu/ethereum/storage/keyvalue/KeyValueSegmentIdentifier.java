@@ -25,7 +25,7 @@ import java.util.EnumSet;
 
 public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   DEFAULT("default".getBytes(StandardCharsets.UTF_8)),
-  BLOCKCHAIN(new byte[] {1}, true, true),
+  BLOCKCHAIN(new byte[] {1}, EnumSet.allOf(DataStorageFormat.class), true, true, false),
   WORLD_STATE(new byte[] {2}, EnumSet.of(FOREST), false, true, false),
 
   // No longer used but retained for DB backwards compatibility
@@ -59,16 +59,6 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
 
   KeyValueSegmentIdentifier(final byte[] id) {
     this(id, EnumSet.allOf(DataStorageFormat.class));
-  }
-
-  KeyValueSegmentIdentifier(
-      final byte[] id, final boolean containsStaticData, final boolean eligibleToHighSpecFlag) {
-    this(
-        id,
-        EnumSet.allOf(DataStorageFormat.class),
-        containsStaticData,
-        eligibleToHighSpecFlag,
-        false);
   }
 
   KeyValueSegmentIdentifier(final byte[] id, final EnumSet<DataStorageFormat> formats) {

@@ -467,17 +467,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
 
   @Override
   public Optional<Address> getWithdrawalRequestContractAddress() {
-    return Optional.empty();
+    return Optional.of(Address.fromHexString("0x00000961ef480eb55e80d19ad83579a64c007002"));
   }
 
   @Override
   public Optional<Address> getDepositContractAddress() {
-    return Optional.empty();
+    return Optional.of(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
   }
 
   @Override
   public Optional<Address> getConsolidationRequestContractAddress() {
-    return Optional.empty();
+    return Optional.of(Address.fromHexString("0x0000bbddc7ce488642fb579f8b00f3a590007251"));
   }
 
   @Override

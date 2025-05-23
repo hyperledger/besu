@@ -423,7 +423,10 @@ public final class RunnerTest {
                         DEFAULT_MAX_OPEN_FILES,
                         DEFAULT_BACKGROUND_THREAD_COUNT,
                         DEFAULT_CACHE_CAPACITY,
-                        DEFAULT_IS_HIGH_SPEC),
+                        DEFAULT_IS_HIGH_SPEC,
+                        false,
+                        Optional.empty(),
+                        Optional.empty()),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(besuConfiguration)

@@ -19,7 +19,6 @@ import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.Histogram;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedSummary;
@@ -248,9 +247,8 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   }
 
   /** The Labelled supplied NoOp metric. */
-  @SuppressWarnings("removal") // remove when deprecated LabelledGauge is removed
   public static class LabelledSuppliedNoOpMetric
-      implements LabelledSuppliedMetric, LabelledGauge, LabelledSuppliedSummary {
+      implements LabelledSuppliedMetric, LabelledSuppliedSummary {
     /** The Label count. */
     final int labelCount;
 

@@ -123,9 +123,9 @@ public abstract class BaseBftProtocolScheduleBuilder {
 
     return builder
         .blockHeaderValidatorBuilder(
-            feeMarket -> createBlockHeaderRuleset(configOptions, feeMarket))
+            (feeMarket, gasCalculator) -> createBlockHeaderRuleset(configOptions, feeMarket))
         .ommerHeaderValidatorBuilder(
-            feeMarket -> createBlockHeaderRuleset(configOptions, feeMarket))
+            (feeMarket, gasCalculator) -> createBlockHeaderRuleset(configOptions, feeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
