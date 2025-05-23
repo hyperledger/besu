@@ -26,7 +26,7 @@ WORKDIR /opt/besu
 COPY --chown=besu:besu besu /opt/besu/
 # support for pyroscope
 ADD --chown=besu:besu https://github.com/grafana/pyroscope-java/releases/download/v2.1.2/pyroscope.jar /opt/besu/pyroscope/pyroscope.jar
-ADD --chown=besu:besu pyroscope.properties /etc/besu/pyroscope.properties
+COPY --chown=besu:besu pyroscope.properties /etc/besu/pyroscope.properties
 
 # Expose services ports
 # 8545 HTTP JSON-RPC
