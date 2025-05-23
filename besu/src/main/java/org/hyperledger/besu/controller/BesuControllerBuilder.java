@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
@@ -117,8 +118,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -702,14 +705,27 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
-    if (chainPrunerConfiguration.getChainPruningEnabled()) {
-      final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
-      blockchain.observeBlockAdded(chainDataPruner);
-      LOG.info(
-          "Chain data pruning enabled with recent blocks retained to be: "
-              + chainPrunerConfiguration.getChainPruningBlocksRetained()
-              + " and frequency to be: "
-              + chainPrunerConfiguration.getChainPruningBlocksFrequency());
+    if (chainPrunerConfiguration.chainPruningEnabled()
+        || chainPrunerConfiguration.preMergePruningEnabled()) {
+      LOG.info("Adding ChainDataPruner to observe block added events");
+      final AtomicLong chainDataPrunerObserverId = new AtomicLong();
+      final ChainDataPruner chainDataPruner =
+          createChainPruner(
+              blockchainStorage, () -> blockchain.removeObserver(chainDataPrunerObserverId.get()));
+      chainDataPrunerObserverId.set(blockchain.observeBlockAdded(chainDataPruner));
+      if (chainPrunerConfiguration.chainPruningEnabled()) {
+        LOG.info(
+            "Chain data pruning enabled with recent blocks retained to be: "
+                + chainPrunerConfiguration.chainPruningBlocksRetained()
+                + " and frequency to be: "
+                + chainPrunerConfiguration.blocksFrequency());
+      } else if (chainPrunerConfiguration.preMergePruningEnabled()) {
+        LOG.info(
+            "Pre-merge block pruning enabled with frequency: "
+                + chainPrunerConfiguration.blocksFrequency()
+                + " and quantity: "
+                + chainPrunerConfiguration.preMergePruningBlocksQuantity());
+      }
     }
 
     final TransactionPool transactionPool =
@@ -1174,16 +1190,30 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     };
   }
 
-  private ChainDataPruner createChainPruner(final BlockchainStorage blockchainStorage) {
+  private ChainDataPruner createChainPruner(
+      final BlockchainStorage blockchainStorage, final Runnable unsubscribeRunnable) {
+    NetworkName network =
+        Stream.of(NetworkName.values())
+            .filter((n) -> n.getNetworkId().equals(networkId))
+            .findAny()
+            .orElseThrow(() -> new RuntimeException("Unrecognised network"));
     return new ChainDataPruner(
         blockchainStorage,
+        unsubscribeRunnable,
         new ChainDataPrunerStorage(
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
-        chainPrunerConfiguration.getChainPruningBlocksRetained(),
-        chainPrunerConfiguration.getChainPruningBlocksFrequency(),
+        network.getFirstPosBlockNumber().orElse(0),
+        chainPrunerConfiguration.chainPruningEnabled()
+            ? ChainDataPruner.Mode.CHAIN_PRUNING
+            : (chainPrunerConfiguration.preMergePruningEnabled()
+                ? ChainDataPruner.Mode.PRE_MERGE_PRUNING
+                : null),
+        chainPrunerConfiguration.chainPruningBlocksRetained(),
+        chainPrunerConfiguration.blocksFrequency(),
+        chainPrunerConfiguration.preMergePruningBlocksQuantity(),
         MonitoredExecutors.newBoundedThreadPool(
-            ChainDataPruner.class.getSimpleName(),
+            EthScheduler.class.getSimpleName() + "-ChainDataPruner",
             1,
             1,
             ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
