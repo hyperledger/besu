@@ -536,6 +536,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private void updateFinalized(final Hash finalizedHash) {
+    // If finalizedHash is already set, do nothing
     if (mergeContext
         .getFinalized()
         .map(BlockHeader::getHash)
@@ -548,21 +549,24 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return;
     }
 
-    protocolContext
-        .getBlockchain()
-        .getBlockHeader(finalizedHash)
-        .ifPresentOrElse(
-            finalizedHeader -> {
-              LOG.atDebug()
-                  .setMessage("Setting finalized block header to {}")
-                  .addArgument(finalizedHeader::toLogString)
-                  .log();
-              mergeContext.setFinalized(finalizedHeader);
-            },
-            () ->
-                LOG.warn(
-                    "Internal error, backward sync completed but failed to import finalized block {}",
-                    finalizedHash));
+    // Check if the finalized block actually exists in the blockchain
+    if (finalizedHash.equals(Hash.ZERO)) { // Check for zero hash
+      LOG.warn("Received zero hash as finalized block. Ignoring...");
+    } else {
+      Optional<BlockHeader> maybeFinalizedHeader =
+          protocolContext.getBlockchain().getBlockHeader(finalizedHash);
+
+      if (maybeFinalizedHeader.isPresent()) {
+        LOG.atDebug()
+            .setMessage("Setting finalized block header to {}")
+            .addArgument(maybeFinalizedHeader.get()::toLogString)
+            .log();
+
+        mergeContext.setFinalized(maybeFinalizedHeader.get());
+      } else {
+        LOG.warn("Backward sync completed but failed to import finalized block {}", finalizedHash);
+      }
+    }
   }
 
   @Override
