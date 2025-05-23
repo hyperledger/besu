@@ -491,7 +491,7 @@ subprojects {
     dependencies { testImplementation sourceSets.testSupport.output }
 
     task testSupportJar(type: Jar) {
-      archiveBaseName = calculateArtifactId(project) + '-support-test'
+      archiveBaseName = calculateArtifactId(project)
       archiveClassifier = 'test-support'
       from sourceSets.testSupport.output
     }
