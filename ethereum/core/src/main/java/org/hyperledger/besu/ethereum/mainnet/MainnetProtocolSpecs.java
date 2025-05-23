@@ -85,6 +85,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import com.google.common.base.Supplier;
@@ -926,7 +927,120 @@ public abstract class MainnetProtocolSpecs {
                     (BaseFeeMarket) feeMarket,
                     gasCalculator,
                     blobSchedule.getMax()))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
         .name("Osaka");
+  }
+
+  static ProtocolSpecBuilder bpo1Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    ProtocolSpecBuilder builder =
+        osakaDefinition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
+    return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo1, "BPO1");
+  }
+
+  static ProtocolSpecBuilder bpo2Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    ProtocolSpecBuilder builder =
+        bpo1Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
+    return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo2, "BPO2");
+  }
+
+  static ProtocolSpecBuilder bpo3Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    ProtocolSpecBuilder builder =
+        bpo2Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
+    return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo3, "BPO3");
+  }
+
+  static ProtocolSpecBuilder bpo4Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    ProtocolSpecBuilder builder =
+        bpo3Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
+    return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo4, "BPO4");
+  }
+
+  static ProtocolSpecBuilder bpo5Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    ProtocolSpecBuilder builder =
+        bpo4Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
+    return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo5, "BPO5");
+  }
+
+  private static ProtocolSpecBuilder applyBlobSchedule(
+      final ProtocolSpecBuilder builder,
+      final GenesisConfigOptions genesisConfigOptions,
+      final Function<BlobScheduleOptions, Optional<BlobSchedule>> blobGetter,
+      final String name) {
+    genesisConfigOptions
+        .getBlobScheduleOptions()
+        .flatMap(blobGetter)
+        .ifPresent(builder::blobSchedule);
+    return builder.name(name);
   }
 
   private static ProtocolSpecBuilder addEOF(
@@ -972,7 +1086,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder protocolSpecBuilder =
-        osakaDefinition(
+        bpo5Definition(
                 chainId,
                 enableRevertReason,
                 genesisConfigOptions,

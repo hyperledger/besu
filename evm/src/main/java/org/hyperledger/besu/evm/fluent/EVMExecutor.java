@@ -535,7 +535,7 @@ public class EVMExecutor {
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.osaka(chainId, evmConfiguration));
     executor.precompileContractRegistry =
-        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
+        MainnetPrecompiledContracts.osaka(executor.evm.getGasCalculator());
     return executor;
   }
 

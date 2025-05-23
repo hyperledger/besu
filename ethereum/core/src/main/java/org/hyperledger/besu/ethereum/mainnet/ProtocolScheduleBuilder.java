@@ -232,6 +232,11 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("CancunEOF", config.getCancunEOFTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Prague", config.getPragueTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Osaka", config.getOsakaTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("BPO1", config.getBpo1Time(), lastForkBlock);
+    lastForkBlock = validateForkOrder("BPO2", config.getBpo2Time(), lastForkBlock);
+    lastForkBlock = validateForkOrder("BPO3", config.getBpo3Time(), lastForkBlock);
+    lastForkBlock = validateForkOrder("BPO4", config.getBpo4Time(), lastForkBlock);
+    lastForkBlock = validateForkOrder("BPO5", config.getBpo5Time(), lastForkBlock);
     lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("ExperimentalEips", config.getExperimentalEipsTime(), lastForkBlock);
@@ -423,6 +428,31 @@ public class ProtocolScheduleBuilder {
       retval.add(
           timestampMilestone(
               MainnetHardforkId.OSAKA, config.getOsakaTime(), specFactory.osakaDefinition(config)));
+    }
+    if (config.getBpo1Time().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              MainnetHardforkId.BPO1, config.getBpo1Time(), specFactory.bpo1Definition(config)));
+    }
+    if (config.getBpo2Time().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              MainnetHardforkId.BPO2, config.getBpo2Time(), specFactory.bpo2Definition(config)));
+    }
+    if (config.getBpo3Time().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              MainnetHardforkId.BPO3, config.getBpo3Time(), specFactory.bpo3Definition(config)));
+    }
+    if (config.getBpo4Time().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              MainnetHardforkId.BPO4, config.getBpo4Time(), specFactory.bpo4Definition(config)));
+    }
+    if (config.getBpo5Time().isPresent()) {
+      retval.add(
+          timestampMilestone(
+              MainnetHardforkId.BPO5, config.getBpo5Time(), specFactory.bpo5Definition(config)));
     }
     if (config.getFutureEipsTime().isPresent()) {
       retval.add(

@@ -329,6 +329,31 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getBpo1Time() {
+    return getOptionalLong("bpo1time");
+  }
+
+  @Override
+  public OptionalLong getBpo2Time() {
+    return getOptionalLong("bpo2time");
+  }
+
+  @Override
+  public OptionalLong getBpo3Time() {
+    return getOptionalLong("bpo3time");
+  }
+
+  @Override
+  public OptionalLong getBpo4Time() {
+    return getOptionalLong("bpo4time");
+  }
+
+  @Override
+  public OptionalLong getBpo5Time() {
+    return getOptionalLong("bpo5time");
+  }
+
+  @Override
   public OptionalLong getFutureEipsTime() {
     return getOptionalLong("futureeipstime");
   }
