@@ -1031,10 +1031,10 @@ public abstract class MainnetProtocolSpecs {
   }
 
   private static ProtocolSpecBuilder applyBlobSchedule(
-      ProtocolSpecBuilder builder,
-      GenesisConfigOptions genesisConfigOptions,
-      Function<BlobScheduleOptions, Optional<BlobSchedule>> blobGetter,
-      String name) {
+      final ProtocolSpecBuilder builder,
+      final GenesisConfigOptions genesisConfigOptions,
+      final Function<BlobScheduleOptions, Optional<BlobSchedule>> blobGetter,
+      final String name) {
     genesisConfigOptions
         .getBlobScheduleOptions()
         .flatMap(blobGetter)
