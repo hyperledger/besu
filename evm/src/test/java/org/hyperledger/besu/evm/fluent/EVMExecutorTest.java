@@ -35,9 +35,9 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.Nonnull;
 
 import com.google.common.collect.MultimapBuilder;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
@@ -213,7 +213,7 @@ class EVMExecutorTest {
     assertThat(result).isNotNull();
   }
 
-  @Nonnull
+  @NotNull
   private static SimpleWorld createSimpleWorld() {
     SimpleWorld simpleWorld = new SimpleWorld();
 

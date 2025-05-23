@@ -20,7 +20,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nonnull;
+
+import jakarta.validation.constraints.NotNull;
 
 /**
  * A set that supports rolling back the set to a prior state.
@@ -118,7 +119,7 @@ public class UndoSet<V> implements Set<V>, Undoable {
   }
 
   @Override
-  public boolean addAll(@Nonnull final Collection<? extends V> m) {
+  public boolean addAll(@NotNull final Collection<? extends V> m) {
     boolean added = false;
     for (V v : m) {
       // don't use short circuit, we need to evaluate all entries
@@ -129,7 +130,7 @@ public class UndoSet<V> implements Set<V>, Undoable {
   }
 
   @Override
-  public boolean removeAll(@Nonnull final Collection<?> c) {
+  public boolean removeAll(@NotNull final Collection<?> c) {
     boolean removed = false;
     for (Object v : c) {
       // don't use short circuit, we need to evaluate all entries
@@ -140,7 +141,7 @@ public class UndoSet<V> implements Set<V>, Undoable {
   }
 
   @Override
-  public boolean retainAll(@Nonnull final Collection<?> c) {
+  public boolean retainAll(@NotNull final Collection<?> c) {
     boolean removed = false;
     HashSet<?> hashed = new HashSet<>(c);
     Iterator<V> iter = delegate.iterator();
@@ -161,26 +162,26 @@ public class UndoSet<V> implements Set<V>, Undoable {
     delegate.clear();
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public Iterator<V> iterator() {
     return new ReadOnlyIterator<>(delegate.iterator());
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public Object[] toArray() {
     return delegate.toArray();
   }
 
-  @Nonnull
+  @NotNull
   @Override
-  public <T> T[] toArray(@Nonnull final T[] a) {
+  public <T> T[] toArray(@NotNull final T[] a) {
     return delegate.toArray(a);
   }
 
   @Override
-  public boolean containsAll(@Nonnull final Collection<?> c) {
+  public boolean containsAll(@NotNull final Collection<?> c) {
     return delegate.containsAll(c);
   }
 
