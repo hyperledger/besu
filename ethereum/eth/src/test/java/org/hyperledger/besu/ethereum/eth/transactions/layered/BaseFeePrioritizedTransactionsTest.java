@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.BlobProofBundle.VERSION_0_KZG_PROOFS;
 import static org.hyperledger.besu.datatypes.TransactionType.EIP1559;
 import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -116,6 +118,10 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         originalTransaction.getMaxGasPrice().multiply(2).divide(10),
         originalTransaction.getPayload().size(),
         originalTransaction.getBlobCount(),
+        originalTransaction
+            .getBlobsWithCommitments()
+            .map(BlobsWithCommitments::getVersionId)
+            .orElse(0),
         originalTransaction.getCodeDelegationList().orElse(null),
         keys);
   }
@@ -192,7 +198,8 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
       final TransactionType type) {
     final PendingTransaction lowGasPriceTx =
         createRemotePendingTransaction(
-            createTransaction(type, 0, DEFAULT_MIN_GAS_PRICE, Wei.ONE, 0, 1, null, KEYS1));
+            createTransaction(
+                type, 0, DEFAULT_MIN_GAS_PRICE, Wei.ONE, 0, 1, VERSION_0_KZG_PROOFS, null, KEYS1));
     assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(DROPPED);
     assertEvicted(lowGasPriceTx);
     assertTransactionNotPrioritized(lowGasPriceTx);
@@ -240,6 +247,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
               DEFAULT_MIN_GAS_PRICE.divide(10),
               0,
               1,
+              VERSION_0_KZG_PROOFS,
               null,
               SIGNATURE_ALGORITHM.get().generateKeyPair());
       addedTxs.add(tx);
@@ -254,6 +262,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
             DEFAULT_MIN_GAS_PRICE.divide(10),
             0,
             1,
+            VERSION_0_KZG_PROOFS,
             null,
             SIGNATURE_ALGORITHM.get().generateKeyPair());
     assertThat(prioritizeTransaction(overflowTx)).isEqualTo(DROPPED);
@@ -276,6 +285,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
               DEFAULT_MIN_GAS_PRICE.divide(10),
               0,
               1,
+              VERSION_0_KZG_PROOFS,
               null,
               KEYS1);
       addedTxs.add(tx);

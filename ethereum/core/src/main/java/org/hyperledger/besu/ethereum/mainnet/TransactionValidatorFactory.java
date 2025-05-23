@@ -30,6 +30,7 @@ import com.google.common.base.Suppliers;
 public class TransactionValidatorFactory {
 
   private volatile Supplier<TransactionValidator> transactionValidatorSupplier;
+  private static final Set<Integer> NO_BLOB = Set.of();
 
   public TransactionValidatorFactory(
       final GasCalculator gasCalculator,
@@ -68,6 +69,26 @@ public class TransactionValidatorFactory {
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
       final int maxInitcodeSize) {
+    this(
+        gasCalculator,
+        gasLimitCalculator,
+        feeMarket,
+        checkSignatureMalleability,
+        chainId,
+        acceptedTransactionTypes,
+        NO_BLOB,
+        maxInitcodeSize);
+  }
+
+  public TransactionValidatorFactory(
+      final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator,
+      final FeeMarket feeMarket,
+      final boolean checkSignatureMalleability,
+      final Optional<BigInteger> chainId,
+      final Set<TransactionType> acceptedTransactionTypes,
+      final Set<Integer> acceptedBlobVersions,
+      final int maxInitcodeSize) {
 
     this.transactionValidatorSupplier =
         Suppliers.memoize(
@@ -79,6 +100,7 @@ public class TransactionValidatorFactory {
                     checkSignatureMalleability,
                     chainId,
                     acceptedTransactionTypes,
+                    acceptedBlobVersions,
                     maxInitcodeSize));
   }
 

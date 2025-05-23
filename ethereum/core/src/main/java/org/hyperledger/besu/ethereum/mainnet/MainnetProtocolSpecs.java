@@ -23,6 +23,7 @@ import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -759,6 +760,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559,
                         TransactionType.BLOB),
+                    Set.of(BlobProofBundle.VERSION_0_KZG_PROOFS),
                     evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::blobAwareBlockHeaderValidator)
@@ -852,6 +854,7 @@ public abstract class MainnetProtocolSpecs {
                             TransactionType.EIP1559,
                             TransactionType.BLOB,
                             TransactionType.DELEGATE_CODE),
+                        Set.of(BlobProofBundle.VERSION_0_KZG_PROOFS),
                         evm.getMaxInitcodeSize()))
             // CodeDelegationProcessor
             .transactionProcessorBuilder(
@@ -927,6 +930,22 @@ public abstract class MainnetProtocolSpecs {
                     (BaseFeeMarket) feeMarket,
                     gasCalculator,
                     blobSchedule.getMax()))
+        .transactionValidatorFactoryBuilder(
+            (evm, gasLimitCalculator, feeMarket) ->
+                new TransactionValidatorFactory(
+                    evm.getGasCalculator(),
+                    gasLimitCalculator,
+                    feeMarket,
+                    true,
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559,
+                        TransactionType.BLOB,
+                        TransactionType.DELEGATE_CODE),
+                    Set.of(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS),
+                    evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
         .name("Osaka");
   }

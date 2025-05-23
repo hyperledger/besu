@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -115,10 +116,9 @@ public class TransactionPool implements BlockAddedObserver {
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
   private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
-  private final ListMultimap<VersionedHash, BlobsWithCommitments.BlobQuad>
-      mapOfBlobsInTransactionPool =
-          Multimaps.synchronizedListMultimap(
-              Multimaps.newListMultimap(new HashMap<>(), () -> new ArrayList<>(1)));
+  private final ListMultimap<VersionedHash, BlobProofBundle> mapOfBlobsInTransactionPool =
+      Multimaps.synchronizedListMultimap(
+          Multimaps.newListMultimap(new HashMap<>(), () -> new ArrayList<>(1)));
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -671,10 +671,10 @@ public class TransactionPool implements BlockAddedObserver {
     if (maybeBlobsWithCommitments.isEmpty()) {
       return;
     }
-    final List<BlobsWithCommitments.BlobQuad> blobQuads =
-        maybeBlobsWithCommitments.get().getBlobQuads();
+    final List<BlobProofBundle> blobProofBundles =
+        maybeBlobsWithCommitments.get().getBlobProofBundles();
 
-    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.versionedHash(), bq));
+    blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.versionedHash(), bq));
   }
 
   private void unmapBlobsOnTransactionDropped(
@@ -684,13 +684,13 @@ public class TransactionPool implements BlockAddedObserver {
     if (maybeBlobsWithCommitments.isEmpty()) {
       return;
     }
-    final List<BlobsWithCommitments.BlobQuad> blobQuads =
-        maybeBlobsWithCommitments.get().getBlobQuads();
+    final List<BlobProofBundle> blobProofBundles =
+        maybeBlobsWithCommitments.get().getBlobProofBundles();
 
-    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.versionedHash(), bq));
+    blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.versionedHash(), bq));
   }
 
-  public BlobsWithCommitments.BlobQuad getBlobQuad(final VersionedHash vh) {
+  public BlobProofBundle getBlobProofBundle(final VersionedHash vh) {
     try {
       // returns an empty list if the key is not present, so getFirst() will throw
       return mapOfBlobsInTransactionPool.get(vh).getFirst();

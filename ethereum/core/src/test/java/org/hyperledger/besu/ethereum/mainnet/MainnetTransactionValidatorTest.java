@@ -33,6 +33,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
@@ -99,6 +100,7 @@ public class MainnetTransactionValidatorTest {
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
+        Set.of(BlobProofBundle.VERSION_0_KZG_PROOFS),
         maxInitcodeSize);
   }
 
@@ -401,6 +403,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            Set.of(BlobProofBundle.VERSION_0_KZG_PROOFS),
             Integer.MAX_VALUE);
 
     final Transaction transaction =
@@ -587,6 +590,7 @@ public class MainnetTransactionValidatorTest {
             .blobsWithCommitments(
                 Optional.of(
                     new BlobsWithCommitments(
+                        BlobProofBundle.VERSION_0_KZG_PROOFS,
                         List.of(new KZGCommitment(Bytes48.ZERO)),
                         List.of(new Blob(Bytes.EMPTY)),
                         List.of(new KZGProof(Bytes48.ZERO)),

@@ -42,12 +42,19 @@ public class BlobPooledTransactionDecoder {
    */
   public static Transaction decode(final RLPInput input) {
     input.enterList();
+    int versionId = 0;
     final Transaction.Builder builder = Transaction.builder();
     BlobTransactionDecoder.readTransactionPayloadInner(builder, input);
+
+    boolean hasVersionId = !input.nextIsList();
+    if (hasVersionId) {
+      versionId = input.readIntScalar();
+    }
     List<Blob> blobs = input.readList(Blob::readFrom);
     List<KZGCommitment> commitments = input.readList(KZGCommitment::readFrom);
     List<KZGProof> proofs = input.readList(KZGProof::readFrom);
+
     input.leaveList();
-    return builder.kzgBlobs(commitments, blobs, proofs).build();
+    return builder.kzgBlobs(versionId, commitments, blobs, proofs).build();
   }
 }
