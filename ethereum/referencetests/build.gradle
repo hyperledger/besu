@@ -128,22 +128,6 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     )
 }
 
-def eofReferenceTests = tasks.register("eofReferenceTests") {
-  final referenceTestsPath = "src/reference-test/external-resources/EOFTests"
-  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
-  inputs.files fileTree(referenceTestsPath),
-    fileTree(generatedTestsPath)
-  outputs.files generatedTestsPath
-  generateTestFiles(
-    fileTree(referenceTestsPath),
-    file("src/reference-test/templates/EOFReferenceTest.java.template"),
-    "EOFTests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eof",
-    "EOFReferenceTest",
-    "org.hyperledger.besu.ethereum.vm.eof"
-    )
-}
-
 sourceSets {
   referenceTest {
     java {
@@ -155,8 +139,7 @@ sourceSets {
         eipStateReferenceTests,
         executionSpecTests,
         generalstateReferenceTests,
-        generalstateRegressionReferenceTests,
-        eofReferenceTests
+        generalstateRegressionReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',
@@ -226,7 +209,7 @@ tasks.register('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
-    def expectedHash = '9201075490807f58811078e9bb5ec895b4ac01a5'
+    def expectedHash = 'afed83bf2a097cba688a60246429f3a051fe03f6'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
       exec {
