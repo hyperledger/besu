@@ -2830,6 +2830,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation())
         .setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode())
         .setPluginContext(this.besuPluginContext)
+        .setHistoryExpiryPruneEnabled(getDataStorageConfiguration().getHistoryExpiryPruneEnabled())
         .setBlobDBSettings(rocksDBPlugin.getBlobDBSettings());
 
     return builder.build();

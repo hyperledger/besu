@@ -36,7 +36,10 @@ public class TransactionReceiptTest {
                 RLP.encode(
                     output ->
                         TransactionReceiptEncoder.writeTo(
-                            receipt, output, TransactionReceiptEncodingConfiguration.NETWORK))),
+                            receipt,
+                            output,
+                            TransactionReceiptEncodingConfiguration
+                                .DEFAULT_NETWORK_CONFIGURATION))),
             false);
     assertThat(copy).isEqualTo(receipt);
   }
@@ -52,8 +55,8 @@ public class TransactionReceiptTest {
         TransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
-                    rlpOut ->
-                        TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))));
+                    rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))),
+            true);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -71,8 +74,8 @@ public class TransactionReceiptTest {
         TransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
-                    rlpOut ->
-                        TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))));
+                    rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))),
+            true);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -91,8 +94,8 @@ public class TransactionReceiptTest {
         TransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
-                    rlpOut ->
-                        TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))));
+                    rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))),
+            true);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -122,8 +125,26 @@ public class TransactionReceiptTest {
             rlpOut ->
                 TransactionReceiptEncoder.writeTo(
                     receipt, rlpOut, encodingOptionsWithoutCompaction));
-    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(compactedReceipt))).isEqualTo(receipt);
-    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(unCompactedReceipt)))
+    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(compactedReceipt), true))
         .isEqualTo(receipt);
+    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(unCompactedReceipt), true))
+        .isEqualTo(receipt);
+  }
+
+  @Test
+  public void toFromRlpEth69Receipt() {
+    final TransactionReceiptEncodingConfiguration encodingConfiguration =
+        TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION;
+
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
+    final TransactionReceipt copy =
+        TransactionReceiptDecoder.readFrom(
+            RLP.input(
+                RLP.encode(
+                    rlpOut ->
+                        TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingConfiguration))),
+            true);
+    assertThat(copy).isEqualTo(receipt);
   }
 }
