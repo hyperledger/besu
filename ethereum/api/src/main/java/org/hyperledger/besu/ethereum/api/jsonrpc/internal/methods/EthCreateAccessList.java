@@ -49,25 +49,24 @@ public class EthCreateAccessList extends AbstractEstimateGas {
       final JsonRpcRequestContext requestContext,
       final CallParameter callParams,
       final ProcessableBlockHeader blockHeader,
-      final TransactionSimulationFunction simulationFunction) {
+      final TransactionSimulationFunction simulationFunction,
+      final long gasLimitUpperBound,
+      final long minTxCost) {
 
     final AccessListOperationTracer tracer = AccessListOperationTracer.create();
-    // if it's a value transfer, try optimistic simulation - get gas min from GasCalculator
-    final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);
     if (attemptOptimisticSimulationWithMinimumBlockGasUsed(
-        blockHeader, callParams, simulationFunction, tracer)) {
+        minTxCost, callParams, simulationFunction, tracer)) {
       return new CreateAccessListResult(tracer.getAccessList(), minTxCost);
     }
     // Otherwise, do the calculation with the provided gasLimit
     final Optional<TransactionSimulatorResult> firstResult =
-        simulationFunction.simulate(
-            overrideGasLimit(callParams, blockHeader.getGasLimit()), tracer);
+        simulationFunction.simulate(overrideGasLimit(callParams, gasLimitUpperBound), tracer);
 
     // if the call accessList is different from the simulation result, calculate gas and return
     if (shouldProcessWithAccessListOverride(callParams, tracer)) {
       final AccessListSimulatorResult result =
           processTransactionWithAccessListOverride(
-              callParams, blockHeader.getGasLimit(), tracer.getAccessList(), simulationFunction);
+              callParams, gasLimitUpperBound, tracer.getAccessList(), simulationFunction);
       return createResponse(requestContext, result);
     } else {
       return createResponse(requestContext, new AccessListSimulatorResult(firstResult, tracer));
