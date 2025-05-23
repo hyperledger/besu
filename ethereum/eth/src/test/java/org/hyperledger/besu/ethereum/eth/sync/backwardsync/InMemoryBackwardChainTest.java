@@ -29,8 +29,8 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,7 +82,7 @@ public class InMemoryBackwardChainTest {
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 4).getHeader());
   }
 
-  @Nonnull
+  @NotNull
   private BackwardChain createChainFromBlock(final Block pivot) {
     final BackwardChain backwardChain =
         new BackwardChain(headersStorage, blocksStorage, chainStorage, sessionDataStorage);

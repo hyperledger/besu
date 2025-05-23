@@ -23,9 +23,9 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
-import javax.annotation.Nonnull;
 
 import com.google.common.net.InetAddresses;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +75,7 @@ public class NodeSmartContractV2PermissioningController
     }
   }
 
-  @Nonnull
+  @NotNull
   private Boolean getCallResult(final EnodeURL enode) {
     return transactionSimulator
         .processAtHead(buildCallParameters(createPayload(enode)))

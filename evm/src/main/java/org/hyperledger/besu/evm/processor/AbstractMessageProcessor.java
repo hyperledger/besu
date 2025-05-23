@@ -27,8 +27,8 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -235,7 +235,7 @@ public abstract class AbstractMessageProcessor {
    * @param codeBytes the code bytes
    * @return the code from evm
    */
-  public Code getCodeFromEVM(@Nonnull final Hash codeHash, final Bytes codeBytes) {
+  public Code getCodeFromEVM(@NotNull final Hash codeHash, final Bytes codeBytes) {
     return evm.getCode(codeHash, codeBytes);
   }
 

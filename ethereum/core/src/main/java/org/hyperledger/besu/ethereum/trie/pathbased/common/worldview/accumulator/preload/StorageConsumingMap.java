@@ -18,9 +18,9 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
+import jakarta.validation.constraints.NotNull;
 
 public class StorageConsumingMap<K, T> extends ForwardingMap<K, T> {
 
@@ -37,7 +37,7 @@ public class StorageConsumingMap<K, T> extends ForwardingMap<K, T> {
   }
 
   @Override
-  public T put(@Nonnull final K slotKey, @Nonnull final T value) {
+  public T put(@NotNull final K slotKey, @NotNull final T value) {
     consumer.process(address, slotKey);
     return storages.put(slotKey, value);
   }

@@ -26,8 +26,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,7 +131,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
   }
 
   @Override
-  public int compareTo(final @Nonnull PeerReputation otherReputation) {
+  public int compareTo(final @NotNull PeerReputation otherReputation) {
     return Integer.compare(this.score, otherReputation.score);
   }
 

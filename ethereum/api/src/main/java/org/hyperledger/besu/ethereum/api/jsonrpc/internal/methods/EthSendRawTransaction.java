@@ -36,9 +36,9 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
-import javax.annotation.Nonnull;
 
 import com.google.common.base.Suppliers;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,7 +114,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
         errorReason -> getJsonRpcResponse(requestContext, errorReason, validationResult));
   }
 
-  @Nonnull
+  @NotNull
   private JsonRpcResponse getJsonRpcResponse(
       final JsonRpcRequestContext requestContext,
       final TransactionInvalidReason errorReason,

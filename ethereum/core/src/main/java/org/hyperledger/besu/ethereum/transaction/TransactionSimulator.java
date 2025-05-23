@@ -52,10 +52,10 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
-import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -347,7 +347,7 @@ public class TransactionSimulator {
                     "Public world state not available for block " + header.toLogString()));
   }
 
-  @Nonnull
+  @NotNull
   public Optional<TransactionSimulatorResult> processWithWorldUpdater(
       final CallParameter callParams,
       final Optional<StateOverrideMap> maybeStateOverrides,
@@ -395,7 +395,7 @@ public class TransactionSimulator {
         () -> FAKE_SIGNATURE);
   }
 
-  @Nonnull
+  @NotNull
   public Optional<TransactionSimulatorResult> processWithWorldUpdater(
       final CallParameter callParams,
       final Optional<StateOverrideMap> maybeStateOverrides,

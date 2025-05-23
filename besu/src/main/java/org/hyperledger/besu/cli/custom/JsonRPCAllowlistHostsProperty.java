@@ -20,10 +20,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Nonnull;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import jakarta.validation.constraints.NotNull;
 
 /** The Json Rpc allowlist hosts list for CLI option. */
 public class JsonRPCAllowlistHostsProperty extends AbstractList<String> {
@@ -34,7 +34,7 @@ public class JsonRPCAllowlistHostsProperty extends AbstractList<String> {
   public JsonRPCAllowlistHostsProperty() {}
 
   @Override
-  @Nonnull
+  @NotNull
   public Iterator<String> iterator() {
     if (hostnamesAllowlist.size() == 1 && hostnamesAllowlist.get(0).equals("none")) {
       return Collections.emptyIterator();
