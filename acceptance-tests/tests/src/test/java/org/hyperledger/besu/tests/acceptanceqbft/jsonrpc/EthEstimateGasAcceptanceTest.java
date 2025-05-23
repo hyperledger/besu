@@ -87,10 +87,7 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
       var transactionTooLow =
           node.execute(
               contractTransactions.callSmartContract(
-                  testDepth.getContractAddress(),
-                  functionCall,
-                  gasTooLow,
-                  GAS_PRICE));
+                  testDepth.getContractAddress(), functionCall, gasTooLow, GAS_PRICE));
 
       node.verify(eth.expectSuccessfulTransactionReceipt(transactionTooLow.getTransactionHash()));
 
