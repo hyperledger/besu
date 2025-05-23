@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -21,7 +23,11 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -52,6 +58,8 @@ public class RocksDBSnapshotTransaction
   private final ReadOptions readOptions;
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
+  private final Cache<Bytes, Optional<byte[]>> keys =
+          CacheBuilder.newBuilder().recordStats().maximumSize(100_000_000).build();
   /**
    * Instantiates a new RocksDb snapshot transaction.
    *
@@ -99,7 +107,18 @@ public class RocksDBSnapshotTransaction
   public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key) {
     throwIfClosed();
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      return Optional.ofNullable(snapshot.get(columnFamilyMapper.apply(segmentId), readOptions, key));
+      var columnName = segmentId.getId();
+      var k = new byte[columnName.length+key.length];
+      System.arraycopy(columnName, 0, k, 0, columnName.length);
+      System.arraycopy(key, 0, k, columnName.length, key.length);
+          final Bytes wrappedKey = Bytes.wrap(k);
+          Optional<byte[]> ifPresent = keys.getIfPresent(wrappedKey);
+        //noinspection OptionalAssignedToNull
+        if(ifPresent==null){
+            ifPresent = Optional.ofNullable(snapshot.get(columnFamilyMapper.apply(segmentId), readOptions, key));
+            keys.put(wrappedKey,ifPresent);
+          }
+          return ifPresent;
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }

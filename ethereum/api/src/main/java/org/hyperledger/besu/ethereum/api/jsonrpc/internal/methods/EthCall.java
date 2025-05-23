@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
@@ -94,19 +95,20 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
             maybeStateOverrides,
             buildTransactionValidationParams(header, callParams),
             OperationTracer.NO_TRACING,
-            (mutableWorldState, transactionSimulatorResult) ->
-                transactionSimulatorResult.map(
-                    result ->
-                        result
-                            .getValidationResult()
-                            .either(
-                                (() ->
-                                    result.isSuccessful()
-                                        ? new JsonRpcSuccessResponse(
-                                            request.getRequest().getId(),
-                                            result.getOutput().toString())
-                                        : errorResponse(request, result)),
-                                reason -> errorResponse(request, result))),
+            (mutableWorldState, transactionSimulatorResult) -> {
+              return transactionSimulatorResult.map(
+                      result ->
+                              result
+                                      .getValidationResult()
+                                      .either(
+                                              (() ->
+                                                      result.isSuccessful()
+                                                              ? new JsonRpcSuccessResponse(
+                                                              request.getRequest().getId(),
+                                                              result.getOutput().toString())
+                                                              : errorResponse(request, result)),
+                                              reason -> errorResponse(request, result)));
+            },
             header)
         .orElse(errorResponse(request, INTERNAL_ERROR));
   }

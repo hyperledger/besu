@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
@@ -289,7 +290,9 @@ public class TransactionSimulator {
     try (final MutableWorldState ws = getWorldState(header)) {
 
       WorldUpdater updater = getEffectiveWorldStateUpdater(ws);
-
+      if(ws instanceof BonsaiWorldState bonsaiWorldState){
+        bonsaiWorldState.disableCacheMerkleTrieLoader();
+      }
       // in order to trace the state diff we need to make sure that
       // the world updater always has a parent
       if (operationTracer instanceof DebugOperationTracer) {
