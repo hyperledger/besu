@@ -24,10 +24,10 @@ import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.slf4j.Logger;
@@ -83,10 +83,10 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     return gasCost;
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
 
     if (input.size() >= 64 && input.slice(0, 64).equals(POINT_AT_INFINITY)) {
       return new PrecompileContractResult(
@@ -132,7 +132,7 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     return res.cachedResult();
   }
 
-  @Nonnull
+  @NotNull
   private static PrecompileContractResult computeDefault(final Bytes input) {
     final BigInteger x = extractParameter(input, 0, 32);
     final BigInteger y = extractParameter(input, 32, 32);

@@ -27,8 +27,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.owasp.encoder.Encode;
 
@@ -158,7 +158,7 @@ public class PeerInfo implements Comparable<PeerInfo> {
   }
 
   @Override
-  public int compareTo(final @Nonnull PeerInfo peerInfo) {
+  public int compareTo(final @NotNull PeerInfo peerInfo) {
     return this.nodeId.compareTo(peerInfo.nodeId);
   }
 

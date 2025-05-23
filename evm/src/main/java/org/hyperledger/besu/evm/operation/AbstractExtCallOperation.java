@@ -26,8 +26,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-import javax.annotation.Nonnull;
-
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -204,7 +203,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     return new OperationResult(clampedAdd(cost, childGas), null, 0);
   }
 
-  private @Nonnull OperationResult softFailure(final MessageFrame frame, final long cost) {
+  private @NotNull OperationResult softFailure(final MessageFrame frame, final long cost) {
     frame.popStackItems(getStackItemsConsumed());
     frame.pushStackItem(EOF1_EXCEPTION_STACK_ITEM);
     return new OperationResult(cost, null);

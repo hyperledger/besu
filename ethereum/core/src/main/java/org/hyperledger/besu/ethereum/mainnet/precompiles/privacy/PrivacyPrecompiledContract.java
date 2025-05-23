@@ -52,8 +52,8 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Base64;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -113,10 +113,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     return 0L;
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
 
     if (skipContractExecution(messageFrame)) {
       return NO_RESULT;

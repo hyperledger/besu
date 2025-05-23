@@ -35,9 +35,9 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.validation.constraints.NotNull;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -155,7 +155,7 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
     assertThat(rebackupManifest).isEqualTo(backupManifest);
   }
 
-  @Nonnull
+  @NotNull
   private UnaryOperator<BesuNodeConfigurationBuilder> configureNodeCommands(
       final Path dataPath, final String... commands) {
     return nodeBuilder -> super.configureNode(nodeBuilder).dataPath(dataPath).run(commands);

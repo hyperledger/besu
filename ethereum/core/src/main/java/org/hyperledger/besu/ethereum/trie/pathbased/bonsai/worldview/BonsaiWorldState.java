@@ -52,9 +52,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
@@ -101,7 +101,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
   }
 
   @Override
-  public Optional<Bytes> getCode(@Nonnull final Address address, final Hash codeHash) {
+  public Optional<Bytes> getCode(@NotNull final Address address, final Hash codeHash) {
     return getWorldStateStorage().getCode(codeHash, address.addressHash());
   }
 

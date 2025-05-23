@@ -76,12 +76,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 
 import com.google.common.base.Ticker;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.net.InetAddresses;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -1722,7 +1722,7 @@ public class PeerDiscoveryControllerTest {
     verify(controller, times(1)).connectOnRlpxLayer(eq(maybePeer.get()));
   }
 
-  @Nonnull
+  @NotNull
   private Packet prepareForForkIdCheck(
       final List<NodeKey> nodeKeys, final DiscoveryPeer sender, final boolean sendForkId) {
     final HashMap<PacketType, Bytes> packetTypeBytesHashMap = new HashMap<>();

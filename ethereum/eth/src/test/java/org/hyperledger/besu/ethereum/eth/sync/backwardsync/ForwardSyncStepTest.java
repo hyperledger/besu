@@ -53,8 +53,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -267,7 +267,7 @@ public class ForwardSyncStepTest {
     return chain;
   }
 
-  @Nonnull
+  @NotNull
   private BackwardChain backwardChainFromBlock(final int number) {
     final BackwardChain backwardChain =
         new BackwardChain(headersStorage, blocksStorage, chainStorage, sessionDataStorage);
@@ -275,7 +275,7 @@ public class ForwardSyncStepTest {
     return backwardChain;
   }
 
-  @Nonnull
+  @NotNull
   private Block getBlockByNumber(final int number) {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
   }
