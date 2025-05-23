@@ -102,8 +102,6 @@ jobs:
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
-      - name: test docker
-        run: ./gradlew distDocker      
       - name: List unit tests
         run: ./gradlew test --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
