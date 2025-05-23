@@ -102,10 +102,11 @@ public class TransactionTestFixture {
         builder.maxFeePerBlobGas(maxFeePerBlobGas.orElse(Wei.ONE));
         if (blobs.isPresent()) {
           builder.kzgBlobs(
-              blobs.get().getKzgCommitments(), blobs.get().getBlobs(), blobs.get().getKzgProofs());
-        } else if (versionedHashes.isPresent()) {
-          builder.versionedHashes(versionedHashes.get());
-        }
+              blobs.get().getVersionId(),
+              blobs.get().getKzgCommitments(),
+              blobs.get().getBlobs(),
+              blobs.get().getKzgProofs());
+        } else versionedHashes.ifPresent(builder::versionedHashes);
         break;
       case DELEGATE_CODE:
         builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));

@@ -48,7 +48,8 @@ public class BlobTransactionEncodingTest {
   }
 
   private static Stream<Arguments> provideOpaqueBytesForNetwork() throws IOException {
-    return Stream.of(createArgumentFromFile("blob2.txt"));
+    return Stream.of(
+        createArgumentFromFile("blob2.txt"), createArgumentFromFile("blob_version1.txt"));
   }
 
   @ParameterizedTest(name = "{index} {0}")

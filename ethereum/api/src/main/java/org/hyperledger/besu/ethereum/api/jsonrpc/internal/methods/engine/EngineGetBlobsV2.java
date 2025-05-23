@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import org.hyperledger.besu.datatypes.BlobProofBundle;
+import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -25,7 +26,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobsBundleV2;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Arrays;
@@ -33,35 +35,18 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import ethereum.ckzg4844.CKZG4844JNI;
+import ethereum.ckzg4844.CellsAndProofs;
 import io.vertx.core.Vertx;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * #### Specification
- *
- * <p>1. Given an array of blob versioned hashes client software **MUST** respond with an array of
- * `BlobAndProofV1` objects with matching versioned hashes, respecting the order of versioned hashes
- * in the input array.
- *
- * <p>2. Client software **MUST** place responses in the order given in the request, using `null`
- * for any missing blobs. For instance, if the request is `[A_versioned_hash, B_versioned_hash,
- * C_versioned_hash]` and client software has data for blobs `A` and `C`, but doesn't have data for
- * `B`, the response **MUST** be `[A, null, C]`.
- *
- * <p>3. Client software **MUST** support request sizes of at least 128 blob versioned hashes. The
- * client **MUST** return `-38004: Too large request` error if the number of requested blobs is too
- * large.
- *
- * <p>4. Client software **MAY** return an array of all `null` entries if syncing or otherwise
- * unable to serve blob pool data.
- *
- * <p>5. Callers **MUST** consider that execution layer clients may prune old blobs from their pool,
- * and will respond with `null` if a blob has been pruned.
- */
-public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
+public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(EngineGetBlobsV2.class);
 
   private final TransactionPool transactionPool;
 
-  public EngineGetBlobsV1(
+  public EngineGetBlobsV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final EngineCallListener engineCallListener,
@@ -72,7 +57,7 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public String getName() {
-    return "engine_getBlobsV1";
+    return "engine_getBlobsV2";
   }
 
   @Override
@@ -93,26 +78,46 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST);
     }
 
-    final List<BlobAndProofV1> result = getBlobV1Result(versionedHashes);
+    final List<BlobAndProofV2> result = getBlobV2Result(versionedHashes);
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
-  private @Nonnull List<BlobAndProofV1> getBlobV1Result(final VersionedHash[] versionedHashes) {
+  private @Nonnull List<BlobAndProofV2> getBlobV2Result(final VersionedHash[] versionedHashes) {
     return Arrays.stream(versionedHashes)
         .map(transactionPool::getBlobProofBundle)
-        .map(this::getBlobAndProofV1)
+        .map(this::getBlobAndProofV2)
         .toList();
   }
 
-  private @Nullable BlobAndProofV1 getBlobAndProofV1(final BlobProofBundle bq) {
+  private @Nullable BlobAndProofV2 getBlobAndProofV2(final BlobProofBundle bq) {
     if (bq == null) {
       return null;
     }
-    if (bq.versionId() != BlobProofBundle.VERSION_0_KZG_PROOFS) {
-      return null;
+    BlobProofBundle toReturn = bq;
+    if (bq.versionId() == BlobProofBundle.VERSION_0_KZG_PROOFS) {
+      LOG.info(
+          "BlobProofBundle {} versionId is 0. Converting to version {}",
+          bq.versionedHash(),
+          BlobProofBundle.VERSION_1_KZG_CELL_PROOFS);
+      CellsAndProofs cellProofs =
+          CKZG4844JNI.computeCellsAndKzgProofs(bq.blob().getData().toArray());
+      List<KZGProof> kzgCellProofs = extractKZGProofs(cellProofs.getProofs());
+      toReturn =
+          BlobProofBundle.builder()
+              .versionId(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS)
+              .blob(bq.blob())
+              .kzgCommitment(bq.kzgCommitment())
+              .kzgProof(kzgCellProofs)
+              .versionedHash(bq.versionedHash())
+              .build();
     }
-    return new BlobAndProofV1(
-        bq.blob().getData().toHexString(), bq.kzgProof().getFirst().getData().toHexString());
+    return new BlobAndProofV2(
+        toReturn.blob().getData().toHexString(),
+        toReturn.kzgProof().stream().map(p -> p.getData().toHexString()).toList());
+  }
+
+  public static List<KZGProof> extractKZGProofs(final byte[] input) {
+    return BlobsBundleV2.extractKZGProofs(input);
   }
 }

@@ -281,8 +281,8 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
     assertThat(maybeBlob).isPresent();
     Transaction restoredBlob = maybeBlob.get();
     assertThat(restoredBlob).isEqualTo(transactionWithBlobs);
-    assertThat(restoredBlob.getBlobsWithCommitments().get().getBlobQuads())
-        .isEqualTo(transactionWithBlobs.getBlobsWithCommitments().get().getBlobQuads());
+    assertThat(restoredBlob.getBlobsWithCommitments().get().getBlobProofBundles())
+        .isEqualTo(transactionWithBlobs.getBlobsWithCommitments().get().getBlobProofBundles());
   }
 
   @ParameterizedTest

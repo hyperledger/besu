@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -86,11 +86,11 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
 
     assertTransactionPending(transactionWithBlobs);
     // assert that the blobs are returned from the tx pool
-    final List<BlobsWithCommitments.BlobQuad> expectedBlobQuads =
-        transactionWithBlobs.getBlobsWithCommitments().get().getBlobQuads();
+    final List<BlobProofBundle> expectedBlobProofBundles =
+        transactionWithBlobs.getBlobsWithCommitments().get().getBlobProofBundles();
 
-    expectedBlobQuads.forEach(
-        bq -> assertThat(transactionPool.getBlobQuad(bq.versionedHash())).isEqualTo(bq));
+    expectedBlobProofBundles.forEach(
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.versionedHash())).isEqualTo(bq));
   }
 
   @Test
@@ -103,12 +103,12 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
     addAndAssertRemoteTransactionsValid(transactionWithBlobs);
     assertTransactionPending(transactionWithBlobs);
 
-    final List<BlobsWithCommitments.BlobQuad> expectedBlobQuads =
-        transactionWithBlobs.getBlobsWithCommitments().get().getBlobQuads();
+    final List<BlobProofBundle> expectedBlobProofBundles =
+        transactionWithBlobs.getBlobsWithCommitments().get().getBlobProofBundles();
 
     // assert that the blobs are returned from the tx pool
-    expectedBlobQuads.forEach(
-        bq -> assertThat(transactionPool.getBlobQuad(bq.versionedHash())).isEqualTo(bq));
+    expectedBlobProofBundles.forEach(
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.versionedHash())).isEqualTo(bq));
 
     // add different transaction that contains the same blobs
     addAndAssertRemoteTransactionsValid(transactionWithSameBlobs);
@@ -116,8 +116,8 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
     assertTransactionPending(transactionWithBlobs);
     assertTransactionPending(transactionWithSameBlobs);
     // assert that the blobs are still returned from the tx pool
-    expectedBlobQuads.forEach(
-        bq -> assertThat(transactionPool.getBlobQuad(bq.versionedHash())).isEqualTo(bq));
+    expectedBlobProofBundles.forEach(
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.versionedHash())).isEqualTo(bq));
 
     // replace the second blob transaction with tx with different blobs
     addAndAssertRemoteTransactionsValid(transactionWithSameBlobsReplacement);
@@ -125,8 +125,8 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
     assertTransactionNotPending(transactionWithSameBlobs);
 
     // assert that the blob is still returned from the tx pool
-    expectedBlobQuads.forEach(
-        bq -> assertThat(transactionPool.getBlobQuad(bq.versionedHash())).isEqualTo(bq));
+    expectedBlobProofBundles.forEach(
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.versionedHash())).isEqualTo(bq));
 
     // replace the first blob transaction with tx with different blobs
     addAndAssertRemoteTransactionsValid(transactionWithBlobsReplacement);
@@ -135,7 +135,7 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
 
     // All txs containing the expected blobs have been replaced,
     // so the blobs should no longer be returned from the tx pool
-    expectedBlobQuads.forEach(
-        bq -> assertThat(transactionPool.getBlobQuad(bq.versionedHash())).isNull());
+    expectedBlobProofBundles.forEach(
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.versionedHash())).isNull());
   }
 }

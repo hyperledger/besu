@@ -7,6 +7,7 @@ on:
       - main
       - release-*
       - verkle
+      - fusaka-devnet-0
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"

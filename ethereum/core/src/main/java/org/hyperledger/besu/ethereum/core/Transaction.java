@@ -1246,9 +1246,12 @@ public class Transaction
         blobsWithCommitments.getKzgProofs().stream()
             .map(proof -> new KZGProof(proof.getData().copy()))
             .toList();
-
     return new BlobsWithCommitments(
-        detachedCommitments, detachedBlobs, detachedProofs, versionedHashes);
+        blobsWithCommitments.getVersionId(),
+        detachedCommitments,
+        detachedBlobs,
+        detachedProofs,
+        versionedHashes);
   }
 
   public static class Builder {
@@ -1468,6 +1471,7 @@ public class Transaction
     }
 
     public Builder kzgBlobs(
+        final int versionId,
         final List<KZGCommitment> kzgCommitments,
         final List<Blob> blobs,
         final List<KZGProof> kzgProofs) {
@@ -1478,7 +1482,7 @@ public class Transaction
                 .toList();
       }
       this.blobsWithCommitments =
-          new BlobsWithCommitments(kzgCommitments, blobs, kzgProofs, versionedHashes);
+          new BlobsWithCommitments(versionId, kzgCommitments, blobs, kzgProofs, versionedHashes);
       return this;
     }
 

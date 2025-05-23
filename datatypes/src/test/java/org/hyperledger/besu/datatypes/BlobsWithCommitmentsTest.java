@@ -20,9 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.security.InvalidParameterException;
 import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.Test;
 
 public class BlobsWithCommitmentsTest {
@@ -31,61 +28,16 @@ public class BlobsWithCommitmentsTest {
     String actualMessage =
         assertThrows(
                 InvalidParameterException.class,
-                () -> new BlobsWithCommitments(List.of(), List.of(), List.of(), List.of()))
-            .getMessage();
-    final String expectedMessage =
-        "There needs to be a minimum of one blob in a blob transaction with commitments";
-    assertThat(actualMessage).isEqualTo(expectedMessage);
-  }
-
-  @Test
-  public void blobsWithCommitmentsMustHaveSameNumberOfElementsVersionedHashes() {
-    String actualMessage =
-        assertThrows(
-                InvalidParameterException.class,
                 () ->
                     new BlobsWithCommitments(
-                        List.of(new KZGCommitment(Bytes48.fromHexStringLenient("1"))),
-                        List.of(new Blob(Bytes.EMPTY)),
-                        List.of(new KZGProof(Bytes48.ZERO)),
+                        BlobProofBundle.VERSION_0_KZG_PROOFS,
+                        List.of(),
+                        List.of(),
+                        List.of(),
                         List.of()))
             .getMessage();
     final String expectedMessage =
-        "There must be an equal number of blobs, commitments, proofs, and versioned hashes";
-    assertThat(actualMessage).isEqualTo(expectedMessage);
-  }
-
-  @Test
-  public void blobsWithCommitmentsMustHaveSameNumberOfElementsKZGCommitment() {
-    String actualMessage =
-        assertThrows(
-                InvalidParameterException.class,
-                () ->
-                    new BlobsWithCommitments(
-                        List.of(),
-                        List.of(new Blob(Bytes.EMPTY)),
-                        List.of(new KZGProof(Bytes48.ZERO)),
-                        List.of(new VersionedHash(Bytes32.rightPad(Bytes.fromHexString("0x01"))))))
-            .getMessage();
-    final String expectedMessage =
-        "There must be an equal number of blobs, commitments, proofs, and versioned hashes";
-    assertThat(actualMessage).isEqualTo(expectedMessage);
-  }
-
-  @Test
-  public void blobsWithCommitmentsMustHaveSameNumberOfElementsKZGProof() {
-    String actualMessage =
-        assertThrows(
-                InvalidParameterException.class,
-                () ->
-                    new BlobsWithCommitments(
-                        List.of(new KZGCommitment(Bytes48.fromHexStringLenient("1"))),
-                        List.of(new Blob(Bytes.EMPTY)),
-                        List.of(),
-                        List.of(new VersionedHash(Bytes32.rightPad(Bytes.fromHexString("0x01"))))))
-            .getMessage();
-    final String expectedMessage =
-        "There must be an equal number of blobs, commitments, proofs, and versioned hashes";
+        "There needs to be a minimum of one blob in a blob transaction with commitments";
     assertThat(actualMessage).isEqualTo(expectedMessage);
   }
 }

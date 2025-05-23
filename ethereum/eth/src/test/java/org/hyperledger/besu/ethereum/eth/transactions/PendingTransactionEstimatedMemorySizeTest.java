@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.BlobProofBundle.VERSION_0_KZG_PROOFS;
+import static org.hyperledger.besu.datatypes.BlobProofBundle.VERSION_1_KZG_CELL_PROOFS;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.ACCESS_LIST_ENTRY_SHALLOW_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.ACCESS_LIST_STORAGE_KEY_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.BLOBS_WITH_COMMITMENTS_SIZE;
@@ -140,7 +142,15 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   @Test
   public void toSize() {
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.ACCESS_LIST, 10, Wei.of(500), Wei.ZERO, 10, 0, null);
+        prepareTransaction(
+            TransactionType.ACCESS_LIST,
+            10,
+            Wei.of(500),
+            Wei.ZERO,
+            10,
+            0,
+            VERSION_0_KZG_PROOFS,
+            null);
     Transaction txTo =
         preparedTx.to(Optional.of(Address.extract(Bytes32.random()))).createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
@@ -187,7 +197,15 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   public void payloadSize() {
 
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.ACCESS_LIST, 10, Wei.of(500), Wei.ZERO, 10, 0, null);
+        prepareTransaction(
+            TransactionType.ACCESS_LIST,
+            10,
+            Wei.of(500),
+            Wei.ZERO,
+            10,
+            0,
+            VERSION_0_KZG_PROOFS,
+            null);
     Transaction txPayload = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     txPayload.writeTo(rlpOut);
@@ -277,7 +295,8 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
       final long containerSize,
       final long itemSize) {
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.BLOB, 10, Wei.of(500), Wei.of(50), 10, 1, null);
+        prepareTransaction(
+            TransactionType.BLOB, 10, Wei.of(500), Wei.of(50), 10, 1, VERSION_0_KZG_PROOFS, null);
     Transaction txBlob = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     TransactionEncoder.encodeRLP(txBlob, rlpOut, EncodingContext.POOLED_TRANSACTION);
@@ -307,9 +326,10 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   }
 
   @Test
-  public void blobsWithCommitmentsSize() {
+  public void blobsWithCommitmentsSizeVersion0() {
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.BLOB, 10, Wei.of(500), Wei.of(50), 10, 1, null);
+        prepareTransaction(
+            TransactionType.BLOB, 10, Wei.of(500), Wei.of(50), 10, 1, VERSION_0_KZG_PROOFS, null);
     Transaction txBlob = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     TransactionEncoder.encodeRLP(txBlob, rlpOut, EncodingContext.POOLED_TRANSACTION);
@@ -328,7 +348,42 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     System.out.println("BlobsWithCommitments size: " + cl.instanceSize());
     final ClassLayout rl = ClassLayout.parseInstance(bwc.getBlobs());
     System.out.println(rl.toPrintable());
-    System.out.println("BlobQuad size:" + rl.instanceSize());
+    System.out.println("BlobProofBundle size:" + rl.instanceSize());
+
+    assertThat(cl.instanceSize() + rl.instanceSize()).isEqualTo(BLOBS_WITH_COMMITMENTS_SIZE);
+  }
+
+  @Test
+  public void blobsWithCommitmentsSizeVersion1() {
+    TransactionTestFixture preparedTx =
+        prepareTransaction(
+            TransactionType.BLOB,
+            10,
+            Wei.of(500),
+            Wei.of(50),
+            10,
+            1,
+            VERSION_1_KZG_CELL_PROOFS,
+            null);
+    Transaction txBlob = preparedTx.createTransaction(KEYS1);
+    BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
+    TransactionEncoder.encodeRLP(txBlob, rlpOut, EncodingContext.POOLED_TRANSACTION);
+
+    txBlob =
+        TransactionDecoder.decodeRLP(
+                new BytesValueRLPInput(rlpOut.encoded(), false), EncodingContext.POOLED_TRANSACTION)
+            .detachedCopy();
+    System.out.println(txBlob.getSender());
+    System.out.println(txBlob.getHash());
+    System.out.println(txBlob.getSize());
+
+    final BlobsWithCommitments bwc = txBlob.getBlobsWithCommitments().get();
+    final ClassLayout cl = ClassLayout.parseInstance(bwc);
+    System.out.println(cl.toPrintable());
+    System.out.println("BlobsWithCommitments size: " + cl.instanceSize());
+    final ClassLayout rl = ClassLayout.parseInstance(bwc.getBlobs());
+    System.out.println(rl.toPrintable());
+    System.out.println("BlobProofBundle size:" + rl.instanceSize());
 
     assertThat(cl.instanceSize() + rl.instanceSize()).isEqualTo(BLOBS_WITH_COMMITMENTS_SIZE);
   }
@@ -337,7 +392,15 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   public void pendingTransactionSize() {
 
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.ACCESS_LIST, 10, Wei.of(500), Wei.ZERO, 10, 0, null);
+        prepareTransaction(
+            TransactionType.ACCESS_LIST,
+            10,
+            Wei.of(500),
+            Wei.ZERO,
+            10,
+            0,
+            VERSION_0_KZG_PROOFS,
+            null);
     Transaction txPayload = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     txPayload.writeTo(rlpOut);
@@ -369,7 +432,15 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     final List<AccessListEntry> ales = List.of(ale1);
 
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.ACCESS_LIST, 0, Wei.of(500), Wei.ZERO, 0, 0, null);
+        prepareTransaction(
+            TransactionType.ACCESS_LIST,
+            0,
+            Wei.of(500),
+            Wei.ZERO,
+            0,
+            0,
+            VERSION_0_KZG_PROOFS,
+            null);
     Transaction txAccessList = preparedTx.accessList(ales).createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     txAccessList.writeTo(rlpOut);
@@ -423,6 +494,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
             Wei.ZERO,
             0,
             0,
+            VERSION_0_KZG_PROOFS,
             List.of(CODE_DELEGATION_SENDER_1));
     Transaction txDelegateCode = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
