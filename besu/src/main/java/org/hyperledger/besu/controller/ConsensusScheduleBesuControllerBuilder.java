@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -339,12 +338,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   public BesuControllerBuilder metricsSystem(final ObservableMetricsSystem metricsSystem) {
     besuControllerBuilderSchedule.values().forEach(b -> b.metricsSystem(metricsSystem));
     return super.metricsSystem(metricsSystem);
-  }
-
-  @Override
-  public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
-    besuControllerBuilderSchedule.values().forEach(b -> b.privacyParameters(privacyParameters));
-    return super.privacyParameters(privacyParameters);
   }
 
   @Override

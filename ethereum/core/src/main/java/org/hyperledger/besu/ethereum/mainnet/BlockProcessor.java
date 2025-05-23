@@ -21,10 +21,8 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 
 import java.util.List;
-import java.util.Optional;
 
 /** Processes a block. */
 public interface BlockProcessor {
@@ -40,16 +38,6 @@ public interface BlockProcessor {
      * @return the receipts generated for the transactions in a block
      */
     List<TransactionReceipt> getReceipts();
-
-    /**
-     * The private receipts generated for the private transactions in a block when in
-     * goQuorumCompatibilityMode
-     *
-     * <p>This is only valid when {@code BlockProcessor#isSuccessful} returns {@code true}.
-     *
-     * @return the receipts generated for the private transactions in a block
-     */
-    List<TransactionReceipt> getPrivateReceipts();
 
     /**
      * Returns whether the block was successfully processed.
@@ -92,7 +80,6 @@ public interface BlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final Block block,
-      final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
       final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction);
 
   /**

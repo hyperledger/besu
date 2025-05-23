@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -172,13 +171,11 @@ public class JsonRpcTestMethodsFactory {
         Optional.of(mock(AccountLocalConfigPermissioningController.class));
     final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController =
         Optional.of(mock(NodeLocalConfigPermissioningController.class));
-    final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
     final FilterManager filterManager =
         new FilterManagerBuilder()
             .blockchainQueries(blockchainQueries)
             .transactionPool(transactionPool)
-            .privacyParameters(privacyParameters)
             .build();
 
     final JsonRpcConfiguration jsonRpcConfiguration = mock(JsonRpcConfiguration.class);
@@ -218,7 +215,6 @@ public class JsonRpcTestMethodsFactory {
             accountWhitelistController,
             nodeWhitelistController,
             apis,
-            privacyParameters,
             jsonRpcConfiguration,
             webSocketConfiguration,
             metricsConfiguration,

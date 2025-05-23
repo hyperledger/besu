@@ -104,7 +104,6 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
               header.getCoinbase(),
               tracer,
               blockHashLookup,
-              false,
               blobGasPrice);
 
       traceFrames = tracer.copyTraceFrames();

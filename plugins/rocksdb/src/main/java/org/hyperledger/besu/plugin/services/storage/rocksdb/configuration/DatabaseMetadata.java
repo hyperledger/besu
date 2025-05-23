@@ -23,8 +23,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.OptionalInt;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DatabindException;
@@ -66,15 +66,6 @@ public class DatabaseMetadata {
     return new DatabaseMetadata(
         BaseVersionedStorageFormat.defaultForNewDB(
             besuConfiguration.getDataStorageConfiguration()));
-  }
-
-  /**
-   * Return the default metadata for new db when privacy feature is enabled
-   *
-   * @return the metadata to use for new db
-   */
-  public static DatabaseMetadata defaultForNewPrivateDb() {
-    return new DatabaseMetadata(PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
   }
 
   /**
@@ -124,9 +115,7 @@ public class DatabaseMetadata {
         file,
         new V2(
             new MetadataV2(
-                versionedStorageFormat.getFormat(),
-                versionedStorageFormat.getVersion(),
-                versionedStorageFormat.getPrivacyVersion())));
+                versionedStorageFormat.getFormat(), versionedStorageFormat.getVersion())));
   }
 
   private static File getDefaultMetadataFile(final Path dataDir) {
@@ -158,27 +147,12 @@ public class DatabaseMetadata {
     // when migrating from v1, this version will automatically migrate the db to the variables
     // storage, so we use the `_WITH_VARIABLES` variants
     final VersionedStorageFormat versionedStorageFormat;
-    if (v1.privacyVersion().isEmpty()) {
-      versionedStorageFormat =
-          switch (v1.version()) {
-            case 1 -> BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
-            case 2 -> BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES;
-            default -> throw new StorageException("Unsupported db version: " + v1.version());
-          };
-    } else {
-      versionedStorageFormat =
-          switch (v1.privacyVersion().getAsInt()) {
-            case 1 ->
-                switch (v1.version()) {
-                  case 1 -> PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES;
-                  case 2 -> PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES;
-                  default -> throw new StorageException("Unsupported db version: " + v1.version());
-                };
-            default ->
-                throw new StorageException(
-                    "Unsupported db privacy version: " + v1.privacyVersion().getAsInt());
-          };
-    }
+    versionedStorageFormat =
+        switch (v1.version()) {
+          case 1 -> BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
+          case 2 -> BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+          default -> throw new StorageException("Unsupported db version: " + v1.version());
+        };
 
     final DatabaseMetadata metadataV2 = new DatabaseMetadata(versionedStorageFormat);
     // writing the metadata will migrate to v2
@@ -192,26 +166,11 @@ public class DatabaseMetadata {
   }
 
   private static VersionedStorageFormat fromV2(final MetadataV2 metadataV2) {
-    if (metadataV2.privacyVersion().isEmpty()) {
-      return Arrays.stream(BaseVersionedStorageFormat.values())
-          .filter(
-              vsf ->
-                  vsf.getFormat().equals(metadataV2.format())
-                      && vsf.getVersion() == metadataV2.version())
-          .findFirst()
-          .orElseThrow(
-              () -> {
-                final String message = "Unsupported RocksDB metadata: " + metadataV2;
-                LOG.error(message);
-                throw new StorageException(message);
-              });
-    }
-    return Arrays.stream(PrivacyVersionedStorageFormat.values())
+    return Arrays.stream(BaseVersionedStorageFormat.values())
         .filter(
             vsf ->
                 vsf.getFormat().equals(metadataV2.format())
-                    && vsf.getVersion() == metadataV2.version()
-                    && vsf.getPrivacyVersion().equals(metadataV2.privacyVersion()))
+                    && vsf.getVersion() == metadataV2.version())
         .findFirst()
         .orElseThrow(
             () -> {
@@ -221,37 +180,6 @@ public class DatabaseMetadata {
             });
   }
 
-  /**
-   * Update an existing base storage to support privacy feature
-   *
-   * @return the update metadata with the privacy support
-   */
-  public DatabaseMetadata upgradeToPrivacy() {
-    return new DatabaseMetadata(
-        switch (versionedStorageFormat.getFormat()) {
-          case FOREST ->
-              switch (versionedStorageFormat.getVersion()) {
-                case 1 -> PrivacyVersionedStorageFormat.FOREST_ORIGINAL;
-                case 2 -> PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES;
-                case 3 -> PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
-                default ->
-                    throw new StorageException(
-                        "Unsupported database with format FOREST and version "
-                            + versionedStorageFormat.getVersion());
-              };
-          case BONSAI ->
-              switch (versionedStorageFormat.getVersion()) {
-                case 1 -> PrivacyVersionedStorageFormat.BONSAI_ORIGINAL;
-                case 2 -> PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES;
-                case 3 -> PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION;
-                default ->
-                    throw new StorageException(
-                        "Unsupported database with format BONSAI and version "
-                            + versionedStorageFormat.getVersion());
-              };
-        });
-  }
-
   @Override
   public String toString() {
     return "versionedStorageFormat=" + versionedStorageFormat;
@@ -259,7 +187,7 @@ public class DatabaseMetadata {
 
   @JsonSerialize
   @SuppressWarnings("unused")
-  private record V1(int version, OptionalInt privacyVersion) {}
+  private record V1(int version) {}
 
   @JsonSerialize
   @SuppressWarnings("unused")
@@ -267,5 +195,6 @@ public class DatabaseMetadata {
 
   @JsonSerialize
   @SuppressWarnings("unused")
-  private record MetadataV2(DataStorageFormat format, int version, OptionalInt privacyVersion) {}
+  @JsonIgnoreProperties({"privacyVersion"})
+  private record MetadataV2(DataStorageFormat format, int version) {}
 }

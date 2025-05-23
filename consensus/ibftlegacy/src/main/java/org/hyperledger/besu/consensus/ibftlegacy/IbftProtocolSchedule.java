@@ -21,7 +21,6 @@ import org.hyperledger.besu.config.IbftLegacyConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
@@ -48,14 +47,12 @@ public class IbftProtocolSchedule {
    * Create protocol schedule.
    *
    * @param config the config
-   * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param evmConfiguration the evm configuration
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration) {
     final IbftLegacyConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
@@ -65,7 +62,6 @@ public class IbftProtocolSchedule {
             config,
             Optional.of(DEFAULT_CHAIN_ID),
             ProtocolSpecAdapters.create(0, builder -> applyIbftChanges(blockPeriod, builder)),
-            privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
             null,
@@ -73,21 +69,6 @@ public class IbftProtocolSchedule {
             false,
             null)
         .createProtocolSchedule();
-  }
-
-  /**
-   * Create protocol schedule.
-   *
-   * @param config the config
-   * @param isRevertReasonEnabled the is revert reason enabled
-   * @param evmConfiguration the evm configuration
-   * @return the protocol schedule
-   */
-  public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
-      final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, evmConfiguration);
   }
 
   private static ProtocolSpecBuilder applyIbftChanges(

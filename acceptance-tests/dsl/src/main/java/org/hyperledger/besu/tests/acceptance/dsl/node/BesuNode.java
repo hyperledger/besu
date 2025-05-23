@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -104,7 +103,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private MiningConfiguration miningConfiguration;
   private TransactionPoolConfiguration txPoolConfiguration;
   private final List<String> runCommand;
-  private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
@@ -169,7 +167,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
       final boolean isDnsEnabled,
-      final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
       final boolean isStrictTxReplayProtectionEnabled,
@@ -234,7 +231,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
-    privacyParameters.ifPresent(this::setPrivacyParameters);
     this.environment = environment;
     this.synchronizerConfiguration = SynchronizerConfiguration.builder().build(); // Default config
     LOG.info("Created BesuNode {}", this);
@@ -694,14 +690,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.txPoolConfiguration = txPoolConfiguration;
   }
 
-  public PrivacyParameters getPrivacyParameters() {
-    return privacyParameters;
-  }
-
-  public void setPrivacyParameters(final PrivacyParameters privacyParameters) {
-    this.privacyParameters = privacyParameters;
-  }
-
   public DataStorageConfiguration getDataStorageConfiguration() {
     return dataStorageConfiguration;
   }
@@ -783,7 +771,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         .add("keyPair", keyPair)
         .add("p2pEnabled", p2pEnabled)
         .add("discoveryEnabled", discoveryEnabled)
-        .add("privacyEnabled", privacyParameters.isEnabled())
         .toString();
   }
 

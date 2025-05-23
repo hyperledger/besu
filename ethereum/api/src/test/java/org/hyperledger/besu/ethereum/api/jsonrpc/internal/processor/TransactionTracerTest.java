@@ -186,7 +186,6 @@ public class TransactionTracerTest {
             eq(tracer),
             any(),
             any(),
-            any(),
             eq(Wei.ZERO)))
         .thenReturn(result);
 
@@ -272,7 +271,6 @@ public class TransactionTracerTest {
             eq(transaction),
             eq(null),
             any(StandardJsonTracer.class),
-            any(),
             any(),
             any(),
             eq(Wei.ZERO)))

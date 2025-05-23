@@ -112,7 +112,6 @@ public class BlockReplay {
                   transaction,
                   protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
                   blockHashLookup,
-                  false,
                   TransactionValidationParams.blockReplay(),
                   blobGasPrice);
             }
@@ -138,7 +137,6 @@ public class BlockReplay {
               transaction,
               spec.getMiningBeneficiaryCalculator().calculateBeneficiary(blockHeader),
               spec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader),
-              false,
               TransactionValidationParams.blockReplay(),
               blobGasPrice);
           return action.performAction(

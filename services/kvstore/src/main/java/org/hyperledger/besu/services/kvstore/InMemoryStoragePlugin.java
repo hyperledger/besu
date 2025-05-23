@@ -38,7 +38,6 @@ public class InMemoryStoragePlugin implements BesuPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryStoragePlugin.class);
   private ServiceManager context;
   private InMemoryKeyValueStorageFactory factory;
-  private InMemoryKeyValueStorageFactory privacyFactory;
 
   /** Default constructor */
   public InMemoryStoragePlugin() {}
@@ -69,20 +68,13 @@ public class InMemoryStoragePlugin implements BesuPlugin {
       factory.close();
       factory = null;
     }
-
-    if (privacyFactory != null) {
-      privacyFactory.close();
-      privacyFactory = null;
-    }
   }
 
   private void createAndRegister(final StorageService service) {
 
     factory = new InMemoryKeyValueStorageFactory("memory");
-    privacyFactory = new InMemoryKeyValueStorageFactory("memory-privacy");
 
     service.registerKeyValueStorage(factory);
-    service.registerKeyValueStorage(privacyFactory);
   }
 
   private void createFactoriesAndRegisterWithStorageService() {

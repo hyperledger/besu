@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -153,9 +152,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** The Metrics system. */
   protected ObservableMetricsSystem metricsSystem;
-
-  /** The Privacy parameters. */
-  protected PrivacyParameters privacyParameters;
 
   /** The Data directory. */
   protected Path dataDirectory;
@@ -361,17 +357,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Privacy parameters besu controller builder.
-   *
-   * @param privacyParameters the privacy parameters
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
-    this.privacyParameters = privacyParameters;
-    return this;
-  }
-
-  /**
    * Data directory besu controller builder.
    *
    * @param dataDirectory the data directory
@@ -567,7 +552,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(networkId, "Missing network ID");
     checkNotNull(miningConfiguration, "Missing mining parameters");
     checkNotNull(metricsSystem, "Missing metrics system");
-    checkNotNull(privacyParameters, "Missing privacy parameters");
     checkNotNull(dataDirectory, "Missing data directory"); // Why do we need this?
     checkNotNull(clock, "Missing clock");
     checkNotNull(transactionPoolConfiguration, "Missing transaction pool configuration");
@@ -644,9 +628,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 .map(BesuComponent::getBesuPluginContext)
                 .orElse(new BesuPluginContextImpl()));
     validateContext(protocolContext);
-
-    protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
-        protocolContext.getWorldStateArchive());
 
     final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
     final Supplier<ProtocolSpec> currentProtocolSpecSupplier =
@@ -809,9 +790,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final List<Closeable> closeables = new ArrayList<>();
     closeables.add(protocolContext.getWorldStateArchive());
     closeables.add(storageProvider);
-    if (privacyParameters.getPrivateStorageProvider() != null) {
-      closeables.add(privacyParameters.getPrivateStorageProvider());
-    }
 
     return new BesuController(
         protocolSchedule,
@@ -823,7 +801,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         syncState,
         transactionPool,
         miningCoordinator,
-        privacyParameters,
         miningConfiguration,
         additionalJsonRpcMethodFactory,
         nodeKey,

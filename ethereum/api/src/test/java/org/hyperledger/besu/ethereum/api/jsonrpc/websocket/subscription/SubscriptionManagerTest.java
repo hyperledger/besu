@@ -18,16 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.blockheaders.NewBlockHeadersSubscription;
-import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.PrivateLogsSubscription;
-import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.PrivateSubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.UnsubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
@@ -203,50 +198,6 @@ public class SubscriptionManagerTest {
     final Throwable thrown =
         catchThrowable(() -> subscriptionManager.unsubscribe(unsubscribeRequest));
     assertThat(thrown).isInstanceOf(SubscriptionNotFoundException.class);
-  }
-
-  @Test
-  public void shouldUnsubscribeIfUserRemovedFromPrivacyGroup() {
-    final String enclavePublicKey = "C1bVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
-    final FilterParameter filterParameter =
-        new FilterParameter(
-            BlockParameter.EARLIEST,
-            BlockParameter.LATEST,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null);
-    final String privacyGroupId = "ZDmkMK7CyxA1F1rktItzKFTfRwApg7aWzsTtm2IOZ5Y=";
-    final PrivateSubscribeRequest privateSubscribeRequest =
-        new PrivateSubscribeRequest(
-            SubscriptionType.LOGS,
-            filterParameter,
-            null,
-            CONNECTION_ID,
-            privacyGroupId,
-            enclavePublicKey);
-
-    final Long subscriptionId = subscriptionManager.subscribe(privateSubscribeRequest);
-    assertThat(
-            subscriptionManager
-                .subscriptionsOfType(SubscriptionType.LOGS, PrivateLogsSubscription.class)
-                .size())
-        .isEqualTo(1);
-
-    subscriptionManager.onPrivateTransactionProcessed(
-        new PrivateTransactionEvent(privacyGroupId, enclavePublicKey));
-
-    subscriptionManager.onBlockAdded();
-
-    assertThat(
-            subscriptionManager
-                .subscriptionsOfType(SubscriptionType.LOGS, PrivateLogsSubscription.class)
-                .size())
-        .isEqualTo(0);
-    assertThat(subscriptionManager.getSubscriptionById(subscriptionId)).isNull();
   }
 
   private SubscribeRequest subscribeRequest(final String connectionId) {
