@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
@@ -26,14 +27,6 @@ import org.junit.jupiter.api.Test;
 class PragueTargetingGasLimitCalculatorTest {
 
   @Test
-  void currentBlobGasLimitIs9BlobsByDefault() {
-    var pragueTargetingGasLimitCalculator =
-        new PragueTargetingGasLimitCalculator(
-            0L, FeeMarket.cancun(0L, Optional.empty()), new PragueGasCalculator());
-    assertThat(pragueTargetingGasLimitCalculator.currentBlobGasLimit()).isEqualTo(0x120000);
-  }
-
-  @Test
   void shouldUsePragueCalculatorBlobGasPerBlob() {
     // should use PragueGasCalculator's blob gas per blob to calculate the gas limit
     final long blobGasPerBlob = new PragueGasCalculator().getBlobGasPerBlob();
@@ -41,7 +34,10 @@ class PragueTargetingGasLimitCalculatorTest {
     int maxBlobs = 10;
     var pragueTargetingGasLimitCalculator =
         new PragueTargetingGasLimitCalculator(
-            0L, FeeMarket.cancun(0L, Optional.empty()), new PragueGasCalculator(), maxBlobs);
+            0L,
+            FeeMarket.cancun(0L, Optional.empty(), BlobSchedule.PRAGUE_DEFAULT),
+            new PragueGasCalculator(),
+            maxBlobs);
     // if maxBlobs = 10, then the gas limit would be 131072 * 10 = 1310720
     assertThat(pragueTargetingGasLimitCalculator.currentBlobGasLimit())
         .isEqualTo(blobGasPerBlob * maxBlobs);
