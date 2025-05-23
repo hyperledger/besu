@@ -194,16 +194,15 @@ public class DNSResolver {
         case "enrtree-branch":
           return new DNSEntry.ENRTree(record.substring(prefix.length() + 1));
         case "enr":
-          return new ENRNode(readKV(record));
+          return ENRNode.fromAttrs(readKV(record));
         case "enrtree":
           return new ENRTreeLink(record);
       }
+      LOG.error("{} should contain enrtree-branch, enr, enrtree-root or enrtree", serialized);
     } catch (Throwable t) {
-      LOG.error("Failed to parse record: {}", record);
-      throw t;
+      LOG.warn("Failed to parse record: {}", record);
     }
-    throw new IllegalArgumentException(
-        serialized + " should contain enrtree-branch, enr, enrtree-root or enrtree");
+    return null;
   }
 
   private static String trimQuotes(final String str) {

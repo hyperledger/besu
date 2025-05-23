@@ -71,6 +71,10 @@ public class MockDnsServerVerticle extends AbstractVerticle {
             });
   }
 
+  public void addTxtRecord(final String key, final String value) {
+    txtRecords.put(key, value);
+  }
+
   @Override
   public void stop() {
     LOG.info("Stopping Mock DNS Server");
