@@ -41,10 +41,11 @@ public class MergePeerFilter implements MergeStateHandler, UnverifiedForkchoiceL
     long lockStamp = this.powTerminalDifficultyLock.readLock();
     try {
       if (this.powTerminalDifficulty.isPresent()
-          && status.totalDifficulty().greaterThan(this.powTerminalDifficulty.get())) {
+          && status.totalDifficulty().isPresent()
+          && status.totalDifficulty().get().greaterThan(this.powTerminalDifficulty.get())) {
         LOG.debug(
             "Disconnecting peer with difficulty {}, likely still on PoW chain",
-            status.totalDifficulty());
+            status.totalDifficulty().get());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY);
         return true;
       } else {

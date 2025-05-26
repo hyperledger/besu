@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
+import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerClientName;
@@ -79,7 +80,7 @@ public class EthPeers implements PeerSelector {
       Comparator.comparing((final EthPeer p) -> p.getReputation().getScore())
           .thenComparing(CHAIN_HEIGHT);
 
-  public static final Comparator<EthPeer> HEAVIEST_CHAIN =
+  public static final Comparator<EthPeer> TOTAL_DIFFICULTY_THEN_HEIGHT =
       TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> LEAST_TO_MOST_BUSY =
@@ -139,7 +140,7 @@ public class EthPeers implements PeerSelector {
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.maxMessageSize = maxMessageSize;
-    this.bestPeerComparator = HEAVIEST_CHAIN;
+    this.bestPeerComparator = TOTAL_DIFFICULTY_THEN_HEIGHT;
     this.localNodeId = localNodeId;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
