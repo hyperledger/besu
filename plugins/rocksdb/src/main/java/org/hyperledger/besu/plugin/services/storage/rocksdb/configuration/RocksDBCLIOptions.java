@@ -34,6 +34,9 @@ public class RocksDBCLIOptions {
   /** The constant DEFAULT_IS_HIGH_SPEC. */
   public static final boolean DEFAULT_IS_HIGH_SPEC = false;
 
+  /** The default value indicating whether read caching is enabled for snapshot access. */
+  public static final boolean DEFAULT_ENABLE_READ_CACHE_FOR_SNAPSHOTS = false;
+
   /** The constant MAX_OPEN_FILES_FLAG. */
   public static final String MAX_OPEN_FILES_FLAG = "--Xplugin-rocksdb-max-open-files";
 
@@ -46,6 +49,10 @@ public class RocksDBCLIOptions {
 
   /** The constant IS_HIGH_SPEC. */
   public static final String IS_HIGH_SPEC = "--Xplugin-rocksdb-high-spec-enabled";
+
+  /** The constant ENABLE_READ_CACHE_FOR_SNAPSHOTS. */
+  public static final String ENABLE_READ_CACHE_FOR_SNAPSHOTS =
+      "--Xplugin-rocksdb-read-cache-snapshots-enabled";
 
   /** Key name for configuring blockchain_blob_garbage_collection_enabled */
   public static final String BLOB_BLOCKCHAIN_GARBAGE_COLLECTION_ENABLED =
@@ -94,6 +101,15 @@ public class RocksDBCLIOptions {
       description =
           "Use this flag to boost Besu performance if you have a 16 GiB RAM hardware or more (default: ${DEFAULT-VALUE})")
   boolean isHighSpec;
+
+  /** Enables read caching during snapshot access. */
+  @CommandLine.Option(
+      names = {ENABLE_READ_CACHE_FOR_SNAPSHOTS},
+      hidden = true,
+      paramLabel = "<BOOLEAN>",
+      description =
+          "Enable caching of reads during snapshot access to improve performance on repeated eth_call and state inspection (default: ${DEFAULT-VALUE})")
+  boolean enableReadCacheForSnapshots;
 
   /** The Blob blockchain garbage collection enabled. */
   @CommandLine.Option(
@@ -151,6 +167,7 @@ public class RocksDBCLIOptions {
     options.cacheCapacity = config.getCacheCapacity();
     options.backgroundThreadCount = config.getBackgroundThreadCount();
     options.isHighSpec = config.isHighSpec();
+    options.enableReadCacheForSnapshots = config.isReadCacheEnabledForSnapshots();
     options.isBlockchainGarbageCollectionEnabled = config.isBlockchainGarbageCollectionEnabled();
     options.blobGarbageCollectionAgeCutoff = config.getBlobGarbageCollectionAgeCutoff();
     options.blobGarbageCollectionForceThreshold = config.getBlobGarbageCollectionForceThreshold();
@@ -168,6 +185,7 @@ public class RocksDBCLIOptions {
         backgroundThreadCount,
         cacheCapacity,
         isHighSpec,
+        enableReadCacheForSnapshots,
         isBlockchainGarbageCollectionEnabled,
         blobGarbageCollectionAgeCutoff,
         blobGarbageCollectionForceThreshold);
@@ -201,6 +219,7 @@ public class RocksDBCLIOptions {
         .add("cacheCapacity", cacheCapacity)
         .add("backgroundThreadCount", backgroundThreadCount)
         .add("isHighSpec", isHighSpec)
+        .add("enableReadCacheForSnapshots", enableReadCacheForSnapshots)
         .add("isBlockchainGarbageCollectionEnabled", isBlockchainGarbageCollectionEnabled)
         .add("blobGarbageCollectionAgeCutoff", blobGarbageCollectionAgeCutoff)
         .add("blobGarbageCollectionForceThreshold", blobGarbageCollectionForceThreshold)

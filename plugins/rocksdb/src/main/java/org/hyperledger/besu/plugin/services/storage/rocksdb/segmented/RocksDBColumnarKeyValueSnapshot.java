@@ -60,6 +60,7 @@ public class RocksDBColumnarKeyValueSnapshot
 
   private final RocksDBSnapshot snapshot;
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final boolean isReadCacheEnabledForSnapshots;
   private final RocksDBMetrics metrics;
   private final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper;
   private final ReadOptions readOptions;
@@ -72,9 +73,11 @@ public class RocksDBColumnarKeyValueSnapshot
    */
   RocksDBColumnarKeyValueSnapshot(
       final OptimisticTransactionDB db,
+      final boolean isReadCacheEnabledForSnapshots,
       final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper,
       final RocksDBMetrics metrics) {
     this.db = db;
+    this.isReadCacheEnabledForSnapshots = isReadCacheEnabledForSnapshots;
     this.metrics = metrics;
     this.columnFamilyMapper = columnFamilyMapper;
     this.snapshot = new RocksDBSnapshot(db);
@@ -87,18 +90,27 @@ public class RocksDBColumnarKeyValueSnapshot
       throws StorageException {
     throwIfClosed();
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      final Bytes wrappedKey = makeCacheKey(segment.getId(), key);
-      Optional<byte[]> maybeKey = GET_KEY_CACHE.getIfPresent(wrappedKey);
-      //noinspection OptionalAssignedToNull
-      if (maybeKey == null) {
-        maybeKey =
-            Optional.ofNullable(snapshot.get(columnFamilyMapper.apply(segment), readOptions, key));
-        GET_KEY_CACHE.put(wrappedKey, maybeKey);
-      }
-      return maybeKey;
+      final ColumnFamilyHandle handle = columnFamilyMapper.apply(segment);
+      return isReadCacheEnabledForSnapshots
+          ? getFromCacheOrRead(segment.getId(), key, handle)
+          : Optional.ofNullable(snapshot.get(handle, readOptions, key));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
+  }
+
+  private Optional<byte[]> getFromCacheOrRead(
+      final byte[] segmentId, final byte[] key, final ColumnFamilyHandle handle)
+      throws RocksDBException {
+    final Bytes cacheKey = makeCacheKey(segmentId, key);
+    Optional<byte[]> cached = GET_KEY_CACHE.getIfPresent(cacheKey);
+    //noinspection OptionalAssignedToNull
+    if (cached == null) {
+      final byte[] value = snapshot.get(handle, readOptions, key);
+      cached = Optional.ofNullable(value);
+      GET_KEY_CACHE.put(cacheKey, cached);
+    }
+    return cached;
   }
 
   private static Bytes makeCacheKey(final byte[] segmentId, final byte[] key) {

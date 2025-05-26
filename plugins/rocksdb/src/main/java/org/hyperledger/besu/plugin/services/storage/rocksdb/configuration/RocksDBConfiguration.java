@@ -26,6 +26,7 @@ public class RocksDBConfiguration {
   private final int backgroundThreadCount;
   private final long cacheCapacity;
   private final boolean isHighSpec;
+  private final boolean enableReadCacheForSnapshots;
   private final boolean isBlockchainGarbageCollectionEnabled;
   private final Optional<Double> blobGarbageCollectionAgeCutoff;
   private final Optional<Double> blobGarbageCollectionForceThreshold;
@@ -51,6 +52,7 @@ public class RocksDBConfiguration {
       final long cacheCapacity,
       final String label,
       final boolean isHighSpec,
+      final boolean enableReadCacheForSnapshots,
       final boolean isBlockchainGarbageCollectionEnabled,
       final Optional<Double> blobGarbageCollectionAgeCutoff,
       final Optional<Double> blobGarbageCollectionForceThreshold) {
@@ -60,6 +62,7 @@ public class RocksDBConfiguration {
     this.cacheCapacity = cacheCapacity;
     this.label = label;
     this.isHighSpec = isHighSpec;
+    this.enableReadCacheForSnapshots = enableReadCacheForSnapshots;
     this.isBlockchainGarbageCollectionEnabled = isBlockchainGarbageCollectionEnabled;
     this.blobGarbageCollectionAgeCutoff = blobGarbageCollectionAgeCutoff;
     this.blobGarbageCollectionForceThreshold = blobGarbageCollectionForceThreshold;
@@ -117,6 +120,15 @@ public class RocksDBConfiguration {
    */
   public boolean isHighSpec() {
     return isHighSpec;
+  }
+
+  /**
+   * Indicates whether read caching is enabled for snapshot access.
+   *
+   * @return {@code true} if read cache is used during snapshot reads; {@code false} otherwise.
+   */
+  public boolean isReadCacheEnabledForSnapshots() {
+    return enableReadCacheForSnapshots;
   }
 
   /**
