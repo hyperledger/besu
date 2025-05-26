@@ -1,0 +1,79 @@
+/*
+ * Copyright contributors to Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.mainnet.milestones;
+
+import org.hyperledger.besu.datatypes.HardforkId;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+
+import java.util.OptionalLong;
+
+/**
+ * Configuration for a milestone definition.
+ */
+public class MilestoneDefinitionConfig {
+  private final HardforkId hardforkId;
+  private final OptionalLong blockNumberOrTimestamp;
+  private final ProtocolSpecBuilder specBuilder;
+  private final MilestoneType milestoneType;
+
+  /**
+   * Constructs a MilestoneDefinitionConfig.
+   *
+   * @param hardforkId the hardfork identifier
+   * @param blockNumberOrTimestamp the block number or timestamp for the milestone
+   * @param specBuilder the protocol specification builder for the milestone
+   * @param milestoneType the type of milestone (block number or timestamp)
+   */
+  public MilestoneDefinitionConfig(
+      final HardforkId hardforkId,
+      final OptionalLong blockNumberOrTimestamp,
+      final ProtocolSpecBuilder specBuilder,
+      MilestoneType milestoneType) {
+    this.hardforkId = hardforkId;
+    this.blockNumberOrTimestamp = blockNumberOrTimestamp;
+    this.specBuilder = specBuilder;
+    this.milestoneType = milestoneType;
+  }
+
+  static MilestoneDefinitionConfig createBlockNumberMilestone(
+      final HardforkId hardforkId, OptionalLong blockNumber, final ProtocolSpecBuilder definition) {
+    return new MilestoneDefinitionConfig(
+        hardforkId, blockNumber, definition, MilestoneType.BLOCK_NUMBER);
+  }
+
+  static MilestoneDefinitionConfig createTimestampMilestone(
+      final HardforkId hardforkId,
+      final OptionalLong timestamp,
+      final ProtocolSpecBuilder definition) {
+    return new MilestoneDefinitionConfig(
+        hardforkId, timestamp, definition, MilestoneType.TIMESTAMP);
+  }
+
+  public HardforkId getHardforkId() {
+    return hardforkId;
+  }
+
+  public OptionalLong getBlockNumberOrTimestamp() {
+    return blockNumberOrTimestamp;
+  }
+
+  public ProtocolSpecBuilder getSpecBuilder() {
+    return specBuilder;
+  }
+
+  public MilestoneType getMilestoneType() {
+    return milestoneType;
+  }
+}
