@@ -49,6 +49,13 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       fallbackValue = "true")
   private Boolean receiptCompactionEnabled = DEFAULT_RECEIPT_COMPACTION_ENABLED;
 
+  @CommandLine.Option(
+      names = {"--Xhistory-expiry-prune"},
+      hidden = true,
+      description =
+          "Convenience option to configure BlobDB garbage collection settings following a history expiry prune")
+  private boolean historyExpiryPrune = false;
+
   /**
    * Options specific to path-based storage modes. Holds the necessary parameters to configure
    * path-based storage, such as the Bonsai mode or Verkle in the future.
@@ -91,6 +98,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     dataStorageOptions.pathBasedExtraStorageOptions =
         PathBasedExtraStorageOptions.fromConfig(
             domainObject.getPathBasedExtraStorageConfiguration());
+    dataStorageOptions.historyExpiryPrune = domainObject.getHistoryExpiryPruneEnabled();
     return dataStorageOptions;
   }
 
@@ -100,6 +108,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(dataStorageFormat)
             .receiptCompactionEnabled(receiptCompactionEnabled)
+            .historyExpiryPruneEnabled(historyExpiryPrune)
             .pathBasedExtraStorageConfiguration(pathBasedExtraStorageOptions.toDomainObject());
     return builder.build();
   }

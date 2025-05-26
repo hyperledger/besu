@@ -75,6 +75,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private volatile Difficulty totalDifficulty;
   private volatile int chainHeadTransactionCount;
   private volatile int chainHeadOmmerCount;
+  private volatile Long earliestBlockNumber;
 
   private Comparator<BlockHeader> blockChoiceRule;
 
@@ -303,6 +304,16 @@ public class DefaultBlockchain implements MutableBlockchain {
   @Override
   public Optional<Hash> getSafeBlock() {
     return blockchainStorage.getSafeBlock();
+  }
+
+  @Override
+  public Optional<Long> getEarliestBlockNumber() {
+    if (earliestBlockNumber == null) {
+      Optional<Long> maybeEarliestBlockNumber = getFirstNonGenesisBlockNumber();
+      maybeEarliestBlockNumber.ifPresent(value -> earliestBlockNumber = value);
+      return maybeEarliestBlockNumber;
+    }
+    return Optional.of(earliestBlockNumber);
   }
 
   @Override
@@ -866,7 +877,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         throw new InvalidConfigurationException(
             "Supplied genesis block does not match chain data stored in "
                 + dataDirectory
-                + ".\n"
+                + "\n"
                 + "Please specify a different data directory with --data-path, specify the original genesis file with "
                 + "--genesis-file or supply a testnet/mainnet option with --network.");
       }
@@ -970,5 +981,40 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   public BlockchainStorage getBlockchainStorage() {
     return blockchainStorage;
+  }
+
+  /**
+   * Performs a binary search to find the first existing block number in the blockchain. This method
+   * starts the search from block number 1, as the genesis block (block 0) is assumed to always
+   * exist. It uses the chain head block number as the upper limit for the search.
+   *
+   * <p>The search involves checking the presence of blocks by their numbers, narrowing down the
+   * range until the first existing block is identified. If a block is found, its number is returned
+   * wrapped in an {@code Optional}. If no block is found, an empty {@code Optional} is returned.
+   *
+   * @return an {@code Optional<Long>} containing the number of the first existing block, or {@code
+   *     Optional.empty()} if no block is found.
+   */
+  private Optional<Long> getFirstNonGenesisBlockNumber() {
+    long low = 1;
+    long high = getChainHeadBlockNumber();
+    while (low < high) {
+      long mid = (low + high) / 2;
+      if (getBlockByNumber(mid).isPresent()) {
+        high = mid;
+      } else {
+        low = mid + 1;
+      }
+    }
+    return getBlockByNumber(low)
+        .map(
+            earliestBlock -> {
+              // if the earliestBlock's parent is genesis, we have the whole chain, return the
+              // genesis number
+              if (earliestBlock.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER + 1) {
+                return BlockHeader.GENESIS_BLOCK_NUMBER;
+              }
+              return earliestBlock.getHeader().getNumber();
+            });
   }
 }

@@ -253,3 +253,6 @@ Xevm-jumpdest-cache-weight-kb=32000
 Xplugins-external-enabled=true
 plugins=["none"]
 plugin-continue-on-error=false
+
+# snapsync
+snapsync-synchronizer-transaction-indexing-enabled=true

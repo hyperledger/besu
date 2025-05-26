@@ -321,7 +321,7 @@ public class EthGetTransactionReceiptTest {
   }
 
   private void mockProtocolSpec(final BlockHeader blockHeader) {
-    FeeMarket feeMarket = FeeMarket.cancun(0, Optional.empty());
+    FeeMarket feeMarket = FeeMarket.cancunDefault(0, Optional.empty());
     ProtocolSpec spec = mock(ProtocolSpec.class);
     when(spec.getFeeMarket()).thenReturn(feeMarket);
     when(spec.getGasCalculator()).thenReturn(new CancunGasCalculator());
