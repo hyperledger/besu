@@ -18,14 +18,13 @@ import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.util.OptionalLong;
+import java.util.function.Supplier;
 
-/**
- * Configuration for a milestone definition.
- */
+/** Configuration for a milestone definition. */
 public class MilestoneDefinitionConfig {
   private final HardforkId hardforkId;
   private final OptionalLong blockNumberOrTimestamp;
-  private final ProtocolSpecBuilder specBuilder;
+  private final Supplier<ProtocolSpecBuilder> specBuilder;
   private final MilestoneType milestoneType;
 
   /**
@@ -39,8 +38,8 @@ public class MilestoneDefinitionConfig {
   public MilestoneDefinitionConfig(
       final HardforkId hardforkId,
       final OptionalLong blockNumberOrTimestamp,
-      final ProtocolSpecBuilder specBuilder,
-      MilestoneType milestoneType) {
+      final Supplier<ProtocolSpecBuilder> specBuilder,
+      final MilestoneType milestoneType) {
     this.hardforkId = hardforkId;
     this.blockNumberOrTimestamp = blockNumberOrTimestamp;
     this.specBuilder = specBuilder;
@@ -48,17 +47,19 @@ public class MilestoneDefinitionConfig {
   }
 
   static MilestoneDefinitionConfig createBlockNumberMilestone(
-      final HardforkId hardforkId, OptionalLong blockNumber, final ProtocolSpecBuilder definition) {
+      final HardforkId hardforkId,
+      final OptionalLong blockNumber,
+      final Supplier<ProtocolSpecBuilder> specBuilder) {
     return new MilestoneDefinitionConfig(
-        hardforkId, blockNumber, definition, MilestoneType.BLOCK_NUMBER);
+        hardforkId, blockNumber, specBuilder, MilestoneType.BLOCK_NUMBER);
   }
 
   static MilestoneDefinitionConfig createTimestampMilestone(
       final HardforkId hardforkId,
       final OptionalLong timestamp,
-      final ProtocolSpecBuilder definition) {
+      final Supplier<ProtocolSpecBuilder> specBuilder) {
     return new MilestoneDefinitionConfig(
-        hardforkId, timestamp, definition, MilestoneType.TIMESTAMP);
+        hardforkId, timestamp, specBuilder, MilestoneType.TIMESTAMP);
   }
 
   public HardforkId getHardforkId() {
@@ -69,7 +70,7 @@ public class MilestoneDefinitionConfig {
     return blockNumberOrTimestamp;
   }
 
-  public ProtocolSpecBuilder getSpecBuilder() {
+  public Supplier<ProtocolSpecBuilder> getSpecBuilder() {
     return specBuilder;
   }
 

@@ -19,8 +19,6 @@ import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.milestones.ClassicMilestoneDefinitionProvider;
-import org.hyperledger.besu.ethereum.mainnet.milestones.MainnetMilestoneDefinitionProvider;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinitionConfig;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinitionProvider;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneType;
@@ -217,24 +215,21 @@ public class ProtocolScheduleBuilder {
   }
 
   private List<BuilderMapEntry> createMilestones(final MainnetProtocolSpecFactory specFactory) {
-    List<MilestoneDefinitionProvider> providers =
-        List.of(new MainnetMilestoneDefinitionProvider(), new ClassicMilestoneDefinitionProvider());
+
     long lastForkBlock = 0;
     List<Optional<BuilderMapEntry>> milestones = new ArrayList<>();
-    for (MilestoneDefinitionProvider provider : providers) {
-      for (MilestoneDefinitionConfig milestone :
-          provider.getMilestoneDefinitions(specFactory, config)) {
-        if (milestone.getBlockNumberOrTimestamp().isPresent()) {
-          long thisForkBlock = milestone.getBlockNumberOrTimestamp().getAsLong();
-          if (lastForkBlock > thisForkBlock) {
-            throw new RuntimeException(
-                String.format(
-                    "Genesis Config Error: '%s' is scheduled for milestone %d but it must be on or after milestone %d.",
-                    milestone.getHardforkId().name(), thisForkBlock, lastForkBlock));
-          }
-          milestones.add(createMilestone(milestone));
-          lastForkBlock = thisForkBlock;
+    for (MilestoneDefinitionConfig milestone :
+        MilestoneDefinitionProvider.getMilestoneDefinitions(specFactory, config)) {
+      if (milestone.getBlockNumberOrTimestamp().isPresent()) {
+        long thisForkBlock = milestone.getBlockNumberOrTimestamp().getAsLong();
+        if (lastForkBlock > thisForkBlock) {
+          throw new RuntimeException(
+              String.format(
+                  "Genesis Config Error: '%s' is scheduled for milestone %d but it must be on or after milestone %d.",
+                  milestone.getHardforkId().name(), thisForkBlock, lastForkBlock));
         }
+        milestones.add(createMilestone(milestone));
+        lastForkBlock = thisForkBlock;
       }
     }
     return milestones.stream().flatMap(Optional::stream).toList();
@@ -251,7 +246,7 @@ public class ProtocolScheduleBuilder {
             milestoneDefinitionConfig.getHardforkId(),
             milestoneDefinitionConfig.getMilestoneType(),
             blockVal,
-            milestoneDefinitionConfig.getSpecBuilder(),
+            milestoneDefinitionConfig.getSpecBuilder().get(),
             protocolSpecAdapters.getModifierForBlock(blockVal)));
   }
 
