@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_D
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.SKIP_DETACHED;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -143,7 +144,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final SavePreMergeHeadersStep savePreMergeHeadersStep =
         new SavePreMergeHeadersStep(
-            protocolContext.getBlockchain(), getMergeHeaderBlockNumber(syncState));
+            protocolContext.getBlockchain(),
+            getFirstPoSBlockNumber(syncState),
+            protocolContext.getConsensusContext(ConsensusContext.class));
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =
@@ -201,7 +204,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     return shouldContinue;
   }
 
-  private long getMergeHeaderBlockNumber(final SyncState syncState) {
+  private long getFirstPoSBlockNumber(final SyncState syncState) {
     return syncConfig.isSnapSyncSavePreMergeHeadersOnlyEnabled()
         ? syncState.getCheckpoint().map(Checkpoint::blockNumber).orElse(0L)
         : 0L;

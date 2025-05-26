@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -32,15 +33,22 @@ import org.slf4j.LoggerFactory;
 public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(SavePreMergeHeadersStep.class);
   private final MutableBlockchain blockchain;
-  private final long mergeBlockNumber;
+  private final long lastPoWBlockNumber;
+  private final long firstPoSBlockNumber;
+  private final ConsensusContext consensusContext;
 
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
   private static final int LOG_REPEAT_DELAY_SECONDS = 30;
   private static final int LOG_PROGRESS_INTERVAL = 1000;
 
-  public SavePreMergeHeadersStep(final MutableBlockchain blockchain, final long mergeBlockNumber) {
+  public SavePreMergeHeadersStep(
+      final MutableBlockchain blockchain,
+      final long firstPoSBlockNumber,
+      final ConsensusContext consensusContext) {
     this.blockchain = blockchain;
-    this.mergeBlockNumber = mergeBlockNumber;
+    this.firstPoSBlockNumber = firstPoSBlockNumber;
+    this.lastPoWBlockNumber = firstPoSBlockNumber - 1;
+    this.consensusContext = consensusContext;
   }
 
   @Override
@@ -51,11 +59,16 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
     }
     storeBlockHeader(blockHeader);
     logProgress(blockHeader);
+    if (blockHeader.getNumber() == lastPoWBlockNumber) {
+      blockchain
+          .getTotalDifficultyByHash(blockHeader.getHash())
+          .ifPresent(consensusContext::setIsPostMerge);
+    }
     return Stream.empty();
   }
 
   private boolean isPostMergeBlock(final long blockNumber) {
-    return blockNumber >= mergeBlockNumber;
+    return blockNumber >= firstPoSBlockNumber;
   }
 
   private void storeBlockHeader(final BlockHeader blockHeader) {
@@ -64,7 +77,6 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
   }
 
   private void logProgress(final BlockHeader blockHeader) {
-    long lastPoWBlockNumber = mergeBlockNumber - 1;
     if (blockHeader.getNumber() == lastPoWBlockNumber) {
       LOG.info("Pre-merge headers import completed at block {}", blockHeader.toLogString());
     } else {
