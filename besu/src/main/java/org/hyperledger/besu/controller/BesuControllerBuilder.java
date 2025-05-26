@@ -706,7 +706,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
     if (chainPrunerConfiguration.chainPruningEnabled()
-        || chainPrunerConfiguration.preMergePruningEnabled()) {
+        || dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
       LOG.info("Adding ChainDataPruner to observe block added events");
       final AtomicLong chainDataPrunerObserverId = new AtomicLong();
       final ChainDataPruner chainDataPruner =
@@ -719,7 +719,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 + chainPrunerConfiguration.chainPruningBlocksRetained()
                 + " and frequency to be: "
                 + chainPrunerConfiguration.blocksFrequency());
-      } else if (chainPrunerConfiguration.preMergePruningEnabled()) {
+      } else if (dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
         LOG.info(
             "Pre-merge block pruning enabled with frequency: "
                 + chainPrunerConfiguration.blocksFrequency()
@@ -1206,7 +1206,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         network.getFirstPosBlockNumber().orElse(0),
         chainPrunerConfiguration.chainPruningEnabled()
             ? ChainDataPruner.Mode.CHAIN_PRUNING
-            : (chainPrunerConfiguration.preMergePruningEnabled()
+            : (dataStorageConfiguration.getHistoryExpiryPruneEnabled()
                 ? ChainDataPruner.Mode.PRE_MERGE_PRUNING
                 : null),
         chainPrunerConfiguration.chainPruningBlocksRetained(),

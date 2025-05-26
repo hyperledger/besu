@@ -16,11 +16,10 @@ package org.hyperledger.besu.ethereum.chain;
 
 public record ChainPrunerConfiguration(
     boolean chainPruningEnabled,
-    boolean preMergePruningEnabled,
     long chainPruningBlocksRetained,
     long blocksFrequency,
     long chainPruningBlocksRetainedLimit,
     int preMergePruningBlocksQuantity) {
   public static final ChainPrunerConfiguration DEFAULT =
-      new ChainPrunerConfiguration(false, false, 7200, 7200, 256, 1000);
+      new ChainPrunerConfiguration(false, 7200, 7200, 256, 1000);
 }

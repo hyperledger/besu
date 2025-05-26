@@ -25,7 +25,6 @@ import picocli.CommandLine;
 /** The Chain pruning CLI options. */
 public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration> {
   private static final String CHAIN_PRUNING_ENABLED_FLAG = "--Xchain-pruning-enabled";
-  private static final String PRE_MERGE_PRUNING_ENABLED_FLAG = "--Xpre-merge-pruning-enabled";
   private static final String CHAIN_PRUNING_BLOCKS_RETAINED_FLAG =
       "--Xchain-pruning-blocks-retained";
   private static final String CHAIN_PRUNING_BLOCKS_RETAINED_LIMIT_FLAG =
@@ -56,20 +55,11 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
 
   @CommandLine.Option(
       hidden = true,
-      names = {PRE_MERGE_PRUNING_ENABLED_FLAG},
-      description =
-          "Enable the chain pruner to actively prune pre-merge blocks, but not headers (default: ${DEFAULT-VALUE})")
-  private final Boolean preMergePruningEnabled = Boolean.FALSE;
-
-  @CommandLine.Option(
-      hidden = true,
       names = {CHAIN_PRUNING_BLOCKS_RETAINED_FLAG},
       description =
           "The number of recent blocks for which to keep the chain data. Should be >= "
               + CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
-              + " (default: ${DEFAULT-VALUE}). Unused if "
-              + PRE_MERGE_PRUNING_ENABLED_FLAG
-              + " is enabled")
+              + " (default: ${DEFAULT-VALUE}). Unused if --Xhistory-expiry-prune is enabled")
   private final Long chainDataPruningBlocksRetained = CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT;
 
   @CommandLine.Option(
@@ -79,9 +69,7 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
           "Allows setting the limit below which no more blocks can be pruned. This prevents setting a value lower than this for "
               + CHAIN_PRUNING_BLOCKS_RETAINED_FLAG
               + ". This flag should be used with caution as reducing the limit may have unintended side effects."
-              + " (default: ${DEFAULT-VALUE}). Unused if "
-              + PRE_MERGE_PRUNING_ENABLED_FLAG
-              + " is enabled")
+              + " (default: ${DEFAULT-VALUE}). Unused if --Xhistory-expiry-prune is enabled")
   private final Long chainDataPruningBlocksRetainedLimit =
       CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT;
 
@@ -123,15 +111,6 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   }
 
   /**
-   * Gets pre-merge pruning enabled
-   *
-   * @return the pre-merge pruning enabled
-   */
-  public Boolean getPreMergePruningEnabled() {
-    return preMergePruningEnabled;
-  }
-
-  /**
    * Gets chain data pruning blocks retained.
    *
    * @return the chain data pruning blocks retained
@@ -153,7 +132,6 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   public ChainPrunerConfiguration toDomainObject() {
     return new ChainPrunerConfiguration(
         chainDataPruningEnabled,
-        preMergePruningEnabled,
         chainDataPruningBlocksRetained,
         chainDataPruningBlocksRetainedLimit,
         chainDataPruningBlocksFrequency.getValue(),
@@ -165,8 +143,6 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
     return Arrays.asList(
         CHAIN_PRUNING_ENABLED_FLAG,
         chainDataPruningEnabled.toString(),
-        PRE_MERGE_PRUNING_ENABLED_FLAG,
-        preMergePruningEnabled.toString(),
         CHAIN_PRUNING_BLOCKS_RETAINED_FLAG,
         chainDataPruningBlocksRetained.toString(),
         CHAIN_PRUNING_BLOCKS_RETAINED_LIMIT_FLAG,
