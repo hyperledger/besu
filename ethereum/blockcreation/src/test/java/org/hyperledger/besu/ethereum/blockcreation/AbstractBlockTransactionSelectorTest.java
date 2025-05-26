@@ -1136,7 +1136,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .isEqualTo(isLongProcessingTxDropped ? true : false);
   }
 
-  @Disabled ("flaky #7150")
+  @Disabled("flaky #7150")
   @ParameterizedTest
   @MethodSource("subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver")
   public void subsetOfInvalidPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver(
