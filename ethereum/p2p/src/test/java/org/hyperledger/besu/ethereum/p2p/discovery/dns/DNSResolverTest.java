@@ -19,11 +19,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.InetAddress;
 import java.security.Security;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class DNSResolverTest {
   @BeforeAll
@@ -72,32 +76,58 @@ class DNSResolverTest {
         .doesNotContain("EC6Q");
   }
 
-  @Test
-  void enrNodeIsParsed() throws Exception {
-    final String txtRecord =
-        "\"enr:-KO4QK1ecw-CGrDDZ4YwFrhgqctD0tWMHKJhUVxsS4um3aUFe3yBHRtVL9uYKk16DurN1IdSKTOB1zNCvjBybjZ_KAqGAYt"
-            + "J5U8wg2V0aMfGhJsZKtCAgmlkgnY0gmlwhA_MtDmJc2VjcDI1NmsxoQNXD7fj3sscyOKBiHYy14igj1vJYWdKYZH7n3T8qRpIcY"
-            + "RzbmFwwIN0Y3CCdl-DdWRwgnZf\"";
+  private static Stream<Arguments> validEnrNodes() throws Exception {
+    return Stream.of(
+        Arguments.of(
+            "\"enr:-KO4QK1ecw-CGrDDZ4YwFrhgqctD0tWMHKJhUVxsS4um3aUFe3yBHRtVL9uYKk16DurN1IdSKTOB1zNCvjBybjZ_KAq"
+                + "GAYtJ5U8wg2V0aMfGhJsZKtCAgmlkgnY0gmlwhA_MtDmJc2VjcDI1NmsxoQNXD7fj3sscyOKBiHYy14igj1vJYWdKYZH7n3T8qRpIcYRzb"
+                + "mFwwIN0Y3CCdl-DdWRwgnZf\"",
+            Bytes.fromHexString(
+                "0xf8a3b840ad5e730f821ab0c367863016b860a9cb43d2d58c1ca261515c6c4b8ba6dda5057b7c811d1b552fdb982a4d7a0eeacdd4"
+                    + "8752293381d73342be30726e367f280a86018b49e54f3083657468c7c6849b192ad080826964827634826970840fccb439897365"
+                    + "63703235366b31a103570fb7e3decb1cc8e281887632d788a08f5bc961674a6191fb9f74fca91a487184736e6170c08374637082"
+                    + "765f8375647082765f"),
+            Bytes.fromHexString(
+                "0x570fb7e3decb1cc8e281887632d788a08f5bc961674a6191fb9f74fca91a4871957e3775d4bdfd4fdeff9bff92ad2f5965234d0e"
+                    + "3c04ab4b85ab3eabd3193c35"),
+            InetAddress.getByAddress(new byte[] {15, (byte) 204, (byte) 180, 57}),
+            30303,
+            30303),
+        Arguments.of(
+            "\"enr:-Jy4QK1ecw-CGrDDZ4YwFrhgqctD0tWMHKJhUVxsS4um3aUFe3yBHRtVL9uYKk16DurN1IdSKTOB1zNCvjBybjZ_KAq"
+                + "GAYtJ5U8wg2V0aMfGhJsZKtCAgmlkgnY0gmlwhA_MtDmJc2VjcDI1NmsxoQNXD7fj3sscyOKBiHYy14igj1vJYWdKYZH7n3T8qRpIcYRzb"
+                + "mFwwIN0Y3CCdl8=\"",
+            Bytes.fromHexString(
+                "0xf89cb840ad5e730f821ab0c367863016b860a9cb43d2d58c1ca261515c6c4b8ba6dda5057b7c811d1b552fdb982a4d7a0eeacdd4"
+                    + "8752293381d73342be30726e367f280a86018b49e54f3083657468c7c6849b192ad080826964827634826970840fccb439897365"
+                    + "63703235366b31a103570fb7e3decb1cc8e281887632d788a08f5bc961674a6191fb9f74fca91a487184736e6170c08374637082"
+                    + "765f"),
+            Bytes.fromHexString(
+                "0x570fb7e3decb1cc8e281887632d788a08f5bc961674a6191fb9f74fca91a4871957e3775d4bdfd4fdeff9bff92ad2f5965234d0e"
+                    + "3c04ab4b85ab3eabd3193c35"),
+            InetAddress.getByAddress(new byte[] {15, (byte) 204, (byte) 180, 57}),
+            30303,
+            30303));
+  }
+
+  @ParameterizedTest
+  @MethodSource("validEnrNodes")
+  void enrNodeIsParsed(
+      final String txtRecord,
+      final Bytes expectedRlp,
+      final Bytes expectedPublicKey,
+      final InetAddress expectedIp,
+      final int expectedTcpPort,
+      final int expectedUdpPort) {
     final DNSEntry entry = DNSResolver.readDNSEntry(txtRecord);
 
     assertThat(entry).isInstanceOf(DNSEntry.ENRNode.class);
     final EthereumNodeRecord record = ((DNSEntry.ENRNode) entry).nodeRecord();
-    assertThat(record.rlp())
-        .isEqualTo(
-            Bytes.fromHexString(
-                "0xf8a3b840ad5e730f821ab0c367863016b860a9cb43d2d58"
-                    + "c1ca261515c6c4b8ba6dda5057b7c811d1b552fdb982a4d7a0eeacdd48752293381d73342be30726e367f280a86018b49e54f3"
-                    + "083657468c7c6849b192ad080826964827634826970840fccb43989736563703235366b31a103570fb7e3decb1cc8e28188763"
-                    + "2d788a08f5bc961674a6191fb9f74fca91a487184736e6170c08374637082765f8375647082765f"));
-    assertThat(record.publicKey())
-        .isEqualTo(
-            Bytes.fromHexString(
-                "0x570fb7e3decb1cc8e281887632d788a08f5bc9616"
-                    + "74a6191fb9f74fca91a4871957e3775d4bdfd4fdeff9bff92ad2f5965234d0e3c04ab4b85ab3eabd3193c35"));
-    assertThat(record.ip())
-        .isEqualTo(InetAddress.getByAddress(new byte[] {15, (byte) 204, (byte) 180, 57}));
-    assertThat(record.tcp()).isEqualTo(Optional.of(30303));
-    assertThat(record.udp()).isEqualTo(Optional.of(30303));
+    assertThat(record.rlp()).isEqualTo(expectedRlp);
+    assertThat(record.publicKey()).isEqualTo(expectedPublicKey);
+    assertThat(record.ip()).isEqualTo(expectedIp);
+    assertThat(record.tcp()).isEqualTo(Optional.of(expectedTcpPort));
+    assertThat(record.udp()).isEqualTo(Optional.of(expectedUdpPort));
   }
 
   @Test
