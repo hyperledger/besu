@@ -233,10 +233,10 @@ public class ProtocolScheduleBuilder {
     List<Optional<BuilderMapEntry>> milestones = new ArrayList<>();
     for (MilestoneDefinition milestone :
         MilestoneDefinitions.createMilestoneDefinitions(specFactory, config)) {
-      if (milestone.getBlockNumberOrTimestamp().isPresent()) {
-        long thisForkBlock = milestone.getBlockNumberOrTimestamp().getAsLong();
+      if (milestone.blockNumberOrTimestamp().isPresent()) {
+        long thisForkBlock = milestone.blockNumberOrTimestamp().getAsLong();
         validateForkOrder(
-            milestone.getHardforkId().name(), milestone.getBlockNumberOrTimestamp(), lastForkBlock);
+            milestone.hardforkId().name(), milestone.blockNumberOrTimestamp(), lastForkBlock);
         milestones.add(createMilestone(milestone));
         lastForkBlock = thisForkBlock;
       }
@@ -245,16 +245,16 @@ public class ProtocolScheduleBuilder {
   }
 
   private Optional<BuilderMapEntry> createMilestone(final MilestoneDefinition milestoneDefinition) {
-    if (milestoneDefinition.getBlockNumberOrTimestamp().isEmpty()) {
+    if (milestoneDefinition.blockNumberOrTimestamp().isEmpty()) {
       return Optional.empty();
     }
-    final long blockVal = milestoneDefinition.getBlockNumberOrTimestamp().getAsLong();
+    final long blockVal = milestoneDefinition.blockNumberOrTimestamp().getAsLong();
     return Optional.of(
         new BuilderMapEntry(
-            milestoneDefinition.getHardforkId(),
-            milestoneDefinition.getMilestoneType(),
+            milestoneDefinition.hardforkId(),
+            milestoneDefinition.milestoneType(),
             blockVal,
-            milestoneDefinition.getSpecBuilder().get(),
+            milestoneDefinition.specBuilder().get(),
             protocolSpecAdapters.getModifierForBlock(blockVal)));
   }
 

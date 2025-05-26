@@ -21,30 +21,11 @@ import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 /** Configuration for a milestone definition. */
-public class MilestoneDefinition {
-  private final HardforkId hardforkId;
-  private final OptionalLong blockNumberOrTimestamp;
-  private final Supplier<ProtocolSpecBuilder> specBuilder;
-  private final MilestoneType milestoneType;
-
-  /**
-   * Constructs a MilestoneDefinitionConfig.
-   *
-   * @param hardforkId the hardfork identifier
-   * @param blockNumberOrTimestamp the block number or timestamp for the milestone
-   * @param specBuilder the protocol specification builder for the milestone
-   * @param milestoneType the type of milestone (block number or timestamp)
-   */
-  private MilestoneDefinition(
-      final HardforkId hardforkId,
-      final OptionalLong blockNumberOrTimestamp,
-      final Supplier<ProtocolSpecBuilder> specBuilder,
-      final MilestoneType milestoneType) {
-    this.hardforkId = hardforkId;
-    this.blockNumberOrTimestamp = blockNumberOrTimestamp;
-    this.specBuilder = specBuilder;
-    this.milestoneType = milestoneType;
-  }
+public record MilestoneDefinition(
+    HardforkId hardforkId,
+    OptionalLong blockNumberOrTimestamp,
+    Supplier<ProtocolSpecBuilder> specBuilder,
+    MilestoneType milestoneType) {
 
   static MilestoneDefinition createBlockNumberMilestone(
       final HardforkId hardforkId,
@@ -59,21 +40,5 @@ public class MilestoneDefinition {
       final OptionalLong timestamp,
       final Supplier<ProtocolSpecBuilder> specBuilder) {
     return new MilestoneDefinition(hardforkId, timestamp, specBuilder, MilestoneType.TIMESTAMP);
-  }
-
-  public HardforkId getHardforkId() {
-    return hardforkId;
-  }
-
-  public OptionalLong getBlockNumberOrTimestamp() {
-    return blockNumberOrTimestamp;
-  }
-
-  public Supplier<ProtocolSpecBuilder> getSpecBuilder() {
-    return specBuilder;
-  }
-
-  public MilestoneType getMilestoneType() {
-    return milestoneType;
   }
 }
