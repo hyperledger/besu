@@ -80,7 +80,6 @@ public class NodePermissioningControllerFactoryTest {
 
     List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(0);
-    assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
 
   @Test
@@ -107,7 +106,6 @@ public class NodePermissioningControllerFactoryTest {
 
     NodeConnectionPermissioningProvider p1 = providers.get(0);
     assertThat(p1).isInstanceOf(NodeLocalConfigPermissioningController.class);
-    assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
 
   @Test
@@ -135,6 +133,5 @@ public class NodePermissioningControllerFactoryTest {
 
     NodeConnectionPermissioningProvider p1 = providers.get(0);
     assertThat(p1).isInstanceOf(NodeLocalConfigPermissioningController.class);
-    assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
 }
