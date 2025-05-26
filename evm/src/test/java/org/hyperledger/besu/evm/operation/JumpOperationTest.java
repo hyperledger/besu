@@ -56,7 +56,7 @@ class JumpOperationTest {
 
   @BeforeEach
   void init() {
-    evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+    evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
   }
 
   @Test

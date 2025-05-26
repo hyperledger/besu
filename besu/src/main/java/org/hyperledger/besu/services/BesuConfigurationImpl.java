@@ -154,5 +154,10 @@ public class BesuConfigurationImpl implements BesuConfiguration {
     public boolean getReceiptCompactionEnabled() {
       return dataStorageConfiguration.getReceiptCompactionEnabled();
     }
+
+    @Override
+    public boolean isHistoryExpiryPruneEnabled() {
+      return dataStorageConfiguration.getHistoryExpiryPruneEnabled();
+    }
   }
 }
