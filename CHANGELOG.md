@@ -19,6 +19,7 @@
 ### Bug fixes
 - Fix `besu -X` unstable options help [#8662](https://github.com/hyperledger/besu/pull/8662)
 - Prevent parsing of invalid ENR records from crashing DNSDaemon [#8368](https://github.com/hyperledger/besu/issues/8368)
+- ENR records with Base64 padding at the end are not parsed correctly [#8697](https://github.com/hyperledger/besu/issues/8697)
 
 ## 25.5.0
 ### Breaking Changes
