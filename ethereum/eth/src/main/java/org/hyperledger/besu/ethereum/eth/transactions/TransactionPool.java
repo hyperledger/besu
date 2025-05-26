@@ -483,7 +483,7 @@ public class TransactionPool implements BlockAddedObserver {
             .getWorldStateArchive()
             .getWorldState(withBlockHeaderAndNoUpdateNodeHead(chainHeadBlockHeader))
             .orElseThrow()) {
-      if(worldState instanceof BonsaiWorldState bonsaiWorldState){
+      if (worldState instanceof BonsaiWorldState bonsaiWorldState) {
         bonsaiWorldState.disableCacheMerkleTrieLoader();
       }
       final Account senderAccount = worldState.get(transaction.getSender());

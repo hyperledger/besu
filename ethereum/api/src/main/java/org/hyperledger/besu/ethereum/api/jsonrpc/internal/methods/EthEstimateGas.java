@@ -58,24 +58,23 @@ public class EthEstimateGas extends AbstractEstimateGas {
       final JsonRpcRequestContext requestContext,
       final CallParameter callParams,
       final ProcessableBlockHeader blockHeader,
-      final TransactionSimulationFunction simulationFunction) {
+      final TransactionSimulationFunction simulationFunction,
+      final long gasLimitUpperBound,
+      final long minTxCost) {
 
-    final long gasLimit = blockHeader.getGasLimit();
     LOG.debug(
         "Processing transaction with tolerance {}; callParams: {}",
         estimateGasToleranceRatio,
         callParams);
 
     if (attemptOptimisticSimulationWithMinimumBlockGasUsed(
-        blockHeader, callParams, simulationFunction, OperationTracer.NO_TRACING)) {
-      // Optimistic simulation - get gas min from GasCalculator
-      final long minTxCost = this.getBlockchainQueries().getMinimumTransactionCost(blockHeader);
+        minTxCost, callParams, simulationFunction, OperationTracer.NO_TRACING)) {
       return Quantity.create(minTxCost);
     }
 
     final var maybeResult =
         simulationFunction.simulate(
-            overrideGasLimit(callParams, blockHeader.getGasLimit()), OperationTracer.NO_TRACING);
+            overrideGasLimit(callParams, gasLimitUpperBound), OperationTracer.NO_TRACING);
 
     final Optional<JsonRpcErrorResponse> maybeErrorResponse =
         validateSimulationResult(requestContext, maybeResult);
@@ -84,7 +83,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
     }
 
     final var result = maybeResult.get();
-    long high = gasLimit;
+    long high = gasLimitUpperBound;
     long mid;
 
     long low = result.result().getEstimateGasUsedByTransaction() - 1;

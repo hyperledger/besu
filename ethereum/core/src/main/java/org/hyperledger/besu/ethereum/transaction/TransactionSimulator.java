@@ -290,7 +290,7 @@ public class TransactionSimulator {
     try (final MutableWorldState ws = getWorldState(header)) {
 
       WorldUpdater updater = getEffectiveWorldStateUpdater(ws);
-      if(ws instanceof BonsaiWorldState bonsaiWorldState){
+      if (ws instanceof BonsaiWorldState bonsaiWorldState) {
         bonsaiWorldState.disableCacheMerkleTrieLoader();
       }
       // in order to trace the state diff we need to make sure that

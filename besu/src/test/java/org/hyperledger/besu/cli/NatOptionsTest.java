@@ -32,8 +32,8 @@ public class NatOptionsTest extends CommandTestAbstract {
 
     Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString(UTF_8)).contains("--nat-method");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).contains("--nat-method");
   }
 
   @Test
