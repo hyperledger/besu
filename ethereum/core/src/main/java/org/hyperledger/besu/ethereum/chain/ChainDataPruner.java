@@ -113,6 +113,12 @@ public class ChainDataPruner implements BlockAddedObserver {
   }
 
   private void preMergePruningAction() {
+    StringBuilder sb = new StringBuilder();
+    for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+      sb.append(element.toString());
+      sb.append("\n");
+    }
+    final String originatingStackTrace = sb.toString();
     pruningExecutor.submit(
         () -> {
           try {
@@ -121,7 +127,10 @@ public class ChainDataPruner implements BlockAddedObserver {
             final long expectedNewPruningMark =
                 Math.min(storedPruningMark + pruningQuantity, mergeBlock);
             LOG.debug(
-                "Attempting to prune blocks {} to {}", storedPruningMark, expectedNewPruningMark);
+                "Attempting to prune blocks {} to {}. Started from \n{}",
+                storedPruningMark,
+                expectedNewPruningMark,
+                originatingStackTrace);
             final KeyValueStorageTransaction pruningTransaction = prunerStorage.startTransaction();
             final BlockchainStorage.Updater updater = blockchainStorage.updater();
             for (long blockNumber = storedPruningMark;
