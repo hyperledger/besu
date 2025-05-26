@@ -22,9 +22,9 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public interface KZGProof {
   /**
-   * Get the data of the Blob.
+   * Gets the data for the KZG proof.
    *
-   * @return the data.
+   * @return The data for the KZG proof.
    */
   Bytes getData();
 }
