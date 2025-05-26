@@ -1161,7 +1161,7 @@ public class Transaction
    * Creates a copy of this transaction that does not share any underlying byte array.
    *
    * <p>This is useful in case the transaction is built from a block body and fields, like to or
-   * payload, are wrapping (and so keeping references) sections of the large RPL encoded block body,
+   * payload, are wrapping (and so keeping references) sections of the large RLP encoded block body,
    * and we plan to keep the transaction around for some time, like in the txpool in case of a
    * reorg, and do not want to keep all the block body in memory for a long time, but only the
    * actual transaction.
