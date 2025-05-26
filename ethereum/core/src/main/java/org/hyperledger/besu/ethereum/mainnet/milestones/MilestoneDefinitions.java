@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.milestones;
 
-import static org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinitionConfig.createBlockNumberMilestone;
-import static org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinitionConfig.createTimestampMilestone;
+import static org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinition.createBlockNumberMilestone;
+import static org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinition.createTimestampMilestone;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.HardforkId;
@@ -27,13 +27,13 @@ import java.util.List;
 import java.util.OptionalLong;
 
 /** Provides milestone definitions for the Ethereum Mainnet and Classic networks. */
-public class MilestoneDefinitionProvider {
+public class MilestoneDefinitions {
 
-  public static List<MilestoneDefinitionConfig> getMilestoneDefinitions(
+  public static List<MilestoneDefinition> createMilestoneDefinitions(
       final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
-    List<MilestoneDefinitionConfig> milestones = new ArrayList<>();
+    List<MilestoneDefinition> milestones = new ArrayList<>();
     milestones.addAll(createMainnetMilestoneDefinitions(specFactory, config));
-    milestones.addAll(getClassicMilestoneDefinitions(specFactory, config));
+    milestones.addAll(createClassicMilestoneDefinitions(specFactory, config));
     return milestones;
   }
 
@@ -44,7 +44,7 @@ public class MilestoneDefinitionProvider {
    * @param config the genesis config options
    * @return a list of milestone definitions for the Classic network
    */
-  private static List<MilestoneDefinitionConfig> getClassicMilestoneDefinitions(
+  private static List<MilestoneDefinition> createClassicMilestoneDefinitions(
       final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
     return List.of(
         createBlockNumberMilestone(
@@ -100,9 +100,9 @@ public class MilestoneDefinitionProvider {
    * @param config the genesis config options
    * @return a list of milestone definitions for the Mainnet
    */
-  private static List<MilestoneDefinitionConfig> createMainnetMilestoneDefinitions(
+  private static List<MilestoneDefinition> createMainnetMilestoneDefinitions(
       final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
-    List<MilestoneDefinitionConfig> milestones = new ArrayList<>();
+    List<MilestoneDefinition> milestones = new ArrayList<>();
     // Add block number milestones first
     milestones.addAll(createMainnetBlockNumberMilestones(specFactory, config));
     // Then add timestamp milestones
@@ -117,7 +117,7 @@ public class MilestoneDefinitionProvider {
    * @param config the genesis config options
    * @return a list of block number milestones
    */
-  private static List<MilestoneDefinitionConfig> createMainnetBlockNumberMilestones(
+  private static List<MilestoneDefinition> createMainnetBlockNumberMilestones(
       final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
     return List.of(
         createBlockNumberMilestone(
@@ -181,7 +181,7 @@ public class MilestoneDefinitionProvider {
    * @param config the genesis config options
    * @return a list of timestamp milestones
    */
-  private static List<MilestoneDefinitionConfig> createMainnetTimestampMilestones(
+  private static List<MilestoneDefinition> createMainnetTimestampMilestones(
       final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
     return List.of(
         createTimestampMilestone(

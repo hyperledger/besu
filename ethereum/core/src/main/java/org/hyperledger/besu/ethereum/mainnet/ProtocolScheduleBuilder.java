@@ -19,8 +19,8 @@ import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinitionConfig;
-import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinitionProvider;
+import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinition;
+import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinitions;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneType;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -194,6 +195,18 @@ public class ProtocolScheduleBuilder {
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
   }
 
+  private long validateForkOrder(
+      final String forkName, final OptionalLong thisForkBlock, final long lastForkBlock) {
+    final long referenceForkBlock = thisForkBlock.orElse(lastForkBlock);
+    if (lastForkBlock > referenceForkBlock) {
+      throw new RuntimeException(
+          String.format(
+              "Genesis Config Error: '%s' is scheduled for milestone %d but it must be on or after milestone %d.",
+              forkName, thisForkBlock.getAsLong(), lastForkBlock));
+    }
+    return referenceForkBlock;
+  }
+
   private NavigableMap<Long, BuilderMapEntry> buildFlattenedMilestoneMap(
       final List<BuilderMapEntry> mileStones) {
     return mileStones.stream()
@@ -218,16 +231,12 @@ public class ProtocolScheduleBuilder {
 
     long lastForkBlock = 0;
     List<Optional<BuilderMapEntry>> milestones = new ArrayList<>();
-    for (MilestoneDefinitionConfig milestone :
-        MilestoneDefinitionProvider.getMilestoneDefinitions(specFactory, config)) {
+    for (MilestoneDefinition milestone :
+        MilestoneDefinitions.createMilestoneDefinitions(specFactory, config)) {
       if (milestone.getBlockNumberOrTimestamp().isPresent()) {
         long thisForkBlock = milestone.getBlockNumberOrTimestamp().getAsLong();
-        if (lastForkBlock > thisForkBlock) {
-          throw new RuntimeException(
-              String.format(
-                  "Genesis Config Error: '%s' is scheduled for milestone %d but it must be on or after milestone %d.",
-                  milestone.getHardforkId().name(), thisForkBlock, lastForkBlock));
-        }
+        validateForkOrder(
+            milestone.getHardforkId().name(), milestone.getBlockNumberOrTimestamp(), lastForkBlock);
         milestones.add(createMilestone(milestone));
         lastForkBlock = thisForkBlock;
       }
@@ -235,18 +244,17 @@ public class ProtocolScheduleBuilder {
     return milestones.stream().flatMap(Optional::stream).toList();
   }
 
-  private Optional<BuilderMapEntry> createMilestone(
-      final MilestoneDefinitionConfig milestoneDefinitionConfig) {
-    if (milestoneDefinitionConfig.getBlockNumberOrTimestamp().isEmpty()) {
+  private Optional<BuilderMapEntry> createMilestone(final MilestoneDefinition milestoneDefinition) {
+    if (milestoneDefinition.getBlockNumberOrTimestamp().isEmpty()) {
       return Optional.empty();
     }
-    final long blockVal = milestoneDefinitionConfig.getBlockNumberOrTimestamp().getAsLong();
+    final long blockVal = milestoneDefinition.getBlockNumberOrTimestamp().getAsLong();
     return Optional.of(
         new BuilderMapEntry(
-            milestoneDefinitionConfig.getHardforkId(),
-            milestoneDefinitionConfig.getMilestoneType(),
+            milestoneDefinition.getHardforkId(),
+            milestoneDefinition.getMilestoneType(),
             blockVal,
-            milestoneDefinitionConfig.getSpecBuilder().get(),
+            milestoneDefinition.getSpecBuilder().get(),
             protocolSpecAdapters.getModifierForBlock(blockVal)));
   }
 
