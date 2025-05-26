@@ -39,6 +39,7 @@ public class SyncStatusNodePermissioningProvider implements NodeConnectionPermis
   private final long inSyncSubscriberId;
   private final AtomicBoolean hasReachedSync = new AtomicBoolean(false);
 
+  // TODO think we can remove this class with onchain permissioning removal
   public SyncStatusNodePermissioningProvider(
       final Synchronizer synchronizer,
       final Collection<EnodeURL> fixedNodes,
