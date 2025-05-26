@@ -65,7 +65,7 @@ public interface DNSEntry {
       try {
         return Bytes.wrap(Base64.getUrlDecoder().decode(enrValue));
       } catch (IllegalArgumentException iae) {
-        LOG.info("enr value `{}` is not properly base64url encoded", enrValue);
+        LOG.debug("enr value `{}` is not properly base64url encoded", enrValue);
         return null;
       }
     }

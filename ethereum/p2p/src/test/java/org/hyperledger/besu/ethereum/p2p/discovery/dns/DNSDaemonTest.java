@@ -98,7 +98,7 @@ class DNSDaemonTest {
   }
 
   @Test
-  @DisplayName("Test DNS Daemon with a mock DNS server and add in am invalid ENR")
+  @DisplayName("Test DNS Daemon with a mock DNS server with invalid ENR records")
   void invalidEnrShouldNotCrashDaemon(final Vertx vertx, final VertxTestContext testContext) {
     final Checkpoint checkpoint = testContext.checkpoint();
     dnsDaemon =
@@ -138,9 +138,22 @@ class DNSDaemonTest {
 
     mockDnsServerVerticle.addTxtRecord(
         "FDXN3SN67NA5DKA4J2GOK7BVQI.all.holesky.ethdisco.net",
-        "enrtree-branch:I56MJAJBMXTZZEPBQR6HWNAH7A");
+        "enrtree-branch:I56MJAJBMXTZZEPBQR6HWNAH7A,I56GAAJBMXTZZEPBQR6HWNAH7A,I56HGDJBMXTZZEPBQR6HWNAH7A");
+
+    // ENR value - invalid encoding
     mockDnsServerVerticle.addTxtRecord(
         "I56MJAJBMXTZZEPBQR6HWNAH7A.all.holesky.ethdisco.net", "enr:-Lu4QMFaK");
+
+    // empty ENR record
+    mockDnsServerVerticle.addTxtRecord(
+        "I56GAAJBMXTZZEPBQR6HWNAH7A.all.holesky.ethdisco.net", "enr:");
+
+    // invalid IP field in ENR record
+    mockDnsServerVerticle.addTxtRecord(
+        "I56HGDJBMXTZZEPBQR6HWNAH7A.all.holesky.ethdisco.net",
+        "enr:-KS4QK1ecw-CGrDDZ4YwFrhgqctD0tWMHKJhUVxsS4um3aUFe3yBHRtVL9uYKk16DurN1IdSKTOB1zNCvjBybjZ_KAqGAYtJ5U8wg2V0a"
+            + "MfGhJsZKtCAgmlkgnY0gmlwhQ_MtDn_iXNlY3AyNTZrMaEDVw-3497LHMjigYh2MteIoI9byWFnSmGR-590_KkaSHGEc25hcMCDdGNwgnZf"
+            + "g3VkcIJ2Xw");
 
     final DeploymentOptions options =
         new DeploymentOptions()
