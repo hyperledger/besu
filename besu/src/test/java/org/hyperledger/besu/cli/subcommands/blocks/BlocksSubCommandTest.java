@@ -129,15 +129,15 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingBlockSubCommandWithoutSubSubcommandMustDisplayUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME);
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_BLOCK_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_BLOCK_USAGE);
   }
 
   @Test
   public void callingBlockSubCommandHelpMustDisplayUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_BLOCK_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_BLOCK_USAGE);
   }
 
   @Test
@@ -472,8 +472,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingBlockExportSubCommandHelpMustDisplayUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_EXPORT_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_BLOCK_EXPORT_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_BLOCK_EXPORT_USAGE);
   }
 
   @Test

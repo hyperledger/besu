@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -31,7 +32,7 @@ public class EthMessages {
   private final Map<Integer, MessageResponseConstructor> messageResponseConstructorsByCode =
       new ConcurrentHashMap<>();
 
-  public Optional<MessageData> dispatch(final EthMessage ethMessage) {
+  public Optional<MessageData> dispatch(final EthMessage ethMessage, final Capability capability) {
     final int code = ethMessage.getData().getCode();
 
     // trigger arbitrary side-effecting listeners
@@ -42,7 +43,7 @@ public class EthMessages {
     return Optional.ofNullable(messageResponseConstructorsByCode.get(code))
         .map(
             messageResponseConstructor ->
-                messageResponseConstructor.response(ethMessage.getData()));
+                messageResponseConstructor.response(ethMessage.getData(), capability));
   }
 
   public long subscribe(final int messageCode, final MessageCallback callback) {
@@ -80,6 +81,6 @@ public class EthMessages {
 
   @FunctionalInterface
   public interface MessageResponseConstructor {
-    MessageData response(MessageData message);
+    MessageData response(MessageData message, Capability capability);
   }
 }
