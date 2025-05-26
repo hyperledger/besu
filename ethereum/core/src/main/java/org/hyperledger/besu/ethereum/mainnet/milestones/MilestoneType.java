@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,23 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.permissioning;
+package org.hyperledger.besu.ethereum.mainnet.milestones;
 
-import java.util.Optional;
-
-public class PermissioningConfiguration {
-
-  private final Optional<LocalPermissioningConfiguration> localConfig;
-
-  public PermissioningConfiguration(final Optional<LocalPermissioningConfiguration> localConfig) {
-    this.localConfig = localConfig;
-  }
-
-  public Optional<LocalPermissioningConfiguration> getLocalConfig() {
-    return localConfig;
-  }
-
-  public static PermissioningConfiguration createDefault() {
-    return new PermissioningConfiguration(Optional.empty());
-  }
+public enum MilestoneType {
+  BLOCK_NUMBER,
+  TIMESTAMP
 }

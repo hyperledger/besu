@@ -92,7 +92,7 @@ public class ProtocolScheduleModule {
   @Provides
   public ProtocolSchedule createProtocolSchedule(
       final ProtocolScheduleBuilder builder, final GenesisConfigOptions config) {
-    final Optional<BigInteger> chainId = config.getChainId().or(() -> builder.getDefaultChainId());
+    final Optional<BigInteger> chainId = config.getChainId().or(builder::getDefaultChainId);
     DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(chainId);
     builder.initSchedule(protocolSchedule, chainId);
     return protocolSchedule;

@@ -65,7 +65,7 @@ public class NodePermissioningControllerFactoryTest {
 
   @Test
   public void testCreateWithNoPermissioningEnabled() {
-    config = new PermissioningConfiguration(Optional.empty(), Optional.empty());
+    config = new PermissioningConfiguration(Optional.empty());
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
         factory.create(
@@ -80,7 +80,6 @@ public class NodePermissioningControllerFactoryTest {
 
     List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(0);
-    assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
 
   @Test
@@ -88,8 +87,7 @@ public class NodePermissioningControllerFactoryTest {
     localPermissioningConfig = LocalPermissioningConfiguration.createDefault();
     localPermissioningConfig.setNodeAllowlist(Collections.emptyList());
     localPermissioningConfig.setNodePermissioningConfigFilePath("fake-file-path");
-    config =
-        new PermissioningConfiguration(Optional.of(localPermissioningConfig), Optional.empty());
+    config = new PermissioningConfiguration(Optional.of(localPermissioningConfig));
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -108,7 +106,6 @@ public class NodePermissioningControllerFactoryTest {
 
     NodeConnectionPermissioningProvider p1 = providers.get(0);
     assertThat(p1).isInstanceOf(NodeLocalConfigPermissioningController.class);
-    assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
 
   @Test
@@ -117,8 +114,7 @@ public class NodePermissioningControllerFactoryTest {
     localPermissioningConfig = LocalPermissioningConfiguration.createDefault();
     localPermissioningConfig.setNodeAllowlist(Collections.emptyList());
     localPermissioningConfig.setNodePermissioningConfigFilePath("fake-file-path");
-    config =
-        new PermissioningConfiguration(Optional.of(localPermissioningConfig), Optional.empty());
+    config = new PermissioningConfiguration(Optional.of(localPermissioningConfig));
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -137,6 +133,5 @@ public class NodePermissioningControllerFactoryTest {
 
     NodeConnectionPermissioningProvider p1 = providers.get(0);
     assertThat(p1).isInstanceOf(NodeLocalConfigPermissioningController.class);
-    assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
 }
