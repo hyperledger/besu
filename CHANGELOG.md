@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 ### Breaking Changes
+- Remove onchain permissioning [#8597](https://github.com/hyperledger/besu/pull/8597)
 - Remove `MetricSystem::createLabelledGauge` deprecated since `24.12.0`, replace it with `MetricSystem::createLabelledSuppliedGauge` [#8299](https://github.com/hyperledger/besu/pull/8299)
 - Remove the deprecated `--tx-pool-disable-locals` option, use `--tx-pool-no-local-priority` instead. [#8614](https://github.com/hyperledger/besu/pull/8614)
 - Remove the deprecated `--Xsnapsync-synchronizer-flat-db-healing-enabled`, use `--Xbonsai-full-flat-db-enabled` instead. [#8415](https://github.com/hyperledger/besu/issues/8415)
@@ -35,7 +36,6 @@
 ## 25.5.0
 ### Breaking Changes
 - Changes to gas estimation algorithm for `eth_estimateGas` and `eth_createAccessList` [#8478](https://github.com/hyperledger/besu/pull/8478) - if you require the previous behavior, specify `--estimate-gas-tolerance-ratio=0.0`
-- Remove onchain permissioning [#8597](https://github.com/hyperledger/besu/pull/8597)
 - Transaction indexing is now disabled by default during the initial sync for snap sync and checkpoint sync. This will break RPCs that use transaction hash for historical queries. [#8611](https://github.com/hyperledger/besu/pull/8611). If you need to enable transaction for the initial sync, use `--snapsync-synchronizer-transaction-indexing-enabled`
 
 ### Upcoming Breaking Changes
