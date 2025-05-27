@@ -408,30 +408,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
               }
             });
 
-    node.getPermissioningConfiguration()
-        .flatMap(PermissioningConfiguration::getSmartContractConfig)
-        .ifPresent(
-            permissioningConfiguration -> {
-              if (permissioningConfiguration.isSmartContractNodeAllowlistEnabled()) {
-                params.add("--permissions-nodes-contract-enabled");
-              }
-              if (permissioningConfiguration.getNodeSmartContractAddress() != null) {
-                params.add("--permissions-nodes-contract-address");
-                params.add(permissioningConfiguration.getNodeSmartContractAddress().toString());
-              }
-              if (permissioningConfiguration.isSmartContractAccountAllowlistEnabled()) {
-                params.add("--permissions-accounts-contract-enabled");
-              }
-              if (permissioningConfiguration.getAccountSmartContractAddress() != null) {
-                params.add("--permissions-accounts-contract-address");
-                params.add(permissioningConfiguration.getAccountSmartContractAddress().toString());
-              }
-              params.add("--permissions-nodes-contract-version");
-              params.add(
-                  String.valueOf(
-                      permissioningConfiguration.getNodeSmartContractInterfaceVersion()));
-            });
-
     params.addAll(node.getExtraCLIOptions());
 
     params.add("--key-value-storage");

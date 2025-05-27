@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
+import static org.hyperledger.besu.ethereum.p2p.discovery.dns.KVReader.readKV;
+
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSEntry.ENRNode;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSEntry.ENRTreeLink;
@@ -25,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -170,7 +173,48 @@ public class DNSResolver {
    * @return the DNS entry read from the domain. Empty if no record is found.
    */
   Optional<DNSEntry> resolveRecord(final String domainName) {
-    return resolveRawRecord(domainName).map(DNSEntry::readDNSEntry);
+    return resolveRawRecord(domainName).map(DNSResolver::readDNSEntry);
+  }
+
+  /**
+   * Read a DNS entry from a String.
+   *
+   * @param serialized the serialized form of a DNS entry
+   * @return DNS entry if found
+   * @throws IllegalArgumentException if the record cannot be read
+   */
+  @VisibleForTesting
+  static DNSEntry readDNSEntry(final String serialized) {
+    final String record = trimQuotes(serialized);
+    final String prefix = getPrefix(record);
+    try {
+      switch (prefix) {
+        case "enrtree-root":
+          return new ENRTreeRoot(readKV(record));
+        case "enrtree-branch":
+          return new DNSEntry.ENRTree(record.substring(prefix.length() + 1));
+        case "enr":
+          return ENRNode.fromAttrs(readKV(record));
+        case "enrtree":
+          return new ENRTreeLink(record);
+      }
+      LOG.error("{} should contain enrtree-branch, enr, enrtree-root or enrtree", serialized);
+    } catch (Throwable t) {
+      LOG.warn("Failed to parse record: {}", record);
+    }
+    return null;
+  }
+
+  private static String trimQuotes(final String str) {
+    if (str.startsWith("\"") && str.endsWith("\"")) {
+      return str.substring(1, str.length() - 1);
+    }
+    return str;
+  }
+
+  private static String getPrefix(final String input) {
+    final String[] parts = input.split(":", 2);
+    return parts.length > 0 ? parts[0] : "";
   }
 
   /**

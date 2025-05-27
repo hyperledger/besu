@@ -26,12 +26,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
-import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
@@ -46,9 +41,8 @@ public class PeerPermissionsAdapterTest {
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final MutableBlockchain blockchain =
       InMemoryKeyValueStorageProvider.createInMemoryBlockchain(gen.genesisBlock());
-  private final List<EnodeURL> bootNodes = new ArrayList<>();
   private final PeerPermissionsAdapter adapter =
-      new PeerPermissionsAdapter(nodePermissioningController, bootNodes, blockchain);
+      new PeerPermissionsAdapter(nodePermissioningController, blockchain);
 
   @Test
   public void allowInPeerTable() {
@@ -68,88 +62,8 @@ public class PeerPermissionsAdapterTest {
   }
 
   @Test
-  public void allowOutboundBonding_inSyncRemoteIsBootnode() {
-    mockSyncStatusNodePermissioning(true, true);
-    bootNodes.add(remoteNode.getEnodeURL());
+  public void allowOutboundBonding() {
 
-    final Action action = Action.DISCOVERY_ALLOW_OUTBOUND_BONDING;
-
-    mockControllerPermissions(true, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
-
-    mockControllerPermissions(false, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(true, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
-
-    mockControllerPermissions(false, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-  }
-
-  @Test
-  public void allowOutboundBonding_inSyncRemoteIsNotABootnode() {
-    mockSyncStatusNodePermissioning(true, true);
-
-    final Action action = Action.DISCOVERY_ALLOW_OUTBOUND_BONDING;
-
-    mockControllerPermissions(true, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
-
-    mockControllerPermissions(false, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(true, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
-
-    mockControllerPermissions(false, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-  }
-
-  @Test
-  // This test smart-contract backed permissioning where while we’re syncing,
-  // we can only trust bootnodes
-  public void allowOutboundBonding_outOfSyncRemoteIsNotABootnode() {
-    mockSyncStatusNodePermissioning(true, false);
-
-    final Action action = Action.DISCOVERY_ALLOW_OUTBOUND_BONDING;
-
-    mockControllerPermissions(true, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(false, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(true, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(false, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-  }
-
-  @Test
-  public void allowOutboundBonding_outOfSyncRemoteIsABootnode() {
-    mockSyncStatusNodePermissioning(true, false);
-    bootNodes.add(remoteNode.getEnodeURL());
-
-    final Action action = Action.DISCOVERY_ALLOW_OUTBOUND_BONDING;
-
-    mockControllerPermissions(true, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
-
-    mockControllerPermissions(false, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(true, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
-
-    mockControllerPermissions(false, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-  }
-
-  @Test
-  public void allowOutboundBonding_noSyncPermissioning() {
-    mockSyncStatusNodePermissioning(false, false);
     final Action action = Action.DISCOVERY_ALLOW_OUTBOUND_BONDING;
 
     mockControllerPermissions(true, false);
@@ -183,82 +97,7 @@ public class PeerPermissionsAdapterTest {
   }
 
   @Test
-  public void allowOutboundNeighborsRequest_inSyncRemoteIsBootnode() {
-    mockSyncStatusNodePermissioning(true, true);
-    bootNodes.add(remoteNode.getEnodeURL());
-    final Action action = Action.DISCOVERY_ALLOW_OUTBOUND_NEIGHBORS_REQUEST;
-
-    mockControllerPermissions(true, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
-
-    mockControllerPermissions(false, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(true, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
-
-    mockControllerPermissions(false, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-  }
-
-  @Test
-  public void allowOutboundNeighborsRequest_inSyncRemoteIsNotABootnode() {
-    mockSyncStatusNodePermissioning(true, true);
-    final Action action = Action.DISCOVERY_ALLOW_OUTBOUND_NEIGHBORS_REQUEST;
-
-    mockControllerPermissions(true, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
-
-    mockControllerPermissions(false, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(true, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
-
-    mockControllerPermissions(false, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-  }
-
-  @Test
-  public void allowOutboundNeighborsRequest_outOfSyncRemoteIsABootnode() {
-    mockSyncStatusNodePermissioning(true, false);
-    bootNodes.add(remoteNode.getEnodeURL());
-    final Action action = Action.DISCOVERY_ALLOW_OUTBOUND_NEIGHBORS_REQUEST;
-
-    mockControllerPermissions(true, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(false, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(true, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(false, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-  }
-
-  @Test
-  public void allowOutboundNeighborsRequest_outOfSyncRemoteIsNotABootnode() {
-    mockSyncStatusNodePermissioning(true, false);
-    final Action action = Action.DISCOVERY_ALLOW_OUTBOUND_NEIGHBORS_REQUEST;
-
-    mockControllerPermissions(true, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(false, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(true, true);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-
-    mockControllerPermissions(false, false);
-    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
-  }
-
-  @Test
-  public void allowOutboundNeighborsRequest_noSyncPermissioning() {
-    mockSyncStatusNodePermissioning(false, false);
+  public void allowOutboundNeighborsRequest() {
     final Action action = Action.DISCOVERY_ALLOW_OUTBOUND_NEIGHBORS_REQUEST;
 
     mockControllerPermissions(true, false);
@@ -368,20 +207,6 @@ public class PeerPermissionsAdapterTest {
     blockchain.appendBlock(newBlock, gen.receipts(newBlock));
 
     assertThat(updateDispatched).isTrue();
-  }
-
-  private void mockSyncStatusNodePermissioning(final boolean isPresent, final boolean isInSync) {
-    if (!isPresent) {
-      when(nodePermissioningController.getSyncStatusNodePermissioningProvider())
-          .thenReturn(Optional.empty());
-      return;
-    }
-
-    final SyncStatusNodePermissioningProvider syncStatus =
-        mock(SyncStatusNodePermissioningProvider.class);
-    when(syncStatus.hasReachedSync()).thenReturn(isInSync);
-    when(nodePermissioningController.getSyncStatusNodePermissioningProvider())
-        .thenReturn(Optional.of(syncStatus));
   }
 
   private void mockControllerPermissions(
