@@ -49,7 +49,7 @@ public class BlobCache {
         bwc.get().getBlobProofBundles().stream()
             .forEach(
                 blobProofBundle ->
-                    this.cache.put(blobProofBundle.versionedHash(), blobProofBundle));
+                    this.cache.put(blobProofBundle.getVersionedHash(), blobProofBundle));
       } else {
         LOG.debug("transaction is missing blobs, cannot cache");
       }
@@ -67,7 +67,7 @@ public class BlobCache {
               maybeHashes.get().stream().map(cache::getIfPresent).toList();
           final BlobsWithCommitments bwc = new BlobsWithCommitments(blobProofBundles);
           if (blobProofBundles.stream()
-              .map(BlobProofBundle::versionedHash)
+              .map(BlobProofBundle::getVersionedHash)
               .toList()
               .containsAll(maybeHashes.get())) {
             txBuilder.blobsWithCommitments(bwc);

@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core.kzg;
 
+import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.CELL_PROOFS_PER_BLOB;
+import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.VERSION_0_KZG_PROOFS;
+import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.VERSION_1_KZG_CELL_PROOFS;
+
 import org.hyperledger.besu.datatypes.VersionedHash;
 
 import java.security.InvalidParameterException;
@@ -22,6 +26,8 @@ import java.util.List;
 import java.util.Objects;
 
 import com.google.common.annotations.VisibleForTesting;
+import ethereum.ckzg4844.CKZG4844JNI;
+import org.apache.tuweni.bytes.Bytes;
 
 /** A class to hold the blobs, commitments, proofs, and versioned hashes for a set of blobs. */
 public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.BlobsWithCommitments {
@@ -82,9 +88,7 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
    * @return the list of cell proofs for the specified blob.
    */
   private static List<KZGProof> extractCellProofs(final List<KZGProof> proofList, final int index) {
-    return proofList.subList(
-        index * BlobProofBundle.CELL_PROOFS_PER_BLOB,
-        (index + 1) * BlobProofBundle.CELL_PROOFS_PER_BLOB);
+    return proofList.subList(index * CELL_PROOFS_PER_BLOB, (index + 1) * CELL_PROOFS_PER_BLOB);
   }
 
   /**
@@ -129,7 +133,7 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
         }
         break;
       case BlobProofBundle.VERSION_1_KZG_CELL_PROOFS:
-        int expectedCellProofsTotal = BlobProofBundle.CELL_PROOFS_PER_BLOB * blobs.size();
+        int expectedCellProofsTotal = CELL_PROOFS_PER_BLOB * blobs.size();
         if (kzgProofs.size() != expectedCellProofsTotal) {
           String error =
               String.format(
@@ -150,7 +154,11 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
    */
   public BlobsWithCommitments(final List<BlobProofBundle> blobProofBundles) {
     this.blobProofBundles = blobProofBundles;
-    this.versionId = blobProofBundles.getFirst().versionId();
+    this.versionId = blobProofBundles.getFirst().getVersionId();
+  }
+
+  private int getSize() {
+    return blobProofBundles.size();
   }
 
   /**
@@ -160,7 +168,11 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
    */
   @Override
   public List<Blob> getBlobs() {
-    return blobProofBundles.stream().map(BlobProofBundle::blob).toList();
+    return blobProofBundles.stream().map(BlobProofBundle::getBlob).toList();
+  }
+
+  private byte[] getBlobsByteArray() {
+    return Bytes.wrap(getBlobs().stream().map(Blob::getData).toList()).toArrayUnsafe();
   }
 
   /**
@@ -170,7 +182,26 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
    */
   @Override
   public List<KZGCommitment> getKzgCommitments() {
-    return blobProofBundles.stream().map(BlobProofBundle::kzgCommitment).toList();
+    return blobProofBundles.stream().map(BlobProofBundle::getKzgCommitment).toList();
+  }
+
+  private byte[] getKzgCommitmentsByteArray() {
+    if (versionId == BlobProofBundle.VERSION_1_KZG_CELL_PROOFS) {
+      return extendCommitments(getKzgCommitments(), CELL_PROOFS_PER_BLOB);
+    }
+    return extendCommitments(getKzgCommitments(), 1);
+  }
+
+  private static byte[] extendCommitments(final List<KZGCommitment> commitments, final int size) {
+    int newSize = commitments.size() * size;
+    ArrayList<KZGCommitment> extendedCommitments = new ArrayList<>(newSize);
+    for (KZGCommitment kzgCommitment : commitments) {
+      for (int i = 0; i < CELL_PROOFS_PER_BLOB; i++) {
+        extendedCommitments.add(new KZGCommitment(kzgCommitment.getData()));
+      }
+    }
+    return Bytes.wrap(extendedCommitments.stream().map(kc -> (Bytes) kc.getData()).toList())
+        .toArrayUnsafe();
   }
 
   /**
@@ -181,8 +212,13 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
   @Override
   public List<KZGProof> getKzgProofs() {
     return blobProofBundles.stream()
-        .flatMap(blobProofBundle -> blobProofBundle.kzgProof().stream())
+        .flatMap(blobProofBundle -> blobProofBundle.getKzgProof().stream())
         .toList();
+  }
+
+  private byte[] getKzgProofsByteArray() {
+    return Bytes.wrap(getKzgProofs().stream().map(kp -> (Bytes) kp.getData()).toList())
+        .toArrayUnsafe();
   }
 
   /**
@@ -192,7 +228,7 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
    */
   @Override
   public List<VersionedHash> getVersionedHashes() {
-    return blobProofBundles.stream().map(BlobProofBundle::versionedHash).toList();
+    return blobProofBundles.stream().map(BlobProofBundle::getVersionedHash).toList();
   }
 
   /**
@@ -202,6 +238,22 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
    */
   public List<BlobProofBundle> getBlobProofBundles() {
     return blobProofBundles;
+  }
+
+  private byte[] getBlobCellsByteArray() {
+    return Bytes.wrap(blobProofBundles.stream().map(BlobProofBundle::getBlobCellsBytes).toList())
+        .toArrayUnsafe();
+  }
+
+  private long[] getCellIndexes() {
+    long[] cellIndices = new long[CELL_PROOFS_PER_BLOB * blobProofBundles.size()];
+    for (int blobIndex = 0; blobIndex < blobProofBundles.size(); blobIndex++) {
+      for (int index = 0; index < CELL_PROOFS_PER_BLOB; index++) {
+        int cellIndex = blobIndex * CELL_PROOFS_PER_BLOB + index;
+        cellIndices[cellIndex] = index;
+      }
+    }
+    return cellIndices;
   }
 
   /**
@@ -226,5 +278,24 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
   @Override
   public int hashCode() {
     return Objects.hash(getBlobProofBundles(), versionId);
+  }
+
+  public static boolean verify4844Kzg(final BlobsWithCommitments blobsWithCommitments) {
+    if (blobsWithCommitments.getVersionId() == VERSION_0_KZG_PROOFS) {
+      return CKZG4844JNI.verifyBlobKzgProofBatch(
+          blobsWithCommitments.getBlobsByteArray(),
+          blobsWithCommitments.getKzgCommitmentsByteArray(),
+          blobsWithCommitments.getKzgProofsByteArray(),
+          blobsWithCommitments.getSize());
+    } else if (blobsWithCommitments.getVersionId() == VERSION_1_KZG_CELL_PROOFS) {
+      return CKZG4844JNI.verifyCellKzgProofBatch(
+          blobsWithCommitments.getKzgCommitmentsByteArray(),
+          blobsWithCommitments.getCellIndexes(),
+          blobsWithCommitments.getBlobCellsByteArray(),
+          blobsWithCommitments.getKzgProofsByteArray());
+    } else {
+      throw new IllegalArgumentException(
+          "Unsupported blob version: " + blobsWithCommitments.getVersionId());
+    }
   }
 }

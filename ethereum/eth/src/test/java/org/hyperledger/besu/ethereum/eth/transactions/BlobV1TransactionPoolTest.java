@@ -90,7 +90,7 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
         transactionWithBlobs.getBlobsWithCommitments().get().getBlobProofBundles();
 
     expectedBlobProofBundles.forEach(
-        bq -> assertThat(transactionPool.getBlobProofBundle(bq.versionedHash())).isEqualTo(bq));
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isEqualTo(bq));
   }
 
   @Test
@@ -108,7 +108,7 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
 
     // assert that the blobs are returned from the tx pool
     expectedBlobProofBundles.forEach(
-        bq -> assertThat(transactionPool.getBlobProofBundle(bq.versionedHash())).isEqualTo(bq));
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isEqualTo(bq));
 
     // add different transaction that contains the same blobs
     addAndAssertRemoteTransactionsValid(transactionWithSameBlobs);
@@ -117,7 +117,7 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
     assertTransactionPending(transactionWithSameBlobs);
     // assert that the blobs are still returned from the tx pool
     expectedBlobProofBundles.forEach(
-        bq -> assertThat(transactionPool.getBlobProofBundle(bq.versionedHash())).isEqualTo(bq));
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isEqualTo(bq));
 
     // replace the second blob transaction with tx with different blobs
     addAndAssertRemoteTransactionsValid(transactionWithSameBlobsReplacement);
@@ -126,7 +126,7 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
 
     // assert that the blob is still returned from the tx pool
     expectedBlobProofBundles.forEach(
-        bq -> assertThat(transactionPool.getBlobProofBundle(bq.versionedHash())).isEqualTo(bq));
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isEqualTo(bq));
 
     // replace the first blob transaction with tx with different blobs
     addAndAssertRemoteTransactionsValid(transactionWithBlobsReplacement);
@@ -136,6 +136,6 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
     // All txs containing the expected blobs have been replaced,
     // so the blobs should no longer be returned from the tx pool
     expectedBlobProofBundles.forEach(
-        bq -> assertThat(transactionPool.getBlobProofBundle(bq.versionedHash())).isNull());
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isNull());
   }
 }

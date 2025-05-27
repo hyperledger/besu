@@ -25,9 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobsBundleV2;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
-import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Arrays;
@@ -35,14 +33,13 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import ethereum.ckzg4844.CKZG4844JNI;
-import ethereum.ckzg4844.CellsAndProofs;
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetBlobsV2.class);
+  public static final int REQUEST_MAX_VERSIONED_HASHES = 128;
 
   private final TransactionPool transactionPool;
 
@@ -62,25 +59,25 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    final VersionedHash[] versionedHashes;
+    final VersionedHash[] versionedHashes = extractVersionedHashes(requestContext);
+    if (versionedHashes.length > REQUEST_MAX_VERSIONED_HASHES) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(),
+          RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST);
+    }
+    final List<BlobAndProofV2> result = getBlobV2Result(versionedHashes);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
+  }
+
+  private VersionedHash[] extractVersionedHashes(final JsonRpcRequestContext requestContext) {
     try {
-      versionedHashes = requestContext.getRequiredParameter(0, VersionedHash[].class);
+      return requestContext.getRequiredParameter(0, VersionedHash[].class);
     } catch (JsonRpcParameter.JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid versioned hashes parameter (index 0)",
           RpcErrorType.INVALID_VERSIONED_HASHES_PARAMS,
           e);
     }
-
-    if (versionedHashes.length > 128) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(),
-          RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST);
-    }
-
-    final List<BlobAndProofV2> result = getBlobV2Result(versionedHashes);
-
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
   private @Nonnull List<BlobAndProofV2> getBlobV2Result(final VersionedHash[] versionedHashes) {
@@ -90,34 +87,30 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
         .toList();
   }
 
-  private @Nullable BlobAndProofV2 getBlobAndProofV2(final BlobProofBundle bq) {
-    if (bq == null) {
+  private @Nullable BlobAndProofV2 getBlobAndProofV2(final BlobProofBundle blobProofBundle) {
+    if (blobProofBundle == null) {
       return null;
     }
-    BlobProofBundle toReturn = bq;
-    if (bq.versionId() == BlobProofBundle.VERSION_0_KZG_PROOFS) {
-      LOG.info(
-          "BlobProofBundle {} versionId is 0. Converting to version {}",
-          bq.versionedHash(),
-          BlobProofBundle.VERSION_1_KZG_CELL_PROOFS);
-      CellsAndProofs cellProofs =
-          CKZG4844JNI.computeCellsAndKzgProofs(bq.blob().getData().toArray());
-      List<KZGProof> kzgCellProofs = extractKZGProofs(cellProofs.getProofs());
-      toReturn =
-          BlobProofBundle.builder()
-              .versionId(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS)
-              .blob(bq.blob())
-              .kzgCommitment(bq.kzgCommitment())
-              .kzgProof(kzgCellProofs)
-              .versionedHash(bq.versionedHash())
-              .build();
-    }
-    return new BlobAndProofV2(
-        toReturn.blob().getData().toHexString(),
-        toReturn.kzgProof().stream().map(p -> p.getData().toHexString()).toList());
+    BlobProofBundle proofBundle = processBundle(blobProofBundle);
+    return createBlobAndProofV2(proofBundle);
   }
 
-  public static List<KZGProof> extractKZGProofs(final byte[] input) {
-    return BlobsBundleV2.extractKZGProofs(input);
+  private BlobProofBundle processBundle(final BlobProofBundle blobProofBundle) {
+    if (blobProofBundle.getVersionId() == BlobProofBundle.VERSION_0_KZG_PROOFS) {
+      LOG.info(
+          "BlobProofBundle {} has versionId 0. Converting to version {}",
+          blobProofBundle.getVersionedHash(),
+          BlobProofBundle.VERSION_1_KZG_CELL_PROOFS);
+      return blobProofBundle.toVersion1();
+    }
+    return blobProofBundle;
+  }
+
+  private BlobAndProofV2 createBlobAndProofV2(final BlobProofBundle blobProofBundle) {
+    return new BlobAndProofV2(
+        blobProofBundle.getBlob().getData().toHexString(),
+        blobProofBundle.getKzgProof().stream()
+            .map(proof -> proof.getData().toHexString())
+            .toList());
   }
 }

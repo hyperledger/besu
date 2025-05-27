@@ -109,10 +109,10 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
     if (bq == null) {
       return null;
     }
-    if (bq.versionId() != BlobProofBundle.VERSION_0_KZG_PROOFS) {
+    if (bq.getVersionId() != BlobProofBundle.VERSION_0_KZG_PROOFS) {
       return null;
     }
     return new BlobAndProofV1(
-        bq.blob().getData().toHexString(), bq.kzgProof().getFirst().getData().toHexString());
+        bq.getBlob().getData().toHexString(), bq.getKzgProof().getFirst().getData().toHexString());
   }
 }

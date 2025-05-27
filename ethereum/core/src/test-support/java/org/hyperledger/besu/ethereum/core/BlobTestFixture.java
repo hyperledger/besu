@@ -54,11 +54,7 @@ public class BlobTestFixture {
     }
   }
 
-  record BlobTriplet(
-      Blob blob, KZGCommitment kzgCommitment, KZGProof kzgProof, VersionedHash versionedHash) {}
-  ;
-
-  public BlobTriplet createBlobTriplet() {
+  public BlobProofBundle createBlobProofBundleVersion0() {
     byte[] rawMaterial = new byte[131072];
     rawMaterial[0] = byteValue++;
 
@@ -67,10 +63,11 @@ public class BlobTestFixture {
     Bytes48 proof =
         Bytes48.wrap(CKZG4844JNI.computeBlobKzgProof(rawMaterial, commitment.toArray()));
     VersionedHash versionedHash = hashCommitment(new KZGCommitment(commitment));
-    return new BlobTriplet(
+    return new BlobProofBundle(
+        BlobProofBundle.VERSION_0_KZG_PROOFS,
         new Blob(Bytes.wrap(rawMaterial)),
         new KZGCommitment(commitment),
-        new KZGProof(proof),
+        List.of(new KZGProof(proof)),
         versionedHash);
   }
 
@@ -80,11 +77,11 @@ public class BlobTestFixture {
     List<KZGProof> proofs = new ArrayList<>();
     List<VersionedHash> versionedHashes = new ArrayList<>();
     for (int i = 0; i < blobCount; i++) {
-      BlobTriplet blobTriplet = createBlobTriplet();
-      blobs.add(blobTriplet.blob());
-      commitments.add(blobTriplet.kzgCommitment());
-      proofs.add(blobTriplet.kzgProof());
-      versionedHashes.add(blobTriplet.versionedHash());
+      BlobProofBundle blobProofBundle = createBlobProofBundleVersion0();
+      blobs.add(blobProofBundle.getBlob());
+      commitments.add(blobProofBundle.getKzgCommitment());
+      proofs.addAll(blobProofBundle.getKzgProof());
+      versionedHashes.add(blobProofBundle.getVersionedHash());
     }
     return new BlobsWithCommitments(
         BlobProofBundle.VERSION_0_KZG_PROOFS, commitments, blobs, proofs, versionedHashes);

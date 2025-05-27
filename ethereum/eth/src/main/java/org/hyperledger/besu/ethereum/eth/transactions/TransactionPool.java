@@ -671,7 +671,7 @@ public class TransactionPool implements BlockAddedObserver {
     final List<BlobProofBundle> blobProofBundles =
         maybeBlobsWithCommitments.get().getBlobProofBundles();
 
-    blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.versionedHash(), bq));
+    blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.getVersionedHash(), bq));
   }
 
   private void unmapBlobsOnTransactionDropped(final Transaction transaction) {
@@ -682,7 +682,7 @@ public class TransactionPool implements BlockAddedObserver {
     final List<BlobProofBundle> blobProofBundles =
         maybeBlobsWithCommitments.get().getBlobProofBundles();
 
-    blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.versionedHash(), bq));
+    blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.getVersionedHash(), bq));
   }
 
   public BlobProofBundle getBlobProofBundle(final VersionedHash vh) {

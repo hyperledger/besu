@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.NONE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -31,28 +30,19 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.kzg.Blob;
-import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
-import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import ethereum.ckzg4844.CKZG4844JNI;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes48;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -253,47 +243,5 @@ class MainnetBlockBodyValidatorTest {
                 .setWithdrawals(Optional.of(withdrawals)));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
     return block;
-  }
-
-  @SuppressWarnings("UnusedVariable")
-  @Test
-  void convertBlob() {
-    try {
-      // optimistically tear down a potential previous loaded trusted setup
-      KZGPointEvalPrecompiledContract.tearDown();
-    } catch (Throwable ignore) {
-      // and ignore errors in case no trusted setup was already loaded
-    }
-    try {
-      CKZG4844JNI.loadNativeLibrary();
-      CKZG4844JNI.loadTrustedSetupFromResource(
-          "/kzg-trusted-setups/mainnet.txt", BlobTestFixture.class, 0);
-
-    } catch (Exception e) {
-      fail("Failed to compute commitment", e);
-    }
-    byte byteValue = 0x00;
-    byte[] rawMaterial = new byte[131072];
-    rawMaterial[0] = byteValue++;
-
-    Blob blob = new Blob(Bytes.wrap(rawMaterial));
-
-    var CellsAndKzgProofs = CKZG4844JNI.computeCellsAndKzgProofs(blob.getData().toArray());
-
-    List<KZGProof> cellProofs = extractKZGProofs(CellsAndKzgProofs.getProofs());
-
-    assertThat(cellProofs.size()).isEqualTo(BlobProofBundle.CELL_PROOFS_PER_BLOB);
-  }
-
-  public static List<KZGProof> extractKZGProofs(final byte[] input) {
-    List<KZGProof> chunks = new ArrayList<>();
-    int chunkSize = Bytes48.SIZE;
-    int totalChunks = input.length / chunkSize;
-    for (int i = 0; i < totalChunks; i++) {
-      byte[] chunk = new byte[chunkSize];
-      System.arraycopy(input, i * chunkSize, chunk, 0, chunkSize);
-      chunks.add(new KZGProof(Bytes48.wrap(chunk)));
-    }
-    return chunks;
   }
 }

@@ -14,24 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.CELL_PROOFS_PER_BLOB;
-import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.VERSION_0_KZG_PROOFS;
-import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.VERSION_1_KZG_CELL_PROOFS;
+import static org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments.verify4844Kzg;
 
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.kzg.Blob;
-import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import ethereum.ckzg4844.CKZG4844JNI;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
@@ -89,89 +82,12 @@ public class MainnetBlobsValidator {
       }
     }
 
-    if (blobsWithCommitments.getVersionId() == VERSION_0_KZG_PROOFS) {
-      return validateBlobWithProof(blobsWithCommitments);
-    }
-
-    if (blobsWithCommitments.getVersionId() == VERSION_1_KZG_CELL_PROOFS) {
-      return validateBlobWithCellProof(blobsWithCommitments);
-    }
-    return ValidationResult.valid();
-  }
-
-  private ValidationResult<TransactionInvalidReason> validateBlobWithProof(
-      final BlobsWithCommitments blobsWithCommitments) {
-    final byte[] blobs =
-        Bytes.wrap(blobsWithCommitments.getBlobs().stream().map(Blob::getData).toList())
-            .toArrayUnsafe();
-    final byte[] kzgCommitments =
-        Bytes.wrap(
-                blobsWithCommitments.getKzgCommitments().stream()
-                    .map(kc -> (Bytes) kc.getData())
-                    .toList())
-            .toArrayUnsafe();
-    final byte[] kzgProofs =
-        Bytes.wrap(
-                blobsWithCommitments.getKzgProofs().stream()
-                    .map(kp -> (Bytes) kp.getData())
-                    .toList())
-            .toArrayUnsafe();
-    final boolean kzgVerification =
-        CKZG4844JNI.verifyBlobKzgProofBatch(
-            blobs, kzgCommitments, kzgProofs, blobsWithCommitments.getBlobs().size());
-    if (!kzgVerification) {
+    if (!verify4844Kzg(blobsWithCommitments)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
           "transaction blobs kzg proof verification failed");
     }
     return ValidationResult.valid();
-  }
-
-  private ValidationResult<TransactionInvalidReason> validateBlobWithCellProof(
-      final BlobsWithCommitments blobsWithCommitments) {
-    final Bytes kzgCellProofs =
-        Bytes.wrap(
-            blobsWithCommitments.getKzgProofs().stream().map(kp -> (Bytes) kp.getData()).toList());
-
-    final byte[] commitments = extendCommitments(blobsWithCommitments.getKzgCommitments());
-    long[] cellIndices = new long[CELL_PROOFS_PER_BLOB * blobsWithCommitments.getBlobs().size()];
-    List<Bytes> cells = new ArrayList<>();
-    for (int blobIndex = 0; blobIndex < blobsWithCommitments.getBlobs().size(); blobIndex++) {
-      byte[] blobCells =
-          CKZG4844JNI.computeCells(
-              blobsWithCommitments.getBlobs().get(blobIndex).getData().toArray());
-      if (blobCells == null) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.INVALID_BLOBS, "error computing cells for blob");
-      }
-      cells.add(Bytes.wrap(blobCells));
-      for (int index = 0; index < CELL_PROOFS_PER_BLOB; index++) {
-        int cellIndex = blobIndex * CELL_PROOFS_PER_BLOB + index;
-        cellIndices[cellIndex] = index;
-      }
-    }
-    var cellsByteArray = Bytes.wrap(cells.stream().toList()).toArrayUnsafe();
-    final boolean kzgVerification =
-        CKZG4844JNI.verifyCellKzgProofBatch(
-            commitments, cellIndices, cellsByteArray, kzgCellProofs.toArrayUnsafe());
-    if (!kzgVerification) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_BLOBS,
-          "transaction blobs kzg cell proof verification failed");
-    }
-    return ValidationResult.valid();
-  }
-
-  private static byte[] extendCommitments(final List<KZGCommitment> commitments) {
-    int newSize = commitments.size() * BlobProofBundle.CELL_PROOFS_PER_BLOB;
-    ArrayList<KZGCommitment> extendedCommitments = new ArrayList<>(newSize);
-    for (KZGCommitment kzgCommitment : commitments) {
-      for (int i = 0; i < BlobProofBundle.CELL_PROOFS_PER_BLOB; i++) {
-        extendedCommitments.add(new KZGCommitment(kzgCommitment.getData()));
-      }
-    }
-    return Bytes.wrap(extendedCommitments.stream().map(kc -> (Bytes) kc.getData()).toList())
-        .toArrayUnsafe();
   }
 
   public static VersionedHash hashCommitment(final KZGCommitment commitment) {

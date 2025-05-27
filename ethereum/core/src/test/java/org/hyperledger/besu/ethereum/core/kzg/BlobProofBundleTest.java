@@ -14,15 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.core.kzg;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.datatypes.VersionedHash.DEFAULT_VERSIONED_HASH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.hyperledger.besu.datatypes.VersionedHash;
+import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 
 import java.util.Collections;
 import java.util.List;
 
+import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.Test;
@@ -47,11 +51,11 @@ public class BlobProofBundleTest {
             .kzgProof(kzgProofs)
             .build();
 
-    assertEquals(0, bundle.versionId());
-    assertEquals(blob, bundle.blob());
-    assertEquals(kzgCommitment, bundle.kzgCommitment());
-    assertEquals(versionedHash, bundle.versionedHash());
-    assertEquals(kzgProofs, bundle.kzgProof());
+    assertEquals(0, bundle.getVersionId());
+    assertEquals(blob, bundle.getBlob());
+    assertEquals(kzgCommitment, bundle.getKzgCommitment());
+    assertEquals(versionedHash, bundle.getVersionedHash());
+    assertEquals(kzgProofs, bundle.getKzgProof());
   }
 
   @Test
@@ -64,11 +68,11 @@ public class BlobProofBundleTest {
             .versionedHash(versionedHash)
             .kzgProof(kzgCellProofs)
             .build();
-    assertEquals(1, bundle.versionId());
-    assertEquals(blob, bundle.blob());
-    assertEquals(kzgCommitment, bundle.kzgCommitment());
-    assertEquals(versionedHash, bundle.versionedHash());
-    assertEquals(kzgCellProofs, bundle.kzgProof());
+    assertEquals(1, bundle.getVersionId());
+    assertEquals(blob, bundle.getBlob());
+    assertEquals(kzgCommitment, bundle.getKzgCommitment());
+    assertEquals(versionedHash, bundle.getVersionedHash());
+    assertEquals(kzgCellProofs, bundle.getKzgProof());
   }
 
   @Test
@@ -174,5 +178,24 @@ public class BlobProofBundleTest {
                     .versionedHash(versionedHash)
                     .build());
     assertEquals("kzgProof must not be empty", exception.getMessage());
+  }
+
+  @SuppressWarnings("UnusedVariable")
+  @Test
+  void convertBlob() {
+    BlobTestFixture blobTestFixture = new BlobTestFixture();
+    BlobProofBundle blobProofBundle = blobTestFixture.createBlobProofBundleVersion0();
+    assertThat(blobProofBundle.getVersionId()).isEqualTo(BlobProofBundle.VERSION_0_KZG_PROOFS);
+
+    BlobProofBundle proofBundle = blobProofBundle.toVersion1();
+    assertThat(proofBundle.getVersionId()).isEqualTo(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS);
+
+    boolean isValid =
+        CKZG4844JNI.verifyCellKzgProofBatch(
+            proofBundle.getCommitmentBytes().toArrayUnsafe(),
+            proofBundle.getIndices(),
+            proofBundle.getBlobCellsBytes().toArrayUnsafe(),
+            proofBundle.getProofBytes().toArrayUnsafe());
+    assertTrue(isValid, "KZG proof verification should be valid");
   }
 }

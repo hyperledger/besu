@@ -120,11 +120,12 @@ public class EngineGetBlobsV1Test {
     // for loop to check each blob and proof
     for (int i = 0; i < versionedHashes.length; i++) {
       assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getBlob()))
-          .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).blob().getData());
-      assertThat(blobsWithCommitments.getBlobProofBundles().get(i).kzgProof().size()).isEqualTo(1);
+          .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).getBlob().getData());
+      assertThat(blobsWithCommitments.getBlobProofBundles().get(i).getKzgProof().size())
+          .isEqualTo(1);
       assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getProof()))
           .isEqualTo(
-              blobsWithCommitments.getBlobProofBundles().get(i).kzgProof().getFirst().getData());
+              blobsWithCommitments.getBlobProofBundles().get(i).getKzgProof().getFirst().getData());
     }
   }
 
@@ -152,12 +153,17 @@ public class EngineGetBlobsV1Test {
     for (int i = 0; i < versionedHashesList.size(); i++) {
       if (i != 1) {
         assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getBlob()))
-            .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).blob().getData());
-        assertThat(blobsWithCommitments.getBlobProofBundles().get(i).kzgProof().size())
+            .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).getBlob().getData());
+        assertThat(blobsWithCommitments.getBlobProofBundles().get(i).getKzgProof().size())
             .isEqualTo(1);
         assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getProof()))
             .isEqualTo(
-                blobsWithCommitments.getBlobProofBundles().get(i).kzgProof().getFirst().getData());
+                blobsWithCommitments
+                    .getBlobProofBundles()
+                    .get(i)
+                    .getKzgProof()
+                    .getFirst()
+                    .getData());
       } else {
         assertThat(blobAndProofV1s.get(i)).isNull();
       }
@@ -236,7 +242,7 @@ public class EngineGetBlobsV1Test {
         .getBlobProofBundles()
         .forEach(
             blobProofBundle ->
-                when(transactionPool.getBlobProofBundle(blobProofBundle.versionedHash()))
+                when(transactionPool.getBlobProofBundle(blobProofBundle.getVersionedHash()))
                     .thenReturn(blobProofBundle));
   }
 
