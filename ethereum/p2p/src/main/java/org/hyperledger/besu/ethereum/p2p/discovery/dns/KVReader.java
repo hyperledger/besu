@@ -33,11 +33,11 @@ public class KVReader {
     return Arrays.stream(record.split("\\s+"))
         .map(
             it -> {
-              // if it contains an = or :, split into Map.entry from the first occurrence
-              if (it.contains("=")) {
-                return it.split("=", 2);
-              } else if (it.contains(":")) {
+              // First split on ':' since Base64 uses '=' as padding
+              if (it.contains(":")) {
                 return it.split(":", 2);
+              } else if (it.contains("=")) {
+                return it.split("=", 2);
               } else {
                 // this should not happen, as the record should be well-formed
                 return new String[] {it};

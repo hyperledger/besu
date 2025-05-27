@@ -12,20 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.datatypes;
+package org.hyperledger.besu.ethereum.mainnet.milestones;
 
-import org.apache.tuweni.bytes.Bytes;
-
-/**
- * Represents an arbitrary data structure used in the KZG scheme. This interface defines the
- * contract for a Blob, which contains data.
- */
-public interface Blob {
-
-  /**
-   * Get the data of the Blob.
-   *
-   * @return the data.
-   */
-  Bytes getData();
+public enum MilestoneType {
+  BLOCK_NUMBER,
+  TIMESTAMP
 }

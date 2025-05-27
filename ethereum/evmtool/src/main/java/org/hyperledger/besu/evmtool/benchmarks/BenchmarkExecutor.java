@@ -143,10 +143,9 @@ public abstract class BenchmarkExecutor {
       case LONDON, PARIS -> new LondonGasCalculator();
       case SHANGHAI -> new ShanghaiGasCalculator();
       case CANCUN -> new CancunGasCalculator();
-      case CANCUN_EOF -> new OsakaGasCalculator();
       case PRAGUE -> new PragueGasCalculator();
       case OSAKA, AMSTERDAM, BOGOTA, POLIS, BANGKOK, EXPERIMENTAL_EIPS -> new OsakaGasCalculator();
-      case FUTURE_EIPS -> new EOFGasCalculator();
+      case CANCUN_EOF, FUTURE_EIPS -> new EOFGasCalculator();
     };
   }
 

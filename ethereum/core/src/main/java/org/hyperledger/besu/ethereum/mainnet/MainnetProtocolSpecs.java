@@ -783,8 +783,7 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem);
-    return addEOF(genesisConfigOptions, chainId, evmConfiguration, protocolSpecBuilder)
-        .name("CancunEOF");
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("CancunEOF");
   }
 
   static ProtocolSpecBuilder pragueDefinition(
@@ -795,9 +794,6 @@ public abstract class MainnetProtocolSpecs {
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-
-    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
-
     ProtocolSpecBuilder pragueSpecBuilder =
         cancunDefinition(
                 chainId,
@@ -816,14 +812,6 @@ public abstract class MainnetProtocolSpecs {
                 blobSchedule ->
                     new PragueGasCalculator(blobSchedule.getTarget()) // EIP-7691 6/9 blob increase
                 )
-            // EIP-7840 Blob schedule | EIP-7691 6/9 blob increase
-            .gasLimitCalculatorBuilder(
-                (feeMarket, gasCalculator, blobSchedule) ->
-                    new PragueTargetingGasLimitCalculator(
-                        londonForkBlockNumber,
-                        (BaseFeeMarket) feeMarket,
-                        gasCalculator,
-                        blobSchedule.getMax()))
             // EIP-3074 AUTH and AUTHCALL
             .evmBuilder(
                 (gasCalculator, jdCacheConfig) ->
@@ -900,8 +888,6 @@ public abstract class MainnetProtocolSpecs {
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
-
     return pragueDefinition(
             chainId,
             enableRevertReason,
@@ -910,43 +896,20 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .blobSchedule(
-            genesisConfigOptions
-                .getBlobScheduleOptions()
-                .flatMap(BlobScheduleOptions::getOsaka)
-                .orElse(BlobSchedule.OSAKA_DEFAULT))
         .gasCalculator(blobSchedule -> new OsakaGasCalculator(blobSchedule.getTarget()))
         .evmBuilder(
             (gasCalculator, __) ->
                 MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .gasLimitCalculatorBuilder(
-            (feeMarket, gasCalculator, blobSchedule) ->
-                new OsakaTargetingGasLimitCalculator(
-                    londonForkBlockNumber,
-                    (BaseFeeMarket) feeMarket,
-                    gasCalculator,
-                    blobSchedule.getMax()))
         .name("Osaka");
   }
 
   private static ProtocolSpecBuilder addEOF(
-      final GenesisConfigOptions genesisConfigOptions,
       final Optional<BigInteger> chainId,
       final EvmConfiguration evmConfiguration,
       final ProtocolSpecBuilder protocolSpecBuilder) {
-
-    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
-
     return protocolSpecBuilder
         // EIP-7692 EOF v1 Gas calculator
         .gasCalculator(blobSchedule -> new EOFGasCalculator(blobSchedule.getTarget()))
-        .gasLimitCalculatorBuilder(
-            (feeMarket, gasCalculator, blobSchedule) ->
-                new OsakaTargetingGasLimitCalculator(
-                    londonForkBlockNumber,
-                    (BaseFeeMarket) feeMarket,
-                    gasCalculator,
-                    blobSchedule.getMax()))
         // EIP-7692 EOF v1 EVM and opcodes
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -983,7 +946,7 @@ public abstract class MainnetProtocolSpecs {
             .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
             .name("FutureEips");
 
-    return addEOF(genesisConfigOptions, chainId, evmConfiguration, protocolSpecBuilder);
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder);
   }
 
   static ProtocolSpecBuilder experimentalEipsDefinition(
