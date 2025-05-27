@@ -501,7 +501,7 @@ subprojects {
     dependencies { testImplementation sourceSets.testSupport.output }
 
     task testSupportJar(type: Jar) {
-      archiveBaseName = calculateArtifactId(project) + '-support-test'
+      archiveBaseName = calculateArtifactId(project)
       archiveClassifier = 'test-support'
       from sourceSets.testSupport.output
     }
@@ -1154,6 +1154,69 @@ distributions {
       from("./app/src/main/scripts/besu-entry.sh") { into "./bin/" }
       from(autocomplete) { into "." }
     }
+  }
+}
+
+tasks.register('generateArtifactsCatalog') {
+  description = 'Create a catalog with all dependencies included in the distribution with detailed information'
+  group = 'Distribution'
+
+  // Set output file
+  def jsonOutputFile = file("$buildDir/reports/dependencies/besu-artifacts-catalog.json")
+
+  outputs.upToDateWhen { false }
+  outputs.file(jsonOutputFile)
+
+  doLast {
+    // Get the runtime classpath configuration
+    def runtimeClasspath = configurations.runtimeClasspath
+
+    // Create a list to store dependency information
+    def artifactsInfoList = []
+
+    // Get all resolved artifacts
+    runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+      def id = artifact.moduleVersion.id
+      def groupId = id.group
+      def artifactId = id.name
+
+      if(id.group.startsWith('besu')) {
+        def projectName = (id.group + "." + id.name).replace('besu.', '').replace('.', ':')
+        def currPrj = project(projectName)
+        groupId = 'org.hyperledger.besu.internal'
+        currPrj.publishing.publications.forEach { // some project have a different groupId
+          pub ->
+          groupId = pub.getGroupId()
+        }
+
+        artifactId = (id.group + "." + id.name).replace('.', '-')
+      }
+
+      def properties = [
+        group: groupId,
+        name: artifactId,
+        version: id.version,
+        fileName: artifact.file.name
+      ]
+
+      if(artifact.classifier) {
+        properties << [classifier: artifact.classifier]
+      }
+
+      // Create a map with dependency information
+      artifactsInfoList.add(properties)
+    }
+
+    // Write to JSON output file
+    jsonOutputFile.withWriter { writer ->
+      def json = groovy.json.JsonOutput.toJson(
+        artifactsInfoList
+        )
+      writer.println(groovy.json.JsonOutput.prettyPrint(json))
+    }
+
+    logger.lifecycle("Artifacts catalog written to:")
+    logger.lifecycle("  JSON: ${jsonOutputFile.absolutePath}")
   }
 }
 
