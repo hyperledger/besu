@@ -67,7 +67,10 @@ public class ChainDataPruner implements BlockAddedObserver {
   public void onBlockAdded(final BlockAddedEvent event) {
     switch (mode) {
       case CHAIN_PRUNING -> chainPrunerAction(event);
-      case PRE_MERGE_PRUNING -> preMergePruningAction();
+      case PRE_MERGE_PRUNING -> {
+        if(event.isNewCanonicalHead())
+          preMergePruningAction();
+      }
     }
   }
 
