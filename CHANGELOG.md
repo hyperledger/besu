@@ -12,7 +12,7 @@
 - `--Xplugin-rocksdb-blob-garbage-collection-age-cutoff`, `--Xplugin-rocksdb-blob-garbage-collection-force-threshold` BlobDB GC config options [#8599](https://github.com/hyperledger/besu/pull/8599)
 - Update discovery library to 25.4.0 [#8635](https://github.com/hyperledger/besu/pull/8635)
 - Increase default target-gas-limit to 60M for Ephemery [#8622](https://github.com/hyperledger/besu/pull/8622)
-- Increase default target-gas-limit to 60M for Hoodi
+- Increase default target-gas-limit to 60M for Hoodi [#8705](https://github.com/hyperledger/besu/pull/8705)
 - Estimate gas on pending block by default [#8627](https://github.com/hyperledger/besu/pull/8627)
 - Upgrade Gradle to 8.14 and related plugins [#8638](https://github.com/hyperledger/besu/pull/8638)
 - Make gas estimation strict by default [#8629](https://github.com/hyperledger/besu/pull/8629)
