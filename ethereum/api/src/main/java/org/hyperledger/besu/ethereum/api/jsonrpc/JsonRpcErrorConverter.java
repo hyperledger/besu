@@ -34,6 +34,8 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
       case EXCEEDS_BLOCK_GAS_LIMIT:
         return RpcErrorType.EXCEEDS_BLOCK_GAS_LIMIT;
+      case EXCEEDS_TRANSACTION_GAS_LIMIT:
+        return RpcErrorType.EXCEEDS_TRANSACTION_GAS_LIMIT;
       case WRONG_CHAIN_ID:
         return RpcErrorType.WRONG_CHAIN_ID;
       case REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED:

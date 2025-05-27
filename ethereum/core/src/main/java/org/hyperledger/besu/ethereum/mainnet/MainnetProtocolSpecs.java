@@ -864,6 +864,8 @@ public abstract class MainnetProtocolSpecs {
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
+    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+
     return pragueDefinition(
             chainId,
             enableRevertReason,
@@ -873,6 +875,15 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled,
             metricsSystem)
         .gasCalculator(OsakaGasCalculator::new)
+        // tx gas limit cap EIP-7825
+        .gasLimitCalculatorBuilder(
+            (feeMarket, gasCalculator, blobSchedule) ->
+                new OsakaTargetingGasLimitCalculator(
+                    londonForkBlockNumber,
+                    (BaseFeeMarket) feeMarket,
+                    gasCalculator,
+                    blobSchedule.getMax(),
+                    blobSchedule.getTarget()))
         .evmBuilder(
             (gasCalculator, __) ->
                 MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
