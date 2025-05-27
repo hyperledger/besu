@@ -143,10 +143,15 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final SavePreMergeHeadersStep savePreMergeHeadersStep =
-        new SavePreMergeHeadersStep(
-            protocolContext.getBlockchain(),
-            getFirstPoSBlockNumber(syncState),
-            protocolContext.getConsensusContext(ConsensusContext.class));
+        protocolSchedule.anyMatch(s -> s.spec().isPoS())
+            ? SavePreMergeHeadersStep.createForPoS(
+                protocolContext.getBlockchain(),
+                getCheckpointBlockNumber(syncState),
+                protocolContext.getConsensusContext(ConsensusContext.class))
+            : SavePreMergeHeadersStep.createForPoA(
+                protocolContext.getBlockchain(),
+                getCheckpointBlockNumber(syncState),
+                protocolContext.getConsensusContext(ConsensusContext.class));
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =
@@ -204,7 +209,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     return shouldContinue;
   }
 
-  private long getFirstPoSBlockNumber(final SyncState syncState) {
+  private long getCheckpointBlockNumber(final SyncState syncState) {
     return syncConfig.isSnapSyncSavePreMergeHeadersOnlyEnabled()
         ? syncState.getCheckpoint().map(Checkpoint::blockNumber).orElse(0L)
         : 0L;

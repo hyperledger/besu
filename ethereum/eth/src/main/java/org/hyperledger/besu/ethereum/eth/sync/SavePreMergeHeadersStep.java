@@ -33,8 +33,9 @@ import org.slf4j.LoggerFactory;
 public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(SavePreMergeHeadersStep.class);
   private final MutableBlockchain blockchain;
+  private final boolean isPoS;
   private final long lastPoWBlockNumber;
-  private final long firstPoSBlockNumber;
+  private final long checkpointBlockNumber;
   private final ConsensusContext consensusContext;
 
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
@@ -43,12 +44,28 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
 
   public SavePreMergeHeadersStep(
       final MutableBlockchain blockchain,
-      final long firstPoSBlockNumber,
+      final boolean isPoS,
+      final long checkpointBlockNumber,
       final ConsensusContext consensusContext) {
     this.blockchain = blockchain;
-    this.firstPoSBlockNumber = firstPoSBlockNumber;
-    this.lastPoWBlockNumber = firstPoSBlockNumber - 1;
+    this.isPoS = isPoS;
+    this.checkpointBlockNumber = checkpointBlockNumber;
+    this.lastPoWBlockNumber = checkpointBlockNumber - 1;
     this.consensusContext = consensusContext;
+  }
+
+  public static SavePreMergeHeadersStep createForPoS(
+      final MutableBlockchain blockchain,
+      final long firstPoSBlockNumber,
+      final ConsensusContext consensusContext) {
+    return new SavePreMergeHeadersStep(blockchain, true, firstPoSBlockNumber, consensusContext);
+  }
+
+  public static SavePreMergeHeadersStep createForPoA(
+      final MutableBlockchain blockchain,
+      final long checkpointBlockNumber,
+      final ConsensusContext consensusContext) {
+    return new SavePreMergeHeadersStep(blockchain, false, checkpointBlockNumber, consensusContext);
   }
 
   @Override
@@ -59,21 +76,21 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
     }
     storeBlockHeader(blockHeader);
     logProgress(blockHeader);
-    if (blockHeader.getNumber() == lastPoWBlockNumber) {
-      blockchain
-          .getTotalDifficultyByHash(blockHeader.getHash())
-          .ifPresent(consensusContext::setIsPostMerge);
-    }
     return Stream.empty();
   }
 
   private boolean isPostMergeBlock(final long blockNumber) {
-    return blockNumber >= firstPoSBlockNumber;
+    return blockNumber >= checkpointBlockNumber;
   }
 
   private void storeBlockHeader(final BlockHeader blockHeader) {
     Difficulty difficulty = blockchain.calculateTotalDifficulty(blockHeader);
     blockchain.unsafeStoreHeader(blockHeader, difficulty);
+    if (isPoS && blockHeader.getNumber() == lastPoWBlockNumber) {
+      blockchain
+          .getTotalDifficultyByHash(blockHeader.getHash())
+          .ifPresent(consensusContext::setIsPostMerge);
+    }
   }
 
   private void logProgress(final BlockHeader blockHeader) {

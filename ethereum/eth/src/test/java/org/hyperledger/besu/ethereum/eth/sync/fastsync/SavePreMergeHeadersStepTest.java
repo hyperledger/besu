@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -46,7 +47,7 @@ class SavePreMergeHeadersStepTest {
     blockchain = mock(MutableBlockchain.class);
     consensusContext = mock(ConsensusContext.class);
     savePreMergeHeadersStep =
-        new SavePreMergeHeadersStep(blockchain, FIRST_POS_BLOCK_NUMBER, consensusContext);
+        SavePreMergeHeadersStep.createForPoS(blockchain, FIRST_POS_BLOCK_NUMBER, consensusContext);
   }
 
   @Test
@@ -74,7 +75,8 @@ class SavePreMergeHeadersStepTest {
   @Test
   void shouldSaveFullBlocksIfCheckpointIsGenesisBlock() {
     savePreMergeHeadersStep =
-        new SavePreMergeHeadersStep(blockchain, BlockHeader.GENESIS_BLOCK_NUMBER, consensusContext);
+        SavePreMergeHeadersStep.createForPoS(
+            blockchain, BlockHeader.GENESIS_BLOCK_NUMBER, consensusContext);
 
     BlockHeader block0 = createMockBlockHeader(0);
     BlockHeader block1 = createMockBlockHeader(1);
@@ -114,6 +116,15 @@ class SavePreMergeHeadersStepTest {
         .thenReturn(Optional.of(Difficulty.ONE));
     savePreMergeHeadersStep.apply(lastPoWBlockHeader);
     verify(consensusContext).setIsPostMerge(Difficulty.ONE);
+  }
+
+  @Test
+  void shouldNotSetIsPostMergeWhenPoAChain() {
+    BlockHeader lastPoWBlockHeader = createMockBlockHeader(FIRST_POS_BLOCK_NUMBER - 1);
+    final SavePreMergeHeadersStep forPoA =
+        SavePreMergeHeadersStep.createForPoA(blockchain, FIRST_POS_BLOCK_NUMBER, consensusContext);
+    forPoA.apply(lastPoWBlockHeader);
+    verifyNoInteractions(consensusContext);
   }
 
   private BlockHeader createMockBlockHeader(final long blockNumber) {
