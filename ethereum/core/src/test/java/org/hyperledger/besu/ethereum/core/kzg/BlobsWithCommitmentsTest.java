@@ -12,10 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.datatypes;
+package org.hyperledger.besu.ethereum.core.kzg;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.hyperledger.besu.datatypes.VersionedHash;
 
 import java.security.InvalidParameterException;
 import java.util.List;
