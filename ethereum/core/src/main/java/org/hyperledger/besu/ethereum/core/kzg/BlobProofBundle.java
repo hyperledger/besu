@@ -12,9 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.datatypes;
+package org.hyperledger.besu.ethereum.core.kzg;
 
 import static com.google.common.base.Preconditions.checkState;
+
+import org.hyperledger.besu.datatypes.VersionedHash;
 
 import java.util.List;
 

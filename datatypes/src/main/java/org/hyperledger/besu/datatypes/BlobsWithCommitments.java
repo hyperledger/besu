@@ -18,6 +18,10 @@ import java.util.List;
 
 /** A class to hold the blobs, commitments, proofs and versioned hashes for a set of blobs. */
 public interface BlobsWithCommitments {
+
+  /** Get the version ID for the sidecar. */
+  int getVersionId();
+
   /**
    * Get the blobs.
    *

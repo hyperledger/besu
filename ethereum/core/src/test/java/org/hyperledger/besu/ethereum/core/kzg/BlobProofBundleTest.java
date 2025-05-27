@@ -12,11 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.datatypes;
+package org.hyperledger.besu.ethereum.core.kzg;
 
 import static org.hyperledger.besu.datatypes.VersionedHash.DEFAULT_VERSIONED_HASH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.hyperledger.besu.datatypes.VersionedHash;
 
 import java.util.Collections;
 import java.util.List;

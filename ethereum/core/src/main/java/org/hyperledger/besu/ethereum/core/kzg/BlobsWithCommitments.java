@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core.kzg;
 
-import org.hyperledger.besu.datatypes.BlobProofBundle;
 import org.hyperledger.besu.datatypes.VersionedHash;
 
 import java.security.InvalidParameterException;
@@ -25,7 +24,7 @@ import java.util.Objects;
 import com.google.common.annotations.VisibleForTesting;
 
 /** A class to hold the blobs, commitments, proofs, and versioned hashes for a set of blobs. */
-public class BlobsWithCommitments {
+public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.BlobsWithCommitments {
 
   private final List<BlobProofBundle> blobProofBundles;
   private final int versionId;
@@ -159,6 +158,7 @@ public class BlobsWithCommitments {
    *
    * @return the blobs.
    */
+  @Override
   public List<Blob> getBlobs() {
     return blobProofBundles.stream().map(BlobProofBundle::blob).toList();
   }
@@ -168,6 +168,7 @@ public class BlobsWithCommitments {
    *
    * @return the commitments.
    */
+  @Override
   public List<KZGCommitment> getKzgCommitments() {
     return blobProofBundles.stream().map(BlobProofBundle::kzgCommitment).toList();
   }
@@ -177,6 +178,7 @@ public class BlobsWithCommitments {
    *
    * @return the proofs.
    */
+  @Override
   public List<KZGProof> getKzgProofs() {
     return blobProofBundles.stream()
         .flatMap(blobProofBundle -> blobProofBundle.kzgProof().stream())
@@ -188,6 +190,7 @@ public class BlobsWithCommitments {
    *
    * @return the hashes.
    */
+  @Override
   public List<VersionedHash> getVersionedHashes() {
     return blobProofBundles.stream().map(BlobProofBundle::versionedHash).toList();
   }
@@ -206,6 +209,7 @@ public class BlobsWithCommitments {
    *
    * @return the version ID.
    */
+  @Override
   public int getVersionId() {
     return versionId;
   }

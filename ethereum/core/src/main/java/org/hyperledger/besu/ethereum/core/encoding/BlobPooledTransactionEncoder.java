@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import static org.hyperledger.besu.datatypes.BlobProofBundle.VERSION_1_KZG_CELL_PROOFS;
+import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.VERSION_1_KZG_CELL_PROOFS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
