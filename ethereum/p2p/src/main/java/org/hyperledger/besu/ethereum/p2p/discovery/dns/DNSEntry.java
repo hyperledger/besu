@@ -27,6 +27,8 @@ import org.apache.tuweni.crypto.SECP256K1;
 import org.apache.tuweni.io.Base32;
 import org.apache.tuweni.io.Base64URLSafe;
 import org.bouncycastle.math.ec.ECPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
 /** Intermediate format to write DNS entries */
@@ -34,24 +36,38 @@ public interface DNSEntry {
 
   /** Represents a node in the ENR record. */
   class ENRNode implements DNSEntry {
+    private static final Logger LOG = LoggerFactory.getLogger(ENRNode.class);
 
     private final EthereumNodeRecord nodeRecord;
 
+    private ENRNode(final EthereumNodeRecord nodeRecord) {
+      this.nodeRecord = nodeRecord;
+    }
+
     /**
-     * Constructs ENRNode with the given attributes.
+     * Create an ENRNode with the given attributes.
      *
      * @param attrs the attributes of the node
+     * @return created ENRNode
      */
-    public ENRNode(final Map<String, String> attrs) {
+    public static ENRNode fromAttrs(final Map<String, String> attrs) {
       if (attrs == null) {
         throw new IllegalArgumentException("ENRNode attributes cannot be null");
       }
-      nodeRecord =
-          Optional.ofNullable(attrs.get("enr"))
-              .map(Base64.getUrlDecoder()::decode)
-              .map(Bytes::wrap)
-              .map(EthereumNodeRecord::fromRLP)
-              .orElseThrow(() -> new IllegalArgumentException("Invalid ENR record"));
+      return Optional.ofNullable(attrs.get("enr"))
+          .map(ENRNode::decodeValue)
+          .map(EthereumNodeRecord::fromRLP)
+          .map(ENRNode::new)
+          .orElse(null);
+    }
+
+    private static Bytes decodeValue(final String enrValue) {
+      try {
+        return Bytes.wrap(Base64.getUrlDecoder().decode(enrValue));
+      } catch (IllegalArgumentException iae) {
+        LOG.debug("enr value `{}` is not properly base64url encoded", enrValue);
+        return null;
+      }
     }
 
     /**

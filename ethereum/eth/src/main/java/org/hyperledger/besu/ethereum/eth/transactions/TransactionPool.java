@@ -23,7 +23,6 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.World
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobProofBundle;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -664,10 +663,8 @@ public class TransactionPool implements BlockAddedObserver {
     return CompletableFuture.completedFuture(null);
   }
 
-  private void mapBlobsOnTransactionAdded(
-      final org.hyperledger.besu.datatypes.Transaction transaction) {
-    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
-        transaction.getBlobsWithCommitments();
+  private void mapBlobsOnTransactionAdded(final Transaction transaction) {
+    final var maybeBlobsWithCommitments = transaction.getBlobsWithCommitments();
     if (maybeBlobsWithCommitments.isEmpty()) {
       return;
     }
@@ -677,10 +674,8 @@ public class TransactionPool implements BlockAddedObserver {
     blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.versionedHash(), bq));
   }
 
-  private void unmapBlobsOnTransactionDropped(
-      final org.hyperledger.besu.datatypes.Transaction transaction) {
-    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
-        transaction.getBlobsWithCommitments();
+  private void unmapBlobsOnTransactionDropped(final Transaction transaction) {
+    final var maybeBlobsWithCommitments = transaction.getBlobsWithCommitments();
     if (maybeBlobsWithCommitments.isEmpty()) {
       return;
     }

@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.hyperledger.besu.datatypes.BlobProofBundle.VERSION_1_KZG_CELL_PROOFS;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import org.hyperledger.besu.datatypes.Blob;
-import org.hyperledger.besu.datatypes.KZGCommitment;
-import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.kzg.Blob;
+import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
+import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.security.InvalidParameterException;
