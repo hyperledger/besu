@@ -41,14 +41,7 @@ public class BlobProofBundleTest {
 
   @Test
   void shouldSucceedWithValidInputsV0() {
-    BlobProofBundle bundle =
-        BlobProofBundle.builder()
-            .versionId(0)
-            .blob(blob)
-            .kzgCommitment(kzgCommitment)
-            .versionedHash(versionedHash)
-            .kzgProof(kzgProofs)
-            .build();
+    BlobProofBundle bundle = new BlobProofBundle(0, blob, kzgCommitment, kzgProofs, versionedHash);
 
     assertEquals(0, bundle.getVersionId());
     assertEquals(blob, bundle.getBlob());
@@ -58,125 +51,59 @@ public class BlobProofBundleTest {
   }
 
   @Test
-  void shouldSucceedWithValidInputsV1() {
-    BlobProofBundle bundle =
-        BlobProofBundle.builder()
-            .versionId(1)
-            .blob(blob)
-            .kzgCommitment(kzgCommitment)
-            .versionedHash(versionedHash)
-            .kzgProof(kzgCellProofs)
-            .build();
-    assertEquals(1, bundle.getVersionId());
-    assertEquals(blob, bundle.getBlob());
-    assertEquals(kzgCommitment, bundle.getKzgCommitment());
-    assertEquals(versionedHash, bundle.getVersionedHash());
-    assertEquals(kzgCellProofs, bundle.getKzgProof());
-  }
-
-  @Test
   void shouldThrowsExceptionWhenKzgCommitmentIsNull() {
-    IllegalStateException exception =
+    IllegalArgumentException exception =
         assertThrows(
-            IllegalStateException.class,
-            () ->
-                BlobProofBundle.builder()
-                    .versionId(0)
-                    .blob(blob)
-                    .versionedHash(versionedHash)
-                    .kzgProof(kzgProofs)
-                    .build());
+            IllegalArgumentException.class,
+            () -> new BlobProofBundle(0, blob, null, kzgProofs, versionedHash));
     assertEquals("kzgCommitment must not be empty", exception.getMessage());
   }
 
   @Test
   void shouldThrowsExceptionWhenVersionedHashIsNull() {
-    IllegalStateException exception =
+    IllegalArgumentException exception =
         assertThrows(
-            IllegalStateException.class,
-            () -> {
-              BlobProofBundle.builder()
-                  .versionId(0)
-                  .blob(blob)
-                  .kzgCommitment(kzgCommitment)
-                  .kzgProof(kzgProofs)
-                  .build();
-            });
+            IllegalArgumentException.class,
+            () -> new BlobProofBundle(0, blob, kzgCommitment, kzgProofs, null));
     assertEquals("versionedHash must not be empty", exception.getMessage());
   }
 
   @Test
   void shouldThrowsExceptionWhenBlobIsNull() {
-    IllegalStateException exception =
+    IllegalArgumentException exception =
         assertThrows(
-            IllegalStateException.class,
-            () ->
-                BlobProofBundle.builder()
-                    .versionId(0)
-                    .kzgCommitment(kzgCommitment)
-                    .versionedHash(versionedHash)
-                    .build());
+            IllegalArgumentException.class,
+            () -> new BlobProofBundle(0, null, kzgCommitment, kzgProofs, versionedHash));
     assertEquals("blob must not be empty", exception.getMessage());
   }
 
   @Test
-  void shouldThrowsExceptionWhenKzgCellProofNotEmpty_V0() {
-    IllegalStateException exception =
+  void shouldThrowsExceptionWhenProof_empty() {
+    IllegalArgumentException exception =
         assertThrows(
-            IllegalStateException.class,
-            () ->
-                BlobProofBundle.builder()
-                    .versionId(BlobProofBundle.VERSION_0_KZG_PROOFS)
-                    .blob(blob)
-                    .kzgCommitment(kzgCommitment)
-                    .versionedHash(versionedHash)
-                    .build());
+            IllegalArgumentException.class,
+            () -> new BlobProofBundle(0, blob, kzgCommitment, null, versionedHash));
     assertEquals("kzgProof must not be empty", exception.getMessage());
   }
 
   @Test
-  void shouldThrowsExceptionWhenKzgProofNotEmpty_V0() {
-    IllegalStateException exception =
+  void shouldThrowsExceptionWhenProofWrongSize() {
+    IllegalArgumentException exception =
         assertThrows(
-            IllegalStateException.class,
-            () ->
-                BlobProofBundle.builder()
-                    .versionId(BlobProofBundle.VERSION_0_KZG_PROOFS)
-                    .blob(blob)
-                    .kzgCommitment(kzgCommitment)
-                    .versionedHash(versionedHash)
-                    .build());
-    assertEquals("kzgProof must not be empty", exception.getMessage());
+            IllegalArgumentException.class,
+            () -> new BlobProofBundle(0, blob, kzgCommitment, kzgCellProofs, versionedHash));
+    assertEquals(
+        "Invalid kzgProof size for versionId 0, expected 1 but got 128", exception.getMessage());
   }
 
   @Test
-  void shouldThrowsExceptionWhenKzgProofNotEmpty_V1() {
-    IllegalStateException exception =
+  void shouldThrowsExceptionWhenProofWrongSize_V1() {
+    IllegalArgumentException exception =
         assertThrows(
-            IllegalStateException.class,
-            () ->
-                BlobProofBundle.builder()
-                    .versionId(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS)
-                    .blob(blob)
-                    .kzgCommitment(kzgCommitment)
-                    .versionedHash(versionedHash)
-                    .build());
-    assertEquals("kzgProof must not be empty", exception.getMessage());
-  }
-
-  @Test
-  void shouldThrowsExceptionWhenKzgCellProofNotEmpty_V1() {
-    IllegalStateException exception =
-        assertThrows(
-            IllegalStateException.class,
-            () ->
-                BlobProofBundle.builder()
-                    .versionId(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS)
-                    .blob(blob)
-                    .kzgCommitment(kzgCommitment)
-                    .versionedHash(versionedHash)
-                    .build());
-    assertEquals("kzgProof must not be empty", exception.getMessage());
+            IllegalArgumentException.class,
+            () -> new BlobProofBundle(1, blob, kzgCommitment, kzgProofs, versionedHash));
+    assertEquals(
+        "Invalid kzgProof size for versionId 1, expected 128 but got 1", exception.getMessage());
   }
 
   @Test
@@ -185,11 +112,11 @@ public class BlobProofBundleTest {
     BlobsWithCommitments bwc = blobTestFixture.createBlobsWithCommitments(2);
     assertThat(bwc.getVersionId()).isEqualTo(BlobProofBundle.VERSION_0_KZG_PROOFS);
 
-    BlobsWithCommitments blobsWithCommitments = bwc.convertToVersion1();
+    BlobsWithCommitments blobsWithCommitments = KzgHelper.convertToVersion1(bwc);
     assertThat(blobsWithCommitments.getVersionId())
         .isEqualTo(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS);
 
-    boolean isValid = BlobsWithCommitments.verify4844Kzg(blobsWithCommitments);
+    boolean isValid = KzgHelper.verify4844Kzg(blobsWithCommitments);
     assertTrue(isValid, "KZG proof verification should be valid");
   }
 }

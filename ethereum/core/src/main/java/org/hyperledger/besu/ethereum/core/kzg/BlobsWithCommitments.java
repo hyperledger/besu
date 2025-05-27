@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 
 /** A class to hold the blobs, commitments, proofs, and versioned hashes for a set of blobs. */
@@ -123,24 +122,19 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
       final List<VersionedHash> versionedHashes) {
     List<BlobProofBundle> bundles = new ArrayList<>(blobs.size());
     for (int i = 0; i < blobs.size(); i++) {
-      BlobProofBundle.Builder builder =
-          BlobProofBundle.builder()
-              .versionId(versionId)
-              .blob(blobs.get(i))
-              .kzgCommitment(kzgCommitments.get(i))
-              .versionedHash(versionedHashes.get(i));
-
-      switch (versionId) {
-        case VERSION_0_KZG_PROOFS:
-          builder.kzgProof(List.of(kzgProofs.get(i)));
-          break;
-        case VERSION_1_KZG_CELL_PROOFS:
-          builder.kzgProof(extractCellProofs(kzgProofs, i));
-          break;
-        default:
-          throw new InvalidParameterException("Invalid kzg version");
-      }
-      bundles.add(builder.build());
+      List<KZGProof> kzgProofsForBlob =
+          switch (versionId) {
+            case VERSION_0_KZG_PROOFS -> List.of(kzgProofs.get(i));
+            case VERSION_1_KZG_CELL_PROOFS -> extractCellProofs(kzgProofs, i);
+            default -> throw new InvalidParameterException("Invalid kzg version");
+          };
+      bundles.add(
+          new BlobProofBundle(
+              versionId,
+              blobs.get(i),
+              kzgCommitments.get(i),
+              kzgProofsForBlob,
+              versionedHashes.get(i)));
     }
     return bundles;
   }
@@ -160,7 +154,7 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
     return blobProofBundles.stream().flatMap(bundle -> bundle.getKzgProof().stream()).toList();
   }
 
-  private byte[] getKzgProofsByteArray() {
+  byte[] getKzgProofsByteArray() {
     return Bytes.wrap(getKzgProofs().stream().map(kp -> (Bytes) kp.getData()).toList())
         .toArrayUnsafe();
   }
@@ -192,56 +186,15 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
     return Objects.hash(blobProofBundles, versionId);
   }
 
-  /**
-   * Converts the current {@link BlobsWithCommitments} instance to version 1 if it is not already.
-   *
-   * @return a {@link BlobsWithCommitments} instance with version 1 KZG cell proofs.
-   */
-  public BlobsWithCommitments convertToVersion1() {
-    if (versionId == VERSION_1_KZG_CELL_PROOFS) {
-      return this;
-    }
-    // Check if the blobs with commitments are valid for conversion
-    boolean isValidBlobsWithCommitments = BlobsWithCommitments.verify4844Kzg(this);
-    if (!isValidBlobsWithCommitments) {
-      throw new IllegalArgumentException(
-          "Invalid blobs with commitments for conversion to version 1");
-    }
-
-    List<BlobProofBundle> version1Bundles =
-        blobProofBundles.stream().map(BlobProofBundle::convertToVersion1).toList();
-    return new BlobsWithCommitments(version1Bundles);
-  }
-
-  public static boolean verify4844Kzg(final BlobsWithCommitments blobsWithCommitments) {
-    return switch (blobsWithCommitments.getVersionId()) {
-      case VERSION_0_KZG_PROOFS ->
-          CKZG4844JNI.verifyBlobKzgProofBatch(
-              blobsWithCommitments.getBlobsByteArray(),
-              blobsWithCommitments.getKzgCommitmentsByteArray(),
-              blobsWithCommitments.getKzgProofsByteArray(),
-              blobsWithCommitments.blobProofBundles.size());
-      case VERSION_1_KZG_CELL_PROOFS ->
-          CKZG4844JNI.verifyCellKzgProofBatch(
-              blobsWithCommitments.getKzgCommitmentsByteArray(),
-              blobsWithCommitments.getCellIndexes(),
-              blobsWithCommitments.getBlobCellsByteArray(),
-              blobsWithCommitments.getKzgProofsByteArray());
-      default ->
-          throw new IllegalArgumentException(
-              "Unsupported blob version: " + blobsWithCommitments.getVersionId());
-    };
-  }
-
   private static List<KZGProof> extractCellProofs(final List<KZGProof> proofList, final int index) {
     return proofList.subList(index * CELL_PROOFS_PER_BLOB, (index + 1) * CELL_PROOFS_PER_BLOB);
   }
 
-  private byte[] getBlobsByteArray() {
+  byte[] getBlobsByteArray() {
     return Bytes.wrap(getBlobs().stream().map(Blob::getData).toList()).toArrayUnsafe();
   }
 
-  private byte[] getKzgCommitmentsByteArray() {
+  byte[] getKzgCommitmentsByteArray() {
     List<KZGCommitment> commitments =
         (versionId == VERSION_1_KZG_CELL_PROOFS)
             ? extendCommitments(getKzgCommitments())
@@ -261,13 +214,13 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
     return extendedCommitments;
   }
 
-  private byte[] getBlobCellsByteArray() {
+  byte[] getBlobCellsByteArray() {
     return Bytes.wrap(
             blobProofBundles.stream().map(cell -> cell.getBlobCellsBytes().orElseThrow()).toList())
         .toArrayUnsafe();
   }
 
-  private long[] getCellIndexes() {
+  long[] getCellIndexes() {
     long[] cellIndices = new long[CELL_PROOFS_PER_BLOB * blobProofBundles.size()];
     for (int blobIndex = 0; blobIndex < blobProofBundles.size(); blobIndex++) {
       for (int index = 0; index < CELL_PROOFS_PER_BLOB; index++) {
