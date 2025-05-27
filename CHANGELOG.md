@@ -27,6 +27,7 @@
 - Estimate gas on pending block by default [#8627](https://github.com/hyperledger/besu/pull/8627)
 - Upgrade Gradle to 8.14 and related plugins [#8638](https://github.com/hyperledger/besu/pull/8638)
 - Make gas estimation strict by default [#8629](https://github.com/hyperledger/besu/pull/8629)
+- `--snapsync-server-enabled` New option to enable serving snap sync data 
 
 ### Bug fixes
 - Fix `besu -X` unstable options help [#8662](https://github.com/hyperledger/besu/pull/8662)
