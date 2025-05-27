@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -36,7 +37,7 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
   private final boolean isPoS;
   private final long lastPoWBlockNumber;
   private final long checkpointBlockNumber;
-  private final ConsensusContext consensusContext;
+  private final Optional<ConsensusContext> consensusContext;
 
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
   private static final int LOG_REPEAT_DELAY_SECONDS = 30;
@@ -46,7 +47,7 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
       final MutableBlockchain blockchain,
       final boolean isPoS,
       final long checkpointBlockNumber,
-      final ConsensusContext consensusContext) {
+      final Optional<ConsensusContext> consensusContext) {
     this.blockchain = blockchain;
     this.isPoS = isPoS;
     this.checkpointBlockNumber = checkpointBlockNumber;
@@ -57,14 +58,14 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
   public static SavePreMergeHeadersStep createForPoS(
       final MutableBlockchain blockchain,
       final long firstPoSBlockNumber,
-      final ConsensusContext consensusContext) {
+      final Optional<ConsensusContext> consensusContext) {
     return new SavePreMergeHeadersStep(blockchain, true, firstPoSBlockNumber, consensusContext);
   }
 
   public static SavePreMergeHeadersStep createForPoA(
       final MutableBlockchain blockchain,
       final long checkpointBlockNumber,
-      final ConsensusContext consensusContext) {
+      final Optional<ConsensusContext> consensusContext) {
     return new SavePreMergeHeadersStep(blockchain, false, checkpointBlockNumber, consensusContext);
   }
 
@@ -86,10 +87,10 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
   private void storeBlockHeader(final BlockHeader blockHeader) {
     Difficulty difficulty = blockchain.calculateTotalDifficulty(blockHeader);
     blockchain.unsafeStoreHeader(blockHeader, difficulty);
-    if (isPoS && blockHeader.getNumber() == lastPoWBlockNumber) {
+    if (isPoS && blockHeader.getNumber() == lastPoWBlockNumber && consensusContext.isPresent()) {
       blockchain
           .getTotalDifficultyByHash(blockHeader.getHash())
-          .ifPresent(consensusContext::setIsPostMerge);
+          .ifPresent(consensusContext.get()::setIsPostMerge);
     }
   }
 

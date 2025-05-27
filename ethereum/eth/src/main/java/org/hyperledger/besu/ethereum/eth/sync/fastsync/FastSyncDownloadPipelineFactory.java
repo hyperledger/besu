@@ -147,11 +147,11 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             ? SavePreMergeHeadersStep.createForPoS(
                 protocolContext.getBlockchain(),
                 getCheckpointBlockNumber(syncState),
-                protocolContext.getConsensusContext(ConsensusContext.class))
+                protocolContext.safeConsensusContext(ConsensusContext.class))
             : SavePreMergeHeadersStep.createForPoA(
                 protocolContext.getBlockchain(),
                 getCheckpointBlockNumber(syncState),
-                protocolContext.getConsensusContext(ConsensusContext.class));
+                protocolContext.safeConsensusContext(ConsensusContext.class));
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =
