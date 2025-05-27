@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -135,7 +136,8 @@ public class MergeProtocolSchedule {
         .name("Paris");
   }
 
-  private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
+  private static BlockHeaderValidator.Builder getBlockHeaderValidator(
+      final FeeMarket feeMarket, final GasCalculator gasCalculator) {
     return MergeValidationRulesetFactory.mergeBlockHeaderValidator(feeMarket);
   }
 
@@ -144,8 +146,8 @@ public class MergeProtocolSchedule {
       final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications) {
     // Any post-Paris fork can rely on the MainnetProtocolSpec definitions again
     // Must allow for config to skip Shanghai and go straight to a later fork.
-    if (config.getForkBlockTimestamps().size() > 0) {
-      postMergeModifications.put(config.getForkBlockTimestamps().get(0), Function.identity());
+    if (!config.getForkBlockTimestamps().isEmpty()) {
+      postMergeModifications.put(config.getForkBlockTimestamps().getFirst(), Function.identity());
     }
   }
 }

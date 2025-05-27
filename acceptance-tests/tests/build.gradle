@@ -12,8 +12,8 @@
  */
 
 plugins {
-  id 'org.web3j' version '4.12.2'
-  id 'org.web3j.solidity' version '0.5.2'
+  id 'org.web3j' version '4.14.0'
+  id 'org.web3j.solidity' version '0.6.0'
 }
 
 web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
@@ -129,6 +129,7 @@ task acceptanceTestNotPrivacy(type: Test) {
   exclude '**/privacy/**'
   exclude '**/permissioning/**'
   exclude '**/bftsoak/**'
+  exclude '**/acceptanceqbft/**'
 
   useJUnitPlatform {}
 
@@ -226,6 +227,34 @@ task acceptanceTestPermissioning(type: Test) {
   def javaProjects = rootProject.subprojects - project(':platform')
   mustRunAfter javaProjects.test
   description = 'Runs Permissioning Besu acceptance tests.'
+  group = 'verification'
+
+  jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
+
+  testLogging {
+    exceptionFormat = 'full'
+    showStackTraces = true
+    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
+    showExceptions = true
+    showCauses = true
+  }
+
+  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
+}
+
+task acceptanceQbftTest(type: Test) {
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+  include '**/acceptanceqbft/**'
+
+  useJUnitPlatform {}
+
+  dependsOn(rootProject.installDist)
+  setSystemProperties(test.getSystemProperties())
+  systemProperty 'acctests.runBesuAsProcess', 'true'
+  systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
+  def javaProjects = rootProject.subprojects - project(':platform')
+  mustRunAfter javaProjects.test
+  description = 'Runs Besu acceptance tests using QBFT nodes.'
   group = 'verification'
 
   jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"

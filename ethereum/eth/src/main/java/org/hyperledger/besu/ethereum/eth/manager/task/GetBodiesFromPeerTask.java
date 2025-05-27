@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
@@ -58,7 +59,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
       final EthContext ethContext,
       final List<BlockHeader> headers,
       final MetricsSystem metricsSystem) {
-    super(ethContext, EthProtocolMessages.GET_BLOCK_BODIES, metricsSystem);
+    super(ethContext, EthProtocol.NAME, EthProtocolMessages.GET_BLOCK_BODIES, metricsSystem);
     checkArgument(headers.size() > 0);
     this.protocolSchedule = protocolSchedule;
 

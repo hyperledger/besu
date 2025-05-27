@@ -30,6 +30,8 @@
     },
     "ethash":{},
     "depositContractAddress": "0x7f02c3e3c98b133055b8b348b2ac625669ed295d",
+    "withdrawalRequestContractAddress": "0x00000961ef480eb55e80d19ad83579a64c007002",
+    "consolidationRequestContractAddress": "0x0000bbddc7ce488642fb579f8b00f3a590007251",
     "discovery": {
       "dns": "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.sepolia.ethdisco.net",
       "bootnodes": [
@@ -41,9 +43,9 @@
       ]
     },
     "checkpoint": {
-      "hash": "0x491ebac1b7f9c0eb426047a495dc577140cb3e09036cd3f7266eda86b635d9fa",
-      "number": 1273020,
-      "totalDifficulty": "0x13DE1653E7D280"
+      "hash": "0x36fb89fba5b7857cf0ca78b5a9625b4043ff4555dfce9b7bcdcdd758a11eb946",
+      "number": 1735371,
+      "totalDifficulty": "0x3c656d23029ab0"
     }
   },
   "alloc":{

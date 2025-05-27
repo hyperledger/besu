@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
@@ -31,7 +30,6 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.RequestType;
@@ -57,6 +55,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -117,6 +116,9 @@ abstract class AbstractBlockCreatorTest {
 
   @Mock private WithdrawalsProcessor withdrawalsProcessor;
   protected EthScheduler ethScheduler = new DeterministicEthScheduler();
+
+  public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
+      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
   @Test
   void findDepositRequestsFromReceipts() {
