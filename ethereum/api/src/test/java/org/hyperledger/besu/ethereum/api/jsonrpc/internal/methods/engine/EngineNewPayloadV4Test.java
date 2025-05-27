@@ -79,9 +79,9 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
           new Request(RequestType.CONSOLIDATION, Bytes.of(1)));
 
   private static final List<Request> INVALID_REQUESTS_DUPLICATES =
-          List.of(
-                  new Request(RequestType.CONSOLIDATION, Bytes.of(1)),
-                  new Request(RequestType.CONSOLIDATION, Bytes.of(1)));
+      List.of(
+          new Request(RequestType.CONSOLIDATION, Bytes.of(1)),
+          new Request(RequestType.CONSOLIDATION, Bytes.of(1)));
 
   @BeforeEach
   @Override
@@ -138,20 +138,21 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   @Test
   public void shouldReturnInvalidIfRequestsInvalidWithDuplicates() {
     BlockHeader mockHeader =
-            setupValidPayload(
-                    new BlockProcessingResult(
-                            Optional.of(
-                                    new BlockProcessingOutputs(null, List.of(), Optional.of(INVALID_REQUESTS_DUPLICATES)))),
-                    Optional.empty());
+        setupValidPayload(
+            new BlockProcessingResult(
+                Optional.of(
+                    new BlockProcessingOutputs(
+                        null, List.of(), Optional.of(INVALID_REQUESTS_DUPLICATES)))),
+            Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
-            .thenReturn(Optional.of(mock(BlockHeader.class)));
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(mockHeader))
-            .thenReturn(Optional.of(mockHeader.getHash()));
+        .thenReturn(Optional.of(mockHeader.getHash()));
     var resp = respWithInvalidDuplicateRequests(mockEnginePayload(mockHeader, emptyList()));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     assertThat(fromErrorResp(resp).getMessage())
-            .isEqualTo(INVALID_EXECUTION_REQUESTS_PARAMS.getMessage());
+        .isEqualTo(INVALID_EXECUTION_REQUESTS_PARAMS.getMessage());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -291,23 +292,22 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   protected JsonRpcResponse respWithInvalidDuplicateRequests(final EnginePayloadParameter payload) {
     final List<String> requestsWithoutRequestId =
-            INVALID_REQUESTS_DUPLICATES.stream() // don't sort them
-                    .map(
-                            r ->
-                                    Bytes.concatenate(Bytes.of(r.getType().getSerializedType()), r.getData())
-                                            .toHexString())
-                    .toList();
+        INVALID_REQUESTS_DUPLICATES.stream() // don't sort them
+            .map(
+                r ->
+                    Bytes.concatenate(Bytes.of(r.getType().getSerializedType()), r.getData())
+                        .toHexString())
+            .toList();
     Object[] params =
-            maybeParentBeaconBlockRoot
-                    .map(
-                            bytes32 ->
-                                    new Object[] {
-                            payload, emptyList(), bytes32.toHexString(), requestsWithoutRequestId
-
-                                    })
-                    .orElseGet(() -> new Object[] {payload});
+        maybeParentBeaconBlockRoot
+            .map(
+                bytes32 ->
+                    new Object[] {
+                      payload, emptyList(), bytes32.toHexString(), requestsWithoutRequestId
+                    })
+            .orElseGet(() -> new Object[] {payload});
     return method.response(
-            new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
   }
 
   private void mockProhibitedRequestsValidator() {
