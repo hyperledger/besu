@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,85 +28,52 @@ import org.apache.commons.lang3.StringUtils;
 /** The enum Network name. */
 public enum NetworkName {
   /** Mainnet network name. */
-  MAINNET(
-      "/mainnet.json",
-      BigInteger.valueOf(1),
-      OptionalInt.of(15_537_394),
-      true,
-      NativeRequirement.MAINNET),
+  MAINNET("/mainnet.json", BigInteger.valueOf(1), true, NativeRequirement.MAINNET),
   /** Sepolia network name. */
-  SEPOLIA(
-      "/sepolia.json",
-      BigInteger.valueOf(11155111),
-      OptionalInt.of(1_450_409),
-      true,
-      NativeRequirement.MAINNET),
+  SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111), true, NativeRequirement.MAINNET),
   /** Holešky network name. */
-  HOLESKY(
-      "/holesky.json",
-      BigInteger.valueOf(17000),
-      OptionalInt.empty(),
-      true,
-      NativeRequirement.MAINNET),
+  HOLESKY("/holesky.json", BigInteger.valueOf(17000), true, NativeRequirement.MAINNET),
   /** Hoodi network name. */
-  HOODI(
-      "/hoodi.json",
-      BigInteger.valueOf(560048),
-      OptionalInt.empty(),
-      true,
-      NativeRequirement.MAINNET),
+  HOODI("/hoodi.json", BigInteger.valueOf(560048), true, NativeRequirement.MAINNET),
   /**
    * EPHEMERY network name. The actual networkId used is calculated based on this default value and
    * the current time. https://ephemery.dev/
    */
-  EPHEMERY(
-      "/ephemery.json",
-      BigInteger.valueOf(39438135),
-      OptionalInt.empty(),
-      true,
-      NativeRequirement.MAINNET),
+  EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135), true, NativeRequirement.MAINNET),
   /** LUKSO mainnet network name. */
-  LUKSO("/lukso.json", BigInteger.valueOf(42), OptionalInt.empty()),
+  LUKSO("/lukso.json", BigInteger.valueOf(42)),
   /** Dev network name. */
-  DEV("/dev.json", BigInteger.valueOf(2018), OptionalInt.empty(), false),
+  DEV("/dev.json", BigInteger.valueOf(2018), false),
   /** Future EIPs network name. */
-  FUTURE_EIPS("/future.json", BigInteger.valueOf(2022), OptionalInt.empty(), false),
+  FUTURE_EIPS("/future.json", BigInteger.valueOf(2022), false),
   /** Experimental EIPs network name. */
-  EXPERIMENTAL_EIPS("/experimental.json", BigInteger.valueOf(2023), OptionalInt.empty(), false),
+  EXPERIMENTAL_EIPS("/experimental.json", BigInteger.valueOf(2023), false),
   /** Classic network name. */
-  CLASSIC("/classic.json", BigInteger.valueOf(1), OptionalInt.empty()),
+  CLASSIC("/classic.json", BigInteger.valueOf(1)),
   /** Mordor network name. */
-  MORDOR("/mordor.json", BigInteger.valueOf(7), OptionalInt.empty());
+  MORDOR("/mordor.json", BigInteger.valueOf(7));
 
   private final String genesisFile;
   private final BigInteger networkId;
-  private final OptionalInt firstPosBlockNumber;
   private final boolean canSnapSync;
   private final String deprecationDate;
   private final Supplier<List<NativeRequirementResult>> nativeRequirements;
 
-  NetworkName(
-      final String genesisFile, final BigInteger networkId, final OptionalInt firstPosBlockNumber) {
-    this(genesisFile, networkId, firstPosBlockNumber, true);
+  NetworkName(final String genesisFile, final BigInteger networkId) {
+    this(genesisFile, networkId, true);
+  }
+
+  NetworkName(final String genesisFile, final BigInteger networkId, final boolean canSnapSync) {
+    this(genesisFile, networkId, canSnapSync, Collections::emptyList);
   }
 
   NetworkName(
       final String genesisFile,
       final BigInteger networkId,
-      final OptionalInt firstPosBlockNumber,
-      final boolean canSnapSync) {
-    this(genesisFile, networkId, firstPosBlockNumber, canSnapSync, Collections::emptyList);
-  }
-
-  NetworkName(
-      final String genesisFile,
-      final BigInteger networkId,
-      final OptionalInt firstPosBlockNumber,
       final boolean canSnapSync,
       final Supplier<List<NativeRequirementResult>> nativeRequirements) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
-    this.firstPosBlockNumber = firstPosBlockNumber;
     this.canSnapSync = canSnapSync;
     // no deprecations planned
     this.deprecationDate = null;
@@ -130,15 +96,6 @@ public enum NetworkName {
    */
   public BigInteger getNetworkId() {
     return networkId;
-  }
-
-  /**
-   * Gets the optional merge block number
-   *
-   * @return the optional merge block number
-   */
-  public OptionalInt getFirstPosBlockNumber() {
-    return firstPosBlockNumber;
   }
 
   /**

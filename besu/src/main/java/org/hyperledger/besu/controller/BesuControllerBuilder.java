@@ -16,7 +16,6 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
@@ -121,7 +120,6 @@ import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -711,7 +709,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final AtomicLong chainDataPrunerObserverId = new AtomicLong();
       final ChainDataPruner chainDataPruner =
           createChainPruner(
-              blockchainStorage, () -> blockchain.removeObserver(chainDataPrunerObserverId.get()));
+              blockchainStorage,
+              () -> blockchain.removeObserver(chainDataPrunerObserverId.get()),
+              syncState);
       chainDataPrunerObserverId.set(blockchain.observeBlockAdded(chainDataPruner));
       if (chainPrunerConfiguration.chainPruningEnabled()) {
         LOG.info(
@@ -1191,19 +1191,16 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private ChainDataPruner createChainPruner(
-      final BlockchainStorage blockchainStorage, final Runnable unsubscribeRunnable) {
-    NetworkName network =
-        Stream.of(NetworkName.values())
-            .filter((n) -> n.getNetworkId().equals(networkId))
-            .findAny()
-            .orElseThrow(() -> new RuntimeException("Unrecognised network"));
+      final BlockchainStorage blockchainStorage,
+      final Runnable unsubscribeRunnable,
+      final SyncState syncState) {
     return new ChainDataPruner(
         blockchainStorage,
         unsubscribeRunnable,
         new ChainDataPrunerStorage(
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
-        network.getFirstPosBlockNumber().orElse(0),
+        syncState.getCheckpoint().map(Checkpoint::blockNumber).orElse(0L),
         chainPrunerConfiguration.chainPruningEnabled()
             ? ChainDataPruner.Mode.CHAIN_PRUNING
             : (dataStorageConfiguration.getHistoryExpiryPruneEnabled()
