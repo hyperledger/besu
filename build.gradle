@@ -148,6 +148,10 @@ configure(allprojects - project(':platform')) {
   java {
     sourceCompatibility = 21
     targetCompatibility = 21
+
+    consistentResolution {
+      useCompileClasspathVersions()
+    }
   }
 
   repositories {
@@ -829,6 +833,7 @@ task distDocker {
   doLast {
     copy {
       from file("${projectDir}/docker/Dockerfile")
+      from file("${projectDir}/docker/pyroscope.properties")
       into(dockerBuildDir)
     }
     exec {

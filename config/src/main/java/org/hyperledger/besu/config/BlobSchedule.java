@@ -26,9 +26,6 @@ public class BlobSchedule {
   /** The constant PRAGUE_DEFAULT. */
   public static final BlobSchedule PRAGUE_DEFAULT = new BlobSchedule(6, 9, 5007716);
 
-  /** The constant OSAKA_DEFAULT. */
-  public static final BlobSchedule OSAKA_DEFAULT = new BlobSchedule(9, 12, 5007716);
-
   private final int target;
   private final int max;
   private final int baseFeeUpdateFraction;
@@ -85,6 +82,18 @@ public class BlobSchedule {
    */
   Map<String, Object> asMap() {
     return Map.of("target", target, "max", max, "baseFeeUpdateFraction", baseFeeUpdateFraction);
+  }
+
+  @Override
+  public String toString() {
+    return "BlobSchedule{"
+        + "target="
+        + target
+        + ", max="
+        + max
+        + ", baseFeeUpdateFraction="
+        + baseFeeUpdateFraction
+        + '}';
   }
 
   /** A class that represents a BlobSchedule where all methods throw an exception. */

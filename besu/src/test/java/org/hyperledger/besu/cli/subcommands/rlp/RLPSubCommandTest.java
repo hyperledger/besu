@@ -85,27 +85,27 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingRLPSubCommandWithoutSubSubcommandMustDisplayUsage() {
     parseCommand(RLP_SUBCOMMAND_NAME);
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_RLP_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_RLP_USAGE);
   }
 
   @Test
-  public void callingRPLSubCommandHelpMustDisplayUsage() {
+  public void callingRLPSubCommandHelpMustDisplayUsage() {
     parseCommand(RLP_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_RLP_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_RLP_USAGE);
   }
 
   // Encode RLP sub-command
   @Test
-  public void callingRPLEncodeSubCommandHelpMustDisplayUsage() {
+  public void callingRLPEncodeSubCommandHelpMustDisplayUsage() {
     parseCommand(RLP_SUBCOMMAND_NAME, RLP_ENCODE_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_RLP_ENCODE_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_RLP_ENCODE_USAGE);
   }
 
   @Test
-  public void callingRPLSubCommandVersionMustDisplayVersion() {
+  public void callingRLPSubCommandVersionMustDisplayVersion() {
     parseCommand(RLP_SUBCOMMAND_NAME, "--version");
     assertThat(commandOutput.toString(UTF_8))
         .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
@@ -113,7 +113,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingRPLEncodeSubCommandVersionMustDisplayVersion() {
+  public void callingRLPEncodeSubCommandVersionMustDisplayVersion() {
     parseCommand(RLP_SUBCOMMAND_NAME, RLP_ENCODE_SUBCOMMAND_NAME, "--version");
     assertThat(commandOutput.toString(UTF_8))
         .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
@@ -134,8 +134,8 @@ public class RLPSubCommandTest extends CommandTestAbstract {
     final String expectedRlpString =
         "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d"
             + "46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0";
-    assertThat(commandOutput.toString(UTF_8)).contains(expectedRlpString);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).contains(expectedRlpString);
   }
 
   @Test
@@ -181,8 +181,8 @@ public class RLPSubCommandTest extends CommandTestAbstract {
       final String expectedRlpString =
           "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d"
               + "46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0";
-      assertThat(commandOutput.toString(UTF_8)).contains(expectedRlpString);
       assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+      assertThat(commandOutput.toString(UTF_8)).contains(expectedRlpString);
     }
   }
 
@@ -207,8 +207,8 @@ public class RLPSubCommandTest extends CommandTestAbstract {
       final String expectedRlpString =
           "0xf84fa00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d"
               + "46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193c080c0";
-      assertThat(commandOutput.toString(UTF_8)).contains(expectedRlpString);
       assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+      assertThat(commandOutput.toString(UTF_8)).contains(expectedRlpString);
     }
   }
 
@@ -276,8 +276,8 @@ public class RLPSubCommandTest extends CommandTestAbstract {
 
     final String expectedValidatorString =
         "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
-    assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
   }
 
   @Test
@@ -294,8 +294,8 @@ public class RLPSubCommandTest extends CommandTestAbstract {
 
     final String expectedValidatorString =
         "[0x241f804efb46f71acaa5be94a62f7798e89c3724, 0x6cdf72da457453063ea92e7fa5ac30afbcec28cd]";
-    assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
   }
 
   @Test
@@ -341,8 +341,8 @@ public class RLPSubCommandTest extends CommandTestAbstract {
       final String expectedValidatorString =
           "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
 
-      assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
       assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+      assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
     }
   }
 
