@@ -96,7 +96,27 @@ public class MainnetTransactionValidator implements TransactionValidator {
       return signatureResult;
     }
 
-    if (transaction.getType().supportsBlob()) {
+    final TransactionType transactionType = transaction.getType();
+    if (!acceptedTransactionTypes.contains(transactionType)) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          String.format(
+              "Transaction type %s is invalid, accepted transaction types are %s",
+              transactionType, acceptedTransactionTypes));
+    }
+
+    if (transaction.getNonce() == MAX_NONCE) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
+    }
+
+    if (transaction.getGasLimit() > gasLimitCalculator.transactionGasLimitCap()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.EXCEEDS_TRANSACTION_GAS_LIMIT,
+          "Transaction gas limit must be at most " + gasLimitCalculator.transactionGasLimitCap());
+    }
+
+    if (transactionType.supportsBlob()) {
       final ValidationResult<TransactionInvalidReason> blobTransactionResult =
           validateBlobTransaction(transaction);
       if (!blobTransactionResult.isValid()) {
@@ -110,20 +130,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
           return blobsResult;
         }
       }
-    }
-
-    final TransactionType transactionType = transaction.getType();
-    if (!acceptedTransactionTypes.contains(transactionType)) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          String.format(
-              "Transaction type %s is invalid, accepted transaction types are %s",
-              transactionType, acceptedTransactionTypes));
-    }
-
-    if (transaction.getNonce() == MAX_NONCE) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
     }
 
     if (transaction.isContractCreation() && transaction.getPayload().size() > maxInitcodeSize) {
