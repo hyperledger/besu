@@ -28,6 +28,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -47,13 +48,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The RocksDb columnar key value snapshot. */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class RocksDBColumnarKeyValueSnapshot
     implements SegmentedKeyValueStorage, SnappedKeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueSnapshot.class);
 
-  private final Cache<Bytes, Optional<byte[]>> GET_KEY_CACHE =
-      CacheBuilder.newBuilder().recordStats().maximumSize(100_000).build();
+  private Optional<Cache<Bytes, Optional<byte[]>>> maybeCache = Optional.empty();
 
   /** The Db. */
   final OptimisticTransactionDB db;
@@ -83,6 +84,14 @@ public class RocksDBColumnarKeyValueSnapshot
     this.snapshot = new RocksDBSnapshot(db);
     this.readOptions =
         new ReadOptions().setVerifyChecksums(false).setSnapshot(snapshot.getSnapshot());
+    if (isReadCacheEnabledForSnapshots) {
+      maybeCache =
+          Optional.of(
+              CacheBuilder.newBuilder()
+                  .maximumSize(100_000)
+                  .expireAfterAccess(5, TimeUnit.MINUTES)
+                  .build());
+    }
   }
 
   @Override
@@ -91,24 +100,29 @@ public class RocksDBColumnarKeyValueSnapshot
     throwIfClosed();
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
       final ColumnFamilyHandle handle = columnFamilyMapper.apply(segment);
-      return isReadCacheEnabledForSnapshots
-          ? getFromCacheOrRead(segment.getId(), key, handle)
-          : Optional.ofNullable(snapshot.get(handle, readOptions, key));
+      if (isReadCacheEnabledForSnapshots) {
+        return getFromCacheOrRead(segment.getId(), key, handle, maybeCache.get());
+      } else {
+        return Optional.ofNullable(snapshot.get(handle, readOptions, key));
+      }
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
   }
 
   private Optional<byte[]> getFromCacheOrRead(
-      final byte[] segmentId, final byte[] key, final ColumnFamilyHandle handle)
+      final byte[] segmentId,
+      final byte[] key,
+      final ColumnFamilyHandle handle,
+      final Cache<Bytes, Optional<byte[]>> cache)
       throws RocksDBException {
     final Bytes cacheKey = makeCacheKey(segmentId, key);
-    Optional<byte[]> cached = GET_KEY_CACHE.getIfPresent(cacheKey);
+    Optional<byte[]> cached = cache.getIfPresent(cacheKey);
     //noinspection OptionalAssignedToNull
     if (cached == null) {
       final byte[] value = snapshot.get(handle, readOptions, key);
       cached = Optional.ofNullable(value);
-      GET_KEY_CACHE.put(cacheKey, cached);
+      cache.put(cacheKey, cached);
     }
     return cached;
   }
