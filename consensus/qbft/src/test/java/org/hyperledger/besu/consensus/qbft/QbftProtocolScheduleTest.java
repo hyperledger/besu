@@ -57,11 +57,11 @@ public class QbftProtocolScheduleTest {
   private final List<Address> validators = singletonList(proposerAddress);
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
-    return new ProtocolContext(
-        null,
-        null,
-        setupContextWithBftExtraDataEncoder(BftContext.class, validators, new QbftExtraDataCodec()),
-        new BadBlockManager());
+    return new ProtocolContext.Builder()
+        .withConsensusContext(
+            setupContextWithBftExtraDataEncoder(
+                BftContext.class, validators, new QbftExtraDataCodec()))
+        .build();
   }
 
   @Test

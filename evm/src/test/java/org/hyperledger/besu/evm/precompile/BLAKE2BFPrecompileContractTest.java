@@ -89,7 +89,7 @@ class BLAKE2BFPrecompileContractTest {
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expectedComputation =
         expectedResult == null ? null : Bytes.fromHexString(expectedResult);
-    assertThat(contract.computePrecompile(input, messageFrame).getOutput())
+    assertThat(contract.computePrecompile(input, messageFrame).output())
         .isEqualTo(expectedComputation);
     assertThat(contract.gasRequirement(input)).isEqualTo(expectedGasUsed);
   }

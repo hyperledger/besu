@@ -31,7 +31,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class NewBlockMessage extends AbstractMessageData {
 
-  private static final int MESSAGE_CODE = EthPV62.NEW_BLOCK;
+  private static final int MESSAGE_CODE = EthProtocolMessages.NEW_BLOCK;
 
   private NewBlockMessageData messageFields = null;
 

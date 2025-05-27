@@ -54,6 +54,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.math.BigInteger;
@@ -166,12 +167,14 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ConsensusContext consensusContext) {
+      final ConsensusContext consensusContext,
+      final ServiceManager serviceManager) {
     return new MigratingProtocolContext(
         blockchain,
         worldStateArchive,
         consensusContext.as(MigratingConsensusContext.class),
-        badBlockManager);
+        badBlockManager,
+        serviceManager);
   }
 
   @Override

@@ -27,7 +27,6 @@ import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
@@ -35,6 +34,7 @@ import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
@@ -68,7 +68,7 @@ import org.hyperledger.besu.cli.options.RpcWebsocketOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
-import org.hyperledger.besu.cli.options.storage.DiffBasedSubStorageOptions;
+import org.hyperledger.besu.cli.options.storage.PathBasedExtraStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.QBFTOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
@@ -134,10 +134,12 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
+import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -196,6 +198,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.EphemeryGenesisUpdater;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -694,6 +697,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfBlocksToCache = 0;
 
+  @CommandLine.Option(
+      names = {"--cache-precompiles"},
+      description = "Specifies whether to cache precompile results (default: ${DEFAULT-VALUE})")
+  private final Boolean enablePrecompileCaching = false;
+
   // Plugins Configuration Option Group
   @CommandLine.ArgGroup(validate = false)
   PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
@@ -974,7 +982,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       // explicitly enabled, perform compatibility check
       VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
 
-      configureNativeLibs();
+      configureNativeLibs(Optional.ofNullable(network));
+      if (enablePrecompileCaching) {
+        configurePrecompileCaching();
+      }
+
       besuController = buildController();
 
       besuPluginContext.beforeExternalServices();
@@ -994,9 +1006,36 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       runner.awaitStop();
 
     } catch (final Exception e) {
-      logger.error("Failed to start Besu", e);
+      logger.error("Failed to start Besu: {}", e.getMessage());
+      logger.debug("Startup failure cause", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
+  }
+
+  private void configurePrecompileCaching() {
+    // enable precompile caching:
+    AbstractPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+    // separately set KZG precompile caching, it does not extend AbstractPrecompiledContract:
+    KZGPointEvalPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+    // separately set BLS precompiles caching, they do not extend AbstractPrecompiledContract:
+    AbstractBLS12PrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+
+    // set a metric logger
+    final var precompileCounter =
+        getMetricsSystem()
+            .createLabelledCounter(
+                BesuMetricCategory.BLOCK_PROCESSING,
+                "precompile_cache",
+                "precompile cache labeled counter",
+                "precompile_name",
+                "event");
+
+    // set a cache event consumer which logs a metrics event
+    AbstractPrecompiledContract.setCacheEventConsumer(
+        cacheEvent ->
+            precompileCounter
+                .labels(cacheEvent.precompile(), cacheEvent.cacheMetric().name())
+                .inc());
   }
 
   private void checkPermissionsAndPrintPaths(final String userName) {
@@ -1358,7 +1397,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .getMetricsSystem()
         .createLabelledSuppliedGauge(
             StandardMetricCategory.PROCESS, "release", "Release information", "version")
-        .labels(() -> 1, BesuInfo.version());
+        .labels(() -> 1, BesuVersionUtils.version());
   }
 
   /**
@@ -1388,7 +1427,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return Optional.ofNullable(colorEnabled);
   }
 
-  private void configureNativeLibs() {
+  @VisibleForTesting
+  void configureNativeLibs(final Optional<NetworkName> configuredNetwork) {
     if (unstableNativeLibraryOptions.getNativeAltbn128()
         && AbstractAltBnPrecompiledContract.maybeEnableNative()) {
       logger.info("Using the native implementation of alt bn128");
@@ -1424,7 +1464,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
         || genesisConfigOptionsSupplier.get().getCancunEOFTime().isPresent()
         || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getOsakaTime().isPresent()) {
+        || genesisConfigOptionsSupplier.get().getOsakaTime().isPresent()
+        || genesisConfigOptionsSupplier.get().getFutureEipsTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -1434,6 +1475,37 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       throw new ParameterException(
           this.commandLine,
           "--kzg-trusted-setup can only be specified on networks with data blobs enabled");
+    }
+    // assert required native libraries have been loaded
+    if (genesisFile == null && configuredNetwork.isPresent()) {
+      checkRequiredNativeLibraries(configuredNetwork.get());
+    }
+  }
+
+  @VisibleForTesting
+  void checkRequiredNativeLibraries(final NetworkName configuredNetwork) {
+    if (configuredNetwork == null) {
+      return;
+    }
+
+    // assert native library requirements for named networks:
+    List<NativeRequirementResult> failedNativeReqs =
+        configuredNetwork.getNativeRequirements().stream().filter(r -> !r.present()).toList();
+
+    if (!failedNativeReqs.isEmpty()) {
+      String failures =
+          failedNativeReqs.stream()
+              .map(r -> r.libname() + " " + r.errorMessage())
+              .collect(Collectors.joining("\n\t"));
+      throw new UnsupportedOperationException(
+          String.format(
+              "Failed to load required native libraries for network %s. "
+                  + "Verify whether your platform %s and arch %s are supported by besu. "
+                  + "Failures loading: \n%s",
+              configuredNetwork.name(),
+              System.getProperty("os.name"),
+              System.getProperty("os.arch"),
+              failures));
     }
   }
 
@@ -1652,7 +1724,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--Xsnapsync-synchronizer-flat option can only be used when --Xbonsai-full-flat-db-enabled is true",
         dataStorageOptions
             .toDomainObject()
-            .getDiffBasedSubStorageConfiguration()
+            .getPathBasedExtraStorageConfiguration()
             .getUnstable()
             .getFullFlatDbEnabled(),
         asList(
@@ -1805,8 +1877,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
-      final DiffBasedSubStorageConfiguration subStorageConfiguration =
-          getDataStorageConfiguration().getDiffBasedSubStorageConfiguration();
+      final PathBasedExtraStorageConfiguration subStorageConfiguration =
+          getDataStorageConfiguration().getPathBasedExtraStorageConfiguration();
       besuControllerBuilder.isParallelTxProcessingEnabled(
           subStorageConfiguration.getUnstable().isParallelTxProcessingEnabled());
     }
@@ -2144,35 +2216,44 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (SyncMode.FULL.equals(getDefaultSyncModeIfNotSet())
         && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
-      final DiffBasedSubStorageConfiguration diffBasedSubStorageConfiguration =
-          dataStorageConfiguration.getDiffBasedSubStorageConfiguration();
-      if (diffBasedSubStorageConfiguration.getLimitTrieLogsEnabled()) {
+      final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration =
+          dataStorageConfiguration.getPathBasedExtraStorageConfiguration();
+      if (pathBasedExtraStorageConfiguration.getLimitTrieLogsEnabled()) {
         if (CommandLineUtils.isOptionSet(
-            commandLine, DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED)) {
+            commandLine, PathBasedExtraStorageOptions.LIMIT_TRIE_LOGS_ENABLED)) {
           throw new ParameterException(
               commandLine,
               String.format(
                   "Cannot enable %s with --sync-mode=%s and --data-storage-format=%s. You must set %s or use a different sync-mode",
-                  DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED,
+                  PathBasedExtraStorageOptions.LIMIT_TRIE_LOGS_ENABLED,
                   SyncMode.FULL,
                   DataStorageFormat.BONSAI,
-                  DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false"));
+                  PathBasedExtraStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false"));
         }
 
         dataStorageConfiguration =
             ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
-                .withDiffBasedSubStorageConfiguration(
-                    ImmutableDiffBasedSubStorageConfiguration.copyOf(
-                            dataStorageConfiguration.getDiffBasedSubStorageConfiguration())
+                .withPathBasedExtraStorageConfiguration(
+                    ImmutablePathBasedExtraStorageConfiguration.copyOf(
+                            dataStorageConfiguration.getPathBasedExtraStorageConfiguration())
                         .withLimitTrieLogsEnabled(false));
         logger.warn(
             "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
-            DiffBasedSubStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false",
+            PathBasedExtraStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false",
             SyncMode.FULL,
             DataStorageFormat.BONSAI);
       }
     }
     return dataStorageConfiguration;
+  }
+
+  /**
+   * Gets the network for this BesuCommand
+   *
+   * @return the network for this BesuCommand
+   */
+  public NetworkName getNetwork() {
+    return network;
   }
 
   private void initMiningParametersMetrics(final MiningConfiguration miningConfiguration) {
@@ -2233,7 +2314,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
-            .legacyForkId(unstableEthProtocolOptions.toDomainObject().isLegacyEth64ForkIdEnabled())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .engineJsonRpcConfiguration(engineJsonRpcConfiguration)
@@ -2734,21 +2814,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
-      final DiffBasedSubStorageConfiguration subStorageConfiguration =
-          getDataStorageConfiguration().getDiffBasedSubStorageConfiguration();
+      final PathBasedExtraStorageConfiguration subStorageConfiguration =
+          getDataStorageConfiguration().getPathBasedExtraStorageConfiguration();
       if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
-        builder.setLimitTrieLogsEnabled();
-        builder.setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad());
-        builder.setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
+        builder
+            .setLimitTrieLogsEnabled()
+            .setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad())
+            .setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
       }
     }
 
-    builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());
-
-    builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
-    builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
-
-    builder.setPluginContext(this.besuPluginContext);
+    builder
+        .setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled())
+        .setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation())
+        .setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode())
+        .setPluginContext(this.besuPluginContext)
+        .setHistoryExpiryPruneEnabled(getDataStorageConfiguration().getHistoryExpiryPruneEnabled())
+        .setBlobDBSettings(rocksDBPlugin.getBlobDBSettings());
 
     return builder.build();
   }

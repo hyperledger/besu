@@ -39,11 +39,6 @@ public class QbftValidatorProviderAdaptor implements QbftValidatorProvider {
   }
 
   @Override
-  public Collection<Address> getValidatorsAtHead() {
-    return validatorProvider.getValidatorsAtHead();
-  }
-
-  @Override
   public Collection<Address> getValidatorsAfterBlock(final QbftBlockHeader header) {
     return validatorProvider.getValidatorsAfterBlock(BlockUtil.toBesuBlockHeader(header));
   }

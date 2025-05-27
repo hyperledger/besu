@@ -22,13 +22,6 @@ import java.util.Collection;
 public interface QbftValidatorProvider {
 
   /**
-   * Gets validators at head.
-   *
-   * @return the validators at head
-   */
-  Collection<Address> getValidatorsAtHead();
-
-  /**
    * Gets validators after block.
    *
    * @param header the header

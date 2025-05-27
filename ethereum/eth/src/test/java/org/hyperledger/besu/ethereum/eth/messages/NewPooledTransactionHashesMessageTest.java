@@ -36,14 +36,14 @@ public class NewPooledTransactionHashesMessageTest {
     final List<Transaction> transactions = List.of(new BlockDataGenerator().transaction());
     final NewPooledTransactionHashesMessage msg =
         NewPooledTransactionHashesMessage.create(transactions, EthProtocol.ETH66);
-    assertThat(msg.getCode()).isEqualTo(EthPV65.NEW_POOLED_TRANSACTION_HASHES);
+    assertThat(msg.getCode()).isEqualTo(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES);
     final List<Hash> pendingHashes = msg.pendingTransactionHashes();
     assertThat(pendingHashes).isEqualTo(toHashList(transactions));
   }
 
   @Test
   public void readFromMessageWithWrongCodeThrows() {
-    final RawMessage rawMsg = new RawMessage(EthPV62.BLOCK_HEADERS, Bytes.of(0));
+    final RawMessage rawMsg = new RawMessage(EthProtocolMessages.BLOCK_HEADERS, Bytes.of(0));
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> NewPooledTransactionHashesMessage.readFrom(rawMsg, EthProtocol.ETH66));

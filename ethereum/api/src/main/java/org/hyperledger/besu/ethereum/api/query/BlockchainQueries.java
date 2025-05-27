@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.query;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -762,6 +763,10 @@ public class BlockchainQueries {
         : Optional.empty();
   }
 
+  public long getMinimumTransactionCost(final ProcessableBlockHeader header) {
+    return protocolSchedule.getByBlockHeader(header).getGasCalculator().getMinimumTransactionCost();
+  }
+
   /**
    * Calculates the blob gas price for data in a transaction.
    *
@@ -795,7 +800,7 @@ public class BlockchainQueries {
    * @param toBlockNumber The block number defining the last block in the search range (inclusive).
    * @param query Constraints on required topics by topic index. For a given index if the set of
    *     topics is non-empty, the topic at this index must match one of the values in the set.
-   * @param isQueryAlive Whether or not the backend query should stay alive.
+   * @param isQueryAlive Whether the backend query should stay alive.
    * @return The set of logs matching the given constraints.
    */
   public List<LogWithMetadata> matchingLogs(
@@ -988,8 +993,8 @@ public class BlockchainQueries {
 
   /**
    * Wraps an operation on MutableWorldState with try-with-resources the corresponding block hash.
-   * This method provides access to the worldstate via a mapper function in order to ensure all of
-   * the uses of the MutableWorldState are subsequently closed, via the try-with-resources block.
+   * This method provides access to the worldstate via a mapper function in order to ensure all uses
+   * of the MutableWorldState are subsequently closed, via the try-with-resources block.
    *
    * @param <U> return type of the operation on the MutableWorldState
    * @param blockHash the block hash

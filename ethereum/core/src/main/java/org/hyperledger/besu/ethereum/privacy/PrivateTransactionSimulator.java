@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -154,28 +154,29 @@ public class PrivateTransactionSimulator {
       final BlockHeader header,
       final Bytes privacyGroupId,
       final MutableWorldState disposablePrivateState) {
-    final Address senderAddress =
-        callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
+    final Address senderAddress = callParams.getSender().orElse(DEFAULT_FROM);
     final Account sender = disposablePrivateState.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
-    final long gasLimit =
-        callParams.getGasLimit() >= 0 ? callParams.getGasLimit() : header.getGasLimit();
-    final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
-    final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
-    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
+    final long gasLimit = callParams.getGas().orElse(header.getGasLimit());
+    final Wei gasPrice = callParams.getGasPrice().orElse(Wei.ZERO);
+    final Wei value = callParams.getValue().orElse(Wei.ZERO);
+    final Bytes payload = callParams.getPayload().orElse(Bytes.EMPTY);
 
-    return PrivateTransaction.builder()
-        .privateFrom(Bytes.EMPTY)
-        .privacyGroupId(privacyGroupId)
-        .restriction(Restriction.RESTRICTED)
-        .nonce(nonce)
-        .gasPrice(gasPrice)
-        .gasLimit(gasLimit)
-        .to(callParams.getTo())
-        .sender(senderAddress)
-        .value(value)
-        .payload(payload)
-        .signature(FAKE_SIGNATURE)
-        .build();
+    final var builder =
+        PrivateTransaction.builder()
+            .privateFrom(Bytes.EMPTY)
+            .privacyGroupId(privacyGroupId)
+            .restriction(Restriction.RESTRICTED)
+            .nonce(nonce)
+            .gasPrice(gasPrice)
+            .gasLimit(gasLimit)
+            .sender(senderAddress)
+            .value(value)
+            .payload(payload)
+            .signature(FAKE_SIGNATURE);
+
+    callParams.getTo().ifPresent(builder::to);
+
+    return builder.build();
   }
 }

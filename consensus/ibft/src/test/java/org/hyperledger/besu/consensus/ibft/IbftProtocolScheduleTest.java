@@ -168,11 +168,10 @@ public class IbftProtocolScheduleTest {
     @Provides
     ProtocolContext protocolContext(
         final List<Address> validators, final BftExtraDataCodec bftExtraDataCodec) {
-      return new ProtocolContext(
-          null,
-          null,
-          setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
-          new BadBlockManager());
+      return new ProtocolContext.Builder()
+          .withConsensusContext(
+              setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec))
+          .build();
     }
   }
 

@@ -191,6 +191,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     if (node.getMiningParameters().isMiningEnabled()) {
       params.add("--miner-enabled");
+      params.add("--miner-extra-data");
+      params.add(node.getMiningParameters().getExtraData().toHexString());
       params.add("--miner-coinbase");
       params.add(node.getMiningParameters().getCoinbase().get().toString());
       params.add("--miner-stratum-port");
@@ -404,30 +406,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                 params.add("--permissions-accounts-config-file");
                 params.add(permissioningConfiguration.getAccountPermissioningConfigFilePath());
               }
-            });
-
-    node.getPermissioningConfiguration()
-        .flatMap(PermissioningConfiguration::getSmartContractConfig)
-        .ifPresent(
-            permissioningConfiguration -> {
-              if (permissioningConfiguration.isSmartContractNodeAllowlistEnabled()) {
-                params.add("--permissions-nodes-contract-enabled");
-              }
-              if (permissioningConfiguration.getNodeSmartContractAddress() != null) {
-                params.add("--permissions-nodes-contract-address");
-                params.add(permissioningConfiguration.getNodeSmartContractAddress().toString());
-              }
-              if (permissioningConfiguration.isSmartContractAccountAllowlistEnabled()) {
-                params.add("--permissions-accounts-contract-enabled");
-              }
-              if (permissioningConfiguration.getAccountSmartContractAddress() != null) {
-                params.add("--permissions-accounts-contract-address");
-                params.add(permissioningConfiguration.getAccountSmartContractAddress().toString());
-              }
-              params.add("--permissions-nodes-contract-version");
-              params.add(
-                  String.valueOf(
-                      permissioningConfiguration.getNodeSmartContractInterfaceVersion()));
             });
 
     params.addAll(node.getExtraCLIOptions());

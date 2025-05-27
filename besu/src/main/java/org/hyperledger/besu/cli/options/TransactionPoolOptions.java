@@ -39,6 +39,7 @@ import java.io.File;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import picocli.CommandLine;
@@ -46,11 +47,6 @@ import picocli.CommandLine;
 /** The Transaction pool Cli stable options. */
 public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration> {
   private static final String TX_POOL_IMPLEMENTATION = "--tx-pool";
-
-  /** Use TX_POOL_NO_LOCAL_PRIORITY instead */
-  @Deprecated(forRemoval = true)
-  private static final String TX_POOL_DISABLE_LOCALS = "--tx-pool-disable-locals";
-
   private static final String TX_POOL_NO_LOCAL_PRIORITY = "--tx-pool-no-local-priority";
   private static final String TX_POOL_ENABLE_SAVE_RESTORE = "--tx-pool-enable-save-restore";
   private static final String TX_POOL_SAVE_FILE = "--tx-pool-save-file";
@@ -72,7 +68,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private TransactionPoolConfiguration.Implementation txPoolImplementation = LAYERED;
 
   @CommandLine.Option(
-      names = {TX_POOL_NO_LOCAL_PRIORITY, TX_POOL_DISABLE_LOCALS},
+      names = {TX_POOL_NO_LOCAL_PRIORITY},
       paramLabel = "<Boolean>",
       description =
           "Set to true if senders of transactions sent via RPC should not have priority (default: ${DEFAULT-VALUE})",
@@ -247,15 +243,16 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   }
 
   @CommandLine.ArgGroup(validate = false)
-  private final TransactionPoolOptions.Unstable unstableOptions =
-      new TransactionPoolOptions.Unstable();
+  private final Unstable unstableOptions = new Unstable();
 
   static class Unstable {
     private static final String TX_MESSAGE_KEEP_ALIVE_SEC_FLAG =
         "--Xincoming-tx-messages-keep-alive-seconds";
-
     private static final String ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG =
         "--Xeth65-tx-announced-buffering-period-milliseconds";
+    private static final String MAX_TRACKED_SEEN_TXS_PER_PEER = "--Xmax-tracked-seen-txs-per-peer";
+    private static final String PEER_TRACKER_FORGET_EVICTED_TXS_FLAG =
+        "--Xpeer-tracker-forget-evicted-txs";
 
     @CommandLine.Option(
         names = {TX_MESSAGE_KEEP_ALIVE_SEC_FLAG},
@@ -277,6 +274,26 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         arity = "1")
     private Duration eth65TrxAnnouncedBufferingPeriod =
         TransactionPoolConfiguration.Unstable.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD;
+
+    @CommandLine.Option(
+        names = {MAX_TRACKED_SEEN_TXS_PER_PEER},
+        paramLabel = "<LONG>",
+        hidden = true,
+        description =
+            "The number of exchanged txs that are remembered with each peer, to minimize broadcasting duplicates (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private int maxTrackedSeenTxsPerPeer =
+        TransactionPoolConfiguration.Unstable.DEFAULT_MAX_TRACKED_SEEN_TXS_PER_PEER;
+
+    @CommandLine.Option(
+        names = {PEER_TRACKER_FORGET_EVICTED_TXS_FLAG},
+        paramLabel = "<BOOLEAN>",
+        hidden = true,
+        description =
+            "Whether txs evicted due to the pool being full should be removed from peer tracker cache that checks for already known txs (default: false on layered and true on sequenced txpool)",
+        arity = "0..1",
+        fallbackValue = "true")
+    private Boolean peerTrackerForgetEvictedTxs;
   }
 
   private TransactionPoolOptions() {}
@@ -287,7 +304,10 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
    * @return the transaction pool options
    */
   public static TransactionPoolOptions create() {
-    return new TransactionPoolOptions();
+    final var txPoolOptions = new TransactionPoolOptions();
+    txPoolOptions.unstableOptions.peerTrackerForgetEvictedTxs =
+        deriveDefaultPeersTrackerForgetEvictedTxs(txPoolOptions.txPoolImplementation);
+    return txPoolOptions;
   }
 
   /**
@@ -334,7 +354,10 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         config.getUnstable().getTxMessageKeepAliveSeconds();
     options.unstableOptions.eth65TrxAnnouncedBufferingPeriod =
         config.getUnstable().getEth65TrxAnnouncedBufferingPeriod();
-
+    options.unstableOptions.maxTrackedSeenTxsPerPeer =
+        config.getUnstable().getMaxTrackedSeenTxsPerPeer();
+    options.unstableOptions.peerTrackerForgetEvictedTxs =
+        config.getUnstable().getPeerTrackerForgetEvictedTxs();
     return options;
   }
 
@@ -392,8 +415,20 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
             ImmutableTransactionPoolConfiguration.Unstable.builder()
                 .txMessageKeepAliveSeconds(unstableOptions.txMessageKeepAliveSeconds)
                 .eth65TrxAnnouncedBufferingPeriod(unstableOptions.eth65TrxAnnouncedBufferingPeriod)
+                .maxTrackedSeenTxsPerPeer(unstableOptions.maxTrackedSeenTxsPerPeer)
+                .peerTrackerForgetEvictedTxs(
+                    Optional.ofNullable(unstableOptions.peerTrackerForgetEvictedTxs)
+                        .orElse(deriveDefaultPeersTrackerForgetEvictedTxs(txPoolImplementation)))
                 .build())
         .build();
+  }
+
+  private static boolean deriveDefaultPeersTrackerForgetEvictedTxs(
+      final TransactionPoolConfiguration.Implementation txPoolImplementation) {
+    return switch (txPoolImplementation) {
+      case LEGACY, SEQUENCED -> true;
+      case LAYERED -> false;
+    };
   }
 
   @Override

@@ -89,7 +89,7 @@ public class CallOperation extends AbstractCallOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.isStatic() && !value(frame).isZero()) {
-      return new OperationResult(cost(frame, true), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else {
       return super.execute(frame, evm);
     }

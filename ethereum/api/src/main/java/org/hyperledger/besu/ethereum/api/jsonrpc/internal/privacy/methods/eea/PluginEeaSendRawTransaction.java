@@ -84,6 +84,7 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
     // choose the highest of the two options
     return Math.max(
         privateTransaction.getGasLimit(),
-        gasCalculator.transactionIntrinsicGasCost(Bytes.fromBase64String(pmtPayload), false, 0));
+        gasCalculator.transactionIntrinsicGasCost(
+            privateTransaction.toUnsignedTransaction(Bytes.fromBase64String(pmtPayload)), 0));
   }
 }

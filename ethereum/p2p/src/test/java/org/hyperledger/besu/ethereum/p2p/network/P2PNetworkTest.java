@@ -27,6 +27,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -45,7 +46,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.InetAddress;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -134,9 +134,11 @@ public class P2PNetworkTest {
     final NodeKey connectorNodeKey = NodeKeyUtils.generate();
 
     final SubProtocol subprotocol1 = MockSubProtocol.create("eth");
-    final Capability cap1 = Capability.create(subprotocol1.getName(), 63);
+    final Capability cap1 =
+        Capability.create(subprotocol1.getName(), EthProtocolHelper.LATEST.getVersion());
     final SubProtocol subprotocol2 = MockSubProtocol.create("oth");
-    final Capability cap2 = Capability.create(subprotocol2.getName(), 63);
+    final Capability cap2 =
+        Capability.create(subprotocol2.getName(), EthProtocolHelper.LATEST.getVersion());
     try (final P2PNetwork listener =
             builder().nodeKey(listenerNodeKey).supportedCapabilities(cap1).build();
         final P2PNetwork connector =
@@ -270,7 +272,7 @@ public class P2PNetworkTest {
         .config(config)
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
+        .supportedCapabilities(Collections.singletonList(EthProtocolHelper.LATEST))
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .blockNumberForks(Collections.emptyList())
         .timestampForks(Collections.emptyList())

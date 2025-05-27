@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.peers;
 
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Arrays;
@@ -56,6 +56,6 @@ public class PeerTestHelper {
    * @return A MutableLocalNode that is not ready (the enode has not been set).
    */
   public static MutableLocalNode createMutableLocalNode() {
-    return MutableLocalNode.create("clientId", 5, Arrays.asList(Capability.create("eth", 63)));
+    return MutableLocalNode.create("clientId", 5, Arrays.asList(EthProtocolHelper.LATEST));
   }
 }

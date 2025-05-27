@@ -21,8 +21,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 /** Calculates the excess blob gas for a parent block header. */
 public class ExcessBlobGasCalculator {
   /**
-   * public class ExcessBlobGasCalculator { /** Calculates the excess blob gas for a parent block
-   * header.
+   * Calculates the excess blob gas for a parent block header.
    *
    * @param protocolSpec The protocol specification of the current block.
    * @param parentHeader The parent block header.

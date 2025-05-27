@@ -40,6 +40,8 @@ public interface TransactionPoolConfiguration {
   interface Unstable {
     Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
     int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
+    int DEFAULT_MAX_TRACKED_SEEN_TXS_PER_PEER = 200_000;
+    boolean DEFAULT_PEER_TRACKER_FORGET_EVICTED_TXS = false;
 
     TransactionPoolConfiguration.Unstable DEFAULT =
         ImmutableTransactionPoolConfiguration.Unstable.builder().build();
@@ -52,6 +54,16 @@ public interface TransactionPoolConfiguration {
     @Value.Default
     default int getTxMessageKeepAliveSeconds() {
       return DEFAULT_TX_MSG_KEEP_ALIVE;
+    }
+
+    @Value.Default
+    default int getMaxTrackedSeenTxsPerPeer() {
+      return DEFAULT_MAX_TRACKED_SEEN_TXS_PER_PEER;
+    }
+
+    @Value.Default
+    default boolean getPeerTrackerForgetEvictedTxs() {
+      return DEFAULT_PEER_TRACKER_FORGET_EVICTED_TXS;
     }
   }
 
@@ -72,10 +84,10 @@ public interface TransactionPoolConfiguration {
   boolean DEFAULT_NO_LOCAL_PRIORITY = false;
   boolean DEFAULT_ENABLE_SAVE_RESTORE = false;
   File DEFAULT_SAVE_FILE = new File(DEFAULT_SAVE_FILE_NAME);
-  long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 12_500_000L;
-  int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 2000;
+  long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 25_000_000L;
+  int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 4000;
   EnumMap<TransactionType, Integer> DEFAULT_MAX_PRIORITIZED_TRANSACTIONS_BY_TYPE =
-      new EnumMap<>(Map.of(TransactionType.BLOB, 9));
+      new EnumMap<>(Map.of(TransactionType.BLOB, 20));
   int DEFAULT_MAX_FUTURE_BY_SENDER = 200;
   Implementation DEFAULT_TX_POOL_IMPLEMENTATION = Implementation.LAYERED;
   Set<Address> DEFAULT_PRIORITY_SENDERS = Set.of();

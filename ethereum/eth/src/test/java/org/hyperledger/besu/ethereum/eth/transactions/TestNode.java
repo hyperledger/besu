@@ -27,7 +27,6 @@ import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -136,8 +135,10 @@ public class TestNode implements Closeable {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     genesisState.writeStateTo(worldStateArchive.getWorldState());
     final ProtocolContext protocolContext =
-        new ProtocolContext(
-            blockchain, worldStateArchive, mock(ConsensusContext.class), new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withWorldStateArchive(worldStateArchive)
+            .build();
 
     final SyncState syncState = mock(SyncState.class);
     final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
@@ -164,7 +165,7 @@ public class TestNode implements Closeable {
             25,
             false,
             SyncMode.SNAP,
-            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList()));
 
     final ChainHeadTracker mockCHT = getChainHeadTracker();
     ethPeers.setChainHeadTracker(mockCHT);

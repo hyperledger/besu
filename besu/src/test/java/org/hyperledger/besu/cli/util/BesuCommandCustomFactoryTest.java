@@ -17,8 +17,8 @@ package org.hyperledger.besu.cli.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.util.Arrays;
 
@@ -43,6 +43,7 @@ public class BesuCommandCustomFactoryTest {
     final BesuCommandCustomFactory besuCommandCustomFactory =
         new BesuCommandCustomFactory(pluginVersionsProvider);
     final VersionProvider versionProvider = besuCommandCustomFactory.create(VersionProvider.class);
-    assertThat(versionProvider.getVersion()).containsExactly(BesuInfo.version(), "v1", "v2");
+    assertThat(versionProvider.getVersion())
+        .containsExactly(BesuVersionUtils.version(), "v1", "v2");
   }
 }

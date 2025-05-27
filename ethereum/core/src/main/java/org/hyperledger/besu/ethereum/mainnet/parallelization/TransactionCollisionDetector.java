@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -55,7 +55,7 @@ public class TransactionCollisionDetector {
       final Transaction transaction,
       final Address miningBeneficiary,
       final ParallelizedTransactionContext parallelizedTransactionContext,
-      final DiffBasedWorldStateUpdateAccumulator<? extends DiffBasedAccount> blockAccumulator) {
+      final PathBasedWorldStateUpdateAccumulator<? extends PathBasedAccount> blockAccumulator) {
     final Set<Address> addressesTouchedByTransaction =
         getAddressesTouchedByTransaction(
             transaction, Optional.of(parallelizedTransactionContext.transactionAccumulator()));
@@ -97,21 +97,21 @@ public class TransactionCollisionDetector {
    */
   public Set<Address> getAddressesTouchedByTransaction(
       final Transaction transaction,
-      final Optional<DiffBasedWorldStateUpdateAccumulator<?>> accumulator) {
+      final Optional<PathBasedWorldStateUpdateAccumulator<?>> accumulator) {
     HashSet<Address> addresses = new HashSet<>();
     addresses.add(transaction.getSender());
     if (transaction.getTo().isPresent()) {
       addresses.add(transaction.getTo().get());
     }
     accumulator.ifPresent(
-        diffBasedWorldStateUpdateAccumulator -> {
-          diffBasedWorldStateUpdateAccumulator
+        pathBasedWorldStateUpdateAccumulator -> {
+          pathBasedWorldStateUpdateAccumulator
               .getAccountsToUpdate()
               .forEach(
-                  (address, diffBasedValue) -> {
+                  (address, pathBasedValue) -> {
                     addresses.add(address);
                   });
-          addresses.addAll(diffBasedWorldStateUpdateAccumulator.getDeletedAccountAddresses());
+          addresses.addAll(pathBasedWorldStateUpdateAccumulator.getDeletedAccountAddresses());
         });
 
     return addresses;
@@ -134,12 +134,12 @@ public class TransactionCollisionDetector {
    *     returned.
    */
   private Set<StorageSlotKey> getSlotsTouchedByTransactionAndByAddress(
-      final Optional<DiffBasedWorldStateUpdateAccumulator<?>> accumulator, final Address address) {
+      final Optional<PathBasedWorldStateUpdateAccumulator<?>> accumulator, final Address address) {
     HashSet<StorageSlotKey> slots = new HashSet<>();
     accumulator.ifPresent(
-        diffBasedWorldStateUpdateAccumulator -> {
-          final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> map =
-              diffBasedWorldStateUpdateAccumulator.getStorageToUpdate().get(address);
+        pathBasedWorldStateUpdateAccumulator -> {
+          final StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> map =
+              pathBasedWorldStateUpdateAccumulator.getStorageToUpdate().get(address);
           if (map != null) {
             map.forEach(
                 (storageSlotKey, slot) -> {
@@ -170,19 +170,19 @@ public class TransactionCollisionDetector {
    */
   private Optional<AccountUpdateContext> getAddressTouchedByBlock(
       final Address addressToFind,
-      final Optional<DiffBasedWorldStateUpdateAccumulator<? extends DiffBasedAccount>>
+      final Optional<PathBasedWorldStateUpdateAccumulator<? extends PathBasedAccount>>
           maybeBlockAccumulator) {
     if (maybeBlockAccumulator.isPresent()) {
-      final DiffBasedWorldStateUpdateAccumulator<? extends DiffBasedAccount> blockAccumulator =
+      final PathBasedWorldStateUpdateAccumulator<? extends PathBasedAccount> blockAccumulator =
           maybeBlockAccumulator.get();
-      final DiffBasedValue<? extends DiffBasedAccount> diffBasedValue =
+      final PathBasedValue<? extends PathBasedAccount> pathBasedValue =
           blockAccumulator.getAccountsToUpdate().get(addressToFind);
-      if (diffBasedValue != null) {
+      if (pathBasedValue != null) {
         return Optional.of(
             new AccountUpdateContext(
                 addressToFind,
                 areAccountDetailsEqualExcludingStorage(
-                    diffBasedValue.getPrior(), diffBasedValue.getUpdated())));
+                    pathBasedValue.getPrior(), pathBasedValue.getUpdated())));
       }
     }
     return Optional.empty();
@@ -203,12 +203,12 @@ public class TransactionCollisionDetector {
    *     are found, or the address has no associated updates, an empty set is returned.
    */
   private Set<StorageSlotKey> getSlotsTouchedByBlockAndByAddress(
-      final Optional<DiffBasedWorldStateUpdateAccumulator<?>> accumulator, final Address address) {
+      final Optional<PathBasedWorldStateUpdateAccumulator<?>> accumulator, final Address address) {
     HashSet<StorageSlotKey> slots = new HashSet<>();
     accumulator.ifPresent(
-        diffBasedWorldStateUpdateAccumulator -> {
-          final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> map =
-              diffBasedWorldStateUpdateAccumulator.getStorageToUpdate().get(address);
+        pathBasedWorldStateUpdateAccumulator -> {
+          final StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> map =
+              pathBasedWorldStateUpdateAccumulator.getStorageToUpdate().get(address);
           if (map != null) {
             map.forEach(
                 (storageSlotKey, slot) -> {
@@ -235,7 +235,7 @@ public class TransactionCollisionDetector {
    * @return true if the account state properties are equal excluding storage, false otherwise.
    */
   private boolean areAccountDetailsEqualExcludingStorage(
-      final DiffBasedAccount prior, final DiffBasedAccount next) {
+      final PathBasedAccount prior, final PathBasedAccount next) {
     return (prior == null && next == null)
         || (prior != null
             && next != null

@@ -18,12 +18,12 @@ import static com.google.common.io.Files.readLines;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Charsets;
 import org.apache.tuweni.io.file.Files;
 
 /** The Noop enclave test harness. */
@@ -83,7 +83,8 @@ public class NoopEnclaveTestHarness implements EnclaveTestHarness {
         .map(
             x -> {
               try {
-                return readLines(Path.of(tempDir.toString(), x).toFile(), Charsets.UTF_8).get(0);
+                return readLines(Path.of(tempDir.toString(), x).toFile(), StandardCharsets.UTF_8)
+                    .get(0);
               } catch (IOException e) {
                 return e.getMessage();
               }

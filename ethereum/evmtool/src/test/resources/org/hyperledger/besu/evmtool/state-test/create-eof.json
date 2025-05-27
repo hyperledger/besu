@@ -6,6 +6,7 @@
     "--trace.memory",
     "--trace.stack",
     "--trace.returndata",
+    "--trace.noeip-3155",
     "--notime"
   ],
   "stdin": {
@@ -45,7 +46,7 @@
       },
       "out": "0x",
       "post": {
-        "Osaka": [
+        "Future_EIPs": [
           {
             "hash": "0x1a8642a04dae90535f00f53d3a30284c4db051d508a653db89eb100ba9aecbf3",
             "logs": "0xf48b954a6a6f4ce6b28e4950b7027413f4bdc8f459df6003b6e8d7a1567c8940",
@@ -71,16 +72,16 @@
     }
   },
   "stdout": [
-    {"pc":0,"section":0,"op":95,"gas":"0x794068","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":1,"section":0,"op":53,"gas":"0x794066","gasCost":"0x3","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"CALLDATALOAD"},
-    {"pc":2,"section":0,"op":95,"gas":"0x794063","gasCost":"0x2","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000"],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":3,"section":0,"op":95,"gas":"0x794061","gasCost":"0x2","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":4,"section":0,"op":161,"gas":"0x79405f","gasCost":"0x2ee","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0","0x0"],"depth":1,"refund":0,"opName":"LOG1"},
-    {"pc":5,"section":0,"op":95,"gas":"0x793d71","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":6,"section":0,"op":95,"gas":"0x793d6f","gasCost":"0x2","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":7,"section":0,"op":238,"immediate":"0x00","gas":"0x793d6d","gasCost":"0x0","memSize":0,"stack":["0x0","0x0"],"depth":1,"refund":0,"opName":"RETURNCONTRACT"},
-    {"output":"","gasUsed":"0xe433","test":"create-eof","fork":"Osaka","d":0,"g":0,"v":0,"postHash":"0x1a8642a04dae90535f00f53d3a30284c4db051d508a653db89eb100ba9aecbf3","postLogsHash":"0xf48b954a6a6f4ce6b28e4950b7027413f4bdc8f459df6003b6e8d7a1567c8940","pass":true},
-    {"pc":0,"op":239,"gas":"0x794068","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"INVALID","error":"Invalid opcode: 0xef"},
-    {"output":"","gasUsed":"0x7a1200","test":"create-eof","fork":"Cancun","d":0,"g":0,"v":0,"postHash":"0xaa80d89bc89f58da8de41d3894bd1a241896ff91f7a5964edaefb39e8e3a4a98","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true,"error":"Invalid opcode: 0xef"}
+    {"pc":24,"section":0,"op":"0x5f","gas":7946344,"gasCost":2,"memSize":0,"stack":[],"depth":1,"functionDepth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":25,"section":0,"op":"0x35","gas":7946342,"gasCost":3,"memSize":0,"stack":["0x0"],"depth":1,"functionDepth":1,"refund":0,"opName":"CALLDATALOAD"},
+    {"pc":26,"section":0,"op":"0x5f","gas":7946339,"gasCost":2,"memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000"],"depth":1,"functionDepth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":27,"section":0,"op":"0x5f","gas":7946337,"gasCost":2,"memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0"],"depth":1,"functionDepth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":28,"section":0,"op":"0xa1","gas":7946335,"gasCost":750,"memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0","0x0"],"depth":1,"functionDepth":1,"refund":0,"opName":"LOG1"},
+    {"pc":29,"section":0,"op":"0x5f","gas":7945585,"gasCost":2,"memSize":0,"stack":[],"depth":1,"functionDepth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":30,"section":0,"op":"0x5f","gas":7945583,"gasCost":2,"memSize":0,"stack":["0x0"],"depth":1,"functionDepth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":31,"section":0,"op":"0xee","immediate":"0x00","gas":7945581,"gasCost":0,"memSize":0,"stack":["0x0","0x0"],"depth":1,"functionDepth":1,"refund":0,"opName":"RETURNCONTRACT"},
+    {"output":"","gasUsed":58419,"test":"create-eof","fork":"Future_EIPs","d":0,"g":0,"v":0,"stateRoot":"0x1a8642a04dae90535f00f53d3a30284c4db051d508a653db89eb100ba9aecbf3","postLogsHash":"0xf48b954a6a6f4ce6b28e4950b7027413f4bdc8f459df6003b6e8d7a1567c8940","pass":true},
+    {"pc":0,"op":"0xef","gas":7946344,"gasCost":0,"memSize":0,"stack":[],"depth":1,"refund":0,"opName":"INVALID","error":"Invalid opcode: 0xef"},
+    {"output":"","gasUsed":8000000,"test":"create-eof","fork":"Cancun","d":0,"g":0,"v":0,"stateRoot":"0xaa80d89bc89f58da8de41d3894bd1a241896ff91f7a5964edaefb39e8e3a4a98","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true,"error":"Invalid opcode: 0xef"}
   ]
 }
