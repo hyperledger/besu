@@ -101,7 +101,7 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
           "BlobProofBundle {} has versionId 0. Converting to version {}",
           blobProofBundle.getVersionedHash(),
           BlobProofBundle.VERSION_1_KZG_CELL_PROOFS);
-      return blobProofBundle.toVersion1();
+      return blobProofBundle.convertToVersion1();
     }
     return blobProofBundle;
   }

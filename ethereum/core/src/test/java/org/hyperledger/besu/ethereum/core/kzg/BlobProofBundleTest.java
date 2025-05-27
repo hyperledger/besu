@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import java.util.Collections;
 import java.util.List;
 
-import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.Test;
@@ -180,22 +179,17 @@ public class BlobProofBundleTest {
     assertEquals("kzgProof must not be empty", exception.getMessage());
   }
 
-  @SuppressWarnings("UnusedVariable")
   @Test
-  void convertBlob() {
+  void shouldConvertToVersion1() {
     BlobTestFixture blobTestFixture = new BlobTestFixture();
-    BlobProofBundle blobProofBundle = blobTestFixture.createBlobProofBundleVersion0();
-    assertThat(blobProofBundle.getVersionId()).isEqualTo(BlobProofBundle.VERSION_0_KZG_PROOFS);
+    BlobsWithCommitments bwc = blobTestFixture.createBlobsWithCommitments(2);
+    assertThat(bwc.getVersionId()).isEqualTo(BlobProofBundle.VERSION_0_KZG_PROOFS);
 
-    BlobProofBundle proofBundle = blobProofBundle.toVersion1();
-    assertThat(proofBundle.getVersionId()).isEqualTo(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS);
+    BlobsWithCommitments blobsWithCommitments = bwc.convertToVersion1();
+    assertThat(blobsWithCommitments.getVersionId())
+        .isEqualTo(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS);
 
-    boolean isValid =
-        CKZG4844JNI.verifyCellKzgProofBatch(
-            proofBundle.getCommitmentBytes().toArrayUnsafe(),
-            proofBundle.getIndices(),
-            proofBundle.getBlobCellsBytes().toArrayUnsafe(),
-            proofBundle.getProofBytes().toArrayUnsafe());
+    boolean isValid = BlobsWithCommitments.verify4844Kzg(blobsWithCommitments);
     assertTrue(isValid, "KZG proof verification should be valid");
   }
 }

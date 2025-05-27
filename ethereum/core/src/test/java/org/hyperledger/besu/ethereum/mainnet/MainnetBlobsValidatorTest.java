@@ -127,7 +127,7 @@ public class MainnetBlobsValidatorTest {
         assertThrows(
             InvalidParameterException.class,
             () ->
-                BlobsWithCommitments.validateBlobWithCommitments(
+                new BlobsWithCommitments(
                     BlobProofBundle.VERSION_0_KZG_PROOFS,
                     kzgCommitments,
                     blobs,
@@ -149,7 +149,7 @@ public class MainnetBlobsValidatorTest {
         assertThrows(
             InvalidParameterException.class,
             () ->
-                BlobsWithCommitments.validateBlobWithCommitments(
+                new BlobsWithCommitments(
                     BlobProofBundle.VERSION_0_KZG_PROOFS,
                     kzgCommitments,
                     blobs,
@@ -172,7 +172,7 @@ public class MainnetBlobsValidatorTest {
         assertThrows(
             InvalidParameterException.class,
             () ->
-                BlobsWithCommitments.validateBlobWithCommitments(
+                new BlobsWithCommitments(
                     BlobProofBundle.VERSION_0_KZG_PROOFS,
                     kzgCommitments,
                     blobs,
@@ -196,7 +196,7 @@ public class MainnetBlobsValidatorTest {
         assertThrows(
             InvalidParameterException.class,
             () ->
-                BlobsWithCommitments.validateBlobWithCommitments(
+                new BlobsWithCommitments(
                     BlobProofBundle.VERSION_0_KZG_PROOFS,
                     kzgCommitments,
                     blobs,
@@ -218,7 +218,7 @@ public class MainnetBlobsValidatorTest {
         assertThrows(
             InvalidParameterException.class,
             () ->
-                BlobsWithCommitments.validateBlobWithCommitments(
+                new BlobsWithCommitments(
                     BlobProofBundle.VERSION_1_KZG_CELL_PROOFS,
                     kzgCommitments,
                     blobs,
@@ -240,7 +240,7 @@ public class MainnetBlobsValidatorTest {
         assertThrows(
             InvalidParameterException.class,
             () ->
-                BlobsWithCommitments.validateBlobWithCommitments(
+                new BlobsWithCommitments(
                     BlobProofBundle.VERSION_1_KZG_CELL_PROOFS,
                     kzgCommitments,
                     blobs,
@@ -263,7 +263,7 @@ public class MainnetBlobsValidatorTest {
         assertThrows(
             InvalidParameterException.class,
             () ->
-                BlobsWithCommitments.validateBlobWithCommitments(
+                new BlobsWithCommitments(
                     BlobProofBundle.VERSION_1_KZG_CELL_PROOFS,
                     kzgCommitments,
                     blobs,
@@ -285,7 +285,7 @@ public class MainnetBlobsValidatorTest {
         assertThrows(
             InvalidParameterException.class,
             () ->
-                BlobsWithCommitments.validateBlobWithCommitments(
+                new BlobsWithCommitments(
                     BlobProofBundle.VERSION_1_KZG_CELL_PROOFS,
                     kzgCommitments,
                     blobs,

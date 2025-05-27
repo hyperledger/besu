@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.LongStream;
 
 import ethereum.ckzg4844.CKZG4844JNI;
@@ -81,19 +82,13 @@ public final class BlobProofBundle {
    *
    * @return a new BlobProofBundle instance with version 1 and updated proofs.
    */
-  public BlobProofBundle toVersion1() {
+  public BlobProofBundle convertToVersion1() {
     // Check if the current version is already version 1
     if (versionId == VERSION_1_KZG_CELL_PROOFS) {
       return this; // Return the current instance as it's already version 1
     }
     CellsAndProofs cellProofs = CKZG4844JNI.computeCellsAndKzgProofs(blob.getData().toArray());
     List<KZGProof> kzgCellProofs = extractKZGProofs(cellProofs.getProofs());
-
-    // Validate the size of kzgProof for version 1
-    if (kzgCellProofs.size() != CELL_PROOFS_PER_BLOB) {
-      throw new IllegalStateException(
-          "Cannot convert to version 1: kzgProof size must be " + CELL_PROOFS_PER_BLOB);
-    }
 
     // Use the Builder to create a new BlobProofBundle with version 1
     return BlobProofBundle.builder()
@@ -146,8 +141,8 @@ public final class BlobProofBundle {
     return versionedHash;
   }
 
-  public Bytes getBlobCellsBytes() {
-    return blobCells;
+  public Optional<Bytes> getBlobCellsBytes() {
+    return Optional.ofNullable(blobCells);
   }
 
   public Bytes getCommitmentBytes() {
@@ -173,7 +168,8 @@ public final class BlobProofBundle {
         extendedCommitments.add(new KZGCommitment(kzgCommitment.getData()));
       }
     }
-    return Bytes.wrap(extendedCommitments.stream().map(kc -> (Bytes) kc.getData()).toList());
+    return org.apache.tuweni.bytes.Bytes.wrap(
+        extendedCommitments.stream().map(kc -> (Bytes) kc.getData()).toList());
   }
 
   @Override
