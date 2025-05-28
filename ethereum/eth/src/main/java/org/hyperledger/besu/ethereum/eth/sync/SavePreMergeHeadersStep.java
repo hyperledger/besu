@@ -55,20 +55,6 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
     this.consensusContext = consensusContext;
   }
 
-  public static SavePreMergeHeadersStep createForPoS(
-      final MutableBlockchain blockchain,
-      final long firstPoSBlockNumber,
-      final Optional<ConsensusContext> consensusContext) {
-    return new SavePreMergeHeadersStep(blockchain, true, firstPoSBlockNumber, consensusContext);
-  }
-
-  public static SavePreMergeHeadersStep createForPoA(
-      final MutableBlockchain blockchain,
-      final long checkpointBlockNumber,
-      final Optional<ConsensusContext> consensusContext) {
-    return new SavePreMergeHeadersStep(blockchain, false, checkpointBlockNumber, consensusContext);
-  }
-
   @Override
   public Stream<BlockHeader> apply(final BlockHeader blockHeader) {
     long blockNumber = blockHeader.getNumber();

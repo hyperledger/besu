@@ -143,15 +143,11 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final SavePreMergeHeadersStep savePreMergeHeadersStep =
-        protocolSchedule.anyMatch(s -> s.spec().isPoS())
-            ? SavePreMergeHeadersStep.createForPoS(
-                protocolContext.getBlockchain(),
-                getCheckpointBlockNumber(syncState),
-                protocolContext.safeConsensusContext(ConsensusContext.class))
-            : SavePreMergeHeadersStep.createForPoA(
-                protocolContext.getBlockchain(),
-                getCheckpointBlockNumber(syncState),
-                protocolContext.safeConsensusContext(ConsensusContext.class));
+        new SavePreMergeHeadersStep(
+            protocolContext.getBlockchain(),
+            protocolSchedule.anyMatch(s -> s.spec().isPoS()),
+            getCheckpointBlockNumber(syncState),
+            protocolContext.safeConsensusContext(ConsensusContext.class));
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =

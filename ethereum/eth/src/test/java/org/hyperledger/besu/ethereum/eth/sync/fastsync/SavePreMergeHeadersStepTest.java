@@ -47,8 +47,8 @@ class SavePreMergeHeadersStepTest {
     blockchain = mock(MutableBlockchain.class);
     consensusContext = mock(ConsensusContext.class);
     savePreMergeHeadersStep =
-        SavePreMergeHeadersStep.createForPoS(
-            blockchain, FIRST_POS_BLOCK_NUMBER, Optional.of(consensusContext));
+        new SavePreMergeHeadersStep(
+            blockchain, true, FIRST_POS_BLOCK_NUMBER, Optional.of(consensusContext));
   }
 
   @Test
@@ -76,8 +76,8 @@ class SavePreMergeHeadersStepTest {
   @Test
   void shouldSaveFullBlocksIfCheckpointIsGenesisBlock() {
     savePreMergeHeadersStep =
-        SavePreMergeHeadersStep.createForPoS(
-            blockchain, BlockHeader.GENESIS_BLOCK_NUMBER, Optional.of(consensusContext));
+        new SavePreMergeHeadersStep(
+            blockchain, true, BlockHeader.GENESIS_BLOCK_NUMBER, Optional.of(consensusContext));
 
     BlockHeader block0 = createMockBlockHeader(0);
     BlockHeader block1 = createMockBlockHeader(1);
@@ -123,8 +123,8 @@ class SavePreMergeHeadersStepTest {
   void shouldNotSetIsPostMergeWhenPoAChain() {
     BlockHeader lastPoWBlockHeader = createMockBlockHeader(FIRST_POS_BLOCK_NUMBER - 1);
     final SavePreMergeHeadersStep forPoA =
-        SavePreMergeHeadersStep.createForPoA(
-            blockchain, FIRST_POS_BLOCK_NUMBER, Optional.of(consensusContext));
+        new SavePreMergeHeadersStep(
+            blockchain, false, FIRST_POS_BLOCK_NUMBER, Optional.of(consensusContext));
     forPoA.apply(lastPoWBlockHeader);
     verifyNoInteractions(consensusContext);
   }
