@@ -29,8 +29,11 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
+import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(TrustedSetupClassLoaderExtension.class)
 public class BlobProofBundleTest {
 
   final Blob blob = new Blob(Bytes.EMPTY);
