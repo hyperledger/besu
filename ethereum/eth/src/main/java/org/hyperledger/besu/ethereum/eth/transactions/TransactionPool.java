@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -34,6 +33,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
+import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -668,10 +668,8 @@ public class TransactionPool implements BlockAddedObserver {
     return CompletableFuture.completedFuture(null);
   }
 
-  private void mapBlobsOnTransactionAdded(
-      final org.hyperledger.besu.datatypes.Transaction transaction) {
-    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
-        transaction.getBlobsWithCommitments();
+  private void mapBlobsOnTransactionAdded(final Transaction transaction) {
+    final var maybeBlobsWithCommitments = transaction.getBlobsWithCommitments();
     if (maybeBlobsWithCommitments.isEmpty()) {
       return;
     }
@@ -681,10 +679,8 @@ public class TransactionPool implements BlockAddedObserver {
     blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.versionedHash(), bq));
   }
 
-  private void unmapBlobsOnTransactionDropped(
-      final org.hyperledger.besu.datatypes.Transaction transaction) {
-    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
-        transaction.getBlobsWithCommitments();
+  private void unmapBlobsOnTransactionDropped(final Transaction transaction) {
+    final var maybeBlobsWithCommitments = transaction.getBlobsWithCommitments();
     if (maybeBlobsWithCommitments.isEmpty()) {
       return;
     }

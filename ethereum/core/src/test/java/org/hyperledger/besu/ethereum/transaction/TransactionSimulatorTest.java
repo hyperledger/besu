@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 import static org.hyperledger.besu.evm.tracing.OperationTracer.NO_TRACING;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -30,7 +29,6 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StateOverride;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -46,6 +44,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -55,6 +54,7 @@ import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
+import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -78,7 +78,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, TrustedSetupClassLoaderExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class TransactionSimulatorTest {
@@ -936,30 +936,14 @@ public class TransactionSimulatorTest {
     }
 
     when(transactionProcessor.processTransaction(
-            any(),
-            any(),
-            eq(transaction),
-            any(),
-            any(),
-            anyBoolean(),
-            any(),
-            any(),
-            any(Wei.class)))
+            any(), any(), eq(transaction), any(), any(), any(), any(), any(Wei.class)))
         .thenReturn(result);
   }
 
   private void verifyTransactionWasProcessed(final Transaction expectedTransaction) {
     verify(transactionProcessor)
         .processTransaction(
-            any(),
-            any(),
-            eq(expectedTransaction),
-            any(),
-            any(),
-            anyBoolean(),
-            any(),
-            any(),
-            any(Wei.class));
+            any(), any(), eq(expectedTransaction), any(), any(), any(), any(), any(Wei.class));
   }
 
   private ImmutableCallParameter.Builder legacyTransactionCallParameterBuilder() {

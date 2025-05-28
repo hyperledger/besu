@@ -212,7 +212,7 @@ public interface Transaction {
    *
    * @return optional blobs with commitments
    */
-  Optional<BlobsWithCommitments> getBlobsWithCommitments();
+  Optional<? extends BlobsWithCommitments> getBlobsWithCommitments();
 
   /**
    * Return the address of the contract, if the transaction creates one

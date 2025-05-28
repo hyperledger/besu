@@ -26,9 +26,6 @@ public class BlobSchedule {
   /** The constant PRAGUE_DEFAULT. */
   public static final BlobSchedule PRAGUE_DEFAULT = new BlobSchedule(6, 9, 5007716);
 
-  /** The constant OSAKA_DEFAULT. */
-  public static final BlobSchedule OSAKA_DEFAULT = new BlobSchedule(9, 12, 5007716);
-
   private final int target;
   private final int max;
   private final int baseFeeUpdateFraction;

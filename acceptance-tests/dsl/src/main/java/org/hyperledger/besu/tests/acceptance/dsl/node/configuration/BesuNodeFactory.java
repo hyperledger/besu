@@ -84,7 +84,6 @@ public class BesuNodeFactory {
         config.getExtraCLIOptions(),
         config.getStaticNodes(),
         config.isDnsEnabled(),
-        config.getPrivacyParameters(),
         config.getRunCommand(),
         config.getKeyPair(),
         config.isStrictTxReplayProtectionEnabled(),
@@ -475,7 +474,7 @@ public class BesuNodeFactory {
     config.setAccountAllowlist(accountAllowList);
     config.setAccountPermissioningConfigFilePath(configFile.getAbsolutePath());
     final PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.of(config), Optional.empty());
+        new PermissioningConfiguration(Optional.of(config));
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)

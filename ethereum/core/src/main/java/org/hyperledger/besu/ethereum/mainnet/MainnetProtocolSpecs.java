@@ -44,9 +44,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -155,18 +152,6 @@ public abstract class MainnetProtocolSpecs {
                     .feeMarket(FeeMarket.legacy())
                     .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
                     .build())
-        .privateTransactionProcessorBuilder(
-            (transactionValidatorFactory,
-                contractCreationProcessor,
-                messageCallProcessor,
-                privateTransactionValidator) ->
-                new PrivateTransactionProcessor(
-                    transactionValidatorFactory,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    false,
-                    evmConfiguration.evmStackSize(),
-                    new PrivateTransactionValidator(Optional.empty())))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
         .blockHeaderValidatorBuilder(
             (feeMarket, gasCalculator) -> MainnetBlockHeaderValidator.create())
@@ -340,19 +325,6 @@ public abstract class MainnetProtocolSpecs {
                 ? MainnetProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
                 : MainnetProtocolSpecs::byzantiumTransactionReceiptFactory)
         .blockReward(BYZANTIUM_BLOCK_REWARD)
-        .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(chainId))
-        .privateTransactionProcessorBuilder(
-            (transactionValidatorFactory,
-                contractCreationProcessor,
-                messageCallProcessor,
-                privateTransactionValidator) ->
-                new PrivateTransactionProcessor(
-                    transactionValidatorFactory,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    false,
-                    evmConfiguration.evmStackSize(),
-                    privateTransactionValidator))
         .name("Byzantium");
   }
 
@@ -783,8 +755,7 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem);
-    return addEOF(genesisConfigOptions, chainId, evmConfiguration, protocolSpecBuilder)
-        .name("CancunEOF");
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("CancunEOF");
   }
 
   static ProtocolSpecBuilder pragueDefinition(
@@ -795,9 +766,6 @@ public abstract class MainnetProtocolSpecs {
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-
-    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
-
     ProtocolSpecBuilder pragueSpecBuilder =
         cancunDefinition(
                 chainId,
@@ -816,14 +784,6 @@ public abstract class MainnetProtocolSpecs {
                 blobSchedule ->
                     new PragueGasCalculator(blobSchedule.getTarget()) // EIP-7691 6/9 blob increase
                 )
-            // EIP-7840 Blob schedule | EIP-7691 6/9 blob increase
-            .gasLimitCalculatorBuilder(
-                (feeMarket, gasCalculator, blobSchedule) ->
-                    new PragueTargetingGasLimitCalculator(
-                        londonForkBlockNumber,
-                        (BaseFeeMarket) feeMarket,
-                        gasCalculator,
-                        blobSchedule.getMax()))
             // EIP-3074 AUTH and AUTHCALL
             .evmBuilder(
                 (gasCalculator, jdCacheConfig) ->
@@ -900,8 +860,6 @@ public abstract class MainnetProtocolSpecs {
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
-
     return pragueDefinition(
             chainId,
             enableRevertReason,
@@ -910,43 +868,20 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .blobSchedule(
-            genesisConfigOptions
-                .getBlobScheduleOptions()
-                .flatMap(BlobScheduleOptions::getOsaka)
-                .orElse(BlobSchedule.OSAKA_DEFAULT))
         .gasCalculator(blobSchedule -> new OsakaGasCalculator(blobSchedule.getTarget()))
         .evmBuilder(
             (gasCalculator, __) ->
                 MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .gasLimitCalculatorBuilder(
-            (feeMarket, gasCalculator, blobSchedule) ->
-                new OsakaTargetingGasLimitCalculator(
-                    londonForkBlockNumber,
-                    (BaseFeeMarket) feeMarket,
-                    gasCalculator,
-                    blobSchedule.getMax()))
         .name("Osaka");
   }
 
   private static ProtocolSpecBuilder addEOF(
-      final GenesisConfigOptions genesisConfigOptions,
       final Optional<BigInteger> chainId,
       final EvmConfiguration evmConfiguration,
       final ProtocolSpecBuilder protocolSpecBuilder) {
-
-    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
-
     return protocolSpecBuilder
         // EIP-7692 EOF v1 Gas calculator
         .gasCalculator(blobSchedule -> new EOFGasCalculator(blobSchedule.getTarget()))
-        .gasLimitCalculatorBuilder(
-            (feeMarket, gasCalculator, blobSchedule) ->
-                new OsakaTargetingGasLimitCalculator(
-                    londonForkBlockNumber,
-                    (BaseFeeMarket) feeMarket,
-                    gasCalculator,
-                    blobSchedule.getMax()))
         // EIP-7692 EOF v1 EVM and opcodes
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -983,7 +918,7 @@ public abstract class MainnetProtocolSpecs {
             .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
             .name("FutureEips");
 
-    return addEOF(genesisConfigOptions, chainId, evmConfiguration, protocolSpecBuilder);
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder);
   }
 
   static ProtocolSpecBuilder experimentalEipsDefinition(
@@ -1077,12 +1012,12 @@ public abstract class MainnetProtocolSpecs {
         final Blockchain blockchain,
         final MutableWorldState worldState,
         final Block block) {
-      return processBlock(
+      updateWorldStateForDao(worldState);
+      return wrapped.processBlock(
           protocolContext,
           blockchain,
           worldState,
           block,
-          Optional.empty(),
           new AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing());
     }
 
@@ -1092,16 +1027,10 @@ public abstract class MainnetProtocolSpecs {
         final Blockchain blockchain,
         final MutableWorldState worldState,
         final Block block,
-        final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
         final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
-          protocolContext,
-          blockchain,
-          worldState,
-          block,
-          privateMetadataUpdater,
-          preprocessingBlockFunction);
+          protocolContext, blockchain, worldState, block, preprocessingBlockFunction);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

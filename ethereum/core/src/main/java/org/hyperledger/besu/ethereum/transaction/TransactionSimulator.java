@@ -469,10 +469,9 @@ public class TransactionSimulator {
             blockHeaderToProcess,
             transaction,
             miningBeneficiary,
-            blockHashLookup,
-            false,
-            transactionValidationParams,
             operationTracer,
+            blockHashLookup,
+            transactionValidationParams,
             blobGasPrice);
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));

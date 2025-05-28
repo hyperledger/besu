@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -65,7 +64,6 @@ class ProtocolScheduleBuilderTest {
             configOptions,
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
@@ -187,24 +185,22 @@ class ProtocolScheduleBuilderTest {
 
   @Test
   void createProtocolScheduleOutOfOrderThrows() {
-    when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(0L));
     when(configOptions.getArrowGlacierBlockNumber()).thenReturn(OptionalLong.of(12L));
     when(configOptions.getGrayGlacierBlockNumber()).thenReturn(OptionalLong.of(11L));
     assertThatThrownBy(() -> builder.createProtocolSchedule())
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "Genesis Config Error: 'GrayGlacier' is scheduled for milestone 11 but it must be on or after milestone 12.");
+            "Genesis Config Error: 'GRAY_GLACIER' is scheduled for milestone 11 but it must be on or after milestone 12.");
   }
 
   @Test
   void createProtocolScheduleWithTimestampsOutOfOrderThrows() {
-    when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(0L));
     when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(3L));
     when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(2L));
     assertThatThrownBy(() -> builder.createProtocolSchedule())
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "Genesis Config Error: 'Cancun' is scheduled for milestone 2 but it must be on or after milestone 3.");
+            "Genesis Config Error: 'CANCUN' is scheduled for milestone 2 but it must be on or after milestone 3.");
   }
 
   @Test
@@ -267,7 +263,6 @@ class ProtocolScheduleBuilderTest {
             configOptions,
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(blockNumber, modifier),
-            new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
