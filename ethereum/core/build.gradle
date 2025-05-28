@@ -39,7 +39,6 @@ dependencies {
   implementation project(':config')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
-  implementation project(':enclave')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
   implementation project(':evm')
