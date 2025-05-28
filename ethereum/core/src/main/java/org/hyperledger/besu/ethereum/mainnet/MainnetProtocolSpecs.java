@@ -44,9 +44,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -156,18 +153,6 @@ public abstract class MainnetProtocolSpecs {
                     .feeMarket(FeeMarket.legacy())
                     .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
                     .build())
-        .privateTransactionProcessorBuilder(
-            (transactionValidatorFactory,
-                contractCreationProcessor,
-                messageCallProcessor,
-                privateTransactionValidator) ->
-                new PrivateTransactionProcessor(
-                    transactionValidatorFactory,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    false,
-                    evmConfiguration.evmStackSize(),
-                    new PrivateTransactionValidator(Optional.empty())))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
         .blockHeaderValidatorBuilder(
             (feeMarket, gasCalculator) -> MainnetBlockHeaderValidator.create())
@@ -341,19 +326,6 @@ public abstract class MainnetProtocolSpecs {
                 ? MainnetProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
                 : MainnetProtocolSpecs::byzantiumTransactionReceiptFactory)
         .blockReward(BYZANTIUM_BLOCK_REWARD)
-        .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(chainId))
-        .privateTransactionProcessorBuilder(
-            (transactionValidatorFactory,
-                contractCreationProcessor,
-                messageCallProcessor,
-                privateTransactionValidator) ->
-                new PrivateTransactionProcessor(
-                    transactionValidatorFactory,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    false,
-                    evmConfiguration.evmStackSize(),
-                    privateTransactionValidator))
         .name("Byzantium");
   }
 
@@ -1153,12 +1125,12 @@ public abstract class MainnetProtocolSpecs {
         final Blockchain blockchain,
         final MutableWorldState worldState,
         final Block block) {
-      return processBlock(
+      updateWorldStateForDao(worldState);
+      return wrapped.processBlock(
           protocolContext,
           blockchain,
           worldState,
           block,
-          Optional.empty(),
           new AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing());
     }
 
@@ -1168,16 +1140,10 @@ public abstract class MainnetProtocolSpecs {
         final Blockchain blockchain,
         final MutableWorldState worldState,
         final Block block,
-        final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
         final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
-          protocolContext,
-          blockchain,
-          worldState,
-          block,
-          privateMetadataUpdater,
-          preprocessingBlockFunction);
+          protocolContext, blockchain, worldState, block, preprocessingBlockFunction);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =
