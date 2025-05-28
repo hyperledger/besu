@@ -14,14 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.assertj.core.api.Assertions.fail;
-
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
-import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,30 +29,25 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.Bytes48;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
+/**
+ * A utility class for creating blobs and their associated cryptographic artifacts (KZG commitments,
+ * proofs, and versioned hashes) for testing purposes.
+ *
+ * <p>This class facilitates testing scenarios involving Ethereum's blob and KZG cryptographic
+ * primitives. It uses the CKZG4844JNI library to compute KZG commitments and proofs and provides
+ * methods to generate blobs and their associated data.
+ *
+ * <p>To ensure the required trusted setup is loaded, use the {@link
+ * org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension} in your test classes. This
+ * extension handles loading the native library and trusted setup automatically.
+ *
+ * @see org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension
+ */
 public class BlobTestFixture {
-
   private byte byteValue = 0x00;
-
-  public BlobTestFixture() {
-    try {
-      // optimistically tear down a potential previous loaded trusted setup
-      KZGPointEvalPrecompiledContract.tearDown();
-    } catch (Throwable ignore) {
-      // and ignore errors in case no trusted setup was already loaded
-    }
-    try {
-      CKZG4844JNI.loadNativeLibrary();
-      CKZG4844JNI.loadTrustedSetupFromResource(
-          "/kzg-trusted-setups/mainnet.txt", BlobTestFixture.class, 0);
-
-    } catch (Exception e) {
-      fail("Failed to compute commitment", e);
-    }
-  }
 
   record BlobTriplet(
       Blob blob, KZGCommitment kzgCommitment, KZGProof kzgProof, VersionedHash versionedHash) {}
-  ;
 
   public BlobTriplet createBlobTriplet() {
     byte[] rawMaterial = new byte[131072];

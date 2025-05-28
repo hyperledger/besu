@@ -2439,9 +2439,19 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void checkpointPostMergeShouldFailWhenGenesisUsesCheckpointFromPreMerge() {
+  public void checkpointPostMergeShouldFailWhenGenesisUsesCheckpointFromPreMerge()
+      throws IOException {
+    final String configText =
+        Resources.toString(
+            Resources.getResource("valid_pre_merge_checkpoint.json"), StandardCharsets.UTF_8);
+    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
     // using the default genesis which has a checkpoint sync block prior to the merge
-    parseCommand("--sync-mode", "CHECKPOINT", "--Xcheckpoint-post-merge-enabled");
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--sync-mode",
+        "CHECKPOINT",
+        "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
