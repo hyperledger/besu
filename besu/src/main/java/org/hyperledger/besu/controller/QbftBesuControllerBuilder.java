@@ -363,7 +363,6 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     return QbftProtocolScheduleBuilder.create(
         genesisConfigOptions,
         qbftForksSchedule,
-        privacyParameters,
         isRevertReasonEnabled,
         qbftExtraDataCodec,
         evmConfiguration,

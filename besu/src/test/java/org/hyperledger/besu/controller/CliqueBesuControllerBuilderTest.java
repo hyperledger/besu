@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -84,7 +83,6 @@ public class CliqueBesuControllerBuilderTest {
   @Mock private SynchronizerConfiguration synchronizerConfiguration;
   @Mock private EthProtocolConfiguration ethProtocolConfiguration;
   @Mock private CheckpointConfigOptions checkpointConfigOptions;
-  @Mock private PrivacyParameters privacyParameters;
   @Mock private Clock clock;
   @Mock private StorageProvider storageProvider;
   @Mock private WorldStatePreimageStorage worldStatePreimageStorage;
@@ -180,7 +178,6 @@ public class CliqueBesuControllerBuilderTest {
             .networkId(networkId)
             .miningParameters(miningConfiguration)
             .metricsSystem(observableMetricsSystem)
-            .privacyParameters(privacyParameters)
             .dataDirectory(tempDir)
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)
