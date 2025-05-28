@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 import static org.hyperledger.besu.evm.tracing.OperationTracer.NO_TRACING;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -937,30 +936,14 @@ public class TransactionSimulatorTest {
     }
 
     when(transactionProcessor.processTransaction(
-            any(),
-            any(),
-            eq(transaction),
-            any(),
-            any(),
-            anyBoolean(),
-            any(),
-            any(),
-            any(Wei.class)))
+            any(), any(), eq(transaction), any(), any(), any(), any(), any(Wei.class)))
         .thenReturn(result);
   }
 
   private void verifyTransactionWasProcessed(final Transaction expectedTransaction) {
     verify(transactionProcessor)
         .processTransaction(
-            any(),
-            any(),
-            eq(expectedTransaction),
-            any(),
-            any(),
-            anyBoolean(),
-            any(),
-            any(),
-            any(Wei.class));
+            any(), any(), eq(expectedTransaction), any(), any(), any(), any(), any(Wei.class));
   }
 
   private ImmutableCallParameter.Builder legacyTransactionCallParameterBuilder() {

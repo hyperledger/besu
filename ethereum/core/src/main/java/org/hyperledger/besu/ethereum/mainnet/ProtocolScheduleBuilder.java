@@ -18,11 +18,9 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinition;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinitions;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneType;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -47,7 +45,6 @@ public class ProtocolScheduleBuilder {
   private final GenesisConfigOptions config;
   private final Optional<BigInteger> defaultChainId;
   private final ProtocolSpecAdapters protocolSpecAdapters;
-  private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final EvmConfiguration evmConfiguration;
   private final BadBlockManager badBlockManager;
@@ -59,7 +56,6 @@ public class ProtocolScheduleBuilder {
       final GenesisConfigOptions config,
       final Optional<BigInteger> defaultChainId,
       final ProtocolSpecAdapters protocolSpecAdapters,
-      final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
@@ -68,7 +64,6 @@ public class ProtocolScheduleBuilder {
       final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
-    this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.evmConfiguration = evmConfiguration;
     this.defaultChainId = defaultChainId;
@@ -262,11 +257,7 @@ public class ProtocolScheduleBuilder {
       final ProtocolSchedule protocolSchedule,
       final ProtocolSpecBuilder definition,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
-    definition
-        .badBlocksManager(badBlockManager)
-        .privacyParameters(privacyParameters)
-        .privateTransactionValidatorBuilder(
-            () -> new PrivateTransactionValidator(protocolSchedule.getChainId()));
+    definition.badBlocksManager(badBlockManager);
 
     return modifier.apply(definition).build(protocolSchedule);
   }
