@@ -89,14 +89,9 @@ public class PathBasedExtraStorageOptions
   /** The unstable options for data storage. */
   public static class Unstable {
 
-    // TODO: --Xsnapsync-synchronizer-flat-db-healing-enabled is deprecated, remove it in a future
-    // release
     @Option(
         hidden = true,
-        names = {
-          "--Xbonsai-full-flat-db-enabled",
-          "--Xsnapsync-synchronizer-flat-db-healing-enabled"
-        },
+        names = {"--Xbonsai-full-flat-db-enabled"},
         arity = "1",
         description = "Enables bonsai full flat database strategy. (default: ${DEFAULT-VALUE})")
     private Boolean fullFlatDbEnabled = DEFAULT_FULL_FLAT_DB_ENABLED;
