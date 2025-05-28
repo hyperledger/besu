@@ -26,7 +26,12 @@ WORKDIR /opt/besu
 COPY --chown=besu:besu besu /opt/besu/
 # support for pyroscope
 ADD --chown=besu:besu https://github.com/grafana/pyroscope-java/releases/download/v2.1.2/pyroscope.jar /opt/besu/pyroscope/pyroscope.jar
-ADD --chown=besu:besu pyroscope.properties /etc/besu/pyroscope.properties
+COPY --chown=besu:besu pyroscope.properties /etc/besu/pyroscope.properties
+# https://grafana.com/docs/pyroscope/latest/configure-client/language-sdks/java/
+# override the config vars as needed.
+# eg: pyroscope.server.address becomes PYROSCOPE_SERVER_ADDRESS
+# Use `BESU_OPTS=-javaagent:/opt/besu/pyroscope/pyroscope.jar` to enable pyroscope
+ENV PYROSCOPE_CONFIGURATION_FILE=/etc/besu/pyroscope.properties
 
 # Expose services ports
 # 8545 HTTP JSON-RPC
@@ -42,13 +47,7 @@ ENV BESU_RPC_HTTP_HOST 0.0.0.0
 ENV BESU_RPC_WS_HOST 0.0.0.0
 ENV BESU_GRAPHQL_HTTP_HOST 0.0.0.0
 ENV BESU_PID_PATH "/tmp/pid"
-
 ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
-# https://grafana.com/docs/pyroscope/latest/configure-client/language-sdks/java/
-# override the config vars as needed.
-# eg: pyroscope.server.address becomes PYROSCOPE_SERVER_ADDRESS
-# Use `BESU_OPTS=-javaagent:/opt/besu/pyroscope/pyroscope.jar` to enable pyroscope
-ENV PYROSCOPE_CONFIGURATION_FILE=/etc/besu/pyroscope.properties
 
 ENV OLDPATH="${PATH}"
 ENV PATH="/opt/besu/bin:${OLDPATH}"

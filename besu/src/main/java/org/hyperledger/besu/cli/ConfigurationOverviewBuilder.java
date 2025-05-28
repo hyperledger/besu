@@ -62,6 +62,7 @@ public class ConfigurationOverviewBuilder {
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
+  private boolean isHistoryExpiryPruneEnabled = false;
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
 
   /**
@@ -317,6 +318,18 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets the history expiry prune enabled.
+   *
+   * @param isHistoryExpiryPruneEnabled the history expiry prune enabled
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setHistoryExpiryPruneEnabled(
+      final boolean isHistoryExpiryPruneEnabled) {
+    this.isHistoryExpiryPruneEnabled = isHistoryExpiryPruneEnabled;
+    return this;
+  }
+
+  /**
    * Sets the blob db settings.
    *
    * @param blobDBSettings the blob db settings
@@ -409,6 +422,10 @@ public class ConfigurationOverviewBuilder {
 
     if (isHighSpec) {
       lines.add("Experimental high spec configuration enabled");
+    }
+
+    if (isHistoryExpiryPruneEnabled) {
+      lines.add("History expiry prune enabled");
     }
 
     if (blobDBSettings != null && blobDBSettings.isBlockchainGarbageCollectionEnabled()) {
