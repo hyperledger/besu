@@ -16,8 +16,10 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
 import java.util.Optional;
 
@@ -66,6 +68,24 @@ class CancunTargetingGasLimitCalculatorTest {
     assertThat(cancunTargetingGasLimitCalculator.currentBlobGasLimit())
         .isEqualTo(blobGasPerBlob * maxBlobs);
     assertThat(cancunTargetingGasLimitCalculator.currentBlobGasLimit()).isEqualTo(2621440);
+  }
+
+  @Test
+  void shouldCalculateCorrectlyPragueBlobGasPerBlob() {
+    // should use PragueGasCalculator's blob gas per blob to calculate the gas limit
+    final long blobGasPerBlob = new PragueGasCalculator().getBlobGasPerBlob();
+    assertThat(blobGasPerBlob).isEqualTo(131072); // same as Cancun
+    int maxBlobs = 10;
+    var pragueTargetingGasLimitCalculator =
+        new CancunTargetingGasLimitCalculator(
+            0L,
+            FeeMarket.cancun(0L, Optional.empty(), BlobSchedule.PRAGUE_DEFAULT),
+            new PragueGasCalculator(),
+            maxBlobs);
+    // if maxBlobs = 10, then the gas limit would be 131072 * 10 = 1310720
+    assertThat(pragueTargetingGasLimitCalculator.currentBlobGasLimit())
+        .isEqualTo(blobGasPerBlob * maxBlobs);
+    assertThat(pragueTargetingGasLimitCalculator.currentBlobGasLimit()).isEqualTo(1310720);
   }
 
   private static class TestFutureGasCalculator extends CancunGasCalculator {

@@ -88,8 +88,8 @@ public class CombinedProtocolScheduleFactoryTest {
   public void createsCombinedProtocolScheduleWithMilestonesFromMultipleSchedules() {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.homesteadBlock(5L);
-    genesisConfigOptions.constantinopleBlock(10L);
-    genesisConfigOptions.byzantiumBlock(105L);
+    genesisConfigOptions.constantinopleBlock(105L);
+    genesisConfigOptions.byzantiumBlock(10L);
     genesisConfigOptions.berlinBlock(110L);
     genesisConfigOptions.londonBlock(220L);
     genesisConfigOptions.shanghaiTime(1000000050L);
@@ -121,19 +121,19 @@ public class CombinedProtocolScheduleFactoryTest {
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(5L, 0L))
         .isSameAs(protocolSchedule1.getByBlockNumberOrTimestamp(5L, 0L));
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L).getName())
-        .isEqualTo("Constantinople");
+        .isEqualTo("Byzantium");
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L))
         .isSameAs(protocolSchedule1.getByBlockNumberOrTimestamp(10L, 0L));
 
     // consensus schedule 2 migration block
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(100L, 0L).getName())
-        .isEqualTo("Constantinople");
+        .isEqualTo("Byzantium");
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(100L, 0L))
         .isSameAs(protocolSchedule2.getByBlockNumberOrTimestamp(10L, 0L));
 
     // consensus schedule 2
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(105L, 0L).getName())
-        .isEqualTo("Byzantium");
+        .isEqualTo("Constantinople");
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(105L, 0L))
         .isSameAs(protocolSchedule2.getByBlockNumberOrTimestamp(105L, 0L));
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(110L, 0L).getName())

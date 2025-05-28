@@ -87,6 +87,7 @@ public class EthCreateAccessListTest {
     when(blockchainQueries.getBlockHeaderByNumber(1L))
         .thenReturn(Optional.of(finalizedBlockHeader));
     when(blockchainQueries.getMinimumTransactionCost(any())).thenReturn(MIN_TX_GAS_COST);
+    when(blockchainQueries.accountBalance(any(), any())).thenReturn(Optional.of(Wei.MAX_WEI));
     when(genesisBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(genesisBlockHeader.getNumber()).thenReturn(0L);
     when(finalizedBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
@@ -398,7 +399,7 @@ public class EthCreateAccessListTest {
         .gasPrice(gasPrice)
         .value(Wei.ZERO)
         .input(Bytes.EMPTY)
-        .strict(false)
+        .strict(true)
         .build();
   }
 
