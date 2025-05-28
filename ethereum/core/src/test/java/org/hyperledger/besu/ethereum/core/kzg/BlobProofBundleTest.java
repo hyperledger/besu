@@ -23,13 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
+import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
-import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
