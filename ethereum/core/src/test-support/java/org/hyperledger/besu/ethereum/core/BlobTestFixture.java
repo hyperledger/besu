@@ -15,7 +15,10 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.fail;
+import static org.hyperledger.besu.ethereum.core.kzg.KzgHelper.computeBlobKzgProof;
+import static org.hyperledger.besu.ethereum.core.kzg.KzgHelper.computeBlobKzgProofs;
 
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
@@ -54,21 +57,19 @@ public class BlobTestFixture {
     }
   }
 
-  public BlobProofBundle createBlobProofBundleVersion0() {
+  public BlobProofBundle createBlobProofBundle(final BlobType blobType) {
     byte[] rawMaterial = new byte[131072];
     rawMaterial[0] = byteValue++;
-
     Bytes48 commitment = Bytes48.wrap(CKZG4844JNI.blobToKzgCommitment(rawMaterial));
-
-    Bytes48 proof =
-        Bytes48.wrap(CKZG4844JNI.computeBlobKzgProof(rawMaterial, commitment.toArray()));
-    VersionedHash versionedHash = hashCommitment(new KZGCommitment(commitment));
+    Blob blob = new Blob(Bytes.wrap(rawMaterial));
+    KZGCommitment kzgCommitment = new KZGCommitment(commitment);
+    List<KZGProof> proofs =
+        switch (blobType) {
+          case KZG_PROOF -> List.of(computeBlobKzgProof(blob, kzgCommitment));
+          case KZG_CELL_PROOFS -> computeBlobKzgProofs(blob);
+        };
     return new BlobProofBundle(
-        BlobProofBundle.VERSION_0_KZG_PROOFS,
-        new Blob(Bytes.wrap(rawMaterial)),
-        new KZGCommitment(commitment),
-        List.of(new KZGProof(proof)),
-        versionedHash);
+        blobType, blob, kzgCommitment, proofs, hashCommitment(new KZGCommitment(commitment)));
   }
 
   public BlobsWithCommitments createBlobsWithCommitments(final int blobCount) {
@@ -77,14 +78,14 @@ public class BlobTestFixture {
     List<KZGProof> proofs = new ArrayList<>();
     List<VersionedHash> versionedHashes = new ArrayList<>();
     for (int i = 0; i < blobCount; i++) {
-      BlobProofBundle blobProofBundle = createBlobProofBundleVersion0();
+      BlobProofBundle blobProofBundle = createBlobProofBundle(BlobType.KZG_PROOF);
       blobs.add(blobProofBundle.getBlob());
       commitments.add(blobProofBundle.getKzgCommitment());
       proofs.addAll(blobProofBundle.getKzgProof());
       versionedHashes.add(blobProofBundle.getVersionedHash());
     }
     return new BlobsWithCommitments(
-        BlobProofBundle.VERSION_0_KZG_PROOFS, commitments, blobs, proofs, versionedHashes);
+        BlobType.KZG_PROOF, commitments, blobs, proofs, versionedHashes);
   }
 
   private VersionedHash hashCommitment(final KZGCommitment commitment) {

@@ -23,6 +23,7 @@ import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
@@ -760,7 +760,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559,
                         TransactionType.BLOB),
-                    Set.of(BlobProofBundle.VERSION_0_KZG_PROOFS),
+                    Set.of(BlobType.KZG_PROOF),
                     evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::blobAwareBlockHeaderValidator)
@@ -842,7 +842,7 @@ public abstract class MainnetProtocolSpecs {
                             TransactionType.EIP1559,
                             TransactionType.BLOB,
                             TransactionType.DELEGATE_CODE),
-                        Set.of(BlobProofBundle.VERSION_0_KZG_PROOFS),
+                        Set.of(BlobType.KZG_PROOF),
                         evm.getMaxInitcodeSize()))
             // CodeDelegationProcessor
             .transactionProcessorBuilder(
@@ -918,7 +918,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.EIP1559,
                         TransactionType.BLOB,
                         TransactionType.DELEGATE_CODE),
-                    Set.of(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS),
+                    Set.of(BlobType.KZG_CELL_PROOFS),
                     evm.getMaxInitcodeSize()))
         .transactionPoolPreProcessor(new OsakaTransactionPoolPreProcessor())
         .name("Osaka");

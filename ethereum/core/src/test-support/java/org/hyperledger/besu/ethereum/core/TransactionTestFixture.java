@@ -102,7 +102,7 @@ public class TransactionTestFixture {
         builder.maxFeePerBlobGas(maxFeePerBlobGas.orElse(Wei.ONE));
         if (blobs.isPresent()) {
           builder.kzgBlobs(
-              blobs.get().getVersionId(),
+              blobs.get().getBlobType(),
               blobs.get().getKzgCommitments(),
               blobs.get().getBlobs(),
               blobs.get().getKzgProofs());

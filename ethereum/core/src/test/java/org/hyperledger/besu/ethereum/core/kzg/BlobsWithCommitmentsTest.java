@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.core.kzg;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.hyperledger.besu.datatypes.BlobType;
+
 import java.security.InvalidParameterException;
 import java.util.List;
 
@@ -30,11 +32,7 @@ public class BlobsWithCommitmentsTest {
                 InvalidParameterException.class,
                 () ->
                     new BlobsWithCommitments(
-                        BlobProofBundle.VERSION_0_KZG_PROOFS,
-                        List.of(),
-                        List.of(),
-                        List.of(),
-                        List.of()))
+                        BlobType.KZG_PROOF, List.of(), List.of(), List.of(), List.of()))
             .getMessage();
     final String expectedMessage =
         "There needs to be a minimum of one blob in a blob transaction with commitments";

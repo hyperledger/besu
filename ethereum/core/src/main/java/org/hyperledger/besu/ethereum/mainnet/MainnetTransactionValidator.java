@@ -20,6 +20,7 @@ import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDe
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -69,7 +70,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
-      final Set<Integer> acceptedBlobVersions,
+      final Set<BlobType> acceptedBlobVersions,
       final int maxInitcodeSize) {
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;

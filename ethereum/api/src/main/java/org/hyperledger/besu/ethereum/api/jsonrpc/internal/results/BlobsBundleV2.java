@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
-import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
@@ -101,20 +101,20 @@ public class BlobsBundleV2 {
   @SuppressWarnings("UnusedVariable")
   private BlobsWithCommitments mapBlobWithCommitments(
       final BlobsWithCommitments blobsWithCommitments) {
-    if (blobsWithCommitments.getVersionId() == BlobProofBundle.VERSION_1_KZG_CELL_PROOFS) {
+    if (blobsWithCommitments.getBlobType() == BlobType.KZG_CELL_PROOFS) {
       return blobsWithCommitments;
     }
     LOG.info(
         "BlobProofBundle {} versionId is 0. Converting to version {}",
         blobsWithCommitments.getVersionedHashes(),
-        BlobProofBundle.VERSION_1_KZG_CELL_PROOFS);
+        BlobType.KZG_CELL_PROOFS);
     List<KZGProof> kzgCellProofs = new ArrayList<>();
     for (Blob blob : blobsWithCommitments.getBlobs()) {
       CellsAndProofs cellProofs = CKZG4844JNI.computeCellsAndKzgProofs(blob.getData().toArray());
       kzgCellProofs.addAll(extractKZGProofs(cellProofs.getProofs()));
     }
     return new BlobsWithCommitments(
-        BlobProofBundle.VERSION_1_KZG_CELL_PROOFS,
+        BlobType.KZG_CELL_PROOFS,
         blobsWithCommitments.getKzgCommitments(),
         blobsWithCommitments.getBlobs(),
         kzgCellProofs,

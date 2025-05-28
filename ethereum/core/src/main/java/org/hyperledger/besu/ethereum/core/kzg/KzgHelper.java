@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.kzg;
 
-import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.VERSION_0_KZG_PROOFS;
-import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.VERSION_1_KZG_CELL_PROOFS;
+import org.hyperledger.besu.datatypes.BlobType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +34,7 @@ public class KzgHelper {
    */
   public static BlobsWithCommitments convertToVersion1(
       final BlobsWithCommitments blobsWithCommitments) {
-    if (blobsWithCommitments.getVersionId() == VERSION_1_KZG_CELL_PROOFS) {
+    if (blobsWithCommitments.getBlobType() == BlobType.KZG_CELL_PROOFS) {
       return blobsWithCommitments;
     }
     // Check if the blobs with commitments are valid for conversion
@@ -52,6 +51,12 @@ public class KzgHelper {
     return new BlobsWithCommitments(version1Bundles);
   }
 
+  /**
+   * Extracts KZG proofs from the given byte array.
+   *
+   * @param input the byte array containing KZG proofs.
+   * @return a list of KZGProof objects extracted from the input.
+   */
   private static List<KZGProof> extractKZGProofs(final byte[] input) {
     List<KZGProof> chunks = new ArrayList<>();
     int chunkSize = Bytes48.SIZE;
@@ -64,38 +69,71 @@ public class KzgHelper {
     return chunks;
   }
 
+  /**
+   * Converts the given BlobProofBundle to version 1 without validating proof.
+   *
+   * @param bundle the BlobProofBundle to convert.
+   * @return a new BlobProofBundle instance with version 1 and updated proofs.
+   */
   public static BlobProofBundle unsafeConvertToVersion1(final BlobProofBundle bundle) {
-    if (bundle.getVersionId() == VERSION_1_KZG_CELL_PROOFS) {
+    if (bundle.getBlobType() == BlobType.KZG_CELL_PROOFS) {
       return bundle;
     }
-    CellsAndProofs cellProofs =
-        CKZG4844JNI.computeCellsAndKzgProofs(bundle.getBlob().getData().toArray());
-    List<KZGProof> kzgCellProofs = extractKZGProofs(cellProofs.getProofs());
+    List<KZGProof> kzgCellProofs = computeBlobKzgProofs(bundle.getBlob());
     return new BlobProofBundle(
-        VERSION_1_KZG_CELL_PROOFS,
+        BlobType.KZG_CELL_PROOFS,
         bundle.getBlob(),
         bundle.getKzgCommitment(),
         kzgCellProofs,
         bundle.getVersionedHash());
   }
 
+  /**
+   * Computes a KZG proof for the given Blob and KZG commitment.
+   *
+   * @param blob the Blob for which to compute the KZG proof.
+   * @param commitment the KZG commitment to use for the proof.
+   * @return a KZGProof object computed from the Blob and KZG commitment.
+   */
+  public static KZGProof computeBlobKzgProof(final Blob blob, final KZGCommitment commitment) {
+    Bytes48 proof =
+        Bytes48.wrap(
+            CKZG4844JNI.computeBlobKzgProof(
+                blob.getData().toArrayUnsafe(), commitment.getData().toArrayUnsafe()));
+    return new KZGProof(proof);
+  }
+
+  /**
+   * Computes KZG proofs for the given Blob.
+   *
+   * @param blob the Blob for which to compute KZG proofs.
+   * @return a list of KZGProof objects computed from the Blob.
+   */
+  public static List<KZGProof> computeBlobKzgProofs(final Blob blob) {
+    CellsAndProofs cellProofs = CKZG4844JNI.computeCellsAndKzgProofs(blob.getData().toArray());
+    return extractKZGProofs(cellProofs.getProofs());
+  }
+
+  /**
+   * Verifies the KZG proofs in the given BlobsWithCommitments.
+   *
+   * @param blobsWithCommitments the BlobsWithCommitments to verify.
+   * @return true if the KZG proofs are valid, false otherwise.
+   */
   public static boolean verify4844Kzg(final BlobsWithCommitments blobsWithCommitments) {
-    return switch (blobsWithCommitments.getVersionId()) {
-      case VERSION_0_KZG_PROOFS ->
+    return switch (blobsWithCommitments.getBlobType()) {
+      case BlobType.KZG_PROOF ->
           CKZG4844JNI.verifyBlobKzgProofBatch(
               blobsWithCommitments.getBlobsByteArray(),
               blobsWithCommitments.getKzgCommitmentsByteArray(),
               blobsWithCommitments.getKzgProofsByteArray(),
               blobsWithCommitments.getBlobProofBundles().size());
-      case VERSION_1_KZG_CELL_PROOFS ->
+      case KZG_CELL_PROOFS ->
           CKZG4844JNI.verifyCellKzgProofBatch(
               blobsWithCommitments.getKzgCommitmentsByteArray(),
               blobsWithCommitments.getCellIndexes(),
               blobsWithCommitments.getBlobCellsByteArray(),
               blobsWithCommitments.getKzgProofsByteArray());
-      default ->
-          throw new IllegalArgumentException(
-              "Unsupported blob version: " + blobsWithCommitments.getVersionId());
     };
   }
 }

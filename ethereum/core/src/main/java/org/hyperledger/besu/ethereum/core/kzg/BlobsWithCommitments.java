@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.core.kzg;
 
 import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.CELL_PROOFS_PER_BLOB;
-import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.VERSION_0_KZG_PROOFS;
-import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.VERSION_1_KZG_CELL_PROOFS;
 
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 
 import java.security.InvalidParameterException;
@@ -31,12 +30,12 @@ import org.apache.tuweni.bytes.Bytes;
 public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.BlobsWithCommitments {
 
   private final List<BlobProofBundle> blobProofBundles;
-  private final int versionId;
+  private final BlobType blobType;
 
   /**
    * Constructs a {@link BlobsWithCommitments} instance.
    *
-   * @param versionId version ID for the sidecar.
+   * @param blobType blobType for the sidecar.
    * @param kzgCommitments commitments for the blobs.
    * @param blobs list of blobs to be committed to.
    * @param kzgProofs proofs for the commitments.
@@ -44,15 +43,15 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
    * @throws InvalidParameterException if the input parameters are invalid.
    */
   public BlobsWithCommitments(
-      final int versionId,
+      final BlobType blobType,
       final List<KZGCommitment> kzgCommitments,
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
       final List<VersionedHash> versionedHashes) {
-    validateInputParameters(versionId, kzgCommitments, blobs, kzgProofs, versionedHashes);
+    validateInputParameters(blobType, kzgCommitments, blobs, kzgProofs, versionedHashes);
     this.blobProofBundles =
-        buildBlobProofBundles(versionId, kzgCommitments, blobs, kzgProofs, versionedHashes);
-    this.versionId = versionId;
+        buildBlobProofBundles(blobType, kzgCommitments, blobs, kzgProofs, versionedHashes);
+    this.blobType = blobType;
   }
 
   /**
@@ -62,11 +61,11 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
    */
   public BlobsWithCommitments(final List<BlobProofBundle> blobProofBundles) {
     this.blobProofBundles = blobProofBundles;
-    this.versionId = blobProofBundles.get(0).getVersionId();
+    this.blobType = blobProofBundles.get(0).getBlobType();
   }
 
   private static void validateInputParameters(
-      final int versionId,
+      final BlobType blobType,
       final List<KZGCommitment> kzgCommitments,
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
@@ -87,20 +86,20 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
               "Invalid number of versionedHashes, expected %s, got %s",
               blobs.size(), versionedHashes.size()));
     }
-    validateProofs(versionId, blobs.size(), kzgProofs);
+    validateProofs(blobType, blobs.size(), kzgProofs);
   }
 
   private static void validateProofs(
-      final int versionId, final int blobCount, final List<KZGProof> kzgProofs) {
-    switch (versionId) {
-      case VERSION_0_KZG_PROOFS:
+      final BlobType blobType, final int blobCount, final List<KZGProof> kzgProofs) {
+    switch (blobType) {
+      case BlobType.KZG_PROOF:
         if (blobCount != kzgProofs.size()) {
           throw new InvalidParameterException(
               String.format(
                   "Invalid number of kzgProofs, expected %s, got %s", blobCount, kzgProofs.size()));
         }
         break;
-      case VERSION_1_KZG_CELL_PROOFS:
+      case KZG_CELL_PROOFS:
         int expectedCellProofsTotal = CELL_PROOFS_PER_BLOB * blobCount;
         if (kzgProofs.size() != expectedCellProofsTotal) {
           throw new InvalidParameterException(
@@ -115,7 +114,7 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
   }
 
   private static List<BlobProofBundle> buildBlobProofBundles(
-      final int versionId,
+      final BlobType blobType,
       final List<KZGCommitment> kzgCommitments,
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
@@ -123,14 +122,13 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
     List<BlobProofBundle> bundles = new ArrayList<>(blobs.size());
     for (int i = 0; i < blobs.size(); i++) {
       List<KZGProof> kzgProofsForBlob =
-          switch (versionId) {
-            case VERSION_0_KZG_PROOFS -> List.of(kzgProofs.get(i));
-            case VERSION_1_KZG_CELL_PROOFS -> extractCellProofs(kzgProofs, i);
-            default -> throw new InvalidParameterException("Invalid kzg version");
+          switch (blobType) {
+            case BlobType.KZG_PROOF -> List.of(kzgProofs.get(i));
+            case KZG_CELL_PROOFS -> extractCellProofs(kzgProofs, i);
           };
       bundles.add(
           new BlobProofBundle(
-              versionId,
+              blobType,
               blobs.get(i),
               kzgCommitments.get(i),
               kzgProofsForBlob,
@@ -189,13 +187,13 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
   }
 
   /**
-   * Get the version ID.
+   * Get the BlobType
    *
-   * @return the version ID
+   * @return the type of the blobs
    */
   @Override
-  public int getVersionId() {
-    return versionId;
+  public BlobType getBlobType() {
+    return blobType;
   }
 
   /**
@@ -235,7 +233,7 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
    */
   byte[] getKzgCommitmentsByteArray() {
     List<KZGCommitment> commitments =
-        (versionId == VERSION_1_KZG_CELL_PROOFS)
+        (blobType == BlobType.KZG_CELL_PROOFS)
             ? extendCommitments(getKzgCommitments())
             : getKzgCommitments();
     return Bytes.wrap(commitments.stream().map(kc -> (Bytes) kc.getData()).toList())
@@ -290,11 +288,11 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     BlobsWithCommitments that = (BlobsWithCommitments) o;
-    return versionId == that.versionId && Objects.equals(blobProofBundles, that.blobProofBundles);
+    return blobType == that.blobType && Objects.equals(blobProofBundles, that.blobProofBundles);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(blobProofBundles, versionId);
+    return Objects.hash(blobProofBundles, blobType);
   }
 }

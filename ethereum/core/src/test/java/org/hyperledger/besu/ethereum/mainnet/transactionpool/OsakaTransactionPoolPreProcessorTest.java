@@ -19,9 +19,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.kzg.KzgHelper;
 
@@ -71,8 +71,7 @@ class OsakaTransactionPoolPreProcessorTest {
   @Test
   void shouldReturnOriginalIfBlobsAreNotVersion0() {
     BlobsWithCommitments blobs = mock(BlobsWithCommitments.class);
-    when(blobs.getVersionId())
-        .thenReturn(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS); // Not version 0
+    when(blobs.getBlobType()).thenReturn(BlobType.KZG_CELL_PROOFS); // Not version 0
     when(mockTransactionType.supportsBlob()).thenReturn(true);
     when(mockTransaction.getBlobsWithCommitments()).thenReturn(Optional.of(blobs));
 
@@ -86,7 +85,7 @@ class OsakaTransactionPoolPreProcessorTest {
     BlobsWithCommitments upgradedBlobs = mock(BlobsWithCommitments.class);
     Transaction upgradedTransaction = mock(Transaction.class);
 
-    when(version0Blobs.getVersionId()).thenReturn(BlobProofBundle.VERSION_0_KZG_PROOFS);
+    when(version0Blobs.getBlobType()).thenReturn(BlobType.KZG_PROOF);
     when(mockTransactionType.supportsBlob()).thenReturn(true);
     when(mockTransaction.getBlobsWithCommitments()).thenReturn(Optional.of(version0Blobs));
 

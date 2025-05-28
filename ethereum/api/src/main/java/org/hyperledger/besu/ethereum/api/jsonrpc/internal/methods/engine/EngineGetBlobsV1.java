@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -109,7 +110,7 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
     if (bq == null) {
       return null;
     }
-    if (bq.getVersionId() != BlobProofBundle.VERSION_0_KZG_PROOFS) {
+    if (bq.getBlobType() != BlobType.KZG_PROOF) {
       return null;
     }
     return new BlobAndProofV1(

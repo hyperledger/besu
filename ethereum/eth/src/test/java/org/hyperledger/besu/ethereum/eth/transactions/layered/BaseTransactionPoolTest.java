@@ -16,13 +16,13 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.TransactionTestFixture.createSignedCodeDelegation;
-import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.VERSION_0_KZG_PROOFS;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -113,7 +113,7 @@ public class BaseTransactionPoolTest {
         Wei.of(5000L).multiply(gasFeeMultiplier).divide(10),
         0,
         blobCount,
-        VERSION_0_KZG_PROOFS,
+        BlobType.KZG_PROOF,
         null,
         keys);
   }
@@ -147,7 +147,7 @@ public class BaseTransactionPoolTest {
             maxGasPrice.divide(10),
             0,
             1,
-            VERSION_0_KZG_PROOFS,
+            BlobType.KZG_PROOF,
             null,
             keys);
     final int payloadSize = txSize - baseTx.getSize();
@@ -159,7 +159,7 @@ public class BaseTransactionPoolTest {
         maxGasPrice.divide(10),
         payloadSize,
         1,
-        VERSION_0_KZG_PROOFS,
+        BlobType.KZG_PROOF,
         null,
         keys);
   }
@@ -174,7 +174,15 @@ public class BaseTransactionPoolTest {
           createTransaction(txType, nonce, maxGasPrice, payloadSize, null, keys);
       case BLOB ->
           createTransaction(
-              txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, 0, null, keys);
+              txType,
+              nonce,
+              maxGasPrice,
+              maxGasPrice.divide(10),
+              payloadSize,
+              1,
+              BlobType.KZG_PROOF,
+              null,
+              keys);
       case DELEGATE_CODE ->
           createTransaction(
               txType, nonce, maxGasPrice, payloadSize, List.of(CODE_DELEGATION_SENDER_1), keys);
@@ -195,7 +203,7 @@ public class BaseTransactionPoolTest {
         maxGasPrice.divide(10),
         payloadSize,
         0,
-        VERSION_0_KZG_PROOFS,
+        BlobType.KZG_PROOF,
         codeDelegations,
         keys);
   }
@@ -207,7 +215,7 @@ public class BaseTransactionPoolTest {
       final Wei maxPriorityFeePerGas,
       final int payloadSize,
       final int blobCount,
-      final int blobVersionId,
+      final BlobType blobType,
       final List<CodeDelegation> codeDelegations,
       final KeyPair keys) {
     return prepareTransaction(
@@ -217,7 +225,7 @@ public class BaseTransactionPoolTest {
             maxPriorityFeePerGas,
             payloadSize,
             blobCount,
-            blobVersionId,
+            blobType,
             codeDelegations)
         .createTransaction(keys);
   }
@@ -229,7 +237,7 @@ public class BaseTransactionPoolTest {
       final Wei maxPriorityFeePerGas,
       final int payloadSize,
       final int blobCount,
-      final int blobVersionId,
+      final BlobType blobType,
       final List<CodeDelegation> codeDelegations) {
 
     var tx =
@@ -256,7 +264,7 @@ public class BaseTransactionPoolTest {
                 .mapToObj(i -> new KZGCommitment(Bytes48.random()))
                 .toList();
         int totalKzgProofs =
-            blobVersionId == VERSION_0_KZG_PROOFS
+            blobType == BlobType.KZG_PROOF
                 ? blobCount
                 : blobCount * BlobProofBundle.CELL_PROOFS_PER_BLOB;
         final List<KZGProof> kzgProofs =
@@ -267,8 +275,7 @@ public class BaseTransactionPoolTest {
             IntStream.range(0, blobCount).mapToObj(i -> new Blob(Bytes.random(32 * 4096))).toList();
         tx.versionedHashes(Optional.of(versionHashes));
         final var blobsWithCommitments =
-            new BlobsWithCommitments(
-                blobVersionId, kgzCommitments, blobs, kzgProofs, versionHashes);
+            new BlobsWithCommitments(blobType, kgzCommitments, blobs, kzgProofs, versionHashes);
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
       } else if (type.supportsDelegateCode()) {
         tx.codeDelegations(codeDelegations);
@@ -290,8 +297,8 @@ public class BaseTransactionPoolTest {
         1,
         originalTransaction
             .getBlobsWithCommitments()
-            .map(BlobsWithCommitments::getVersionId)
-            .orElse(0),
+            .map(BlobsWithCommitments::getBlobType)
+            .orElse(BlobType.KZG_PROOF),
         originalTransaction.getCodeDelegationList().orElse(null),
         keys);
   }

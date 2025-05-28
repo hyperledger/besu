@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.ethereum.core.kzg.KzgHelper.verify4844Kzg;
 
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
@@ -29,9 +30,9 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
 public class MainnetBlobsValidator {
-  final Set<Integer> acceptedBlobVersions;
+  final Set<BlobType> acceptedBlobVersions;
 
-  public MainnetBlobsValidator(final Set<Integer> acceptedBlobVersions) {
+  public MainnetBlobsValidator(final Set<BlobType> acceptedBlobVersions) {
     this.acceptedBlobVersions = acceptedBlobVersions;
   }
 
@@ -44,7 +45,7 @@ public class MainnetBlobsValidator {
           "transaction blobs are empty, cannot verify without blobs");
     }
     BlobsWithCommitments blobsWithCommitments = transaction.getBlobsWithCommitments().get();
-    if (!acceptedBlobVersions.contains(blobsWithCommitments.getVersionId())) {
+    if (!acceptedBlobVersions.contains(blobsWithCommitments.getBlobType())) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS, "invalid blob version");
     }

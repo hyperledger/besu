@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.transactionpool;
 
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.core.kzg.KzgHelper;
 
 import java.util.Optional;
@@ -57,7 +57,7 @@ public class OsakaTransactionPoolPreProcessor implements TransactionPoolPreProce
         && transaction.getType().supportsBlob()
         && transaction
             .getBlobsWithCommitments()
-            .map(bwc -> bwc.getVersionId() == BlobProofBundle.VERSION_0_KZG_PROOFS)
+            .map(bwc -> bwc.getBlobType() == BlobType.KZG_PROOF)
             .orElse(false);
   }
 

@@ -28,6 +28,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvalua
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
-import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
@@ -208,11 +208,7 @@ class BlobSizeTransactionSelectorTest {
         tx.versionedHashes(Optional.of(versionHashes));
         final var blobsWithCommitments =
             new BlobsWithCommitments(
-                BlobProofBundle.VERSION_0_KZG_PROOFS,
-                kgzCommitments,
-                blobs,
-                kzgProofs,
-                versionHashes);
+                BlobType.KZG_PROOF, kgzCommitments, blobs, kzgProofs, versionHashes);
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
       } else {
         fail("At least 1 blob is required for blob tx type");

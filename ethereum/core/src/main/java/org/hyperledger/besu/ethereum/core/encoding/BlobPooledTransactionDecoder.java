@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
@@ -53,8 +54,8 @@ public class BlobPooledTransactionDecoder {
     List<Blob> blobs = input.readList(Blob::readFrom);
     List<KZGCommitment> commitments = input.readList(KZGCommitment::readFrom);
     List<KZGProof> proofs = input.readList(KZGProof::readFrom);
-
     input.leaveList();
-    return builder.kzgBlobs(versionId, commitments, blobs, proofs).build();
+
+    return builder.kzgBlobs(BlobType.of(versionId), commitments, blobs, proofs).build();
   }
 }

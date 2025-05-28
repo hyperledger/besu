@@ -20,11 +20,11 @@ import java.util.List;
 public interface BlobsWithCommitments {
 
   /**
-   * Get the version ID.
+   * Get the blob type.
    *
-   * @return the version ID
+   * @return the blob type
    */
-  int getVersionId();
+  BlobType getBlobType();
 
   /**
    * Get the blobs.
