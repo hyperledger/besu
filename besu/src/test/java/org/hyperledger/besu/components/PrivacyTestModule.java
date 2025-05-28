@@ -16,6 +16,7 @@ package org.hyperledger.besu.components;
 
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_ENABLE_READ_CACHE_FOR_SNAPSHOTS;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
@@ -103,6 +104,7 @@ public class PrivacyTestModule {
                             DEFAULT_BACKGROUND_THREAD_COUNT,
                             DEFAULT_CACHE_CAPACITY,
                             DEFAULT_IS_HIGH_SPEC,
+                            DEFAULT_ENABLE_READ_CACHE_FOR_SNAPSHOTS,
                             false,
                             Optional.empty(),
                             Optional.empty()),
