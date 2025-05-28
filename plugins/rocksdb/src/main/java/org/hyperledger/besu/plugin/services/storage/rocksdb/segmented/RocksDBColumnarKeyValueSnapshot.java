@@ -105,7 +105,7 @@ public class RocksDBColumnarKeyValueSnapshot
     throwIfClosed();
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
       final ColumnFamilyHandle handle = columnFamilyMapper.apply(segment);
-      if (isReadCacheEnabledForSnapshots) {
+      if (isReadCacheEnabledForSnapshots && segment.isEligibleToHighSpecFlag()) {
         return getFromCacheOrRead(segment.getId(), key, handle, maybeCache.get());
       } else {
         return Optional.ofNullable(snapshot.get(handle, readOptions, key));
