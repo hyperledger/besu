@@ -40,6 +40,7 @@ public class RocksDBConfiguration {
    * @param cacheCapacity the cache capacity
    * @param label the label
    * @param isHighSpec the is high spec
+   * @param enableReadCacheForSnapshots whether read caching is enabled for snapshots
    * @param isBlockchainGarbageCollectionEnabled the garbage collection enabled for the BLOCKCHAIN
    *     column family
    * @param blobGarbageCollectionAgeCutoff the blob garbage collection age cutoff

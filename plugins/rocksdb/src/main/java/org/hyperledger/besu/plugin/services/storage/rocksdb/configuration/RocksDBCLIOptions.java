@@ -108,7 +108,7 @@ public class RocksDBCLIOptions {
       hidden = true,
       paramLabel = "<BOOLEAN>",
       description =
-          "Enable caching of reads during snapshot access to improve performance on repeated eth_call and state inspection (default: ${DEFAULT-VALUE})")
+          "Enable caching of reads during snapshot access to improve performance (default: ${DEFAULT-VALUE})")
   boolean enableReadCacheForSnapshots;
 
   /** The Blob blockchain garbage collection enabled. */
