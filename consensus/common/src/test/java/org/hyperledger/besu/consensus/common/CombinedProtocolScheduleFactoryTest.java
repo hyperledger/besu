@@ -22,7 +22,6 @@ import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -174,7 +173,6 @@ public class CombinedProtocolScheduleFactoryTest {
             genesisConfigOptions,
             Optional.of(BigInteger.ONE),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
