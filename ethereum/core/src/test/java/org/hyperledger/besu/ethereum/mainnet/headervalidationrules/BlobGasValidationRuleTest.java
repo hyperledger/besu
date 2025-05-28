@@ -20,8 +20,11 @@ import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
+
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +33,6 @@ import org.junit.jupiter.api.Test;
 public class BlobGasValidationRuleTest {
 
   private CancunGasCalculator cancunGasCalculator;
-  private CancunTargetingGasLimitCalculator cancunTargetingGasLimitCalculator;
   private BlobGasValidationRule cancunBlobGasValidationRule;
 
   private PragueGasCalculator pragueGasCalculator;
@@ -39,12 +41,18 @@ public class BlobGasValidationRuleTest {
   @BeforeEach
   public void setUp() {
     cancunGasCalculator = new CancunGasCalculator();
+    final CancunTargetingGasLimitCalculator cancunTargetingGasLimitCalculator =
+        new CancunTargetingGasLimitCalculator(
+            0L, FeeMarket.cancunDefault(0L, Optional.empty()), cancunGasCalculator);
     cancunBlobGasValidationRule =
         new BlobGasValidationRule(cancunGasCalculator, cancunTargetingGasLimitCalculator);
 
     pragueGasCalculator = new PragueGasCalculator();
+    final CancunTargetingGasLimitCalculator pragueGasLimitCalculator =
+        new CancunTargetingGasLimitCalculator(
+            0L, FeeMarket.cancunDefault(0L, Optional.empty()), pragueGasCalculator);
     pragueBlobGasValidationRule =
-        new BlobGasValidationRule(pragueGasCalculator, cancunTargetingGasLimitCalculator);
+        new BlobGasValidationRule(pragueGasCalculator, pragueGasLimitCalculator);
   }
 
   /**
