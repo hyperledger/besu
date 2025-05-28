@@ -23,6 +23,9 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
   private static final int DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN = 6;
 
   private final long maxBlobGasPerBlock;
+  private final long targetBlobGasPerBlock;
+  private final long blobGasPerBlob;
+  private final GasCalculator gasCalculator;
 
   public CancunTargetingGasLimitCalculator(
       final long londonForkBlock,
@@ -42,10 +45,31 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
       final int maxBlobsPerBlock) {
     super(londonForkBlock, feeMarket);
     this.maxBlobGasPerBlock = gasCalculator.getBlobGasPerBlob() * maxBlobsPerBlock;
+    this.targetBlobGasPerBlock = gasCalculator.getTargetBlobGasPerBlock();
+    this.blobGasPerBlob = gasCalculator.getBlobGasPerBlob();
+
+    this.gasCalculator = gasCalculator; // TODO if this is the way to go, remove the above 2 lines ?
   }
 
   @Override
   public long currentBlobGasLimit() {
     return maxBlobGasPerBlock;
+  }
+
+  @Override
+  public long computeExcessBlobGas(final long parentExcessBlobGas, final long parentBlobGasUsed) {
+    final long currentExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed;
+    if (currentExcessBlobGas < targetBlobGasPerBlock) {
+      return 0L;
+    }
+    return currentExcessBlobGas - targetBlobGasPerBlock;
+  }
+
+  public long getBlobGasPerBlob() {
+    return blobGasPerBlob;
+  }
+
+  public GasCalculator getGasCalculator() {
+    return this.gasCalculator;
   }
 }

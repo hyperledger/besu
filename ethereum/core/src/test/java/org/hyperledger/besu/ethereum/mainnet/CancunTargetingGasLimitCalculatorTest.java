@@ -21,11 +21,42 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
+import java.util.List;
 import java.util.Optional;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CancunTargetingGasLimitCalculatorTest {
+  private static final long TARGET_BLOB_GAS_PER_BLOCK_CANCUN = 0x60000;
+  private final CancunTargetingGasLimitCalculator cancunTargetingGasLimitCalculator =
+      new CancunTargetingGasLimitCalculator(
+          0L, FeeMarket.cancunDefault(0L, Optional.empty()), new CancunGasCalculator());
+
+  @ParameterizedTest(name = "{index} - parent gas {0}, used gas {1}, new excess {2}")
+  @MethodSource("blobGasses")
+  public void shouldCalculateExcessBlobGasCorrectly(
+      final long parentExcess, final long used, final long expected) {
+    final long usedBlobGas = cancunTargetingGasLimitCalculator.getGasCalculator().blobGasCost(used);
+    assertThat(cancunTargetingGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
+        .isEqualTo(expected);
+  }
+
+  Iterable<Arguments> blobGasses() {
+    long targetGasPerBlock = TARGET_BLOB_GAS_PER_BLOCK_CANCUN;
+    return List.of(
+        Arguments.of(0L, 0L, 0L),
+        Arguments.of(targetGasPerBlock, 0L, 0L),
+        Arguments.of(0L, 3, 0L),
+        Arguments.of(1, 3, 1),
+        Arguments.of(targetGasPerBlock, 1, cancunTargetingGasLimitCalculator.getBlobGasPerBlob()),
+        Arguments.of(targetGasPerBlock, 3, targetGasPerBlock));
+  }
 
   @Test
   void currentBlobGasLimitIs6Blobs() {
@@ -99,5 +130,12 @@ class CancunTargetingGasLimitCalculatorTest {
     public long getBlobGasPerBlob() {
       return TEST_BLOB_GAS_PER_BLOB_FUTURE;
     }
+  }
+
+  @Test
+  void dryRunDetector() {
+    Assertions.assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

@@ -94,9 +94,11 @@ public class IbftProtocolSchedule {
       final long secondsBetweenBlocks, final ProtocolSpecBuilder builder) {
     return builder
         .blockHeaderValidatorBuilder(
-            (feeMarket, gasCalculator) -> ibftBlockHeaderValidatorBuilder(secondsBetweenBlocks))
+            (feeMarket, gasCalculator, gasLimitCalculator) ->
+                ibftBlockHeaderValidatorBuilder(secondsBetweenBlocks))
         .ommerHeaderValidatorBuilder(
-            (feeMarket, gasCalculator) -> ibftBlockHeaderValidatorBuilder(secondsBetweenBlocks))
+            (feeMarket, gasCalculator, gasLimitCalculator) ->
+                ibftBlockHeaderValidatorBuilder(secondsBetweenBlocks))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)

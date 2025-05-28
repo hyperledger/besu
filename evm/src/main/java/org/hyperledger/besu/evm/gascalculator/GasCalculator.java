@@ -626,23 +626,22 @@ public interface GasCalculator {
   }
 
   /**
+   * Returns the blob gas cost per blob. This is the gas cost for each blob of data that is added to
+   * the block.
+   *
+   * @return the blob gas cost per blob
+   */
+  default long getTargetBlobGasPerBlock() {
+    return 0L;
+  }
+
+  /**
    * Return the gas cost given the number of blobs
    *
    * @param blobCount the number of blobs
    * @return the total gas cost
    */
   default long blobGasCost(final long blobCount) {
-    return 0L;
-  }
-
-  /**
-   * Compute the new value for the excess blob gas, given the parent value and the blob gas used
-   *
-   * @param parentExcessBlobGas excess blob gas from the parent
-   * @param blobGasUsed blob gas used
-   * @return the new excess blob gas value
-   */
-  default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
     return 0L;
   }
 

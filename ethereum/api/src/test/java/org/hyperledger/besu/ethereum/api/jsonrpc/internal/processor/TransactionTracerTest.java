@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ImmutableTransactionTraceParams;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -85,6 +86,7 @@ public class TransactionTracerTest {
 
   @Mock private ProtocolSpec protocolSpec;
   @Mock private GasCalculator gasCalculator;
+  @Mock private GasLimitCalculator gasLimitCalculator;
   @Mock private BlockHashProcessor blockHashProcessor;
 
   @Mock private Tracer.TraceableState mutableWorldState;
@@ -122,6 +124,7 @@ public class TransactionTracerTest {
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
+    when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSpec.getBlockHashProcessor()).thenReturn(blockHashProcessor);
     when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
   }

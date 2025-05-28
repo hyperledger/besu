@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.Test;
 public class BlobGasValidationRuleTest {
 
   private CancunGasCalculator cancunGasCalculator;
+  private CancunTargetingGasLimitCalculator cancunTargetingGasLimitCalculator;
   private BlobGasValidationRule cancunBlobGasValidationRule;
 
   private PragueGasCalculator pragueGasCalculator;
@@ -37,10 +39,12 @@ public class BlobGasValidationRuleTest {
   @BeforeEach
   public void setUp() {
     cancunGasCalculator = new CancunGasCalculator();
-    cancunBlobGasValidationRule = new BlobGasValidationRule(cancunGasCalculator);
+    cancunBlobGasValidationRule =
+        new BlobGasValidationRule(cancunGasCalculator, cancunTargetingGasLimitCalculator);
 
     pragueGasCalculator = new PragueGasCalculator();
-    pragueBlobGasValidationRule = new BlobGasValidationRule(pragueGasCalculator);
+    pragueBlobGasValidationRule =
+        new BlobGasValidationRule(pragueGasCalculator, cancunTargetingGasLimitCalculator);
   }
 
   /**

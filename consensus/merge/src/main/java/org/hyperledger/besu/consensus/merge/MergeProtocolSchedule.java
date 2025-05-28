@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -137,7 +138,9 @@ public class MergeProtocolSchedule {
   }
 
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(
-      final FeeMarket feeMarket, final GasCalculator gasCalculator) {
+      final FeeMarket feeMarket,
+      final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator) {
     return MergeValidationRulesetFactory.mergeBlockHeaderValidator(feeMarket);
   }
 
