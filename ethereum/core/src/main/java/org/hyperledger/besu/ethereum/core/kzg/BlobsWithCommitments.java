@@ -139,38 +139,150 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
     return bundles;
   }
 
+  /**
+   * Get the blobs.
+   *
+   * @return the blobs
+   */
   @Override
   public List<Blob> getBlobs() {
     return blobProofBundles.stream().map(BlobProofBundle::getBlob).toList();
   }
 
+  /**
+   * Get the commitments.
+   *
+   * @return the commitments
+   */
   @Override
   public List<KZGCommitment> getKzgCommitments() {
     return blobProofBundles.stream().map(BlobProofBundle::getKzgCommitment).toList();
   }
 
+  /**
+   * Get the proofs.
+   *
+   * @return the proofs
+   */
   @Override
   public List<KZGProof> getKzgProofs() {
     return blobProofBundles.stream().flatMap(bundle -> bundle.getKzgProof().stream()).toList();
   }
 
-  byte[] getKzgProofsByteArray() {
-    return Bytes.wrap(getKzgProofs().stream().map(kp -> (Bytes) kp.getData()).toList())
-        .toArrayUnsafe();
-  }
-
+  /**
+   * Get the hashes.
+   *
+   * @return the hashes
+   */
   @Override
   public List<VersionedHash> getVersionedHashes() {
     return blobProofBundles.stream().map(BlobProofBundle::getVersionedHash).toList();
   }
 
+  /**
+   * Get the list of BlobProofBundle.
+   *
+   * @return blob proof bundles
+   */
   public List<BlobProofBundle> getBlobProofBundles() {
     return blobProofBundles;
   }
 
+  /**
+   * Get the version ID.
+   *
+   * @return the version ID
+   */
   @Override
   public int getVersionId() {
     return versionId;
+  }
+
+  /**
+   * Get the KZG proofs as a byte array.
+   *
+   * @return the KZG proofs as a byte array
+   */
+  byte[] getKzgProofsByteArray() {
+    return Bytes.wrap(getKzgProofs().stream().map(kp -> (Bytes) kp.getData()).toList())
+        .toArrayUnsafe();
+  }
+
+  /**
+   * Extracts the cell proofs for a specific blob index.
+   *
+   * @param proofList the list of KZG proofs.
+   * @param index the index of the blob for which to extract the cell proofs.
+   * @return a list of KZG proofs corresponding to the specified blob index.
+   */
+  private static List<KZGProof> extractCellProofs(final List<KZGProof> proofList, final int index) {
+    return proofList.subList(index * CELL_PROOFS_PER_BLOB, (index + 1) * CELL_PROOFS_PER_BLOB);
+  }
+
+  /**
+   * Get the blobs as a byte array.
+   *
+   * @return the blobs as a byte array
+   */
+  byte[] getBlobsByteArray() {
+    return Bytes.wrap(getBlobs().stream().map(Blob::getData).toList()).toArrayUnsafe();
+  }
+
+  /**
+   * Get the KZG commitments as a byte array.
+   *
+   * @return the KZG commitments as a byte array
+   */
+  byte[] getKzgCommitmentsByteArray() {
+    List<KZGCommitment> commitments =
+        (versionId == VERSION_1_KZG_CELL_PROOFS)
+            ? extendCommitments(getKzgCommitments())
+            : getKzgCommitments();
+    return Bytes.wrap(commitments.stream().map(kc -> (Bytes) kc.getData()).toList())
+        .toArrayUnsafe();
+  }
+
+  /**
+   * Extends the KZG commitments to match the number of cell proofs per blob.
+   *
+   * @param commitments the original list of KZG commitments.
+   * @return a new list of KZG commitments, extended to match the number of cell proofs per blob.
+   */
+  private List<KZGCommitment> extendCommitments(final List<KZGCommitment> commitments) {
+    int newSize = commitments.size() * CELL_PROOFS_PER_BLOB;
+    ArrayList<KZGCommitment> extendedCommitments = new ArrayList<>(newSize);
+    for (KZGCommitment kzgCommitment : commitments) {
+      for (int i = 0; i < CELL_PROOFS_PER_BLOB; i++) {
+        extendedCommitments.add(new KZGCommitment(kzgCommitment.getData()));
+      }
+    }
+    return extendedCommitments;
+  }
+
+  /**
+   * Get the blob cells as a byte array.
+   *
+   * @return the blob cells as a byte array
+   */
+  byte[] getBlobCellsByteArray() {
+    return Bytes.wrap(
+            blobProofBundles.stream().map(cell -> cell.getBlobCellsBytes().orElseThrow()).toList())
+        .toArrayUnsafe();
+  }
+
+  /**
+   * Get the cell indexes for the blobs.
+   *
+   * @return an array of cell indexes
+   */
+  long[] getCellIndexes() {
+    long[] cellIndices = new long[CELL_PROOFS_PER_BLOB * blobProofBundles.size()];
+    for (int blobIndex = 0; blobIndex < blobProofBundles.size(); blobIndex++) {
+      for (int index = 0; index < CELL_PROOFS_PER_BLOB; index++) {
+        cellIndices[blobIndex * CELL_PROOFS_PER_BLOB + index] = index;
+      }
+    }
+    return cellIndices;
   }
 
   @Override
@@ -184,49 +296,5 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
   @Override
   public int hashCode() {
     return Objects.hash(blobProofBundles, versionId);
-  }
-
-  private static List<KZGProof> extractCellProofs(final List<KZGProof> proofList, final int index) {
-    return proofList.subList(index * CELL_PROOFS_PER_BLOB, (index + 1) * CELL_PROOFS_PER_BLOB);
-  }
-
-  byte[] getBlobsByteArray() {
-    return Bytes.wrap(getBlobs().stream().map(Blob::getData).toList()).toArrayUnsafe();
-  }
-
-  byte[] getKzgCommitmentsByteArray() {
-    List<KZGCommitment> commitments =
-        (versionId == VERSION_1_KZG_CELL_PROOFS)
-            ? extendCommitments(getKzgCommitments())
-            : getKzgCommitments();
-    return Bytes.wrap(commitments.stream().map(kc -> (Bytes) kc.getData()).toList())
-        .toArrayUnsafe();
-  }
-
-  private List<KZGCommitment> extendCommitments(final List<KZGCommitment> commitments) {
-    int newSize = commitments.size() * CELL_PROOFS_PER_BLOB;
-    ArrayList<KZGCommitment> extendedCommitments = new ArrayList<>(newSize);
-    for (KZGCommitment kzgCommitment : commitments) {
-      for (int i = 0; i < CELL_PROOFS_PER_BLOB; i++) {
-        extendedCommitments.add(new KZGCommitment(kzgCommitment.getData()));
-      }
-    }
-    return extendedCommitments;
-  }
-
-  byte[] getBlobCellsByteArray() {
-    return Bytes.wrap(
-            blobProofBundles.stream().map(cell -> cell.getBlobCellsBytes().orElseThrow()).toList())
-        .toArrayUnsafe();
-  }
-
-  long[] getCellIndexes() {
-    long[] cellIndices = new long[CELL_PROOFS_PER_BLOB * blobProofBundles.size()];
-    for (int blobIndex = 0; blobIndex < blobProofBundles.size(); blobIndex++) {
-      for (int index = 0; index < CELL_PROOFS_PER_BLOB; index++) {
-        cellIndices[blobIndex * CELL_PROOFS_PER_BLOB + index] = index;
-      }
-    }
-    return cellIndices;
   }
 }

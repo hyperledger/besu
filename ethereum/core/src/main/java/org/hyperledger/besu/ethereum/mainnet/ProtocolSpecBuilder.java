@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompi
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
+import org.hyperledger.besu.ethereum.mainnet.transactionpool.TransactionPoolPreProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.EVM;
@@ -92,6 +93,7 @@ public class ProtocolSpecBuilder {
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
   private boolean isReplayProtectionSupported = false;
+  private TransactionPoolPreProcessor transactionPoolPreProcessor;
 
   public ProtocolSpecBuilder gasCalculator(
       final Function<BlobSchedule, GasCalculator> gasCalculatorBuilder) {
@@ -304,6 +306,12 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder transactionPoolPreProcessor(
+      final TransactionPoolPreProcessor transactionPoolPreProcessor) {
+    this.transactionPoolPreProcessor = transactionPoolPreProcessor;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
@@ -417,7 +425,8 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(requestProcessorCoordinator),
         blockHashProcessor,
         isPoS,
-        isReplayProtectionSupported);
+        isReplayProtectionSupported,
+        Optional.ofNullable(transactionPoolPreProcessor));
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(

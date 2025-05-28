@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.transactionpool.TransactionPoolPreProcessor;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -243,19 +244,25 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private ValidationResult<TransactionInvalidReason> addTransaction(
-      final Transaction transaction, final boolean isLocal, final byte score) {
+      final Transaction baseTransaction, final boolean isLocal, final byte score) {
 
-    final boolean hasPriority = isPriorityTransaction(transaction, isLocal);
+    final boolean hasPriority = isPriorityTransaction(baseTransaction, isLocal);
 
-    if (pendingTransactions.containsTransaction(transaction)) {
+    if (pendingTransactions.containsTransaction(baseTransaction)) {
       LOG.atTrace()
           .setMessage("Discard already present transaction {}")
-          .addArgument(transaction::toTraceLog)
+          .addArgument(baseTransaction::toTraceLog)
           .log();
       // We already have this transaction, don't even validate it.
       metrics.incrementRejected(isLocal, hasPriority, TRANSACTION_ALREADY_KNOWN, "txpool");
       return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
     }
+
+    // Apply any necessary fork related pre-processing before submitting the transaction to the pool
+    Transaction transaction =
+        getTransactionPoolPreProcessor()
+            .map(preProcessor -> preProcessor.prepareTransaction(baseTransaction, isLocal))
+            .orElse(baseTransaction);
 
     final ValidationResultAndAccount validationResult =
         validateTransaction(transaction, isLocal, hasPriority);
@@ -406,6 +413,12 @@ public class TransactionPool implements BlockAddedObserver {
         .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
         .getTransactionValidatorFactory()
         .get();
+  }
+
+  private Optional<TransactionPoolPreProcessor> getTransactionPoolPreProcessor() {
+    return protocolSchedule
+        .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
+        .getTransactionPoolPreProcessor();
   }
 
   private ValidationResultAndAccount validateTransaction(

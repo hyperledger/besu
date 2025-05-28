@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
+import org.hyperledger.besu.ethereum.mainnet.transactionpool.OsakaTransactionPoolPreProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
@@ -919,6 +920,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.DELEGATE_CODE),
                     Set.of(BlobProofBundle.VERSION_1_KZG_CELL_PROOFS),
                     evm.getMaxInitcodeSize()))
+        .transactionPoolPreProcessor(new OsakaTransactionPoolPreProcessor())
         .name("Osaka");
   }
 
