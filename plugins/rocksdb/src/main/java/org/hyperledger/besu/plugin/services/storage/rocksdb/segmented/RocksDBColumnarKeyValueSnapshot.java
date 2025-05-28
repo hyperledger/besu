@@ -48,12 +48,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The RocksDb columnar key value snapshot. */
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})
 public class RocksDBColumnarKeyValueSnapshot
     implements SegmentedKeyValueStorage, SnappedKeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueSnapshot.class);
 
+  // Cache to store read results during snapshot access.
+  // We use Optional<byte[]> as the value type to distinguish between:
+  // - a key that maps to an actual zero value (represented as Optional.empty())
+  // - a key that has not been read yet (not present in the cache)
+  // - a key that has been read and has a non-zero value (Optional.of(bytes))
   private Optional<Cache<Bytes, Optional<byte[]>>> maybeCache = Optional.empty();
 
   /** The Db. */
@@ -118,7 +123,6 @@ public class RocksDBColumnarKeyValueSnapshot
       throws RocksDBException {
     final Bytes cacheKey = makeCacheKey(segmentId, key);
     Optional<byte[]> cached = cache.getIfPresent(cacheKey);
-    //noinspection OptionalAssignedToNull
     if (cached == null) {
       final byte[] value = snapshot.get(handle, readOptions, key);
       cached = Optional.ofNullable(value);
