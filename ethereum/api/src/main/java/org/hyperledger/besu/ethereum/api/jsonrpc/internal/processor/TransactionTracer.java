@@ -194,7 +194,6 @@ public class TransactionTracer {
             .getProtocolSpec(header)
             .getBlockHashProcessor()
             .createBlockHashLookup(blockchain, header),
-        false,
         ImmutableTransactionValidationParams.builder().isAllowFutureNonce(true).build(),
         blobGasPrice);
   }
