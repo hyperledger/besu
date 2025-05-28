@@ -97,7 +97,6 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
   protected ProtocolSchedule createProtocolSchedule() {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfigOptions,
-        Optional.of(privacyParameters),
         Optional.of(isRevertReasonEnabled),
         Optional.of(evmConfiguration),
         super.miningConfiguration,
