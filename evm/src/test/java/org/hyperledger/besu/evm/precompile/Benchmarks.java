@@ -14,15 +14,8 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.crypto.Hash.keccak256;
-
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.SECPPrivateKey;
-import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.code.CodeV0;
@@ -32,7 +25,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 
-import java.math.BigInteger;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -40,19 +33,13 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 @SuppressWarnings("UnusedMethod")
 public class Benchmarks {
-
   static final Random random = new Random();
+  static final long GAS_PER_SECOND_STANDARD = 100_000_000L;
 
-  static final long GAS_PER_SECOND_STANDARD = 35_000_000L;
-
-  static final int HASH_WARMUP = 1_000_000;
-  static final int HASH_ITERATIONS = 10_000;
-
-  static final int MATH_WARMUP = 10_000;
+  static final int MATH_WARMUP = 15_000;
   static final int MATH_ITERATIONS = 1_000;
   static final MessageFrame fakeFrame =
       MessageFrame.builder()
@@ -75,113 +62,74 @@ public class Benchmarks {
           .build();
 
   private static void benchSecp256k1Recover() {
-    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    testCases.put(
+        "0x0c65a9d9ffc02c7c99e36e32ce0f950c7804ceda",
+        Bytes.fromHexString(
+            "0x0049872459827432342344987245982743234234498724598274323423429943000000000000000000000000000000000000000000000000000000000000001be8359c341771db7f9ea3a662a1741d27775ce277961470028e054ed3285aab8e31f63eaac35c4e6178abbc2a1073040ac9bbb0b67f2bc89a2e9593ba9abe8c53"));
 
-    final SECPPrivateKey privateKey =
-        signatureAlgorithm.createPrivateKey(
-            new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
-    final KeyPair keyPair = signatureAlgorithm.createKeyPair(privateKey);
+    final SECP256K1 signatureAlgorithm = new SECP256K1();
 
-    final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
-    final Bytes32 dataHash = keccak256(data);
-    final SECPSignature signature = signatureAlgorithm.sign(dataHash, keyPair);
-    for (int i = 0; i < MATH_WARMUP; i++) {
-      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
+    final ECRECPrecompiledContract contract =
+        new ECRECPrecompiledContract(new IstanbulGasCalculator(), signatureAlgorithm);
+
+    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+      final long timePerCallInNs = runBenchmark(testCase.getValue(), contract);
+      long gasRequirement = contract.gasRequirement(testCase.getValue());
+      logPerformance("Secp256k1 signature recovery", gasRequirement, timePerCallInNs);
     }
-    final Stopwatch timer = Stopwatch.createStarted();
-    for (int i = 0; i < MATH_ITERATIONS; i++) {
-      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
-    }
-    timer.stop();
-
-    final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-    final double perCall = elapsed / MATH_ITERATIONS;
-    final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
-
-    System.out.printf("secp256k1 signature recovery for %,d gas.%n", (int) gasSpent);
   }
 
   public static void benchSha256() {
     final SHA256PrecompiledContract contract =
         new SHA256PrecompiledContract(new IstanbulGasCalculator());
-    final byte[] warmupData = new byte[240];
-    final Bytes warmupBytes = Bytes.wrap(warmupData);
-    for (int i = 0; i < HASH_WARMUP; i++) {
-      contract.computePrecompile(warmupBytes, fakeFrame);
-    }
+
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
       random.nextBytes(data);
       final Bytes bytes = Bytes.wrap(data);
-      final Stopwatch timer = Stopwatch.createStarted();
-      for (int i = 0; i < HASH_ITERATIONS; i++) {
-        contract.computePrecompile(bytes, fakeFrame);
-      }
-      timer.stop();
 
-      final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-      final double perCall = elapsed / HASH_ITERATIONS;
-      final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
-
-      System.out.printf(
-          "sha256 %,d bytes for %,d gas. Charging %,d gas.%n",
-          len, (int) gasSpent, contract.gasRequirement(bytes));
+      final long timePerCallInNs = runBenchmark(bytes, contract);
+      long gasRequirement = contract.gasRequirement(bytes);
+      logPerformance(String.format("Sha256 %,d bytes", len), gasRequirement, timePerCallInNs);
     }
   }
 
   private static void benchKeccak256() {
     fakeFrame.expandMemory(0, 1024);
     var istanbulGasCalculator = new IstanbulGasCalculator();
-    final byte[] warmupData = new byte[240];
-    final Bytes warmupBytes = Bytes.wrap(warmupData);
-    for (int i = 0; i < HASH_WARMUP; i++) {
-      Hash.keccak256(warmupBytes);
-    }
+
     for (int len = 0; len <= 512; len += 8) {
       final byte[] data = new byte[len];
       random.nextBytes(data);
       final Bytes bytes = Bytes.wrap(data);
+      for (int i = 0; i < MATH_WARMUP; i++) {
+        Hash.keccak256(bytes);
+      }
       final Stopwatch timer = Stopwatch.createStarted();
-      for (int i = 0; i < HASH_ITERATIONS; i++) {
+      for (int i = 0; i < MATH_ITERATIONS; i++) {
         Hash.keccak256(bytes);
       }
       timer.stop();
 
-      final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-      final double perCall = elapsed / HASH_ITERATIONS;
-      final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
-
-      System.out.printf(
-          "keccak256 %,d bytes for %,d gas. Charing %d gas.%n",
-          len, (int) gasSpent, istanbulGasCalculator.keccak256OperationGasCost(fakeFrame, 0, len));
+      final long elapsed = timer.elapsed(TimeUnit.NANOSECONDS);
+      final long timePerCallInNs = elapsed / MATH_ITERATIONS;
+      long gasRequirement = istanbulGasCalculator.keccak256OperationGasCost(fakeFrame, 0, len);
+      logPerformance(String.format("Keccak256 %,d bytes", len), gasRequirement, timePerCallInNs);
     }
   }
 
   private static void benchRipeMD() {
     final RIPEMD160PrecompiledContract contract =
         new RIPEMD160PrecompiledContract(new IstanbulGasCalculator());
-    final byte[] warmupData = new byte[240];
-    final Bytes warmupBytes = Bytes.wrap(warmupData);
-    for (int i = 0; i < HASH_WARMUP; i++) {
-      contract.computePrecompile(warmupBytes, fakeFrame);
-    }
+
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
       random.nextBytes(data);
       final Bytes bytes = Bytes.wrap(data);
-      final Stopwatch timer = Stopwatch.createStarted();
-      for (int i = 0; i < HASH_ITERATIONS; i++) {
-        contract.computePrecompile(bytes, fakeFrame);
-      }
-      timer.stop();
-
-      final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-      final double perCall = elapsed / HASH_ITERATIONS;
-      final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
-
-      System.out.printf(
-          "ripemd %,d bytes for %,d gas. Charging %,d gas.%n",
-          len, (int) gasSpent, contract.gasRequirement(bytes));
+      final long timePerCallInNs = runBenchmark(bytes, contract);
+      long gasRequirement = contract.gasRequirement(bytes);
+      logPerformance(String.format("RIPMD %,d bytes", len), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -282,18 +230,11 @@ public class Benchmarks {
         new BigIntegerModularExponentiationPrecompiledContract(new BerlinGasCalculator());
 
     for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
-      final double gasSpent = runBenchmark(testCase.getValue(), contract);
-
-      long gasCost = contract.gasRequirement(testCase.getValue());
-      System.out.printf(
-          "ModEXP %s for \t%,d gas. Charging %,d gas. \t@ %,.3f MGps%n",
-          testCase.getKey(),
-          (int) gasSpent,
-          gasCost,
-          gasCost / gasSpent * GAS_PER_SECOND_STANDARD / 1_000_000);
+      final long timePerCallInNs = runBenchmark(testCase.getValue(), contract);
+      long gasRequirement = contract.gasRequirement(testCase.getValue());
+      logPerformance(
+          String.format("ModEXP %s", testCase.getKey()), gasRequirement, timePerCallInNs);
     }
-
-    System.getProperties().forEach((k, v) -> System.out.println(k + " = " + v));
   }
 
   private static void benchBNADD() {
@@ -315,10 +256,9 @@ public class Benchmarks {
     final AltBN128AddPrecompiledContract contract =
         AltBN128AddPrecompiledContract.istanbul(new IstanbulGasCalculator());
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "BNADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("BNADD", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBNMUL() {
@@ -335,10 +275,9 @@ public class Benchmarks {
     final AltBN128MulPrecompiledContract contract =
         AltBN128MulPrecompiledContract.istanbul(new IstanbulGasCalculator());
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "BNMUL for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("BNMUL", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBNPairing() {
@@ -387,11 +326,9 @@ public class Benchmarks {
         AltBN128PairingPrecompiledContract.istanbul(new IstanbulGasCalculator());
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
-
-      System.out.printf(
-          "BNPairings %d pairs for %,d gas. Charging %,d gas.%n",
-          i * 2 + 2, (int) gasSpent, contract.gasRequirement(args[i]));
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
+      logPerformance(String.format("BNPairings %,d", i * 2 + 2), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -405,10 +342,9 @@ public class Benchmarks {
 
     final BLS12G1AddPrecompiledContract contract = new BLS12G1AddPrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "G1ADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("G1ADD", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBLS12G1MultiExp() {
@@ -453,11 +389,9 @@ public class Benchmarks {
     final BLS12G1MultiExpPrecompiledContract contract = new BLS12G1MultiExpPrecompiledContract();
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
-
-      System.out.printf(
-          "G1MULTIEXP %d for %,d gas. Charging %,d gas.%n",
-          i + 1, (int) gasSpent, contract.gasRequirement(args[i]));
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
+      logPerformance(String.format("G1MULTIEXP %,d", i + 1), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -471,10 +405,9 @@ public class Benchmarks {
 
     final BLS12G2AddPrecompiledContract contract = new BLS12G2AddPrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "G2ADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("G2ADD", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBLS12G2MultiExp() {
@@ -519,11 +452,9 @@ public class Benchmarks {
     final BLS12G2MultiExpPrecompiledContract contract = new BLS12G2MultiExpPrecompiledContract();
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
-
-      System.out.printf(
-          "G2MULTIEXP %d for %,d gas. Charging %,d gas.%n",
-          i + 1, (int) gasSpent, contract.gasRequirement(args[i]));
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
+      logPerformance(String.format("G2MULTIEXP %,d", i + 1), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -560,11 +491,10 @@ public class Benchmarks {
     final BLS12PairingPrecompiledContract contract = new BLS12PairingPrecompiledContract();
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
-
-      System.out.printf(
-          "BLS pairings %d pairs for %,d gas. Charging %,d gas.%n",
-          i * 2 + 2, (int) gasSpent, contract.gasRequirement(args[i]));
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
+      logPerformance(
+          String.format("BLS pairings %d pairs", i * 2 + 2), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -575,10 +505,9 @@ public class Benchmarks {
 
     final BLS12MapFpToG1PrecompiledContract contract = new BLS12MapFpToG1PrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "MAPFPTOG1 for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("MAPFPTOG1", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBLS12MapFP2TOG2() {
@@ -588,15 +517,13 @@ public class Benchmarks {
 
     final BLS12MapFp2ToG2PrecompiledContract contract = new BLS12MapFp2ToG2PrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "MAPFP2TOG2 for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("MAPFP2TOG2", gasRequirement, timePerCallInNs);
   }
 
-  private static double runBenchmark(final Bytes arg, final PrecompiledContract contract) {
-    if (contract.computePrecompile(arg, fakeFrame).getOutput() == null) {
+  private static long runBenchmark(final Bytes arg, final PrecompiledContract contract) {
+    if (contract.computePrecompile(arg, fakeFrame).output() == null) {
       throw new RuntimeException("Input is Invalid");
     }
 
@@ -609,12 +536,86 @@ public class Benchmarks {
     }
     timer.stop();
 
-    final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-    final double perCall = elapsed / MATH_ITERATIONS;
-    return perCall * GAS_PER_SECOND_STANDARD;
+    final long elapsed = timer.elapsed(TimeUnit.NANOSECONDS);
+    final long perCallInNs = elapsed / MATH_ITERATIONS;
+    return perCallInNs;
+  }
+
+  private static void benchKZGPointEval() {
+    final Bytes arg =
+        Bytes.fromHexString(
+            "010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e0000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+    KZGPointEvalPrecompiledContract.init();
+    final KZGPointEvalPrecompiledContract contract = new KZGPointEvalPrecompiledContract();
+
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("KZGPointEval", gasRequirement, timePerCallInNs);
+  }
+
+  private static double getMgasPerS(final long timePerCallInNs, final long gasCost) {
+    return (double) (gasCost * 1_000) / timePerCallInNs;
+  }
+
+  private static long getDerivedGasFromExecutionTime(final long timePerCallInNs) {
+    return (long) ((timePerCallInNs * GAS_PER_SECOND_STANDARD) / 1.0e9D);
+  }
+
+  public static void logPerformance(final String label, final long gasCost, final long timeNs) {
+    double derivedGas = (timeNs / 1_000_000_000.0) * GAS_PER_SECOND_STANDARD;
+    double mgps = (gasCost * 1000.0) / timeNs;
+
+    System.out.printf(
+        "%-30s | %,7d gas cost | %,7.0f calculated gas for execution time per call %,9d ns | %7.2f MGps%n",
+        label, gasCost, derivedGas, timeNs, mgps);
+  }
+
+  public static void logHeader() {
+    long executionTimeExampleNs = 247_914L;
+    long gasPerSecond = GAS_PER_SECOND_STANDARD;
+    long derivedGas = (executionTimeExampleNs * gasPerSecond) / 1_000_000_000L;
+
+    System.out.println(
+        "**** Calculate the derived gas from execution time with a target of 100 mgas/s *****");
+    System.out.println(
+        "*                                                                                  *");
+    System.out.println(
+        "*   If "
+            + String.format("%,d", executionTimeExampleNs)
+            + " ns is the execution time of the precompile call, so this is how     *");
+    System.out.println(
+        "*                the derived gas is calculated                                     *");
+    System.out.println(
+        "*                                                                                  *");
+    System.out.println(
+        "*   "
+            + String.format("%,d", gasPerSecond)
+            + " gas    -------> 1 second (1_000_000_000 ns)                        *");
+    System.out.println(
+        "*   x           gas    -------> "
+            + String.format("%,d", executionTimeExampleNs)
+            + " ns                                         *");
+    System.out.println(
+        "*                                                                                  *");
+    System.out.println(
+        "*\tx = ("
+            + String.format("%,d", executionTimeExampleNs)
+            + " * "
+            + String.format("%,d", gasPerSecond)
+            + ") / 1_000_000_000 = "
+            + String.format("%,d", derivedGas)
+            + " gas"
+            + "                       *");
+    System.out.println(
+        "************************************************************************************");
+    System.out.println();
+    System.out.println("** System Properties **");
+    System.out.println();
+    System.getProperties().forEach((k, v) -> System.out.println(k + " = " + v));
   }
 
   public static void main(final String[] args) {
+    logHeader();
     benchSecp256k1Recover();
     benchSha256();
     benchKeccak256();
@@ -630,5 +631,6 @@ public class Benchmarks {
     benchBLS12Pair();
     benchBLS12MapFPTOG1();
     benchBLS12MapFP2TOG2();
+    benchKZGPointEval();
   }
 }

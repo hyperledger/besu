@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.components.EthereumCoreComponent;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -123,7 +122,6 @@ public class IbftProtocolScheduleTest {
     return IbftProtocolScheduleBuilder.create(
         genesisConfig,
         forkSched,
-        PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
@@ -168,11 +166,10 @@ public class IbftProtocolScheduleTest {
     @Provides
     ProtocolContext protocolContext(
         final List<Address> validators, final BftExtraDataCodec bftExtraDataCodec) {
-      return new ProtocolContext(
-          null,
-          null,
-          setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
-          new BadBlockManager());
+      return new ProtocolContext.Builder()
+          .withConsensusContext(
+              setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec))
+          .build();
     }
   }
 

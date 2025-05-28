@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.ServiceManager;
 
 /** The Migrating protocol context. */
 public class MigratingProtocolContext extends ProtocolContext {
@@ -32,19 +33,28 @@ public class MigratingProtocolContext extends ProtocolContext {
    * @param worldStateArchive the world state archive
    * @param migratingConsensusContext the consensus context
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param serviceManager the plugin service manager
    */
   public MigratingProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final MigratingConsensusContext migratingConsensusContext,
-      final BadBlockManager badBlockManager) {
-    super(blockchain, worldStateArchive, migratingConsensusContext, badBlockManager);
+      final BadBlockManager badBlockManager,
+      final ServiceManager serviceManager) {
+    super(
+        blockchain, worldStateArchive, migratingConsensusContext, badBlockManager, serviceManager);
     this.consensusContextSchedule = migratingConsensusContext.getConsensusContextSchedule();
   }
 
   @Override
   public <C extends ConsensusContext> C getConsensusContext(final Class<C> klass) {
     final long chainHeadBlockNumber = getBlockchain().getChainHeadBlockNumber();
-    return consensusContextSchedule.getFork(chainHeadBlockNumber).getValue().as(klass);
+    return consensusContextSchedule.getFork(chainHeadBlockNumber + 1).getValue().as(klass);
+  }
+
+  @Override
+  public <C extends ConsensusContext> C getConsensusContext(
+      final Class<C> klass, final long blockNumber) {
+    return consensusContextSchedule.getFork(blockNumber).getValue().as(klass);
   }
 }

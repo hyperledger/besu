@@ -42,6 +42,11 @@ public class BftEventHandlerAdaptor implements BftEventHandler {
   }
 
   @Override
+  public void stop() {
+    qbftEventHandler.stop();
+  }
+
+  @Override
   public void handleMessageEvent(final BftReceivedMessageEvent msg) {
     qbftEventHandler.handleMessageEvent(msg);
   }

@@ -97,7 +97,7 @@ import picocli.CommandLine.Option;
     descriptionHeading = "%nDescription:%n%n",
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
-    footer = "Hyperledger Besu is licensed under the Apache License 2.0",
+    footer = "Besu is licensed under the Apache License 2.0",
     subcommands = {
       BenchmarkSubCommand.class,
       B11rSubCommand.class,
@@ -198,6 +198,13 @@ public class EvmToolCommand implements Runnable {
       description = "Output the final allocations after a run.",
       scope = INHERIT)
   final Boolean showJsonAlloc = false;
+
+  @Option(
+      names = {"--noeip-3155", "--trace.noeip-3155"},
+      description = "Produce a trace with types strictly compatible with EIP-3155.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean eip3155strict = true;
 
   @Option(
       names = {"--memory", "--trace.memory"},
@@ -413,8 +420,7 @@ public class EvmToolCommand implements Runnable {
         final long intrinsicGasCost =
             protocolSpec
                 .getGasCalculator()
-                .transactionIntrinsicGasCost(
-                    tx.getPayload(), tx.isContractCreation(), accessListCost + delegateCodeCost);
+                .transactionIntrinsicGasCost(tx, accessListCost + delegateCodeCost);
         txGas -= intrinsicGasCost;
       }
 
@@ -444,7 +450,8 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData, showStorage)
+                ? new StandardJsonTracer(
+                    out, showMemory, !hideStack, showReturnData, showStorage, eip3155strict)
                 : OperationTracer.NO_TRACING;
 
         WorldUpdater updater = component.getWorldUpdater();
@@ -615,13 +622,10 @@ public class EvmToolCommand implements Runnable {
                             .toList()));
                 out.println("  },");
               }
-              out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
+              out.print("  \"balance\": \"" + account.getBalance().toDecimalString() + "\"");
               if (account.getNonce() != 0) {
                 out.println(",");
-                out.println(
-                    "  \"nonce\": \""
-                        + Bytes.ofUnsignedLong(account.getNonce()).toShortHexString()
-                        + "\"");
+                out.println("  \"nonce\": " + account.getNonce());
               } else {
                 out.println();
               }

@@ -50,7 +50,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -112,11 +111,12 @@ public class IbftRoundTest {
   @BeforeEach
   public void setup() {
     protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withWorldStateArchive(worldStateArchive)
+            .withConsensusContext(
+                setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()))
+            .build();
 
     lenient().when(messageValidator.validateProposal(any())).thenReturn(true);
     lenient().when(messageValidator.validatePrepare(any())).thenReturn(true);

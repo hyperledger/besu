@@ -56,7 +56,8 @@ import org.apache.tuweni.bytes.Bytes32;
   "uncles",
   "transactions",
   "withdrawalsRoot",
-  "withdrawals"
+  "withdrawals",
+  "requestsHash"
 })
 public class BlockResult implements JsonRpcResult {
 
@@ -88,7 +89,7 @@ public class BlockResult implements JsonRpcResult {
   private final String blobGasUsed;
   private final String excessBlobGas;
   private final String parentBeaconBlockRoot;
-  private final List<CallProcessingResult> callProcessingResults;
+  private final String requestsHash;
 
   public BlockResult(
       final BlockHeader header,
@@ -103,18 +104,6 @@ public class BlockResult implements JsonRpcResult {
       final BlockHeader header,
       final List<TransactionResult> transactions,
       final List<JsonNode> ommers,
-      final Difficulty totalDifficulty,
-      final int size,
-      final boolean includeCoinbase,
-      final Optional<List<Withdrawal>> withdrawals) {
-    this(header, transactions, ommers, null, totalDifficulty, size, includeCoinbase, withdrawals);
-  }
-
-  public BlockResult(
-      final BlockHeader header,
-      final List<TransactionResult> transactions,
-      final List<JsonNode> ommers,
-      final List<CallProcessingResult> callProcessingResults,
       final Difficulty totalDifficulty,
       final int size,
       final boolean includeCoinbase,
@@ -140,7 +129,6 @@ public class BlockResult implements JsonRpcResult {
     this.timestamp = Quantity.create(header.getTimestamp());
     this.ommers = ommers;
     this.transactions = transactions;
-    this.callProcessingResults = callProcessingResults;
     this.coinbase = includeCoinbase ? header.getCoinbase().toString() : null;
     this.withdrawalsRoot = header.getWithdrawalsRoot().map(Hash::toString).orElse(null);
     this.withdrawals =
@@ -152,6 +140,7 @@ public class BlockResult implements JsonRpcResult {
     this.excessBlobGas = header.getExcessBlobGas().map(Quantity::create).orElse(null);
     this.parentBeaconBlockRoot =
         header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
+    this.requestsHash = header.getRequestsHash().map(Hash::toString).orElse(null);
   }
 
   @JsonGetter(value = "number")
@@ -290,8 +279,8 @@ public class BlockResult implements JsonRpcResult {
     return parentBeaconBlockRoot;
   }
 
-  @JsonGetter(value = "calls")
-  public List<CallProcessingResult> getTransactionProcessingResults() {
-    return callProcessingResults;
+  @JsonGetter(value = "requestsHash")
+  public String getRequestsHash() {
+    return requestsHash;
   }
 }

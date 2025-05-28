@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -85,16 +84,17 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiArchiveWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiArchiver;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiArchiveWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchiver;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive.WorldStateHealer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
@@ -102,9 +102,11 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import java.io.Closeable;
 import java.math.BigInteger;
@@ -153,9 +155,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** The Metrics system. */
   protected ObservableMetricsSystem metricsSystem;
-
-  /** The Privacy parameters. */
-  protected PrivacyParameters privacyParameters;
 
   /** The Data directory. */
   protected Path dataDirectory;
@@ -361,17 +360,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Privacy parameters besu controller builder.
-   *
-   * @param privacyParameters the privacy parameters
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
-    this.privacyParameters = privacyParameters;
-    return this;
-  }
-
-  /**
    * Data directory besu controller builder.
    *
    * @param dataDirectory the data directory
@@ -567,7 +555,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(networkId, "Missing network ID");
     checkNotNull(miningConfiguration, "Missing mining parameters");
     checkNotNull(metricsSystem, "Missing metrics system");
-    checkNotNull(privacyParameters, "Missing privacy parameters");
     checkNotNull(dataDirectory, "Missing data directory"); // Why do we need this?
     checkNotNull(clock, "Missing clock");
     checkNotNull(transactionPoolConfiguration, "Missing transaction pool configuration");
@@ -636,11 +623,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createConsensusContext(blockchain, worldStateArchive, protocolSchedule);
 
     final ProtocolContext protocolContext =
-        createProtocolContext(blockchain, worldStateArchive, consensusContext);
+        createProtocolContext(
+            blockchain,
+            worldStateArchive,
+            consensusContext,
+            besuComponent
+                .map(BesuComponent::getBesuPluginContext)
+                .orElse(new BesuPluginContextImpl()));
     validateContext(protocolContext);
-
-    protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
-        protocolContext.getWorldStateArchive());
 
     final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
     final Supplier<ProtocolSpec> currentProtocolSpecSupplier =
@@ -649,8 +639,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         new ForkIdManager(
             blockchain,
             genesisConfigOptions.getForkBlockNumbers(),
-            genesisConfigOptions.getForkBlockTimestamps(),
-            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled());
+            genesisConfigOptions.getForkBlockTimestamps());
     final EthPeers ethPeers =
         new EthPeers(
             currentProtocolSpecSupplier,
@@ -788,8 +777,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             protocolContext, protocolSchedule, miningConfiguration);
 
     if (DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
-      final DiffBasedSubStorageConfiguration subStorageConfiguration =
-          dataStorageConfiguration.getDiffBasedSubStorageConfiguration();
+      final PathBasedExtraStorageConfiguration subStorageConfiguration =
+          dataStorageConfiguration.getPathBasedExtraStorageConfiguration();
       if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
         final TrieLogManager trieLogManager =
             ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
@@ -817,9 +806,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final List<Closeable> closeables = new ArrayList<>();
     closeables.add(protocolContext.getWorldStateArchive());
     closeables.add(storageProvider);
-    if (privacyParameters.getPrivateStorageProvider() != null) {
-      closeables.add(privacyParameters.getPrivateStorageProvider());
-    }
 
     return new BesuController(
         protocolSchedule,
@@ -831,7 +817,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         syncState,
         transactionPool,
         miningCoordinator,
-        privacyParameters,
         miningConfiguration,
         additionalJsonRpcMethodFactory,
         nodeKey,
@@ -865,8 +850,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final Blockchain blockchain,
       final EthScheduler scheduler) {
     final boolean isProofOfStake = genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
-    final DiffBasedSubStorageConfiguration subStorageConfiguration =
-        dataStorageConfiguration.getDiffBasedSubStorageConfiguration();
+    final PathBasedExtraStorageConfiguration subStorageConfiguration =
+        dataStorageConfiguration.getPathBasedExtraStorageConfiguration();
     final TrieLogPruner trieLogPruner =
         new TrieLogPruner(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
@@ -888,7 +873,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final TrieLogManager trieLogManager) {
     final BonsaiArchiver archiver =
         new BonsaiArchiver(
-            (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+            (PathBasedWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             scheduler::executeServiceTask,
             trieLogManager,
@@ -1133,13 +1118,21 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
    * @param consensusContext the consensus context
+   * @param serviceManager plugin service manager
    * @return the protocol context
    */
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ConsensusContext consensusContext) {
-    return new ProtocolContext(blockchain, worldStateArchive, consensusContext, badBlockManager);
+      final ConsensusContext consensusContext,
+      final ServiceManager serviceManager) {
+    return new ProtocolContext.Builder()
+        .withBlockchain(blockchain)
+        .withWorldStateArchive(worldStateArchive)
+        .withConsensusContext(consensusContext)
+        .withBadBlockManager(badBlockManager)
+        .withServiceManager(serviceManager)
+        .build();
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
@@ -1173,7 +1166,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchain,
             Optional.of(
                 dataStorageConfiguration
-                    .getDiffBasedSubStorageConfiguration()
+                    .getPathBasedExtraStorageConfiguration()
                     .getMaxLayersToLoad()),
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
@@ -1189,7 +1182,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchain,
             Optional.of(
                 dataStorageConfiguration
-                    .getDiffBasedSubStorageConfiguration()
+                    .getPathBasedExtraStorageConfiguration()
                     .getMaxLayersToLoad()),
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),

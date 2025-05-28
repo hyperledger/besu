@@ -53,58 +53,23 @@ public interface PrecompiledContract {
    * @param messageFrame context for this message
    * @return the output of the pre-compiled contract.
    */
-  @SuppressWarnings("deprecation")
   @Nonnull
-  default PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    final Bytes result = compute(input, messageFrame);
-    if (result == null) {
-      return PrecompileContractResult.halt(null, Optional.of(ExceptionalHaltReason.NONE));
-    } else {
-      return PrecompileContractResult.success(result);
-    }
-  }
+  PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame);
 
   /**
-   * Executes the pre-compiled contract.
+   * Encapsulated result of precompiled contract.
    *
-   * @param input the input for the pre-compiled contract.
-   * @param messageFrame context for this message
-   * @return the output of the pre-compiled contract.
-   * @deprecated Migrate to use {@link #computePrecompile(Bytes, MessageFrame)}.
+   * @param output output if successful
+   * @param isRefundGas Should we charge the gasRequirement?
+   * @param state state of the EVM after execution (for format errors this would be ExceptionalHalt)
+   * @param haltReason the exceptional halt reason
    */
-  @Deprecated(since = "22.1.2")
-  default Bytes compute(final Bytes input, final @Nonnull MessageFrame messageFrame) {
-    return computePrecompile(input, messageFrame).getOutput();
-  }
-
-  /** The Precompile contract result. */
-  class PrecompileContractResult {
-    private final Bytes output;
-    private final boolean refundGas;
-    private final MessageFrame.State state;
-    private final Optional<ExceptionalHaltReason> haltReason;
-
-    /**
-     * Encapsulated result of precompiled contract.
-     *
-     * @param output output if successful
-     * @param refundGas Should we charge the gasRequirement?
-     * @param state state of the EVM after execution (for format errors this would be
-     *     ExceptionalHalt)
-     * @param haltReason the exceptional halt reason
-     */
-    // TOO JDK17 use a record
-    public PrecompileContractResult(
-        final Bytes output,
-        final boolean refundGas,
-        final MessageFrame.State state,
-        final Optional<ExceptionalHaltReason> haltReason) {
-      this.output = output;
-      this.refundGas = refundGas;
-      this.state = state;
-      this.haltReason = haltReason;
-    }
+  record PrecompileContractResult(
+      Bytes output,
+      boolean isRefundGas,
+      MessageFrame.State state,
+      Optional<ExceptionalHaltReason> haltReason) {
 
     /**
      * precompile contract result with Success state.
@@ -143,41 +108,13 @@ public interface PrecompiledContract {
       return new PrecompileContractResult(
           output, false, MessageFrame.State.EXCEPTIONAL_HALT, haltReason);
     }
-
-    /**
-     * Gets output.
-     *
-     * @return the output
-     */
-    public Bytes getOutput() {
-      return output;
-    }
-
-    /**
-     * Is refund gas.
-     *
-     * @return the boolean
-     */
-    public boolean isRefundGas() {
-      return refundGas;
-    }
-
-    /**
-     * Gets state.
-     *
-     * @return the state
-     */
-    public MessageFrame.State getState() {
-      return state;
-    }
-
-    /**
-     * Gets halt reason.
-     *
-     * @return the halt reason
-     */
-    public Optional<ExceptionalHaltReason> getHaltReason() {
-      return haltReason;
-    }
   }
+
+  /**
+   * Record type used for precompile result caching.
+   *
+   * @param cachedInput cached input bytes
+   * @param cachedResult cached result
+   */
+  record PrecompileInputResultTuple(Bytes cachedInput, PrecompileContractResult cachedResult) {}
 }

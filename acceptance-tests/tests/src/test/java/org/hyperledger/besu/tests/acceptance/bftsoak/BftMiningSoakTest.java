@@ -175,9 +175,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
     lastChainHeight = chainHeight;
 
-    // Leave the chain stalled for 3 minutes. Check no new blocks are mined. Then
+    // Leave the chain stalled for 1 minute. Check no new blocks are mined. Then
     // resume the other validators.
-    nextStepEndTime = previousStepEndTime.plus(3, ChronoUnit.MINUTES);
+    nextStepEndTime = previousStepEndTime.plus(1, ChronoUnit.MINUTES);
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
       Thread.sleep(ONE_MINUTE);
       chainHeight = minerNode1.execute(ethTransactions.blockNumber());
@@ -233,8 +233,10 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
             + lastChainHeight.intValue()
             + 120);
     // Upgrade the chain from berlin to london in 120 blocks time
-    upgradeToLondon(
-        minerNode1, minerNode2, minerNode3, minerNode4, lastChainHeight.intValue() + 120);
+    int londonBlockNumber = lastChainHeight.intValue() + 120;
+    upgradeToLondon(minerNode1, minerNode2, minerNode3, minerNode4, londonBlockNumber);
+
+    minerNode4.verify(blockchain.minimumHeight(londonBlockNumber, 180));
 
     previousStepEndTime = Instant.now();
 
@@ -266,15 +268,20 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(301));
 
     // Upgrade the chain to shanghai in 120 seconds. Then try to deploy a shanghai contract
-    LOG.info(
-        "Upgrading the entire chain to the Shanghai fork one node at a time. The genesis for each node will be updated to shanghaiTime = "
-            + Instant.now().getEpochSecond()
-            + 120);
+    Instant shanghaiUpgradeStartTime = Instant.now();
     upgradeToShanghai(
-        minerNode1, minerNode2, minerNode3, minerNode4, Instant.now().getEpochSecond() + 120);
+        minerNode1,
+        minerNode2,
+        minerNode3,
+        minerNode4,
+        shanghaiUpgradeStartTime.getEpochSecond() + 120);
 
-    // Allow the chain to restart mining blocks
-    Thread.sleep(THREE_MINUTES);
+    cluster.verify(blockchain.reachesHeight(minerNode4, 1, 180));
+
+    // Check if has been 120 seconds since the upgrade and wait otherwise
+    while (Instant.now().getEpochSecond() < shanghaiUpgradeStartTime.getEpochSecond() + 130) {
+      Thread.sleep(TEN_SECONDS);
+    }
 
     LOG.info(
         "Deploying a smart contract that should only work if the chain is running on the shanghai fork");

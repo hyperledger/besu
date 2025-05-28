@@ -33,7 +33,7 @@ public final class GetReceiptsMessage extends AbstractMessageData {
       return (GetReceiptsMessage) message;
     }
     final int code = message.getCode();
-    if (code != EthPV63.GET_RECEIPTS) {
+    if (code != EthProtocolMessages.GET_RECEIPTS) {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a GetReceipts.", code));
     }
@@ -54,7 +54,7 @@ public final class GetReceiptsMessage extends AbstractMessageData {
 
   @Override
   public int getCode() {
-    return EthPV63.GET_RECEIPTS;
+    return EthProtocolMessages.GET_RECEIPTS;
   }
 
   public Iterable<Hash> hashes() {

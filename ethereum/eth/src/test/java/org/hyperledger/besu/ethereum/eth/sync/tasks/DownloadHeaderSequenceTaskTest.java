@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
@@ -178,7 +178,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
     final RespondingEthPeer.Responder responder =
         (cap, message) -> {
           final Optional<MessageData> fullResponse = fullResponder.respond(cap, message);
-          if (!fullResponse.isPresent() || message.getCode() != EthPV62.GET_BLOCK_HEADERS) {
+          if (!fullResponse.isPresent()
+              || message.getCode() != EthProtocolMessages.GET_BLOCK_HEADERS) {
             return fullResponse;
           }
           final BlockHeadersMessage headersMessage =

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -477,5 +479,22 @@ public class IbftControllerTest {
     when(roundChangeMessageData.getCode()).thenReturn(IbftV2.ROUND_CHANGE);
     when(roundChangeMessageData.decode()).thenReturn(roundChange);
     roundChangeMessage = new DefaultMessage(null, roundChangeMessageData);
+  }
+
+  @Test
+  public void heightManagerCanOnlyBeStartedOnceIfNotStopped() {
+    constructIbftController();
+    ibftController.start();
+    assertThatThrownBy(() -> ibftController.start())
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Attempt to start new height manager without stopping previous manager");
+  }
+
+  @Test
+  public void heightManagerCanBeRestartedIfStopped() {
+    constructIbftController();
+    ibftController.start();
+    ibftController.stop();
+    assertThatNoException().isThrownBy(() -> ibftController.start());
   }
 }

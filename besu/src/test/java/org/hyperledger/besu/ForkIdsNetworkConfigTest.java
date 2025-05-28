@@ -69,6 +69,13 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0xed88b5fdL), 0L))
         },
         new Object[] {
+          NetworkName.HOODI,
+          List.of(
+              new ForkId(Bytes.ofUnsignedInt(0xbef71d30L), 1742999832L),
+              new ForkId(Bytes.ofUnsignedInt(0x0929e24eL), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x0929e24eL), 0L))
+        },
+        new Object[] {
           NetworkName.HOLESKY,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0xc61a6098L), 1696000704L),
@@ -96,8 +103,9 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0x20c327fcL), 15050000L),
               new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 1681338455L),
               new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 1710338135L),
-              new ForkId(Bytes.ofUnsignedInt(0x9f3d2254L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x9f3d2254L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x9f3d2254L), 1746612311L),
+              new ForkId(Bytes.ofUnsignedInt(0xc376cf8bL), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0xc376cf8bL), 0L))
         },
         new Object[] {
           NetworkName.MORDOR,
@@ -151,10 +159,7 @@ public class ForkIdsNetworkConfigTest {
 
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            mockBlockchain,
-            genesisConfig.getForkBlockNumbers(),
-            genesisConfig.getForkTimestamps(),
-            false);
+            mockBlockchain, genesisConfig.getForkBlockNumbers(), genesisConfig.getForkTimestamps());
 
     final List<ForkId> actualForkIds =
         Streams.concat(schedule.streamMilestoneBlocks(), Stream.of(Long.MAX_VALUE))

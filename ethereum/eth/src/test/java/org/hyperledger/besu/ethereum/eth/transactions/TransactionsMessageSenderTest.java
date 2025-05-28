@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
@@ -48,7 +48,8 @@ public class TransactionsMessageSenderTest {
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
 
-  private final PeerTransactionTracker transactionTracker = new PeerTransactionTracker(ethPeers);
+  private final PeerTransactionTracker transactionTracker =
+      new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
   private final TransactionsMessageSender messageSender =
       new TransactionsMessageSender(transactionTracker);
 
@@ -79,7 +80,8 @@ public class TransactionsMessageSenderTest {
     final List<MessageData> sentMessages = messageDataArgumentCaptor.getAllValues();
 
     assertThat(sentMessages).hasSize(2);
-    assertThat(sentMessages).allMatch(message -> message.getCode() == EthPV62.TRANSACTIONS);
+    assertThat(sentMessages)
+        .allMatch(message -> message.getCode() == EthProtocolMessages.TRANSACTIONS);
     final Set<Transaction> firstBatch = getTransactionsFromMessage(sentMessages.get(0));
     final Set<Transaction> secondBatch = getTransactionsFromMessage(sentMessages.get(1));
 
@@ -92,7 +94,7 @@ public class TransactionsMessageSenderTest {
         message -> {
           final Set<Transaction> actualSentTransactions = getTransactionsFromMessage(message);
           final Set<Transaction> expectedTransactions = newHashSet(transactions);
-          return message.getCode() == EthPV62.TRANSACTIONS
+          return message.getCode() == EthProtocolMessages.TRANSACTIONS
               && actualSentTransactions.equals(expectedTransactions);
         });
   }

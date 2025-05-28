@@ -24,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
 import static org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommandTest.Cmd.cmd;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.CommandTestAbstract;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256R1;
@@ -32,6 +31,7 @@ import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -98,49 +98,54 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingOperatorSubCommandWithoutSubSubcommandMustDisplayUsage() {
     parseCommand(OperatorSubCommand.COMMAND_NAME);
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_OPERATOR_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_OPERATOR_USAGE);
   }
 
   @Test
   public void callingOperatorCommandHelpMustDisplayUsage() {
     parseCommand(OperatorSubCommand.COMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_OPERATOR_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_OPERATOR_USAGE);
   }
 
   @Test
   public void callingOperatorCommandVersionMustDisplayVersion() {
     parseCommand(OperatorSubCommand.COMMAND_NAME, "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingBackupStateCommandVersionMustDisplayVersion() {
     parseCommand("x-backup-state", "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingGenerateBlockchainConfigCommandVersionMustDisplayVersion() {
     parseCommand("generate-blockchain-config", "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingGenerateLogBloomCacheCommandVersionMustDisplayVersion() {
     parseCommand("generate-log-bloom-cache", "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingRestoreStateCommandVersionMustDisplayVersion() {
     parseCommand("x-restore-state", "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 

@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -54,6 +53,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.math.BigInteger;
@@ -166,12 +166,14 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ConsensusContext consensusContext) {
+      final ConsensusContext consensusContext,
+      final ServiceManager serviceManager) {
     return new MigratingProtocolContext(
         blockchain,
         worldStateArchive,
         consensusContext.as(MigratingConsensusContext.class),
-        badBlockManager);
+        badBlockManager,
+        serviceManager);
   }
 
   @Override
@@ -197,9 +199,10 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
-    return besuControllerBuilderSchedule
-        .get(0L)
-        .createAdditionalPluginServices(blockchain, protocolContext);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.createAdditionalPluginServices(blockchain, protocolContext));
+    return new NoopPluginServiceFactory();
   }
 
   @Override
@@ -207,10 +210,14 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final MiningConfiguration miningConfiguration) {
-    return besuControllerBuilderSchedule
-        .get(0L)
-        .createAdditionalJsonRpcMethodFactory(
-            protocolContext, protocolSchedule, miningConfiguration);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(
+            b ->
+                b.createAdditionalJsonRpcMethodFactory(
+                    protocolContext, protocolSchedule, miningConfiguration));
+    return super.createAdditionalJsonRpcMethodFactory(
+        protocolContext, protocolSchedule, miningConfiguration);
   }
 
   @Override
@@ -218,7 +225,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final EthProtocolManager ethProtocolManager,
       final Optional<SnapProtocolManager> maybeSnapProtocolManager) {
     return besuControllerBuilderSchedule
-        .get(0L)
+        .get(besuControllerBuilderSchedule.keySet().stream().skip(1).findFirst().orElseThrow())
         .createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
   }
 
@@ -240,20 +247,34 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
       final ForkIdManager forkIdManager) {
-    return besuControllerBuilderSchedule
-        .get(0L)
-        .createEthProtocolManager(
-            protocolContext,
-            synchronizerConfiguration,
-            transactionPool,
-            ethereumWireProtocolConfiguration,
-            ethPeers,
-            ethContext,
-            ethMessages,
-            scheduler,
-            peerValidators,
-            mergePeerFilter,
-            forkIdManager);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(
+            b ->
+                b.createEthProtocolManager(
+                    protocolContext,
+                    synchronizerConfiguration,
+                    transactionPool,
+                    ethereumWireProtocolConfiguration,
+                    ethPeers,
+                    ethContext,
+                    ethMessages,
+                    scheduler,
+                    peerValidators,
+                    mergePeerFilter,
+                    forkIdManager));
+    return super.createEthProtocolManager(
+        protocolContext,
+        synchronizerConfiguration,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethContext,
+        ethMessages,
+        scheduler,
+        peerValidators,
+        mergePeerFilter,
+        forkIdManager);
   }
 
   @Override
@@ -317,12 +338,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   public BesuControllerBuilder metricsSystem(final ObservableMetricsSystem metricsSystem) {
     besuControllerBuilderSchedule.values().forEach(b -> b.metricsSystem(metricsSystem));
     return super.metricsSystem(metricsSystem);
-  }
-
-  @Override
-  public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
-    besuControllerBuilderSchedule.values().forEach(b -> b.privacyParameters(privacyParameters));
-    return super.privacyParameters(privacyParameters);
   }
 
   @Override

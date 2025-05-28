@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -27,7 +30,7 @@ import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 import org.hyperledger.besu.ethereum.transaction.BlockStateCall;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
@@ -36,12 +39,26 @@ import org.hyperledger.besu.plugin.data.TransactionSimulationResult;
 import org.hyperledger.besu.plugin.services.BlockSimulationService;
 
 import java.util.List;
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
 
 /** This class is a service that simulates the processing of a block */
 public class BlockSimulatorServiceImpl implements BlockSimulationService {
   private final BlockSimulator blockSimulator;
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  // Dummy signature for transactions to not fail being processed.
+  private static final SECPSignature FAKE_SIGNATURE =
+      SIGNATURE_ALGORITHM
+          .get()
+          .createSignature(
+              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+              (byte) 0);
 
   /**
    * This constructor creates a BlockSimulatorServiceImpl object
@@ -65,7 +82,8 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
             protocolSchedule,
             transactionSimulator,
             miningConfiguration,
-            blockchain);
+            blockchain,
+            0);
     this.worldStateArchive = worldStateArchive;
   }
 
@@ -120,7 +138,12 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
         new BlockStateCall(callParameters, blockOverrides, stateOverrides);
     try (final MutableWorldState ws = getWorldState(header, persistWorldState)) {
       BlockSimulationParameter blockSimulationParameter =
-          new BlockSimulationParameter(blockStateCall, true);
+          new BlockSimulationParameter.BlockSimulationParameterBuilder()
+              .blockStateCalls(List.of(blockStateCall))
+              .validation(true)
+              .fakeSignature(FAKE_SIGNATURE)
+              .build();
+
       List<BlockSimulationResult> results =
           blockSimulator.process(header, blockSimulationParameter, ws);
       BlockSimulationResult result = results.getFirst();

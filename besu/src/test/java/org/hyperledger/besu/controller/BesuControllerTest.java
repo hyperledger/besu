@@ -98,6 +98,27 @@ public class BesuControllerTest {
         .isInstanceOf(QbftBesuControllerBuilder.class);
   }
 
+  @Test
+  public void createConsensusScheduleBesuControllerBuilderWhenMigratingFromIbftLegacyToQbft() {
+    final long qbftStartBlock = 10L;
+    mockGenesisConfigForMigration("ibftLegacy", OptionalLong.of(qbftStartBlock));
+
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder().fromGenesisFile(genesisConfig, SyncMode.FULL);
+
+    assertThat(besuControllerBuilder).isInstanceOf(ConsensusScheduleBesuControllerBuilder.class);
+
+    final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule =
+        ((ConsensusScheduleBesuControllerBuilder) besuControllerBuilder)
+            .getBesuControllerBuilderSchedule();
+
+    assertThat(besuControllerBuilderSchedule).containsKeys(0L, qbftStartBlock);
+    assertThat(besuControllerBuilderSchedule.get(0L))
+        .isInstanceOf(IbftLegacyBesuControllerBuilder.class);
+    assertThat(besuControllerBuilderSchedule.get(qbftStartBlock))
+        .isInstanceOf(QbftBesuControllerBuilder.class);
+  }
+
   private void mockGenesisConfigForMigration(
       final String consensus, final OptionalLong startBlock) {
     when(genesisConfigOptions.isConsensusMigration()).thenReturn(true);
@@ -106,6 +127,11 @@ public class BesuControllerTest {
       case "ibft2":
         {
           when(genesisConfigOptions.isIbft2()).thenReturn(true);
+          break;
+        }
+      case "ibftlegacy":
+        {
+          when(genesisConfigOptions.isIbftLegacy()).thenReturn(true);
           break;
         }
       default:
@@ -128,6 +154,14 @@ public class BesuControllerTest {
   }
 
   @Test
+  public void defaultMainnetCheckpointSyncUsesMergeControllerBuilder() {
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder().fromGenesisFile(GenesisConfig.mainnet(), SyncMode.CHECKPOINT);
+
+    assertThat(besuControllerBuilder).isInstanceOf(MergeBesuControllerBuilder.class);
+  }
+
+  @Test
   public void postMergeCheckpointSyncWithTotalDifficultyEqualsTTDUsesTransitionControllerBuilder()
       throws IOException {
     final GenesisConfig mergeAtGenesisFile =
@@ -142,8 +176,10 @@ public class BesuControllerTest {
 
   @Test
   public void preMergeCheckpointSyncUsesTransitionControllerBuilder() {
+    final GenesisConfig checkpointPreMerge =
+        GenesisConfig.fromResource("/valid_pre_merge_checkpoint.json");
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisFile(GenesisConfig.mainnet(), SyncMode.CHECKPOINT);
+        new BesuController.Builder().fromGenesisFile(checkpointPreMerge, SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }

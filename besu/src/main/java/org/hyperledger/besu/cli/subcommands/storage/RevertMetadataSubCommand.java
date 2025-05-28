@@ -20,7 +20,6 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.OptionalInt;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -113,10 +112,6 @@ public class RevertMetadataSubCommand implements Runnable {
         }
 
         final var formatField = v2Obj.get("format").asText();
-        final OptionalInt maybePrivacyVersion =
-            v2Obj.has("privacyVersion")
-                ? OptionalInt.of(v2Obj.get("privacyVersion").asInt())
-                : OptionalInt.empty();
 
         final DataStorageFormat dataStorageFormat = DataStorageFormat.valueOf(formatField);
         final int v1Version =
@@ -127,9 +122,9 @@ public class RevertMetadataSubCommand implements Runnable {
             };
 
         @JsonSerialize
-        record V1(int version, OptionalInt privacyVersion) {}
+        record V1(int version) {}
 
-        MAPPER.writeValue(dbMetadata, new V1(v1Version, maybePrivacyVersion));
+        MAPPER.writeValue(dbMetadata, new V1(v1Version));
         LOG.info("Successfully reverted database metadata from v2 to v1 in {}", dbMetadata);
       } catch (IOException ioe) {
         throw new RuntimeException(ioe);

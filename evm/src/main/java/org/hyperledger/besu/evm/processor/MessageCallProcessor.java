@@ -160,17 +160,17 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
       frame.decrementRemainingGas(gasRequirement);
       final PrecompiledContract.PrecompileContractResult result =
           contract.computePrecompile(frame.getInputData(), frame);
-      operationTracer.tracePrecompileCall(frame, gasRequirement, result.getOutput());
+      operationTracer.tracePrecompileCall(frame, gasRequirement, result.output());
       if (result.isRefundGas()) {
         frame.incrementRemainingGas(gasRequirement);
       }
       if (frame.getState() == MessageFrame.State.REVERT) {
-        frame.setRevertReason(result.getOutput());
+        frame.setRevertReason(result.output());
       } else {
-        frame.setOutputData(result.getOutput());
+        frame.setOutputData(result.output());
       }
-      frame.setState(result.getState());
-      frame.setExceptionalHaltReason(result.getHaltReason());
+      frame.setState(result.state());
+      frame.setExceptionalHaltReason(result.haltReason());
     }
   }
 

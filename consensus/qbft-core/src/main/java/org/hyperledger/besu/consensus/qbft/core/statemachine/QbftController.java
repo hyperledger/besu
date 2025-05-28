@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.qbft.core.statemachine;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
-import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
@@ -53,7 +52,6 @@ public class QbftController implements QbftEventHandler {
   private final FutureMessageBuffer futureMessageBuffer;
   private final Gossiper gossiper;
   private final MessageTracker duplicateMessageTracker;
-  private final SynchronizerUpdater synchronizerUpdater;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final QbftBlockCodec blockEncoder;
   private BaseQbftBlockHeightManager currentHeightManager;
@@ -68,7 +66,6 @@ public class QbftController implements QbftEventHandler {
    * @param gossiper the gossiper
    * @param duplicateMessageTracker the duplicate message tracker
    * @param futureMessageBuffer the future message buffer
-   * @param synchronizerUpdater the synchronizer updater
    * @param blockEncoder the block encoder
    */
   public QbftController(
@@ -78,7 +75,6 @@ public class QbftController implements QbftEventHandler {
       final Gossiper gossiper,
       final MessageTracker duplicateMessageTracker,
       final FutureMessageBuffer futureMessageBuffer,
-      final SynchronizerUpdater synchronizerUpdater,
       final QbftBlockCodec blockEncoder) {
 
     this.blockchain = blockchain;
@@ -86,7 +82,6 @@ public class QbftController implements QbftEventHandler {
     this.futureMessageBuffer = futureMessageBuffer;
     this.gossiper = gossiper;
     this.duplicateMessageTracker = duplicateMessageTracker;
-    this.synchronizerUpdater = synchronizerUpdater;
     this.qbftBlockHeightManagerFactory = qbftBlockHeightManagerFactory;
     this.blockEncoder = blockEncoder;
   }
@@ -139,10 +134,29 @@ public class QbftController implements QbftEventHandler {
     return currentHeightManager;
   }
 
+  /* Replace the current height manager with a no-op height manager. */
+  private void stopCurrentHeightManager(final QbftBlockHeader parentHeader) {
+    currentHeightManager = qbftBlockHeightManagerFactory.createNoOpBlockHeightManager(parentHeader);
+  }
+
   @Override
   public void start() {
     if (started.compareAndSet(false, true)) {
       startNewHeightManager(blockchain.getChainHeadHeader());
+    } else {
+      // In normal circumstances the height manager should only be started once. If the caller
+      // has stopped the height manager (e.g. while sync completes) they must call stop() before
+      // starting the height manager again.
+      throw new IllegalStateException(
+          "Attempt to start new height manager without stopping previous manager");
+    }
+  }
+
+  @Override
+  public void stop() {
+    if (started.compareAndSet(true, false)) {
+      stopCurrentHeightManager(blockchain.getChainHeadHeader());
+      LOG.debug("QBFT height manager stop");
     }
   }
 
@@ -264,10 +278,6 @@ public class QbftController implements QbftEventHandler {
     } else if (isMsgForFutureChainHeight(msgRoundIdentifier)) {
       LOG.trace("Received message for future block height round={}", msgRoundIdentifier);
       futureMessageBuffer.addMessage(msgRoundIdentifier.getSequenceNumber(), rawMsg);
-      // Notify the synchronizer the transmitting peer must have the parent block to the received
-      // messages's target height.
-      synchronizerUpdater.updatePeerChainState(
-          msgRoundIdentifier.getSequenceNumber() - 1L, rawMsg.getConnection());
     } else {
       LOG.trace(
           "BFT message discarded as it is from a previous block height messageType={} chainHeight={} eventHeight={}",

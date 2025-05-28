@@ -15,13 +15,13 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.MINIMUM_TRIE_LOG_RETENTION_LIMIT;
+import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.MINIMUM_TRIE_LOG_RETENTION_LIMIT;
 
 import org.hyperledger.besu.cli.options.AbstractCLIOptionsTest;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDiffBasedSubStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(
                     dataStorageConfiguration
-                        .getDiffBasedSubStorageConfiguration()
+                        .getPathBasedExtraStorageConfiguration()
                         .getTrieLogPruningWindowSize())
                 .isEqualTo(600),
         "--bonsai-limit-trie-logs-enabled",
@@ -49,7 +49,7 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(
                     dataStorageConfiguration
-                        .getDiffBasedSubStorageConfiguration()
+                        .getPathBasedExtraStorageConfiguration()
                         .getTrieLogPruningWindowSize())
                 .isEqualTo(600),
         "--Xbonsai-limit-trie-logs-enabled",
@@ -63,14 +63,14 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(
                     dataStorageConfiguration
-                        .getDiffBasedSubStorageConfiguration()
+                        .getPathBasedExtraStorageConfiguration()
                         .getLimitTrieLogsEnabled())
                 .isEqualTo(false),
         "--bonsai-limit-trie-logs-enabled=false");
   }
 
   @Test
-  public void diffbasedTrieLogPruningWindowSizeShouldBePositive() {
+  public void pathbasedTrieLogPruningWindowSizeShouldBePositive() {
     internalTestFailure(
         "--bonsai-trie-logs-pruning-window-size=0 must be greater than 0",
         "--bonsai-limit-trie-logs-enabled",
@@ -79,7 +79,7 @@ public class DataStorageOptionsTest
   }
 
   @Test
-  public void diffbasedTrieLogPruningWindowSizeShouldBeAboveRetentionLimit() {
+  public void pathbasedTrieLogPruningWindowSizeShouldBeAboveRetentionLimit() {
     internalTestFailure(
         "--bonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512",
         "--bonsai-limit-trie-logs-enabled",
@@ -93,7 +93,7 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(
                     dataStorageConfiguration
-                        .getDiffBasedSubStorageConfiguration()
+                        .getPathBasedExtraStorageConfiguration()
                         .getMaxLayersToLoad())
                 .isEqualTo(MINIMUM_TRIE_LOG_RETENTION_LIMIT + 1),
         "--bonsai-limit-trie-logs-enabled",
@@ -107,7 +107,7 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(
                     dataStorageConfiguration
-                        .getDiffBasedSubStorageConfiguration()
+                        .getPathBasedExtraStorageConfiguration()
                         .getMaxLayersToLoad())
                 .isEqualTo(MINIMUM_TRIE_LOG_RETENTION_LIMIT),
         "--bonsai-limit-trie-logs-enabled",
@@ -125,12 +125,12 @@ public class DataStorageOptionsTest
   }
 
   @Test
-  public void diffbasedCodeUsingCodeHashEnabledCanBeEnabled() {
+  public void pathbasedCodeUsingCodeHashEnabledCanBeEnabled() {
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(
                     dataStorageConfiguration
-                        .getDiffBasedSubStorageConfiguration()
+                        .getPathBasedExtraStorageConfiguration()
                         .getUnstable()
                         .getCodeStoredByCodeHashEnabled())
                 .isEqualTo(true),
@@ -139,12 +139,12 @@ public class DataStorageOptionsTest
   }
 
   @Test
-  public void diffbasedCodeUsingCodeHashEnabledCanBeDisabled() {
+  public void pathbasedCodeUsingCodeHashEnabledCanBeDisabled() {
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(
                     dataStorageConfiguration
-                        .getDiffBasedSubStorageConfiguration()
+                        .getPathBasedExtraStorageConfiguration()
                         .getUnstable()
                         .getCodeStoredByCodeHashEnabled())
                 .isEqualTo(false),
@@ -185,8 +185,8 @@ public class DataStorageOptionsTest
   protected DataStorageConfiguration createCustomizedDomainObject() {
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(DataStorageFormat.BONSAI)
-        .diffBasedSubStorageConfiguration(
-            ImmutableDiffBasedSubStorageConfiguration.builder()
+        .pathBasedExtraStorageConfiguration(
+            ImmutablePathBasedExtraStorageConfiguration.builder()
                 .maxLayersToLoad(513L)
                 .limitTrieLogsEnabled(true)
                 .trieLogPruningWindowSize(514)

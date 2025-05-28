@@ -69,6 +69,43 @@ public class RocksDbHelper {
     }
   }
 
+  static void forFilteredColumnFamily(
+      final String dbPath,
+      final BiConsumer<RocksDB, ColumnFamilyHandle> task,
+      final List<String> columnFamilyNameFilter) {
+    RocksDB.loadLibrary();
+    Options options = new Options();
+    options.setCreateIfMissing(true);
+
+    // Open the RocksDB database with multiple column families
+    List<byte[]> cfNames;
+    try {
+      cfNames = RocksDB.listColumnFamilies(options, dbPath);
+    } catch (RocksDBException e) {
+      throw new RuntimeException(e);
+    }
+    final List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
+    final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
+    cfDescriptors.add(new ColumnFamilyDescriptor(cfNames.get(0))); // add default
+    cfNames.stream()
+        .filter(cfName -> columnFamilyNameFilter.contains(getNameById(cfName)))
+        .forEach(
+            cfName -> {
+              cfDescriptors.add(new ColumnFamilyDescriptor(cfName));
+            });
+    try (final RocksDB rocksdb = RocksDB.openReadOnly(dbPath, cfDescriptors, cfHandles)) {
+      for (ColumnFamilyHandle cfHandle : cfHandles) {
+        task.accept(rocksdb, cfHandle);
+      }
+    } catch (RocksDBException e) {
+      throw new RuntimeException(e);
+    } finally {
+      for (ColumnFamilyHandle cfHandle : cfHandles) {
+        cfHandle.close();
+      }
+    }
+  }
+
   static void printStatsForColumnFamily(
       final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
       throws RocksDBException {

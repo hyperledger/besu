@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.txselection.BlockTransactionSelectio
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.time.Duration;
@@ -213,7 +214,9 @@ public abstract class MiningConfiguration {
 
   @Value.Immutable
   public interface MutableInitValues {
-    Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
+    // This is the default extra data containing version info, capped at 32 bytes.
+    Bytes DEFAULT_EXTRA_DATA = BesuVersionUtils.versionForExtraData();
+
     Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
     Wei DEFAULT_MIN_PRIORITY_FEE_PER_GAS = Wei.ZERO;
     double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;

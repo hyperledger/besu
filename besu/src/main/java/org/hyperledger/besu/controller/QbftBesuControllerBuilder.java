@@ -36,6 +36,7 @@ import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.UniqueMessageMulticaster;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorPeers;
 import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
@@ -43,6 +44,7 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.FutureMessageSynchronizerHandler;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
@@ -64,7 +66,6 @@ import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
@@ -96,7 +97,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Duration;
@@ -152,7 +152,9 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   private ValidatorProvider createReadOnlyValidatorProvider(final Blockchain blockchain) {
     checkNotNull(
         transactionValidatorProvider, "transactionValidatorProvider should have been initialised");
-    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
+    final long startBlock =
+        qbftConfig.getStartBlock().isPresent() ? qbftConfig.getStartBlock().getAsLong() : 0;
+    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength(), startBlock);
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
     final BlockValidatorProvider readOnlyBlockValidatorProvider =
         BlockValidatorProvider.nonForkingValidatorProvider(
@@ -212,22 +214,23 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             qbftExtraDataCodec,
             ethProtocolManager.ethContext().getScheduler());
 
-    final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
+    final ValidatorProvider validatorProvider;
+    if (qbftConfig.getStartBlock().isPresent()) {
+      validatorProvider =
+          protocolContext
+              .getConsensusContext(BftContext.class, qbftConfig.getStartBlock().getAsLong())
+              .getValidatorProvider();
+    } else {
+      validatorProvider =
+          protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
+    }
     final QbftValidatorProvider qbftValidatorProvider =
         new QbftValidatorProviderAdaptor(validatorProvider);
 
     final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
-    final QbftContext qbftContext = new QbftContext(qbftValidatorProvider, qbftBlockInterface);
-    final ProtocolContext qbftProtocolContext =
-        new ProtocolContext(
-            blockchain,
-            protocolContext.getWorldStateArchive(),
-            qbftContext,
-            protocolContext.getBadBlockManager());
 
     final ProposerSelector proposerSelector =
-        new ProposerSelector(blockchain, bftBlockInterface, true, validatorProvider);
+        new BftProposerSelector(blockchain, bftBlockInterface, true, validatorProvider);
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
@@ -254,7 +257,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, qbftProtocolSchedule, qbftProtocolContext);
+        new MessageValidatorFactory(
+            proposerSelector, qbftProtocolSchedule, qbftValidatorProvider, qbftBlockInterface);
 
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(
@@ -264,11 +268,14 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             blockLogger(transactionPool, localAddress)
                 .blockMined(BlockUtil.toBesuBlock(qbftBlock)));
 
+    final EthSynchronizerUpdater synchronizerUpdater =
+        new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers());
     final FutureMessageBuffer futureMessageBuffer =
         new FutureMessageBuffer(
             qbftConfig.getFutureMessagesMaxDistance(),
             qbftConfig.getFutureMessagesLimit(),
-            blockchain.getChainHeadBlockNumber());
+            blockchain.getChainHeadBlockNumber(),
+            new FutureMessageSynchronizerHandler(synchronizerUpdater));
     final MessageTracker duplicateMessageTracker =
         new MessageTracker(qbftConfig.getDuplicateMessageLimit());
 
@@ -277,18 +284,18 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     QbftRoundFactory qbftRoundFactory =
         new QbftRoundFactory(
             finalState,
-            qbftProtocolContext,
+            qbftBlockInterface,
             qbftProtocolSchedule,
             minedBlockObservers,
             messageValidatorFactory,
-            messageFactory,
-            qbftExtraDataCodec);
+            messageFactory);
     QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory =
         new QbftBlockHeightManagerFactory(
             finalState,
             qbftRoundFactory,
             messageValidatorFactory,
             messageFactory,
+            qbftValidatorProvider,
             new QbftValidatorModeTransitionLoggerAdaptor(
                 new ValidatorModeTransitionLogger(qbftForksSchedule)));
 
@@ -302,7 +309,6 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,
-            new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers()),
             blockEncoder);
     final BftEventHandler bftEventHandler = new BftEventHandlerAdaptor(qbftController);
 
@@ -316,7 +322,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             bftProcessor,
             blockCreatorFactory,
             blockchain,
-            bftEventQueue);
+            bftEventQueue,
+            syncState);
 
     // Update the next block period in seconds according to the transition schedule
     protocolContext
@@ -335,35 +342,6 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                       .getEmptyBlockPeriodSeconds());
             });
 
-    syncState.subscribeSyncStatus(
-        syncStatus -> {
-          if (syncState.syncTarget().isPresent()) {
-            // We're syncing so stop doing other stuff
-            LOG.info("Stopping QBFT mining coordinator while we are syncing");
-            miningCoordinator.stop();
-          } else {
-            LOG.info("Starting QBFT mining coordinator following sync");
-            miningCoordinator.enable();
-            miningCoordinator.start();
-          }
-        });
-
-    syncState.subscribeCompletionReached(
-        new BesuEvents.InitialSyncCompletionListener() {
-          @Override
-          public void onInitialSyncCompleted() {
-            LOG.info("Starting QBFT mining coordinator following initial sync");
-            miningCoordinator.enable();
-            miningCoordinator.start();
-          }
-
-          @Override
-          public void onInitialSyncRestart() {
-            // Nothing to do. The mining coordinator won't be started until
-            // sync has completed.
-          }
-        });
-
     return miningCoordinator;
   }
 
@@ -381,7 +359,6 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     return QbftProtocolScheduleBuilder.create(
         genesisConfigOptions,
         qbftForksSchedule,
-        privacyParameters,
         isRevertReasonEnabled,
         qbftExtraDataCodec,
         evmConfiguration,
@@ -428,7 +405,9 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
+    final long startBlock =
+        qbftConfig.getStartBlock().isPresent() ? qbftConfig.getStartBlock().getAsLong() : 0;
+    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength(), startBlock);
 
     final BftValidatorOverrides validatorOverrides =
         convertBftForks(genesisConfigOptions.getTransitions().getQbftForks());

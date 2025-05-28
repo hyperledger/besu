@@ -117,4 +117,9 @@ public class IbftController extends BaseBftController {
   protected BaseBlockHeightManager getCurrentHeightManager() {
     return currentHeightManager;
   }
+
+  @Override
+  protected void stopCurrentHeightManager(final BlockHeader parentHeader) {
+    currentHeightManager = ibftBlockHeightManagerFactory.createNoOpBlockHeightManager(parentHeader);
+  }
 }

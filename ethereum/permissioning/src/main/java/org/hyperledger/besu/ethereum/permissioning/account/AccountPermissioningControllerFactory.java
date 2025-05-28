@@ -14,36 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.permissioning.account;
 
-import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.permissioning.TransactionPermissioningProvider;
 
+import java.util.List;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class AccountPermissioningControllerFactory {
-
-  private static final Logger LOG =
-      LoggerFactory.getLogger(AccountPermissioningControllerFactory.class);
 
   public static Optional<AccountPermissioningController> create(
       final PermissioningConfiguration permissioningConfiguration,
       final TransactionSimulator transactionSimulator,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final List<TransactionPermissioningProvider> pluginProviders) {
 
     if (permissioningConfiguration == null) {
       return Optional.empty();
@@ -53,51 +40,16 @@ public class AccountPermissioningControllerFactory {
         accountLocalConfigPermissioningController =
             buildLocalConfigPermissioningController(permissioningConfiguration, metricsSystem);
 
-    final Optional<TransactionSmartContractPermissioningController>
-        transactionSmartContractPermissioningController =
-            buildSmartContractPermissioningController(
-                permissioningConfiguration, transactionSimulator, metricsSystem);
-
-    if (accountLocalConfigPermissioningController.isPresent()
-        || transactionSmartContractPermissioningController.isPresent()) {
+    if (accountLocalConfigPermissioningController.isPresent() || pluginProviders.size() > 0) {
 
       final AccountPermissioningController controller =
           new AccountPermissioningController(
-              accountLocalConfigPermissioningController,
-              transactionSmartContractPermissioningController);
+              accountLocalConfigPermissioningController, pluginProviders);
 
       return Optional.of(controller);
     } else {
       return Optional.empty();
     }
-  }
-
-  private static Optional<TransactionSmartContractPermissioningController>
-      buildSmartContractPermissioningController(
-          final PermissioningConfiguration permissioningConfiguration,
-          final TransactionSimulator transactionSimulator,
-          final MetricsSystem metricsSystem) {
-
-    if (permissioningConfiguration.getSmartContractConfig().isPresent()) {
-      final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
-          permissioningConfiguration.getSmartContractConfig().get();
-
-      if (smartContractPermissioningConfiguration.isSmartContractAccountAllowlistEnabled()) {
-        final Address accountSmartContractAddress =
-            smartContractPermissioningConfiguration.getAccountSmartContractAddress();
-
-        Optional<TransactionSmartContractPermissioningController>
-            transactionSmartContractPermissioningController =
-                Optional.of(
-                    new TransactionSmartContractPermissioningController(
-                        accountSmartContractAddress, transactionSimulator, metricsSystem));
-        validatePermissioningContract(transactionSmartContractPermissioningController.get());
-
-        return transactionSmartContractPermissioningController;
-      }
-    }
-
-    return Optional.empty();
   }
 
   private static Optional<AccountLocalConfigPermissioningController>
@@ -117,39 +69,5 @@ public class AccountPermissioningControllerFactory {
     }
 
     return Optional.empty();
-  }
-
-  private static void validatePermissioningContract(
-      final TransactionSmartContractPermissioningController
-          transactionSmartContractPermissioningController) {
-    try {
-      LOG.debug("Validating onchain account permissioning smart contract configuration");
-
-      final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
-
-      final SECPSignature FAKE_SIGNATURE =
-          signatureAlgorithm.createSignature(
-              signatureAlgorithm.getHalfCurveOrder(),
-              signatureAlgorithm.getHalfCurveOrder(),
-              (byte) 0);
-
-      final Transaction transaction =
-          Transaction.builder()
-              .type(TransactionType.FRONTIER)
-              .sender(Address.ZERO)
-              .gasLimit(0)
-              .gasPrice(Wei.ZERO)
-              .value(Wei.ZERO)
-              .payload(Bytes.EMPTY)
-              .nonce(0)
-              .signature(FAKE_SIGNATURE)
-              .build();
-
-      // We don't care about the validation result. All we need it to ensure the check doesn't fail
-      transactionSmartContractPermissioningController.isPermitted(transaction);
-    } catch (Exception e) {
-      throw new IllegalStateException(
-          "Error validating onchain account permissioning smart contract configuration", e);
-    }
   }
 }

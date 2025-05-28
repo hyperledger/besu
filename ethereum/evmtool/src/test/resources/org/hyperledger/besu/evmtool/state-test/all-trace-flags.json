@@ -6,6 +6,7 @@
     "--trace.memory",
     "--trace.stack",
     "--trace.returndata",
+    "--trace.eip-3155",
     "--notime"
   ],
   "stdin": {
@@ -101,6 +102,6 @@
     {"pc":49,"op":96,"gas":"0x9ffffa38f","gasCost":"0x3","memory":"0x0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff","memSize":32,"stack":["0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff"],"returnData":"0x0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff","depth":1,"refund":0,"opName":"PUSH1"},
     {"pc":51,"op":85,"gas":"0x9ffffa38c","gasCost":"0x1388","memory":"0x0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff","memSize":32,"stack":["0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff","0x0"],"returnData":"0x0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff","depth":1,"refund":0,"opName":"SSTORE"},
     {"pc":52,"op":0,"gas":"0x9ffff9004","gasCost":"0x0","memory":"0x0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff","memSize":32,"stack":[],"returnData":"0x0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff","depth":1,"refund":0,"opName":"STOP"},
-    {"output":"","gasUsed":"0x6ffc","test":"returndatacopy_following_call","fork":"London","d":0,"g":0,"v":0,"postHash":"0x1c6dda42e80135b6d5ff1a664e6f85e8552d5c56888bb35e2e694f3829a500c7","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
+    {"output":"","gasUsed":"0x6ffc","test":"returndatacopy_following_call","fork":"London","d":0,"g":0,"v":0,"stateRoot":"0x1c6dda42e80135b6d5ff1a664e6f85e8552d5c56888bb35e2e694f3829a500c7","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
   ]
 }

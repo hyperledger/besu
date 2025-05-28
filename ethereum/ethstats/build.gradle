@@ -35,7 +35,7 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'com.squareup.okhttp3:okhttp'
   implementation 'io.vertx:vertx-core'
-  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
 
   implementation project(':consensus:clique')
   implementation project(':config')

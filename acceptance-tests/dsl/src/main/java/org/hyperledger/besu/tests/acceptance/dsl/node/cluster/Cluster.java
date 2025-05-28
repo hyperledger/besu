@@ -91,12 +91,14 @@ public class Cluster implements AutoCloseable {
         .forEach(this::startNode);
 
     if (clusterConfiguration.isAwaitPeerDiscovery()) {
+      int timeoutSeconds = clusterConfiguration.getPeerDiscoveryTimeoutSeconds();
       for (final RunnableNode node : nodes) {
         LOG.info(
-            "Awaiting peer discovery for node {}, expecting {} peers",
+            "Awaiting peer discovery for node {}, expecting {} peers, timeout {} seconds",
             node.getName(),
-            nodes.size() - 1);
-        node.awaitPeerDiscovery(net.awaitPeerCount(nodes.size() - 1));
+            nodes.size() - 1,
+            timeoutSeconds);
+        node.awaitPeerDiscovery(net.awaitPeerCount(nodes.size() - 1, timeoutSeconds));
       }
     }
     LOG.info("Cluster startup complete.");

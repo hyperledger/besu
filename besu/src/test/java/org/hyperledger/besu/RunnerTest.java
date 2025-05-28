@@ -46,7 +46,6 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockSyncTestUtils;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -424,7 +423,10 @@ public final class RunnerTest {
                         DEFAULT_MAX_OPEN_FILES,
                         DEFAULT_BACKGROUND_THREAD_COUNT,
                         DEFAULT_CACHE_CAPACITY,
-                        DEFAULT_IS_HIGH_SPEC),
+                        DEFAULT_IS_HIGH_SPEC,
+                        false,
+                        Optional.empty(),
+                        Optional.empty()),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(besuConfiguration)
@@ -495,7 +497,6 @@ public final class RunnerTest {
         .nodeKey(nodeKey)
         .storageProvider(storageProvider)
         .metricsSystem(metricsSystem)
-        .privacyParameters(PrivacyParameters.DEFAULT)
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)

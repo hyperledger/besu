@@ -34,8 +34,8 @@ dependencies {
   api 'org.slf4j:slf4j-api'
 
   implementation 'net.java.dev.jna:jna'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:secp256k1'
   implementation 'org.hyperledger.besu:secp256r1'
   implementation 'org.hyperledger.besu:blake2bf'

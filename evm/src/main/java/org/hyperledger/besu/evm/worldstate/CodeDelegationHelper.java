@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,6 +15,10 @@
 package org.hyperledger.besu.evm.worldstate;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.CodeDelegationAccount;
+
+import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -41,5 +45,49 @@ public class CodeDelegationHelper {
     return code != null
         && code.size() == DELEGATED_CODE_SIZE
         && code.slice(0, CODE_DELEGATION_PREFIX.size()).equals(CODE_DELEGATION_PREFIX);
+  }
+
+  /**
+   * Returns the target account of the delegated code.
+   *
+   * @param worldUpdater the world updater.
+   * @param isPrecompile function to check if an address belongs to a precompile account.
+   * @param account the account which has a code delegation.
+   * @return the target account of the delegated code, throws IllegalArgumentException if account is
+   *     null or doesn't have code delegation.
+   */
+  public static CodeDelegationAccount getTargetAccount(
+      final WorldUpdater worldUpdater, final Predicate<Address> isPrecompile, final Account account)
+      throws IllegalArgumentException {
+    if (account == null) {
+      throw new IllegalArgumentException("Account must not be null.");
+    }
+
+    if (!hasCodeDelegation(account.getCode())) {
+      throw new IllegalArgumentException("Account does not have code delegation.");
+    }
+
+    final Address targetAddress =
+        Address.wrap(account.getCode().slice(CODE_DELEGATION_PREFIX.size()));
+
+    final Bytes targetCode = processTargetCode(worldUpdater, isPrecompile, targetAddress);
+
+    return new CodeDelegationAccount(account, targetAddress, targetCode);
+  }
+
+  private static Bytes processTargetCode(
+      final WorldUpdater worldUpdater,
+      final Predicate<Address> isPrecompile,
+      final Address targetAddress) {
+    if (targetAddress == null) {
+      return Bytes.EMPTY;
+    }
+
+    final Account targetAccount = worldUpdater.get(targetAddress);
+
+    if (targetAccount == null || isPrecompile.test(targetAddress)) {
+      return Bytes.EMPTY;
+    }
+    return targetAccount.getCode();
   }
 }

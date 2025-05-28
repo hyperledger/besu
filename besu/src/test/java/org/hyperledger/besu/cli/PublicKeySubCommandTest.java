@@ -18,13 +18,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -152,21 +152,22 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   @Test
   public void callingPublicKeySubCommandWithoutSubSubcommandMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME);
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
   }
 
   @Test
   public void callingPublicKeySubCommandHelpMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
   }
 
   @Test
   public void callingPublicKeySubCommandVersionMustDisplayVersion() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -174,14 +175,15 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   @Test
   public void callingPublicKeyExportSubCommandHelpMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_USAGE);
   }
 
   @Test
   public void callingPublicKeyExportSubCommandVersionMustDisplayVersion() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -192,8 +194,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME);
 
     final String expectedOutputStart = nodeKey.getPublicKey().toString();
-    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   @Test
@@ -235,8 +237,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         privateKeyFile.toString());
 
     final String expectedOutputStart = keyPair.getPublicKey().toString();
-    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   @Test
@@ -269,15 +271,16 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   @Test
   public void callingPublicKeyExportAddressSubCommandHelpMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE);
   }
 
   @Test
   public void callingPublicKeyExportAddressSubCommandVersionMustDisplayVersion() {
     parseCommand(
         PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME, "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -288,8 +291,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME);
 
     final String expectedOutputStart = Util.publicKeyToAddress(nodeKey.getPublicKey()).toString();
-    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   @Test
@@ -335,8 +338,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         privateKeyFile.toString());
 
     final String expectedOutputStart = Util.publicKeyToAddress(keyPair.getPublicKey()).toString();
-    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   @Test

@@ -34,8 +34,8 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.BesuEvents;
@@ -195,13 +195,17 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
   private void registerResponseConstructors() {
     snapMessages.registerResponseConstructor(
-        SnapV1.GET_ACCOUNT_RANGE, messageData -> constructGetAccountRangeResponse(messageData));
+        SnapV1.GET_ACCOUNT_RANGE,
+        (messageData, capability) -> constructGetAccountRangeResponse(messageData));
     snapMessages.registerResponseConstructor(
-        SnapV1.GET_STORAGE_RANGE, messageData -> constructGetStorageRangeResponse(messageData));
+        SnapV1.GET_STORAGE_RANGE,
+        (messageData, capability) -> constructGetStorageRangeResponse(messageData));
     snapMessages.registerResponseConstructor(
-        SnapV1.GET_BYTECODES, messageData -> constructGetBytecodesResponse(messageData));
+        SnapV1.GET_BYTECODES,
+        (messageData, capability) -> constructGetBytecodesResponse(messageData));
     snapMessages.registerResponseConstructor(
-        SnapV1.GET_TRIE_NODES, messageData -> constructGetTrieNodesResponse(messageData));
+        SnapV1.GET_TRIE_NODES,
+        (messageData, capability) -> constructGetTrieNodesResponse(messageData));
   }
 
   MessageData constructGetAccountRangeResponse(final MessageData message) {
