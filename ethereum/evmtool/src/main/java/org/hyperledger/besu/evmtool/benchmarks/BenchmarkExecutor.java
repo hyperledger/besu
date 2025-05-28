@@ -92,7 +92,7 @@ public abstract class BenchmarkExecutor {
   /**
    * Run the benchmark with the specific args. Execution will be done warmup + iterations times
    *
-   * @param arg the bytes areguments to pass into the contract
+   * @param arg the bytes arguments to pass into the contract
    * @param contract the precompiled contract to benchmark
    * @return the mean number of seconds each timed iteration took.
    */
