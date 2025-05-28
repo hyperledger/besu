@@ -148,6 +148,10 @@ configure(allprojects - project(':platform')) {
   java {
     sourceCompatibility = 21
     targetCompatibility = 21
+
+    consistentResolution {
+      useCompileClasspathVersions()
+    }
   }
 
   repositories {
