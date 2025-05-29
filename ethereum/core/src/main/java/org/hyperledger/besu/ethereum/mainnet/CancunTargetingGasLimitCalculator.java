@@ -25,12 +25,6 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
   /** The default mainnet target blobs per block for Cancun */
   private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_CANCUN = 3;
 
-  /** The default mainnet target blobs per block for Osaka */
-  //  private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_PRAGUE = 6;
-
-  /** The default mainnet target blobs per block for Osaka */
-  // private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_OSAKA = 9;
-
   private final long maxBlobGasPerBlock;
 
   /** this.getBlobGasPerBlob() * 3 blobs = 131072 * 6 = 393216 = 0x60000 */

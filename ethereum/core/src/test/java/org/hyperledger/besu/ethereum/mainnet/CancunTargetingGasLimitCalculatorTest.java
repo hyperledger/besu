@@ -19,6 +19,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
 import java.util.List;
@@ -39,15 +40,15 @@ class CancunTargetingGasLimitCalculatorTest {
           0L, FeeMarket.cancunDefault(0L, Optional.empty()), new CancunGasCalculator());
 
   @ParameterizedTest(name = "{index} - parent gas {0}, used gas {1}, new excess {2}")
-  @MethodSource("blobGasses")
-  public void shouldCalculateExcessBlobGasCorrectly(
+  @MethodSource("cancunBlobGasses")
+  public void shouldCalculateCancunExcessBlobGasCorrectly(
       final long parentExcess, final long used, final long expected) {
     final long usedBlobGas = new CancunGasCalculator().blobGasCost(used);
     assertThat(cancunTargetingGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
         .isEqualTo(expected);
   }
 
-  Iterable<Arguments> blobGasses() {
+  Iterable<Arguments> cancunBlobGasses() {
     long targetGasPerBlock = TARGET_BLOB_GAS_PER_BLOCK_CANCUN;
     return List.of(
         Arguments.of(0L, 0L, 0L),
@@ -108,6 +109,45 @@ class CancunTargetingGasLimitCalculatorTest {
     assertThat(cancunTargetingGasLimitCalculator.currentBlobGasLimit()).isEqualTo(2621440);
   }
 
+  private final PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
+  // CancunTargetingGasLimitCalculator with Prague numbers
+  private final CancunTargetingGasLimitCalculator pragueGasLimitCalculator =
+      new CancunTargetingGasLimitCalculator(
+          0L,
+          FeeMarket.cancunDefault(0L, Optional.empty()),
+          pragueGasCalculator,
+          BlobSchedule.PRAGUE_DEFAULT.getMax(),
+          BlobSchedule.PRAGUE_DEFAULT.getTarget());
+
+  private static final long TARGET_BLOB_GAS_PER_BLOCK_PRAGUE = 0xC0000;
+
+  @ParameterizedTest(name = "{index} - parent gas {0}, used gas {1}, blob target {2}")
+  @MethodSource("pragueBlobGasses")
+  public void shouldCalculatePragueExcessBlobGasCorrectly(
+      final long parentExcess, final long used, final long expected) {
+    final long usedBlobGas = pragueGasCalculator.blobGasCost(used);
+    assertThat(pragueGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
+        .isEqualTo(expected);
+  }
+
+  Iterable<Arguments> pragueBlobGasses() {
+    long sixBlobTargetGas = TARGET_BLOB_GAS_PER_BLOCK_PRAGUE;
+    long newTargetCount = 6;
+
+    return List.of(
+        // New target count
+        Arguments.of(0L, 0L, 0L),
+        Arguments.of(sixBlobTargetGas, 0L, 0L),
+        Arguments.of(newTargetCount, 0L, 0L),
+        Arguments.of(0L, newTargetCount, 0L),
+        Arguments.of(1L, newTargetCount, 1L),
+        Arguments.of(
+            pragueGasCalculator.blobGasCost(newTargetCount),
+            1L,
+            pragueGasLimitCalculator.getBlobGasPerBlob()),
+        Arguments.of(sixBlobTargetGas, newTargetCount, sixBlobTargetGas));
+  }
+
   @Test
   void shouldCalculateCorrectlyPragueBlobGasPerBlob() {
     // should use PragueGasCalculator's blob gas per blob to calculate the gas limit
@@ -128,6 +168,49 @@ class CancunTargetingGasLimitCalculatorTest {
     assertThat(pragueTargetingGasLimitCalculator.currentBlobGasLimit()).isEqualTo(1310720);
   }
 
+  long nineBlobTargetGas = TARGET_BLOB_GAS_PER_BLOCK_OSAKA;
+  int newTargetCount = 9;
+  public static final OsakaGasCalculator osakaGasCalculator = new OsakaGasCalculator();
+  // CancunTargetingGasLimitCalculator with Osaka numbers
+  private final CancunTargetingGasLimitCalculator osakaGasLimitCalculator =
+      new CancunTargetingGasLimitCalculator(
+          0L,
+          FeeMarket.cancunDefault(0L, Optional.empty()),
+          osakaGasCalculator,
+          BlobSchedule.PRAGUE_DEFAULT.getMax(),
+          newTargetCount);
+
+  private static final long TARGET_BLOB_GAS_PER_BLOCK_OSAKA = 0x120000;
+
+  @ParameterizedTest(name = "{index} - parent gas {0}, used gas {1}, blob target {2}")
+  @MethodSource("osakaBlobGasses")
+  public void shouldCalculateOsakaExcessBlobGasCorrectly(
+      final long parentExcess, final long used, final long expected) {
+    final long usedBlobGas = osakaGasCalculator.blobGasCost(used);
+    assertThat(osakaGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
+        .isEqualTo(expected);
+  }
+
+  Iterable<Arguments> osakaBlobGasses() {
+
+    return List.of(
+        // New target count
+        Arguments.of(0L, 0L, 0L),
+        Arguments.of(nineBlobTargetGas, 0L, 0L),
+        Arguments.of(newTargetCount, 0L, 0L),
+        Arguments.of(0L, newTargetCount, 0L),
+        Arguments.of(1L, newTargetCount, 1L),
+        Arguments.of(
+            osakaGasCalculator.blobGasCost(newTargetCount),
+            1L,
+            osakaGasLimitCalculator.getBlobGasPerBlob()),
+        Arguments.of(nineBlobTargetGas, newTargetCount, nineBlobTargetGas));
+  }
+
+  /**
+   * This class is used to test the CancunTargetingGasLimitCalculator with a hypothetical future
+   * blob gas
+   */
   private static class TestFutureGasCalculator extends CancunGasCalculator {
     private static final long TEST_BLOB_GAS_PER_BLOB_FUTURE = 262144;
 
