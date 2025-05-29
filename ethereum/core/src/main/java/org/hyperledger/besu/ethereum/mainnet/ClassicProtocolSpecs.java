@@ -74,7 +74,7 @@ public class ClassicProtocolSpecs {
     return MainnetProtocolSpecs.homesteadDefinition(
             evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
         .isReplayProtectionSupported(true)
-        .gasCalculator(blobSchedule -> new TangerineWhistleGasCalculator())
+        .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
@@ -89,7 +89,7 @@ public class ClassicProtocolSpecs {
       final MetricsSystem metricsSystem) {
     return tangerineWhistleDefinition(
             chainId, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
-        .gasCalculator(blobSchedule -> new DieHardGasCalculator())
+        .gasCalculator(DieHardGasCalculator::new)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_PAUSED)
         .name("DieHard");
   }
@@ -157,7 +157,7 @@ public class ClassicProtocolSpecs {
             metricsSystem)
         .evmBuilder(MainnetEVMs::byzantium)
         .evmConfiguration(evmConfiguration)
-        .gasCalculator(blobSchedule -> new SpuriousDragonGasCalculator())
+        .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(MessageCallProcessor::new)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
@@ -205,7 +205,7 @@ public class ClassicProtocolSpecs {
             isParallelTxProcessingEnabled,
             metricsSystem)
         .evmBuilder(MainnetEVMs::constantinople)
-        .gasCalculator(blobSchedule -> new PetersburgGasCalculator())
+        .gasCalculator(PetersburgGasCalculator::new)
         .evmBuilder(MainnetEVMs::constantinople)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Agharta");
@@ -225,7 +225,7 @@ public class ClassicProtocolSpecs {
             evmConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .gasCalculator(blobSchedule -> new IstanbulGasCalculator())
+        .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             (gasCalculator, evmConfig) ->
                 MainnetEVMs.istanbul(
@@ -293,7 +293,7 @@ public class ClassicProtocolSpecs {
             evmConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .gasCalculator(blobSchedule -> new BerlinGasCalculator())
+        .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
@@ -323,7 +323,7 @@ public class ClassicProtocolSpecs {
             evmConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .gasCalculator(blobSchedule -> new LondonGasCalculator())
+        .gasCalculator(LondonGasCalculator::new)
         .contractCreationProcessorBuilder(
             evm ->
                 new ContractCreationProcessor(
@@ -346,7 +346,7 @@ public class ClassicProtocolSpecs {
             isParallelTxProcessingEnabled,
             metricsSystem)
         // EIP-3860
-        .gasCalculator(blobSchedule -> new ShanghaiGasCalculator())
+        .gasCalculator(ShanghaiGasCalculator::new)
         // EIP-3855
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
