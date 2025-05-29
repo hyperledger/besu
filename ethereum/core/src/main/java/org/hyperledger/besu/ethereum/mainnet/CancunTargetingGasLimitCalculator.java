@@ -61,9 +61,9 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
       final int maxBlobsPerBlock,
       final int targetBlobsPerBlock) {
     super(londonForkBlock, feeMarket);
-    this.targetBlobGasPerBlock = targetBlobsPerBlock;
-    this.maxBlobGasPerBlock = gasCalculator.getBlobGasPerBlob() * maxBlobsPerBlock;
     this.blobGasPerBlob = gasCalculator.getBlobGasPerBlob();
+    this.targetBlobGasPerBlock = blobGasPerBlob * targetBlobsPerBlock;
+    this.maxBlobGasPerBlock = blobGasPerBlob * maxBlobsPerBlock;
   }
 
   @Override
