@@ -61,7 +61,8 @@ public class BlockRangeBroadcaster {
    *
    * @param message the message received from the peer
    */
-  private void handleBlockRangeUpdateMessage(final EthMessage message) {
+  @VisibleForTesting
+  void handleBlockRangeUpdateMessage(final EthMessage message) {
     try {
       final BlockRangeUpdateMessage blockRangeUpdateMessage =
           BlockRangeUpdateMessage.readFrom(message.getData());
@@ -74,19 +75,35 @@ public class BlockRangeBroadcaster {
           latestBlockNumber,
           blockHash,
           message.getPeer().getLoggableId());
-      message.getPeer().registerKnownBlock(blockHash);
-      message.getPeer().registerBlockRange(blockHash, latestBlockNumber, earliestBlockNumber);
+      if (isValid(blockRangeUpdateMessage)) {
+        message.getPeer().registerKnownBlock(blockHash);
+        message.getPeer().registerBlockRange(blockHash, latestBlockNumber, earliestBlockNumber);
+      } else {
+        LOG.trace(
+            "Invalid block range update message received: earliest={}, latest={}",
+            earliestBlockNumber,
+            latestBlockNumber);
+        handleInvalidMessage(message, DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      }
     } catch (final RLPException e) {
       LOG.atTrace()
           .setMessage("Unable to parse BlockRangeUpdateMessage from peer {} {}")
           .addArgument(message.getPeer()::getLoggableId)
           .addArgument(e)
           .log();
-      message
-          .getPeer()
-          .disconnect(
-              DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
+      handleInvalidMessage(
+          message,
+          DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     }
+  }
+
+  private void handleInvalidMessage(
+      final EthMessage message, final DisconnectMessage.DisconnectReason reason) {
+    message.getPeer().disconnect(reason);
+  }
+
+  private boolean isValid(final BlockRangeUpdateMessage message) {
+    return message.getLatestBlockNumber() >= message.getEarliestBlockNumber();
   }
 
   /**
