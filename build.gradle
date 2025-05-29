@@ -1017,13 +1017,11 @@ def calculateVersion() {
 
 def calculateArtifactId(configuringProject) {
   def currentProject = configuringProject
-  def projectNames = []
-  do {
+  def projectNames = [currentProject.name]
+  while((currentProject = currentProject.getParent()) != null) {
     projectNames << currentProject.name
-    currentProject = currentProject.getParent()
-  } while( currentProject != null)
-
-    return projectNames.reverse().join('-')
+  }
+  return projectNames.reverse().join('-')
 }
 
 def getGitCommitDetails(length = 8) {
