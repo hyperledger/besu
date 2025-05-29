@@ -27,7 +27,6 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
 
   private final long maxBlobGasPerBlock;
 
-  /** this.getBlobGasPerBlob() * 3 blobs = 131072 * 6 = 393216 = 0x60000 */
   private final long targetBlobGasPerBlock;
 
   private final long blobGasPerBlob;

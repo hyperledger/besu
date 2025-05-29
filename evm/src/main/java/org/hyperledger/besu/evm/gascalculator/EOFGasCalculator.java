@@ -29,14 +29,6 @@ public class EOFGasCalculator extends OsakaGasCalculator {
   static final long MIN_CALLEE_GAS = 2300;
 
   /** Instantiates a new EOF Gas Calculator. */
-  //  public EOFGasCalculator() {
-  //    super();
-  //  }
-  //
-  //  /**
-  //   * Instantiates a new EOF Gas Calculator
-  //   *
-  //   */
   public EOFGasCalculator() {
     this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
   }
