@@ -685,7 +685,7 @@ public abstract class MainnetProtocolSpecs {
                 .flatMap(BlobScheduleOptions::getCancun)
                 .orElse(BlobSchedule.CANCUN_DEFAULT))
         // gas calculator for EIP-4844 blob gas
-        .gasCalculator(blobSchedule -> new CancunGasCalculator(blobSchedule.getTarget()))
+        .gasCalculator(blobSchedule -> new CancunGasCalculator())
         // gas limit with EIP-4844 max blob gas per block
         .gasLimitCalculatorBuilder(
             (feeMarket, gasCalculator, blobSchedule) ->
@@ -693,7 +693,8 @@ public abstract class MainnetProtocolSpecs {
                     londonForkBlockNumber,
                     (BaseFeeMarket) feeMarket,
                     gasCalculator,
-                    blobSchedule.getMax()))
+                    blobSchedule.getMax(),
+                    blobSchedule.getTarget()))
         // EVM changes to support EIP-1153: TSTORE and EIP-5656: MCOPY
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -782,8 +783,7 @@ public abstract class MainnetProtocolSpecs {
                     .flatMap(BlobScheduleOptions::getPrague)
                     .orElse(BlobSchedule.PRAGUE_DEFAULT))
             .gasCalculator(
-                blobSchedule ->
-                    new PragueGasCalculator(blobSchedule.getTarget()) // EIP-7691 6/9 blob increase
+                blobSchedule -> new PragueGasCalculator() // EIP-7691 6/9 blob increase
                 )
             // EIP-3074 AUTH and AUTHCALL
             .evmBuilder(
@@ -869,7 +869,7 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
-        .gasCalculator(blobSchedule -> new OsakaGasCalculator(blobSchedule.getTarget()))
+        .gasCalculator(blobSchedule -> new OsakaGasCalculator())
         .evmBuilder(
             (gasCalculator, __) ->
                 MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
@@ -882,7 +882,7 @@ public abstract class MainnetProtocolSpecs {
       final ProtocolSpecBuilder protocolSpecBuilder) {
     return protocolSpecBuilder
         // EIP-7692 EOF v1 Gas calculator
-        .gasCalculator(blobSchedule -> new EOFGasCalculator(blobSchedule.getTarget()))
+        .gasCalculator(blobSchedule -> new EOFGasCalculator())
         // EIP-7692 EOF v1 EVM and opcodes
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->

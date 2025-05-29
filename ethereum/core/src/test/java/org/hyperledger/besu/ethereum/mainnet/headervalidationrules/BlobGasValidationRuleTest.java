@@ -34,21 +34,23 @@ public class BlobGasValidationRuleTest {
 
   private CancunGasCalculator cancunGasCalculator;
   private BlobGasValidationRule cancunBlobGasValidationRule;
+  private CancunTargetingGasLimitCalculator cancunTargetingGasLimitCalculator;
 
   private PragueGasCalculator pragueGasCalculator;
   private BlobGasValidationRule pragueBlobGasValidationRule;
+  private CancunTargetingGasLimitCalculator pragueGasLimitCalculator;
 
   @BeforeEach
   public void setUp() {
     cancunGasCalculator = new CancunGasCalculator();
-    final CancunTargetingGasLimitCalculator cancunTargetingGasLimitCalculator =
+    cancunTargetingGasLimitCalculator =
         new CancunTargetingGasLimitCalculator(
             0L, FeeMarket.cancunDefault(0L, Optional.empty()), cancunGasCalculator);
     cancunBlobGasValidationRule =
         new BlobGasValidationRule(cancunGasCalculator, cancunTargetingGasLimitCalculator);
 
     pragueGasCalculator = new PragueGasCalculator();
-    final CancunTargetingGasLimitCalculator pragueGasLimitCalculator =
+    pragueGasLimitCalculator =
         new CancunTargetingGasLimitCalculator(
             0L, FeeMarket.cancunDefault(0L, Optional.empty()), pragueGasCalculator);
     pragueBlobGasValidationRule =
@@ -61,7 +63,7 @@ public class BlobGasValidationRuleTest {
    */
   @Test
   public void validateHeader_BlobGasMatchesCalculated_SuccessValidation() {
-    long target = cancunGasCalculator.getTargetBlobGasPerBlock();
+    long target = cancunTargetingGasLimitCalculator.getTargetBlobGasPerBlock();
 
     // Create parent header
     final BlockHeaderTestFixture parentBuilder = new BlockHeaderTestFixture();
@@ -83,7 +85,7 @@ public class BlobGasValidationRuleTest {
    */
   @Test
   public void validateHeader_BlobGasDifferentFromCalculated_FailsValidation() {
-    long target = cancunGasCalculator.getTargetBlobGasPerBlock();
+    long target = cancunTargetingGasLimitCalculator.getTargetBlobGasPerBlock();
 
     // Create parent header
     final BlockHeaderTestFixture parentBuilder = new BlockHeaderTestFixture();
@@ -104,7 +106,7 @@ public class BlobGasValidationRuleTest {
    */
   @Test
   public void validateHeader_BlobGasMatchesCalculated_SuccessValidation_Prague() {
-    long target = pragueGasCalculator.getTargetBlobGasPerBlock();
+    long target = pragueGasLimitCalculator.getTargetBlobGasPerBlock();
 
     // Create parent header
     final BlockHeaderTestFixture parentBuilder = new BlockHeaderTestFixture();
@@ -126,7 +128,7 @@ public class BlobGasValidationRuleTest {
    */
   @Test
   public void validateHeader_BlobGasDifferentFromCalculated_FailsValidation_Prague() {
-    long target = pragueGasCalculator.getTargetBlobGasPerBlock();
+    long target = pragueGasLimitCalculator.getTargetBlobGasPerBlock();
 
     // Create parent header
     final BlockHeaderTestFixture parentBuilder = new BlockHeaderTestFixture();

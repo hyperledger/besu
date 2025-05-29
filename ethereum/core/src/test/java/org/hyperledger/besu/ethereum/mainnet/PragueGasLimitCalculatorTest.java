@@ -31,10 +31,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PragueGasLimitCalculatorTest {
+  private final PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
   // CancunTargetingGasLimitCalculator with Prague numbers
   private final CancunTargetingGasLimitCalculator pragueGasLimitCalculator =
       new CancunTargetingGasLimitCalculator(
-          0L, FeeMarket.cancunDefault(0L, Optional.empty()), new PragueGasCalculator());
+          0L, FeeMarket.cancunDefault(0L, Optional.empty()), pragueGasCalculator);
 
   private static final long TARGET_BLOB_GAS_PER_BLOCK_PRAGUE = 0xC0000;
 
@@ -43,7 +44,7 @@ class PragueGasLimitCalculatorTest {
   @MethodSource("blobGasses")
   public void shouldCalculateExcessBlobGasCorrectly(
       final long parentExcess, final long used, final long expected) {
-    final long usedBlobGas = pragueGasLimitCalculator.getGasCalculator().blobGasCost(used);
+    final long usedBlobGas = pragueGasCalculator.blobGasCost(used);
     assertThat(pragueGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
         .isEqualTo(expected);
   }
@@ -60,7 +61,7 @@ class PragueGasLimitCalculatorTest {
         Arguments.of(0L, newTargetCount, 0L),
         Arguments.of(1L, newTargetCount, 1L),
         Arguments.of(
-            pragueGasLimitCalculator.getGasCalculator().blobGasCost(newTargetCount),
+            pragueGasCalculator.blobGasCost(newTargetCount),
             1L,
             pragueGasLimitCalculator.getBlobGasPerBlob()),
         Arguments.of(sixBlobTargetGas, newTargetCount, sixBlobTargetGas));

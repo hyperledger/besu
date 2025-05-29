@@ -22,16 +22,32 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
   /** The mainnet default maximum number of blobs per block for Cancun */
   private static final int DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN = 6;
 
+  /** The default mainnet target blobs per block for Cancun */
+  private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_CANCUN = 3;
+
+  /** The default mainnet target blobs per block for Osaka */
+  //  private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_PRAGUE = 6;
+
+  /** The default mainnet target blobs per block for Osaka */
+  // private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_OSAKA = 9;
+
   private final long maxBlobGasPerBlock;
+
+  /** this.getBlobGasPerBlob() * 3 blobs = 131072 * 6 = 393216 = 0x60000 */
   private final long targetBlobGasPerBlock;
+
   private final long blobGasPerBlob;
-  private final GasCalculator gasCalculator;
 
   public CancunTargetingGasLimitCalculator(
       final long londonForkBlock,
       final BaseFeeMarket feeMarket,
       final GasCalculator gasCalculator) {
-    this(londonForkBlock, feeMarket, gasCalculator, DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN);
+    this(
+        londonForkBlock,
+        feeMarket,
+        gasCalculator,
+        DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN,
+        DEFAULT_TARGET_BLOBS_PER_BLOCK_CANCUN);
   }
 
   /**
@@ -42,13 +58,12 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
       final long londonForkBlock,
       final BaseFeeMarket feeMarket,
       final GasCalculator gasCalculator,
-      final int maxBlobsPerBlock) {
+      final int maxBlobsPerBlock,
+      final int targetBlobsPerBlock) {
     super(londonForkBlock, feeMarket);
+    this.targetBlobGasPerBlock = targetBlobsPerBlock;
     this.maxBlobGasPerBlock = gasCalculator.getBlobGasPerBlob() * maxBlobsPerBlock;
-    this.targetBlobGasPerBlock = gasCalculator.getTargetBlobGasPerBlock();
     this.blobGasPerBlob = gasCalculator.getBlobGasPerBlob();
-
-    this.gasCalculator = gasCalculator; // TODO if this is the way to go, remove the above 2 lines ?
   }
 
   @Override
@@ -69,7 +84,12 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
     return blobGasPerBlob;
   }
 
-  public GasCalculator getGasCalculator() {
-    return this.gasCalculator;
+  /**
+   * Retrieves the target blob gas per block.
+   *
+   * @return The target blob gas per block.
+   */
+  public long getTargetBlobGasPerBlock() {
+    return targetBlobGasPerBlock;
   }
 }

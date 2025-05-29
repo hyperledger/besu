@@ -42,7 +42,7 @@ class CancunTargetingGasLimitCalculatorTest {
   @MethodSource("blobGasses")
   public void shouldCalculateExcessBlobGasCorrectly(
       final long parentExcess, final long used, final long expected) {
-    final long usedBlobGas = cancunTargetingGasLimitCalculator.getGasCalculator().blobGasCost(used);
+    final long usedBlobGas = new CancunGasCalculator().blobGasCost(used);
     assertThat(cancunTargetingGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
         .isEqualTo(expected);
   }
@@ -72,9 +72,14 @@ class CancunTargetingGasLimitCalculatorTest {
     final long blobGasPerBlob = new CancunGasCalculator().getBlobGasPerBlob();
     assertThat(blobGasPerBlob).isEqualTo(131072);
     int maxBlobs = 10;
+    int targetBlobs = 3;
     var cancunTargetingGasLimitCalculator =
         new CancunTargetingGasLimitCalculator(
-            0L, FeeMarket.cancunDefault(0L, Optional.empty()), new CancunGasCalculator(), maxBlobs);
+            0L,
+            FeeMarket.cancunDefault(0L, Optional.empty()),
+            new CancunGasCalculator(),
+            maxBlobs,
+            targetBlobs);
     // if maxBlobs = 10, then the gas limit would be 131072 * 10 = 1310720
     assertThat(cancunTargetingGasLimitCalculator.currentBlobGasLimit())
         .isEqualTo(blobGasPerBlob * maxBlobs);
@@ -89,12 +94,14 @@ class CancunTargetingGasLimitCalculatorTest {
     final long blobGasPerBlob = new TestFutureGasCalculator().getBlobGasPerBlob();
     assertThat(blobGasPerBlob).isEqualTo(262144);
     int maxBlobs = 10;
+    int targetBlobs = 3;
     var cancunTargetingGasLimitCalculator =
         new CancunTargetingGasLimitCalculator(
             0L,
             FeeMarket.cancunDefault(0L, Optional.empty()),
             new TestFutureGasCalculator(),
-            maxBlobs);
+            maxBlobs,
+            targetBlobs);
     // if maxBlobs = 10, then the gas limit would be 262144 * 10 = 2621440
     assertThat(cancunTargetingGasLimitCalculator.currentBlobGasLimit())
         .isEqualTo(blobGasPerBlob * maxBlobs);
@@ -107,12 +114,14 @@ class CancunTargetingGasLimitCalculatorTest {
     final long blobGasPerBlob = new PragueGasCalculator().getBlobGasPerBlob();
     assertThat(blobGasPerBlob).isEqualTo(131072); // same as Cancun
     int maxBlobs = 10;
+    int targetBlobs = 3;
     var pragueTargetingGasLimitCalculator =
         new CancunTargetingGasLimitCalculator(
             0L,
             FeeMarket.cancun(0L, Optional.empty(), BlobSchedule.PRAGUE_DEFAULT),
             new PragueGasCalculator(),
-            maxBlobs);
+            maxBlobs,
+            targetBlobs);
     // if maxBlobs = 10, then the gas limit would be 131072 * 10 = 1310720
     assertThat(pragueTargetingGasLimitCalculator.currentBlobGasLimit())
         .isEqualTo(blobGasPerBlob * maxBlobs);
@@ -123,7 +132,7 @@ class CancunTargetingGasLimitCalculatorTest {
     private static final long TEST_BLOB_GAS_PER_BLOB_FUTURE = 262144;
 
     public TestFutureGasCalculator() {
-      super(0, 7);
+      super(0);
     }
 
     @Override

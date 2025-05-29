@@ -31,10 +31,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class OsakaGasLimitCalculatorTest {
+  public static final OsakaGasCalculator osakaGasCalculator = new OsakaGasCalculator();
   // CancunTargetingGasLimitCalculator with Osaka numbers
   private final CancunTargetingGasLimitCalculator osakaGasLimitCalculator =
       new CancunTargetingGasLimitCalculator(
-          0L, FeeMarket.cancunDefault(0L, Optional.empty()), new OsakaGasCalculator());
+          0L, FeeMarket.cancunDefault(0L, Optional.empty()), osakaGasCalculator);
 
   private static final long TARGET_BLOB_GAS_PER_BLOCK_OSAKA = 0x120000;
 
@@ -43,7 +44,7 @@ class OsakaGasLimitCalculatorTest {
   @MethodSource("blobGasses")
   public void shouldCalculateExcessBlobGasCorrectly(
       final long parentExcess, final long used, final long expected) {
-    final long usedBlobGas = osakaGasLimitCalculator.getGasCalculator().blobGasCost(used);
+    final long usedBlobGas = osakaGasCalculator.blobGasCost(used);
     assertThat(osakaGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
         .isEqualTo(expected);
   }
@@ -60,7 +61,7 @@ class OsakaGasLimitCalculatorTest {
         Arguments.of(0L, newTargetCount, 0L),
         Arguments.of(1L, newTargetCount, 1L),
         Arguments.of(
-            osakaGasLimitCalculator.getGasCalculator().blobGasCost(newTargetCount),
+            osakaGasCalculator.blobGasCost(newTargetCount),
             1L,
             osakaGasLimitCalculator.getBlobGasPerBlob()),
         Arguments.of(nineBlobTargetGas, newTargetCount, nineBlobTargetGas));
