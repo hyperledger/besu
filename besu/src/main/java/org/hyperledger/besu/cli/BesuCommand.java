@@ -856,8 +856,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       // set merge config on the basis of genesis config
       setMergeConfigOptions();
 
-      setIgnorableStorageSegments();
-
       instantiateSignatureAlgorithmFactory();
 
       logger.info("Starting Besu");
@@ -868,6 +866,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       validateOptions();
 
       configure();
+
+      setIgnorableStorageSegments();
 
       // If we're not running against a named network, or if version compat protection has been
       // explicitly enabled, perform compatibility check
@@ -2394,7 +2394,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /** Set ignorable segments in RocksDB Storage Provider plugin. */
   public void setIgnorableStorageSegments() {
-    if (!unstableChainPruningOptions.getChainDataPruningEnabled()) {
+    if (!unstableChainPruningOptions.getChainDataPruningEnabled()
+        && !dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
       rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE);
     }
   }

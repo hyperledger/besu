@@ -32,10 +32,10 @@ import picocli.CommandLine;
 
 /** The prune pre-merge block data sub command */
 @CommandLine.Command(
-    name = "x-prune-pre-merge-blocks",
+    name = "prune-pre-merge-blocks",
+    aliases = "x-prune-pre-merge-blocks",
     description =
-        "[Experimental] Prunes all pre-merge blocks and associated transaction receipts, leaving only headers and genesis block",
-    hidden = true,
+        "Prunes all pre-merge blocks and associated transaction receipts, leaving only headers and genesis block",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class PrunePreMergeBlockDataSubCommand implements Runnable {
