@@ -25,8 +25,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -88,7 +88,7 @@ public class MergeBesuControllerBuilderTest {
   private MergeBesuControllerBuilder besuControllerBuilder;
   private static final NodeKey nodeKey = NodeKeyUtils.generate();
 
-  @Mock GenesisConfig genesisConfig;
+  @Mock GenesisFile genesisFile;
   @Mock GenesisConfigOptions genesisConfigOptions;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
@@ -119,12 +119,12 @@ public class MergeBesuControllerBuilderTest {
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.toHexString());
-    lenient().when(genesisConfig.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
-    lenient().when(genesisConfig.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
-    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
-    lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
-    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
+    lenient().when(genesisFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
+    lenient().when(genesisFile.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
+    lenient().when(genesisFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisFile.getNonce()).thenReturn(Long.toHexString(1));
+    lenient().when(genesisFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(genesisConfigOptions.getTerminalTotalDifficulty())
         .thenReturn((Optional.of(UInt256.valueOf(100L))));
@@ -174,7 +174,7 @@ public class MergeBesuControllerBuilderTest {
   MergeBesuControllerBuilder visitWithMockConfigs(final MergeBesuControllerBuilder builder) {
     return (MergeBesuControllerBuilder)
         builder
-            .genesisConfig(genesisConfig)
+            .genesisConfig(genesisFile)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .miningParameters(miningConfiguration)
@@ -223,7 +223,7 @@ public class MergeBesuControllerBuilderTest {
   @Test
   public void assertBuiltContextMonitorsTTD() {
     final GenesisState genesisState =
-        GenesisState.fromConfig(genesisConfig, this.besuControllerBuilder.createProtocolSchedule());
+        GenesisState.fromConfig(genesisFile, this.besuControllerBuilder.createProtocolSchedule());
     final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
     final MergeContext mergeContext =
         spy(

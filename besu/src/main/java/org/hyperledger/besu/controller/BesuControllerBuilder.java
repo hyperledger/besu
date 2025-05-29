@@ -18,8 +18,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
 import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
@@ -128,7 +128,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   /** The genesis file */
-  protected GenesisConfig genesisConfig;
+  protected GenesisFile genesisFile;
 
   /** The genesis config options; */
   protected GenesisConfigOptions genesisConfigOptions;
@@ -245,12 +245,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Genesis config file besu controller builder.
    *
-   * @param genesisConfig the genesis config
+   * @param genesisFile the genesis config
    * @return the besu controller builder
    */
-  public BesuControllerBuilder genesisConfig(final GenesisConfig genesisConfig) {
-    this.genesisConfig = genesisConfig;
-    this.genesisConfigOptions = genesisConfig.getConfigOptions();
+  public BesuControllerBuilder genesisConfig(final GenesisFile genesisFile) {
+    this.genesisFile = genesisFile;
+    this.genesisConfigOptions = genesisFile.getConfigOptions();
     return this;
   }
 
@@ -546,7 +546,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the besu controller
    */
   public BesuController build() {
-    checkNotNull(genesisConfig, "Missing genesis config file");
+    checkNotNull(genesisFile, "Missing genesis config file");
     checkNotNull(genesisConfigOptions, "Missing genesis config options");
     checkNotNull(syncConfig, "Missing sync config");
     checkNotNull(ethereumWireProtocolConfiguration, "Missing ethereum protocol configuration");
@@ -839,10 +839,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return maybeGenesisStateRoot
         .map(
             genesisStateRoot ->
-                GenesisState.fromStorage(genesisStateRoot, genesisConfig, protocolSchedule))
+                GenesisState.fromStorage(genesisStateRoot, genesisFile, protocolSchedule))
         .orElseGet(
-            () ->
-                GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule));
+            () -> GenesisState.fromConfig(dataStorageConfiguration, genesisFile, protocolSchedule));
   }
 
   private TrieLogPruner createTrieLogPruner(

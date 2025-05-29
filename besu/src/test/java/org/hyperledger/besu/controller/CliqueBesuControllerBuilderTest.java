@@ -22,8 +22,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.ImmutableCliqueConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
@@ -78,7 +78,7 @@ public class CliqueBesuControllerBuilderTest {
 
   private BesuControllerBuilder cliqueBesuControllerBuilder;
 
-  @Mock private GenesisConfig genesisConfig;
+  @Mock private GenesisFile genesisFile;
   @Mock private GenesisConfigOptions genesisConfigOptions;
   @Mock private SynchronizerConfiguration synchronizerConfiguration;
   @Mock private EthProtocolConfiguration ethProtocolConfiguration;
@@ -104,14 +104,14 @@ public class CliqueBesuControllerBuilderTest {
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.toHexString());
-    lenient().when(genesisConfig.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
-    when(genesisConfig.getExtraData())
+    lenient().when(genesisFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
+    when(genesisFile.getExtraData())
         .thenReturn(
             "0x0000000000000000000000000000000000000000000000000000000000000000b9b81ee349c3807e46bc71aa2632203c5b4620340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
-    lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
-    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
+    lenient().when(genesisFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisFile.getNonce()).thenReturn(Long.toHexString(1));
+    lenient().when(genesisFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     lenient()
         .when(storageProvider.createBlockchainStorage(any(), any(), any()))
@@ -172,7 +172,7 @@ public class CliqueBesuControllerBuilderTest {
 
     cliqueBesuControllerBuilder =
         new CliqueBesuControllerBuilder()
-            .genesisConfig(genesisConfig)
+            .genesisConfig(genesisFile)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .networkId(networkId)

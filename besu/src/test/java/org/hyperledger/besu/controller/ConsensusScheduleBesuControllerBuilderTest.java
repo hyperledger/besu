@@ -20,7 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -60,7 +60,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
   private @Mock BiFunction<
           NavigableSet<ForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
       combinedProtocolScheduleFactory;
-  private @Mock GenesisConfig genesisConfig;
+  private @Mock GenesisFile genesisFile;
   private @Mock BesuControllerBuilder besuControllerBuilder1;
   private @Mock BesuControllerBuilder besuControllerBuilder2;
   private @Mock BesuControllerBuilder besuControllerBuilder3;
@@ -103,8 +103,8 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     final ConsensusScheduleBesuControllerBuilder consensusScheduleBesuControllerBuilder =
         new ConsensusScheduleBesuControllerBuilder(
             besuControllerBuilderSchedule, combinedProtocolScheduleFactory);
-    when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
-    consensusScheduleBesuControllerBuilder.genesisConfig(genesisConfig);
+    when(genesisFile.getConfigOptions()).thenReturn(genesisConfigOptions);
+    consensusScheduleBesuControllerBuilder.genesisConfig(genesisFile);
     consensusScheduleBesuControllerBuilder.createProtocolSchedule();
 
     final NavigableSet<ForkSpec<ProtocolSchedule>> expectedProtocolSchedulesSpecs =

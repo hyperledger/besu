@@ -71,7 +71,7 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
         .thenReturn(new TransitionsConfigOptions(jsonTransitions));
 
     lenient()
-        .when(genesisConfig.getExtraData())
+        .when(genesisFile.getExtraData())
         .thenReturn(
             QbftExtraDataCodec.createGenesisExtraDataString(List.of(Address.fromHexString("1"))));
   }

@@ -56,7 +56,7 @@ public class IbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
         .when(genesisConfigOptions.getTransitions())
         .thenReturn(new TransitionsConfigOptions(jsonTransitions));
 
-    when(genesisConfig.getExtraData())
+    when(genesisFile.getExtraData())
         .thenReturn(
             "0xf83ea00000000000000000000000000000000000000000000000000000000000000000d594c2ab482b506de561668e07f04547232a72897daf808400000000c0");
   }

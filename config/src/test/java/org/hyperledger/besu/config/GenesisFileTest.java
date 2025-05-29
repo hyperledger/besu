@@ -17,7 +17,7 @@ package org.hyperledger.besu.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.config.GenesisConfig.fromConfig;
+import static org.hyperledger.besu.config.GenesisFile.fromConfig;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -39,15 +39,15 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Test;
 
-class GenesisConfigTest {
+class GenesisFileTest {
 
   private static final BigInteger MAINNET_CHAIN_ID = BigInteger.ONE;
   private static final BigInteger DEVELOPMENT_CHAIN_ID = BigInteger.valueOf(1337);
-  private static final GenesisConfig EMPTY_CONFIG = fromConfig("{}");
+  private static final GenesisFile EMPTY_CONFIG = fromConfig("{}");
 
   @Test
   void shouldLoadMainnetConfigFile() {
-    final GenesisConfig config = GenesisConfig.mainnet();
+    final GenesisFile config = GenesisFile.mainnet();
     // Sanity check some basic properties to confirm this is the mainnet file.
     assertThat(config.getConfigOptions().isEthHash()).isTrue();
     assertThat(config.getConfigOptions().getChainId()).hasValue(MAINNET_CHAIN_ID);
@@ -64,7 +64,7 @@ class GenesisConfigTest {
 
   @Test
   void shouldLoadDevelopmentConfigFile() {
-    final GenesisConfig config = GenesisConfig.fromResource("/dev.json");
+    final GenesisFile config = GenesisFile.fromResource("/dev.json");
     // Sanity check some basic properties to confirm this is the dev file.
     assertThat(config.getConfigOptions().isEthHash()).isTrue();
     assertThat(config.getConfigOptions().getChainId()).hasValue(DEVELOPMENT_CHAIN_ID);
@@ -156,27 +156,26 @@ class GenesisConfigTest {
 
   @Test
   void shouldGetBaseFeeAtGenesis() {
-    GenesisConfig withBaseFeeAtGenesis =
-        GenesisConfig.fromConfig("{\"config\":{\"londonBlock\":0},\"baseFeePerGas\":\"0xa\"}");
+    GenesisFile withBaseFeeAtGenesis =
+        GenesisFile.fromConfig("{\"config\":{\"londonBlock\":0},\"baseFeePerGas\":\"0xa\"}");
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isPresent();
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas().get().toLong()).isEqualTo(10L);
   }
 
   @Test
   void shouldGetDefaultBaseFeeAtGenesis() {
-    GenesisConfig withBaseFeeAtGenesis =
-        GenesisConfig.fromConfig("{\"config\":{\"londonBlock\":0}}");
+    GenesisFile withBaseFeeAtGenesis = GenesisFile.fromConfig("{\"config\":{\"londonBlock\":0}}");
     // no specified baseFeePerGas:
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isNotPresent();
     // supply a default genesis baseFeePerGas when london-at-genesis:
     assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas())
-        .contains(GenesisConfig.BASEFEE_AT_GENESIS_DEFAULT_VALUE);
+        .contains(GenesisFile.BASEFEE_AT_GENESIS_DEFAULT_VALUE);
   }
 
   @Test
   void shouldGetBaseFeeExplicitlyAtGenesis() {
-    GenesisConfig withBaseFeeNotAtGenesis =
-        GenesisConfig.fromConfig("{\"config\":{\"londonBlock\":10},\"baseFeePerGas\":\"0xa\"}");
+    GenesisFile withBaseFeeNotAtGenesis =
+        GenesisFile.fromConfig("{\"config\":{\"londonBlock\":10},\"baseFeePerGas\":\"0xa\"}");
     // specified baseFeePerGas:
     Wei expectedBaseFee = Wei.of(0xa);
     assertThat(withBaseFeeNotAtGenesis.getBaseFeePerGas()).contains(expectedBaseFee);
@@ -195,7 +194,7 @@ class GenesisConfigTest {
 
   @Test
   void shouldGetTerminalTotalDifficultyAtGenesis() {
-    GenesisConfig withTerminalTotalDifficultyAtGenesis =
+    GenesisFile withTerminalTotalDifficultyAtGenesis =
         fromConfig("{\"config\":{\"terminalTotalDifficulty\":1000}}");
     assertThat(withTerminalTotalDifficultyAtGenesis.getConfigOptions().getTerminalTotalDifficulty())
         .contains(UInt256.valueOf(1000L));
@@ -209,7 +208,7 @@ class GenesisConfigTest {
   @Test
   void assertSepoliaTerminalTotalDifficulty() {
     GenesisConfigOptions sepoliaOptions =
-        GenesisConfig.fromResource("/sepolia.json").getConfigOptions();
+        GenesisFile.fromResource("/sepolia.json").getConfigOptions();
 
     assertThat(sepoliaOptions.getTerminalTotalDifficulty()).isPresent();
     assertThat(sepoliaOptions.getTerminalTotalDifficulty())
@@ -219,7 +218,7 @@ class GenesisConfigTest {
   @Test
   void assertMainnetTerminalTotalDifficulty() {
     GenesisConfigOptions mainnetOptions =
-        GenesisConfig.fromResource("/mainnet.json").getConfigOptions();
+        GenesisFile.fromResource("/mainnet.json").getConfigOptions();
 
     assertThat(mainnetOptions.getTerminalTotalDifficulty()).isPresent();
     // tentative as of 2022-08-11:
@@ -230,7 +229,7 @@ class GenesisConfigTest {
   @Test
   void assertTerminalTotalDifficultyOverride() {
     GenesisConfigOptions sepoliaOverrideOptions =
-        GenesisConfig.fromResource("/sepolia.json")
+        GenesisFile.fromResource("/sepolia.json")
             .withOverrides(Map.of("terminalTotalDifficulty", String.valueOf(Long.MAX_VALUE)))
             .getConfigOptions();
 
@@ -241,8 +240,8 @@ class GenesisConfigTest {
 
   @Test
   void shouldFindMergeNetSplitForkAndAlias() {
-    GenesisConfig mergeNetSplitGenesis =
-        GenesisConfig.fromConfig(
+    GenesisFile mergeNetSplitGenesis =
+        GenesisFile.fromConfig(
             "{\"config\":{\"mergeNetsplitBlock\":11},\"baseFeePerGas\":\"0xa\"}");
     assertThat(mergeNetSplitGenesis.getForkBlockNumbers()).hasSize(1);
     assertThat(mergeNetSplitGenesis.getConfigOptions().getMergeNetSplitBlockNumber()).isPresent();
@@ -250,8 +249,8 @@ class GenesisConfigTest {
         .isEqualTo(11L);
 
     // assert empty if not present:
-    GenesisConfig londonGenesis =
-        GenesisConfig.fromConfig("{\"config\":{\"londonBlock\":11},\"baseFeePerGas\":\"0xa\"}");
+    GenesisFile londonGenesis =
+        GenesisFile.fromConfig("{\"config\":{\"londonBlock\":11},\"baseFeePerGas\":\"0xa\"}");
     assertThat(londonGenesis.getForkBlockNumbers()).hasSize(1);
     assertThat(londonGenesis.getConfigOptions().getMergeNetSplitBlockNumber()).isEmpty();
   }
@@ -259,7 +258,7 @@ class GenesisConfigTest {
   @Test
   void assertMainnetDepositContractAddress() {
     GenesisConfigOptions mainnetOptions =
-        GenesisConfig.fromResource("/mainnet.json").getConfigOptions();
+        GenesisFile.fromResource("/mainnet.json").getConfigOptions();
 
     assertThat(mainnetOptions.getDepositContractAddress()).isPresent();
     assertThat(mainnetOptions.getDepositContractAddress().get())
@@ -269,7 +268,7 @@ class GenesisConfigTest {
   @Test
   void assertSepoliaDepositContractAddress() {
     GenesisConfigOptions sepoliaOptions =
-        GenesisConfig.fromResource("/sepolia.json").getConfigOptions();
+        GenesisFile.fromResource("/sepolia.json").getConfigOptions();
 
     assertThat(sepoliaOptions.getDepositContractAddress()).isPresent();
     assertThat(sepoliaOptions.getDepositContractAddress().get())
@@ -279,7 +278,7 @@ class GenesisConfigTest {
   @Test
   void assertHoleskyDepositContractAddress() {
     GenesisConfigOptions holeskyOptions =
-        GenesisConfig.fromResource("/holesky.json").getConfigOptions();
+        GenesisFile.fromResource("/holesky.json").getConfigOptions();
 
     assertThat(holeskyOptions.getDepositContractAddress()).isPresent();
     assertThat(holeskyOptions.getDepositContractAddress().get())
@@ -289,7 +288,7 @@ class GenesisConfigTest {
   @Test
   void assertEphemeryDepositContractAddress() {
     GenesisConfigOptions ephemeryOptions =
-        GenesisConfig.fromResource("/ephemery.json").getConfigOptions();
+        GenesisFile.fromResource("/ephemery.json").getConfigOptions();
 
     assertThat(ephemeryOptions.getDepositContractAddress()).isPresent();
     assertThat(ephemeryOptions.getDepositContractAddress().get())
@@ -303,7 +302,7 @@ class GenesisConfigTest {
 
   @Test
   void shouldGetAllocations() {
-    final GenesisConfig config =
+    final GenesisFile config =
         fromConfig(
             "{"
                 + "  \"alloc\": {"
@@ -362,13 +361,13 @@ class GenesisConfigTest {
 
   @Test
   void shouldGetEmptyAllocationsWhenAllocNotPresent() {
-    final GenesisConfig config = fromConfig("{}");
+    final GenesisFile config = fromConfig("{}");
     assertThat(config.streamAllocations()).isEmpty();
   }
 
   @Test
   void shouldGetLargeChainId() {
-    final GenesisConfig config =
+    final GenesisFile config =
         fromConfig(
             "{\"config\": { \"chainId\": 31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095 }}");
     assertThat(config.getConfigOptions().getChainId())
@@ -389,7 +388,7 @@ class GenesisConfigTest {
 
   @Test
   void testOverridePresent() {
-    final GenesisConfig config = GenesisConfig.fromResource("/dev.json");
+    final GenesisFile config = GenesisFile.fromResource("/dev.json");
     final int bigBlock = 999_999_999;
     final String bigBlockString = Integer.toString(bigBlock);
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -408,7 +407,7 @@ class GenesisConfigTest {
 
   @Test
   void testOverrideNull() {
-    final GenesisConfig config = GenesisConfig.fromResource("/dev.json");
+    final GenesisFile config = GenesisFile.fromResource("/dev.json");
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     override.put("istanbulBlock", null);
     override.put("chainId", null);
@@ -424,7 +423,7 @@ class GenesisConfigTest {
 
   @Test
   void testOverrideCaseInsensitivity() {
-    final GenesisConfig config = GenesisConfig.fromResource("/dev.json");
+    final GenesisFile config = GenesisFile.fromResource("/dev.json");
     final int bigBlock = 999_999_999;
     final String bigBlockString = Integer.toString(bigBlock);
     final Map<String, String> override = new HashMap<>();
@@ -445,7 +444,7 @@ class GenesisConfigTest {
 
   @Test
   void testOverrideEmptyString() {
-    final GenesisConfig config = GenesisConfig.fromResource("/dev.json");
+    final GenesisFile config = GenesisFile.fromResource("/dev.json");
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     override.put("istanbulBlock", "");
     override.put("chainId", "");
@@ -460,7 +459,7 @@ class GenesisConfigTest {
 
   @Test
   void testNoOverride() {
-    final GenesisConfig config = GenesisConfig.fromResource("/dev.json");
+    final GenesisFile config = GenesisFile.fromResource("/dev.json");
 
     assertThat(config.getConfigOptions().getLondonBlockNumber()).hasValue(0);
     assertThat(config.getConfigOptions().getIstanbulBlockNumber()).isNotPresent();
@@ -473,7 +472,7 @@ class GenesisConfigTest {
   @Test
   void testConstantinopleFixShouldNotBeSupportedAlongPetersburg() {
     // petersburg node
-    final GenesisConfig config = GenesisConfig.fromResource("/all_forks.json");
+    final GenesisFile config = GenesisFile.fromResource("/all_forks.json");
 
     assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(7);
 
@@ -503,7 +502,7 @@ class GenesisConfigTest {
                             "valid_config_with_custom_forks.json"),
                         StandardCharsets.UTF_8)));
 
-    final GenesisConfig config = fromConfig(configNode);
+    final GenesisFile config = fromConfig(configNode);
 
     assertThat(config.getForkBlockNumbers()).containsExactly(1L, 2L, 3L, 1035301L, 2222222L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(4));
@@ -523,7 +522,7 @@ class GenesisConfigTest {
                             // declared (which we want to ignore)
                             "valid_config_with_etc_forks.json"),
                         StandardCharsets.UTF_8)));
-    final GenesisConfig config = fromConfig(configNode);
+    final GenesisFile config = fromConfig(configNode);
 
     assertThat(config.getForkBlockNumbers()).containsExactly(1L, 2L, 3L, 1035301L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(61));
@@ -568,10 +567,9 @@ class GenesisConfigTest {
                             "valid_config_with_unexpected_forks.json"),
                         StandardCharsets.UTF_8)));
 
-    final GenesisConfig configFileNoUnexpectedForks = fromConfig(configNoUnexpectedForks);
-    final GenesisConfig configFileClassicFork = fromConfig(configClassicFork);
-    final GenesisConfig configFileMultipleUnexpectedForks =
-        fromConfig(configMultipleUnexpectedForks);
+    final GenesisFile configFileNoUnexpectedForks = fromConfig(configNoUnexpectedForks);
+    final GenesisFile configFileClassicFork = fromConfig(configClassicFork);
+    final GenesisFile configFileMultipleUnexpectedForks = fromConfig(configMultipleUnexpectedForks);
 
     assertThat(configFileNoUnexpectedForks.getForkBlockNumbers())
         .containsExactly(1L, 2L, 3L, 1035301L);
@@ -599,15 +597,15 @@ class GenesisConfigTest {
         Resources.toString(Resources.getResource("all_forks.json"), StandardCharsets.UTF_8);
     final ObjectNode genesisNode = JsonUtil.objectNodeFromString(configText);
 
-    final GenesisConfig genesisConfig = fromConfig(genesisNode);
+    final GenesisFile genesisFile = fromConfig(genesisNode);
 
-    final ObjectNode output = JsonUtil.objectNodeFromMap(genesisConfig.getConfigOptions().asMap());
+    final ObjectNode output = JsonUtil.objectNodeFromMap(genesisFile.getConfigOptions().asMap());
 
     assertThat(JsonUtil.getJson(output, true))
         .isEqualTo(JsonUtil.getJson(genesisNode.get("config"), true));
   }
 
-  private GenesisConfig configWithProperty(final String key, final String value) {
+  private GenesisFile configWithProperty(final String key, final String value) {
     return fromConfig("{\"" + key + "\":\"" + value + "\"}");
   }
 

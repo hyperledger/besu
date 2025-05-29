@@ -21,7 +21,7 @@ import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransacti
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
@@ -61,14 +61,14 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 
   @Override
-  protected GenesisConfig getGenesisConfig() {
-    return GenesisConfig.fromResource("/block-transaction-selector/london-genesis.json");
+  protected GenesisFile getGenesisConfig() {
+    return GenesisFile.fromResource("/block-transaction-selector/london-genesis.json");
   }
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return new ProtocolScheduleBuilder(
-            genesisConfig.getConfigOptions(),
+            genesisFile.getConfigOptions(),
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
             false,

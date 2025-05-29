@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -71,7 +71,7 @@ public class MainnetProtocolScheduleTest {
   public void shouldOnlyUseFrontierWhenEmptyJsonConfigIsUsed() {
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
-            GenesisConfig.fromConfig("{}").getConfigOptions(),
+            GenesisFile.fromConfig("{}").getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
@@ -88,7 +88,7 @@ public class MainnetProtocolScheduleTest {
         "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"petersburgBlock\": 19, \"chainId\":1234}}";
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
-            GenesisConfig.fromConfig(json).getConfigOptions(),
+            GenesisFile.fromConfig(json).getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
@@ -122,7 +122,7 @@ public class MainnetProtocolScheduleTest {
         .isThrownBy(
             () ->
                 MainnetProtocolSchedule.fromConfig(
-                    GenesisConfig.fromConfig(json).getConfigOptions(),
+                    GenesisFile.fromConfig(json).getConfigOptions(),
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),

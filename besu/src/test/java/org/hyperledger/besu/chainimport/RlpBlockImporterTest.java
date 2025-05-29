@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -172,7 +172,7 @@ public final class RlpBlockImporterTest {
 
     final BesuController controller =
         new BesuController.Builder()
-            .fromGenesisFile(GenesisConfig.fromConfig(config), SyncMode.FULL)
+            .fromGenesisFile(GenesisFile.fromConfig(config), SyncMode.FULL)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())

@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
@@ -196,10 +196,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(1));
 
     // assert that shanghaiTime override is applied
-    final GenesisConfig actualGenesisConfig = (config.genesisConfig());
-    assertThat(actualGenesisConfig).isNotNull();
-    assertThat(actualGenesisConfig.getConfigOptions().getShanghaiTime()).isNotEmpty();
-    assertThat(actualGenesisConfig.getConfigOptions().getShanghaiTime().getAsLong()).isEqualTo(123);
+    final GenesisFile actualGenesisFile = (config.genesisFile());
+    assertThat(actualGenesisFile).isNotNull();
+    assertThat(actualGenesisFile.getConfigOptions().getShanghaiTime()).isNotEmpty();
+    assertThat(actualGenesisFile.getConfigOptions().getShanghaiTime().getAsLong()).isEqualTo(123);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -224,10 +224,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(3141592));
 
     // then assert that the shanghaiTime is applied
-    final GenesisConfig actualGenesisConfig = (config.genesisConfig());
-    assertThat(actualGenesisConfig).isNotNull();
-    assertThat(actualGenesisConfig.getConfigOptions().getShanghaiTime()).isNotEmpty();
-    assertThat(actualGenesisConfig.getConfigOptions().getShanghaiTime().getAsLong()).isEqualTo(123);
+    final GenesisFile actualGenesisFile = (config.genesisFile());
+    assertThat(actualGenesisFile).isNotNull();
+    assertThat(actualGenesisFile.getConfigOptions().getShanghaiTime()).isNotEmpty();
+    assertThat(actualGenesisFile.getConfigOptions().getShanghaiTime().getAsLong()).isEqualTo(123);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -277,7 +277,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
-                GenesisConfig.fromResource(MAINNET.getGenesisFile()),
+                GenesisFile.fromResource(MAINNET.getGenesisFile()),
                 MAINNET.getNetworkId(),
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
@@ -485,8 +485,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    assertThat(networkArg.getValue().genesisConfig())
-        .isEqualTo(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
+    assertThat(networkArg.getValue().genesisFile())
+        .isEqualTo(GenesisFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -669,8 +669,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    assertThat(networkArg.getValue().genesisConfig())
-        .isEqualTo(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
+    assertThat(networkArg.getValue().genesisFile())
+        .isEqualTo(GenesisFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
     assertThat(networkArg.getValue().bootNodes()).isEmpty();
     assertThat(networkArg.getValue().networkId()).isEqualTo(GENESIS_CONFIG_TEST_CHAINID);
 
@@ -690,8 +690,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    assertThat(networkArg.getValue().genesisConfig())
-        .isEqualTo(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_INVALID_DATA)));
+    assertThat(networkArg.getValue().genesisFile())
+        .isEqualTo(GenesisFile.fromConfig(encodeJsonGenesis(GENESIS_INVALID_DATA)));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -705,7 +705,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     // in this network genesis file.
 
     final var genesisConfig =
-        EthNetworkConfig.getNetworkConfig(MAINNET).genesisConfig().getConfigOptions();
+        EthNetworkConfig.getNetworkConfig(MAINNET).genesisFile().getConfigOptions();
     assertThat(genesisConfig.getChainId().isPresent()).isTrue();
     assertThat(genesisConfig.getChainId().get())
         .isEqualTo(EthNetworkConfig.getNetworkConfig(MAINNET).networkId());

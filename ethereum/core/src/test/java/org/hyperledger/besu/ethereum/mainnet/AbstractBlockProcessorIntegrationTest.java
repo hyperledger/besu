@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -92,7 +92,7 @@ class AbstractBlockProcessorIntegrationTest {
   public void setUp() {
     final ExecutionContextTestFixture contextTestFixture =
         ExecutionContextTestFixture.builder(
-                GenesisConfig.fromResource(
+                GenesisFile.fromResource(
                     "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
             .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
@@ -106,7 +106,7 @@ class AbstractBlockProcessorIntegrationTest {
   private static Stream<Arguments> blockProcessorProvider() {
     final ExecutionContextTestFixture contextTestFixture =
         ExecutionContextTestFixture.builder(
-                GenesisConfig.fromResource(
+                GenesisFile.fromResource(
                     "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
             .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
@@ -217,7 +217,7 @@ class AbstractBlockProcessorIntegrationTest {
   void testProcessBlockZeroReward() {
     ExecutionContextTestFixture contextTestFixture =
         ExecutionContextTestFixture.builder(
-                GenesisConfig.fromResource(
+                GenesisFile.fromResource(
                     "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
             .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();

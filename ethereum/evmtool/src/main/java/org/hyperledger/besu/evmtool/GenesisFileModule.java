@@ -16,8 +16,8 @@ package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -64,14 +64,14 @@ public class GenesisFileModule {
 
   @Singleton
   @Provides
-  GenesisConfig providesGenesisConfig() {
-    return GenesisConfig.fromConfig(genesisConfig);
+  GenesisFile providesGenesisConfig() {
+    return GenesisFile.fromConfig(genesisConfig);
   }
 
   @Singleton
   @Provides
-  GenesisConfigOptions provideGenesisConfigOptions(final GenesisConfig genesisConfig) {
-    return genesisConfig.getConfigOptions();
+  GenesisConfigOptions provideGenesisConfigOptions(final GenesisFile genesisFile) {
+    return genesisFile.getConfigOptions();
   }
 
   @Singleton
@@ -88,8 +88,8 @@ public class GenesisFileModule {
   @Singleton
   @Provides
   GenesisState provideGenesisState(
-      final GenesisConfig genesisConfig, final ProtocolSchedule protocolSchedule) {
-    return GenesisState.fromConfig(genesisConfig, protocolSchedule);
+      final GenesisFile genesisFile, final ProtocolSchedule protocolSchedule) {
+    return GenesisState.fromConfig(genesisFile, protocolSchedule);
   }
 
   @Singleton

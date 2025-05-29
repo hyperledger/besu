@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.config.GenesisAccount;
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -30,25 +30,25 @@ import java.util.stream.Stream;
 
 public interface MergeGenesisConfigHelper {
 
-  default GenesisConfig getPosGenesisConfig() {
+  default GenesisFile getPosGenesisConfig() {
     try {
       final URI uri = MergeGenesisConfigHelper.class.getResource("/posAtGenesis.json").toURI();
-      return GenesisConfig.fromSource(uri.toURL());
+      return GenesisFile.fromSource(uri.toURL());
     } catch (final URISyntaxException | IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
-  default GenesisConfig getPowGenesisConfig() {
+  default GenesisFile getPowGenesisConfig() {
     try {
       final URI uri = MergeGenesisConfigHelper.class.getResource("/powAtGenesis.json").toURI();
-      return GenesisConfig.fromSource(uri.toURL());
+      return GenesisFile.fromSource(uri.toURL());
     } catch (final URISyntaxException | IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
-  default Stream<Address> genesisAllocations(final GenesisConfig configFile) {
+  default Stream<Address> genesisAllocations(final GenesisFile configFile) {
     return configFile.streamAllocations().map(GenesisAccount::address);
   }
 

@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
@@ -382,7 +382,7 @@ public class TestContextBuilder {
 
   private GenesisState createGenesisBlock(final String genesisFile) throws IOException {
     return GenesisState.fromConfig(
-        GenesisConfig.fromSource(Path.of(genesisFile).toUri().toURL()),
+        GenesisFile.fromSource(Path.of(genesisFile).toUri().toURL()),
         ProtocolScheduleFixture.MAINNET);
   }
 

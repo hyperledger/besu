@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
@@ -303,9 +303,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  public BesuControllerBuilder genesisConfig(final GenesisConfig genesisConfig) {
-    super.genesisConfig(genesisConfig);
-    return propagateConfig(z -> z.genesisConfig(genesisConfig));
+  public BesuControllerBuilder genesisConfig(final GenesisFile genesisFile) {
+    super.genesisConfig(genesisFile);
+    return propagateConfig(z -> z.genesisConfig(genesisFile));
   }
 
   @Override

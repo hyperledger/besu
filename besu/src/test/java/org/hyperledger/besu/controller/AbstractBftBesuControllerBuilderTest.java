@@ -21,8 +21,8 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -73,7 +73,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public abstract class AbstractBftBesuControllerBuilderTest {
 
   protected BesuControllerBuilder bftBesuControllerBuilder;
-  @Mock protected GenesisConfig genesisConfig;
+  @Mock protected GenesisFile genesisFile;
   @Mock protected GenesisConfigOptions genesisConfigOptions;
   @Mock private SynchronizerConfiguration synchronizerConfiguration;
   @Mock private EthProtocolConfiguration ethProtocolConfiguration;
@@ -98,11 +98,11 @@ public abstract class AbstractBftBesuControllerBuilderTest {
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.toHexString());
-    lenient().when(genesisConfig.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
-    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
-    lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
-    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
+    lenient().when(genesisFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
+    lenient().when(genesisFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisFile.getNonce()).thenReturn(Long.toHexString(1));
+    lenient().when(genesisFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     lenient()
         .when(storageProvider.createBlockchainStorage(any(), any(), any()))
@@ -139,7 +139,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
 
     bftBesuControllerBuilder =
         createBftControllerBuilder()
-            .genesisConfig(genesisConfig)
+            .genesisConfig(genesisFile)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .networkId(networkId)

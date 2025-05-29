@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public class LondonFeeMarket implements BaseFeeMarket {
   private static final Logger LOG = LoggerFactory.getLogger(LondonFeeMarket.class);
 
-  static final Wei DEFAULT_BASEFEE_INITIAL_VALUE = GenesisConfig.BASEFEE_AT_GENESIS_DEFAULT_VALUE;
+  static final Wei DEFAULT_BASEFEE_INITIAL_VALUE = GenesisFile.BASEFEE_AT_GENESIS_DEFAULT_VALUE;
   static final long DEFAULT_BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
   static final long DEFAULT_SLACK_COEFFICIENT = 2L;
 

@@ -20,8 +20,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
@@ -144,9 +144,9 @@ public class ForkIdsNetworkConfigTest {
   @ParameterizedTest
   @MethodSource("parameters")
   public void testForkId(final NetworkName chainName, final List<ForkId> expectedForkIds) {
-    final GenesisConfig genesisConfig = GenesisConfig.fromResource(chainName.getGenesisFile());
-    final MilestoneStreamingTransitionProtocolSchedule schedule = createSchedule(genesisConfig);
-    final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, schedule);
+    final GenesisFile genesisFile = GenesisFile.fromResource(chainName.getGenesisFile());
+    final MilestoneStreamingTransitionProtocolSchedule schedule = createSchedule(genesisFile);
+    final GenesisState genesisState = GenesisState.fromConfig(genesisFile, schedule);
     final Blockchain mockBlockchain = mock(Blockchain.class);
     final BlockHeader mockBlockHeader = mock(BlockHeader.class);
 
@@ -159,7 +159,7 @@ public class ForkIdsNetworkConfigTest {
 
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            mockBlockchain, genesisConfig.getForkBlockNumbers(), genesisConfig.getForkTimestamps());
+            mockBlockchain, genesisFile.getForkBlockNumbers(), genesisFile.getForkTimestamps());
 
     final List<ForkId> actualForkIds =
         Streams.concat(schedule.streamMilestoneBlocks(), Stream.of(Long.MAX_VALUE))
@@ -174,8 +174,8 @@ public class ForkIdsNetworkConfigTest {
   }
 
   private static MilestoneStreamingTransitionProtocolSchedule createSchedule(
-      final GenesisConfig genesisConfig) {
-    final GenesisConfigOptions configOptions = genesisConfig.getConfigOptions();
+      final GenesisFile genesisFile) {
+    final GenesisConfigOptions configOptions = genesisFile.getConfigOptions();
     MilestoneStreamingProtocolSchedule preMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
             (DefaultProtocolSchedule)

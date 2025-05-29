@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
 
-import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -72,7 +72,7 @@ public class TraceTransactionIntegrationTest {
   @BeforeEach
   public void setUp() {
     final ExecutionContextTestFixture contextTestFixture =
-        ExecutionContextTestFixture.builder(GenesisConfig.fromResource("/genesis-it.json")).build();
+        ExecutionContextTestFixture.builder(GenesisFile.fromResource("/genesis-it.json")).build();
     genesisBlock = contextTestFixture.getGenesis();
     blockchain = contextTestFixture.getBlockchain();
     worldStateArchive = contextTestFixture.getStateArchive();
