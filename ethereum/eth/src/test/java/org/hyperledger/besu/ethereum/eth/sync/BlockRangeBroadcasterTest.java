@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.BlockRangeUpdateMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -116,5 +118,34 @@ public class BlockRangeBroadcasterTest {
     when(latestBlockHeader.getHash()).thenReturn(expectedBlockHash);
     when(blockchain.getEarliestBlockNumber()).thenReturn(Optional.of(earliestBlockNumber));
     when(blockchain.getChainHeadHeader()).thenReturn(latestBlockHeader);
+  }
+
+  @Test
+  public void shouldNotDisconnectIfLatestBlockNumberIsGreaterThanEarliest() {
+    final EthPeer peer = mock(EthPeer.class);
+    handleBlockRangeUpdateMessage(peer, 0L, 1L);
+    verify(peer, never()).disconnect(any());
+  }
+
+  @Test
+  public void shouldNotDisconnectIfLatestBlockNumberIsEqualToEarliest() {
+    final EthPeer peer = mock(EthPeer.class);
+    handleBlockRangeUpdateMessage(peer, 0L, 0L);
+    verify(peer, never()).disconnect(any());
+  }
+
+  @Test
+  public void shouldDisconnectIfLatestBlockNumberIsLessThanEarliest() {
+    final EthPeer peer = mock(EthPeer.class);
+    handleBlockRangeUpdateMessage(peer, 1L, 0L);
+    verify(peer).disconnect(DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED);
+  }
+
+  private void handleBlockRangeUpdateMessage(
+      final EthPeer peer, final long earliestBlockNumber, final long latestBlockNumber) {
+    BlockRangeUpdateMessage message =
+        BlockRangeUpdateMessage.create(earliestBlockNumber, latestBlockNumber, Hash.ZERO);
+    EthMessage ethMessage = new EthMessage(peer, message);
+    blockRangeBroadcaster.handleBlockRangeUpdateMessage(ethMessage);
   }
 }
