@@ -23,7 +23,7 @@ import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
-import org.hyperledger.besu.ethereum.core.kzg.KzgHelper;
+import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
 
 import java.util.Optional;
 
@@ -89,11 +89,11 @@ class OsakaTransactionPoolPreProcessorTest {
     when(mockTransactionType.supportsBlob()).thenReturn(true);
     when(mockTransaction.getBlobsWithCommitments()).thenReturn(Optional.of(version0Blobs));
 
-    try (MockedStatic<KzgHelper> kzgHelperMock = mockStatic(KzgHelper.class);
+    try (MockedStatic<CKZG4844Helper> kzgHelperMock = mockStatic(CKZG4844Helper.class);
         MockedStatic<Transaction> transactionBuilderMock = mockStatic(Transaction.class)) {
 
       kzgHelperMock
-          .when(() -> KzgHelper.convertToVersion1(version0Blobs))
+          .when(() -> CKZG4844Helper.convertToVersion1(version0Blobs))
           .thenReturn(upgradedBlobs);
       Transaction.Builder mockBuilder = mock(Transaction.Builder.class);
       when(mockBuilder.copiedFrom(mockTransaction)).thenReturn(mockBuilder);

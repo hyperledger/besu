@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.transactionpool;
 
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.kzg.KzgHelper;
+import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
 
 import java.util.Optional;
 
@@ -65,7 +65,7 @@ public class OsakaTransactionPoolPreProcessor implements TransactionPoolPreProce
     LOG.debug("Upgrading transaction {} from blobs version 0 to version 1", transaction.getHash());
     return transaction
         .getBlobsWithCommitments()
-        .map(KzgHelper::convertToVersion1)
+        .map(CKZG4844Helper::convertToVersion1)
         .map(
             upgradedBlobs ->
                 Transaction.builder()

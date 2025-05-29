@@ -32,8 +32,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
-import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -266,7 +266,7 @@ public class BaseTransactionPoolTest {
         int totalKzgProofs =
             blobType == BlobType.KZG_PROOF
                 ? blobCount
-                : blobCount * BlobProofBundle.CELL_PROOFS_PER_BLOB;
+                : blobCount * CKZG4844Helper.CELL_PROOFS_PER_BLOB;
         final List<KZGProof> kzgProofs =
             IntStream.range(0, totalKzgProofs)
                 .mapToObj(i -> new KZGProof(Bytes48.random()))

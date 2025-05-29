@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.hyperledger.besu.ethereum.core.kzg.KzgHelper.computeBlobKzgProof;
-import static org.hyperledger.besu.ethereum.core.kzg.KzgHelper.computeBlobKzgProofs;
+import static org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper.computeBlobKzgProof;
+import static org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper.computeBlobKzgProofs;
 
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;

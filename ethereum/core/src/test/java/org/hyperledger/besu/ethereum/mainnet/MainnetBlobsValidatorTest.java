@@ -14,23 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.CELL_PROOFS_PER_BLOB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.BlobType;
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
-import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -101,156 +96,5 @@ public class MainnetBlobsValidatorTest {
     assertEquals(
         "transaction versioned hashes are empty, cannot verify without versioned hashes",
         result.getErrorMessage());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenKzgCommitmentsSizeIsInvalid_V0() {
-    List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
-    List<KZGCommitment> kzgCommitments = List.of(mock(KZGCommitment.class));
-    List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<VersionedHash> versionedHashes =
-        List.of(mock(VersionedHash.class), mock(VersionedHash.class));
-
-    InvalidParameterException exception =
-        assertThrows(
-            InvalidParameterException.class,
-            () ->
-                new BlobsWithCommitments(
-                    BlobType.KZG_PROOF, kzgCommitments, blobs, kzgProofs, versionedHashes));
-
-    assertEquals("Invalid number of kzgCommitments, expected 2, got 1", exception.getMessage());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenVersionedHashSizeIsInvalid_V0() {
-    List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
-    List<KZGCommitment> kzgCommitments =
-        List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
-    List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<VersionedHash> versionedHashes = List.of(mock(VersionedHash.class));
-
-    InvalidParameterException exception =
-        assertThrows(
-            InvalidParameterException.class,
-            () ->
-                new BlobsWithCommitments(
-                    BlobType.KZG_PROOF, kzgCommitments, blobs, kzgProofs, versionedHashes));
-
-    assertEquals("Invalid number of versionedHashes, expected 2, got 1", exception.getMessage());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenKzgProofsSizeIsInvalid_V0() {
-    List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
-    List<KZGCommitment> kzgCommitments =
-        List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
-    List<KZGProof> kzgProofs = List.of(mock(KZGProof.class));
-    List<VersionedHash> versionedHashes =
-        List.of(mock(VersionedHash.class), mock(VersionedHash.class));
-
-    InvalidParameterException exception =
-        assertThrows(
-            InvalidParameterException.class,
-            () ->
-                new BlobsWithCommitments(
-                    BlobType.KZG_PROOF, kzgCommitments, blobs, kzgProofs, versionedHashes));
-
-    assertEquals("Invalid number of kzgProofs, expected 2, got 1", exception.getMessage());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenKzgCellProofsIsInvalid_V0() {
-    List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
-    List<KZGCommitment> kzgCommitments =
-        List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
-    List<KZGProof> kzgProofs =
-        List.of(mock(KZGProof.class), mock(KZGProof.class), mock(KZGProof.class));
-    List<VersionedHash> versionedHashes =
-        List.of(mock(VersionedHash.class), mock(VersionedHash.class));
-
-    InvalidParameterException exception =
-        assertThrows(
-            InvalidParameterException.class,
-            () ->
-                new BlobsWithCommitments(
-                    BlobType.KZG_PROOF, kzgCommitments, blobs, kzgProofs, versionedHashes));
-
-    assertEquals("Invalid number of kzgProofs, expected 2, got 3", exception.getMessage());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenKzgCommitmentsSizeIsInvalid_V1() {
-    List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
-    List<KZGCommitment> kzgCommitments = List.of(mock(KZGCommitment.class));
-    List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<VersionedHash> versionedHashes =
-        List.of(mock(VersionedHash.class), mock(VersionedHash.class));
-
-    InvalidParameterException exception =
-        assertThrows(
-            InvalidParameterException.class,
-            () ->
-                new BlobsWithCommitments(
-                    BlobType.KZG_CELL_PROOFS, kzgCommitments, blobs, kzgProofs, versionedHashes));
-
-    assertEquals("Invalid number of kzgCommitments, expected 2, got 1", exception.getMessage());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenVersionedHashSizeIsInvalid_V1() {
-    List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
-    List<KZGCommitment> kzgCommitments =
-        List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
-    List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<VersionedHash> versionedHashes = List.of(mock(VersionedHash.class));
-
-    InvalidParameterException exception =
-        assertThrows(
-            InvalidParameterException.class,
-            () ->
-                new BlobsWithCommitments(
-                    BlobType.KZG_CELL_PROOFS, kzgCommitments, blobs, kzgProofs, versionedHashes));
-
-    assertEquals("Invalid number of versionedHashes, expected 2, got 1", exception.getMessage());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenProofsSizeIsInvalid_V1() {
-    List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
-    List<KZGCommitment> kzgCommitments =
-        List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
-    List<KZGProof> kzgProofs = List.of(mock(KZGProof.class), mock(KZGProof.class));
-    List<VersionedHash> versionedHashes =
-        List.of(mock(VersionedHash.class), mock(VersionedHash.class));
-
-    InvalidParameterException exception =
-        assertThrows(
-            InvalidParameterException.class,
-            () ->
-                new BlobsWithCommitments(
-                    BlobType.KZG_CELL_PROOFS, kzgCommitments, blobs, kzgProofs, versionedHashes));
-    assertEquals("Invalid number of cell proofs, expected 256, got 2", exception.getMessage());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenBlobWithCommitmentsCellProofsSizeIsInvalid_V1() {
-    List<Blob> blobs = List.of(mock(Blob.class), mock(Blob.class));
-    List<KZGCommitment> kzgCommitments =
-        List.of(mock(KZGCommitment.class), mock(KZGCommitment.class));
-    List<KZGProof> kzgProofs = List.of(mock(KZGProof.class));
-    List<VersionedHash> versionedHashes =
-        List.of(mock(VersionedHash.class), mock(VersionedHash.class));
-
-    InvalidParameterException exception =
-        assertThrows(
-            InvalidParameterException.class,
-            () ->
-                new BlobsWithCommitments(
-                    BlobType.KZG_CELL_PROOFS, kzgCommitments, blobs, kzgProofs, versionedHashes));
-
-    int expectedCellsSize = blobs.size() * CELL_PROOFS_PER_BLOB;
-    String error =
-        String.format("Invalid number of cell proofs, expected %s, got 1", expectedCellsSize);
-    assertEquals(error, exception.getMessage());
   }
 }

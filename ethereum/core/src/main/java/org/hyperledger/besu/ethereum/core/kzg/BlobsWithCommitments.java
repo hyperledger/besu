@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.core.kzg;
 
-import static org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle.CELL_PROOFS_PER_BLOB;
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.datatypes.BlobType.KZG_PROOF;
+import static org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper.CELL_PROOFS_PER_BLOB;
 
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -23,14 +25,29 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /** A class to hold the blobs, commitments, proofs, and versioned hashes for a set of blobs. */
 public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.BlobsWithCommitments {
-
-  private final List<BlobProofBundle> blobProofBundles;
   private final BlobType blobType;
+  private final List<BlobProofBundle> blobProofBundles;
+
+  /**
+   * Constructs a {@link BlobsWithCommitments} instance from a list of {@link BlobProofBundle}.
+   *
+   * @param blobProofBundles the list of blob proof bundles to be attached to the transaction.
+   */
+  public BlobsWithCommitments(final List<BlobProofBundle> blobProofBundles) {
+    checkArgument(!blobProofBundles.isEmpty(), "BlobProofBundles list cannot be empty");
+    BlobType blobType = blobProofBundles.getFirst().getBlobType();
+    checkArgument(
+        blobProofBundles.stream().allMatch(bundle -> bundle.getBlobType() == blobType),
+        "BlobProofBundles must have the same BlobType");
+    this.blobProofBundles = blobProofBundles;
+    this.blobType = blobType;
+  }
 
   /**
    * Constructs a {@link BlobsWithCommitments} instance.
@@ -54,14 +71,35 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
     this.blobType = blobType;
   }
 
-  /**
-   * Constructs a {@link BlobsWithCommitments} instance from a list of {@link BlobProofBundle}.
-   *
-   * @param blobProofBundles the list of blob proof bundles to be attached to the transaction.
-   */
-  public BlobsWithCommitments(final List<BlobProofBundle> blobProofBundles) {
-    this.blobProofBundles = blobProofBundles;
-    this.blobType = blobProofBundles.get(0).getBlobType();
+  private static List<BlobProofBundle> buildBlobProofBundles(
+      final BlobType blobType,
+      final List<KZGCommitment> kzgCommitments,
+      final List<Blob> blobs,
+      final List<KZGProof> kzgProofs,
+      final List<VersionedHash> versionedHashes) {
+    return IntStream.range(0, blobs.size())
+        .mapToObj(
+            index -> {
+              List<KZGProof> kzgProofsForBlob = extractProofsForBlob(blobType, kzgProofs, index);
+              return new BlobProofBundle(
+                  blobType,
+                  blobs.get(index),
+                  kzgCommitments.get(index),
+                  kzgProofsForBlob,
+                  versionedHashes.get(index));
+            })
+        .toList();
+  }
+
+  private static List<KZGProof> extractProofsForBlob(
+      final BlobType blobType, final List<KZGProof> kzgProofs, final int index) {
+    return switch (blobType) {
+      case KZG_PROOF -> List.of(kzgProofs.get(index)); // Single proof per blob
+      case KZG_CELL_PROOFS ->
+          kzgProofs.subList(
+              index * CELL_PROOFS_PER_BLOB,
+              (index + 1) * CELL_PROOFS_PER_BLOB); // 128 cell proofs per blob
+    };
   }
 
   private static void validateInputParameters(
@@ -70,71 +108,27 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
       final List<VersionedHash> versionedHashes) {
-    if (blobs.isEmpty()) {
-      throw new InvalidParameterException(
-          "There needs to be a minimum of one blob in a blob transaction with commitments");
-    }
-    if (blobs.size() != kzgCommitments.size()) {
-      throw new InvalidParameterException(
-          String.format(
-              "Invalid number of kzgCommitments, expected %s, got %s",
-              blobs.size(), kzgCommitments.size()));
-    }
-    if (blobs.size() != versionedHashes.size()) {
-      throw new InvalidParameterException(
-          String.format(
-              "Invalid number of versionedHashes, expected %s, got %s",
-              blobs.size(), versionedHashes.size()));
-    }
-    validateProofs(blobType, blobs.size(), kzgProofs);
-  }
-
-  private static void validateProofs(
-      final BlobType blobType, final int blobCount, final List<KZGProof> kzgProofs) {
-    switch (blobType) {
-      case BlobType.KZG_PROOF:
-        if (blobCount != kzgProofs.size()) {
-          throw new InvalidParameterException(
-              String.format(
-                  "Invalid number of kzgProofs, expected %s, got %s", blobCount, kzgProofs.size()));
-        }
-        break;
-      case KZG_CELL_PROOFS:
-        int expectedCellProofsTotal = CELL_PROOFS_PER_BLOB * blobCount;
-        if (kzgProofs.size() != expectedCellProofsTotal) {
-          throw new InvalidParameterException(
-              String.format(
-                  "Invalid number of cell proofs, expected %s, got %s",
-                  expectedCellProofsTotal, kzgProofs.size()));
-        }
-        break;
-      default:
-        throw new InvalidParameterException("Invalid kzg version");
-    }
-  }
-
-  private static List<BlobProofBundle> buildBlobProofBundles(
-      final BlobType blobType,
-      final List<KZGCommitment> kzgCommitments,
-      final List<Blob> blobs,
-      final List<KZGProof> kzgProofs,
-      final List<VersionedHash> versionedHashes) {
-    List<BlobProofBundle> bundles = new ArrayList<>(blobs.size());
-    for (int i = 0; i < blobs.size(); i++) {
-      List<KZGProof> kzgProofsForBlob =
-          switch (blobType) {
-            case BlobType.KZG_PROOF -> List.of(kzgProofs.get(i));
-            case KZG_CELL_PROOFS -> extractCellProofs(kzgProofs, i);
-          };
-      bundles.add(
-          new BlobProofBundle(
-              blobType,
-              blobs.get(i),
-              kzgCommitments.get(i),
-              kzgProofsForBlob,
-              versionedHashes.get(i)));
-    }
-    return bundles;
+    int blobCount = blobs.size();
+    int expectedProofs = blobType == KZG_PROOF ? blobCount : CELL_PROOFS_PER_BLOB * blobCount;
+    checkArgument(
+        blobCount > 0,
+        "There needs to be a minimum of one blob in a blob transaction with commitments");
+    checkArgument(
+        blobCount == kzgCommitments.size(),
+        "Invalid number of kzgCommitments, expected %s, got %s",
+        blobCount,
+        kzgCommitments.size());
+    checkArgument(
+        blobCount == versionedHashes.size(),
+        "Invalid number of versionedHashes, expected %s, got %s",
+        blobCount,
+        versionedHashes.size());
+    checkArgument(
+        kzgProofs.size() == expectedProofs,
+        "Invalid number of proofs (%s), expected %s, got %s",
+        blobType,
+        expectedProofs,
+        kzgProofs.size());
   }
 
   /**
@@ -197,7 +191,7 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
   }
 
   /**
-   * Get the KZG proofs as a byte array.
+   * Get the KZG proofs as a byte array. Passed to the CKZG4844JNI for proof verification.
    *
    * @return the KZG proofs as a byte array
    */
@@ -207,18 +201,7 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
   }
 
   /**
-   * Extracts the cell proofs for a specific blob index.
-   *
-   * @param proofList the list of KZG proofs.
-   * @param index the index of the blob for which to extract the cell proofs.
-   * @return a list of KZG proofs corresponding to the specified blob index.
-   */
-  private static List<KZGProof> extractCellProofs(final List<KZGProof> proofList, final int index) {
-    return proofList.subList(index * CELL_PROOFS_PER_BLOB, (index + 1) * CELL_PROOFS_PER_BLOB);
-  }
-
-  /**
-   * Get the blobs as a byte array.
+   * Get the blobs as a byte array. Passed to the CKZG4844JNI for proof verification.
    *
    * @return the blobs as a byte array
    */
@@ -227,7 +210,7 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
   }
 
   /**
-   * Get the KZG commitments as a byte array.
+   * Get the KZG commitments as a byte array. Passed to the CKZG4844JNI for proof verification.
    *
    * @return the KZG commitments as a byte array
    */
@@ -241,7 +224,8 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
   }
 
   /**
-   * Extends the KZG commitments to match the number of cell proofs per blob.
+   * Extends the KZG commitments to match the number of cell proofs per blob. This is necessary when
+   * the blob type is KZG_CELL_PROOFS, and we want to verify the cell proofs
    *
    * @param commitments the original list of KZG commitments.
    * @return a new list of KZG commitments, extended to match the number of cell proofs per blob.
@@ -258,7 +242,7 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
   }
 
   /**
-   * Get the blob cells as a byte array.
+   * Get the blob cells as a byte array. Passed to the CKZG4844JNI for proof verification.
    *
    * @return the blob cells as a byte array
    */
@@ -269,7 +253,7 @@ public class BlobsWithCommitments implements org.hyperledger.besu.datatypes.Blob
   }
 
   /**
-   * Get the cell indexes for the blobs.
+   * Get the cell indexes for the blobs. Passed to the CKZG4844JNI for proof verification.
    *
    * @return an array of cell indexes
    */

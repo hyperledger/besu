@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.core.kzg.KzgHelper.verify4844Kzg;
+import static org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper.verify4844Kzg;
 
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;

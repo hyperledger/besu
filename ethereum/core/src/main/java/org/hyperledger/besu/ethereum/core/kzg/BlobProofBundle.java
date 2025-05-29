@@ -23,14 +23,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Represents a bundle of proofs for a blob, including KZG commitments and proofs. */
 public final class BlobProofBundle {
-
-  /** Number of cell proofs per blob. */
-  public static final int CELL_PROOFS_PER_BLOB = 128;
 
   private final BlobType blobType;
   private final Blob blob;
@@ -61,10 +57,11 @@ public final class BlobProofBundle {
           "Invalid kzgProof size for versionId 0, expected 1 but got " + kzgProof.size();
       throw new IllegalArgumentException(errorMessage);
     }
-    if (blobType == BlobType.KZG_CELL_PROOFS && kzgProof.size() != CELL_PROOFS_PER_BLOB) {
+    if (blobType == BlobType.KZG_CELL_PROOFS
+        && kzgProof.size() != CKZG4844Helper.CELL_PROOFS_PER_BLOB) {
       String errorMessage =
           "Invalid kzgProof size for versionId 1, expected "
-              + CELL_PROOFS_PER_BLOB
+              + CKZG4844Helper.CELL_PROOFS_PER_BLOB
               + " but got "
               + kzgProof.size();
       throw new IllegalArgumentException(errorMessage);
@@ -79,7 +76,7 @@ public final class BlobProofBundle {
 
   private Bytes computeCells(final Blob blob, final BlobType blobType) {
     if (blobType == BlobType.KZG_CELL_PROOFS) {
-      return Bytes.wrap(CKZG4844JNI.computeCells(blob.getData().toArrayUnsafe()));
+      return CKZG4844Helper.computeCells(blob);
     }
     return null;
   }

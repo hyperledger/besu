@@ -21,9 +21,19 @@ import java.util.List;
 
 import ethereum.ckzg4844.CKZG4844JNI;
 import ethereum.ckzg4844.CellsAndProofs;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
 
-public class KzgHelper {
+/**
+ * Utility class for handling KZG-related operations, including converting BlobsWithCommitments to
+ * version 1, extracting KZG proofs, and verifying KZG proofs.
+ *
+ * <p>Wrapper for CKZG4844JNI to provide a higher-level API for KZG operations.
+ */
+public class CKZG4844Helper {
+
+  /** Number of cell proofs per blob. */
+  public static final int CELL_PROOFS_PER_BLOB = 128;
 
   /**
    * Converts the given BlobsWithCommitments to version 1.
@@ -112,6 +122,16 @@ public class KzgHelper {
   public static List<KZGProof> computeBlobKzgProofs(final Blob blob) {
     CellsAndProofs cellProofs = CKZG4844JNI.computeCellsAndKzgProofs(blob.getData().toArray());
     return extractKZGProofs(cellProofs.getProofs());
+  }
+
+  /**
+   * Computes the cells for the given Blob.
+   *
+   * @param blob the Blob for which to compute the cells.
+   * @return a Bytes object containing the computed cells.
+   */
+  public static Bytes computeCells(final Blob blob) {
+    return Bytes.wrap(CKZG4844JNI.computeCells(blob.getData().toArrayUnsafe()));
   }
 
   /**

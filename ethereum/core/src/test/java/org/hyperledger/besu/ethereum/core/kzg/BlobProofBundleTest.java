@@ -41,7 +41,7 @@ public class BlobProofBundleTest {
   final VersionedHash versionedHash = DEFAULT_VERSIONED_HASH;
   List<KZGProof> kzgProofs = List.of(new KZGProof(Bytes48.ZERO));
   List<KZGProof> kzgCellProofs =
-      Collections.nCopies(BlobProofBundle.CELL_PROOFS_PER_BLOB, new KZGProof(Bytes48.ZERO));
+      Collections.nCopies(CKZG4844Helper.CELL_PROOFS_PER_BLOB, new KZGProof(Bytes48.ZERO));
 
   @Test
   void shouldSucceedWithValidInputsV0() {
@@ -124,10 +124,10 @@ public class BlobProofBundleTest {
     BlobsWithCommitments bwc = blobTestFixture.createBlobsWithCommitments(2);
     assertThat(bwc.getBlobType()).isEqualTo(BlobType.KZG_PROOF);
 
-    BlobsWithCommitments blobsWithCommitments = KzgHelper.convertToVersion1(bwc);
+    BlobsWithCommitments blobsWithCommitments = CKZG4844Helper.convertToVersion1(bwc);
     assertThat(blobsWithCommitments.getBlobType()).isEqualTo(BlobType.KZG_CELL_PROOFS);
 
-    boolean isValid = KzgHelper.verify4844Kzg(blobsWithCommitments);
+    boolean isValid = CKZG4844Helper.verify4844Kzg(blobsWithCommitments);
     assertTrue(isValid, "KZG proof verification should be valid");
   }
 }

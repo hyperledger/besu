@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
-import org.hyperledger.besu.ethereum.core.kzg.KzgHelper;
+import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Arrays;
@@ -103,7 +103,7 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
           "BlobProofBundle {} has blob type 0. Converting to version {}",
           blobProofBundle.getVersionedHash(),
           BlobType.KZG_CELL_PROOFS);
-      return KzgHelper.unsafeConvertToVersion1(blobProofBundle);
+      return CKZG4844Helper.unsafeConvertToVersion1(blobProofBundle);
     }
     return blobProofBundle;
   }
