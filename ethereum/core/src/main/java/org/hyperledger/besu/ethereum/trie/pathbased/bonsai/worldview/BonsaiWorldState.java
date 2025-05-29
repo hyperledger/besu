@@ -92,7 +92,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
         new BonsaiWorldStateUpdateAccumulator(
             this,
             (addr, value) ->
-                bonsaiCachedMerkleTrieLoader.preLoadAccount(
+                this.bonsaiCachedMerkleTrieLoader.preLoadAccount(
                     getWorldStateStorage(), worldStateRootHash, addr),
             (addr, value) ->
                 this.bonsaiCachedMerkleTrieLoader.preLoadStorageSlot(
