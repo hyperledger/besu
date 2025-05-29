@@ -125,24 +125,4 @@ public final class BlobProofBundle {
   public int hashCode() {
     return Objects.hash(blobType, blob, kzgCommitment, kzgProof, versionedHash);
   }
-
-  @Override
-  public String toString() {
-    return "BlobProofBundle["
-        + "BlobType="
-        + blobType
-        + ", "
-        + "blob="
-        + blob
-        + ", "
-        + "kzgCommitment="
-        + kzgCommitment
-        + ", "
-        + "kzgProof="
-        + kzgProof
-        + ", "
-        + "versionedHash="
-        + versionedHash
-        + ']';
-  }
 }

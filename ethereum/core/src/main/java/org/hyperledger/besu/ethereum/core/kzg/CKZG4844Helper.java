@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.BlobType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ethereum.ckzg4844.CKZG4844JNI;
 import ethereum.ckzg4844.CellsAndProofs;
@@ -54,10 +55,11 @@ public class CKZG4844Helper {
           "Invalid blobs with commitments for conversion to version 1");
     }
 
-    List<BlobProofBundle> version1Bundles = new ArrayList<>();
-    for (BlobProofBundle bundle : blobsWithCommitments.getBlobProofBundles()) {
-      version1Bundles.add(unsafeConvertToVersion1(bundle));
-    }
+    List<BlobProofBundle> version1Bundles =
+        blobsWithCommitments.getBlobProofBundles().stream()
+            .map(CKZG4844Helper::unsafeConvertToVersion1)
+            .collect(Collectors.toList());
+
     return new BlobsWithCommitments(version1Bundles);
   }
 
@@ -68,15 +70,14 @@ public class CKZG4844Helper {
    * @return a list of KZGProof objects extracted from the input.
    */
   private static List<KZGProof> extractKZGProofs(final byte[] input) {
-    List<KZGProof> chunks = new ArrayList<>();
-    int chunkSize = Bytes48.SIZE;
-    int totalChunks = input.length / chunkSize;
-    for (int i = 0; i < totalChunks; i++) {
-      byte[] chunk = new byte[chunkSize];
-      System.arraycopy(input, i * chunkSize, chunk, 0, chunkSize);
-      chunks.add(new KZGProof(Bytes48.wrap(chunk)));
+    List<KZGProof> proofs = new ArrayList<>(CELL_PROOFS_PER_BLOB);
+    int proofSize = KZGProof.SIZE;
+    for (int i = 0; i < CELL_PROOFS_PER_BLOB; i++) {
+      byte[] proof = new byte[proofSize];
+      System.arraycopy(input, i * proofSize, proof, 0, proofSize);
+      proofs.add(new KZGProof(Bytes48.wrap(proof)));
     }
-    return chunks;
+    return proofs;
   }
 
   /**

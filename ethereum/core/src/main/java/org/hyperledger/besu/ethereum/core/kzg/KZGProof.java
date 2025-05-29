@@ -23,6 +23,7 @@ import org.apache.tuweni.bytes.Bytes48;
 
 /** This class contains the data for a KZG proof for a KZG commitment. */
 public class KZGProof implements org.hyperledger.besu.datatypes.KZGProof {
+  static int SIZE = 48;
   private final Bytes48 data;
 
   /**

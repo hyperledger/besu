@@ -18,20 +18,17 @@ import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import ethereum.ckzg4844.CKZG4844JNI;
-import ethereum.ckzg4844.CellsAndProofs;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes48;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +71,7 @@ public class BlobsBundleV2 {
             .map(Bytes::toString)
             .collect(Collectors.toList());
 
-    LOG.info(
+    LOG.debug(
         "BlobsBundleV2: totalTxs: {}, blobTxs: {}, commitments: {}, cell proofs: {}, blobs: {}",
         transactions.size(),
         blobsWithCommitments.size(),
@@ -98,38 +95,16 @@ public class BlobsBundleV2 {
     return blobs;
   }
 
-  @SuppressWarnings("UnusedVariable")
   private BlobsWithCommitments mapBlobWithCommitments(
       final BlobsWithCommitments blobsWithCommitments) {
-    if (blobsWithCommitments.getBlobType() == BlobType.KZG_CELL_PROOFS) {
-      return blobsWithCommitments;
+    // This may occur during fork transitions when the pool contains outdated blob types.
+    // It should not happen once the pool is refreshed with new transactions.
+    if (blobsWithCommitments.getBlobType() == BlobType.KZG_PROOF) {
+      LOG.warn(
+          "BlobsWithCommitments {} has a blob type of KZG_PROOF. Converting to KZG_CELL_PROOFS.",
+          blobsWithCommitments.getVersionedHashes());
+      return CKZG4844Helper.convertToVersion1(blobsWithCommitments);
     }
-    LOG.info(
-        "BlobProofBundle {} versionId is 0. Converting to version {}",
-        blobsWithCommitments.getVersionedHashes(),
-        BlobType.KZG_CELL_PROOFS);
-    List<KZGProof> kzgCellProofs = new ArrayList<>();
-    for (Blob blob : blobsWithCommitments.getBlobs()) {
-      CellsAndProofs cellProofs = CKZG4844JNI.computeCellsAndKzgProofs(blob.getData().toArray());
-      kzgCellProofs.addAll(extractKZGProofs(cellProofs.getProofs()));
-    }
-    return new BlobsWithCommitments(
-        BlobType.KZG_CELL_PROOFS,
-        blobsWithCommitments.getKzgCommitments(),
-        blobsWithCommitments.getBlobs(),
-        kzgCellProofs,
-        blobsWithCommitments.getVersionedHashes());
-  }
-
-  public static List<KZGProof> extractKZGProofs(final byte[] input) {
-    List<KZGProof> chunks = new ArrayList<>();
-    int chunkSize = Bytes48.SIZE;
-    int totalChunks = input.length / chunkSize;
-    for (int i = 0; i < totalChunks; i++) {
-      byte[] chunk = new byte[chunkSize];
-      System.arraycopy(input, i * chunkSize, chunk, 0, chunkSize);
-      chunks.add(new KZGProof(Bytes48.wrap(chunk)));
-    }
-    return chunks;
+    return blobsWithCommitments;
   }
 }

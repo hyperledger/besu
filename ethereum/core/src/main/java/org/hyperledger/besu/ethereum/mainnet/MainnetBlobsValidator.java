@@ -46,8 +46,7 @@ public class MainnetBlobsValidator {
     }
     BlobsWithCommitments blobsWithCommitments = transaction.getBlobsWithCommitments().get();
     if (!acceptedBlobVersions.contains(blobsWithCommitments.getBlobType())) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_BLOBS, "invalid blob version");
+      return ValidationResult.invalid(TransactionInvalidReason.INVALID_BLOBS, "invalid blob type");
     }
 
     if (blobsWithCommitments.getBlobs().size() != blobsWithCommitments.getKzgCommitments().size()) {

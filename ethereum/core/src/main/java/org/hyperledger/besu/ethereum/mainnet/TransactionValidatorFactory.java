@@ -31,7 +31,7 @@ import com.google.common.base.Suppliers;
 public class TransactionValidatorFactory {
 
   private volatile Supplier<TransactionValidator> transactionValidatorSupplier;
-  private static final Set<BlobType> NO_BLOB = Set.of();
+  private static final Set<BlobType> BLOBS_PROHIBITED = Set.of();
 
   public TransactionValidatorFactory(
       final GasCalculator gasCalculator,
@@ -77,7 +77,7 @@ public class TransactionValidatorFactory {
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
-        NO_BLOB,
+        BLOBS_PROHIBITED,
         maxInitcodeSize);
   }
 

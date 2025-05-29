@@ -98,11 +98,12 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
   }
 
   private BlobProofBundle processBundle(final BlobProofBundle blobProofBundle) {
+    // This may occur during fork transitions when the pool contains outdated blob types.
+    // It should not happen once the pool is refreshed with new transactions.
     if (blobProofBundle.getBlobType() == BlobType.KZG_PROOF) {
-      LOG.info(
-          "BlobProofBundle {} has blob type 0. Converting to version {}",
-          blobProofBundle.getVersionedHash(),
-          BlobType.KZG_CELL_PROOFS);
+      LOG.warn(
+          "BlobProofBundle {} with KZG_PROOF type found, converting to KZG_CELL_PROOFS type.",
+          blobProofBundle.getVersionedHash());
       return CKZG4844Helper.unsafeConvertToVersion1(blobProofBundle);
     }
     return blobProofBundle;
