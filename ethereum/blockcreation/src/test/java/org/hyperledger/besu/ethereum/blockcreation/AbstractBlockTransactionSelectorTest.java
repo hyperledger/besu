@@ -32,7 +32,6 @@ import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PRIORI
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -1431,7 +1430,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final long gasRemaining,
       final long processingTime) {
     when(transactionProcessor.processTransaction(
-            any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), eq(tx), any(), any(), any(), any(), any()))
         .thenAnswer(
             invocation -> {
               if (processingTime > 0) {
@@ -1461,7 +1460,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final TransactionInvalidReason invalidReason,
       final long processingTime) {
     when(transactionProcessor.processTransaction(
-            any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), eq(tx), any(), any(), any(), any(), any()))
         .thenAnswer(
             invocation -> {
               if (processingTime > 0) {

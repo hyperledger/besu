@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.components;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -44,7 +43,6 @@ public class ProtocolScheduleModule {
    *
    * @param config the genesis config options
    * @param protocolSpecAdapters the protocol spec adapters
-   * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled whether revert reason is enabled
    * @param evmConfiguration the EVM configuration
    * @param badBlockManager the bad block manager
@@ -58,7 +56,6 @@ public class ProtocolScheduleModule {
   public ProtocolScheduleBuilder provideProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final ProtocolSpecAdapters protocolSpecAdapters,
-      final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final BadBlockManager badBlockManager,
@@ -71,7 +68,6 @@ public class ProtocolScheduleModule {
             config,
             config.getChainId(),
             protocolSpecAdapters,
-            privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
             miningConfiguration,
