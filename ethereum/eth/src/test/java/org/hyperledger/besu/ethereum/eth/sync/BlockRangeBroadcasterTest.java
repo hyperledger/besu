@@ -121,14 +121,21 @@ public class BlockRangeBroadcasterTest {
   }
 
   @Test
-  public void shouldNotDisconnectPeerOnValidMessage() {
+  public void shouldNotDisconnectIfLatestBlockNumberIsGreaterThanEarliest() {
     final EthPeer peer = mock(EthPeer.class);
     handleBlockRangeUpdateMessage(peer, 0L, 1L);
     verify(peer, never()).disconnect(any());
   }
 
   @Test
-  public void shouldDisconnectPeerOnInvalidMessage() {
+  public void shouldNotDisconnectIfLatestBlockNumberIsEqualToEarliest() {
+    final EthPeer peer = mock(EthPeer.class);
+    handleBlockRangeUpdateMessage(peer, 0L, 0L);
+    verify(peer, never()).disconnect(any());
+  }
+
+  @Test
+  public void shouldDisconnectIfLatestBlockNumberIsLessThanEarliest() {
     final EthPeer peer = mock(EthPeer.class);
     handleBlockRangeUpdateMessage(peer, 1L, 0L);
     verify(peer).disconnect(DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED);
