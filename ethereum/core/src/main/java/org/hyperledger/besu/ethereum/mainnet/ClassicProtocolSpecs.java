@@ -61,7 +61,8 @@ public class ClassicProtocolSpecs {
     return MainnetProtocolSpecs.homesteadDefinition(
             evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
         .blockHeaderValidatorBuilder(
-            (feeMarket, gasCalculator) -> MainnetBlockHeaderValidator.createClassicValidator())
+            (feeMarket, gasCalculator, gasLimitCalculator) ->
+                MainnetBlockHeaderValidator.createClassicValidator())
         .name("ClassicRecoveryInit");
   }
 
@@ -248,11 +249,11 @@ public class ClassicProtocolSpecs {
             isParallelTxProcessingEnabled,
             metricsSystem)
         .blockHeaderValidatorBuilder(
-            (feeMarket, gasCalculator) ->
+            (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createPgaBlockHeaderValidator(
                     new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .ommerHeaderValidatorBuilder(
-            (feeMarket, gasCalculator) ->
+            (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
                     new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .name("Thanos");
