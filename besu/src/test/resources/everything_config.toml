@@ -98,12 +98,6 @@ cache-precompiles=true
 rpc-gas-cap = 50000000
 rpc-max-trace-filter-range=100
 
-# PRIVACY TLS
-privacy-tls-enabled=false
-privacy-tls-keystore-file="none.pfx"
-privacy-tls-keystore-password-file="none.passwd"
-privacy-tls-known-enclave-file="privacy_tls_enclave.txt"
-
 # GRAPHQL HTTP
 graphql-http-enabled=false
 graphql-http-host="6.7.8.9"
@@ -182,16 +176,6 @@ permissions-nodes-config-file-enabled=false
 permissions-nodes-config-file="./permissions_config.toml"
 permissions-accounts-config-file-enabled=false
 permissions-accounts-config-file="./permissions_config.toml"
-
-# Privacy
-privacy-url="http://127.0.0.1:8888"
-privacy-public-key-file="./pubKey.pub"
-privacy-enabled=false
-privacy-multi-tenancy-enabled=true
-privacy-marker-transaction-signing-key-file="./signerKey"
-privacy-enable-database-migration=false
-privacy-flexible-groups-enabled=false
-privacy-nonce-always-increments=false
 
 # Transaction Pool
 tx-pool="layered"

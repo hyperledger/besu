@@ -32,10 +32,10 @@ import picocli.CommandLine;
 
 /** The prune pre-merge block data sub command */
 @CommandLine.Command(
-    name = "x-prune-pre-merge-blocks",
+    name = "prune-pre-merge-blocks",
+    aliases = "x-prune-pre-merge-blocks",
     description =
-        "[Experimental] Prunes all pre-merge blocks and associated transaction receipts, leaving only headers and genesis block",
-    hidden = true,
+        "Prunes all pre-merge blocks and associated transaction receipts, leaving only headers and genesis block",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class PrunePreMergeBlockDataSubCommand implements Runnable {
@@ -43,8 +43,8 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
 
   private static final List<NetworkName> SUPPORTED_NETWORKS =
       List.of(NetworkName.MAINNET, NetworkName.SEPOLIA);
-  private static final long MAINNET_MERGE_BLOCK_NUMBER = 15_537_393;
-  private static final long SEPOLIA_MERGE_BLOCK_NUMBER = 1_735_371;
+  private static final long MAINNET_FIRST_POS_BLOCK_NUMBER = 15_537_394;
+  private static final long SEPOLIA_FIRST_POS_BLOCK_NUMBER = 1_450_409;
 
   private static final int DEFAULT_THREADS = Runtime.getRuntime().availableProcessors() - 1;
   private static final int DEFAULT_PRUNE_RANGE_SIZE = 10000;
@@ -87,7 +87,7 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
         dataPath);
     final long mergeBlockNumber = getMergeBlockNumber(network);
     LOG.info("Parallelizing with number of threads: {}", threads);
-    LOG.info("Merge block number: {}", mergeBlockNumber);
+    LOG.info("Merge block number (first PoS block): {}", mergeBlockNumber);
     LOG.info("Prune range size: {}", pruneRangeSize);
 
     try (BesuController besuController = storageSubCommand.besuCommand.buildController()) {
@@ -121,8 +121,8 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
 
   private static long getMergeBlockNumber(final NetworkName network) {
     return switch (network) {
-      case MAINNET -> MAINNET_MERGE_BLOCK_NUMBER;
-      case SEPOLIA -> SEPOLIA_MERGE_BLOCK_NUMBER;
+      case MAINNET -> MAINNET_FIRST_POS_BLOCK_NUMBER;
+      case SEPOLIA -> SEPOLIA_FIRST_POS_BLOCK_NUMBER;
       default -> throw new RuntimeException("Unexpected network: " + network);
     };
   }

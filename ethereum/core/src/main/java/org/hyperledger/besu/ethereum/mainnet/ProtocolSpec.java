@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -70,8 +69,6 @@ public class ProtocolSpec {
 
   private final boolean skipZeroBlockRewards;
 
-  private final PrivateTransactionProcessor privateTransactionProcessor;
-
   private final FeeMarket feeMarket;
 
   private final Optional<PoWHasher> powHasher;
@@ -91,7 +88,6 @@ public class ProtocolSpec {
    * @param evm the EVM supporting the appropriate operations for this specification
    * @param transactionValidatorFactory the transaction validator factory to use
    * @param transactionProcessor the transaction processor to use
-   * @param privateTransactionProcessor the private transaction processor to use
    * @param blockHeaderValidator the block header validator to use
    * @param ommerHeaderValidator the rules used to validate an ommer
    * @param blockBodyValidator the block body validator to use
@@ -122,7 +118,6 @@ public class ProtocolSpec {
       final EVM evm,
       final TransactionValidatorFactory transactionValidatorFactory,
       final MainnetTransactionProcessor transactionProcessor,
-      final PrivateTransactionProcessor privateTransactionProcessor,
       final BlockHeaderValidator blockHeaderValidator,
       final BlockHeaderValidator ommerHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
@@ -151,7 +146,6 @@ public class ProtocolSpec {
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.transactionProcessor = transactionProcessor;
-    this.privateTransactionProcessor = privateTransactionProcessor;
     this.blockHeaderValidator = blockHeaderValidator;
     this.ommerHeaderValidator = ommerHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
@@ -325,10 +319,6 @@ public class ProtocolSpec {
 
   public PrecompileContractRegistry getPrecompileContractRegistry() {
     return precompileContractRegistry;
-  }
-
-  public PrivateTransactionProcessor getPrivateTransactionProcessor() {
-    return privateTransactionProcessor;
   }
 
   /**

@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -98,7 +97,6 @@ public class MergeBesuControllerBuilderTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   MiningConfiguration miningConfiguration;
 
-  @Mock PrivacyParameters privacyParameters;
   @Mock Clock clock;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
@@ -181,7 +179,6 @@ public class MergeBesuControllerBuilderTest {
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .miningParameters(miningConfiguration)
             .metricsSystem(observableMetricsSystem)
-            .privacyParameters(privacyParameters)
             .dataDirectory(tempDir)
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)

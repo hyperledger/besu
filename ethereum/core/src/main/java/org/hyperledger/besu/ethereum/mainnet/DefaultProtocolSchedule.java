@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.TimestampProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -141,17 +140,5 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
             spec.spec()
                 .getTransactionValidatorFactory()
                 .setPermissionTransactionFilter(permissionTransactionFilter));
-  }
-
-  @Override
-  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
-      final WorldStateArchive publicWorldStateArchive) {
-    protocolSpecs.forEach(
-        spec -> {
-          final BlockProcessor blockProcessor = spec.spec().getBlockProcessor();
-          if (PrivacyBlockProcessor.class.isAssignableFrom(blockProcessor.getClass()))
-            ((PrivacyBlockProcessor) blockProcessor)
-                .setPublicWorldStateArchive(publicWorldStateArchive);
-        });
   }
 }
