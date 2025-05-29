@@ -25,11 +25,15 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class ChainDataPrunerTest {
 
@@ -45,8 +49,12 @@ public class ChainDataPrunerTest {
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,
+            () -> {},
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
+            0,
+            ChainDataPruner.Mode.CHAIN_PRUNING,
             512,
+            0,
             0,
             // completed
             new BlockingExecutor());
@@ -85,8 +93,12 @@ public class ChainDataPrunerTest {
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,
+            () -> {},
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
+            0,
+            ChainDataPruner.Mode.CHAIN_PRUNING,
             512,
+            0,
             0,
             // completed
             new BlockingExecutor());
@@ -117,6 +129,73 @@ public class ChainDataPrunerTest {
       assertThat(blockchain.getBlockByHash(canonicalChain.get(i - 511).getHash())).isPresent();
       assertThat(blockchain.getBlockByHash(canonicalChain.get(index - 512).getHash())).isEmpty();
       assertThat(blockchain.getBlockByHash(forkChain.get(i - 511).getHash())).isPresent();
+    }
+  }
+
+  @Test
+  public void testPreMergePruningAction() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final BlockchainStorage blockchainStorage =
+        new KeyValueStoragePrefixedKeyBlockchainStorage(
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions(),
+            false);
+    Block genesisBlock = gen.genesisBlock();
+    final MutableBlockchain blockchain =
+        DefaultBlockchain.createMutable(
+            genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
+    gen.blockSequence(genesisBlock, 20)
+        .forEach((block) -> blockchain.appendBlock(block, gen.receipts(block)));
+    final int mergeBlock = 11;
+    final int pruningQuantity = 6;
+    // ok, chain now has 20 blocks, including the genesis block
+    Assertions.assertEquals(20, blockchain.getChainHeadBlockNumber());
+
+    // set up the pruner to prune blocks to 1 to 10 in batches of 6
+    ChainDataPruner pruner =
+        new ChainDataPruner(
+            blockchainStorage,
+            () -> {},
+            new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
+            mergeBlock,
+            ChainDataPruner.Mode.PRE_MERGE_PRUNING,
+            0,
+            0,
+            pruningQuantity,
+            new BlockingExecutor());
+
+    BlockAddedEvent blockAddedEvent = Mockito.mock(BlockAddedEvent.class);
+    Mockito.when(blockAddedEvent.isNewCanonicalHead()).thenReturn(true);
+
+    // On the first prune, we're expecting blocks 1 to 6 to be removed, the full pruning batch size
+    pruner.onBlockAdded(blockAddedEvent);
+
+    checkBlocks(blockchain, 1, pruningQuantity, Optional::isEmpty);
+    checkBlocks(
+        blockchain, pruningQuantity + 1, blockchain.getChainHeadBlockNumber(), Optional::isPresent);
+
+    // On the second prune, we're expecting blocks 7 to 10 to be removed, limited by the merge block
+    // supplied to the pruner
+    pruner.onBlockAdded(blockAddedEvent);
+
+    checkBlocks(blockchain, 1, mergeBlock - 1, Optional::isEmpty);
+    checkBlocks(blockchain, mergeBlock, blockchain.getChainHeadBlockNumber(), Optional::isPresent);
+  }
+
+  private void checkBlocks(
+      final Blockchain blockchain,
+      final long start,
+      final long end,
+      final Predicate<Optional<Block>> test) {
+    for (long prunedBlockNumber = start; prunedBlockNumber <= end; prunedBlockNumber++) {
+      blockchain
+          .getBlockHeader(prunedBlockNumber)
+          .ifPresentOrElse(
+              (blockHeader) ->
+                  Assertions.assertTrue(
+                      test.test(blockchain.getBlockByHash(blockHeader.getBlockHash()))),
+              () -> Assertions.fail("Failed to find header expected to exist"));
     }
   }
 

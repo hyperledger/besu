@@ -42,7 +42,6 @@ public class RocksDBPlugin implements BesuPlugin {
   private final List<SegmentIdentifier> ignorableSegments = new ArrayList<>();
   private ServiceManager context;
   private RocksDBKeyValueStorageFactory factory;
-  private RocksDBKeyValuePrivacyStorageFactory privacyFactory;
 
   /** Instantiates a newRocksDb plugin. */
   public RocksDBPlugin() {
@@ -97,15 +96,6 @@ public class RocksDBPlugin implements BesuPlugin {
     } catch (final IOException e) {
       LOG.error("Failed to stop plugin: {}", e.getMessage(), e);
     }
-
-    try {
-      if (privacyFactory != null) {
-        privacyFactory.close();
-        privacyFactory = null;
-      }
-    } catch (final IOException e) {
-      LOG.error("Failed to stop plugin: {}", e.getMessage(), e);
-    }
   }
 
   /**
@@ -137,10 +127,8 @@ public class RocksDBPlugin implements BesuPlugin {
             segments,
             ignorableSegments,
             RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
-    privacyFactory = new RocksDBKeyValuePrivacyStorageFactory(factory);
 
     service.registerKeyValueStorage(factory);
-    service.registerKeyValueStorage(privacyFactory);
   }
 
   private void createFactoriesAndRegisterWithStorageService() {
