@@ -44,7 +44,7 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   public static final int DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY = 256;
 
   /** The constant DEFAULT_PRE_MERGE_PRUNING_QUANTITY. */
-  public static final int DEFAULT_PRE_MERGE_PRUNING_QUANTITY = 256;
+  public static final int DEFAULT_PRE_MERGE_PRUNING_QUANTITY = 100;
 
   @CommandLine.Option(
       hidden = true,
