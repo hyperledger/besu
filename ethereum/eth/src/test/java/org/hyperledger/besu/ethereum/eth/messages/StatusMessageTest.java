@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -22,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
 import java.util.Random;
@@ -32,21 +34,28 @@ import org.junit.jupiter.api.Test;
 
 public class StatusMessageTest {
 
+  private final int version = EthProtocol.LATEST.getVersion();
+  private final BigInteger networkId = BigInteger.ONE;
+  private final Difficulty td = Difficulty.of(1000L);
+  private final Hash bestHash = randHash(1L);
+  private final Hash genesisHash = randHash(2L);
+  private final ForkId forkId = new ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
+  private final StatusMessage.Builder builder =
+      StatusMessage.builder()
+          .protocolVersion(version)
+          .networkId(networkId)
+          .totalDifficulty(td)
+          .bestHash(bestHash)
+          .genesisHash(genesisHash)
+          .forkId(forkId);
+
   @Test
   public void getters() {
-    final int version = EthProtocol.LATEST.getVersion();
-    final BigInteger networkId = BigInteger.ONE;
-    final Difficulty td = Difficulty.of(1000L);
-    final Hash bestHash = randHash(1L);
-    final Hash genesisHash = randHash(2L);
-    final ForkId forkId = new ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
-
-    final StatusMessage msg =
-        StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
+    final StatusMessage msg = builder.build();
 
     assertThat(msg.protocolVersion()).isEqualTo(version);
     assertThat(msg.networkId()).isEqualTo(networkId);
-    assertThat(msg.totalDifficulty()).isEqualTo(td);
+    assertThat(msg.totalDifficulty().get()).isEqualTo(td);
     assertThat(msg.bestHash()).isEqualTo(bestHash);
     assertThat(msg.genesisHash()).isEqualTo(genesisHash);
     assertThat(msg.forkId()).isEqualTo(forkId);
@@ -54,21 +63,13 @@ public class StatusMessageTest {
 
   @Test
   public void serializeDeserialize() {
-    final int version = EthProtocolVersion.V68;
-    final BigInteger networkId = BigInteger.ONE;
-    final Difficulty td = Difficulty.of(1000L);
-    final Hash bestHash = randHash(1L);
-    final Hash genesisHash = randHash(2L);
-    final ForkId forkId = new ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
+    final MessageData msg = builder.build();
 
-    final MessageData msg =
-        StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
-
-    final StatusMessage copy = new StatusMessage(msg.getData());
+    final StatusMessage copy = StatusMessage.create(msg.getData());
 
     assertThat(copy.protocolVersion()).isEqualTo(version);
     assertThat(copy.networkId()).isEqualTo(networkId);
-    assertThat(copy.totalDifficulty()).isEqualTo(td);
+    assertThat(copy.totalDifficulty().get()).isEqualTo(td);
     assertThat(copy.bestHash()).isEqualTo(bestHash);
     assertThat(copy.genesisHash()).isEqualTo(genesisHash);
     assertThat(copy.forkId()).isEqualTo(forkId);
@@ -76,21 +77,62 @@ public class StatusMessageTest {
 
   @Test
   public void toStringDecodedHasExpectedInfo() {
-    final int version = EthProtocolVersion.V68;
-    final BigInteger networkId = BigInteger.ONE;
-    final Difficulty td = Difficulty.of(1000L);
-    final Hash bestHash = randHash(1L);
-    final Hash genesisHash = randHash(2L);
-    final ForkId forkId = new ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
+    final MessageData msg = builder.build();
 
-    final MessageData msg =
-        StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
-
-    final StatusMessage copy = new StatusMessage(msg.getData());
+    final StatusMessage copy = StatusMessage.create(msg.getData());
     final String copyToStringDecoded = copy.toStringDecoded();
 
     assertThat(copyToStringDecoded).contains("bestHash=" + bestHash);
     assertThat(copyToStringDecoded).contains("genesisHash=" + genesisHash);
+  }
+
+  @Test
+  public void shouldNotHaveBlockRangeWhenEth68() {
+    Exception exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                builder
+                    .protocolVersion(EthProtocolVersion.V68)
+                    .blockRange(new StatusMessage.BlockRange(0L, 10))
+                    .build());
+    assertThat(exception.getMessage())
+        .contains("blockRange is only supported for protocol version >= 69");
+  }
+
+  @Test
+  public void shouldHaveBlockRangeWhenEth69() {
+    Exception exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> builder.protocolVersion(EthProtocolVersion.V69).blockRange(null).build());
+    assertThat(exception.getMessage())
+        .contains("blockRange must be present for protocol version >= 69");
+  }
+
+  @Test
+  public void shouldHaveTotalDifficultWhenEth68() {
+    Exception exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> builder.protocolVersion(EthProtocolVersion.V68).totalDifficulty(null).build());
+    assertThat(exception.getMessage())
+        .contains("totalDifficulty must be present for protocol version <= 68");
+  }
+
+  @Test
+  public void shouldNotHaveTotalDifficultWhenEth69() {
+    Exception exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                builder
+                    .protocolVersion(EthProtocolVersion.V69)
+                    .blockRange(new StatusMessage.BlockRange(0L, 10L))
+                    .totalDifficulty(Difficulty.ZERO)
+                    .build());
+    assertThat(exception.getMessage())
+        .contains("totalDifficulty must be not present for protocol version >= 69");
   }
 
   private Hash randHash(final long seed) {
@@ -98,5 +140,22 @@ public class StatusMessageTest {
     final byte[] bytes = new byte[32];
     random.nextBytes(bytes);
     return Hash.wrap(Bytes32.wrap(bytes));
+  }
+
+  @Test
+  public void shouldNotHaveTotalDifficultWhen69FromRawInput() {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeIntScalar(69);
+    out.writeBigIntegerScalar(networkId);
+    out.writeUInt256Scalar(Difficulty.of(1000L));
+    out.writeBytes(bestHash);
+    out.writeBytes(genesisHash);
+    forkId.writeTo(out);
+    out.endList();
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> StatusMessage.create(out.encoded()).protocolVersion(),
+        "StatusMessage should not be able to deserialize invalid data");
   }
 }

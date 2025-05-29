@@ -38,7 +38,6 @@ dependencies {
   implementation project(':consensus:merge')
   implementation project(':crypto:services')
   implementation project(':datatypes')
-  implementation project(':enclave')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')

@@ -31,7 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
-
+  private static final BigInteger GAS_PRICE = BigInteger.valueOf(10000000000L);
   private BesuNode node;
   private TestDepth testDepth;
 
@@ -71,23 +71,23 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
 
       assertThat(ethCall.isReverted()).isEqualTo(false);
 
-      // Sanity check our estimate is right on the edge with eth_call
+      // With the ESTIMATE_GAS_TOLERANCE_RATIO there is now a bit of a difference,
+      // and it's proportional to the size of the estimate.
+      // Subtracting 10% should make the eth_call fail
+      BigInteger amountToSubtract = estimateGas.getAmountUsed().divide(BigInteger.valueOf(10));
+      BigInteger gasTooLow = estimateGas.getAmountUsed().subtract(amountToSubtract);
+      // Sanity check our estimate is close by sending eth_call with less than that gas estimate
       var ethCallTooLow =
           node.execute(
-              new EthCallTransaction(
-                  testDepth.getContractAddress(),
-                  functionCall,
-                  estimateGas.getAmountUsed().subtract(BigInteger.ONE)));
+              new EthCallTransaction(testDepth.getContractAddress(), functionCall, gasTooLow));
 
       assertThat(ethCallTooLow.isReverted()).isEqualTo(true);
 
-      // Sanity check our estimate is right on the edge with eth_sendRawTransaction
+      // Sanity check our estimate is close with eth_sendRawTransaction
       var transactionTooLow =
           node.execute(
               contractTransactions.callSmartContract(
-                  testDepth.getContractAddress(),
-                  functionCall,
-                  estimateGas.getAmountUsed().subtract(BigInteger.ONE)));
+                  testDepth.getContractAddress(), functionCall, gasTooLow, GAS_PRICE));
 
       node.verify(eth.expectSuccessfulTransactionReceipt(transactionTooLow.getTransactionHash()));
 
@@ -103,7 +103,10 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
       var transaction =
           node.execute(
               contractTransactions.callSmartContract(
-                  testDepth.getContractAddress(), functionCall, estimateGas.getAmountUsed()));
+                  testDepth.getContractAddress(),
+                  functionCall,
+                  estimateGas.getAmountUsed(),
+                  GAS_PRICE));
 
       node.verify(eth.expectSuccessfulTransactionReceipt(transaction.getTransactionHash()));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,296 +19,129 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.json.ChainIdDeserializer;
+import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
+import org.hyperledger.besu.ethereum.core.json.OptionalUnsignedLongDeserializer;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
+import org.immutables.value.Value;
 
 // Represents parameters for eth_call and eth_estimateGas JSON-RPC methods.
-public class CallParameter {
-  private final Optional<BigInteger> chainId;
+@Value.Immutable
+@JsonDeserialize(as = ImmutableCallParameter.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public abstract class CallParameter {
+  @JsonDeserialize(contentUsing = ChainIdDeserializer.class)
+  public abstract Optional<BigInteger> getChainId();
 
-  private final Address from;
+  @JsonProperty("from")
+  public abstract Optional<Address> getSender();
 
-  private final Address to;
+  public abstract Optional<Address> getTo();
 
-  private final long gasLimit;
+  @JsonDeserialize(using = OptionalUnsignedLongDeserializer.class)
+  public abstract OptionalLong getGas();
 
-  private final Optional<Wei> maxPriorityFeePerGas;
+  public abstract Optional<Wei> getMaxPriorityFeePerGas();
 
-  private final Optional<Wei> maxFeePerGas;
-  private final Optional<Wei> maxFeePerBlobGas;
+  public abstract Optional<Wei> getMaxFeePerGas();
 
-  private final Wei gasPrice;
+  public abstract Optional<Wei> getMaxFeePerBlobGas();
 
-  private final Wei value;
+  public abstract Optional<Wei> getGasPrice();
 
-  private final Bytes payload;
+  public abstract Optional<Wei> getValue();
 
-  private final Optional<List<AccessListEntry>> accessList;
-  private final Optional<List<VersionedHash>> blobVersionedHashes;
-  private final Optional<Long> nonce;
+  public abstract Optional<List<AccessListEntry>> getAccessList();
 
-  public CallParameter(
-      final Address from,
-      final Address to,
-      final long gasLimit,
-      final Wei gasPrice,
-      final Wei value,
-      final Bytes payload) {
-    this.chainId = Optional.empty();
-    this.from = from;
-    this.to = to;
-    this.gasLimit = gasLimit;
-    this.accessList = Optional.empty();
-    this.maxPriorityFeePerGas = Optional.empty();
-    this.maxFeePerGas = Optional.empty();
-    this.gasPrice = gasPrice;
-    this.value = value;
-    this.payload = payload;
-    this.maxFeePerBlobGas = Optional.empty();
-    this.blobVersionedHashes = Optional.empty();
-    this.nonce = Optional.empty();
-  }
+  public abstract Optional<List<VersionedHash>> getBlobVersionedHashes();
 
-  public CallParameter(
-      final Address from,
-      final Address to,
-      final long gasLimit,
-      final Wei gasPrice,
-      final Wei value,
-      final Bytes payload,
-      final Optional<Long> nonce) {
-    this.chainId = Optional.empty();
-    this.from = from;
-    this.to = to;
-    this.gasLimit = gasLimit;
-    this.accessList = Optional.empty();
-    this.maxPriorityFeePerGas = Optional.empty();
-    this.maxFeePerGas = Optional.empty();
-    this.gasPrice = gasPrice;
-    this.value = value;
-    this.payload = payload;
-    this.maxFeePerBlobGas = Optional.empty();
-    this.blobVersionedHashes = Optional.empty();
-    this.nonce = nonce;
-  }
+  @JsonDeserialize(using = OptionalUnsignedLongDeserializer.class)
+  public abstract OptionalLong getNonce();
 
-  public CallParameter(
-      final Address from,
-      final Address to,
-      final long gasLimit,
-      final Wei gasPrice,
-      final Optional<Wei> maxPriorityFeePerGas,
-      final Optional<Wei> maxFeePerGas,
-      final Wei value,
-      final Bytes payload,
-      final Optional<List<AccessListEntry>> accessList,
-      final Optional<Long> nonce) {
-    this.chainId = Optional.empty();
-    this.from = from;
-    this.to = to;
-    this.gasLimit = gasLimit;
-    this.maxPriorityFeePerGas = maxPriorityFeePerGas;
-    this.maxFeePerGas = maxFeePerGas;
-    this.gasPrice = gasPrice;
-    this.value = value;
-    this.payload = payload;
-    this.accessList = accessList;
-    this.maxFeePerBlobGas = Optional.empty();
-    this.blobVersionedHashes = Optional.empty();
-    this.nonce = nonce;
-  }
+  public abstract Optional<Boolean> getStrict();
 
-  public CallParameter(
-      final Optional<BigInteger> chainId,
-      final Address from,
-      final Address to,
-      final long gasLimit,
-      final Wei gasPrice,
-      final Optional<Wei> maxPriorityFeePerGas,
-      final Optional<Wei> maxFeePerGas,
-      final Wei value,
-      final Bytes payload,
-      final Optional<List<AccessListEntry>> accessList,
-      final Optional<Wei> maxFeePerBlobGas,
-      final Optional<List<VersionedHash>> blobVersionedHashes,
-      final Optional<Long> nonce) {
-    this.chainId = chainId;
-    this.from = from;
-    this.to = to;
-    this.gasLimit = gasLimit;
-    this.maxPriorityFeePerGas = maxPriorityFeePerGas;
-    this.maxFeePerGas = maxFeePerGas;
-    this.gasPrice = gasPrice;
-    this.value = value;
-    this.payload = payload;
-    this.accessList = accessList;
-    this.maxFeePerBlobGas = maxFeePerBlobGas;
-    this.blobVersionedHashes = blobVersionedHashes;
-    this.nonce = nonce;
-  }
+  /**
+   * 'input' is mutually exclusive with 'data', so it needs special handling. This method is only
+   * used to deserialize the 'input' field, always use getPayload() to get the value.
+   */
+  @JsonDeserialize(contentUsing = HexStringDeserializer.class)
+  protected abstract Optional<Bytes> getInput();
 
-  public Optional<BigInteger> getChainId() {
-    return chainId;
-  }
+  /**
+   * 'data' is mutually exclusive with 'input', so it needs special handling. This method is only
+   * used to deserialize the 'data' field, always use getPayload() to get the value.
+   */
+  @JsonDeserialize(contentUsing = HexStringDeserializer.class)
+  protected abstract Optional<Bytes> getData();
 
-  public Address getFrom() {
-    return from;
-  }
-
-  public Address getTo() {
-    return to;
-  }
-
-  public long getGasLimit() {
-    return gasLimit;
-  }
-
-  public Wei getGasPrice() {
-    return gasPrice;
-  }
-
-  public Optional<Wei> getMaxPriorityFeePerGas() {
-    return maxPriorityFeePerGas;
-  }
-
-  public Optional<Wei> getMaxFeePerGas() {
-    return maxFeePerGas;
-  }
-
-  public Wei getValue() {
-    return value;
-  }
-
-  public Bytes getPayload() {
-    return payload;
-  }
-
-  public Optional<List<AccessListEntry>> getAccessList() {
-    return accessList;
-  }
-
-  public Optional<Wei> getMaxFeePerBlobGas() {
-    return maxFeePerBlobGas;
-  }
-
-  public Optional<List<VersionedHash>> getBlobVersionedHashes() {
-    return blobVersionedHashes;
-  }
-
-  public Optional<Long> getNonce() {
-    return nonce;
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
+  @Value.Check
+  protected void check() {
+    if (getInput().isPresent() && getData().isPresent() && !getInput().equals(getData())) {
+      throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");
     }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final CallParameter that = (CallParameter) o;
-    return gasLimit == that.gasLimit
-        && chainId.equals(that.chainId)
-        && Objects.equals(from, that.from)
-        && Objects.equals(to, that.to)
-        && Objects.equals(gasPrice, that.gasPrice)
-        && Objects.equals(maxPriorityFeePerGas, that.maxPriorityFeePerGas)
-        && Objects.equals(maxFeePerGas, that.maxFeePerGas)
-        && Objects.equals(value, that.value)
-        && Objects.equals(payload, that.payload)
-        && Objects.equals(accessList, that.accessList)
-        && Objects.equals(maxFeePerBlobGas, that.maxFeePerBlobGas)
-        && Objects.equals(blobVersionedHashes, that.blobVersionedHashes)
-        && Objects.equals(nonce, that.nonce);
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        chainId,
-        from,
-        to,
-        gasLimit,
-        gasPrice,
-        maxPriorityFeePerGas,
-        maxFeePerGas,
-        value,
-        payload,
-        accessList,
-        maxFeePerBlobGas,
-        blobVersionedHashes,
-        nonce);
-  }
-
-  @Override
-  public String toString() {
-    return "CallParameter{"
-        + "chainId="
-        + chainId
-        + ", from="
-        + from
-        + ", to="
-        + to
-        + ", gasLimit="
-        + gasLimit
-        + ", maxPriorityFeePerGas="
-        + maxPriorityFeePerGas.map(Wei::toHumanReadableString).orElse("N/A")
-        + ", maxFeePerGas="
-        + maxFeePerGas.map(Wei::toHumanReadableString).orElse("N/A")
-        + ", maxFeePerBlobGas="
-        + maxFeePerBlobGas.map(Wei::toHumanReadableString).orElse("N/A")
-        + ", gasPrice="
-        + (gasPrice != null ? gasPrice.toHumanReadableString() : "N/A")
-        + ", value="
-        + (value != null ? value.toHumanReadableString() : "N/A")
-        + ", payloadSize="
-        + (payload != null ? payload.size() : "null")
-        + ", accessListSize="
-        + accessList.map(List::size)
-        + ", blobVersionedHashesSize="
-        + blobVersionedHashes.map(List::size)
-        + ", nonce="
-        + nonce.map(Object::toString).orElse("N/A")
-        + '}';
+  /**
+   * Returns either the 'input' or 'data' field, depending on which is present, or empty if neither
+   * is present.
+   *
+   * @return the payload, or empty if none is present.
+   */
+  @Value.Derived
+  public Optional<Bytes> getPayload() {
+    return getInput().or(this::getData);
   }
 
   public static CallParameter fromTransaction(final Transaction tx) {
-    return new CallParameter(
-        tx.getChainId(),
-        tx.getSender(),
-        tx.getTo().orElse(null),
-        tx.getGasLimit(),
-        tx.getGasPrice().orElse(Wei.ZERO),
-        tx.getMaxPriorityFeePerGas(),
-        tx.getMaxFeePerGas(),
-        tx.getValue(),
-        tx.getPayload(),
-        tx.getAccessList(),
-        tx.getMaxFeePerBlobGas(),
-        tx.getVersionedHashes(),
-        Optional.of(tx.getNonce()));
+    final var builder =
+        ImmutableCallParameter.builder()
+            .chainId(tx.getChainId())
+            .sender(tx.getSender())
+            .gas(tx.getGasLimit())
+            .value(tx.getValue())
+            .input(tx.getPayload())
+            .nonce(tx.getNonce());
+
+    tx.getTo().ifPresent(builder::to);
+    tx.getGasPrice().ifPresent(builder::gasPrice);
+    tx.getMaxPriorityFeePerGas().ifPresent(builder::maxPriorityFeePerGas);
+    tx.getMaxFeePerGas().ifPresent(builder::maxFeePerGas);
+
+    tx.getAccessList().ifPresent(builder::accessList);
+
+    tx.getMaxFeePerBlobGas().ifPresent(builder::maxFeePerBlobGas);
+    tx.getVersionedHashes().ifPresent(builder::blobVersionedHashes);
+    return builder.build();
   }
 
   public static CallParameter fromTransaction(final org.hyperledger.besu.datatypes.Transaction tx) {
-    return new CallParameter(
-        tx.getChainId(),
-        tx.getSender(),
-        tx.getTo().orElse(null),
-        tx.getGasLimit(),
-        tx.getGasPrice().map(Wei::fromQuantity).orElse(Wei.ZERO),
-        tx.getMaxPriorityFeePerGas().map(Wei::fromQuantity),
-        tx.getMaxFeePerGas().map(Wei::fromQuantity),
-        Wei.fromQuantity(tx.getValue()),
-        tx.getPayload(),
-        tx.getAccessList(),
-        tx.getMaxFeePerBlobGas().map(Wei::fromQuantity),
-        tx.getVersionedHashes(),
-        Optional.of(tx.getNonce()));
+    final var builder =
+        ImmutableCallParameter.builder()
+            .chainId(tx.getChainId())
+            .sender(tx.getSender())
+            .gas(tx.getGasLimit())
+            .value(Wei.fromQuantity(tx.getValue()))
+            .input(tx.getPayload())
+            .nonce(tx.getNonce());
+
+    tx.getTo().ifPresent(builder::to);
+    tx.getGasPrice().map(Wei::fromQuantity).ifPresent(builder::gasPrice);
+
+    tx.getMaxPriorityFeePerGas().map(Wei::fromQuantity).ifPresent(builder::maxPriorityFeePerGas);
+    tx.getMaxFeePerGas().map(Wei::fromQuantity).ifPresent(builder::maxFeePerGas);
+
+    tx.getAccessList().ifPresent(builder::accessList);
+    tx.getMaxFeePerBlobGas().map(Wei::fromQuantity).ifPresent(builder::maxFeePerBlobGas);
+    tx.getVersionedHashes().ifPresent(builder::blobVersionedHashes);
+    return builder.build();
   }
 }

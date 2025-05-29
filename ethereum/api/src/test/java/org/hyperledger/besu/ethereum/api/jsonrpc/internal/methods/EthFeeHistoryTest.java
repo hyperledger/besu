@@ -410,7 +410,7 @@ public class EthFeeHistoryTest {
   private void mockPostBlobFork() {
     final ProtocolSpec cancunSpec = mock(ProtocolSpec.class);
     when(cancunSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
-    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancun(5, Optional.empty()));
+    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancunDefault(5, Optional.empty()));
     when(cancunSpec.getGasLimitCalculator())
         .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(cancunSpec);
@@ -420,7 +420,7 @@ public class EthFeeHistoryTest {
   private void mockTransitionBlobFork() {
     final ProtocolSpec cancunSpec = mock(ProtocolSpec.class);
     when(cancunSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
-    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancun(5, Optional.empty()));
+    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancunDefault(5, Optional.empty()));
     when(cancunSpec.getGasLimitCalculator())
         .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(cancunSpec);

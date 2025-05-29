@@ -154,6 +154,14 @@ public class BesuControllerTest {
   }
 
   @Test
+  public void defaultMainnetCheckpointSyncUsesMergeControllerBuilder() {
+    final BesuControllerBuilder besuControllerBuilder =
+        new BesuController.Builder().fromGenesisFile(GenesisConfig.mainnet(), SyncMode.CHECKPOINT);
+
+    assertThat(besuControllerBuilder).isInstanceOf(MergeBesuControllerBuilder.class);
+  }
+
+  @Test
   public void postMergeCheckpointSyncWithTotalDifficultyEqualsTTDUsesTransitionControllerBuilder()
       throws IOException {
     final GenesisConfig mergeAtGenesisFile =
@@ -168,8 +176,10 @@ public class BesuControllerTest {
 
   @Test
   public void preMergeCheckpointSyncUsesTransitionControllerBuilder() {
+    final GenesisConfig checkpointPreMerge =
+        GenesisConfig.fromResource("/valid_pre_merge_checkpoint.json");
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisFile(GenesisConfig.mainnet(), SyncMode.CHECKPOINT);
+        new BesuController.Builder().fromGenesisFile(checkpointPreMerge, SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }

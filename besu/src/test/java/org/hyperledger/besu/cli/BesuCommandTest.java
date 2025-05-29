@@ -237,15 +237,15 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void callingHelpSubCommandMustDisplayUsage() {
     parseCommand("--help");
     final String expectedOutputStart = String.format("Usage:%n%nbesu [OPTIONS] [COMMAND]");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   @Test
   public void callingHelpDisplaysDefaultRpcApisCorrectly() {
     parseCommand("--help");
-    assertThat(commandOutput.toString(UTF_8)).contains("default: [ETH, NET, WEB3]");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).contains("default: [ETH, NET, WEB3]");
   }
 
   @Test
@@ -254,6 +254,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8))
         .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingUnstableSubCommandMustNotError() {
+    parseCommand("-X");
+    final String expectedOutputStart = "Unstable options";
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   // Testing default values
@@ -1196,10 +1204,10 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verifyNoInteractions(mockRunnerBuilder);
 
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).contains("--fast-sync-min-peers");
     // whitelist is now a hidden option
     assertThat(commandOutput.toString(UTF_8)).doesNotContain("whitelist");
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2044,10 +2052,10 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verifyNoInteractions(mockRunnerBuilder);
 
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).contains("--config-file");
     assertThat(commandOutput.toString(UTF_8)).contains("--data-path");
     assertThat(commandOutput.toString(UTF_8)).contains("--genesis-file");
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2431,9 +2439,19 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void checkpointPostMergeShouldFailWhenGenesisUsesCheckpointFromPreMerge() {
+  public void checkpointPostMergeShouldFailWhenGenesisUsesCheckpointFromPreMerge()
+      throws IOException {
+    final String configText =
+        Resources.toString(
+            Resources.getResource("valid_pre_merge_checkpoint.json"), StandardCharsets.UTF_8);
+    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
     // using the default genesis which has a checkpoint sync block prior to the merge
-    parseCommand("--sync-mode", "CHECKPOINT", "--Xcheckpoint-post-merge-enabled");
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--sync-mode",
+        "CHECKPOINT",
+        "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))

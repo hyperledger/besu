@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.config.BlobScheduleOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
@@ -45,7 +46,7 @@ public class MainnetProtocolSpecsTest {
   private MiningConfiguration miningConfiguration;
 
   @Mock(lenient = true)
-  private BlobScheduleOptions.BlobSchedule pragueBlobSchedule;
+  private BlobSchedule pragueBlobSchedule;
 
   @Mock(lenient = true)
   private BlobScheduleOptions blobScheduleOptions;

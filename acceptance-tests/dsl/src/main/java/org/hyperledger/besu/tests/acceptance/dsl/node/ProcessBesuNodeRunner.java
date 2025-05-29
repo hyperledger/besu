@@ -213,36 +213,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--miner-stratum-enabled");
     }
 
-    if (node.getPrivacyParameters().isEnabled()) {
-      params.add("--privacy-enabled");
-
-      params.add("--privacy-url");
-      params.add(node.getPrivacyParameters().getEnclaveUri().toString());
-
-      if (node.getPrivacyParameters().isMultiTenancyEnabled()) {
-        params.add("--privacy-multi-tenancy-enabled");
-      } else {
-        params.add("--privacy-public-key-file");
-        params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
-      }
-
-      if (!node.getExtraCLIOptions().contains("--plugin-privacy-service-signing-enabled=true")) {
-        params.add("--privacy-marker-transaction-signing-key-file");
-        params.add(node.homeDirectory().resolve("key").toString());
-      }
-
-      if (node.getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
-        params.add("--privacy-flexible-groups-enabled");
-      }
-
-      if (node.getPrivacyParameters().isPrivacyPluginEnabled()) {
-        params.add("--Xprivacy-plugin-enabled");
-      }
-      if (node.getPrivacyParameters().isPrivateNonceAlwaysIncrementsEnabled()) {
-        params.add("privacy-nonce-always-increments");
-      }
-    }
-
     if (!node.getBootnodes().isEmpty()) {
       params.add("--bootnodes");
       params.add(node.getBootnodes().stream().map(URI::toString).collect(Collectors.joining(",")));
@@ -406,30 +376,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                 params.add("--permissions-accounts-config-file");
                 params.add(permissioningConfiguration.getAccountPermissioningConfigFilePath());
               }
-            });
-
-    node.getPermissioningConfiguration()
-        .flatMap(PermissioningConfiguration::getSmartContractConfig)
-        .ifPresent(
-            permissioningConfiguration -> {
-              if (permissioningConfiguration.isSmartContractNodeAllowlistEnabled()) {
-                params.add("--permissions-nodes-contract-enabled");
-              }
-              if (permissioningConfiguration.getNodeSmartContractAddress() != null) {
-                params.add("--permissions-nodes-contract-address");
-                params.add(permissioningConfiguration.getNodeSmartContractAddress().toString());
-              }
-              if (permissioningConfiguration.isSmartContractAccountAllowlistEnabled()) {
-                params.add("--permissions-accounts-contract-enabled");
-              }
-              if (permissioningConfiguration.getAccountSmartContractAddress() != null) {
-                params.add("--permissions-accounts-contract-address");
-                params.add(permissioningConfiguration.getAccountSmartContractAddress().toString());
-              }
-              params.add("--permissions-nodes-contract-version");
-              params.add(
-                  String.valueOf(
-                      permissioningConfiguration.getNodeSmartContractInterfaceVersion()));
             });
 
     params.addAll(node.getExtraCLIOptions());
