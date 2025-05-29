@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.BesuInfo;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.io.IOException;
 import java.net.URL;
@@ -58,14 +58,15 @@ public class ValidateConfigSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingValidateConfigSubCommandHelpMustDisplayUsage() {
     parseCommand(VALIDATE_CONFIG_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
   }
 
   @Test
   public void callingValidateConfigSubCommandVersionMustDisplayVersion() {
     parseCommand(VALIDATE_CONFIG_SUBCOMMAND_NAME, "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -83,9 +84,9 @@ public class ValidateConfigSubCommandTest extends CommandTestAbstract {
     Files.writeString(invalidToml, "xyz=");
     invalidToml.toFile().deleteOnExit();
 
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     parseCommand(VALIDATE_CONFIG_SUBCOMMAND_NAME, "--config-file", invalidToml.toString());
     assertThat(commandOutput.toString(UTF_8)).contains("Invalid TOML configuration");
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -97,7 +98,7 @@ public class ValidateConfigSubCommandTest extends CommandTestAbstract {
     validToml.toFile().deleteOnExit();
 
     parseCommand(VALIDATE_CONFIG_SUBCOMMAND_NAME, "--config-file", validToml.toString());
-    assertThat(commandOutput.toString(UTF_8)).startsWith("TOML config file is valid");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith("TOML config file is valid");
   }
 }

@@ -30,15 +30,29 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The AltBN128Pairing precompiled contract. */
 public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiledContract {
-
+  private static final Logger LOG =
+      LoggerFactory.getLogger(AltBN128PairingPrecompiledContract.class);
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
+  private static final String PRECOMPILE_NAME = "AltBN128Pairing";
+
+  private static final Cache<Integer, PrecompileInputResultTuple> bnPairingCache =
+      Caffeine.newBuilder()
+          .maximumWeight(16_000_000)
+          .weigher((k, v) -> ((PrecompileInputResultTuple) v).cachedInput().size())
+          .expireAfterWrite(15, TimeUnit.MINUTES) // Evict 15 minutes after each entry is written
+          .build();
 
   /** The constant FALSE. */
   static final Bytes FALSE =
@@ -54,7 +68,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
   private AltBN128PairingPrecompiledContract(
       final GasCalculator gasCalculator, final long pairingGasCost, final long baseGasCost) {
     super(
-        "AltBN128Pairing",
+        PRECOMPILE_NAME,
         gasCalculator,
         LibGnarkEIP196.EIP196_PAIR_OPERATION_RAW_VALUE,
         Integer.MAX_VALUE / PARAMETER_LENGTH * PARAMETER_LENGTH);
@@ -99,11 +113,42 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
-    if (useNative) {
-      return computeNative(input, messageFrame);
-    } else {
-      return computeDefault(input);
+    PrecompileInputResultTuple res;
+    Integer cacheKey = null;
+    if (enableResultCaching) {
+      cacheKey = getCacheKey(input);
+      res = bnPairingCache.getIfPresent(cacheKey);
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          LOG.debug(
+              "false positive altbn128Pairing {}, cache key {}, cached input: {}, input: {}",
+              input.getClass().getSimpleName(),
+              cacheKey,
+              res.cachedInput().toHexString(),
+              input.toHexString());
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
+      }
     }
+    if (useNative) {
+      res =
+          new PrecompileInputResultTuple(
+              enableResultCaching ? input.copy() : input, computeNative(input, messageFrame));
+    } else {
+      res =
+          new PrecompileInputResultTuple(
+              enableResultCaching ? input.copy() : input, computeDefault(input));
+    }
+    if (cacheKey != null) {
+      bnPairingCache.put(cacheKey, res);
+    }
+
+    return res.cachedResult();
   }
 
   @Nonnull

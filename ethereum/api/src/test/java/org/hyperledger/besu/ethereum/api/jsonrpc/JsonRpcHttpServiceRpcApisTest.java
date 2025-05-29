@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -201,8 +200,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   private JsonRpcHttpService createJsonRpcHttpServiceWithRpcApis(final JsonRpcConfiguration config)
       throws Exception {
     final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.ETH62);
-    supportedCapabilities.add(EthProtocol.ETH63);
+    supportedCapabilities.add(EthProtocol.LATEST);
 
     final Map<String, JsonRpcMethod> rpcMethods =
         new JsonRpcMethodsFactory()
@@ -226,7 +224,6 @@ public class JsonRpcHttpServiceRpcApisTest {
                 Optional.of(mock(AccountLocalConfigPermissioningController.class)),
                 Optional.of(mock(NodeLocalConfigPermissioningController.class)),
                 config.getRpcApis(),
-                mock(PrivacyParameters.class),
                 mock(JsonRpcConfiguration.class),
                 mock(WebSocketConfiguration.class),
                 mock(MetricsConfiguration.class),
@@ -284,7 +281,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     when(genesisBlock.getHash()).thenReturn(Hash.ZERO);
     final P2PNetwork p2pNetwork =
         DefaultP2PNetwork.builder()
-            .supportedCapabilities(Capability.create("eth", 63))
+            .supportedCapabilities(EthProtocol.LATEST)
             .nodeKey(NodeKeyUtils.generate())
             .vertx(vertx)
             .config(config)
@@ -312,8 +309,7 @@ public class JsonRpcHttpServiceRpcApisTest {
       final MetricsConfiguration metricsConfiguration,
       final NatService natService) {
     final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.ETH62);
-    supportedCapabilities.add(EthProtocol.ETH63);
+    supportedCapabilities.add(EthProtocol.LATEST);
     jsonRpcConfiguration.setPort(0);
     webSocketConfiguration.setPort(0);
 
@@ -339,7 +335,6 @@ public class JsonRpcHttpServiceRpcApisTest {
                 Optional.of(mock(AccountLocalConfigPermissioningController.class)),
                 Optional.of(mock(NodeLocalConfigPermissioningController.class)),
                 jsonRpcConfiguration.getRpcApis(),
-                mock(PrivacyParameters.class),
                 jsonRpcConfiguration,
                 webSocketConfiguration,
                 metricsConfiguration,

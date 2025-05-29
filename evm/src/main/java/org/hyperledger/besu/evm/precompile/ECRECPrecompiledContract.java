@@ -26,16 +26,24 @@ import java.math.BigInteger;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The ECREC precompiled contract. */
 public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ECRECPrecompiledContract.class);
   private static final int V_BASE = 27;
   final SignatureAlgorithm signatureAlgorithm;
+  private static final String PRECOMPILE_NAME = "ECREC";
+  private static final Cache<Integer, PrecompileInputResultTuple> ecrecCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
 
   /**
    * Instantiates a new ECREC precompiled contract with the default signature algorithm.
@@ -54,7 +62,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
    */
   public ECRECPrecompiledContract(
       final GasCalculator gasCalculator, final SignatureAlgorithm signatureAlgorithm) {
-    super("ECREC", gasCalculator);
+    super(PRECOMPILE_NAME, gasCalculator);
     this.signatureAlgorithm = signatureAlgorithm;
   }
 
@@ -78,6 +86,30 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
       return PrecompileContractResult.success(Bytes.EMPTY);
     }
 
+    PrecompileInputResultTuple res;
+    Integer cacheKey = null;
+    if (enableResultCaching) {
+      cacheKey = getCacheKey(input);
+      res = ecrecCache.getIfPresent(cacheKey);
+
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          LOG.debug(
+              "false positive ecrecover {}, cache key {}, cached input: {}, input: {}",
+              input.getClass().getSimpleName(),
+              cacheKey,
+              res.cachedInput().toHexString(),
+              input.toHexString());
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
+      }
+    }
+
     final int recId = d.get(63) - V_BASE;
     final BigInteger r = d.slice(64, 32).toUnsignedBigInteger();
     final BigInteger s = d.slice(96, 32).toUnsignedBigInteger();
@@ -97,13 +129,26 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
       final Optional<SECPPublicKey> recovered =
           signatureAlgorithm.recoverPublicKeyFromSignature(h, signature);
       if (recovered.isEmpty()) {
-        return PrecompileContractResult.success(Bytes.EMPTY);
+        res =
+            new PrecompileInputResultTuple(
+                enableResultCaching ? input.copy() : input,
+                PrecompileContractResult.success(Bytes.EMPTY));
+        if (cacheKey != null) {
+          ecrecCache.put(cacheKey, res);
+        }
+        return res.cachedResult();
       }
 
       final Bytes32 hashed = Hash.keccak256(recovered.get().getEncodedBytes());
       final MutableBytes32 result = MutableBytes32.create();
       hashed.slice(12).copyTo(result, 12);
-      return PrecompileContractResult.success(result);
+      res =
+          new PrecompileInputResultTuple(
+              enableResultCaching ? input.copy() : input, PrecompileContractResult.success(result));
+      if (enableResultCaching) {
+        ecrecCache.put(cacheKey, res);
+      }
+      return res.cachedResult();
     } catch (final IllegalArgumentException e) {
       return PrecompileContractResult.success(Bytes.EMPTY);
     }

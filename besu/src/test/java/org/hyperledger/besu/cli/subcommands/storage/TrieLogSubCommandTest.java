@@ -58,9 +58,9 @@ class TrieLogSubCommandTest extends CommandTestAbstract {
         .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
     final List<DataStorageConfiguration> configs =
         dataStorageConfigurationArgumentCaptor.getAllValues();
-    assertThat(configs.get(0).getDiffBasedSubStorageConfiguration().getLimitTrieLogsEnabled())
+    assertThat(configs.get(0).getPathBasedExtraStorageConfiguration().getLimitTrieLogsEnabled())
         .isTrue();
-    assertThat(configs.get(1).getDiffBasedSubStorageConfiguration().getLimitTrieLogsEnabled())
+    assertThat(configs.get(1).getPathBasedExtraStorageConfiguration().getLimitTrieLogsEnabled())
         .isFalse();
   }
 
@@ -75,7 +75,7 @@ class TrieLogSubCommandTest extends CommandTestAbstract {
         .allMatch(
             dataStorageConfiguration ->
                 dataStorageConfiguration
-                    .getDiffBasedSubStorageConfiguration()
+                    .getPathBasedExtraStorageConfiguration()
                     .getLimitTrieLogsEnabled());
   }
 }

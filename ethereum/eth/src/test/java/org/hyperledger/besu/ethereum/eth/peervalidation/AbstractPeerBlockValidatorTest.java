@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
@@ -135,7 +135,7 @@ public abstract class AbstractPeerBlockValidatorTest {
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.targetedResponder(
             (cap, msg) -> {
-              if (msg.getCode() != EthPV62.GET_BLOCK_HEADERS) {
+              if (msg.getCode() != EthProtocolMessages.GET_BLOCK_HEADERS) {
                 return false;
               }
               final GetBlockHeadersMessage headersRequest = GetBlockHeadersMessage.readFrom(msg);

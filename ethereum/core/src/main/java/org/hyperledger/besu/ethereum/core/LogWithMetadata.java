@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 
@@ -110,24 +109,6 @@ public class LogWithMetadata extends Log
   }
 
   public static List<LogWithMetadata> generate(
-      final int logIndexOffset,
-      final PrivateTransactionReceipt receipt,
-      final long number,
-      final Hash blockHash,
-      final Hash transactionHash,
-      final int transactionIndex,
-      final boolean removed) {
-    return generate(
-        logIndexOffset,
-        receipt.getLogs(),
-        number,
-        blockHash,
-        transactionHash,
-        transactionIndex,
-        removed);
-  }
-
-  private static List<LogWithMetadata> generate(
       final int logIndexOffset,
       final List<Log> receiptLogs,
       final long number,

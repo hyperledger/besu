@@ -35,6 +35,7 @@ dependencies {
   annotationProcessor 'org.apache.logging.log4j:log4j-core'
 
   implementation 'com.google.guava:guava'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.logging.log4j:log4j-core'

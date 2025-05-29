@@ -26,7 +26,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -76,7 +75,11 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
   private final EthScheduler ethScheduler = new DeterministicEthScheduler();
   private final ProtocolContext protocolContext =
-      new ProtocolContext(blockchain, worldStateArchive, mergeContext, new BadBlockManager());
+      new ProtocolContext.Builder()
+          .withBlockchain(blockchain)
+          .withWorldStateArchive(worldStateArchive)
+          .withConsensusContext(mergeContext)
+          .build();
 
   private final Address coinbase = genesisAllocations(getPowGenesisConfig()).findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();

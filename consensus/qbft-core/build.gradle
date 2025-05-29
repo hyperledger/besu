@@ -37,7 +37,7 @@ dependencies {
   implementation project(':ethereum:rlp')
 
   implementation 'com.google.guava:guava'
-  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')

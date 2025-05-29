@@ -18,25 +18,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParam
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
-import org.hyperledger.besu.ethereum.api.query.LogsQuery;
-import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
-import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 public class LogsSubscriptionService implements Consumer<LogWithMetadata> {
 
   private final SubscriptionManager subscriptionManager;
-  private final Optional<PrivacyQueries> privacyQueries;
 
-  public LogsSubscriptionService(
-      final SubscriptionManager subscriptionManager,
-      final Optional<PrivacyQueries> privacyQueries) {
+  public LogsSubscriptionService(final SubscriptionManager subscriptionManager) {
     this.subscriptionManager = subscriptionManager;
-    this.privacyQueries = privacyQueries;
   }
 
   @Override
@@ -55,29 +47,6 @@ public class LogsSubscriptionService implements Consumer<LogWithMetadata> {
                   && filterParameter.getLogsQuery().matches(logWithMetadata);
             })
         .forEach(logsSubscription -> sendLogToSubscription(logWithMetadata, logsSubscription));
-  }
-
-  public void checkPrivateLogs(final BlockAddedEvent event) {
-    privacyQueries.ifPresent(
-        pq ->
-            subscriptionManager
-                .subscriptionsOfType(SubscriptionType.LOGS, LogsSubscription.class)
-                .stream()
-                .filter(PrivateLogsSubscription.class::isInstance)
-                .map(PrivateLogsSubscription.class::cast)
-                .forEach(queryPrivateEventForSubscription(pq, event)));
-  }
-
-  private Consumer<PrivateLogsSubscription> queryPrivateEventForSubscription(
-      final PrivacyQueries privacyQueries, final BlockAddedEvent event) {
-    return subscription -> {
-      final String privacyGroupId = subscription.getPrivacyGroupId();
-      final LogsQuery logsQuery = subscription.getFilterParameter().getLogsQuery();
-
-      privacyQueries
-          .matchingLogs(privacyGroupId, event.getHeader().getHash(), logsQuery)
-          .forEach(logWithMetadata -> sendLogToSubscription(logWithMetadata, subscription));
-    };
   }
 
   private void sendLogToSubscription(

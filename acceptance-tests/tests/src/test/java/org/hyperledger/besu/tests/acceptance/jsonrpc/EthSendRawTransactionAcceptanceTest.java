@@ -40,9 +40,9 @@ public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
   public void setUp() throws Exception {
     sender = accounts.getPrimaryBenefactor();
 
-    lenientNode = besu.createArchiveNode("lenientNode", configureNode((false)));
-    strictNode = besu.createArchiveNode("strictNode", configureNode((true)));
-    miningNode = besu.createMinerNode("strictMiningNode", configureNode((true)));
+    lenientNode = besu.createArchiveNode("lenientNode", configureNode(false));
+    strictNode = besu.createArchiveNode("strictNode", configureNode(true));
+    miningNode = besu.createMinerNode("strictMiningNode", configureNode(true));
     cluster.start(lenientNode, strictNode, miningNode);
 
     // verify nodes are fully connected otherwise tx could not be propagated

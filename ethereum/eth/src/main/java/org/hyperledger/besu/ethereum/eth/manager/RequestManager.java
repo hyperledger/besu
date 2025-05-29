@@ -40,15 +40,12 @@ public class RequestManager {
       new AtomicLong(1); // some clients have issues encoding zero
   private final Map<BigInteger, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
-  private final boolean supportsRequestId;
   private final String protocolName;
 
   private final AtomicInteger outstandingRequests = new AtomicInteger(0);
 
-  public RequestManager(
-      final EthPeer peer, final boolean supportsRequestId, final String protocolName) {
+  public RequestManager(final EthPeer peer, final String protocolName) {
     this.peer = peer;
-    this.supportsRequestId = supportsRequestId;
     this.protocolName = protocolName;
   }
 
@@ -65,7 +62,7 @@ public class RequestManager {
     outstandingRequests.incrementAndGet();
     final BigInteger requestId = BigInteger.valueOf(requestIdCounter.getAndIncrement());
     final ResponseStream stream = createStream(requestId);
-    sender.send(supportsRequestId ? messageData.wrapMessageData(requestId) : messageData);
+    sender.send(messageData.wrapMessageData(requestId));
     return stream;
   }
 
@@ -73,21 +70,14 @@ public class RequestManager {
     final Collection<ResponseStream> streams = List.copyOf(responseStreams.values());
     final int count = outstandingRequests.decrementAndGet();
     try {
-      if (supportsRequestId) {
-        // If there's a requestId, find the specific stream it belongs to
-        final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-            ethMessage.getData().unwrapMessageData();
-        Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
-            .ifPresentOrElse(
-                responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),
-                // Consider incorrect requestIds to be a useless response; too
-                // many of these and we will disconnect.
-                () -> peer.recordUselessResponse("Request ID incorrect"));
-
-      } else {
-        // otherwise iterate through all of them
-        streams.forEach(stream -> stream.processMessage(ethMessage.getData()));
-      }
+      final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
+          ethMessage.getData().unwrapMessageData();
+      Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
+          .ifPresentOrElse(
+              responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),
+              // Consider incorrect requestIds to be a useless response; too
+              // many of these and we will disconnect.
+              () -> peer.recordUselessResponse("Request ID incorrect"));
     } catch (final RLPException e) {
       LOG.debug(
           "Received malformed message {} (BREACH_OF_PROTOCOL), disconnecting: {}",

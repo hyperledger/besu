@@ -99,7 +99,7 @@ public class LogsQuery {
   }
 
   private boolean matchesTopic(final LogTopic topic, final List<LogTopic> matchCriteria) {
-    return matchCriteria.contains(null) || matchCriteria.contains(topic);
+    return matchCriteria.isEmpty() || matchCriteria.contains(null) || matchCriteria.contains(topic);
   }
 
   @Override

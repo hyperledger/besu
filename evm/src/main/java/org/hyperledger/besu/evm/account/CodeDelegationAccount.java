@@ -17,36 +17,42 @@ package org.hyperledger.besu.evm.account;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.NavigableMap;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Wraps an EOA account and includes delegated code to be run on behalf of it. */
-public class CodeDelegationAccount extends AbstractCodeDelegationAccount implements Account {
+public class CodeDelegationAccount implements Account {
 
   private final Account wrappedAccount;
+  private final Bytes targetCode;
+  private final Address targetAddress;
+  private Hash targetCodeHash;
 
   /**
    * Creates a new CodeDelegationAccount.
    *
-   * @param worldUpdater the world updater.
    * @param wrappedAccount the account that has delegated code to be loaded into it.
-   * @param codeDelegationAddress the address of the delegated code.
-   * @param gasCalculator the gas calculator to check for precompiles.
+   * @param targetAddress the address of the target of the code delegation.
+   * @param targetCode the code of the target of the code delegation.
    */
   public CodeDelegationAccount(
-      final WorldUpdater worldUpdater,
-      final Account wrappedAccount,
-      final Address codeDelegationAddress,
-      final GasCalculator gasCalculator) {
-    super(worldUpdater, codeDelegationAddress, gasCalculator);
+      final Account wrappedAccount, final Address targetAddress, final Bytes targetCode) {
     this.wrappedAccount = wrappedAccount;
+    this.targetCode = targetCode;
+    this.targetAddress = targetAddress;
+  }
+
+  /**
+   * Returns the target address of the delegated code.
+   *
+   * @return the target address
+   */
+  public Address getTargetAddress() {
+    return targetAddress;
   }
 
   @Override
@@ -57,11 +63,6 @@ public class CodeDelegationAccount extends AbstractCodeDelegationAccount impleme
   @Override
   public boolean isStorageEmpty() {
     return wrappedAccount.isStorageEmpty();
-  }
-
-  @Override
-  public Optional<Address> codeDelegationAddress() {
-    return super.codeDelegationAddress();
   }
 
   @Override
@@ -81,12 +82,16 @@ public class CodeDelegationAccount extends AbstractCodeDelegationAccount impleme
 
   @Override
   public Bytes getCode() {
-    return wrappedAccount.getCode();
+    return targetCode;
   }
 
   @Override
   public Hash getCodeHash() {
-    return wrappedAccount.getCodeHash();
+    if (targetCodeHash == null) {
+      targetCodeHash = Hash.hash(targetCode);
+    }
+
+    return targetCodeHash;
   }
 
   @Override

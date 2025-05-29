@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.cli;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.log.FramedLogMessage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
@@ -61,6 +62,8 @@ public class ConfigurationOverviewBuilder {
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
+  private boolean isHistoryExpiryPruneEnabled = false;
+  private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
 
   /**
    * Create a new ConfigurationOverviewBuilder.
@@ -303,13 +306,49 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * set the plugin context
+   *
+   * @param besuPluginContext the plugin context
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setPluginContext(
+      final BesuPluginContextImpl besuPluginContext) {
+    this.besuPluginContext = besuPluginContext;
+    return this;
+  }
+
+  /**
+   * Sets the history expiry prune enabled.
+   *
+   * @param isHistoryExpiryPruneEnabled the history expiry prune enabled
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setHistoryExpiryPruneEnabled(
+      final boolean isHistoryExpiryPruneEnabled) {
+    this.isHistoryExpiryPruneEnabled = isHistoryExpiryPruneEnabled;
+    return this;
+  }
+
+  /**
+   * Sets the blob db settings.
+   *
+   * @param blobDBSettings the blob db settings
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setBlobDBSettings(
+      final RocksDBCLIOptions.BlobDBSettings blobDBSettings) {
+    this.blobDBSettings = blobDBSettings;
+    return this;
+  }
+
+  /**
    * Build configuration overview.
    *
    * @return the string representing configuration overview
    */
   public String build() {
     final List<String> lines = new ArrayList<>();
-    lines.add("Besu version " + BesuInfo.class.getPackage().getImplementationVersion());
+    lines.add("Besu version " + BesuVersionUtils.shortVersion());
     lines.add("");
     lines.add("Configuration:");
 
@@ -364,15 +403,7 @@ public class ConfigurationOverviewBuilder {
 
     lines.add("Using " + txPoolImplementation + " transaction pool implementation");
 
-    if (isHighSpec) {
-      lines.add("Experimental high spec configuration enabled");
-    }
-
     lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
-
-    if (isSnapServerEnabled) {
-      lines.add("Experimental Snap Sync server enabled");
-    }
 
     if (isLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();
@@ -383,6 +414,38 @@ public class ConfigurationOverviewBuilder {
         trieLogPruningString.append("; prune window: ").append(trieLogsPruningWindowSize);
       }
       lines.add(trieLogPruningString.toString());
+    }
+
+    if (isSnapServerEnabled) {
+      lines.add("Experimental Snap Sync server enabled");
+    }
+
+    if (isHighSpec) {
+      lines.add("Experimental high spec configuration enabled");
+    }
+
+    if (isHistoryExpiryPruneEnabled) {
+      lines.add("History expiry prune enabled");
+    }
+
+    if (blobDBSettings != null && blobDBSettings.isBlockchainGarbageCollectionEnabled()) {
+      lines.add("Experimental BlobDB BLOCKCHAIN Garbage Collection enabled");
+    }
+    if (hasCustomBlobDBSettings()) {
+      final StringBuilder blobDBString = new StringBuilder();
+      blobDBString.append("Experimental BlobDB GC ");
+      if (blobDBSettings.blobGarbageCollectionAgeCutoff().isPresent()) {
+        blobDBString
+            .append("age cutoff: ")
+            .append(blobDBSettings.blobGarbageCollectionAgeCutoff().get())
+            .append("; ");
+      }
+      if (blobDBSettings.blobGarbageCollectionForceThreshold().isPresent()) {
+        blobDBString
+            .append("force threshold: ")
+            .append(blobDBSettings.blobGarbageCollectionForceThreshold().get());
+      }
+      lines.add(blobDBString.toString());
     }
 
     lines.add("");
@@ -413,6 +476,12 @@ public class ConfigurationOverviewBuilder {
     }
 
     return FramedLogMessage.generate(lines);
+  }
+
+  private boolean hasCustomBlobDBSettings() {
+    return blobDBSettings != null
+        && (blobDBSettings.blobGarbageCollectionAgeCutoff().isPresent()
+            || blobDBSettings.blobGarbageCollectionForceThreshold().isPresent());
   }
 
   private void detectJemalloc(final List<String> lines) {
@@ -446,14 +515,5 @@ public class ConfigurationOverviewBuilder {
 
   private String normalizeSize(final long size) {
     return String.format("%.02f", (double) (size) / 1024 / 1024 / 1024) + " GB";
-  }
-
-  /**
-   * set the plugin context
-   *
-   * @param besuPluginContext the plugin context
-   */
-  public void setPluginContext(final BesuPluginContextImpl besuPluginContext) {
-    this.besuPluginContext = besuPluginContext;
   }
 }

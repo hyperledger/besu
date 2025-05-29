@@ -13,7 +13,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 import com.github.jk1.license.filter.LicenseBundleNormalizer
 import groovy.transform.CompileStatic
 import groovy.transform.Memoized
@@ -23,15 +22,15 @@ import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 plugins {
-  id 'com.diffplug.spotless' version '7.0.2'
+  id 'com.diffplug.spotless' version '7.0.3'
   id 'com.github.jk1.dependency-license-report' version '2.9'
   id 'com.jfrog.artifactory' version '5.2.5'
-  id 'me.champeau.jmh' version '0.7.2' apply false
-  id 'net.ltgt.errorprone' version '4.1.0'
+  id 'me.champeau.jmh' version '0.7.3' apply false
+  id 'net.ltgt.errorprone' version '4.2.0'
   id 'maven-publish'
   id 'jacoco'
   id 'jacoco-report-aggregation'
-  id 'org.sonarqube' version '6.0.1.5171'
+  id 'org.sonarqube' version '6.2.0.5505'
 }
 
 sonarqube {
@@ -149,6 +148,10 @@ configure(allprojects - project(':platform')) {
   java {
     sourceCompatibility = 21
     targetCompatibility = 21
+
+    consistentResolution {
+      useCompileClasspathVersions()
+    }
   }
 
   repositories {
@@ -203,6 +206,12 @@ configure(allprojects - project(':platform')) {
     resolutionStrategy.capabilitiesResolution.withCapability('org.bouncycastle:bcpkix-jdk18on') {
       selectHighestVersion()
     }
+
+    // transitive versions conflict with io.protocols.tuweni, prefer ours
+    exclude group: 'io.tmio', module: 'tuweni-bytes'
+    exclude group: 'io.tmio', module: 'tuweni-crypto'
+    exclude group: 'io.tmio', module: 'tuweni-rlp'
+    exclude group: 'io.tmio', module: 'tuweni-units'
   }
 
 
@@ -373,7 +382,7 @@ configure(allprojects - project(':platform')) {
   javadoc {
     options.addBooleanOption('Xdoclint:all', true)
     // disable doc lint checking for generated code and acceptance tests dsl.
-    options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated,' +
+    options.addBooleanOption('Xdoclint/package:' +
       '-org.hyperledger.besu.tests.acceptance.*,' +
       '-org.hyperledger.besu.tests.web3j.generated,' +
       // TODO: these are temporary excluded from lint (ethereum sub modules), it should be removed in a future PR.
@@ -397,8 +406,6 @@ configure(allprojects - project(':platform')) {
       '-org.hyperledger.besu.ethereum.forkid,' +
       '-org.hyperledger.besu.ethereum.mainnet,' +
       '-org.hyperledger.besu.ethereum.mainnet.*,' +
-      '-org.hyperledger.besu.ethereum.privacy,' +
-      '-org.hyperledger.besu.ethereum.privacy.*,' +
       '-org.hyperledger.besu.ethereum.processing,' +
       '-org.hyperledger.besu.ethereum.proof,' +
       '-org.hyperledger.besu.ethereum.storage,' +
@@ -824,6 +831,7 @@ task distDocker {
   doLast {
     copy {
       from file("${projectDir}/docker/Dockerfile")
+      from file("${projectDir}/docker/pyroscope.properties")
       into(dockerBuildDir)
     }
     exec {
@@ -1095,9 +1103,9 @@ distributions {
   main {
     contents {
       from("./LICENSE") { into "." }
-      from("build/reports/license/license-dependency.html") { into "." }
-      from("./docs/GettingStartedBinaries.md") { into "." }
-      from("./docs/DocsArchive0.8.0.html") { into "." }
+      from("./build/reports/dependency-license/index.html") { into "."}
+      rename("index.html","license-dependency.html")
+      from("./docs/README.md") { into "." }
       from("./besu/src/main/scripts/besu-entry.sh") { into "./bin/" }
       from(autocomplete) { into "." }
     }

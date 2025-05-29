@@ -20,7 +20,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -37,6 +37,7 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 
@@ -91,7 +92,8 @@ class MainnetTransactionProcessorTest {
         .feeMarket(FeeMarket.legacy())
         .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
         .codeDelegationProcessor(
-            new CodeDelegationProcessor(Optional.of(BigInteger.ONE), BigInteger.TEN))
+            new CodeDelegationProcessor(
+                Optional.of(BigInteger.ONE), BigInteger.TEN, new CodeDelegationService()))
         .build();
   }
 
@@ -103,7 +105,7 @@ class MainnetTransactionProcessorTest {
     Address senderAddress = Address.fromHexString("0x5555555555555555555555555555555555555555");
     Address coinbaseAddress = Address.fromHexString("0x4242424242424242424242424242424242424242");
 
-    when(transaction.getHash()).thenReturn(Hash.EMPTY);
+    when(transaction.getType()).thenReturn(TransactionType.EIP1559);
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
     when(transaction.getSender()).thenReturn(senderAddress);
     when(transaction.getValue()).thenReturn(Wei.ZERO);
@@ -132,7 +134,6 @@ class MainnetTransactionProcessorTest {
         transaction,
         coinbaseAddress,
         blockHashLookup,
-        false,
         ImmutableTransactionValidationParams.builder().build(),
         Wei.ZERO);
 
@@ -145,7 +146,6 @@ class MainnetTransactionProcessorTest {
         transaction,
         coinbaseAddress,
         blockHashLookup,
-        false,
         ImmutableTransactionValidationParams.builder().build(),
         Wei.ZERO);
 
@@ -164,8 +164,8 @@ class MainnetTransactionProcessorTest {
     Address senderAddress = Address.fromHexString("0x5555555555555555555555555555555555555555");
     Address coinbaseAddress = Address.fromHexString("0x4242424242424242424242424242424242424242");
 
+    when(transaction.getType()).thenReturn(TransactionType.EIP1559);
     when(transaction.getTo()).thenReturn(toAddress);
-    when(transaction.getHash()).thenReturn(Hash.EMPTY);
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
     when(transaction.getSender()).thenReturn(senderAddress);
     when(transaction.getValue()).thenReturn(Wei.ZERO);
@@ -192,10 +192,9 @@ class MainnetTransactionProcessorTest {
           blockHeader,
           transaction,
           coinbaseAddress,
-          blockHashLookup,
-          false,
-          ImmutableTransactionValidationParams.builder().build(),
           tracer,
+          blockHashLookup,
+          ImmutableTransactionValidationParams.builder().build(),
           Wei.ZERO);
     } catch (final MerkleTrieException e) {
       // the MerkleTrieException is thrown again in MainnetTransactionProcessor, we ignore it here
@@ -243,7 +242,6 @@ class MainnetTransactionProcessorTest {
         transaction,
         Address.fromHexString("1"),
         blockHashLookup,
-        false,
         ImmutableTransactionValidationParams.builder().build(),
         Wei.ZERO);
 

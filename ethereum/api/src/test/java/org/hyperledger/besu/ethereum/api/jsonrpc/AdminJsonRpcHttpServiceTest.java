@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -53,8 +54,7 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   @Test
   public void getPeers() throws Exception {
     final List<Capability> caps = new ArrayList<>();
-    caps.add(Capability.create("eth", 61));
-    caps.add(Capability.create("eth", 62));
+    caps.add(EthProtocol.LATEST);
     final List<EthPeer> peerList = new ArrayList<>();
     final PeerInfo info1 =
         new PeerInfo(

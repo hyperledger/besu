@@ -17,13 +17,13 @@ package org.hyperledger.besu.ethereum.referencetests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiPreImageProxy;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.Consumer;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiPreImageProxy;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.Consumer;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,8 +34,8 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
   private final BonsaiPreImageProxy preImageProxy;
 
   public BonsaiReferenceTestUpdateAccumulator(
-      final DiffBasedWorldView world,
-      final Consumer<DiffBasedValue<BonsaiAccount>> accountPreloader,
+      final PathBasedWorldView world,
+      final Consumer<PathBasedValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
       final BonsaiPreImageProxy preImageProxy,
       final EvmConfiguration evmConfiguration) {
@@ -67,7 +67,7 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
     getStorageToUpdate()
         .forEach(
             (k, v) -> {
-              StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> newMap =
+              StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> newMap =
                   new StorageConsumingMap<>(k, new ConcurrentHashMap<>(), v.getConsumer());
               v.forEach((key, value) -> newMap.put(key, value.copy()));
               copy.getStorageToUpdate().put(k, newMap);

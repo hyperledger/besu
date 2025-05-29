@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -122,7 +121,7 @@ public class TransactionPoolFactoryTest {
             25,
             false,
             SyncMode.SNAP,
-            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList()));
     when(ethContext.getEthMessages()).thenReturn(ethMessages);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
 
@@ -374,7 +373,6 @@ public class TransactionPoolFactoryTest {
                 config,
                 Optional.of(DEFAULT_CHAIN_ID),
                 ProtocolSpecAdapters.create(0, Function.identity()),
-                PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,

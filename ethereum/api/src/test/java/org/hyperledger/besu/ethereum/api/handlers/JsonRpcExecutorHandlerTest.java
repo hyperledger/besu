@@ -56,6 +56,7 @@ class JsonRpcExecutorHandlerTest {
     mockVertx = mock(Vertx.class);
     mockResponse = mock(HttpServerResponse.class);
 
+    when(mockConfig.getHttpTimeoutSec()).thenReturn(30L);
     when(mockContext.vertx()).thenReturn(mockVertx);
     when(mockContext.response()).thenReturn(mockResponse);
     when(mockResponse.ended()).thenReturn(false);

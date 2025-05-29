@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -24,6 +27,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public final class ReceiptsMessage extends AbstractMessageData {
@@ -33,20 +37,23 @@ public final class ReceiptsMessage extends AbstractMessageData {
       return (ReceiptsMessage) message;
     }
     final int code = message.getCode();
-    if (code != EthPV63.RECEIPTS) {
+    if (code != EthProtocolMessages.RECEIPTS) {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a ReceiptsMessage.", code));
     }
     return new ReceiptsMessage(message.getData());
   }
 
-  public static ReceiptsMessage create(final List<List<TransactionReceipt>> receipts) {
+  @VisibleForTesting
+  public static ReceiptsMessage create(
+      final List<List<TransactionReceipt>> receipts,
+      final TransactionReceiptEncodingConfiguration encodingConfiguration) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     receipts.forEach(
         (receiptSet) -> {
           tmp.startList();
-          receiptSet.forEach(r -> r.writeToForNetwork(tmp));
+          receiptSet.forEach(r -> TransactionReceiptEncoder.writeTo(r, tmp, encodingConfiguration));
           tmp.endList();
         });
     tmp.endList();
@@ -70,7 +77,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
 
   @Override
   public int getCode() {
-    return EthPV63.RECEIPTS;
+    return EthProtocolMessages.RECEIPTS;
   }
 
   public List<List<TransactionReceipt>> receipts() {
@@ -81,7 +88,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
       final int setSize = input.enterList();
       final List<TransactionReceipt> receiptSet = new ArrayList<>(setSize);
       for (int i = 0; i < setSize; i++) {
-        receiptSet.add(TransactionReceipt.readFrom(input, false));
+        receiptSet.add(TransactionReceiptDecoder.readFrom(input, false));
       }
       input.leaveList();
       receipts.add(receiptSet);

@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
@@ -115,7 +115,6 @@ public class TraceTransactionIntegrationTest {
             createTransaction,
             genesisBlockHeader.getCoinbase(),
             blockHashLookup,
-            false,
             TransactionValidationParams.blockReplay(),
             Wei.ZERO);
     assertThat(result.isSuccessful()).isTrue();
@@ -148,7 +147,6 @@ public class TraceTransactionIntegrationTest {
             genesisBlockHeader.getCoinbase(),
             tracer,
             blockHashLookup,
-            false,
             Wei.ZERO);
 
     assertThat(result.isSuccessful()).isTrue();
@@ -190,7 +188,6 @@ public class TraceTransactionIntegrationTest {
         genesisBlockHeader.getCoinbase(),
         tracer,
         blockHashLookup,
-        false,
         Wei.ZERO);
 
     final int expectedDepth = 0; // Reference impl returned 1. Why the difference?

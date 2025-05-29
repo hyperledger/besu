@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.BesuInfo;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,15 +67,17 @@ public class PasswordSubCommandTest extends CommandTestAbstract {
   @Test
   public void passwordSubCommandVersionDisplaysVersion() {
     parseCommand("password", "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void passwordHashSubCommandVersionDisplaysVersion() {
     parseCommand("password", "hash", "--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
   }
 
   @Test

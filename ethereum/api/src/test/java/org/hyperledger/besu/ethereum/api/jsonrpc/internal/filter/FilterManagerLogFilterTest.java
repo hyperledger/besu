@@ -24,7 +24,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,14 +33,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
-import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
 
 import java.util.List;
 import java.util.Optional;
@@ -59,14 +56,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class FilterManagerLogFilterTest {
 
-  private static final String PRIVACY_GROUP_ID = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
-  private static final String ENCLAVE_PUBLIC_KEY = "iOCzoGo5kwtZU0J41Z9xnGXHN6ZNukIa9MspvHtu3Jk=";
-
   private FilterManager filterManager;
 
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
-  @Mock private PrivacyQueries privacyQueries;
   @Mock private TransactionPool transactionPool;
   @Spy private final FilterRepository filterRepository = new FilterRepository();
 
@@ -77,7 +70,6 @@ public class FilterManagerLogFilterTest {
         new FilterManagerBuilder()
             .blockchainQueries(blockchainQueries)
             .transactionPool(transactionPool)
-            .privacyQueries(privacyQueries)
             .filterRepository(filterRepository)
             .build();
   }
@@ -95,25 +87,19 @@ public class FilterManagerLogFilterTest {
 
   @Test
   public void shouldCheckMatchingLogsWhenRecordedNewBlockEventForPrivateFiltersOnly() {
-    filterManager.installPrivateLogFilter(
-        PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY, latest(), latest(), logsQuery());
     filterManager.installLogFilter(latest(), latest(), logsQuery());
     final Hash blockAddedHash = recordBlockEvents(1).get(0).getHeader().getHash();
 
     verify(blockchainQueries, never()).matchingLogs(eq(100L), eq(100L), eq(logsQuery()), any());
-    verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery()));
   }
 
   @Test
   public void shouldUseBlockHashWhenCheckingLogsForChangesForPrivateFiltersOnly() {
-    filterManager.installPrivateLogFilter(
-        PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY, blockNum(1L), blockNum(10L), logsQuery());
     filterManager.installLogFilter(blockNum(1L), blockNum(10L), logsQuery());
 
     final Hash blockAddedHash = recordBlockEvents(1).get(0).getHeader().getHash();
 
     verify(blockchainQueries, never()).matchingLogs(any(Hash.class), any(LogsQuery.class), any());
-    verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery()));
   }
 
   @Test
@@ -220,84 +206,6 @@ public class FilterManagerLogFilterTest {
     filterManager.logs("foo");
 
     verify(filter).resetExpireTime();
-  }
-
-  @Test
-  public void installAndUninstallPrivateFilter() {
-    final String filterId =
-        filterManager.installPrivateLogFilter(
-            PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY, latest(), latest(), logsQuery());
-
-    assertThat(filterRepository.getFilter(filterId, PrivateLogFilter.class)).isPresent();
-
-    assertThat(filterManager.uninstallFilter(filterId)).isTrue();
-
-    assertThat(filterRepository.getFilter(filterId, PrivateLogFilter.class)).isEmpty();
-  }
-
-  @Test
-  public void privateLogFilterShouldQueryPrivacyQueriesObject() {
-    final LogWithMetadata logWithMetadata = logWithMetadata();
-    final LogsQuery logsQuery = logsQuery();
-    when(privacyQueries.matchingLogs(eq(PRIVACY_GROUP_ID), any(), eq(logsQuery)))
-        .thenReturn(singletonList(logWithMetadata));
-
-    final String filterId =
-        filterManager.installPrivateLogFilter(
-            PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY, latest(), latest(), logsQuery);
-    final Hash blockAddedHash = recordBlockEvents(1).get(0).getHeader().getHash();
-
-    verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery));
-    assertThat(filterManager.logsChanges(filterId).get(0)).isEqualTo(logWithMetadata);
-  }
-
-  @Test
-  public void getLogsForPrivateFilterShouldQueryPrivacyQueriesObject() {
-    final LogWithMetadata logWithMetadata = logWithMetadata();
-    when(privacyQueries.matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any()))
-        .thenReturn(Lists.newArrayList(logWithMetadata));
-
-    final String privateLogFilterId =
-        filterManager.installPrivateLogFilter(
-            PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY, latest(), latest(), logsQuery());
-
-    final List<LogWithMetadata> logs = filterManager.logs(privateLogFilterId);
-
-    verify(blockchainQueries, times(2)).headBlockNumber();
-    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any(), any());
-
-    verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any());
-    assertThat(logs.get(0)).isEqualTo(logWithMetadata);
-  }
-
-  @Test
-  public void removalEvent_uninstallsFilter() {
-    final LogWithMetadata logWithMetadata = logWithMetadata();
-    when(privacyQueries.matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any()))
-        .thenReturn(Lists.newArrayList(logWithMetadata));
-
-    final String privateLogFilterId =
-        filterManager.installPrivateLogFilter(
-            PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY, latest(), latest(), logsQuery());
-
-    final List<LogWithMetadata> logs = filterManager.logs(privateLogFilterId);
-
-    verify(blockchainQueries, times(2)).headBlockNumber();
-    verify(blockchainQueries, never()).matchingLogs(anyLong(), anyLong(), any(), any());
-
-    verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), anyLong(), anyLong(), any());
-    assertThat(logs.get(0)).isEqualTo(logWithMetadata);
-
-    // signal removal of user from group
-    privateTransactionEvent(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY);
-
-    assertThat(filterManager.logs(privateLogFilterId)).isNull();
-    assertThat(filterRepository.getFilter(privateLogFilterId, PrivateLogFilter.class)).isEmpty();
-  }
-
-  private void privateTransactionEvent(final String privacyGroupId, final String privacyUserId) {
-    PrivateTransactionEvent event = new PrivateTransactionEvent(privacyGroupId, privacyUserId);
-    filterManager.processRemovalEvent(event);
   }
 
   private LogWithMetadata logWithMetadata() {
