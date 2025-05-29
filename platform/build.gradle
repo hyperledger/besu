@@ -37,7 +37,6 @@ dependencies {
   api platform('org.immutables:bom:2.10.1')
   api platform('org.junit:junit-bom:5.11.4')
   api platform('org.mockito:mockito-bom:5.15.2')
-  api platform('org.ow2.asm:asm-bom:9.8')
   api platform('org.slf4j:slf4j-bom:2.0.16')
 
   constraints {
@@ -58,7 +57,6 @@ dependencies {
     api project(':ethereum:blockcreation')
     api project(':ethereum:core')
     api project(':ethereum:eth')
-    api project(':ethereum:evmtool')
     api project(':ethereum:p2p')
     api project(':ethereum:permissioning')
     api project(':ethereum:referencetests')
