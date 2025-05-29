@@ -320,10 +320,12 @@ public class ProtocolSpecBuilder {
             messageCallProcessor);
 
     final BlockHeaderValidator blockHeaderValidator =
-        createBlockHeaderValidator(blockHeaderValidatorBuilder, feeMarket, gasCalculator);
+        createBlockHeaderValidator(
+            blockHeaderValidatorBuilder, feeMarket, gasCalculator, gasLimitCalculator);
 
     final BlockHeaderValidator ommerHeaderValidator =
-        createBlockHeaderValidator(ommerHeaderValidatorBuilder, feeMarket, gasCalculator);
+        createBlockHeaderValidator(
+            ommerHeaderValidatorBuilder, feeMarket, gasCalculator, gasLimitCalculator);
 
     final BlockBodyValidator blockBodyValidator = blockBodyValidatorBuilder.apply(protocolSchedule);
 
@@ -378,9 +380,10 @@ public class ProtocolSpecBuilder {
   private BlockHeaderValidator createBlockHeaderValidator(
       final BlockHeaderValidatorBuilder blockHeaderValidatorBuilder,
       final FeeMarket feeMarket,
-      final GasCalculator gasCalculator) {
+      final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator) {
     return blockHeaderValidatorBuilder
-        .apply(feeMarket, gasCalculator)
+        .apply(feeMarket, gasCalculator, gasLimitCalculator)
         .difficultyCalculator(difficultyCalculator)
         .build();
   }
@@ -421,7 +424,8 @@ public class ProtocolSpecBuilder {
 
   @FunctionalInterface
   public interface BlockHeaderValidatorBuilder {
-    BlockHeaderValidator.Builder apply(FeeMarket feeMarket, GasCalculator gasCalculator);
+    BlockHeaderValidator.Builder apply(
+        FeeMarket feeMarket, GasCalculator gasCalculator, GasLimitCalculator gasLimitCalculator);
   }
 
   @FunctionalInterface
