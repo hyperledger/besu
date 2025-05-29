@@ -35,7 +35,9 @@ dependencies {
   api 'io.consensys.tuweni:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation project(':evm')
-  compileOnly 'io.vertx:vertx-core'
+  // included so plugins do not need to depend on a specific vertx version
+  implementation 'io.vertx:vertx-core'
+  implementation 'io.vertx:vertx-web-client'
 }
 
 configurations { testArtifacts }
