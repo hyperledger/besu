@@ -53,7 +53,7 @@ public class LondonTargetingGasLimitCalculator extends FrontierTargetingGasLimit
     }
 
     if (londonForkBlock == newBlockNumber) {
-      nextGasLimit = nextGasLimit * feeMarket.getSlackCoefficient();
+      nextGasLimit = nextGasLimit * getFeeMarket().getSlackCoefficient();
     }
 
     if (nextGasLimit != currentGasLimit) {
@@ -61,5 +61,9 @@ public class LondonTargetingGasLimitCalculator extends FrontierTargetingGasLimit
     }
 
     return nextGasLimit;
+  }
+
+  protected BaseFeeMarket getFeeMarket() {
+    return feeMarket;
   }
 }
