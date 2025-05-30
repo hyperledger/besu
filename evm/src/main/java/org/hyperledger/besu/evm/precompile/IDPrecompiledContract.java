@@ -17,8 +17,7 @@ package org.hyperledger.besu.evm.precompile;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import javax.annotation.Nonnull;
-
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The ID precompiled contract. */
@@ -38,10 +37,10 @@ public class IDPrecompiledContract extends AbstractPrecompiledContract {
     return gasCalculator().idPrecompiledContractGasCost(input);
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
     return PrecompileContractResult.success(input.copy());
   }
 }

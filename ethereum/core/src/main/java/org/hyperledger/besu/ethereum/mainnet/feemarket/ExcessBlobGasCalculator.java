@@ -32,7 +32,7 @@ public class ExcessBlobGasCalculator {
     // Blob Data Excess
     long headerExcess =
         protocolSpec
-            .getGasCalculator()
+            .getGasLimitCalculator()
             .computeExcessBlobGas(
                 parentHeader.getExcessBlobGas().map(BlobGas::toLong).orElse(0L),
                 parentHeader.getBlobGasUsed().orElse(0L));

@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_ENABLE_READ_CACHE_FOR_SNAPSHOTS;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
@@ -31,6 +32,7 @@ public class RocksDBConfigurationBuilder {
   private long cacheCapacity = DEFAULT_CACHE_CAPACITY;
   private int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
   private boolean isHighSpec = DEFAULT_IS_HIGH_SPEC;
+  private boolean enableReadCacheForSnapshots = DEFAULT_ENABLE_READ_CACHE_FOR_SNAPSHOTS;
   private boolean isBlockchainGarbageCollectionEnabled = false;
   private Optional<Double> blobGarbageCollectionAgeCutoff = Optional.empty();
   private Optional<Double> blobGarbageCollectionForceThreshold = Optional.empty();
@@ -105,6 +107,18 @@ public class RocksDBConfigurationBuilder {
   }
 
   /**
+   * Enables or disables read caching for snapshot access.
+   *
+   * @param enableReadCacheForSnapshots whether read caching should be enabled for snapshots
+   * @return the RocksDB configuration builder
+   */
+  public RocksDBConfigurationBuilder enableReadCacheForSnapshots(
+      final boolean enableReadCacheForSnapshots) {
+    this.enableReadCacheForSnapshots = enableReadCacheForSnapshots;
+    return this;
+  }
+
+  /**
    * Is blockchain garbage collection enabled.
    *
    * @param isBlockchainGarbageCollectionEnabled the is blockchain garbage collection enabled
@@ -152,6 +166,7 @@ public class RocksDBConfigurationBuilder {
         .cacheCapacity(configuration.getCacheCapacity())
         .maxOpenFiles(configuration.getMaxOpenFiles())
         .isHighSpec(configuration.isHighSpec())
+        .enableReadCacheForSnapshots(configuration.isReadCacheEnabledForSnapshots())
         .isBlockchainGarbageCollectionEnabled(configuration.isBlockchainGarbageCollectionEnabled())
         .blobGarbageCollectionAgeCutoff(configuration.getBlobGarbageCollectionAgeCutoff())
         .blobGarbageCollectionForceThreshold(
@@ -171,6 +186,7 @@ public class RocksDBConfigurationBuilder {
         cacheCapacity,
         label,
         isHighSpec,
+        enableReadCacheForSnapshots,
         isBlockchainGarbageCollectionEnabled,
         blobGarbageCollectionAgeCutoff,
         blobGarbageCollectionForceThreshold);
