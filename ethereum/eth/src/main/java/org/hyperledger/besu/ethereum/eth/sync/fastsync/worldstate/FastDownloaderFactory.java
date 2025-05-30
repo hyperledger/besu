@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -82,12 +81,9 @@ public class FastDownloaderFactory {
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
 
-    if (!syncState.isResyncNeeded()
-        && fastSyncState.getPivotBlockHeader().isEmpty()
-        && protocolContext.getBlockchain().getChainHeadBlockNumber()
-            != BlockHeader.GENESIS_BLOCK_NUMBER) {
+    if (!syncState.isResyncNeeded() && syncState.isInitialSyncPhaseDone()) {
       LOG.info(
-          "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
+          "Fast sync was requested, but cannot be enabled because initial sync phase has already completed.");
       return Optional.empty();
     }
 
