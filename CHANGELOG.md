@@ -17,7 +17,7 @@
   - Proof of Work consensus
   - Fast Sync
 - Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that in order to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
-
+- `--Xsnapsync-server-enabled` is deprecated, use `--snapsync-server-enabled` instead [#8512](https://github.com/hyperledger/besu/pull/8512)
 ### Additions and Improvements
 - Add eth/69 protocol for optional use by using the `--Xeth-capability-max=69` flag (currently defaults to 68) [#8519](https://github.com/hyperledger/besu/pull/8519)
 - `--Xplugin-rocksdb-blockchain-blob-garbage-collection-enabled` Adds ability to enabled BlobDB GC for BLOCKCHAIN column family [#8599](https://github.com/hyperledger/besu/pull/8599)
@@ -28,6 +28,7 @@
 - Estimate gas on pending block by default [#8627](https://github.com/hyperledger/besu/pull/8627)
 - Upgrade Gradle to 8.14 and related plugins [#8638](https://github.com/hyperledger/besu/pull/8638)
 - Make gas estimation strict by default [#8629](https://github.com/hyperledger/besu/pull/8629)
+- `--snapsync-server-enabled` New option to enable serving snap sync data [#8512](https://github.com/hyperledger/besu/pull/8512)
 
 ### Bug fixes
 - Fix `besu -X` unstable options help [#8662](https://github.com/hyperledger/besu/pull/8662)
