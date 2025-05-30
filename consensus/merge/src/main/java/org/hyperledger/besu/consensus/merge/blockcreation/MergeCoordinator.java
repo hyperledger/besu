@@ -550,24 +550,27 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return;
     }
 
-    // Check if the finalized block actually exists in the blockchain
-    if (finalizedHash.equals(Hash.ZERO)) { // Check for zero hash
+    if (finalizedHash.equals(Hash.ZERO)) {
       LOG.warn("Received zero hash as finalized block. Ignoring...");
-    } else {
-      Optional<BlockHeader> maybeFinalizedHeader =
-          protocolContext.getBlockchain().getBlockHeader(finalizedHash);
-
-      if (maybeFinalizedHeader.isPresent()) {
-        LOG.atDebug()
-            .setMessage("Setting finalized block header to {}")
-            .addArgument(maybeFinalizedHeader.get()::toLogString)
-            .log();
-
-        mergeContext.setFinalized(maybeFinalizedHeader.get());
-      } else {
-        LOG.warn("Backward sync completed but failed to import finalized block {}", finalizedHash);
-      }
+      return;
     }
+
+    protocolContext
+        .getBlockchain()
+        .getBlockHeader(finalizedHash)
+        // Check if the finalized block exists in the blockchain
+        .ifPresentOrElse(
+            finalizedHeader -> {
+              LOG.atDebug()
+                  .setMessage("Setting finalized block header to {}")
+                  .addArgument(finalizedHeader::toLogString)
+                  .log();
+              mergeContext.setFinalized(finalizedHeader);
+            },
+            () ->
+                LOG.warn(
+                    "Internal error, backward sync completed but failed to import finalized block {}",
+                    finalizedHash));
   }
 
   @Override
