@@ -47,56 +47,24 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final long parentBaseFeePerGas) {
     final long currentExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed;
 
-    System.out.println(
-        "parentExcessBlobGas = "
-            + parentExcessBlobGas
-            + ", parentBlobGasUsed = "
-            + parentBlobGasUsed
-            + ", parentBaseFeePerGas = "
-            + parentBaseFeePerGas);
-    System.out.println("currentExcessBlobGas = " + currentExcessBlobGas);
-    System.out.println("getTargetBlobGasPerBlock() = " + getTargetBlobGasPerBlock());
-
     // First check if we're below the target
     if (currentExcessBlobGas < getTargetBlobGasPerBlock()) {
       return 0L;
     }
 
-    // Calculate base fee per blob gas using the parent excess blob gas
+    // EIP-7918 https://eips.ethereum.org/EIPS/eip-7918
     Wei baseFeeBlobGas = Wei.ZERO;
     if (getFeeMarket().implementsBlobFee()) {
       baseFeeBlobGas = getFeeMarket().blobGasPricePerGas(BlobGas.of(parentExcessBlobGas));
     }
     long baseFeeBlobGasLong = baseFeeBlobGas.toLong();
-    System.out.println("baseFeeBlobGas = " + baseFeeBlobGas);
-    System.out.println("baseFeeBlobGasLong = " + baseFeeBlobGasLong);
-    //    if BLOB_BASE_COST * parent.base_fee_per_gas > GAS_PER_BLOB *
-    // get_base_fee_per_blob_gas(parent):
-    //        return parent.excess_blob_gas + parent.blob_gas_used * (blobSchedule.max -
-    // blobSchedule.target) // blobSchedule.max
-    System.out.println("getBlobGasPerBlob() " + getBlobGasPerBlob());
-    System.out.println("getTargetBlobsPerBlock() " + getTargetBlobsPerBlock());
-    System.out.println("getMaxBlobsPerBlock() " + getMaxBlobsPerBlock());
-    System.out.println(
-        "BLOB_BASE_COST * parentBaseFeePerGas " + (BLOB_BASE_COST * parentBaseFeePerGas));
-    System.out.println(
-        "getBlobGasPerBlob() * baseFeeBlobGasLong " + (getBlobGasPerBlob() * baseFeeBlobGasLong));
-    System.out.println("BLOB_BASE_COST " + BLOB_BASE_COST);
     if (BLOB_BASE_COST * parentBaseFeePerGas > getBlobGasPerBlob() * baseFeeBlobGasLong) {
-
-      System.out.println(
-          "return 2nd option = "
-              + currentExcessBlobGas
-              + " * "
-              + (getMaxBlobsPerBlock() - getTargetBlobsPerBlock()) / getMaxBlobsPerBlock());
       return parentExcessBlobGas
           + parentBlobGasUsed
               * (getMaxBlobsPerBlock() - getTargetBlobsPerBlock())
               / getMaxBlobsPerBlock();
-
     } else {
-      System.out.println(
-          "return 3rd option = " + (currentExcessBlobGas - getTargetBlobGasPerBlock()));
+      // same as Cancun
       return currentExcessBlobGas - getTargetBlobGasPerBlock();
     }
   }
