@@ -56,12 +56,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -646,6 +650,50 @@ public class MainnetTransactionValidatorTest {
     }
 
     assertThat(validationResult.isValid()).isTrue();
+  }
+
+  @ParameterizedTest
+  @MethodSource("shouldSupportTransactionGasLimitCap_EIP_7825")
+  public void shouldSupportTransactionGasLimitCap_EIP_7825(
+      final long txGasLimit, final boolean valid) {
+    final long gasLimitCap = 30_000_000L;
+    final var feeMarket = FeeMarket.london(0L);
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator,
+            new OsakaTargetingGasLimitCalculator(0L, feeMarket, gasCalculator, 6, 3, gasLimitCap),
+            feeMarket,
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            Integer.MAX_VALUE);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .maxFeePerGas(Optional.of(Wei.of(150000L)))
+            .type(TransactionType.EIP1559)
+            .chainId(Optional.of(BigInteger.ONE))
+            .gasLimit(txGasLimit)
+            .createTransaction(senderKeys);
+    final Optional<Wei> basefee = Optional.of(Wei.of(150000L));
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyLong())).thenReturn(50L);
+
+    final var validationResult =
+        validator.validate(transaction, basefee, Optional.empty(), transactionValidationParams);
+
+    if (valid) {
+      assertThat(validationResult.isValid()).isTrue();
+    } else {
+      assertThat(validationResult.isValid()).isFalse();
+      assertThat(validationResult.getInvalidReason())
+          .isEqualTo(TransactionInvalidReason.EXCEEDS_TRANSACTION_GAS_LIMIT);
+      assertThat(validationResult.getErrorMessage())
+          .isEqualTo("Transaction gas limit must be at most 30000000");
+    }
+  }
+
+  private static Stream<Arguments> shouldSupportTransactionGasLimitCap_EIP_7825() {
+    return Stream.of(Arguments.of(30_000_000L, true), Arguments.of(30_000_001L, false));
   }
 
   private Account accountWithNonce(final long nonce) {
