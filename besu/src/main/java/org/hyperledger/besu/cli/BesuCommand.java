@@ -1723,7 +1723,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PathBasedExtraStorageConfiguration subStorageConfiguration =
           getDataStorageConfiguration().getPathBasedExtraStorageConfiguration();
       besuControllerBuilder.isParallelTxProcessingEnabled(
-          subStorageConfiguration.getUnstable().isParallelTxProcessingEnabled());
+          subStorageConfiguration.getParallelTxProcessingEnabled());
     }
     return besuControllerBuilder;
   }
