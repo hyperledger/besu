@@ -51,7 +51,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
 import org.hyperledger.besu.cli.config.NetworkName;
@@ -77,6 +76,7 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
@@ -237,22 +237,31 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void callingHelpSubCommandMustDisplayUsage() {
     parseCommand("--help");
     final String expectedOutputStart = String.format("Usage:%n%nbesu [OPTIONS] [COMMAND]");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   @Test
   public void callingHelpDisplaysDefaultRpcApisCorrectly() {
     parseCommand("--help");
-    assertThat(commandOutput.toString(UTF_8)).contains("default: [ETH, NET, WEB3]");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).contains("default: [ETH, NET, WEB3]");
   }
 
   @Test
   public void callingVersionDisplayBesuInfoVersion() {
     parseCommand("--version");
-    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingUnstableSubCommandMustNotError() {
+    parseCommand("-X");
+    final String expectedOutputStart = "Unstable options";
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
   }
 
   // Testing default values
@@ -300,7 +309,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
-    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
+    assertThat(miningArg.getValue().getExtraData())
+        .isEqualTo(BesuVersionUtils.versionForExtraData());
     assertThat(ethNetworkArg.getValue().networkId()).isEqualTo(1);
     assertThat(ethNetworkArg.getValue().bootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
@@ -1194,10 +1204,10 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verifyNoInteractions(mockRunnerBuilder);
 
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).contains("--fast-sync-min-peers");
     // whitelist is now a hidden option
     assertThat(commandOutput.toString(UTF_8)).doesNotContain("whitelist");
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1878,7 +1888,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
-    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
+    assertThat(miningArg.getValue().getExtraData())
+        .isEqualTo(BesuVersionUtils.versionForExtraData());
     assertThat(miningArg.getValue().getTargetGasLimit()).isEmpty();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -1904,7 +1915,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
-    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
+    assertThat(miningArg.getValue().getExtraData())
+        .isEqualTo(BesuVersionUtils.versionForExtraData());
     assertThat(miningArg.getValue().getTargetGasLimit().getAsLong()).isEqualTo(customGasLimit);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -2040,10 +2052,10 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verifyNoInteractions(mockRunnerBuilder);
 
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).contains("--config-file");
     assertThat(commandOutput.toString(UTF_8)).contains("--data-path");
     assertThat(commandOutput.toString(UTF_8)).contains("--genesis-file");
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2261,49 +2273,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void compatibilityEth64ForkIdEnabledMustBeUsed() {
-    parseCommand("--compatibility-eth64-forkid-enabled");
-    verify(mockControllerBuilder)
-        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
-    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
-        .isTrue();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void compatibilityEth64ForkIdNotEnabledMustBeUsed() {
-    parseCommand("--compatibility-eth64-forkid-enabled=false");
-    verify(mockControllerBuilder)
-        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
-    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
-        .isFalse();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void assertThatCompatibilityEth64ForkIdIsNotEnabledByDefault() {
-    parseCommand();
-    verify(mockControllerBuilder)
-        .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
-    assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
-        .isFalse();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void assertThatCompatibilityEth64ForkIdIsPresentInHelpMessage() {
-    parseCommand("--help");
-    assertThat(commandOutput.toString(UTF_8))
-        .contains(
-            "--compatibility-eth64-forkid-enabled",
-            "Enable the legacy Eth/64 fork id. (default: false)");
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void assertThatCheckPortClashRejectsAsExpectedForEngineApi() throws Exception {
     // use WS port for HTTP
     final int port = 8545;
@@ -2443,6 +2412,13 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void verifyVersionInTheConfigurationOverviewIsCorrect() {
+    parseCommand();
+    verify(mockLogger)
+        .info(argThat(arg -> arg.contains("# Besu version " + BesuVersionUtils.shortVersion())));
+  }
+
+  @Test
   public void checkpointPostMergeShouldFailWhenGenesisHasNoTTD() throws IOException {
     final String configText =
         Resources.toString(
@@ -2463,9 +2439,19 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void checkpointPostMergeShouldFailWhenGenesisUsesCheckpointFromPreMerge() {
+  public void checkpointPostMergeShouldFailWhenGenesisUsesCheckpointFromPreMerge()
+      throws IOException {
+    final String configText =
+        Resources.toString(
+            Resources.getResource("valid_pre_merge_checkpoint.json"), StandardCharsets.UTF_8);
+    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
     // using the default genesis which has a checkpoint sync block prior to the merge
-    parseCommand("--sync-mode", "CHECKPOINT", "--Xcheckpoint-post-merge-enabled");
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--sync-mode",
+        "CHECKPOINT",
+        "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))

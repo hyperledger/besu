@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedLayeredWorldStateKeyValueStorage;
@@ -40,8 +41,8 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -181,6 +182,7 @@ public abstract class PathBasedWorldState
     final PathBasedWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
+    Runnable cacheWorldState = () -> {};
 
     try {
       final Hash calculatedRootHash;
@@ -205,11 +207,9 @@ public abstract class PathBasedWorldState
         saveTrieLog =
             () -> {
               trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
-              // not save a frozen state in the cache
-              if (!isStorageFrozen) {
-                cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
-              }
             };
+        cacheWorldState =
+            () -> cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
 
         stateUpdater
             .getWorldStateTransaction()
@@ -227,9 +227,16 @@ public abstract class PathBasedWorldState
       success = true;
     } finally {
       if (success) {
-        stateUpdater.commit();
-        accumulator.reset();
+        // commit the trielog transaction ahead of the state, in case of an abnormal shutdown:
         saveTrieLog.run();
+        // commit only the composed worldstate, as trielog transaction is already complete:
+        stateUpdater.commitComposedOnly();
+        if (!isStorageFrozen) {
+          // optionally save the committed worldstate state in the cache
+          cacheWorldState.run();
+        }
+
+        accumulator.reset();
       } else {
         stateUpdater.rollback();
         accumulator.reset();
@@ -239,11 +246,7 @@ public abstract class PathBasedWorldState
 
   protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
     if (!worldStateConfig.isTrieDisabled() && !calculatedStateRoot.equals(header.getStateRoot())) {
-      throw new RuntimeException(
-          "World State Root does not match expected value, header "
-              + header.getStateRoot().toHexString()
-              + " calculated "
-              + calculatedStateRoot.toHexString());
+      throw new StateRootMismatchException(header.getStateRoot(), calculatedStateRoot);
     }
   }
 
@@ -380,7 +383,7 @@ public abstract class PathBasedWorldState
       final Address address, final StorageSlotKey storageSlotKey);
 
   @Override
-  public abstract Optional<Bytes> getCode(@Nonnull final Address address, final Hash codeHash);
+  public abstract Optional<Bytes> getCode(@NotNull final Address address, final Hash codeHash);
 
   protected abstract Hash calculateRootHash(
       final Optional<PathBasedWorldStateKeyValueStorage.Updater> maybeStateUpdater,

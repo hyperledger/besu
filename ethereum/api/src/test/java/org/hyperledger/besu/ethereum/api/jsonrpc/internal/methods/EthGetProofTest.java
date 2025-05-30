@@ -82,6 +82,8 @@ class EthGetProofTest {
       Address.fromHexString("0x1234567890123456789012345678901234567890");
   private final UInt256 storageKey =
       UInt256.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
+  private final String storageKeyShortened =
+      "0x01"; // shortened form of storageKey used in json output
   private final long blockNumber = 1;
 
   @BeforeEach
@@ -169,7 +171,6 @@ class EthGetProofTest {
 
   @Test
   void getProof() {
-
     final GetProofResult expectedResponse = generateWorldState();
 
     final JsonRpcRequestContext request =
@@ -183,8 +184,7 @@ class EthGetProofTest {
     assertThat(result).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(result.getNonce()).isEqualTo("0xfffffffffffffffe");
     assertThat(result.getStorageProof().size()).isGreaterThan(0);
-    assertThat(result.getStorageProof().get(0).getKey())
-        .isEqualTo(storageKey.trimLeadingZeros().toHexString());
+    assertThat(result.getStorageProof().get(0).getKey()).isEqualTo(storageKeyShortened);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

@@ -40,8 +40,8 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
 import java.util.List;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
@@ -218,7 +218,7 @@ class CreateOperationTest {
 
   @Test
   void eofV1CannotCall() {
-    final EVM pragueEvm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+    final EVM pragueEvm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
@@ -241,13 +241,13 @@ class CreateOperationTest {
     assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
-  @Nonnull
+  @NotNull
   private MessageFrame testMemoryFrame(
       final UInt256 memoryOffset,
       final UInt256 memoryLength,
       final UInt256 value,
       final int depth) {
-    final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+    final EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)

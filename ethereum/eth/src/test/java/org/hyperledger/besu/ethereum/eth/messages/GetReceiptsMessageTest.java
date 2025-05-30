@@ -42,7 +42,8 @@ public final class GetReceiptsMessageTest {
     // Create GetReceipts message, copy it to a generic message, then read back into a GetReceipts
     // message
     final MessageData initialMessage = GetReceiptsMessage.create(hashes);
-    final MessageData raw = new RawMessage(EthPV63.GET_RECEIPTS, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.GET_RECEIPTS, initialMessage.getData());
     final GetReceiptsMessage message = GetReceiptsMessage.readFrom(raw);
 
     // Read hashes back out after round trip and check they match originals.

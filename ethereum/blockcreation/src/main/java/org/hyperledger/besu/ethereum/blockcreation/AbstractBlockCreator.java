@@ -219,10 +219,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .getTransactionSelectionService()
               .createPluginTransactionSelector(selectorsStateManager);
       final var operationTracer = pluginTransactionSelector.getOperationTracer();
-      pluginTransactionSelector
-          .getOperationTracer()
-          .traceStartBlock(processableBlockHeader, miningBeneficiary);
-
       operationTracer.traceStartBlock(processableBlockHeader, miningBeneficiary);
       BlockProcessingContext blockProcessingContext =
           new BlockProcessingContext(
@@ -343,7 +339,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSpec newProtocolSpec,
       final BlockHeader parentHeader) {
 
-    if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
+    if (newProtocolSpec.getFeeMarket().implementsBlobFee()) {
       final var gasCalculator = newProtocolSpec.getGasCalculator();
       final int newBlobsCount =
           transactionResults.getTransactionsByType(TransactionType.BLOB).stream()

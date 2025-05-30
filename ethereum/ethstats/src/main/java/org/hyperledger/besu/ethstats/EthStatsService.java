@@ -72,8 +72,8 @@ import java.util.stream.LongStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.WebSocket;
+import io.vertx.core.http.WebSocketClientOptions;
 import io.vertx.core.http.WebSocketConnectOptions;
 import io.vertx.core.net.PemTrustOptions;
 import org.slf4j.Logger;
@@ -103,7 +103,7 @@ public class EthStatsService {
   private final P2PNetwork p2PNetwork;
   private final BlockchainQueries blockchainQueries;
   private final BlockResultFactory blockResultFactory;
-  private final HttpClientOptions httpClientOptions;
+  private final WebSocketClientOptions webSocketClientOptions;
   private final WebSocketConnectOptions webSocketConnectOptions;
 
   private ScheduledFuture<?> reportScheduler;
@@ -147,16 +147,15 @@ public class EthStatsService {
     this.genesisConfigOptions = genesisConfigOptions;
     this.p2PNetwork = p2PNetwork;
     this.blockResultFactory = new BlockResultFactory();
-    this.httpClientOptions = buildHttpClientOptions(ethStatsConnectOptions);
+    this.webSocketClientOptions = buildWebSocketClientOptions(ethStatsConnectOptions);
     this.webSocketConnectOptions = buildWebSocketConnectOptions(ethStatsConnectOptions);
   }
 
-  private static HttpClientOptions buildHttpClientOptions(
+  private static WebSocketClientOptions buildWebSocketClientOptions(
       final EthStatsConnectOptions ethStatsConnectOptions) {
-    final HttpClientOptions options = new HttpClientOptions();
-
+    final WebSocketClientOptions options = new WebSocketClientOptions();
     if (ethStatsConnectOptions.getCaCert() != null) {
-      options.setPemTrustOptions(
+      options.setTrustOptions(
           new PemTrustOptions().addCertPath(ethStatsConnectOptions.getCaCert().toString()));
     }
     return options;
@@ -190,8 +189,8 @@ public class EthStatsService {
     try {
       enodeURL = p2PNetwork.getLocalEnode().orElseThrow();
       vertx
-          .createHttpClient(httpClientOptions)
-          .webSocket(
+          .createWebSocketClient(webSocketClientOptions)
+          .connect(
               webSocketConnectOptions,
               event -> {
                 if (event.succeeded()) {

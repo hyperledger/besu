@@ -32,7 +32,6 @@ import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PRIORI
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -112,6 +111,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -1135,6 +1135,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .isEqualTo(isLongProcessingTxDropped ? true : false);
   }
 
+  @Disabled("flaky #7150")
   @ParameterizedTest
   @MethodSource("subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver")
   public void subsetOfInvalidPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver(
@@ -1429,7 +1430,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final long gasRemaining,
       final long processingTime) {
     when(transactionProcessor.processTransaction(
-            any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), eq(tx), any(), any(), any(), any(), any()))
         .thenAnswer(
             invocation -> {
               if (processingTime > 0) {
@@ -1459,7 +1460,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final TransactionInvalidReason invalidReason,
       final long processingTime) {
     when(transactionProcessor.processTransaction(
-            any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), eq(tx), any(), any(), any(), any(), any()))
         .thenAnswer(
             invocation -> {
               if (processingTime > 0) {

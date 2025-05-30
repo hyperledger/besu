@@ -41,12 +41,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
 import java.util.Optional;
@@ -100,12 +97,7 @@ public class MessageValidatorTest {
     BftContext mockBftCtx = mock(BftContext.class);
     lenient().when(mockBftCtx.as(Mockito.any())).thenReturn(mockBftCtx);
 
-    protocolContext =
-        new ProtocolContext(
-            mock(MutableBlockchain.class),
-            mock(WorldStateArchive.class),
-            mockBftCtx,
-            new BadBlockManager());
+    protocolContext = new ProtocolContext.Builder().withConsensusContext(mockBftCtx).build();
 
     lenient()
         .when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))

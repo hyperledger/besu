@@ -107,15 +107,17 @@ dependencies {
 
     api 'io.pkts:pkts-core:3.0.10'
 
-    api 'io.consensys.protocols:tuweni-bytes:2.6.0'
-    api 'io.consensys.protocols:tuweni-config:2.6.0'
-    api 'io.consensys.protocols:tuweni-concurrent:2.6.0'
-    api 'io.consensys.protocols:tuweni-crypto:2.6.0'
-    api 'io.consensys.protocols:tuweni-io:2.6.0'
-    api 'io.consensys.protocols:tuweni-net:2.6.0'
-    api 'io.consensys.protocols:tuweni-rlp:2.6.0'
-    api 'io.consensys.protocols:tuweni-toml:2.6.0'
-    api 'io.consensys.protocols:tuweni-units:2.6.0'
+    api 'io.consensys.tuweni:tuweni-bytes:2.7.0'
+    api 'io.consensys.tuweni:tuweni-config:2.7.0'
+    api 'io.consensys.tuweni:tuweni-concurrent:2.7.0'
+    api 'io.consensys.tuweni:tuweni-crypto:2.7.0'
+    api 'io.consensys.tuweni:tuweni-io:2.7.0'
+    api 'io.consensys.tuweni:tuweni-net:2.7.0'
+    api 'io.consensys.tuweni:tuweni-rlp:2.7.0'
+    api 'io.consensys.tuweni:tuweni-toml:2.7.0'
+    api 'io.consensys.tuweni:tuweni-units:2.7.0'
+
+    api 'jakarta.validation:jakarta.validation-api:3.0.2'
 
     api 'javax.inject:javax.inject:1'
 
@@ -177,9 +179,9 @@ dependencies {
 
     api 'org.xerial.snappy:snappy-java:1.1.10.7'
 
-    api 'io.consensys.protocols:jc-kzg-4844:2.0.0'
+    api 'io.consensys.protocols:jc-kzg-4844:2.1.1'
 
-    api 'tech.pegasys.discovery:discovery:25.2.0'
+    api 'tech.pegasys.discovery:discovery:25.4.0'
   }
 }
 

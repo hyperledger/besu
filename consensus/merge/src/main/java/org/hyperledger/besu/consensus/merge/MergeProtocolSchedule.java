@@ -16,9 +16,9 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -60,35 +61,6 @@ public class MergeProtocolSchedule {
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-    return create(
-        config,
-        PrivacyParameters.DEFAULT,
-        isRevertReasonEnabled,
-        miningConfiguration,
-        badBlockManager,
-        isParallelTxProcessingEnabled,
-        metricsSystem);
-  }
-
-  /**
-   * Create protocol schedule.
-   *
-   * @param config the config
-   * @param privacyParameters the privacy parameters
-   * @param isRevertReasonEnabled the is revert reason enabled
-   * @param miningConfiguration the mining parameters
-   * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
-   * @return the protocol schedule
-   */
-  public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final MiningConfiguration miningConfiguration,
-      final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
         new HashMap<>();
@@ -103,7 +75,6 @@ public class MergeProtocolSchedule {
             config,
             Optional.of(DEFAULT_CHAIN_ID),
             new ProtocolSpecAdapters(postMergeModifications),
-            privacyParameters,
             isRevertReasonEnabled,
             EvmConfiguration.DEFAULT,
             miningConfiguration,
@@ -135,7 +106,10 @@ public class MergeProtocolSchedule {
         .name("Paris");
   }
 
-  private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
+  private static BlockHeaderValidator.Builder getBlockHeaderValidator(
+      final FeeMarket feeMarket,
+      final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator) {
     return MergeValidationRulesetFactory.mergeBlockHeaderValidator(feeMarket);
   }
 
@@ -144,8 +118,8 @@ public class MergeProtocolSchedule {
       final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications) {
     // Any post-Paris fork can rely on the MainnetProtocolSpec definitions again
     // Must allow for config to skip Shanghai and go straight to a later fork.
-    if (config.getForkBlockTimestamps().size() > 0) {
-      postMergeModifications.put(config.getForkBlockTimestamps().get(0), Function.identity());
+    if (!config.getForkBlockTimestamps().isEmpty()) {
+      postMergeModifications.put(config.getForkBlockTimestamps().getFirst(), Function.identity());
     }
   }
 }

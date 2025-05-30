@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api;
 
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthEstimateGas;
 
 import org.immutables.value.Value;
 
@@ -62,6 +63,18 @@ public abstract class ApiConfiguration {
   @Value.Default
   public double getGasPricePercentile() {
     return 50.0d;
+  }
+
+  /**
+   * Returns the ratio to use for eth_estimateGas tolerance. Default value is 0.015. This is
+   * effectively how "close" the estimate is required to be. See {@link EthEstimateGas} for how this
+   * is used in calculations.
+   *
+   * @return the decimal ratio to use for eth_estimateGas tolerance
+   */
+  @Value.Default
+  public double getEstimateGasToleranceRatio() {
+    return 0.015d;
   }
 
   /**

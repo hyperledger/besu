@@ -27,12 +27,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -64,7 +64,6 @@ class ProtocolScheduleBuilderTest {
             configOptions,
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
@@ -82,6 +81,10 @@ class ProtocolScheduleBuilderTest {
     when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 1));
     when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 3));
     when(configOptions.getPragueTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 5));
+    when(configOptions.getDepositContractAddress()).thenReturn(Optional.of(Address.ZERO));
+    when(configOptions.getConsolidationRequestContractAddress())
+        .thenReturn(Optional.of(Address.ZERO));
+    when(configOptions.getWithdrawalRequestContractAddress()).thenReturn(Optional.of(Address.ZERO));
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
     assertThat(protocolSchedule.getChainId()).contains(CHAIN_ID);
@@ -142,7 +145,10 @@ class ProtocolScheduleBuilderTest {
     when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(0));
     when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(0));
     when(configOptions.getPragueTime()).thenReturn(OptionalLong.of(PRAGUE_TIME));
-
+    when(configOptions.getDepositContractAddress()).thenReturn(Optional.of(Address.ZERO));
+    when(configOptions.getConsolidationRequestContractAddress())
+        .thenReturn(Optional.of(Address.ZERO));
+    when(configOptions.getWithdrawalRequestContractAddress()).thenReturn(Optional.of(Address.ZERO));
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
     final Optional<Long> maybeBerlinMileStone = protocolSchedule.milestoneFor(BERLIN);
@@ -179,24 +185,22 @@ class ProtocolScheduleBuilderTest {
 
   @Test
   void createProtocolScheduleOutOfOrderThrows() {
-    when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(0L));
     when(configOptions.getArrowGlacierBlockNumber()).thenReturn(OptionalLong.of(12L));
     when(configOptions.getGrayGlacierBlockNumber()).thenReturn(OptionalLong.of(11L));
     assertThatThrownBy(() -> builder.createProtocolSchedule())
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "Genesis Config Error: 'GrayGlacier' is scheduled for milestone 11 but it must be on or after milestone 12.");
+            "Genesis Config Error: 'GRAY_GLACIER' is scheduled for milestone 11 but it must be on or after milestone 12.");
   }
 
   @Test
   void createProtocolScheduleWithTimestampsOutOfOrderThrows() {
-    when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(0L));
     when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(3L));
     when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(2L));
     assertThatThrownBy(() -> builder.createProtocolSchedule())
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "Genesis Config Error: 'Cancun' is scheduled for milestone 2 but it must be on or after milestone 3.");
+            "Genesis Config Error: 'CANCUN' is scheduled for milestone 2 but it must be on or after milestone 3.");
   }
 
   @Test
@@ -259,7 +263,6 @@ class ProtocolScheduleBuilderTest {
             configOptions,
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(blockNumber, modifier),
-            new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,

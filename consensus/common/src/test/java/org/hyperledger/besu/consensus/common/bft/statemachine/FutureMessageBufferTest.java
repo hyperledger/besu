@@ -16,8 +16,10 @@ package org.hyperledger.besu.consensus.common.bft.statemachine;
 
 import static java.util.Arrays.copyOfRange;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.consensus.common.bft.network.MockPeerFactory;
+import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer.FutureMessageHandler;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
@@ -32,6 +34,7 @@ import java.util.stream.IntStream;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class FutureMessageBufferTest {
   private Message message;
@@ -186,6 +189,18 @@ public class FutureMessageBufferTest {
       futureMsgBuffer.addMessage(1, message);
     }
     assertThat(futureMsgBuffer.totalMessagesSize()).isEqualTo(5);
+  }
+
+  @Test
+  public void triggersHandlerWhenFutureMessageAreAdded() {
+    final var futureMessageHandler = Mockito.mock(FutureMessageHandler.class);
+    final var futureMsgBuffer = new FutureMessageBuffer(5, 5, 0, futureMessageHandler);
+
+    futureMsgBuffer.addMessage(1, message);
+    verify(futureMessageHandler).handleFutureMessage(1, message);
+
+    futureMsgBuffer.addMessage(2, message);
+    verify(futureMessageHandler).handleFutureMessage(2, message);
   }
 
   private DefaultMessage[] addMessages(final long height, final int count) {

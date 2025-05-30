@@ -81,15 +81,17 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   private static final double TRY_FILL_BLOCK = 1.0;
 
   private static final long DEFAULT_TARGET_GAS_LIMIT = 36_000_000L;
-  // testnets might have higher gas limits than mainnet
-  private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 36_000_000L;
+  // testnets might have higher gas limits than mainnet and are incrementally updated
+  private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
+  // next target gas limit TBD
+  // private static final long NEXT_STEP_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
 
-  private static final List<BigInteger> TESTNET_CHAIN_IDS =
-      List.of(
-          BigInteger.valueOf(11155111), // Sepolia
-          BigInteger.valueOf(17000), // Holesky
-          BigInteger.valueOf(560048), // Hoodi
-          BigInteger.valueOf(39438135) // Ephemery
+  private static final Map<BigInteger, Long> TESTNET_CHAIN_IDS =
+      Map.of(
+          BigInteger.valueOf(11155111), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Sepolia
+          BigInteger.valueOf(17000), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Holesky
+          BigInteger.valueOf(560048), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Hoodi
+          BigInteger.valueOf(39438135), DEFAULT_TARGET_GAS_LIMIT_TESTNET // Ephemery
           );
 
   /** The Mining parameters. */
@@ -893,12 +895,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private long getDefaultGasLimit(final ProtocolSchedule protocolSchedule) {
-    if (protocolSchedule.getChainId().isPresent()
-        && TESTNET_CHAIN_IDS.contains(protocolSchedule.getChainId().get())) {
-      return DEFAULT_TARGET_GAS_LIMIT_TESTNET;
-    }
-
-    return DEFAULT_TARGET_GAS_LIMIT;
+    return protocolSchedule
+        .getChainId()
+        .map(TESTNET_CHAIN_IDS::get)
+        .orElse(DEFAULT_TARGET_GAS_LIMIT);
   }
 
   private static class BlockCreationTask {

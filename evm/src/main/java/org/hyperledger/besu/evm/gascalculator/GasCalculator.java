@@ -542,22 +542,21 @@ public interface GasCalculator {
    * Returns the intrinsic gas cost of a transaction payload, i.e. the cost deriving from its
    * encoded binary representation when stored on-chain.
    *
-   * @param transactionPayload The encoded transaction, as bytes
-   * @param isContractCreation Is this transaction a contract creation transaction?
+   * @param transaction The encoded transaction
    * @param baselineGas The gas used by access lists and code delegation authorizations
    * @return the transaction's intrinsic gas cost
    */
-  long transactionIntrinsicGasCost(
-      Bytes transactionPayload, boolean isContractCreation, long baselineGas);
+  long transactionIntrinsicGasCost(Transaction transaction, long baselineGas);
 
   /**
    * Returns the floor gas cost of a transaction payload, i.e. the minimum gas cost that a
    * transaction will be charged based on its calldata. Introduced in EIP-7623 in Prague.
    *
    * @param transactionPayload The encoded transaction, as bytes
+   * @param payloadZeroBytes The number of zero bytes in the payload
    * @return the transaction's floor gas cost
    */
-  long transactionFloorCost(final Bytes transactionPayload);
+  long transactionFloorCost(final Bytes transactionPayload, final long payloadZeroBytes);
 
   /**
    * Returns the gas cost of the explicitly declared access list.
@@ -637,17 +636,6 @@ public interface GasCalculator {
   }
 
   /**
-   * Compute the new value for the excess blob gas, given the parent value and the blob gas used
-   *
-   * @param parentExcessBlobGas excess blob gas from the parent
-   * @param blobGasUsed blob gas used
-   * @return the new excess blob gas value
-   */
-  default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
-    return 0L;
-  }
-
-  /**
    * Returns the upfront gas cost for EIP 7702 authorization processing.
    *
    * @param delegateCodeListLength The length of the code delegation list
@@ -678,4 +666,16 @@ public interface GasCalculator {
    */
   long calculateGasRefund(
       Transaction transaction, MessageFrame initialFrame, long codeDelegationRefund);
+
+  /**
+   * Compute the gas cost for delegated code resolution.
+   *
+   * @param frame the message frame
+   * @param targetAccount the account
+   * @return the gas cost
+   */
+  default long calculateCodeDelegationResolutionGas(
+      final MessageFrame frame, final Account targetAccount) {
+    return 0L;
+  }
 }

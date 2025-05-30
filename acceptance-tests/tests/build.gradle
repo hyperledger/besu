@@ -12,8 +12,8 @@
  */
 
 plugins {
-  id 'org.web3j' version '4.12.2'
-  id 'org.web3j.solidity' version '0.5.2'
+  id 'org.web3j' version '4.14.0'
+  id 'org.web3j.solidity' version '0.6.0'
 }
 
 web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
@@ -39,7 +39,6 @@ dependencies {
   testImplementation project(':config')
   testImplementation project(':consensus:clique')
   testImplementation project(':datatypes')
-  testImplementation project(':enclave')
   testImplementation project(':ethereum:api')
   testImplementation project(':ethereum:core')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
@@ -49,7 +48,6 @@ dependencies {
   testImplementation project(':ethereum:rlp')
   testImplementation project(':metrics:core')
   testImplementation project(':plugin-api')
-  testImplementation project(':privacy-contracts')
   testImplementation project(':testutil')
   testImplementation project(':util')
   implementation project(':plugins:rocksdb')
@@ -73,7 +71,7 @@ dependencies {
   testImplementation 'io.vertx:vertx-core'
   testImplementation 'org.apache.commons:commons-compress'
   testImplementation 'org.apache.logging.log4j:log4j-core'
-  testImplementation 'io.consensys.protocols:tuweni-crypto'
+  testImplementation 'io.consensys.tuweni:tuweni-crypto'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -126,9 +124,9 @@ task acceptanceTest(type: Test) {
 
 task acceptanceTestNotPrivacy(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
-  exclude '**/privacy/**'
   exclude '**/permissioning/**'
   exclude '**/bftsoak/**'
+  exclude '**/acceptanceqbft/**'
 
   useJUnitPlatform {}
 
@@ -226,6 +224,34 @@ task acceptanceTestPermissioning(type: Test) {
   def javaProjects = rootProject.subprojects - project(':platform')
   mustRunAfter javaProjects.test
   description = 'Runs Permissioning Besu acceptance tests.'
+  group = 'verification'
+
+  jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
+
+  testLogging {
+    exceptionFormat = 'full'
+    showStackTraces = true
+    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
+    showExceptions = true
+    showCauses = true
+  }
+
+  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
+}
+
+task acceptanceQbftTest(type: Test) {
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+  include '**/acceptanceqbft/**'
+
+  useJUnitPlatform {}
+
+  dependsOn(rootProject.installDist)
+  setSystemProperties(test.getSystemProperties())
+  systemProperty 'acctests.runBesuAsProcess', 'true'
+  systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
+  def javaProjects = rootProject.subprojects - project(':platform')
+  mustRunAfter javaProjects.test
+  description = 'Runs Besu acceptance tests using QBFT nodes.'
   group = 'verification'
 
   jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"

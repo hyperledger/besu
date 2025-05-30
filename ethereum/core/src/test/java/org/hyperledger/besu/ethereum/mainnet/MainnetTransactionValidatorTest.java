@@ -23,7 +23,6 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,11 +32,7 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Blob;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.KZGCommitment;
-import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -45,8 +40,13 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.kzg.Blob;
+import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
+import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -66,7 +66,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, TrustedSetupClassLoaderExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class MainnetTransactionValidatorTest {
 
@@ -128,7 +128,7 @@ public class MainnetTransactionValidatorTest {
             .gasLimit(10)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean(), anyLong())).thenReturn(50L);
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyLong())).thenReturn(50L);
 
     assertThat(
             validator.validate(
@@ -147,8 +147,8 @@ public class MainnetTransactionValidatorTest {
             .gasLimit(10)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean(), anyLong())).thenReturn(5L);
-    when(gasCalculator.transactionFloorCost(any())).thenReturn(51L);
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyLong())).thenReturn(5L);
+    when(gasCalculator.transactionFloorCost(any(), anyLong())).thenReturn(51L);
 
     assertThat(
             validator.validate(
@@ -342,7 +342,7 @@ public class MainnetTransactionValidatorTest {
         createTransactionValidator(
             gasCalculator,
             GasLimitCalculator.constant(),
-            FeeMarket.cancun(0L, Optional.empty()),
+            FeeMarket.cancunDefault(0L, Optional.empty()),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(
@@ -418,7 +418,7 @@ public class MainnetTransactionValidatorTest {
                 transaction, Optional.empty(), Optional.empty(), transactionValidationParams))
         .isEqualTo(ValidationResult.invalid(INVALID_TRANSACTION_FORMAT));
 
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean(), anyLong())).thenReturn(0L);
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyLong())).thenReturn(0L);
 
     assertThat(
             eip1559Validator.validate(
@@ -495,7 +495,7 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
     final Optional<Wei> basefee = Optional.of(Wei.of(150000L));
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean(), anyLong())).thenReturn(50L);
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyLong())).thenReturn(50L);
 
     assertThat(
             validator.validate(transaction, basefee, Optional.empty(), transactionValidationParams))
@@ -520,7 +520,7 @@ public class MainnetTransactionValidatorTest {
             .type(TransactionType.EIP1559)
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean(), anyLong())).thenReturn(50L);
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyLong())).thenReturn(50L);
 
     assertThat(
             validator.validate(
@@ -571,7 +571,7 @@ public class MainnetTransactionValidatorTest {
         createTransactionValidator(
             gasCalculator,
             GasLimitCalculator.constant(),
-            FeeMarket.cancun(0L, Optional.empty()),
+            FeeMarket.cancunDefault(0L, Optional.empty()),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559, TransactionType.BLOB),
@@ -614,7 +614,7 @@ public class MainnetTransactionValidatorTest {
         createTransactionValidator(
             gasCalculator,
             GasLimitCalculator.constant(),
-            FeeMarket.cancun(0L, Optional.empty()),
+            FeeMarket.cancunDefault(0L, Optional.empty()),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559, TransactionType.BLOB),

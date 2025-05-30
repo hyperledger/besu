@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -69,7 +68,6 @@ public class BesuController implements java.io.Closeable {
   private final JsonRpcMethods additionalJsonRpcMethodsFactory;
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
-  private final PrivacyParameters privacyParameters;
   private final List<Closeable> closeables;
   private final MiningConfiguration miningConfiguration;
   private final PluginServiceFactory additionalPluginServices;
@@ -91,7 +89,6 @@ public class BesuController implements java.io.Closeable {
    * @param syncState the sync state
    * @param transactionPool the transaction pool
    * @param miningCoordinator the mining coordinator
-   * @param privacyParameters the privacy parameters
    * @param miningConfiguration the mining parameters
    * @param additionalJsonRpcMethodsFactory the additional json rpc methods factory
    * @param nodeKey the node key
@@ -112,7 +109,6 @@ public class BesuController implements java.io.Closeable {
       final SyncState syncState,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
-      final PrivacyParameters privacyParameters,
       final MiningConfiguration miningConfiguration,
       final JsonRpcMethods additionalJsonRpcMethodsFactory,
       final NodeKey nodeKey,
@@ -133,7 +129,6 @@ public class BesuController implements java.io.Closeable {
     this.nodeKey = nodeKey;
     this.transactionPool = transactionPool;
     this.miningCoordinator = miningCoordinator;
-    this.privacyParameters = privacyParameters;
     this.closeables = closeables;
     this.miningConfiguration = miningConfiguration;
     this.additionalPluginServices = additionalPluginServices;
@@ -253,15 +248,6 @@ public class BesuController implements java.io.Closeable {
     } catch (final IOException e) {
       LOG.error("Unable to close resource.", e);
     }
-  }
-
-  /**
-   * Gets privacy parameters.
-   *
-   * @return the privacy parameters
-   */
-  public PrivacyParameters getPrivacyParameters() {
-    return privacyParameters;
   }
 
   /**

@@ -75,6 +75,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private volatile Difficulty totalDifficulty;
   private volatile int chainHeadTransactionCount;
   private volatile int chainHeadOmmerCount;
+  private volatile Long earliestBlockNumber;
 
   private Comparator<BlockHeader> blockChoiceRule;
 
@@ -112,9 +113,14 @@ public class DefaultBlockchain implements MutableBlockchain {
     final Hash chainHead = blockchainStorage.getChainHead().get();
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
     totalDifficulty = blockchainStorage.getTotalDifficulty(chainHead).get();
-    final BlockBody chainHeadBody = blockchainStorage.getBlockBody(chainHead).get();
-    chainHeadTransactionCount = chainHeadBody.getTransactions().size();
-    chainHeadOmmerCount = chainHeadBody.getOmmers().size();
+
+    blockchainStorage
+        .getBlockBody(chainHead)
+        .ifPresent(
+            headBlockBody -> {
+              chainHeadTransactionCount = headBlockBody.getTransactions().size();
+              chainHeadOmmerCount = headBlockBody.getOmmers().size();
+            });
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     this.blockChoiceRule = heaviestChainBlockChoiceRule;
@@ -301,6 +307,16 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public Optional<Long> getEarliestBlockNumber() {
+    if (earliestBlockNumber == null) {
+      Optional<Long> maybeEarliestBlockNumber = getFirstNonGenesisBlockNumber();
+      maybeEarliestBlockNumber.ifPresent(value -> earliestBlockNumber = value);
+      return maybeEarliestBlockNumber;
+    }
+    return Optional.of(earliestBlockNumber);
+  }
+
+  @Override
   public Hash getChainHeadHash() {
     return chainHeader.getHash();
   }
@@ -431,6 +447,18 @@ public class DefaultBlockchain implements MutableBlockchain {
   public synchronized void storeBlock(final Block block, final List<TransactionReceipt> receipts) {
     if (numberOfBlocksToCache != 0) cacheBlockData(block, receipts);
     appendBlockHelper(new BlockWithReceipts(block, receipts), true, true);
+  }
+
+  @Override
+  public void unsafeStoreHeader(final BlockHeader blockHeader, final Difficulty totalDifficulty) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    updater.putBlockHeader(blockHeader.getHash(), blockHeader);
+    updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
+    updater.putTotalDifficulty(blockHeader.getHash(), totalDifficulty);
+    this.chainHeader = blockHeader;
+    this.totalDifficulty = totalDifficulty;
+    updater.setChainHead(blockHeader.getBlockHash());
+    updater.commit();
   }
 
   private void cacheBlockData(final Block block, final List<TransactionReceipt> receipts) {
@@ -736,10 +764,9 @@ public class DefaultBlockchain implements MutableBlockchain {
       final Block block = blockWithReceipts.getBlock();
 
       var reorgEvent = handleChainReorg(updater, blockWithReceipts);
+      updateCacheForNewCanonicalHead(block, calculateTotalDifficulty(block.getHeader()));
       updater.commit();
       blockAddedObservers.forEach(o -> o.onBlockAdded(reorgEvent));
-
-      updateCacheForNewCanonicalHead(block, calculateTotalDifficulty(block.getHeader()));
       return true;
     } catch (final NoSuchElementException e) {
       // Any Optional.get() calls in this block should be present, missing data means data
@@ -850,7 +877,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         throw new InvalidConfigurationException(
             "Supplied genesis block does not match chain data stored in "
                 + dataDirectory
-                + ".\n"
+                + "\n"
                 + "Please specify a different data directory with --data-path, specify the original genesis file with "
                 + "--genesis-file or supply a testnet/mainnet option with --network.");
       }
@@ -950,5 +977,44 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   public Optional<Cache<Hash, Difficulty>> getTotalDifficultyCache() {
     return totalDifficultyCache;
+  }
+
+  public BlockchainStorage getBlockchainStorage() {
+    return blockchainStorage;
+  }
+
+  /**
+   * Performs a binary search to find the first existing block number in the blockchain. This method
+   * starts the search from block number 1, as the genesis block (block 0) is assumed to always
+   * exist. It uses the chain head block number as the upper limit for the search.
+   *
+   * <p>The search involves checking the presence of blocks by their numbers, narrowing down the
+   * range until the first existing block is identified. If a block is found, its number is returned
+   * wrapped in an {@code Optional}. If no block is found, an empty {@code Optional} is returned.
+   *
+   * @return an {@code Optional<Long>} containing the number of the first existing block, or {@code
+   *     Optional.empty()} if no block is found.
+   */
+  private Optional<Long> getFirstNonGenesisBlockNumber() {
+    long low = 1;
+    long high = getChainHeadBlockNumber();
+    while (low < high) {
+      long mid = (low + high) / 2;
+      if (getBlockByNumber(mid).isPresent()) {
+        high = mid;
+      } else {
+        low = mid + 1;
+      }
+    }
+    return getBlockByNumber(low)
+        .map(
+            earliestBlock -> {
+              // if the earliestBlock's parent is genesis, we have the whole chain, return the
+              // genesis number
+              if (earliestBlock.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER + 1) {
+                return BlockHeader.GENESIS_BLOCK_NUMBER;
+              }
+              return earliestBlock.getHeader().getNumber();
+            });
   }
 }

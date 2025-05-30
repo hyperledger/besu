@@ -22,9 +22,9 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,9 +103,9 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
    * @param messageFrame the message frame
    * @return the precompile contract result
    */
-  @Nonnull
+  @NotNull
   public PrecompileContractResult computeNative(
-      final @Nonnull Bytes input, final MessageFrame messageFrame) {
+      final @NotNull Bytes input, final MessageFrame messageFrame) {
     final byte[] result = new byte[LibGnarkEIP196.EIP196_PREALLOCATE_FOR_RESULT_BYTES];
     final byte[] error = new byte[LibGnarkEIP196.EIP196_PREALLOCATE_FOR_ERROR_BYTES];
 

@@ -14,16 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.util.BesuVersionUtils;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.constraints.NotNull;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,9 +46,9 @@ public class VersionMetadata implements Comparable<VersionMetadata> {
    * @return the version of Besu
    */
   public static String getRuntimeVersionString() {
-    return VersionMetadata.class.getPackage().getImplementationVersion() == null
+    return BesuVersionUtils.shortVersion() == null
         ? BESU_VERSION_UNKNOWN
-        : VersionMetadata.class.getPackage().getImplementationVersion();
+        : BesuVersionUtils.shortVersion();
   }
 
   public static VersionMetadata getRuntimeVersion() {
@@ -71,13 +73,19 @@ public class VersionMetadata implements Comparable<VersionMetadata> {
     MAPPER.writeValue(getDefaultMetadataFile(dataDir), this);
   }
 
-  private static File getDefaultMetadataFile(final Path dataDir) {
+  private static File getDefaultMetadataFile(final Path dataDir) throws IOException {
     File metaDataFile = dataDir.resolve(METADATA_FILENAME).toFile();
 
     // Create the data dir here if it doesn't exist yet
     if (!metaDataFile.getParentFile().exists()) {
       LOG.info("Data directory {} does not exist - creating it", dataDir);
-      metaDataFile.getParentFile().mkdirs();
+      boolean created = metaDataFile.getParentFile().mkdirs();
+      if (!created) {
+        throw new IOException("Failed to create data directory: " + dataDir);
+      }
+    }
+    if (!metaDataFile.getParentFile().canWrite()) {
+      throw new IOException("Data directory is not writable: " + dataDir);
     }
     return metaDataFile;
   }
@@ -156,7 +164,7 @@ public class VersionMetadata implements Comparable<VersionMetadata> {
   }
 
   @Override
-  public int compareTo(@Nonnull final VersionMetadata versionMetadata) {
+  public int compareTo(@NotNull final VersionMetadata versionMetadata) {
     final String thisVersion = this.getBesuVersion().split("-", 2)[0];
     final String metadataVersion = versionMetadata.getBesuVersion().split("-", 2)[0];
     return new ComparableVersion(thisVersion).compareTo(new ComparableVersion(metadataVersion));

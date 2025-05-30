@@ -48,8 +48,8 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'io.consensys.protocols:tuweni-bytes'
-  implementation 'io.consensys.protocols:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
 
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
   testImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')

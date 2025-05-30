@@ -30,6 +30,7 @@ import org.hyperledger.besu.util.number.Percentage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -89,22 +90,22 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
-  public void disableLocalsDefault() {
+  public void noLocalPriorityDefault() {
     internalTestSuccess(config -> assertThat(config.getNoLocalPriority()).isFalse());
   }
 
   @Test
-  public void disableLocalsOn() {
+  public void noLocalPriorityOn() {
     internalTestSuccess(
         config -> assertThat(config.getNoLocalPriority()).isTrue(),
-        "--tx-pool-disable-locals=true");
+        "--tx-pool-no-local-priority=true");
   }
 
   @Test
-  public void disableLocalsOff() {
+  public void noLocalPriorityOff() {
     internalTestSuccess(
         config -> assertThat(config.getNoLocalPriority()).isFalse(),
-        "--tx-pool-disable-locals=false");
+        "--tx-pool-no-local-priority=false");
   }
 
   @Test
@@ -452,6 +453,58 @@ public class TransactionPoolOptionsTest
         "Invalid value for option '--tx-pool-min-score': '" + overflowMinScore + "' is not a byte",
         "--tx-pool-min-score",
         overflowMinScore);
+  }
+
+  @Test
+  public void defaultForgetEvictedTxsWithSequencedIsTrue() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isTrue(),
+        "--tx-pool",
+        SEQUENCED.name().toLowerCase(Locale.ROOT));
+  }
+
+  @Test
+  public void explicitlyDisablingForgetEvictedTxsWithSequenced() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isFalse(),
+        "--tx-pool",
+        SEQUENCED.name().toLowerCase(Locale.ROOT),
+        "--Xpeer-tracker-forget-evicted-txs=false");
+  }
+
+  @Test
+  public void fallbackValueForgetEvictedTxsWithSequenced() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isTrue(),
+        "--tx-pool",
+        SEQUENCED.name().toLowerCase(Locale.ROOT),
+        "--Xpeer-tracker-forget-evicted-txs");
+  }
+
+  @Test
+  public void defaultForgetEvictedTxsWithLayeredIsFalse() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isFalse(),
+        "--tx-pool",
+        LAYERED.name().toLowerCase(Locale.ROOT));
+  }
+
+  @Test
+  public void explicitlyEnablingForgetEvictedTxsWithLayered() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isTrue(),
+        "--tx-pool",
+        LAYERED.name().toLowerCase(Locale.ROOT),
+        "--Xpeer-tracker-forget-evicted-txs=true");
+  }
+
+  @Test
+  public void fallbackValueForgetEvictedTxsWithLayered() {
+    internalTestSuccess(
+        config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isTrue(),
+        "--tx-pool",
+        LAYERED.name().toLowerCase(Locale.ROOT),
+        "--Xpeer-tracker-forget-evicted-txs");
   }
 
   @Override

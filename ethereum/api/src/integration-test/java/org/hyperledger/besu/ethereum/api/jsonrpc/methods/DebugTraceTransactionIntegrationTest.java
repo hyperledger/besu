@@ -28,9 +28,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +44,7 @@ public class DebugTraceTransactionIntegrationTest {
   @BeforeAll
   public static void setUpOnce() throws Exception {
     final String genesisJson =
-        Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
+        Resources.toString(BlockTestUtil.getTestGenesisUrl(), StandardCharsets.UTF_8);
 
     blockchain =
         new JsonRpcTestMethodsFactory(

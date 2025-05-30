@@ -100,7 +100,7 @@ public class PipelineChainDownloaderTest {
 
     selectTargetFuture.complete(syncTarget);
 
-    verify(downloadPipelineFactory).createDownloadPipelineForSyncTarget(syncTarget);
+    verify(downloadPipelineFactory).createDownloadPipelineForSyncTarget(syncState, syncTarget);
     verify(downloadPipelineFactory)
         .startPipeline(scheduler, syncState, syncTarget, downloadPipeline);
   }
@@ -245,7 +245,7 @@ public class PipelineChainDownloaderTest {
 
     final CompletableFuture<Void> result = chainDownloader.start();
     verify(syncTargetManager).findSyncTarget();
-    verify(downloadPipelineFactory).createDownloadPipelineForSyncTarget(syncTarget);
+    verify(downloadPipelineFactory).createDownloadPipelineForSyncTarget(syncState, syncTarget);
     verify(downloadPipelineFactory)
         .startPipeline(scheduler, syncState, syncTarget, downloadPipeline);
 
@@ -344,7 +344,7 @@ public class PipelineChainDownloaderTest {
       final SyncTarget syncTarget,
       final Pipeline<?> pipeline,
       final CompletableFuture<Void> completableFuture) {
-    when(downloadPipelineFactory.createDownloadPipelineForSyncTarget(syncTarget))
+    when(downloadPipelineFactory.createDownloadPipelineForSyncTarget(syncState, syncTarget))
         .thenReturn((Pipeline) pipeline);
     when(downloadPipelineFactory.startPipeline(scheduler, syncState, syncTarget, pipeline))
         .thenReturn(completableFuture);

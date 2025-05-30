@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.qbft.core.validation.ValidationTestHelpers.createEmptyRoundChangePayloads;
 import static org.hyperledger.besu.consensus.qbft.core.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
@@ -39,11 +38,8 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftContext;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 
 import java.util.HashMap;
 import java.util.List;
@@ -85,8 +81,6 @@ public class ProposalValidatorTest {
   @Mock private QbftProtocolSchedule protocolSchedule;
   @Mock private QbftBlockCodec blockEncoder;
   @Mock private QbftBlockInterface blockInterface;
-  @Mock private QbftValidatorProvider validatorProvider;
-  @Mock private ProtocolContext protocolContext;
   private QbftNodeList validators;
 
   private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
@@ -97,9 +91,6 @@ public class ProposalValidatorTest {
     // typically tests require the blockValidation to be successful
     when(blockValidator.validateBlock(any()))
         .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
-
-    QbftContext qbftContext = new QbftContext(validatorProvider, blockInterface);
-    lenient().when(protocolContext.getConsensusContext(QbftContext.class)).thenReturn(qbftContext);
 
     when(protocolSchedule.getBlockValidator(any())).thenReturn(blockValidator);
 
@@ -119,7 +110,7 @@ public class ProposalValidatorTest {
         block,
         roundIdentifier,
         new ProposalValidator(
-            protocolContext,
+            blockInterface,
             protocolSchedule,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             validators.getNodeAddresses(),

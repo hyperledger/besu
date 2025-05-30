@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -54,6 +53,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.math.BigInteger;
@@ -166,12 +166,14 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ConsensusContext consensusContext) {
+      final ConsensusContext consensusContext,
+      final ServiceManager serviceManager) {
     return new MigratingProtocolContext(
         blockchain,
         worldStateArchive,
         consensusContext.as(MigratingConsensusContext.class),
-        badBlockManager);
+        badBlockManager,
+        serviceManager);
   }
 
   @Override
@@ -336,12 +338,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   public BesuControllerBuilder metricsSystem(final ObservableMetricsSystem metricsSystem) {
     besuControllerBuilderSchedule.values().forEach(b -> b.metricsSystem(metricsSystem));
     return super.metricsSystem(metricsSystem);
-  }
-
-  @Override
-  public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
-    besuControllerBuilderSchedule.values().forEach(b -> b.privacyParameters(privacyParameters));
-    return super.privacyParameters(privacyParameters);
   }
 
   @Override

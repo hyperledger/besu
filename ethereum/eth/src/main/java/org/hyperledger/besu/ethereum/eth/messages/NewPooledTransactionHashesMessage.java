@@ -32,7 +32,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public class NewPooledTransactionHashesMessage extends AbstractMessageData {
-  private static final int MESSAGE_CODE = EthPV65.NEW_POOLED_TRANSACTION_HASHES;
+  private static final int MESSAGE_CODE = EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES;
   private List<TransactionAnnouncement> pendingTransactions;
   private final Capability capability;
 

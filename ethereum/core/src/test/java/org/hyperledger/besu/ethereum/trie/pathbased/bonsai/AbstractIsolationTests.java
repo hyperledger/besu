@@ -30,7 +30,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -174,8 +173,10 @@ public abstract class AbstractIsolationTests {
     var ws = archive.getWorldState();
     genesisState.writeStateTo(ws);
     protocolContext =
-        new ProtocolContext(
-            blockchain, archive, mock(ConsensusContext.class), new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withWorldStateArchive(archive)
+            .build();
     ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     transactionPool =
@@ -201,7 +202,11 @@ public abstract class AbstractIsolationTests {
                         1024 /* MAX_OPEN_FILES*/,
                         4 /*BACKGROUND_THREAD_COUNT*/,
                         8388608 /*CACHE_CAPACITY*/,
-                        false),
+                        false,
+                        false,
+                        false,
+                        Optional.empty(),
+                        Optional.empty()),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(

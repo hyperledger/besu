@@ -31,14 +31,32 @@ import org.junit.jupiter.api.Test;
 
 public class PeerTransactionTrackerTest {
   private final EthPeers ethPeers = mock(EthPeers.class);
-
   private final EthPeer ethPeer1 = mock(EthPeer.class);
   private final EthPeer ethPeer2 = mock(EthPeer.class);
   private final BlockDataGenerator generator = new BlockDataGenerator();
-  private final PeerTransactionTracker tracker = new PeerTransactionTracker(ethPeers);
   private final Transaction transaction1 = generator.transaction();
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
+  private final PeerTransactionTracker tracker =
+      new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
+  private final PeerTransactionTracker forgetfulTracker =
+      new PeerTransactionTracker(
+          ImmutableTransactionPoolConfiguration.builder()
+              .unstable(
+                  ImmutableTransactionPoolConfiguration.Unstable.builder()
+                      .peerTrackerForgetEvictedTxs(true)
+                      .build())
+              .build(),
+          ethPeers);
+  private final PeerTransactionTracker shortMemoryTracker =
+      new PeerTransactionTracker(
+          ImmutableTransactionPoolConfiguration.builder()
+              .unstable(
+                  ImmutableTransactionPoolConfiguration.Unstable.builder()
+                      .maxTrackedSeenTxsPerPeer(2)
+                      .build())
+              .build(),
+          ethPeers);
 
   @Test
   public void shouldTrackTransactionsToSendToPeer() {
@@ -67,13 +85,41 @@ public class PeerTransactionTrackerTest {
 
   @Test
   public void shouldStopTrackingSeenTransactionsWhenRemovalReasonSaysSo() {
+    forgetfulTracker.markTransactionsAsSeen(ethPeer1, ImmutableSet.of(transaction2));
+
+    assertThat(forgetfulTracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+
+    forgetfulTracker.onTransactionDropped(transaction2, createRemovalReason(true));
+
+    assertThat(forgetfulTracker.hasSeenTransaction(transaction2.getHash())).isFalse();
+  }
+
+  @Test
+  public void shouldKeepTrackingSeenTransactionsWhenNotForgettingEvenIfRemovalReasonSaysSo() {
     tracker.markTransactionsAsSeen(ethPeer1, ImmutableSet.of(transaction2));
 
     assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isTrue();
 
     tracker.onTransactionDropped(transaction2, createRemovalReason(true));
 
-    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isFalse();
+    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+  }
+
+  @Test
+  public void shouldRemoveTheLastRecentSeenTransactionWhenTheCacheIsFull() {
+    shortMemoryTracker.markTransactionsAsSeen(
+        ethPeer1, ImmutableSet.of(transaction1, transaction2));
+
+    assertThat(shortMemoryTracker.hasSeenTransaction(transaction1.getHash())).isTrue();
+    assertThat(shortMemoryTracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+
+    // now the cache is full and the last recent entry if the transaction1
+    // so it should be evicted when inserting transaction3
+    shortMemoryTracker.markTransactionsAsSeen(ethPeer1, ImmutableSet.of(transaction3));
+
+    assertThat(shortMemoryTracker.hasSeenTransaction(transaction1.getHash())).isFalse();
+    assertThat(shortMemoryTracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+    assertThat(shortMemoryTracker.hasSeenTransaction(transaction3.getHash())).isTrue();
   }
 
   @Test

@@ -27,7 +27,6 @@ import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
@@ -63,7 +62,6 @@ import org.hyperledger.besu.cli.options.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
 import org.hyperledger.besu.cli.options.PermissionsOptions;
 import org.hyperledger.besu.cli.options.PluginsConfigurationOptions;
-import org.hyperledger.besu.cli.options.PrivacyPluginOptions;
 import org.hyperledger.besu.cli.options.RPCOptions;
 import org.hyperledger.besu.cli.options.RpcWebsocketOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
@@ -72,7 +70,6 @@ import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
 import org.hyperledger.besu.cli.options.storage.PathBasedExtraStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.QBFTOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
-import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.TxParseSubCommand;
@@ -102,7 +99,6 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
@@ -115,7 +111,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.VersionMetadata;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -128,8 +123,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
@@ -139,6 +132,8 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
+import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -157,7 +152,6 @@ import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
-import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
@@ -172,7 +166,6 @@ import org.hyperledger.besu.plugin.services.p2p.P2PService;
 import org.hyperledger.besu.plugin.services.rlp.RlpConverterService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
 import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
@@ -185,7 +178,6 @@ import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.P2PServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
-import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RlpConverterServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
@@ -197,6 +189,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.EphemeryGenesisUpdater;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -212,7 +205,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -297,7 +289,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
-  private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
@@ -322,7 +313,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final StorageServiceImpl storageService;
   private final SecurityModuleServiceImpl securityModuleService;
   private final PermissioningServiceImpl permissioningService;
-  private final PrivacyPluginServiceImpl privacyPluginService;
   private final RpcEndpointServiceImpl rpcEndpointServiceImpl;
 
   private final Map<String, String> environment;
@@ -428,7 +418,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--sync-mode"},
       paramLabel = MANDATORY_MODE_FORMAT_HELP,
       description =
-          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: SNAP if a --network is supplied and privacy isn't enabled. FULL otherwise.)")
+          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: SNAP if a --network is supplied. FULL otherwise.)")
   private SyncMode syncMode = null;
 
   @Option(
@@ -505,99 +495,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // In-Process RPC Options
   @CommandLine.ArgGroup(validate = false, heading = "@|bold In-Process RPC Options|@%n")
   InProcessRpcOptions inProcessRpcOptions = InProcessRpcOptions.create();
-
-  private static final String PRIVACY_DEPRECATION_PREFIX =
-      "Deprecated. Tessera-based privacy is deprecated. See CHANGELOG for alternative options. ";
-
-  // Privacy Options Group
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold (Deprecated) Privacy Options |@%n")
-  PrivacyOptionGroup privacyOptionGroup = new PrivacyOptionGroup();
-
-  static class PrivacyOptionGroup {
-    @Option(
-        names = {"--privacy-tls-enabled"},
-        paramLabel = MANDATORY_FILE_FORMAT_HELP,
-        description =
-            PRIVACY_DEPRECATION_PREFIX
-                + "Enable TLS for connecting to privacy enclave (default: ${DEFAULT-VALUE})")
-    private final Boolean isPrivacyTlsEnabled = false;
-
-    @Option(
-        names = "--privacy-tls-keystore-file",
-        paramLabel = MANDATORY_FILE_FORMAT_HELP,
-        description =
-            PRIVACY_DEPRECATION_PREFIX
-                + "Path to a PKCS#12 formatted keystore; used to enable TLS on inbound connections.")
-    private final Path privacyKeyStoreFile = null;
-
-    @Option(
-        names = "--privacy-tls-keystore-password-file",
-        paramLabel = MANDATORY_FILE_FORMAT_HELP,
-        description =
-            PRIVACY_DEPRECATION_PREFIX
-                + "Path to a file containing the password used to decrypt the keystore.")
-    private final Path privacyKeyStorePasswordFile = null;
-
-    @Option(
-        names = "--privacy-tls-known-enclave-file",
-        paramLabel = MANDATORY_FILE_FORMAT_HELP,
-        description =
-            PRIVACY_DEPRECATION_PREFIX
-                + "Path to a file containing the fingerprints of the authorized privacy enclave.")
-    private final Path privacyTlsKnownEnclaveFile = null;
-
-    @Option(
-        names = {"--privacy-enabled"},
-        description =
-            PRIVACY_DEPRECATION_PREFIX + "Enable private transactions (default: ${DEFAULT-VALUE})")
-    private final Boolean isPrivacyEnabled = false;
-
-    @Option(
-        names = {"--privacy-multi-tenancy-enabled"},
-        description =
-            PRIVACY_DEPRECATION_PREFIX
-                + "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})")
-    private final Boolean isPrivacyMultiTenancyEnabled = false;
-
-    @Option(
-        names = {"--privacy-url"},
-        description = PRIVACY_DEPRECATION_PREFIX + "The URL on which the enclave is running")
-    private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
-
-    @Option(
-        names = {"--privacy-public-key-file"},
-        description = PRIVACY_DEPRECATION_PREFIX + "The enclave's public key file")
-    private final File privacyPublicKeyFile = null;
-
-    @Option(
-        names = {"--privacy-marker-transaction-signing-key-file"},
-        description =
-            PRIVACY_DEPRECATION_PREFIX
-                + "The name of a file containing the private key used to sign privacy marker transactions. If unset, each will be signed with a random key.")
-    private final Path privateMarkerTransactionSigningKeyPath = null;
-
-    @Option(
-        names = {"--privacy-enable-database-migration"},
-        description =
-            PRIVACY_DEPRECATION_PREFIX
-                + "Enable private database metadata migration (default: ${DEFAULT-VALUE})")
-    private final Boolean migratePrivateDatabase = false;
-
-    @Option(
-        names = {"--privacy-flexible-groups-enabled"},
-        description =
-            PRIVACY_DEPRECATION_PREFIX
-                + "Enable flexible privacy groups (default: ${DEFAULT-VALUE})")
-    private final Boolean isFlexiblePrivacyGroupsEnabled = false;
-
-    @Option(
-        names = {"--privacy-nonce-always-increments"},
-        description =
-            PRIVACY_DEPRECATION_PREFIX
-                + "Enable private nonce "
-                + "incrementation even if the transaction didn't succeeded (default: ${DEFAULT-VALUE})")
-    private final Boolean isPrivateNonceAlwaysIncrementsEnabled = false;
-  }
 
   // Metrics Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Metrics Options|@%n")
@@ -695,6 +592,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfBlocksToCache = 0;
 
+  @CommandLine.Option(
+      names = {"--cache-precompiles"},
+      description = "Specifies whether to cache precompile results (default: ${DEFAULT-VALUE})")
+  private final Boolean enablePrecompileCaching = false;
+
   // Plugins Configuration Option Group
   @CommandLine.ArgGroup(validate = false)
   PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
@@ -752,7 +654,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new StorageServiceImpl(),
         new SecurityModuleServiceImpl(),
         new PermissioningServiceImpl(),
-        new PrivacyPluginServiceImpl(),
         new RpcEndpointServiceImpl(),
         new TransactionSelectionServiceImpl(),
         new TransactionPoolValidatorServiceImpl(),
@@ -775,7 +676,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param storageService instance of StorageServiceImpl
    * @param securityModuleService instance of SecurityModuleServiceImpl
    * @param permissioningService instance of PermissioningServiceImpl
-   * @param privacyPluginService instance of PrivacyPluginServiceImpl
    * @param rpcEndpointServiceImpl instance of RpcEndpointServiceImpl
    * @param transactionSelectionServiceImpl instance of TransactionSelectionServiceImpl
    * @param transactionValidatorServiceImpl instance of TransactionValidatorServiceImpl
@@ -796,7 +696,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
       final PermissioningServiceImpl permissioningService,
-      final PrivacyPluginServiceImpl privacyPluginService,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
       final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl,
@@ -816,7 +715,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.storageService = storageService;
     this.securityModuleService = securityModuleService;
     this.permissioningService = permissioningService;
-    this.privacyPluginService = privacyPluginService;
     if (besuPluginContext.getService(BesuConfigurationImpl.class).isPresent()) {
       this.pluginCommonConfiguration =
           besuPluginContext.getService(BesuConfigurationImpl.class).get();
@@ -958,8 +856,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       // set merge config on the basis of genesis config
       setMergeConfigOptions();
 
-      setIgnorableStorageSegments();
-
       instantiateSignatureAlgorithmFactory();
 
       logger.info("Starting Besu");
@@ -971,11 +867,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       configure();
 
+      setIgnorableStorageSegments();
+
       // If we're not running against a named network, or if version compat protection has been
       // explicitly enabled, perform compatibility check
       VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
 
       configureNativeLibs(Optional.ofNullable(network));
+      if (enablePrecompileCaching) {
+        configurePrecompileCaching();
+      }
+
       besuController = buildController();
 
       besuPluginContext.beforeExternalServices();
@@ -984,7 +886,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       runner.startExternalServices();
 
       startPlugins(runner);
-      validatePrivacyPluginOptions();
       setReleaseMetrics();
       preSynchronization();
 
@@ -999,6 +900,32 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.debug("Startup failure cause", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
+  }
+
+  private void configurePrecompileCaching() {
+    // enable precompile caching:
+    AbstractPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+    // separately set KZG precompile caching, it does not extend AbstractPrecompiledContract:
+    KZGPointEvalPrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+    // separately set BLS precompiles caching, they do not extend AbstractPrecompiledContract:
+    AbstractBLS12PrecompiledContract.setPrecompileCaching(enablePrecompileCaching);
+
+    // set a metric logger
+    final var precompileCounter =
+        getMetricsSystem()
+            .createLabelledCounter(
+                BesuMetricCategory.BLOCK_PROCESSING,
+                "precompile_cache",
+                "precompile cache labeled counter",
+                "precompile_name",
+                "event");
+
+    // set a cache event consumer which logs a metrics event
+    AbstractPrecompiledContract.setCacheEventConsumer(
+        cacheEvent ->
+            precompileCounter
+                .labels(cacheEvent.precompile(), cacheEvent.cacheMetric().name())
+                .inc());
   }
 
   private void checkPermissionsAndPrintPaths(final String userName) {
@@ -1165,7 +1092,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("RPC", unstableRPCOptions)
             .put("DNS Configuration", unstableDnsOptions)
             .put("NAT Configuration", unstableNatOptions)
-            .put("Privacy Plugin Configuration", unstablePrivacyPluginOptions)
             .put("Synchronizer", unstableSynchronizerOptions)
             .put("Native Library", unstableNativeLibraryOptions)
             .put("EVM Options", unstableEvmOptions)
@@ -1186,7 +1112,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricCategoryRegistry.addCategories(StandardMetricCategory.class);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
     besuPluginContext.addService(PermissioningService.class, permissioningService);
-    besuPluginContext.addService(PrivacyPluginService.class, privacyPluginService);
     besuPluginContext.addService(RpcEndpointService.class, rpcEndpointServiceImpl);
     besuPluginContext.addService(
         TransactionSelectionService.class, transactionSelectionServiceImpl);
@@ -1311,56 +1236,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.startPlugins();
   }
 
-  private void validatePrivacyPluginOptions() {
-    // plugins do not 'wire up' until start has been called
-    // consequently you can only do some configuration checks
-    // after start has been called on plugins
-
-    if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
-      logger.warn(
-          "--Xprivacy-plugin-enabled and related options are " + PRIVACY_DEPRECATION_PREFIX);
-
-      if (privacyOptionGroup.privateMarkerTransactionSigningKeyPath != null
-          && privacyPluginService != null
-          && privacyPluginService.getPrivateMarkerTransactionFactory() != null) {
-        throw new ParameterException(
-            commandLine,
-            "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
-      }
-
-      if (Wei.ZERO.compareTo(miningParametersSupplier.get().getMinTransactionGasPrice()) < 0
-          && (privacyOptionGroup.privateMarkerTransactionSigningKeyPath == null
-              && (privacyPluginService == null
-                  || privacyPluginService.getPrivateMarkerTransactionFactory() == null))) {
-        // if gas is required, cannot use random keys to sign private tx
-        // ie --privacy-marker-transaction-signing-key-file must be set
-        throw new ParameterException(
-            commandLine,
-            "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
-      }
-
-      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
-          && privacyPluginService != null
-          && privacyPluginService.getPayloadProvider() == null) {
-        throw new ParameterException(
-            commandLine,
-            "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
-      }
-
-      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
-          && privacyOptionGroup.isFlexiblePrivacyGroupsEnabled) {
-        throw new ParameterException(
-            commandLine, "Privacy Plugin can not be used with flexible privacy groups");
-      }
-    }
-  }
-
   private void setReleaseMetrics() {
     besuComponent
         .getMetricsSystem()
         .createLabelledSuppliedGauge(
             StandardMetricCategory.PROCESS, "release", "Release information", "version")
-        .labels(() -> 1, BesuInfo.version());
+        .labels(() -> 1, BesuVersionUtils.version());
   }
 
   /**
@@ -1427,7 +1308,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
         || genesisConfigOptionsSupplier.get().getCancunEOFTime().isPresent()
         || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getOsakaTime().isPresent()) {
+        || genesisConfigOptionsSupplier.get().getOsakaTime().isPresent()
+        || genesisConfigOptionsSupplier.get().getFutureEipsTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -1822,7 +1704,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .nodeKey(new NodeKey(securityModule()))
             .metricsSystem((ObservableMetricsSystem) besuComponent.getMetricsSystem())
             .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
-            .privacyParameters(privacyParameters())
             .clock(Clock.systemUTC())
             .isRevertReasonEnabled(isRevertReasonEnabled)
             .storageProvider(storageProvider)
@@ -1869,18 +1750,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
     return engineConfig;
-  }
-
-  private void checkPrivacyTlsOptionsDependencies() {
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--privacy-tls-enabled",
-        !privacyOptionGroup.isPrivacyTlsEnabled,
-        asList(
-            "--privacy-tls-keystore-file",
-            "--privacy-tls-keystore-password-file",
-            "--privacy-tls-known-enclave-file"));
   }
 
   /**
@@ -1933,143 +1802,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final var metricsConfiguration = metricsConfigurationBuilder.build();
     metricCategoryRegistry.setMetricsConfiguration(metricsConfiguration);
     return metricsConfiguration;
-  }
-
-  private PrivacyParameters privacyParameters() {
-
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--privacy-enabled",
-        !privacyOptionGroup.isPrivacyEnabled,
-        asList("--privacy-multi-tenancy-enabled", "--privacy-tls-enabled"));
-
-    CommandLineUtils.checkMultiOptionDependencies(
-        logger,
-        commandLine,
-        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled was defined.",
-        List.of(!privacyOptionGroup.isPrivacyEnabled),
-        List.of("--privacy-url", "--privacy-public-key-file"));
-
-    checkPrivacyTlsOptionsDependencies();
-
-    final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
-    if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
-      logger.warn("--privacy-enabled and related options are " + PRIVACY_DEPRECATION_PREFIX);
-      final String errorSuffix = "cannot be enabled with privacy.";
-      if (syncMode == SyncMode.FAST) {
-        throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
-      }
-      if (syncMode == SyncMode.SNAP) {
-        throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
-      }
-      if (syncMode == SyncMode.CHECKPOINT) {
-        throw new ParameterException(
-            commandLine, String.format("%s %s", "Checkpoint sync", errorSuffix));
-      }
-      if (getDataStorageConfiguration().getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
-        throw new ParameterException(commandLine, String.format("%s %s", "Bonsai", errorSuffix));
-      }
-
-      if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)
-          && Boolean.FALSE.equals(jsonRpcConfiguration.isAuthenticationEnabled())
-          && Boolean.FALSE.equals(webSocketConfiguration.isAuthenticationEnabled())) {
-        throw new ParameterException(
-            commandLine,
-            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
-      }
-
-      privacyParametersBuilder.setEnabled(true);
-      privacyParametersBuilder.setEnclaveUrl(privacyOptionGroup.privacyUrl);
-      privacyParametersBuilder.setMultiTenancyEnabled(
-          privacyOptionGroup.isPrivacyMultiTenancyEnabled);
-      privacyParametersBuilder.setFlexiblePrivacyGroupsEnabled(
-          privacyOptionGroup.isFlexiblePrivacyGroupsEnabled);
-      privacyParametersBuilder.setPrivacyPluginEnabled(
-          unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
-      privacyParametersBuilder.setPrivateNonceAlwaysIncrementsEnabled(
-          privacyOptionGroup.isPrivateNonceAlwaysIncrementsEnabled);
-
-      final boolean hasPrivacyPublicKey = privacyOptionGroup.privacyPublicKeyFile != null;
-
-      if (hasPrivacyPublicKey
-          && Boolean.TRUE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)) {
-        throw new ParameterException(
-            commandLine, "Privacy multi-tenancy and privacy public key cannot be used together");
-      }
-
-      if (!hasPrivacyPublicKey
-          && !privacyOptionGroup.isPrivacyMultiTenancyEnabled
-          && !unstablePrivacyPluginOptions.isPrivacyPluginEnabled()) {
-        throw new ParameterException(
-            commandLine, "Please specify Enclave public key file path to enable privacy");
-      }
-
-      if (hasPrivacyPublicKey
-          && Boolean.FALSE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)) {
-        try {
-          privacyParametersBuilder.setPrivacyUserIdUsingFile(
-              privacyOptionGroup.privacyPublicKeyFile);
-        } catch (final IOException e) {
-          throw new ParameterException(
-              commandLine, "Problem with privacy-public-key-file: " + e.getMessage(), e);
-        } catch (final IllegalArgumentException e) {
-          throw new ParameterException(
-              commandLine, "Contents of privacy-public-key-file invalid: " + e.getMessage(), e);
-        }
-      }
-
-      privacyParametersBuilder.setPrivateKeyPath(
-          privacyOptionGroup.privateMarkerTransactionSigningKeyPath);
-      privacyParametersBuilder.setStorageProvider(
-          privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
-      if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyTlsEnabled)) {
-        privacyParametersBuilder.setPrivacyKeyStoreFile(privacyOptionGroup.privacyKeyStoreFile);
-        privacyParametersBuilder.setPrivacyKeyStorePasswordFile(
-            privacyOptionGroup.privacyKeyStorePasswordFile);
-        privacyParametersBuilder.setPrivacyTlsKnownEnclaveFile(
-            privacyOptionGroup.privacyTlsKnownEnclaveFile);
-      }
-      privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
-    }
-
-    if (Boolean.FALSE.equals(privacyOptionGroup.isPrivacyEnabled) && anyPrivacyApiEnabled()) {
-      logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
-    }
-
-    privacyParametersBuilder.setPrivacyService(privacyPluginService);
-    final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
-
-    if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
-      preSynchronizationTaskRunner.addTask(
-          new PrivateDatabaseMigrationPreSyncTask(
-              privacyParameters, privacyOptionGroup.migratePrivateDatabase));
-    }
-
-    return privacyParameters;
-  }
-
-  private boolean anyPrivacyApiEnabled() {
-    return jsonRpcHttpOptions.getRpcHttpApis().contains(RpcApis.EEA.name())
-        || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.EEA.name())
-        || jsonRpcHttpOptions.getRpcHttpApis().contains(RpcApis.PRIV.name())
-        || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PRIV.name());
-  }
-
-  private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {
-    return new PrivacyKeyValueStorageProviderBuilder()
-        .withStorageFactory(privacyKeyValueStorageFactory(name))
-        .withCommonConfiguration(pluginCommonConfiguration)
-        .withMetricsSystem(getMetricsSystem())
-        .build();
-  }
-
-  private PrivacyKeyValueStorageFactory privacyKeyValueStorageFactory(final String name) {
-    return (PrivacyKeyValueStorageFactory)
-        storageService
-            .getByName(name)
-            .orElseThrow(
-                () -> new StorageException("No KeyValueStorageFactory found for key: " + name));
   }
 
   private KeyValueStorageProvider keyValueStorageProvider(final String name) {
@@ -2209,6 +1941,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return dataStorageConfiguration;
   }
 
+  /**
+   * Gets the network for this BesuCommand
+   *
+   * @return the network for this BesuCommand
+   */
+  public NetworkName getNetwork() {
+    return network;
+  }
+
   private void initMiningParametersMetrics(final MiningConfiguration miningConfiguration) {
     new MiningParametersMetrics(getMetricsSystem(), miningConfiguration);
   }
@@ -2267,7 +2008,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
-            .legacyForkId(unstableEthProtocolOptions.toDomainObject().isLegacyEth64ForkIdEnabled())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .engineJsonRpcConfiguration(engineJsonRpcConfiguration)
@@ -2653,7 +2393,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /** Set ignorable segments in RocksDB Storage Provider plugin. */
   public void setIgnorableStorageSegments() {
-    if (!unstableChainPruningOptions.getChainDataPruningEnabled()) {
+    if (!unstableChainPruningOptions.getChainDataPruningEnabled()
+        && !dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
       rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE);
     }
   }
@@ -2703,7 +2444,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return Optional.ofNullable(syncMode)
         .orElse(
             genesisFile == null
-                    && !privacyOptionGroup.isPrivacyEnabled
                     && Optional.ofNullable(network).map(NetworkName::canSnapSync).orElse(false)
                 ? SyncMode.SNAP
                 : SyncMode.FULL);
@@ -2771,18 +2511,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PathBasedExtraStorageConfiguration subStorageConfiguration =
           getDataStorageConfiguration().getPathBasedExtraStorageConfiguration();
       if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
-        builder.setLimitTrieLogsEnabled();
-        builder.setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad());
-        builder.setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
+        builder
+            .setLimitTrieLogsEnabled()
+            .setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad())
+            .setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
       }
     }
 
-    builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());
-
-    builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
-    builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
-
-    builder.setPluginContext(this.besuPluginContext);
+    builder
+        .setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled())
+        .setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation())
+        .setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode())
+        .setPluginContext(this.besuPluginContext)
+        .setHistoryExpiryPruneEnabled(getDataStorageConfiguration().getHistoryExpiryPruneEnabled())
+        .setBlobDBSettings(rocksDBPlugin.getBlobDBSettings());
 
     return builder.build();
   }

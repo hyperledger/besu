@@ -14,25 +14,18 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.crypto.Hash.keccak256;
-
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.SECPPrivateKey;
-import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 
-import java.math.BigInteger;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -40,19 +33,13 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 @SuppressWarnings("UnusedMethod")
 public class Benchmarks {
-
   static final Random random = new Random();
+  static final long GAS_PER_SECOND_STANDARD = 100_000_000L;
 
-  static final long GAS_PER_SECOND_STANDARD = 35_000_000L;
-
-  static final int HASH_WARMUP = 1_000_000;
-  static final int HASH_ITERATIONS = 10_000;
-
-  static final int MATH_WARMUP = 10_000;
+  static final int MATH_WARMUP = 15_000;
   static final int MATH_ITERATIONS = 1_000;
   static final MessageFrame fakeFrame =
       MessageFrame.builder()
@@ -75,113 +62,74 @@ public class Benchmarks {
           .build();
 
   private static void benchSecp256k1Recover() {
-    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    testCases.put(
+        "0x0c65a9d9ffc02c7c99e36e32ce0f950c7804ceda",
+        Bytes.fromHexString(
+            "0x0049872459827432342344987245982743234234498724598274323423429943000000000000000000000000000000000000000000000000000000000000001be8359c341771db7f9ea3a662a1741d27775ce277961470028e054ed3285aab8e31f63eaac35c4e6178abbc2a1073040ac9bbb0b67f2bc89a2e9593ba9abe8c53"));
 
-    final SECPPrivateKey privateKey =
-        signatureAlgorithm.createPrivateKey(
-            new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
-    final KeyPair keyPair = signatureAlgorithm.createKeyPair(privateKey);
+    final SECP256K1 signatureAlgorithm = new SECP256K1();
 
-    final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
-    final Bytes32 dataHash = keccak256(data);
-    final SECPSignature signature = signatureAlgorithm.sign(dataHash, keyPair);
-    for (int i = 0; i < MATH_WARMUP; i++) {
-      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
+    final ECRECPrecompiledContract contract =
+        new ECRECPrecompiledContract(new IstanbulGasCalculator(), signatureAlgorithm);
+
+    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+      final long timePerCallInNs = runBenchmark(testCase.getValue(), contract);
+      long gasRequirement = contract.gasRequirement(testCase.getValue());
+      logPerformance("Secp256k1 signature recovery", gasRequirement, timePerCallInNs);
     }
-    final Stopwatch timer = Stopwatch.createStarted();
-    for (int i = 0; i < MATH_ITERATIONS; i++) {
-      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
-    }
-    timer.stop();
-
-    final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-    final double perCall = elapsed / MATH_ITERATIONS;
-    final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
-
-    System.out.printf("secp256k1 signature recovery for %,d gas.%n", (int) gasSpent);
   }
 
   public static void benchSha256() {
     final SHA256PrecompiledContract contract =
         new SHA256PrecompiledContract(new IstanbulGasCalculator());
-    final byte[] warmupData = new byte[240];
-    final Bytes warmupBytes = Bytes.wrap(warmupData);
-    for (int i = 0; i < HASH_WARMUP; i++) {
-      contract.computePrecompile(warmupBytes, fakeFrame);
-    }
+
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
       random.nextBytes(data);
       final Bytes bytes = Bytes.wrap(data);
-      final Stopwatch timer = Stopwatch.createStarted();
-      for (int i = 0; i < HASH_ITERATIONS; i++) {
-        contract.computePrecompile(bytes, fakeFrame);
-      }
-      timer.stop();
 
-      final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-      final double perCall = elapsed / HASH_ITERATIONS;
-      final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
-
-      System.out.printf(
-          "sha256 %,d bytes for %,d gas. Charging %,d gas.%n",
-          len, (int) gasSpent, contract.gasRequirement(bytes));
+      final long timePerCallInNs = runBenchmark(bytes, contract);
+      long gasRequirement = contract.gasRequirement(bytes);
+      logPerformance(String.format("Sha256 %,d bytes", len), gasRequirement, timePerCallInNs);
     }
   }
 
   private static void benchKeccak256() {
     fakeFrame.expandMemory(0, 1024);
     var istanbulGasCalculator = new IstanbulGasCalculator();
-    final byte[] warmupData = new byte[240];
-    final Bytes warmupBytes = Bytes.wrap(warmupData);
-    for (int i = 0; i < HASH_WARMUP; i++) {
-      Hash.keccak256(warmupBytes);
-    }
+
     for (int len = 0; len <= 512; len += 8) {
       final byte[] data = new byte[len];
       random.nextBytes(data);
       final Bytes bytes = Bytes.wrap(data);
+      for (int i = 0; i < MATH_WARMUP; i++) {
+        Hash.keccak256(bytes);
+      }
       final Stopwatch timer = Stopwatch.createStarted();
-      for (int i = 0; i < HASH_ITERATIONS; i++) {
+      for (int i = 0; i < MATH_ITERATIONS; i++) {
         Hash.keccak256(bytes);
       }
       timer.stop();
 
-      final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-      final double perCall = elapsed / HASH_ITERATIONS;
-      final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
-
-      System.out.printf(
-          "keccak256 %,d bytes for %,d gas. Charing %d gas.%n",
-          len, (int) gasSpent, istanbulGasCalculator.keccak256OperationGasCost(fakeFrame, 0, len));
+      final long elapsed = timer.elapsed(TimeUnit.NANOSECONDS);
+      final long timePerCallInNs = elapsed / MATH_ITERATIONS;
+      long gasRequirement = istanbulGasCalculator.keccak256OperationGasCost(fakeFrame, 0, len);
+      logPerformance(String.format("Keccak256 %,d bytes", len), gasRequirement, timePerCallInNs);
     }
   }
 
   private static void benchRipeMD() {
     final RIPEMD160PrecompiledContract contract =
         new RIPEMD160PrecompiledContract(new IstanbulGasCalculator());
-    final byte[] warmupData = new byte[240];
-    final Bytes warmupBytes = Bytes.wrap(warmupData);
-    for (int i = 0; i < HASH_WARMUP; i++) {
-      contract.computePrecompile(warmupBytes, fakeFrame);
-    }
+
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
       random.nextBytes(data);
       final Bytes bytes = Bytes.wrap(data);
-      final Stopwatch timer = Stopwatch.createStarted();
-      for (int i = 0; i < HASH_ITERATIONS; i++) {
-        contract.computePrecompile(bytes, fakeFrame);
-      }
-      timer.stop();
-
-      final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-      final double perCall = elapsed / HASH_ITERATIONS;
-      final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
-
-      System.out.printf(
-          "ripemd %,d bytes for %,d gas. Charging %,d gas.%n",
-          len, (int) gasSpent, contract.gasRequirement(bytes));
+      final long timePerCallInNs = runBenchmark(bytes, contract);
+      long gasRequirement = contract.gasRequirement(bytes);
+      logPerformance(String.format("RIPMD %,d bytes", len), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -213,6 +161,10 @@ public class Benchmarks {
                 "even-modulus-2",
                 Bytes.fromHexString(
                     "000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000d80000000000000000000000000000000000000000000000000000000000000010e0060000a921212121212121ff0000212b212121ffff1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f00feffff212121212121ffffffff1fe1e0e0e01e1f1f169f1f1f1f490afcefffffffffffffffff82828282828282828282828282828282828282828200ffff28ff2b212121ffff1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1fffffffffff0afceffffff7ffffffffff7c8282828282a1828282828282828282828282828200ffff28ff2b212121ffff1f1f1f1f1f1fd11f1f1f1f1f1f1f1f1f1f1fffffffffffffffff21212121212121fb2121212121ffff1f1f1f1f1f1f1f1fffaf82828282828200ffff28ff2b218282000000000000000000"))
+            .put(
+                "even-modulous2",
+                Bytes.fromHexString(
+                    "0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000003c2040160024518968061546464452029984405379963244433254832348165045983839181603600983245188119082741180552472823434126339186042653363989253518144015007104659260895861906540664936284389736130979465984263224400655133820675791338815252163142936101184074977707018635613728563507946963514079867296353079585444179075183175315953500862929638853495671020263166123912364061541662955981749424030252416330220564030645929402440479045589943839631409636357644094127401186503107365632233122371688639562179885062893961510897259834525401728081797411184820573804096446362924176080926052008070342876591822173915634645231182811305568049542955744148010693635112077769594038286419007643605441221736768092092706367136248982357930831050114862462054469804238839007660797444001134145988063087013657265067255538916788266246587774231646489345179567885975873995767749906187041937713976494258573504873269320274358396975658022816526738914029788471066595929777423497242252763504644221066495966982158816143636722736200299105017320500139589998102103536908651755056175006587609525845133254470473698921229697550145309121304642224273213418856615560961843245211567388930209839462064588566503446549415643465733541976019955544090933949692508519895293721888001835024288589127818157262958206047538648802179821901844091151603223229973835165715768557428338775055435040494382003663260090655173262271219880999454966135210800173588881197223814096778846598765822161982688788574265773201009190341430440400154076998270731076034021917712825351270109621323258567738829791704547404897555410847468529100600344699859551947494210268509149049419749744679372826553895949980386864014015247047775654329663958663391477680679444996526407026021137970100258833584773507489900747148344826790699325870056679710341571267983857125765234149331990149745571500943300684008078036054281629105618499442731182983775330888524074001975745730722737461725166625564316976464879780901853271273641654911641084141502464"))
             .put(
                 "nagydani-1-square",
                 Bytes.fromHexString(
@@ -274,26 +226,71 @@ public class Benchmarks {
                 Bytes.fromHexString(
                     "000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000400c5a1611f8be90071a43db23cc2fe01871cc4c0e8ab5743f6378e4fef77f7f6db0095c0727e20225beb665645403453e325ad5f9aeb9ba99bf3c148f63f9c07cf4fe8847ad5242d6b7d4499f93bd47056ddab8f7dee878fc2314f344dbee2a7c41a5d3db91eff372c730c2fdd3a141a4b61999e36d549b9870cf2f4e632c4d5df5f024f81c028000073a0ed8847cfb0593d36a47142f578f05ccbe28c0c06aeb1b1da027794c48db880278f79ba78ae64eedfea3c07d10e0562668d839749dc95f40467d15cf65b9cfc52c7c4bcef1cda3596dd52631aac942f146c7cebd46065131699ce8385b0db1874336747ee020a5698a3d1a1082665721e769567f579830f9d259cec1a836845109c21cf6b25da572512bf3c42fd4b96e43895589042ab60dd41f497db96aec102087fe784165bb45f942859268fd2ff6c012d9d00c02ba83eace047cc5f7b2c392c2955c58a49f0338d6fc58749c9db2155522ac17914ec216ad87f12e0ee95574613942fa615898c4d9e8a3be68cd6afa4e7a003dedbdf8edfee31162b174f965b20ae752ad89c967b3068b6f722c16b354456ba8e280f987c08e0a52d40a2e8f3a59b94d590aeef01879eb7a90b3ee7d772c839c85519cbeaddc0c193ec4874a463b53fcaea3271d80ebfb39b33489365fc039ae549a17a9ff898eea2f4cb27b8dbee4c17b998438575b2b8d107e4a0d66ba7fca85b41a58a8d51f191a35c856dfbe8aef2b00048a694bbccff832d23c8ca7a7ff0b6c0b3011d00b97c86c0628444d267c951d9e4fb8f83e154b8f74fb51aa16535e498235c5597dac9606ed0be3173a3836baa4e7d756ffe1e2879b415d3846bccd538c05b847785699aefde3e305decb600cd8fb0e7d8de5efc26971a6ad4e6d7a2d91474f1023a0ac4b78dc937da0ce607a45974d2cac1c33a2631ff7fe6144a3b2e5cf98b531a9627dea92c1dc82204d09db0439b6a11dd64b484e1263aa45fd9539b6020b55e3baece3986a8bffc1003406348f5c61265099ed43a766ee4f93f5f9c5abbc32a0fd3ac2b35b87f9ec26037d88275bd7dd0a54474995ee34ed3727f3f97c48db544b1980193a4b76a8a3ddab3591ce527f16d91882e67f0103b5cda53f7da54d489fc4ac08b6ab358a5a04aa9daa16219d50bd672a7cb804ed769d218807544e5993f1c27427104b349906a0b654df0bf69328afd3013fbe430155339c39f236df5557bf92f1ded7ff609a8502f49064ec3d1dbfb6c15d3a4c11a4f8acd12278cbf68acd5709463d12e3338a6eddb8c112f199645e23154a8e60879d2a654e3ed9296aa28f134168619691cd2c6b9e2eba4438381676173fc63c2588a3c5910dc149cf3760f0aa9fa9c3f5faa9162b0bf1aac9dd32b706a60ef53cbdb394b6b40222b5bc80eea82ba8958386672564cae3794f977871ab62337cf010001e30049201ec12937e7ce79d0f55d9c810e20acf52212aca1d3888949e0e4830aad88d804161230eb89d4d329cc83570fe257217d2119134048dd2ed167646975fc7d77136919a049ea74cf08ddd2b896890bb24a0ba18094a22baa351bf29ad96c66bbb1a598f2ca391749620e62d61c3561a7d3653ccc8892c7b99baaf76bf836e2991cb06d6bc0514568ff0d1ec8bb4b3d6984f5eaefb17d3ea2893722375d3ddb8e389a8eef7d7d198f8e687d6a513983df906099f9a2d23f4f9dec6f8ef2f11fc0a21fac45353b94e00486f5e17d386af42502d09db33cf0cf28310e049c07e88682aeeb00cb833c5174266e62407a57583f1f88b304b7c6e0c84bbe1c0fd423072d37a5bd0aacf764229e5c7cd02473460ba3645cd8e8ae144065bf02d0dd238593d8e230354f67e0b2f23012c23274f80e3ee31e35e2606a4a3f31d94ab755e6d163cff52cbb36b6d0cc67ffc512aeed1dce4d7a0d70ce82f2baba12e8d514dc92a056f994adfb17b5b9712bd5186f27a2fda1f7039c5df2c8587fdc62f5627580c13234b55be4df3056050e2d1ef3218f0dd66cb05265fe1acfb0989d8213f2c19d1735a7cf3fa65d88dad5af52dc2bba22b7abf46c3bc77b5091baab9e8f0ddc4d5e581037de91a9f8dcbc69309be29cc815cf19a20a7585b8b3073edf51fc9baeb3e509b97fa4ecfd621e0fd57bd61cac1b895c03248ff12bdbc57509250df3517e8a3fe1d776836b34ab352b973d932ef708b14f7418f9eceb1d87667e61e3e758649cb083f01b133d37ab2f5afa96d6c84bcacf4efc3851ad308c1e7d9113624fce29fab460ab9d2a48d92cdb281103a5250ad44cb2ff6e67ac670c02fdafb3e0f1353953d6d7d5646ca1568dea55275a050ec501b7c6250444f7219f1ba7521ba3b93d089727ca5f3bbe0d6c1300b423377004954c5628fdb65770b18ced5c9b23a4a5a6d6ef25fe01b4ce278de0bcc4ed86e28a0a68818ffa40970128cf2c38740e80037984428c1bd5113f40ff47512ee6f4e4d8f9b8e8e1b3040d2928d003bd1c1329dc885302fbce9fa81c23b4dc49c7c82d29b52957847898676c89aa5d32b5b0e1c0d5a2b79a19d67562f407f19425687971a957375879d90c5f57c857136c17106c9ab1b99d80e69c8c954ed386493368884b55c939b8d64d26f643e800c56f90c01079d7c534e3b2b7ae352cefd3016da55f6a85eb803b85e2304915fd2001f77c74e28746293c46e4f5f0fd49cf988aafd0026b8e7a3bab2da5cdce1ea26c2e29ec03f4807fac432662b2d6c060be1c7be0e5489de69d0a6e03a4b9117f9244b34a0f1ecba89884f781c6320412413a00c4980287409a2a78c2cd7e65cecebbe4ec1c28cac4dd95f6998e78fc6f1392384331c9436aa10e10e2bf8ad2c4eafbcf276aa7bae64b74428911b3269c749338b0fc5075ad"))
             .put(
-                "even-modulous2",
+                "marius-1-even",
                 Bytes.fromHexString(
-                    "0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000003c2040160024518968061546464452029984405379963244433254832348165045983839181603600983245188119082741180552472823434126339186042653363989253518144015007104659260895861906540664936284389736130979465984263224400655133820675791338815252163142936101184074977707018635613728563507946963514079867296353079585444179075183175315953500862929638853495671020263166123912364061541662955981749424030252416330220564030645929402440479045589943839631409636357644094127401186503107365632233122371688639562179885062893961510897259834525401728081797411184820573804096446362924176080926052008070342876591822173915634645231182811305568049542955744148010693635112077769594038286419007643605441221736768092092706367136248982357930831050114862462054469804238839007660797444001134145988063087013657265067255538916788266246587774231646489345179567885975873995767749906187041937713976494258573504873269320274358396975658022816526738914029788471066595929777423497242252763504644221066495966982158816143636722736200299105017320500139589998102103536908651755056175006587609525845133254470473698921229697550145309121304642224273213418856615560961843245211567388930209839462064588566503446549415643465733541976019955544090933949692508519895293721888001835024288589127818157262958206047538648802179821901844091151603223229973835165715768557428338775055435040494382003663260090655173262271219880999454966135210800173588881197223814096778846598765822161982688788574265773201009190341430440400154076998270731076034021917712825351270109621323258567738829791704547404897555410847468529100600344699859551947494210268509149049419749744679372826553895949980386864014015247047775654329663958663391477680679444996526407026021137970100258833584773507489900747148344826790699325870056679710341571267983857125765234149331990149745571500943300684008078036054281629105618499442731182983775330888524074001975745730722737461725166625564316976464879780901853271273641654911641084141502464"))
+                    "000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000c1000000000000000000000000000000000000000000000000000000000000000cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe000007d7d7d83828282348286877d7d827d407d797d7d7d7d7d7d7d7d7d7d7d5b00000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000021000000000000000000000000000000000000000000000000000000000000000cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4000007d7d7d83828282348286877d7d82"))
+            .put(
+                "guido-1-even",
+                Bytes.fromHexString(
+                    "000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000d80000000000000000000000000000000000000000000000000000000000000010ffffffffffffffff76ffffffffffffff1cffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c76ec7c7c7c7ffffffffffffffc7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7ffffffffffffc7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c76ec7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7ffffffffff3f000000000000000000000000"))
+            .put(
+                "guido-2-even",
+                Bytes.fromHexString(
+                    "000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000d80000000000000000000000000000000000000000000000000000000000000010e0060000a921212121212121ff0000212b212121ffff1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f00feffff212121212121ffffffff1fe1e0e0e01e1f1f169f1f1f1f490afcefffffffffffffffff82828282828282828282828282828282828282828200ffff28ff2b212121ffff1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1fffffffffff0afceffffff7ffffffffff7c8282828282a1828282828282828282828282828200ffff28ff2b212121ffff1f1f1f1f1f1fd11f1f1f1f1f1f1f1f1f1f1fffffffffffffffff21212121212121fb2121212121ffff1f1f1f1f1f1f1f1fffaf82828282828200ffff28ff2b21828200"))
+            .put(
+                "guido-3-even",
+                Bytes.fromHexString(
+                    "00000000000000000000000000000000000000000000000000000000000001e7000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000002cb0193585a48e18aad777e9c1b54221a0f58140392e4f091cd5f42b2e8644a9384fbd58ae1edec2477ebf7edbf7c0a3f8bd21d1890ee87646feab3c47be716f842cc3da9b940af312dc54450a960e3fc0b86e56abddd154068e10571a96fff6259431632bc15695c6c8679057e66c2c25c127e97e64ee5de6ea1fc0a4a0e431343fed1daafa072c238a45841da86a9806680bc9f298411173210790359209cd454b5af7b4d5688b4403924e5f863d97e2c5349e1a04b54fcf385b1e9d7714bab8fbf5835f6ff9ed575e77dff7af5cbb641db5d537933bae1fa6555d6c12d6fb31ca27b57771f4aebfbe0bf95e8990c0108ffe7cbdaf370be52cf3ade594543af75ad9329d2d11a402270b5b9a6bf4b83307506e118fca4862749d04e916fc7a039f0d13f2a02e0eedb800199ec95df15b4ccd8669b52586879624d51219e72102fad810b5909b1e372ddf33888fb9beb09b416e4164966edbabd89e4a286be36277fc576ed519a15643dac602e92b63d0b9121f0491da5b16ef793a967f096d80b6c81ecaaffad7e3f06a4a5ac2796f1ed9f68e6a0fd5cf191f0c5c2eec338952ff8d31abc68bf760febeb57e088995ba1d7726a2fdd6d8ca28a181378b8b4ab699bfd4b696739bbf17a9eb2df6251143046137fdbbfacac312ebf67a67da9741b596000000000000419a2917c61722b0713d3b00a2f0e1dd5aebbbe09615de424700eea3c3020fe6e9ea5de9fa1ace781df28b21f746d2ab61d0da496e08473c90ff7dfe25b43bcde76f4bafb82e0975bea75f5a0591dba80ba2fff80a07d8853bea5be13ab326ba70c57b153acc646151948d1cf061ca31b02d4719fac710e7c723ca44f5b1737824b7ccc74ba5bff980aabdbf267621cafc3d6dcc29d0ca9c16839a92ed34de136da7900aa3ee43d21aa57498981124357cf0ca9b86f9a8d3f9c604ca00c726e48f7a9945021ea6dfff92d6b2d6514693169ca133e993541bfa4c4c191de806aa80c48109bcfc9901eccfdeb2395ab75fe63c67de900829d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"))
+            .put(
+                "guido-4-even",
+                Bytes.fromHexString(
+                    "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000181000000000000000000000000000000000000000000000000000000000000000801ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2cffffffffffffffffffffffffffffffffffffffffffffffffffffffff3b10000000006c01ffffffffffffffffffffffffffffffffffffffffffffffdffffb97ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3bffffffffffffffffffffffffffffffffffffffffffffffffffffffffebafd93b37ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5bb6affffffff3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2a"))
+            .put(
+                "marcin-1-base-heavy",
+                Bytes.fromHexString(
+                    "00000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000c0e8e77626586f73b955364c7b4bbf0bb7f7685ebd40e852b164633a4acbd3244c51f81bcdfc324a0dff2b5bec9d92e21cbebc4d5e29d3a3d30de3e03fbeab8d7f2ee5f854d076701c8753d72779187e404f9b2fb705c495137d78551250314a463ef5a213fe22de1cea28d60f518364ff95fe0b73660793e3efcfbe31bda68aeccc21cc9477a6aea5df8cae73422b700c47e54d892691e099167e77befc94780a920ae4155769cd69c30626f054134b5f003772473f57f84837402df6d166e66303f01681d2220bfea4bb888a5543db8c0916274ddb1ea93b144c042c01d8164c954b27ac388a17c8e9a7ba12a968f288f3308d6fe7bcdf28e685e9a2e00d8be1af19726b7662016d6404f9336493ad633777feb88c9d02a1d2428e566ac38f42c0bb66d2962ec349088ce0d03b35bf27f6114414ef558c87ad8e543754a352f7dffcaca429690688595ab1d1b349d9295b480a82f43ac5c9112fe40720545cc78501cd8b42f3605212fe06a835c9cbc0328e07e94aedb2ac11f6d6649e7fcd8c43"))
+            .put(
+                "marcin-1-exp-heavy",
+                Bytes.fromHexString(
+                    "0000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000005100000000000000000000000000000000000000000000000000000000000000080001020304050607ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0001020304050607"))
+            .put(
+                "marcin-1-balanced",
+                Bytes.fromHexString(
+                    "000000000000000000000000000000000000000000000000000000000000002800000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000028e8e77626586f73b955364c7b4bbf0bb7f7685ebd40e852b164633a4acbd3244c000102030405060701fffffff01681d2220bfea4bb888a5543db8c0916274ddb1ea93b144c042c01d8164c950001020304050607"))
+            .put(
+                "marcin-2-base-heavy",
+                Bytes.fromHexString(
+                    "000000000000000000000000000000000000000000000000000000000000019800000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000198e8e77626586f73b955364c7b4bbf0bb7f7685ebd40e852b164633a4acbd3244c51f81bcdfc324a0dff2b5bec9d92e21cbebc4d5e29d3a3d30de3e03fbeab8d7f2ee5f854d076701c8753d72779187e404f9b2fb705c495137d78551250314a463ef5a213fe22de1cea28d60f518364ff95fe0b73660793e3efcfbe31bda68aeccc21cc9477a6aea5df8cae73422b700c47e54d892691e099167e77befc94780a920ae4155769cd69c30626f054134b5f003772473f57f84837402df6d166e663c29021b0e084f7dc16f6ec88cc597f1aea9f8e0b9501e0f7a546805d2a20eeda0bf080aeb3ed7ea6f9174d804bd242f0b31ff1ea24800344abb580cd87f61ca75a013a87733553966400242399dee3760877fead2cd87287747155e47a854acb50fe07922f57ae3b4553201bfd7c11aca85e1541f91db8e62dca9c418dc5feae086c9487350539c884510044efce5e3f2aaffca4215c12b9044506375097fecd9b22e2ef46f01f1af8aff742aebf96bdcaf55a341600971dc62555376b9e98a8000102030405060708090a0b0c0d0e0f101112131415161703f01681d2220bfea4bb888a5543db8c0916274ddb1ea93b144c042c01d8164c954b27ac388a17c8e9a7ba12a968f288f3308d6fe7bcdf28e685e9a2e00d8be1af19726b7662016d6404f9336493ad633777feb88c9d02a1d2428e566ac38f42c0bb66d2962ec349088ce0d03b35bf27f6114414ef558c87ad8e543754a352f7dffcaca429690688595ab1d1b349d9295b480a82f43ac5c9112fe40720545cc78501cd8b42f3605212fe06a835c9cbc0328e07e94aedb2ac11f6d6649e7fcd8c43ddce2bd0cdc6c22c4dcd345735040d5bfe3f09b7c61362089f728e2222db96cab2f2c2ccf43574f9e119f4860fd0f1b6036a43ad9db8a428ea09a4ee385112f3fe9c6656ea2cec604cbb5a9227526653bfa7035e4ae80010b1ba16a76608d5dde0a62bc019e9047b5ec05b1005fd017366130a4ba555e7be654561ee3f539c93cb2c9988fca71bf0ad9c4a426b924641a28e1e4adb93609bfa5b2bc81714cbba1110208b86d7b87be28bdf63a62e33ae81dbcc43de9192bd192c40e85faab539000102030405060708090a0b0c0d0e0f1011121314151617"))
+            .put(
+                "marcin-2-exp-heavy",
+                Bytes.fromHexString(
+                    "000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000010000102030405060708090a0b0c0d0e0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff000102030405060708090a0b0c0d0e0f"))
+            .put(
+                "marcin-2-balanced",
+                Bytes.fromHexString(
+                    "000000000000000000000000000000000000000000000000000000000000003800000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000038e8e77626586f73b955364c7b4bbf0bb7f7685ebd40e852b164633a4acbd3244c000102030405060708090a0b0c0d0e0f10111213141516172bfffffffffffffff01681d2220bfea4bb888a5543db8c0916274ddb1ea93b144c042c01d8164c95000102030405060708090a0b0c0d0e0f1011121314151617"))
+            .put(
+                "marcin-3-base-heavy",
+                Bytes.fromHexString(
+                    "000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020e8e77626586f73b955364c7b4bbf0bb7f7685ebd40e852b164633a4acbd3244cfffffffffffffffffffffffffffffffff01681d2220bfea4bb888a5543db8c0916274ddb1ea93b144c042c01d8164c95"))
+            .put(
+                "marcin-3-exp-heavy",
+                Bytes.fromHexString(
+                    "000000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000018000102030405060708090a0b0c0d0e0f1011121314151617ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff000102030405060708090a0b0c0d0e0f1011121314151617"))
+            .put(
+                "marcin-3-balanced",
+                Bytes.fromHexString(
+                    "000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000020e8e77626586f73b955364c7b4bbf0bb7f7685ebd40e852b164633a4acbd3244cfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff01681d2220bfea4bb888a5543db8c0916274ddb1ea93b144c042c01d8164c95"))
             .build();
     final BigIntegerModularExponentiationPrecompiledContract contract =
-        new BigIntegerModularExponentiationPrecompiledContract(new BerlinGasCalculator());
+        new BigIntegerModularExponentiationPrecompiledContract(new OsakaGasCalculator());
 
     for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
-      final double gasSpent = runBenchmark(testCase.getValue(), contract);
-
-      long gasCost = contract.gasRequirement(testCase.getValue());
-      System.out.printf(
-          "ModEXP %s for \t%,d gas. Charging %,d gas. \t@ %,.3f MGps%n",
-          testCase.getKey(),
-          (int) gasSpent,
-          gasCost,
-          gasCost / gasSpent * GAS_PER_SECOND_STANDARD / 1_000_000);
+      final long timePerCallInNs = runBenchmark(testCase.getValue(), contract);
+      long gasRequirement = contract.gasRequirement(testCase.getValue());
+      logPerformance(
+          String.format("ModEXP %s", testCase.getKey()), gasRequirement, timePerCallInNs);
     }
-
-    System.getProperties().forEach((k, v) -> System.out.println(k + " = " + v));
   }
 
   private static void benchBNADD() {
@@ -315,10 +312,9 @@ public class Benchmarks {
     final AltBN128AddPrecompiledContract contract =
         AltBN128AddPrecompiledContract.istanbul(new IstanbulGasCalculator());
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "BNADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("BNADD", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBNMUL() {
@@ -335,10 +331,9 @@ public class Benchmarks {
     final AltBN128MulPrecompiledContract contract =
         AltBN128MulPrecompiledContract.istanbul(new IstanbulGasCalculator());
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "BNMUL for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("BNMUL", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBNPairing() {
@@ -387,11 +382,9 @@ public class Benchmarks {
         AltBN128PairingPrecompiledContract.istanbul(new IstanbulGasCalculator());
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
-
-      System.out.printf(
-          "BNPairings %d pairs for %,d gas. Charging %,d gas.%n",
-          i * 2 + 2, (int) gasSpent, contract.gasRequirement(args[i]));
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
+      logPerformance(String.format("BNPairings %,d", i * 2 + 2), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -405,10 +398,9 @@ public class Benchmarks {
 
     final BLS12G1AddPrecompiledContract contract = new BLS12G1AddPrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "G1ADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("G1ADD", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBLS12G1MultiExp() {
@@ -453,11 +445,9 @@ public class Benchmarks {
     final BLS12G1MultiExpPrecompiledContract contract = new BLS12G1MultiExpPrecompiledContract();
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
-
-      System.out.printf(
-          "G1MULTIEXP %d for %,d gas. Charging %,d gas.%n",
-          i + 1, (int) gasSpent, contract.gasRequirement(args[i]));
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
+      logPerformance(String.format("G1MULTIEXP %,d", i + 1), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -471,10 +461,9 @@ public class Benchmarks {
 
     final BLS12G2AddPrecompiledContract contract = new BLS12G2AddPrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "G2ADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("G2ADD", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBLS12G2MultiExp() {
@@ -519,11 +508,9 @@ public class Benchmarks {
     final BLS12G2MultiExpPrecompiledContract contract = new BLS12G2MultiExpPrecompiledContract();
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
-
-      System.out.printf(
-          "G2MULTIEXP %d for %,d gas. Charging %,d gas.%n",
-          i + 1, (int) gasSpent, contract.gasRequirement(args[i]));
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
+      logPerformance(String.format("G2MULTIEXP %,d", i + 1), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -560,11 +547,10 @@ public class Benchmarks {
     final BLS12PairingPrecompiledContract contract = new BLS12PairingPrecompiledContract();
 
     for (int i = 0; i < args.length; i++) {
-      final double gasSpent = runBenchmark(args[i], contract);
-
-      System.out.printf(
-          "BLS pairings %d pairs for %,d gas. Charging %,d gas.%n",
-          i * 2 + 2, (int) gasSpent, contract.gasRequirement(args[i]));
+      final long timePerCallInNs = runBenchmark(args[i], contract);
+      long gasRequirement = contract.gasRequirement(args[i]);
+      logPerformance(
+          String.format("BLS pairings %d pairs", i * 2 + 2), gasRequirement, timePerCallInNs);
     }
   }
 
@@ -575,10 +561,9 @@ public class Benchmarks {
 
     final BLS12MapFpToG1PrecompiledContract contract = new BLS12MapFpToG1PrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "MAPFPTOG1 for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("MAPFPTOG1", gasRequirement, timePerCallInNs);
   }
 
   private static void benchBLS12MapFP2TOG2() {
@@ -588,15 +573,13 @@ public class Benchmarks {
 
     final BLS12MapFp2ToG2PrecompiledContract contract = new BLS12MapFp2ToG2PrecompiledContract();
 
-    final double gasSpent = runBenchmark(arg, contract);
-
-    System.out.printf(
-        "MAPFP2TOG2 for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(arg));
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("MAPFP2TOG2", gasRequirement, timePerCallInNs);
   }
 
-  private static double runBenchmark(final Bytes arg, final PrecompiledContract contract) {
-    if (contract.computePrecompile(arg, fakeFrame).getOutput() == null) {
+  private static long runBenchmark(final Bytes arg, final PrecompiledContract contract) {
+    if (contract.computePrecompile(arg, fakeFrame).output() == null) {
       throw new RuntimeException("Input is Invalid");
     }
 
@@ -609,12 +592,86 @@ public class Benchmarks {
     }
     timer.stop();
 
-    final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-    final double perCall = elapsed / MATH_ITERATIONS;
-    return perCall * GAS_PER_SECOND_STANDARD;
+    final long elapsed = timer.elapsed(TimeUnit.NANOSECONDS);
+    final long perCallInNs = elapsed / MATH_ITERATIONS;
+    return perCallInNs;
+  }
+
+  private static void benchKZGPointEval() {
+    final Bytes arg =
+        Bytes.fromHexString(
+            "010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e0000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+    KZGPointEvalPrecompiledContract.init();
+    final KZGPointEvalPrecompiledContract contract = new KZGPointEvalPrecompiledContract();
+
+    final long timePerCallInNs = runBenchmark(arg, contract);
+    long gasRequirement = contract.gasRequirement(arg);
+    logPerformance("KZGPointEval", gasRequirement, timePerCallInNs);
+  }
+
+  private static double getMgasPerS(final long timePerCallInNs, final long gasCost) {
+    return (double) (gasCost * 1_000) / timePerCallInNs;
+  }
+
+  private static long getDerivedGasFromExecutionTime(final long timePerCallInNs) {
+    return (long) ((timePerCallInNs * GAS_PER_SECOND_STANDARD) / 1.0e9D);
+  }
+
+  public static void logPerformance(final String label, final long gasCost, final long timeNs) {
+    double derivedGas = (timeNs / 1_000_000_000.0) * GAS_PER_SECOND_STANDARD;
+    double mgps = (gasCost * 1000.0) / timeNs;
+
+    System.out.printf(
+        "%-30s | %,7d gas cost | %,7.0f calculated gas for execution time per call %,9d ns | %7.2f MGps%n",
+        label, gasCost, derivedGas, timeNs, mgps);
+  }
+
+  public static void logHeader() {
+    long executionTimeExampleNs = 247_914L;
+    long gasPerSecond = GAS_PER_SECOND_STANDARD;
+    long derivedGas = (executionTimeExampleNs * gasPerSecond) / 1_000_000_000L;
+
+    System.out.println(
+        "**** Calculate the derived gas from execution time with a target of 100 mgas/s *****");
+    System.out.println(
+        "*                                                                                  *");
+    System.out.println(
+        "*   If "
+            + String.format("%,d", executionTimeExampleNs)
+            + " ns is the execution time of the precompile call, so this is how     *");
+    System.out.println(
+        "*                the derived gas is calculated                                     *");
+    System.out.println(
+        "*                                                                                  *");
+    System.out.println(
+        "*   "
+            + String.format("%,d", gasPerSecond)
+            + " gas    -------> 1 second (1_000_000_000 ns)                        *");
+    System.out.println(
+        "*   x           gas    -------> "
+            + String.format("%,d", executionTimeExampleNs)
+            + " ns                                         *");
+    System.out.println(
+        "*                                                                                  *");
+    System.out.println(
+        "*\tx = ("
+            + String.format("%,d", executionTimeExampleNs)
+            + " * "
+            + String.format("%,d", gasPerSecond)
+            + ") / 1_000_000_000 = "
+            + String.format("%,d", derivedGas)
+            + " gas"
+            + "                       *");
+    System.out.println(
+        "************************************************************************************");
+    System.out.println();
+    System.out.println("** System Properties **");
+    System.out.println();
+    System.getProperties().forEach((k, v) -> System.out.println(k + " = " + v));
   }
 
   public static void main(final String[] args) {
+    logHeader();
     benchSecp256k1Recover();
     benchSha256();
     benchKeccak256();
@@ -630,5 +687,6 @@ public class Benchmarks {
     benchBLS12Pair();
     benchBLS12MapFPTOG1();
     benchBLS12MapFP2TOG2();
+    benchKZGPointEval();
   }
 }

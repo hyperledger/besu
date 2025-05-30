@@ -17,7 +17,6 @@ package org.hyperledger.besu.plugin.services;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.Histogram;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedSummary;
@@ -89,27 +88,6 @@ public interface MetricsSystem extends BesuService {
    */
   LabelledSuppliedMetric createLabelledSuppliedCounter(
       MetricCategory category, String name, String help, String... labelNames);
-
-  /**
-   * Creates a Gauge with assigned labels, that gets its values from suppliers. To be used when the
-   * values of the gauge are calculated outside the metric system.
-   *
-   * @param category The {@link MetricCategory} this gauge is assigned to.
-   * @param name A name for this metric.
-   * @param help A human readable description of the metric.
-   * @param labelNames An array of labels to assign to the Gauge.
-   * @return The created LabelledGauge instance.
-   * @deprecated Use {@link #createLabelledSuppliedGauge(MetricCategory, String, String, String...)}
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("removal") // remove when deprecated LabelledGauge is removed
-  default LabelledGauge createLabelledGauge(
-      final MetricCategory category,
-      final String name,
-      final String help,
-      final String... labelNames) {
-    return (LabelledGauge) createLabelledSuppliedGauge(category, name, help, labelNames);
-  }
 
   /**
    * Creates a Gauge with assigned labels, that gets its values from suppliers. To be used when the

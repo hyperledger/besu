@@ -61,10 +61,10 @@ public class KZGPointEvalPrecompileContractTest {
     PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(parameters.input, toRun);
     if (parameters.valid) {
-      assertThat(result.getState()).isEqualTo(MessageFrame.State.COMPLETED_SUCCESS);
-      assertThat(result.getOutput()).isEqualTo(parameters.returnValue);
+      assertThat(result.state()).isEqualTo(MessageFrame.State.COMPLETED_SUCCESS);
+      assertThat(result.output()).isEqualTo(parameters.returnValue);
     } else {
-      assertThat(result.getState()).isNotEqualTo(MessageFrame.State.COMPLETED_SUCCESS);
+      assertThat(result.state()).isNotEqualTo(MessageFrame.State.COMPLETED_SUCCESS);
     }
   }
 

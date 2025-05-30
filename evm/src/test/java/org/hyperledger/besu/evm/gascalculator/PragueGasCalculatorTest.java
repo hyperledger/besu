@@ -23,25 +23,18 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
 class PragueGasCalculatorTest {
 
-  private static final long TARGET_BLOB_GAS_PER_BLOCK_PRAGUE = 0xC0000;
   private final PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
   @Mock private Transaction transaction;
   @Mock private MessageFrame messageFrame;
@@ -51,34 +44,6 @@ class PragueGasCalculatorTest {
     PragueGasCalculator subject = new PragueGasCalculator();
     assertThat(subject.isPrecompile(Address.precompiled(0x14))).isFalse();
     assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
-  }
-
-  @ParameterizedTest(
-      name = "{index} - parent gas {0}, used gas {1}, blob target {2} new excess {3}")
-  @MethodSource("blobGasses")
-  public void shouldCalculateExcessBlobGasCorrectly(
-      final long parentExcess, final long used, final long expected) {
-    final long usedBlobGas = pragueGasCalculator.blobGasCost(used);
-    assertThat(pragueGasCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
-        .isEqualTo(expected);
-  }
-
-  Iterable<Arguments> blobGasses() {
-    long sixBlobTargetGas = TARGET_BLOB_GAS_PER_BLOCK_PRAGUE;
-    long newTargetCount = 6;
-
-    return List.of(
-        // New target count
-        Arguments.of(0L, 0L, 0L),
-        Arguments.of(sixBlobTargetGas, 0L, 0L),
-        Arguments.of(newTargetCount, 0L, 0L),
-        Arguments.of(0L, newTargetCount, 0L),
-        Arguments.of(1L, newTargetCount, 1L),
-        Arguments.of(
-            pragueGasCalculator.blobGasCost(newTargetCount),
-            1L,
-            pragueGasCalculator.getBlobGasPerBlob()),
-        Arguments.of(sixBlobTargetGas, newTargetCount, sixBlobTargetGas));
   }
 
   @Test
@@ -185,20 +150,20 @@ class PragueGasCalculatorTest {
   @Test
   void transactionFloorCostShouldBeAtLeastTransactionBaseCost() {
     // floor cost = 21000 (base cost) + 0
-    AssertionsForClassTypes.assertThat(pragueGasCalculator.transactionFloorCost(Bytes.EMPTY))
+    AssertionsForClassTypes.assertThat(pragueGasCalculator.transactionFloorCost(Bytes.EMPTY, 0))
         .isEqualTo(21000);
     // floor cost = 21000 (base cost) + 256 (tokensInCallData) * 10 (cost per token)
     AssertionsForClassTypes.assertThat(
-            pragueGasCalculator.transactionFloorCost(Bytes.repeat((byte) 0x0, 256)))
+            pragueGasCalculator.transactionFloorCost(Bytes.repeat((byte) 0x0, 256), 256))
         .isEqualTo(23560L);
     // floor cost = 21000 (base cost) + 256 * 4 (tokensInCallData) * 10 (cost per token)
     AssertionsForClassTypes.assertThat(
-            pragueGasCalculator.transactionFloorCost(Bytes.repeat((byte) 0x1, 256)))
+            pragueGasCalculator.transactionFloorCost(Bytes.repeat((byte) 0x1, 256), 0))
         .isEqualTo(31240L);
     // floor cost = 21000 (base cost) + 5 + (6 * 4) (tokensInCallData) * 10 (cost per token)
     AssertionsForClassTypes.assertThat(
             pragueGasCalculator.transactionFloorCost(
-                Bytes.fromHexString("0x0001000100010001000101")))
+                Bytes.fromHexString("0x0001000100010001000101"), 5))
         .isEqualTo(21290L);
   }
 }

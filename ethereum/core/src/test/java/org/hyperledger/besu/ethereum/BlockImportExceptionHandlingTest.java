@@ -82,6 +82,7 @@ class BlockImportExceptionHandlingTest {
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
   private final GasCalculator gasCalculator = mock(GasCalculator.class);
+  private final GasLimitCalculator gasLimitCalculator = mock(GasLimitCalculator.class);
   private final FeeMarket feeMarket = mock(FeeMarket.class);
   protected final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
@@ -118,10 +119,10 @@ class BlockImportExceptionHandlingTest {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockHashProcessor()).thenReturn(new FrontierBlockHashProcessor());
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
+    when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
     mainnetBlockValidator =
-        new MainnetBlockValidator(
-            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+        new MainnetBlockValidator(blockHeaderValidator, blockBodyValidator, blockProcessor);
   }
 
   @Test

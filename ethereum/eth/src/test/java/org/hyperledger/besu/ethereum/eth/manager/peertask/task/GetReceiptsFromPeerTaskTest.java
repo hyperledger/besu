@@ -17,12 +17,13 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -75,7 +76,7 @@ public class GetReceiptsFromPeerTaskTest {
     MessageData messageData = task.getRequestMessage();
     GetReceiptsMessage getReceiptsMessage = GetReceiptsMessage.readFrom(messageData);
 
-    Assertions.assertEquals(EthPV63.GET_RECEIPTS, getReceiptsMessage.getCode());
+    Assertions.assertEquals(EthProtocolMessages.GET_RECEIPTS, getReceiptsMessage.getCode());
     Iterable<Hash> hashesInMessage = getReceiptsMessage.hashes();
     List<Hash> expectedHashes =
         List.of(
@@ -125,7 +126,8 @@ public class GetReceiptsFromPeerTaskTest {
                 List.of(receiptForBlock2),
                 List.of(receiptForBlock3),
                 List.of(
-                    new TransactionReceipt(1, 101112, Collections.emptyList(), Optional.empty()))));
+                    new TransactionReceipt(1, 101112, Collections.emptyList(), Optional.empty()))),
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
 
     Assertions.assertThrows(
         InvalidPeerTaskResponseException.class, () -> task.processResponse(receiptsMessage));
@@ -161,7 +163,8 @@ public class GetReceiptsFromPeerTaskTest {
     ReceiptsMessage receiptsMessage =
         ReceiptsMessage.create(
             List.of(
-                List.of(receiptForBlock1), List.of(receiptForBlock2), List.of(receiptForBlock3)));
+                List.of(receiptForBlock1), List.of(receiptForBlock2), List.of(receiptForBlock3)),
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
 
     Map<BlockHeader, List<TransactionReceipt>> resultMap = task.processResponse(receiptsMessage);
 
@@ -180,7 +183,10 @@ public class GetReceiptsFromPeerTaskTest {
 
     GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(List.of(blockHeader1), null);
 
-    ReceiptsMessage receiptsMessage = ReceiptsMessage.create(Collections.emptyList());
+    ReceiptsMessage receiptsMessage =
+        ReceiptsMessage.create(
+            Collections.emptyList(),
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
 
     Map<BlockHeader, List<TransactionReceipt>> resultMap = task.processResponse(receiptsMessage);
 

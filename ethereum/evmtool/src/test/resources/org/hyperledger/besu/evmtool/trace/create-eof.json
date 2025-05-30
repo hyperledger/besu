@@ -1,6 +1,7 @@
 {
   "cli": [
     "--notime",
+    "--trace.noeip-3155",
     "--json",
     "--create",
     "--code",
@@ -8,18 +9,18 @@
     "--coinbase",
     "4444588443C3A91288C5002483449ABA1054192B",
     "--fork",
-    "Osaka"
+    "FutureEips"
   ],
   "stdin": "",
   "stdout": [
-    {"pc":0,"section":0,"op":95,"gas":"0x2540be400","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":1,"section":0,"op":53,"gas":"0x2540be3fe","gasCost":"0x3","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"CALLDATALOAD"},
-    {"pc":2,"section":0,"op":95,"gas":"0x2540be3fb","gasCost":"0x2","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000"],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":3,"section":0,"op":95,"gas":"0x2540be3f9","gasCost":"0x2","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":4,"section":0,"op":161,"gas":"0x2540be3f7","gasCost":"0x2ee","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0","0x0"],"depth":1,"refund":0,"opName":"LOG1"},
-    {"pc":5,"section":0,"op":95,"gas":"0x2540be109","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":6,"section":0,"op":95,"gas":"0x2540be107","gasCost":"0x2","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":7,"section":0,"op":238,"immediate":"0x00","gas":"0x2540be105","gasCost":"0x0","memSize":0,"stack":["0x0","0x0"],"depth":1,"refund":0,"opName":"RETURNCONTRACT"},
-    {"stateRoot":"0x9790b070a5749acec6a7252a867f795df3c2cb5b800fb509ea259a1c0b5d96c1","output":"0x","gasUsed":"0x129b","pass":true,"fork":"Osaka"}
+    {"pc":24,"section":0,"op":"0x5f","gas":10000000000,"gasCost":2,"memSize":0,"stack":[],"depth":1,"functionDepth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":25,"section":0,"op":"0x35","gas":9999999998,"gasCost":3,"memSize":0,"stack":["0x0"],"depth":1,"functionDepth":1,"refund":0,"opName":"CALLDATALOAD"},
+    {"pc":26,"section":0,"op":"0x5f","gas":9999999995,"gasCost":2,"memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000"],"depth":1,"functionDepth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":27,"section":0,"op":"0x5f","gas":9999999993,"gasCost":2,"memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0"],"depth":1,"functionDepth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":28,"section":0,"op":"0xa1","gas":9999999991,"gasCost":750,"memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0","0x0"],"depth":1,"functionDepth":1,"refund":0,"opName":"LOG1"},
+    {"pc":29,"section":0,"op":"0x5f","gas":9999999241,"gasCost":2,"memSize":0,"stack":[],"depth":1,"functionDepth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":30,"section":0,"op":"0x5f","gas":9999999239,"gasCost":2,"memSize":0,"stack":["0x0"],"depth":1,"functionDepth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":31,"section":0,"op":"0xee","immediate":"0x00","gas":9999999237,"gasCost":0,"memSize":0,"stack":["0x0","0x0"],"depth":1,"functionDepth":1,"refund":0,"opName":"RETURNCONTRACT"},
+    {"stateRoot":"0x9790b070a5749acec6a7252a867f795df3c2cb5b800fb509ea259a1c0b5d96c1","output":"0x","gasUsed":"0x129b","pass":true,"fork":"FutureEips"}
   ]
 }
