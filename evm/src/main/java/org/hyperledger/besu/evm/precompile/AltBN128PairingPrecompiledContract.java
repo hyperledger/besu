@@ -31,10 +31,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nonnull;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,10 +102,10 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     return (pairingGasCost * parameters) + baseGasCost;
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
     if (input.isEmpty()) {
       return PrecompileContractResult.success(TRUE);
     }
@@ -151,7 +151,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     return res.cachedResult();
   }
 
-  @Nonnull
+  @NotNull
   private static PrecompileContractResult computeDefault(final Bytes input) {
     final int parameters = input.size() / PARAMETER_LENGTH;
     final List<AltBn128Point> a = new ArrayList<>();

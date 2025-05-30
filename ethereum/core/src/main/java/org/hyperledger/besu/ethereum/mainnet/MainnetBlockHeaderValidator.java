@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -181,7 +182,9 @@ public final class MainnetBlockHeaderValidator {
   }
 
   public static BlockHeaderValidator.Builder mergeBlockHeaderValidator(
-      final FeeMarket feeMarket, final GasCalculator gasCalculator) {
+      final FeeMarket feeMarket,
+      final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator) {
 
     var baseFeeMarket = (BaseFeeMarket) feeMarket;
 
@@ -200,13 +203,18 @@ public final class MainnetBlockHeaderValidator {
   }
 
   public static BlockHeaderValidator.Builder noBlobBlockHeaderValidator(
-      final FeeMarket feeMarket, final GasCalculator gasCalculator) {
-    return mergeBlockHeaderValidator(feeMarket, gasCalculator).addRule(new NoBlobRule());
+      final FeeMarket feeMarket,
+      final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator) {
+    return mergeBlockHeaderValidator(feeMarket, gasCalculator, gasLimitCalculator)
+        .addRule(new NoBlobRule());
   }
 
   public static BlockHeaderValidator.Builder blobAwareBlockHeaderValidator(
-      final FeeMarket feeMarket, final GasCalculator gasCalculator) {
-    return mergeBlockHeaderValidator(feeMarket, gasCalculator)
-        .addRule(new BlobGasValidationRule(gasCalculator));
+      final FeeMarket feeMarket,
+      final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator) {
+    return mergeBlockHeaderValidator(feeMarket, gasCalculator, gasLimitCalculator)
+        .addRule(new BlobGasValidationRule(gasCalculator, gasLimitCalculator));
   }
 }

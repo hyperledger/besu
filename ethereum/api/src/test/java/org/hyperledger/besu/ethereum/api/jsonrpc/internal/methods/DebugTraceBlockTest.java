@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -99,7 +98,6 @@ public class DebugTraceBlockTest {
                         genesisConfig.getConfigOptions(),
                         Optional.of(BigInteger.valueOf(42)),
                         protocolSpecAdapters,
-                        PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
                         MiningConfiguration.MINING_DISABLED,

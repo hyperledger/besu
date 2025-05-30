@@ -418,10 +418,9 @@ public class T8nExecutor {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                blockHashLookup,
-                false,
-                TransactionValidationParams.processingBlock(),
                 tracer,
+                blockHashLookup,
+                TransactionValidationParams.processingBlock(),
                 blobGasPrice);
         tracerManager.disposeTracer(tracer);
       } catch (Exception e) {
