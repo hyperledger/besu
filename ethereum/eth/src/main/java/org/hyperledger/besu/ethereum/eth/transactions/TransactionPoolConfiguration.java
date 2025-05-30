@@ -87,7 +87,7 @@ public interface TransactionPoolConfiguration {
   long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 25_000_000L;
   int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 4000;
   EnumMap<TransactionType, Integer> DEFAULT_MAX_PRIORITIZED_TRANSACTIONS_BY_TYPE =
-      new EnumMap<>(Map.of(TransactionType.BLOB, 18));
+      new EnumMap<>(Map.of(TransactionType.BLOB, 20));
   int DEFAULT_MAX_FUTURE_BY_SENDER = 200;
   Implementation DEFAULT_TX_POOL_IMPLEMENTATION = Implementation.LAYERED;
   Set<Address> DEFAULT_PRIORITY_SENDERS = Set.of();
