@@ -65,6 +65,9 @@ dependencies {
     api project(':evm')
     api project(':metrics:core')
     api project(':plugin-api')
+    api project(':services:kvstore')
+    api project(':services:pipeline')
+    api project(':services:tasks')
     api project(':testutil')
     api project(':util')
 
