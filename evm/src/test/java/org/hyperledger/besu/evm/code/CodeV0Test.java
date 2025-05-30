@@ -32,8 +32,7 @@ import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import javax.annotation.Nonnull;
-
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,7 +69,7 @@ class CodeV0Test {
     Mockito.verify(getsCached, times(1)).calculateJumpDests();
   }
 
-  @Nonnull
+  @NotNull
   private MessageFrame createJumpFrame(final CodeV0 getsCached) {
     final MessageFrame frame =
         MessageFrame.builder()
