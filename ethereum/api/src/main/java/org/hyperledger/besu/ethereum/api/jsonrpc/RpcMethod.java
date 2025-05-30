@@ -57,6 +57,7 @@ public enum RpcMethod {
   ENGINE_GET_PAYLOAD_V2("engine_getPayloadV2"),
   ENGINE_GET_PAYLOAD_V3("engine_getPayloadV3"),
   ENGINE_GET_PAYLOAD_V4("engine_getPayloadV4"),
+  ENGINE_GET_PAYLOAD_V5("engine_getPayloadV5"),
   ENGINE_NEW_PAYLOAD_V1("engine_newPayloadV1"),
   ENGINE_NEW_PAYLOAD_V2("engine_newPayloadV2"),
   ENGINE_NEW_PAYLOAD_V3("engine_newPayloadV3"),

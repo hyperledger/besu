@@ -23,7 +23,7 @@ import org.apache.tuweni.bytes.Bytes48;
 
 /** This class contains the data for a KZG commitment. */
 public class KZGCommitment implements org.hyperledger.besu.datatypes.KZGCommitment {
-  final Bytes48 data;
+  private final Bytes48 data;
 
   /**
    * Constructor for a KZG commitment.

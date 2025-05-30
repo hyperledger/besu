@@ -28,6 +28,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -206,7 +207,8 @@ class BlobSizeTransactionSelectorTest {
             IntStream.range(0, blobCount).mapToObj(i -> new Blob(Bytes.random(32 * 4096))).toList();
         tx.versionedHashes(Optional.of(versionHashes));
         final var blobsWithCommitments =
-            new BlobsWithCommitments(kgzCommitments, blobs, kzgProofs, versionHashes);
+            new BlobsWithCommitments(
+                BlobType.KZG_PROOF, kgzCommitments, blobs, kzgProofs, versionHashes);
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
       } else {
         fail("At least 1 blob is required for blob tx type");

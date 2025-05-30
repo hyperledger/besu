@@ -26,6 +26,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Sha256Hash;
@@ -1246,9 +1247,12 @@ public class Transaction
         blobsWithCommitments.getKzgProofs().stream()
             .map(proof -> new KZGProof(proof.getData().copy()))
             .toList();
-
     return new BlobsWithCommitments(
-        detachedCommitments, detachedBlobs, detachedProofs, versionedHashes);
+        blobsWithCommitments.getBlobType(),
+        detachedCommitments,
+        detachedBlobs,
+        detachedProofs,
+        versionedHashes);
   }
 
   public static class Builder {
@@ -1468,6 +1472,7 @@ public class Transaction
     }
 
     public Builder kzgBlobs(
+        final BlobType blobType,
         final List<KZGCommitment> kzgCommitments,
         final List<Blob> blobs,
         final List<KZGProof> kzgProofs) {
@@ -1478,7 +1483,7 @@ public class Transaction
                 .toList();
       }
       this.blobsWithCommitments =
-          new BlobsWithCommitments(kzgCommitments, blobs, kzgProofs, versionedHashes);
+          new BlobsWithCommitments(blobType, kzgCommitments, blobs, kzgProofs, versionedHashes);
       return this;
     }
 
