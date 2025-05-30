@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.BesuEvents;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -146,8 +145,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     if (!isStarted.get() && snapServerEnabled) {
       // if we are bonsai and full flat, we can provide a worldstate storage:
       var worldStateKeyValueStorage = worldStateStorageCoordinator.worldStateKeyValueStorage();
-      if (worldStateKeyValueStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)
-          && worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)) {
+      if (worldStateKeyValueStorage.getDataStorageFormat().isBonsaiFormat()
+          && (worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)
+              || worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.ARCHIVE))) {
         LOGGER.debug("Starting SnapServer with Bonsai full flat db");
         var bonsaiArchive =
             protocolContext
