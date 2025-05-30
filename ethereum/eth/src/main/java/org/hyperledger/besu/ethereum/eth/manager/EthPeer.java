@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
@@ -27,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
+import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
@@ -53,9 +53,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -509,12 +509,9 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void registerStatusReceived(
-      final Hash hash,
-      final Difficulty td,
-      final int protocolVersion,
-      final PeerConnection connection) {
-    chainHeadState.statusReceived(hash, td);
-    lastProtocolVersion.set(protocolVersion);
+      final StatusMessage statusMessage, final PeerConnection connection) {
+    chainHeadState.statusReceived(statusMessage);
+    lastProtocolVersion.set(statusMessage.protocolVersion());
     statusHasBeenReceivedFromPeer.set(true);
     synchronized (this) {
       connection.setStatusReceived();
@@ -597,6 +594,11 @@ public class EthPeer implements Comparable<EthPeer> {
     chainHeadState.update(blockHash, height);
   }
 
+  public void registerBlockRange(
+      final Hash blockHash, final long height, final long earliestBlockHeight) {
+    chainHeadState.update(blockHash, height, earliestBlockHeight);
+  }
+
   public int outstandingRequests() {
     return requestManagers.values().stream()
         .flatMap(m -> m.values().stream())
@@ -645,14 +647,14 @@ public class EthPeer implements Comparable<EthPeer> {
         System.currentTimeMillis() - connection.getInitiatedAt());
   }
 
-  @Nonnull
+  @NotNull
   public String getLoggableId() {
     // 8 bytes plus the 0x prefix is 18 characters
     return nodeId().toString().substring(0, 18) + "...";
   }
 
   @Override
-  public int compareTo(final @Nonnull EthPeer ethPeer) {
+  public int compareTo(final @NotNull EthPeer ethPeer) {
     final int repCompare = this.reputation.compareTo(ethPeer.reputation);
     if (repCompare != 0) return repCompare;
 

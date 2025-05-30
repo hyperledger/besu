@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -102,7 +103,9 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
   private final MetricsSystem metricsSystem;
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
-  private final RocksDBConfiguration configuration;
+
+  /** RocksDB DB configuration */
+  protected final RocksDBConfiguration configuration;
 
   /** RocksDB DB options */
   protected DBOptions options;
@@ -227,14 +230,46 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
             .setTableFormatConfig(basedTableConfig)
             .setLevelCompactionDynamicLevelBytes(dynamicLevelBytes);
     if (segment.containsStaticData()) {
-      options
-          .setEnableBlobFiles(true)
-          .setEnableBlobGarbageCollection(segment.isStaticDataGarbageCollectionEnabled())
-          .setMinBlobSize(100)
-          .setBlobCompressionType(CompressionType.LZ4_COMPRESSION);
+      configureBlobDBForSegment(segment, configuration, options);
     }
 
     return new ColumnFamilyDescriptor(segment.getId(), options);
+  }
+
+  private static void configureBlobDBForSegment(
+      final SegmentIdentifier segment,
+      final RocksDBConfiguration configuration,
+      final ColumnFamilyOptions options) {
+    options
+        .setEnableBlobFiles(true)
+        .setEnableBlobGarbageCollection(
+            isStaticDataGarbageCollectionEnabled(segment, configuration))
+        .setMinBlobSize(100)
+        .setBlobCompressionType(CompressionType.LZ4_COMPRESSION);
+    if (configuration.getBlobGarbageCollectionAgeCutoff().isPresent()) {
+      // fraction of file age to be considered eligible for GC;
+      // 0.25 = oldest 25% of files eligible;
+      // 1 = all files eligible
+      options.setBlobGarbageCollectionAgeCutoff(
+          configuration.getBlobGarbageCollectionAgeCutoff().get());
+    }
+    if (configuration.getBlobGarbageCollectionForceThreshold().isPresent()) {
+      // fraction of garbage in eligible blob files to trigger GC;
+      // 1 = trigger when eligible file contains 100% garbage;
+      // 0 = trigger for all eligible files;
+      options.setBlobGarbageCollectionForceThreshold(
+          configuration.getBlobGarbageCollectionForceThreshold().get());
+    }
+  }
+
+  private static boolean isStaticDataGarbageCollectionEnabled(
+      final SegmentIdentifier segment, final RocksDBConfiguration configuration) {
+    if (BLOCKCHAIN.getName().equals(segment.getName())
+        && configuration.isBlockchainGarbageCollectionEnabled()) {
+      return true;
+    } else {
+      return segment.isStaticDataGarbageCollectionEnabled();
+    }
   }
 
   /***

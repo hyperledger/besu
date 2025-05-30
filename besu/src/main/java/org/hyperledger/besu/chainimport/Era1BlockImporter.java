@@ -127,7 +127,8 @@ public class Era1BlockImporter implements Closeable {
                               Bytes.wrap(executionBlockReceipts.receipts()), false);
                       final List<TransactionReceipt> receiptsForBlock = new ArrayList<>();
                       input.readList(
-                          (in) -> receiptsForBlock.add(TransactionReceiptDecoder.readFrom(in)));
+                          (in) ->
+                              receiptsForBlock.add(TransactionReceiptDecoder.readFrom(in, false)));
                       return receiptsForBlock;
                     }));
           }

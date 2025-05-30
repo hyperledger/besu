@@ -98,15 +98,15 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingOperatorSubCommandWithoutSubSubcommandMustDisplayUsage() {
     parseCommand(OperatorSubCommand.COMMAND_NAME);
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_OPERATOR_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_OPERATOR_USAGE);
   }
 
   @Test
   public void callingOperatorCommandHelpMustDisplayUsage() {
     parseCommand(OperatorSubCommand.COMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_OPERATOR_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_OPERATOR_USAGE);
   }
 
   @Test

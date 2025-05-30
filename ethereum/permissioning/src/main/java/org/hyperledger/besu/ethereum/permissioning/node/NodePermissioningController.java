@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.permissioning.node;
 
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
@@ -30,32 +29,18 @@ public class NodePermissioningController {
 
   private static final Logger LOG = LoggerFactory.getLogger(NodePermissioningController.class);
 
-  private final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider;
   private Optional<ContextualNodePermissioningProvider> insufficientPeersPermissioningProvider =
       Optional.empty();
   private final List<NodeConnectionPermissioningProvider> providers;
   private final Subscribers<Runnable> permissioningUpdateSubscribers = Subscribers.create();
 
-  public NodePermissioningController(
-      final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider,
-      final List<NodeConnectionPermissioningProvider> providers) {
+  public NodePermissioningController(final List<NodeConnectionPermissioningProvider> providers) {
     this.providers = providers;
-    this.syncStatusNodePermissioningProvider = syncStatusNodePermissioningProvider;
   }
 
   public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
 
     LOG.trace("Node permissioning: Checking {} -> {}", sourceEnode, destinationEnode);
-
-    if (syncStatusNodePermissioningProvider
-        .map(p -> !p.hasReachedSync() && p.isConnectionPermitted(sourceEnode, destinationEnode))
-        .orElse(false)) {
-
-      LOG.trace(
-          "Node permissioning - Sync Status: Permitted {} -> {}", sourceEnode, destinationEnode);
-
-      return true;
-    }
 
     final Optional<Boolean> insufficientPeerPermission =
         insufficientPeersPermissioningProvider.flatMap(
@@ -72,27 +57,15 @@ public class NodePermissioningController {
 
       return permitted;
     }
+    for (final NodeConnectionPermissioningProvider provider : providers) {
+      if (!provider.isConnectionPermitted(sourceEnode, destinationEnode)) {
+        LOG.trace(
+            "Node permissioning - {}: Rejected {} -> {}",
+            provider.getClass().getSimpleName(),
+            sourceEnode,
+            destinationEnode);
 
-    if (syncStatusNodePermissioningProvider.isPresent()
-        && !syncStatusNodePermissioningProvider
-            .get()
-            .isConnectionPermitted(sourceEnode, destinationEnode)) {
-
-      LOG.trace(
-          "Node permissioning - Sync Status: Rejected {} -> {}", sourceEnode, destinationEnode);
-
-      return false;
-    } else {
-      for (final NodeConnectionPermissioningProvider provider : providers) {
-        if (!provider.isConnectionPermitted(sourceEnode, destinationEnode)) {
-          LOG.trace(
-              "Node permissioning - {}: Rejected {} -> {}",
-              provider.getClass().getSimpleName(),
-              sourceEnode,
-              destinationEnode);
-
-          return false;
-        }
+        return false;
       }
     }
 
@@ -107,10 +80,6 @@ public class NodePermissioningController {
         () -> permissioningUpdateSubscribers.forEach(Runnable::run));
     this.insufficientPeersPermissioningProvider =
         Optional.of(insufficientPeersPermissioningProvider);
-  }
-
-  public Optional<SyncStatusNodePermissioningProvider> getSyncStatusNodePermissioningProvider() {
-    return syncStatusNodePermissioningProvider;
   }
 
   public List<NodeConnectionPermissioningProvider> getProviders() {

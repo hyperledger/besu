@@ -202,7 +202,11 @@ public abstract class AbstractIsolationTests {
                         1024 /* MAX_OPEN_FILES*/,
                         4 /*BACKGROUND_THREAD_COUNT*/,
                         8388608 /*CACHE_CAPACITY*/,
-                        false),
+                        false,
+                        false,
+                        false,
+                        Optional.empty(),
+                        Optional.empty()),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(

@@ -26,9 +26,9 @@ import org.hyperledger.besu.nativelib.arithmetic.LibArithmetic;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.slf4j.Logger;
@@ -95,10 +95,10 @@ public class BigIntegerModularExponentiationPrecompiledContract
     return gasCalculator().modExpGasCost(input);
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
     if (useNative) {
       return computeNative(input);
     } else {
@@ -112,7 +112,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
    * @param input the input
    * @return the precompile contract result
    */
-  @Nonnull
+  @NotNull
   public PrecompileContractResult computeDefault(final Bytes input) {
     final int baseLength = clampedToInt(baseLength(input));
     final int exponentLength = clampedToInt(exponentLength(input));
@@ -247,7 +247,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
    * @param input the input
    * @return the precompile contract result
    */
-  public PrecompileContractResult computeNative(final @Nonnull Bytes input) {
+  public PrecompileContractResult computeNative(final @NotNull Bytes input) {
     final int modulusLength = clampedToInt(modulusLength(input));
     final IntByReference o_len = new IntByReference(modulusLength);
 

@@ -19,14 +19,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.SavePreMergeHeadersStep;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -34,18 +38,22 @@ import org.junit.jupiter.api.Test;
 
 class SavePreMergeHeadersStepTest {
   private MutableBlockchain blockchain;
+  private ConsensusContext consensusContext;
   private SavePreMergeHeadersStep savePreMergeHeadersStep;
-  private static final long MERGE_BLOCK_NUMBER = 1000;
+  private static final long FIRST_POS_BLOCK_NUMBER = 1000;
 
   @BeforeEach
   void setUp() {
     blockchain = mock(MutableBlockchain.class);
-    savePreMergeHeadersStep = new SavePreMergeHeadersStep(blockchain, MERGE_BLOCK_NUMBER);
+    consensusContext = mock(ConsensusContext.class);
+    savePreMergeHeadersStep =
+        new SavePreMergeHeadersStep(
+            blockchain, true, FIRST_POS_BLOCK_NUMBER, Optional.of(consensusContext));
   }
 
   @Test
-  void shouldSaveFullBlockForMergeBlock() {
-    BlockHeader blockHeader = createMockBlockHeader(MERGE_BLOCK_NUMBER);
+  void shouldSaveFullBlockForFirstPoSBlock() {
+    BlockHeader blockHeader = createMockBlockHeader(FIRST_POS_BLOCK_NUMBER);
     Difficulty difficulty = mock(Difficulty.class);
     when(blockchain.calculateTotalDifficulty(blockHeader)).thenReturn(difficulty);
 
@@ -56,8 +64,8 @@ class SavePreMergeHeadersStepTest {
   }
 
   @Test
-  void shouldNotStoreOnlyBlockHeaderWhenPostMergeBlock() {
-    BlockHeader blockHeader = createMockBlockHeader(MERGE_BLOCK_NUMBER + 1);
+  void shouldSaveFullBlockWhenPostMergeBlock() {
+    BlockHeader blockHeader = createMockBlockHeader(FIRST_POS_BLOCK_NUMBER + 1);
 
     Stream<BlockHeader> nextProcessingStateInput = savePreMergeHeadersStep.apply(blockHeader);
 
@@ -66,9 +74,10 @@ class SavePreMergeHeadersStepTest {
   }
 
   @Test
-  void shouldNotSaveIfCheckpointIsGenesisBlock() {
+  void shouldSaveFullBlocksIfCheckpointIsGenesisBlock() {
     savePreMergeHeadersStep =
-        new SavePreMergeHeadersStep(blockchain, BlockHeader.GENESIS_BLOCK_NUMBER);
+        new SavePreMergeHeadersStep(
+            blockchain, true, BlockHeader.GENESIS_BLOCK_NUMBER, Optional.of(consensusContext));
 
     BlockHeader block0 = createMockBlockHeader(0);
     BlockHeader block1 = createMockBlockHeader(1);
@@ -86,7 +95,12 @@ class SavePreMergeHeadersStepTest {
 
   @Test
   void shouldStoreOnlyBlockHeaderWhenPreMergeBlock() {
-    BlockHeader blockHeader = createMockBlockHeader(MERGE_BLOCK_NUMBER - 1);
+    shouldStoreOnlyHeaderWhenPreMergeBlockNumber(1);
+    shouldStoreOnlyHeaderWhenPreMergeBlockNumber(FIRST_POS_BLOCK_NUMBER - 1);
+  }
+
+  private void shouldStoreOnlyHeaderWhenPreMergeBlockNumber(final long blockNumber) {
+    BlockHeader blockHeader = createMockBlockHeader(blockNumber);
     Difficulty difficulty = mock(Difficulty.class);
     when(blockchain.calculateTotalDifficulty(blockHeader)).thenReturn(difficulty);
 
@@ -96,9 +110,29 @@ class SavePreMergeHeadersStepTest {
     verify(blockchain).unsafeStoreHeader(blockHeader, difficulty);
   }
 
+  @Test
+  void shouldSetIsPostMergeWhenLastPoWBlock() {
+    BlockHeader lastPoWBlockHeader = createMockBlockHeader(FIRST_POS_BLOCK_NUMBER - 1);
+    when(blockchain.getTotalDifficultyByHash(lastPoWBlockHeader.getHash()))
+        .thenReturn(Optional.of(Difficulty.ONE));
+    savePreMergeHeadersStep.apply(lastPoWBlockHeader);
+    verify(consensusContext).setIsPostMerge(Difficulty.ONE);
+  }
+
+  @Test
+  void shouldNotSetIsPostMergeWhenPoAChain() {
+    BlockHeader lastPoWBlockHeader = createMockBlockHeader(FIRST_POS_BLOCK_NUMBER - 1);
+    final SavePreMergeHeadersStep forPoA =
+        new SavePreMergeHeadersStep(
+            blockchain, false, FIRST_POS_BLOCK_NUMBER, Optional.of(consensusContext));
+    forPoA.apply(lastPoWBlockHeader);
+    verifyNoInteractions(consensusContext);
+  }
+
   private BlockHeader createMockBlockHeader(final long blockNumber) {
     BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getNumber()).thenReturn(blockNumber);
+    when(blockHeader.getHash()).thenReturn(Hash.EMPTY);
     return blockHeader;
   }
 }
