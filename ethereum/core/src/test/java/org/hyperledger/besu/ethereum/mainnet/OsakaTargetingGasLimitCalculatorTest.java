@@ -37,15 +37,24 @@ class OsakaTargetingGasLimitCalculatorTest {
   private final OsakaGasCalculator osakaGasCalculator = new OsakaGasCalculator();
   private final BaseFeeMarket feeMarket = FeeMarket.cancunDefault(0L, Optional.empty());
 
-  private final OsakaTargetingGasLimitCalculator osakaTargetingGasLimitCalculator =
-      new OsakaTargetingGasLimitCalculator(0L, feeMarket, osakaGasCalculator);
-
-  @ParameterizedTest(name = "{index} - parent gas {0}, used gas {1}, new excess {2}")
+  @ParameterizedTest(
+      name = "{index} - parent gas {0}, used gas {1}, parent base fee per gas {2}, new excess {3}")
   @MethodSource("osakaExcessBlobGasTestCases")
   public void shouldCalculateOsakaExcessBlobGasCorrectly(
-      final long parentExcess, final long used, final long expected) {
+      final long parentExcess,
+      final long used,
+      final long parentBaseFeePerGas,
+      final long expected) {
+    int maxBlobs = 10;
+    int targetBlobs = 9;
+    final OsakaTargetingGasLimitCalculator osakaTargetingGasLimitCalculator =
+        new OsakaTargetingGasLimitCalculator(
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+
     final long usedBlobGas = osakaGasCalculator.blobGasCost(used);
-    assertThat(osakaTargetingGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas, 0L))
+    assertThat(
+            osakaTargetingGasLimitCalculator.computeExcessBlobGas(
+                parentExcess, usedBlobGas, parentBaseFeePerGas))
         .isEqualTo(expected);
   }
 
@@ -53,17 +62,19 @@ class OsakaTargetingGasLimitCalculatorTest {
     long targetGasPerBlock = TARGET_BLOB_GAS_PER_BLOCK_OSAKA;
     return List.of(
         // Case 1: Below target, should return 0
-        Arguments.of(0L, 0L, 0L),
-        Arguments.of(targetGasPerBlock - 1, 0L, 0L),
-        Arguments.of(0L, 8, 0L), // 8 blobs is below target (9)
+        Arguments.of(0L, 0L, 0L, 0L),
+        Arguments.of(targetGasPerBlock - 1, 0L, 0L, 0L),
+        Arguments.of(0L, 8, 0L, 0L), // 8 blobs is below target (9)
 
-        // Case 2: Above target, BLOB_BASE_COST * baseFee > GAS_PER_BLOB * blobFee
-        // This should use the formula: parentExcess + parentBlobGasUsed * (max - target) / max
-        Arguments.of(targetGasPerBlock, 1, 1245184L),
-
-        // Case 3: Above target, BLOB_BASE_COST * baseFee <= GAS_PER_BLOB * blobFee
+        // Case 2: Above target, BLOB_BASE_COST * baseFee <= GAS_PER_BLOB * blobFee
         // This should use the formula: parentExcess + parentBlobGasUsed - target
-        Arguments.of(targetGasPerBlock * 2, 10, 2490368L));
+        Arguments.of(targetGasPerBlock * 2, 10, 17L, 2490368L),
+
+        // Case 3: Above target, BLOB_BASE_COST * baseFee > GAS_PER_BLOB * blobFee
+        // This should use the formula: parentExcess + parentBlobGasUsed * (max - target) / max
+        Arguments.of(targetGasPerBlock, 1, 0L, osakaGasCalculator.getBlobGasPerBlob()),
+        Arguments.of(targetGasPerBlock, 10, 1L, 1310720L),
+        Arguments.of(targetGasPerBlock, 10, 16L, 1310720L));
   }
 
   @Test
@@ -94,6 +105,8 @@ class OsakaTargetingGasLimitCalculatorTest {
     var calculator =
         new OsakaTargetingGasLimitCalculator(
             0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+    assertThat(calculator.getMaxBlobsPerBlock()).isEqualTo(maxBlobs);
+    assertThat(calculator.getTargetBlobsPerBlock()).isEqualTo(targetBlobs);
 
     long parentExcessBlobGas = calculator.getTargetBlobGasPerBlock();
     long parentBlobGasUsed = osakaGasCalculator.getBlobGasPerBlob() * 2;

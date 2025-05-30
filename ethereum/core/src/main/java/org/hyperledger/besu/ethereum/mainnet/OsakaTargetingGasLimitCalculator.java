@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -74,19 +74,25 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
     // get_base_fee_per_blob_gas(parent):
     //        return parent.excess_blob_gas + parent.blob_gas_used * (blobSchedule.max -
     // blobSchedule.target) // blobSchedule.max
+    System.out.println("getBlobGasPerBlob() " + getBlobGasPerBlob());
+    System.out.println("getTargetBlobsPerBlock() " + getTargetBlobsPerBlock());
+    System.out.println("getMaxBlobsPerBlock() " + getMaxBlobsPerBlock());
+    System.out.println(
+        "BLOB_BASE_COST * parentBaseFeePerGas " + (BLOB_BASE_COST * parentBaseFeePerGas));
+    System.out.println(
+        "getBlobGasPerBlob() * baseFeeBlobGasLong " + (getBlobGasPerBlob() * baseFeeBlobGasLong));
+    System.out.println("BLOB_BASE_COST " + BLOB_BASE_COST);
     if (BLOB_BASE_COST * parentBaseFeePerGas > getBlobGasPerBlob() * baseFeeBlobGasLong) {
-      System.out.println("getBlobGasPerBlob() *" + getBlobGasPerBlob());
-      System.out.println("getTargetBlobsPerBlock() *" + getTargetBlobsPerBlock());
-      System.out.println("getMaxBlobsPerBlock() *" + getMaxBlobsPerBlock());
 
       System.out.println(
           "return 2nd option = "
               + currentExcessBlobGas
-              + "*"
-              + +(getMaxBlobsPerBlock() - getTargetBlobsPerBlock()) / getMaxBlobsPerBlock());
-      return currentExcessBlobGas
-          * (getMaxBlobsPerBlock() - getTargetBlobsPerBlock())
-          / getMaxBlobsPerBlock();
+              + " * "
+              + (getMaxBlobsPerBlock() - getTargetBlobsPerBlock()) / getMaxBlobsPerBlock());
+      return parentExcessBlobGas
+          + parentBlobGasUsed
+              * (getMaxBlobsPerBlock() - getTargetBlobsPerBlock())
+              / getMaxBlobsPerBlock();
 
     } else {
       System.out.println(
