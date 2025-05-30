@@ -537,6 +537,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private void updateFinalized(final Hash finalizedHash) {
+    // If finalizedHash is already set, do nothing
     if (mergeContext
         .getFinalized()
         .map(BlockHeader::getHash)
@@ -549,9 +550,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return;
     }
 
+    if (finalizedHash.equals(Hash.ZERO)) {
+      LOG.warn("Received zero hash as finalized block. Ignoring...");
+      return;
+    }
+
     protocolContext
         .getBlockchain()
         .getBlockHeader(finalizedHash)
+        // Check if the finalized block exists in the blockchain
         .ifPresentOrElse(
             finalizedHeader -> {
               LOG.atDebug()
