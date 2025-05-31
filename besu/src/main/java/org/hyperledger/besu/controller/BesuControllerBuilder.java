@@ -217,6 +217,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** When enabled, round changes on f+1 RC messages from higher rounds */
   protected boolean isEarlyRoundChangeEnabled = false;
 
+  /** When enabled, qbft recovery for nodes coming up is faster */
+  protected boolean isFastRecoveryEnabled = false;
+
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
 
@@ -537,6 +540,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   public BesuControllerBuilder isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
     this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
+    return this;
+  }
+
+  /**
+   * set fast recovery enabled for QBFT consensus
+   *
+   * @param fastRecoveryEnabled whether to enable fast recovery
+   * @return the besu controller
+   */
+  public BesuControllerBuilder isFastRecoveryEnabled(final boolean fastRecoveryEnabled) {
+    this.isFastRecoveryEnabled = fastRecoveryEnabled;
     return this;
   }
 
