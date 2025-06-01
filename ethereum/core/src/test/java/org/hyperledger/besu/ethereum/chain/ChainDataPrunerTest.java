@@ -29,8 +29,8 @@ import java.util.Optional;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -203,7 +203,7 @@ public class ChainDataPrunerTest {
     @Override
     public void shutdown() {}
 
-    @Nonnull
+    @NotNull
     @Override
     public List<Runnable> shutdownNow() {
       return List.of();
@@ -220,12 +220,12 @@ public class ChainDataPrunerTest {
     }
 
     @Override
-    public boolean awaitTermination(final long timeout, final @Nonnull TimeUnit unit) {
+    public boolean awaitTermination(final long timeout, final @NotNull TimeUnit unit) {
       return true;
     }
 
     @Override
-    public void execute(final @Nonnull Runnable command) {
+    public void execute(final @NotNull Runnable command) {
       command.run();
     }
   }
