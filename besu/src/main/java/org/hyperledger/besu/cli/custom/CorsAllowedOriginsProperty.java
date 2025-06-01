@@ -23,10 +23,10 @@ import java.util.List;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.annotation.Nonnull;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import jakarta.validation.constraints.NotNull;
 
 /** The Cors allowed origins property used in CLI */
 public class CorsAllowedOriginsProperty extends AbstractList<String> {
@@ -37,7 +37,7 @@ public class CorsAllowedOriginsProperty extends AbstractList<String> {
   public CorsAllowedOriginsProperty() {}
 
   @Override
-  @Nonnull
+  @NotNull
   public Iterator<String> iterator() {
     if (domains.size() == 1 && domains.get(0).equals("none")) {
       return Collections.emptyIterator();

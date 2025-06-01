@@ -117,6 +117,8 @@ dependencies {
     api 'io.consensys.tuweni:tuweni-toml:2.7.0'
     api 'io.consensys.tuweni:tuweni-units:2.7.0'
 
+    api 'jakarta.validation:jakarta.validation-api:3.0.2'
+
     api 'javax.inject:javax.inject:1'
 
     api 'net.java.dev.jna:jna:5.16.0'

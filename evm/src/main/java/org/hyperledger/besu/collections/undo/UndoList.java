@@ -20,7 +20,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import javax.annotation.Nonnull;
+
+import jakarta.validation.constraints.NotNull;
 
 /**
  * A list that supports rolling back the list to a prior state.
@@ -164,7 +165,7 @@ public class UndoList<V> implements List<V>, Undoable {
   }
 
   @Override
-  public boolean containsAll(final @Nonnull Collection<?> c) {
+  public boolean containsAll(final @NotNull Collection<?> c) {
     return new HashSet<>(delegate).containsAll(c);
   }
 
@@ -186,7 +187,7 @@ public class UndoList<V> implements List<V>, Undoable {
   }
 
   @Override
-  public boolean removeAll(final @Nonnull Collection<?> c) {
+  public boolean removeAll(final @NotNull Collection<?> c) {
     HashSet<?> hs = new HashSet<>(c);
     ListIterator<V> iter = delegate.listIterator();
     boolean updated = false;
@@ -202,7 +203,7 @@ public class UndoList<V> implements List<V>, Undoable {
   }
 
   @Override
-  public boolean retainAll(final @Nonnull Collection<?> c) {
+  public boolean retainAll(final @NotNull Collection<?> c) {
     HashSet<?> hs = new HashSet<>(c);
     ListIterator<V> iter = delegate.listIterator();
     boolean updated = false;
@@ -270,7 +271,7 @@ public class UndoList<V> implements List<V>, Undoable {
   }
 
   @Override
-  public <T> T[] toArray(final @Nonnull T[] a) {
+  public <T> T[] toArray(final @NotNull T[] a) {
     return delegate.toArray(a);
   }
 
