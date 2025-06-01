@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
-import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerClientName;
@@ -557,12 +556,21 @@ public class EthPeers implements PeerSelector {
 
   private void ethPeerStatusExchanged(final EthPeer peer) {
     // We have a connection to a peer that is on the right chain and is willing to connect to us.
-    // Find out what the EthPeer block height is and whether it can serve snap data (if we are doing
-    // snap sync)
     LOG.debug("Peer {} status exchanged", peer);
+
+    // Only track the chain head if the peer is not Eth69 compatible. With Eth69, the status message
+    // contains the chain head information, so we don't need to fetch it separately.
+    if (!EthProtocol.isEth69Compatible(peer.getMaxAgreedCapability())) {
+      checkChainHead(peer);
+    }
+
+    // If we are doing snap sync, check if the peer is a snap server
+    checkSnapServer(peer);
+  }
+
+  private void checkChainHead(final EthPeer peer) {
     assert tracker != null : "ChainHeadTracker must be set before EthPeers can be used";
     CompletableFuture<BlockHeader> future = tracker.getBestHeaderFromPeer(peer);
-
     future.whenComplete(
         (peerHeadBlockHeader, error) -> {
           if (peerHeadBlockHeader == null) {
@@ -596,41 +604,44 @@ public class EthPeers implements PeerSelector {
             }
 
             peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
-            CompletableFuture<Void> isServingSnapFuture;
-            if (syncMode == SyncMode.SNAP || syncMode == SyncMode.CHECKPOINT) {
-              // even if we have finished the snap sync, we still want to know if the peer is a snap
-              // server
-              isServingSnapFuture =
-                  CompletableFuture.runAsync(
-                      () -> {
-                        try {
-                          checkIsSnapServer(peer, peerHeadBlockHeader);
-                        } catch (Exception e) {
-                          throw new RuntimeException(e);
-                        }
-                      });
-            } else {
-              isServingSnapFuture = CompletableFuture.completedFuture(null);
-            }
-            isServingSnapFuture.thenRun(
-                () -> {
-                  if (!peer.getConnection().isDisconnected() && addPeerToEthPeers(peer)) {
-                    connectedPeersCounter.inc();
-                    connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
-                  }
-                });
           }
         });
   }
 
-  private void checkIsSnapServer(final EthPeer peer, final BlockHeader peersHeadBlockHeader) {
+  private void checkSnapServer(final EthPeer peer) {
+    CompletableFuture<Void> isServingSnapFuture;
+    if (syncMode == SyncMode.SNAP || syncMode == SyncMode.CHECKPOINT) {
+      // even if we have finished the snap sync, we still want to know if the peer is a snap
+      // server
+      isServingSnapFuture =
+          CompletableFuture.runAsync(
+              () -> {
+                try {
+                  checkIsSnapServer(peer);
+                } catch (Exception e) {
+                  throw new RuntimeException(e);
+                }
+              });
+    } else {
+      isServingSnapFuture = CompletableFuture.completedFuture(null);
+    }
+    isServingSnapFuture.thenRun(
+        () -> {
+          if (!peer.getConnection().isDisconnected() && addPeerToEthPeers(peer)) {
+            connectedPeersCounter.inc();
+            connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
+          }
+        });
+  }
+
+  private void checkIsSnapServer(final EthPeer peer) {
     if (peer.getAgreedCapabilities().contains(SnapProtocol.SNAP1)) {
       if (snapServerChecker != null) {
         // set that peer is a snap server for doing the test
         peer.setIsServingSnap(true);
         Boolean isServer;
         try {
-          isServer = snapServerChecker.check(peer, peersHeadBlockHeader).get(6L, TimeUnit.SECONDS);
+          isServer = snapServerChecker.check(peer).get(6L, TimeUnit.SECONDS);
         } catch (Exception e) {
           LOG.atTrace()
               .setMessage("Error checking if peer {} is a snap server. Setting to false.")
