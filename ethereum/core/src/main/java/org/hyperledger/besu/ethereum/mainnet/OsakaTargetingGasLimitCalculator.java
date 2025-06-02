@@ -53,20 +53,10 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
     long baseFeeBlobGasLong = baseFeeBlobGas.toLong();
     if (BLOB_BASE_COST * parentBaseFeePerGas > getBlobGasPerBlob() * baseFeeBlobGasLong) {
       return parentExcessBlobGas
-          + parentBlobGasUsed
-              * (getMaxBlobsPerBlock() - getTargetBlobsPerBlock())
-              / getMaxBlobsPerBlock();
+          + parentBlobGasUsed * (maxBlobsPerBlock - targetBlobsPerBlock) / maxBlobsPerBlock;
     } else {
       // same as Cancun
       return currentExcessBlobGas - getTargetBlobGasPerBlock();
     }
-  }
-
-  public int getMaxBlobsPerBlock() {
-    return maxBlobsPerBlock;
-  }
-
-  public int getTargetBlobsPerBlock() {
-    return targetBlobsPerBlock;
   }
 }

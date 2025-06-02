@@ -105,8 +105,8 @@ class OsakaTargetingGasLimitCalculatorTest {
     var calculator =
         new OsakaTargetingGasLimitCalculator(
             0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
-    assertThat(calculator.getMaxBlobsPerBlock()).isEqualTo(maxBlobs);
-    assertThat(calculator.getTargetBlobsPerBlock()).isEqualTo(targetBlobs);
+    assertThat(calculator.maxBlobsPerBlock).isEqualTo(maxBlobs);
+    assertThat(calculator.targetBlobsPerBlock).isEqualTo(targetBlobs);
 
     long parentExcessBlobGas = calculator.getTargetBlobGasPerBlock();
     long parentBlobGasUsed = osakaGasCalculator.getBlobGasPerBlob() * 2;
