@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLError.INVALID_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_ENGINE_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.UNSUPPORTED_FORK;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -181,7 +181,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     // Should return an error response with INVALID_EXECUTION_REQUESTS_PARAMS
     final JsonRpcError jsonRpcError = fromErrorResp(badParam);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getMessage()).isEqualTo(INVALID_EXECUTION_REQUESTS_PARAMS.getMessage());
+    assertThat(jsonRpcError.getMessage()).isEqualTo(INVALID_ENGINE_PARAMS.getMessage());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 

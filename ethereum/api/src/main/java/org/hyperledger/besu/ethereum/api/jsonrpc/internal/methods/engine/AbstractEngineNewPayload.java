@@ -520,7 +520,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       LOG.warn(invalidBlockLogMessage);
     }
     // return ErrorResponse
-    return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
+    return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_ENGINE_PARAMS);
   }
 
   protected EngineStatus getInvalidBlockHashStatus() {
