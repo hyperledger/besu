@@ -557,55 +557,58 @@ public class EthPeers implements PeerSelector {
   private void ethPeerStatusExchanged(final EthPeer peer) {
     // We have a connection to a peer that is on the right chain and is willing to connect to us.
     LOG.debug("Peer {} status exchanged", peer);
+    assert tracker != null : "ChainHeadTracker must be set before EthPeers can be used";
 
-    // Only track the chain head if the peer is not Eth69 compatible. With Eth69, the status message
-    // contains the chain head information, so we don't need to fetch it separately.
-    if (!EthProtocol.isEth69Compatible(peer.getMaxAgreedCapability())) {
-      checkChainHead(peer);
+    // Handle chain head tracking based on protocol compatibility.
+    if (EthProtocol.isEth69Compatible(peer.getMaxAgreedCapability())) {
+      // For Eth69-compatible peers, the chain head information is included in the status message.
+      // Skip fetching the chain head separately and directly check trailing peer requirements.
+      checkTrailingPeerRequirements(peer);
+    } else {
+      // For non-Eth69-compatible peers, fetch the chain head before checking trailing requirements.
+      CompletableFuture<BlockHeader> future = tracker.getBestHeaderFromPeer(peer);
+      future.whenComplete(
+          (peerHeadBlockHeader, error) -> {
+            // If we successfully retrieved the chain head, check trailing peer requirements and
+            // update
+            // the peer's estimated height.
+            if (peerHeadBlockHeader != null) {
+              checkTrailingPeerRequirements(peer);
+              peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
+            } else {
+              LOG.debug(
+                  "Failed to retrieve chain head info. Disconnecting {}... {}",
+                  peer.getLoggableId(),
+                  error);
+              peer.disconnect(
+                  DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
+            }
+          });
     }
 
     // If we are doing snap sync, check if the peer is a snap server
     checkSnapServer(peer);
   }
 
-  private void checkChainHead(final EthPeer peer) {
-    assert tracker != null : "ChainHeadTracker must be set before EthPeers can be used";
-    CompletableFuture<BlockHeader> future = tracker.getBestHeaderFromPeer(peer);
-    future.whenComplete(
-        (peerHeadBlockHeader, error) -> {
-          if (peerHeadBlockHeader == null) {
-            LOG.debug(
-                "Failed to retrieve chain head info. Disconnecting {}... {}",
-                peer.getLoggableId(),
-                error);
-            peer.disconnect(
-                DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
-          } else {
-
-            // we can check trailing peers now
-            final TrailingPeerRequirements trailingPeerRequirements =
-                trailingPeerRequirementsSupplier.get();
-            if (trailingPeerRequirements != null) {
-              if (peer.chainState().getEstimatedHeight()
-                  < trailingPeerRequirements.getMinimumHeightToBeUpToDate()) {
-                if (!(getNumTrailingPeers(trailingPeerRequirements.getMinimumHeightToBeUpToDate())
-                    < trailingPeerRequirements.getMaxTrailingPeers())) {
-                  LOG.atTrace()
-                      .setMessage(
-                          "Adding trailing peer {} would exceed max trailing peers {}. Disconnecting...")
-                      .addArgument(peer.getLoggableId())
-                      .addArgument(trailingPeerRequirements.getMaxTrailingPeers())
-                      .log();
-                  peer.disconnect(
-                      DisconnectMessage.DisconnectReason.USELESS_PEER_EXCEEDS_TRAILING_PEERS);
-                  return;
-                }
-              }
-            }
-
-            peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
-          }
-        });
+  private void checkTrailingPeerRequirements(final EthPeer peer) {
+    // we can check trailing peers now
+    final TrailingPeerRequirements trailingPeerRequirements =
+        trailingPeerRequirementsSupplier.get();
+    if (trailingPeerRequirements != null) {
+      if (peer.chainState().getEstimatedHeight()
+          < trailingPeerRequirements.getMinimumHeightToBeUpToDate()) {
+        if (!(getNumTrailingPeers(trailingPeerRequirements.getMinimumHeightToBeUpToDate())
+            < trailingPeerRequirements.getMaxTrailingPeers())) {
+          LOG.atTrace()
+              .setMessage(
+                  "Adding trailing peer {} would exceed max trailing peers {}. Disconnecting...")
+              .addArgument(peer.getLoggableId())
+              .addArgument(trailingPeerRequirements.getMaxTrailingPeers())
+              .log();
+          peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_EXCEEDS_TRAILING_PEERS);
+        }
+      }
+    }
   }
 
   private void checkSnapServer(final EthPeer peer) {
