@@ -39,9 +39,10 @@ import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ProtocolSpecBuilder {
-  private Function<BlobSchedule, GasCalculator> gasCalculatorBuilder;
+  private Supplier<GasCalculator> gasCalculatorBuilder;
   private GasLimitCalculatorBuilder gasLimitCalculatorBuilder;
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
@@ -82,8 +83,7 @@ public class ProtocolSpecBuilder {
   private boolean isReplayProtectionSupported = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
 
-  public ProtocolSpecBuilder gasCalculator(
-      final Function<BlobSchedule, GasCalculator> gasCalculatorBuilder) {
+  public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
     return this;
   }
@@ -305,7 +305,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(blobSchedule, "Missing blob schedule");
 
     final FeeMarket feeMarket = feeMarketBuilder.apply(blobSchedule);
-    final GasCalculator gasCalculator = gasCalculatorBuilder.apply(blobSchedule);
+    final GasCalculator gasCalculator = gasCalculatorBuilder.get();
     final GasLimitCalculator gasLimitCalculator =
         gasLimitCalculatorBuilder.apply(feeMarket, gasCalculator, blobSchedule);
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);

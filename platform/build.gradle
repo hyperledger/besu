@@ -65,6 +65,9 @@ dependencies {
     api project(':evm')
     api project(':metrics:core')
     api project(':plugin-api')
+    api project(':services:kvstore')
+    api project(':services:pipeline')
+    api project(':services:tasks')
     api project(':testutil')
     api project(':util')
 
@@ -116,6 +119,8 @@ dependencies {
     api 'io.consensys.tuweni:tuweni-rlp:2.7.0'
     api 'io.consensys.tuweni:tuweni-toml:2.7.0'
     api 'io.consensys.tuweni:tuweni-units:2.7.0'
+
+    api 'jakarta.validation:jakarta.validation-api:3.0.2'
 
     api 'javax.inject:javax.inject:1'
 

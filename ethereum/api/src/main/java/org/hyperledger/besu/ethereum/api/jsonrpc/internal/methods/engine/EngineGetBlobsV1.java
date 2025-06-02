@@ -31,10 +31,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Arrays;
 import java.util.List;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import io.vertx.core.Vertx;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * #### Specification
@@ -99,7 +99,7 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
-  private @Nonnull List<BlobAndProofV1> getBlobV1Result(final VersionedHash[] versionedHashes) {
+  private @NotNull List<BlobAndProofV1> getBlobV1Result(final VersionedHash[] versionedHashes) {
     return Arrays.stream(versionedHashes)
         .map(transactionPool::getBlobProofBundle)
         .map(this::getBlobAndProofV1)
