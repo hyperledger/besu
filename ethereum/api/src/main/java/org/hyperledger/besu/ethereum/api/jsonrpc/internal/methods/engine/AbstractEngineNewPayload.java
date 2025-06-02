@@ -285,7 +285,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               "Computed block hash %s does not match block hash parameter %s",
               newBlockHeader.getBlockHash(), blockParam.getBlockHash());
       LOG.debug(errorMessage);
-      // this is the only time we want to return INVALID
+      // If the block is invalid, we want to return INVALID
       // from the spec:
       // https://github.com/ethereum/execution-apis/blob/main/src/engine/prague.md#engine_newpayloadv4
       // Given the executionRequests, client software MUST compute the execution requests commitment
@@ -481,7 +481,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             invalidStatus.name(),
             validationError);
     // always log invalid at DEBUG
-    LOG.warn(invalidBlockLogMessage);
+    LOG.debug(invalidBlockLogMessage);
     // periodically log at WARN
     if (lastInvalidWarn + ENGINE_API_LOGGING_THRESHOLD < System.currentTimeMillis()) {
       lastInvalidWarn = System.currentTimeMillis();
@@ -513,7 +513,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             invalidStatus.name(),
             validationError);
     // always log invalid at DEBUG
-    LOG.warn(invalidBlockLogMessage);
+    LOG.debug(invalidBlockLogMessage);
     // periodically log at WARN
     if (lastInvalidWarn + ENGINE_API_LOGGING_THRESHOLD < System.currentTimeMillis()) {
       lastInvalidWarn = System.currentTimeMillis();
