@@ -30,26 +30,16 @@ public class EOFGasCalculator extends OsakaGasCalculator {
 
   /** Instantiates a new EOF Gas Calculator. */
   public EOFGasCalculator() {
-    super();
-  }
-
-  /**
-   * Instantiates a new EOF Gas Calculator
-   *
-   * @param targetBlobsPerBlock the target blobs per block
-   */
-  public EOFGasCalculator(final int targetBlobsPerBlock) {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], targetBlobsPerBlock);
+    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
   }
 
   /**
    * Instantiates a new EOF Gas Calculator
    *
    * @param maxPrecompile the max precompile
-   * @param targetBlobsPerBlock the target blobs per block
    */
-  protected EOFGasCalculator(final int maxPrecompile, final int targetBlobsPerBlock) {
-    super(maxPrecompile, targetBlobsPerBlock);
+  protected EOFGasCalculator(final int maxPrecompile) {
+    super(maxPrecompile);
   }
 
   @Override

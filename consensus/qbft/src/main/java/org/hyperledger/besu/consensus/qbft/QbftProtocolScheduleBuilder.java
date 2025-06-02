@@ -25,7 +25,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -46,7 +45,6 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    *
    * @param config the config
    * @param qbftForksSchedule the qbft forks schedule
-   * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
@@ -60,7 +58,6 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
   public static BftProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
-      final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
@@ -72,7 +69,6 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         .createProtocolSchedule(
             config,
             qbftForksSchedule,
-            privacyParameters,
             isRevertReasonEnabled,
             bftExtraDataCodec,
             evmConfiguration,
@@ -108,7 +104,6 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
     return create(
         config,
         qbftForksSchedule,
-        PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
         evmConfiguration,
@@ -144,7 +139,6 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
     return create(
         config,
         qbftForksSchedule,
-        PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
