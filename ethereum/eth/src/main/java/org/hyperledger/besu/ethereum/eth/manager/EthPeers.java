@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
@@ -559,35 +558,46 @@ public class EthPeers implements PeerSelector {
     LOG.debug("Peer {} status exchanged", peer);
     assert tracker != null : "ChainHeadTracker must be set before EthPeers can be used";
 
+    CompletableFuture<Void> checkHeadBlockFuture;
     // Handle chain head tracking based on protocol compatibility.
     if (EthProtocol.isEth69Compatible(peer.getMaxAgreedCapability())) {
       // For Eth69-compatible peers, the chain head information is included in the status message.
       // Skip fetching the chain head separately and directly check trailing peer requirements.
-      checkTrailingPeerRequirements(peer);
+      checkHeadBlockFuture = CompletableFuture.completedFuture(null);
     } else {
       // For non-Eth69-compatible peers, fetch the chain head before checking trailing requirements.
-      CompletableFuture<BlockHeader> future = tracker.getBestHeaderFromPeer(peer);
-      future.whenComplete(
-          (peerHeadBlockHeader, error) -> {
-            // If we successfully retrieved the chain head, check trailing peer requirements and
-            // update
-            // the peer's estimated height.
-            if (peerHeadBlockHeader != null) {
-              checkTrailingPeerRequirements(peer);
-              peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
-            } else {
-              LOG.debug(
-                  "Failed to retrieve chain head info. Disconnecting {}... {}",
-                  peer.getLoggableId(),
-                  error);
-              peer.disconnect(
-                  DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
-            }
-          });
+      checkHeadBlockFuture =
+          tracker
+              .getBestHeaderFromPeer(peer)
+              .thenApply(
+                  h -> {
+                    peer.chainState().update(h);
+                    return null;
+                  });
     }
-
     // If we are doing snap sync, check if the peer is a snap server
-    checkSnapServer(peer);
+    final CompletableFuture<Void> checkSnapServerFuture = checkSnapServer(peer);
+    // Wait for both checks to complete
+    CompletableFuture.allOf(checkSnapServerFuture, checkHeadBlockFuture)
+        .orTimeout(5, TimeUnit.SECONDS)
+        .handle(
+            (result, error) -> {
+              if (error != null) {
+                LOG.atDebug()
+                    .setMessage("Error checking snap server or chain head for peer {}: {}")
+                    .addArgument(peer.getLoggableId())
+                    .addArgument(error)
+                    .log();
+                peer.disconnect(
+                    DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
+              }
+              checkTrailingPeerRequirements(peer);
+              if (!peer.getConnection().isDisconnected() && addPeerToEthPeers(peer)) {
+                connectedPeersCounter.inc();
+                connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
+              }
+              return null;
+            });
   }
 
   private void checkTrailingPeerRequirements(final EthPeer peer) {
@@ -611,56 +621,29 @@ public class EthPeers implements PeerSelector {
     }
   }
 
-  private void checkSnapServer(final EthPeer peer) {
-    CompletableFuture<Void> isServingSnapFuture;
-    if (syncMode == SyncMode.SNAP || syncMode == SyncMode.CHECKPOINT) {
-      // even if we have finished the snap sync, we still want to know if the peer is a snap
-      // server
-      isServingSnapFuture =
-          CompletableFuture.runAsync(
-              () -> {
-                try {
-                  checkIsSnapServer(peer);
-                } catch (Exception e) {
-                  throw new RuntimeException(e);
-                }
-              });
+  private CompletableFuture<Void> checkSnapServer(final EthPeer peer) {
+    if ((syncMode == SyncMode.SNAP || syncMode == SyncMode.CHECKPOINT)
+        && peer.getAgreedCapabilities().contains(SnapProtocol.SNAP1)) {
+      // even if we have finished the snap sync, we still want to know if the peer is a snap server
+      return checkIsSnapServer(peer);
     } else {
-      isServingSnapFuture = CompletableFuture.completedFuture(null);
+      return CompletableFuture.completedFuture(null);
     }
-    isServingSnapFuture.thenRun(
-        () -> {
-          if (!peer.getConnection().isDisconnected() && addPeerToEthPeers(peer)) {
-            connectedPeersCounter.inc();
-            connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
-          }
-        });
   }
 
-  private void checkIsSnapServer(final EthPeer peer) {
-    if (peer.getAgreedCapabilities().contains(SnapProtocol.SNAP1)) {
-      if (snapServerChecker != null) {
-        // set that peer is a snap server for doing the test
-        peer.setIsServingSnap(true);
-        Boolean isServer;
-        try {
-          isServer = snapServerChecker.check(peer).get(6L, TimeUnit.SECONDS);
-        } catch (Exception e) {
-          LOG.atTrace()
-              .setMessage("Error checking if peer {} is a snap server. Setting to false.")
-              .addArgument(peer.getLoggableId())
-              .log();
-          peer.setIsServingSnap(false);
-          return;
-        }
-        peer.setIsServingSnap(isServer);
-        LOG.atTrace()
-            .setMessage("{}: peer {}")
-            .addArgument(isServer ? "Is a snap server" : "Is NOT a snap server")
-            .addArgument(peer.getLoggableId())
-            .log();
-      }
-    }
+  private CompletableFuture<Void> checkIsSnapServer(final EthPeer peer) {
+    return snapServerChecker
+        .check(peer)
+        .thenApply(
+            isServer -> {
+              peer.setIsServingSnap(isServer);
+              LOG.atDebug()
+                  .setMessage("{}: peer {}")
+                  .addArgument(isServer ? "Is a snap server" : "Is NOT a snap server")
+                  .addArgument(peer.getLoggableId())
+                  .log();
+              return null;
+            });
   }
 
   private int comparePeerPriorities(final EthPeer p1, final EthPeer p2) {
