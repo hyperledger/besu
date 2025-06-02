@@ -22,10 +22,10 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.sun.jna.ptr.IntByReference;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,10 +109,10 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     return name;
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
 
     PrecompileInputResultTuple res = null;
 
