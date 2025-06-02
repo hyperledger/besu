@@ -42,6 +42,7 @@ import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioni
 
 import java.time.Clock;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,9 +54,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -631,6 +632,12 @@ public class EthPeer implements Comparable<EthPeer> {
         .anyMatch(cap -> EthProtocol.get().isValidMessageCode(cap.getVersion(), messageCode));
   }
 
+  public Capability getMaxAgreedCapability() {
+    return getAgreedCapabilities().stream()
+        .max(Comparator.comparingInt(Capability::getVersion))
+        .orElseThrow(() -> new IllegalStateException("No capabilities available"));
+  }
+
   @Override
   public String toString() {
     return String.format(
@@ -647,14 +654,14 @@ public class EthPeer implements Comparable<EthPeer> {
         System.currentTimeMillis() - connection.getInitiatedAt());
   }
 
-  @Nonnull
+  @NotNull
   public String getLoggableId() {
     // 8 bytes plus the 0x prefix is 18 characters
     return nodeId().toString().substring(0, 18) + "...";
   }
 
   @Override
-  public int compareTo(final @Nonnull EthPeer ethPeer) {
+  public int compareTo(final @NotNull EthPeer ethPeer) {
     final int repCompare = this.reputation.compareTo(ethPeer.reputation);
     if (repCompare != 0) return repCompare;
 

@@ -87,6 +87,7 @@ public class EthEstimateGasTest {
     when(blockchainQueries.getBlockHeaderByNumber(1L))
         .thenReturn(Optional.of(finalizedBlockHeader));
     when(blockchainQueries.getMinimumTransactionCost(any())).thenReturn(MIN_TX_GAS_COST);
+    when(blockchainQueries.accountBalance(any(), any())).thenReturn(Optional.of(Wei.MAX_WEI));
     when(genesisBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(genesisBlockHeader.getNumber()).thenReturn(0L);
     when(finalizedBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
@@ -423,9 +424,9 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldNotIgnoreSenderBalanceAccountWhenStrictModeEnabled() {
+  public void shouldNotIgnoreSenderBalanceByDefault() {
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO, Optional.of(true)));
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     getMockTransactionSimulatorResult(
         false,
         MIN_TX_GAS_COST,
@@ -433,7 +434,7 @@ public class EthEstimateGasTest {
         Optional.empty(),
         pendingBlockHeader,
         OptionalLong.empty(),
-        Optional.of(true));
+        Optional.empty());
 
     method.response(request);
 
@@ -441,9 +442,9 @@ public class EthEstimateGasTest {
         .processOnPending(
             eq(
                 modifiedLegacyTransactionCallParameter(
-                    Long.MAX_VALUE, Wei.ZERO, OptionalLong.empty(), Optional.of(true))),
+                    Long.MAX_VALUE, Wei.ZERO, OptionalLong.empty(), Optional.empty())),
             eq(Optional.empty()), // no account overrides
-            eq(TransactionValidationParams.transactionSimulatorAllowFutureNonce()),
+            eq(TransactionValidationParams.transactionSimulatorAllowUnderpricedAndFutureNonce()),
             any(OperationTracer.class),
             eq(pendingBlockHeader));
   }
@@ -587,14 +588,6 @@ public class EthEstimateGasTest {
               eq(blockHeader)))
           .thenReturn(Optional.of(mockTxSimResult));
       when(transactionSimulator.processOnPending(
-              eq(modifiedEip1559TransactionCallParameter()),
-              eq(Optional.empty()), // no account overrides
-              any(TransactionValidationParams.class),
-              any(OperationTracer.class),
-              eq(blockHeader)))
-          .thenReturn(Optional.of(mockTxSimResult));
-      // for testing different combination of gasPrice params
-      when(transactionSimulator.processOnPending(
               eq(modifiedEip1559TransactionCallParameter(MIN_TX_GAS_COST, maybeNonce)),
               eq(Optional.empty()), // no account overrides
               any(TransactionValidationParams.class),
@@ -671,7 +664,6 @@ public class EthEstimateGasTest {
         .to(Address.fromHexString("0x0"))
         .maxPriorityFeePerGas(Wei.fromHexString("0x10"))
         .maxFeePerGas(Wei.fromHexString("0x10"))
-        .strict(false)
         .nonce(maybeNonce)
         .build();
   }
@@ -688,7 +680,6 @@ public class EthEstimateGasTest {
         .gas(gasLimit)
         .maxPriorityFeePerGas(Wei.fromHexString("0x10"))
         .maxFeePerGas(Wei.fromHexString("0x10"))
-        .strict(false)
         .nonce(maybeNonce)
         .build();
   }

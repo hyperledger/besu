@@ -148,6 +148,10 @@ configure(allprojects - project(':platform')) {
   java {
     sourceCompatibility = 21
     targetCompatibility = 21
+
+    consistentResolution {
+      useCompileClasspathVersions()
+    }
   }
 
   repositories {
@@ -188,6 +192,9 @@ configure(allprojects - project(':platform')) {
     annotationProcessor(platform(project(':platform')))
 
     testAnnotationProcessor(platform(project(':platform')))
+
+    // for validation annotations like @NotNull
+    implementation 'jakarta.validation:jakarta.validation-api'
 
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
@@ -378,7 +385,7 @@ configure(allprojects - project(':platform')) {
   javadoc {
     options.addBooleanOption('Xdoclint:all', true)
     // disable doc lint checking for generated code and acceptance tests dsl.
-    options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated,' +
+    options.addBooleanOption('Xdoclint/package:' +
       '-org.hyperledger.besu.tests.acceptance.*,' +
       '-org.hyperledger.besu.tests.web3j.generated,' +
       // TODO: these are temporary excluded from lint (ethereum sub modules), it should be removed in a future PR.
@@ -402,8 +409,6 @@ configure(allprojects - project(':platform')) {
       '-org.hyperledger.besu.ethereum.forkid,' +
       '-org.hyperledger.besu.ethereum.mainnet,' +
       '-org.hyperledger.besu.ethereum.mainnet.*,' +
-      '-org.hyperledger.besu.ethereum.privacy,' +
-      '-org.hyperledger.besu.ethereum.privacy.*,' +
       '-org.hyperledger.besu.ethereum.processing,' +
       '-org.hyperledger.besu.ethereum.proof,' +
       '-org.hyperledger.besu.ethereum.storage,' +
@@ -829,6 +834,7 @@ task distDocker {
   doLast {
     copy {
       from file("${projectDir}/docker/Dockerfile")
+      from file("${projectDir}/docker/pyroscope.properties")
       into(dockerBuildDir)
     }
     exec {

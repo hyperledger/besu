@@ -1031,16 +1031,6 @@ public class MainnetEVMs {
   /**
    * Osaka evm.
    *
-   * @param evmConfiguration the evm configuration
-   * @return the evm
-   */
-  public static EVM osaka(final EvmConfiguration evmConfiguration) {
-    return osaka(DEV_NET_CHAIN_ID, evmConfiguration);
-  }
-
-  /**
-   * Osaka evm.
-   *
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration
    * @return the evm

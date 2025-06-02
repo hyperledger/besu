@@ -35,8 +35,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -322,7 +322,7 @@ public class BackwardSyncAlgSpec {
     return backwardChain;
   }
 
-  @Nonnull
+  @NotNull
   private Block getBlockByNumber(final int number) {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
   }

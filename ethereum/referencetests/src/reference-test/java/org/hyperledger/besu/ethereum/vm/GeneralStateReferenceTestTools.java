@@ -175,7 +175,6 @@ public class GeneralStateReferenceTestTools {
             transaction,
             blockHeader.getCoinbase(),
             protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader),
-            false,
             TransactionValidationParams.processingBlock(),
             blobGasPrice);
     if (result.isInvalid()) {
