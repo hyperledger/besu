@@ -233,7 +233,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .toList();
       precomputeSenders(transactions);
     } catch (final RLPException | IllegalArgumentException e) {
-      return respondWithError(
+      return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
@@ -242,7 +242,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     if (blockParam.getExtraData() == null) {
-      return respondWithError(
+      return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
@@ -322,7 +322,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWith(reqId, blockParam, blockParam.getBlockHash(), VALID);
     }
     if (mergeCoordinator.isBadBlock(blockParam.getBlockHash())) {
-      return respondWithError(
+      return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator
@@ -382,12 +382,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         Throwable causedBy = executionResult.causedBy().get();
         if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
           RpcErrorType error = RpcErrorType.INTERNAL_ERROR;
-          JsonRpcErrorResponse response = new JsonRpcErrorResponse(reqId, error);
-          return response;
+          return new JsonRpcErrorResponse(reqId, error);
         }
       }
       LOG.debug("New payload is invalid: {}", executionResult.errorMessage.get());
-      return respondWithError(
+      return respondWithInvalid(
           reqId,
           blockParam,
           latestValidAncestor.get(),
