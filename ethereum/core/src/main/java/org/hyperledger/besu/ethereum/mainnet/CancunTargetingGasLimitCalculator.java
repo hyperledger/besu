@@ -30,8 +30,8 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
   private final long targetBlobGasPerBlock;
 
   private final long blobGasPerBlob;
-  private final int maxBlobsPerBlock;
-  private final int targetBlobsPerBlock;
+  protected final int maxBlobsPerBlock;
+  protected final int targetBlobsPerBlock;
 
   public CancunTargetingGasLimitCalculator(
       final long londonForkBlock,
@@ -95,13 +95,5 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
 
   public long getMaxBlobGasPerBlock() {
     return maxBlobGasPerBlock;
-  }
-
-  public int getMaxBlobsPerBlock() {
-    return maxBlobsPerBlock;
-  }
-
-  public int getTargetBlobsPerBlock() {
-    return targetBlobsPerBlock;
   }
 }

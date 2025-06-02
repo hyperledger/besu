@@ -173,8 +173,8 @@ class CancunTargetingGasLimitCalculatorTest {
   int newTargetCount = 9;
   public static final OsakaGasCalculator osakaGasCalculator = new OsakaGasCalculator();
   // CancunTargetingGasLimitCalculator with Osaka numbers
-  private final CancunTargetingGasLimitCalculator osakaGasLimitCalculator =
-      new CancunTargetingGasLimitCalculator(
+  private final OsakaTargetingGasLimitCalculator osakaGasLimitCalculator =
+      new OsakaTargetingGasLimitCalculator(
           0L,
           FeeMarket.cancunDefault(0L, Optional.empty()),
           osakaGasCalculator,

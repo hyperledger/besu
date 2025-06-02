@@ -23,7 +23,7 @@ public class LondonTargetingGasLimitCalculator extends FrontierTargetingGasLimit
   private static final Logger LOG =
       LoggerFactory.getLogger(LondonTargetingGasLimitCalculator.class);
   private final long londonForkBlock;
-  private final BaseFeeMarket feeMarket;
+  protected final BaseFeeMarket feeMarket;
 
   public LondonTargetingGasLimitCalculator(
       final long londonForkBlock, final BaseFeeMarket feeMarket) {
@@ -53,7 +53,7 @@ public class LondonTargetingGasLimitCalculator extends FrontierTargetingGasLimit
     }
 
     if (londonForkBlock == newBlockNumber) {
-      nextGasLimit = nextGasLimit * getFeeMarket().getSlackCoefficient();
+      nextGasLimit = nextGasLimit * feeMarket.getSlackCoefficient();
     }
 
     if (nextGasLimit != currentGasLimit) {
@@ -61,9 +61,5 @@ public class LondonTargetingGasLimitCalculator extends FrontierTargetingGasLimit
     }
 
     return nextGasLimit;
-  }
-
-  protected BaseFeeMarket getFeeMarket() {
-    return feeMarket;
   }
 }

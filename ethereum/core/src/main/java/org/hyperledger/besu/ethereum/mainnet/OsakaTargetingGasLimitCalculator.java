@@ -27,13 +27,6 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
   public OsakaTargetingGasLimitCalculator(
       final long londonForkBlock,
       final BaseFeeMarket feeMarket,
-      final GasCalculator gasCalculator) {
-    super(londonForkBlock, feeMarket, gasCalculator);
-  }
-
-  public OsakaTargetingGasLimitCalculator(
-      final long londonForkBlock,
-      final BaseFeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final int maxBlobsPerBlock,
       final int targetBlobsPerBlock) {
@@ -54,8 +47,8 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
 
     // EIP-7918 https://eips.ethereum.org/EIPS/eip-7918
     Wei baseFeeBlobGas = Wei.ZERO;
-    if (getFeeMarket().implementsBlobFee()) {
-      baseFeeBlobGas = getFeeMarket().blobGasPricePerGas(BlobGas.of(parentExcessBlobGas));
+    if (feeMarket.implementsBlobFee()) {
+      baseFeeBlobGas = feeMarket.blobGasPricePerGas(BlobGas.of(parentExcessBlobGas));
     }
     long baseFeeBlobGasLong = baseFeeBlobGas.toLong();
     if (BLOB_BASE_COST * parentBaseFeePerGas > getBlobGasPerBlob() * baseFeeBlobGasLong) {
@@ -67,5 +60,13 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       // same as Cancun
       return currentExcessBlobGas - getTargetBlobGasPerBlock();
     }
+  }
+
+  public int getMaxBlobsPerBlock() {
+    return maxBlobsPerBlock;
+  }
+
+  public int getTargetBlobsPerBlock() {
+    return targetBlobsPerBlock;
   }
 }
