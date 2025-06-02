@@ -56,7 +56,7 @@
     "id": 67,
     "error": {
       "code": -32602,
-      "message": "Invalid execution requests params"
+      "message": "Invalid engine params"
     }
   },
   "statusCode": 200
