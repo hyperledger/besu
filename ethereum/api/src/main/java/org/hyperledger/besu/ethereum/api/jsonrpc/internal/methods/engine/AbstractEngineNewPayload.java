@@ -286,7 +286,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               newBlockHeader.getBlockHash(), blockParam.getBlockHash());
       LOG.debug(errorMessage);
       // this is the only time we want to return INVALID
-      // from the spec: https://github.com/ethereum/execution-apis/blob/main/src/engine/prague.md#engine_newpayloadv4
+      // from the spec:
+      // https://github.com/ethereum/execution-apis/blob/main/src/engine/prague.md#engine_newpayloadv4
       // Given the executionRequests, client software MUST compute the execution requests commitment
       // and incorporate it into the blockHash validation process.
       // That is, if the computed commitment does not match the corresponding commitment in the
