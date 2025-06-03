@@ -21,31 +21,31 @@ import org.immutables.value.Value;
 public interface TransactionValidationParams {
 
   TransactionValidationParams processingBlockParams =
-      ImmutableTransactionValidationParams.of(false, false, false, true, false, false);
+      ImmutableTransactionValidationParams.of(false, false, false, true, false, false, false);
 
   TransactionValidationParams transactionPoolParams =
-      ImmutableTransactionValidationParams.of(true, false, true, true, true, false);
+      ImmutableTransactionValidationParams.of(true, false, true, true, true, false, false);
 
   TransactionValidationParams miningParams =
-      ImmutableTransactionValidationParams.of(false, false, false, true, true, false);
+      ImmutableTransactionValidationParams.of(false, false, false, true, true, false, false);
 
   TransactionValidationParams blockReplayParams =
-      ImmutableTransactionValidationParams.of(false, false, false, false, false, false);
+      ImmutableTransactionValidationParams.of(false, false, false, false, false, false, false);
 
   TransactionValidationParams transactionSimulatorParams =
-      ImmutableTransactionValidationParams.of(false, false, false, false, false, true);
+      ImmutableTransactionValidationParams.of(false, false, false, false, false, true, true);
 
   TransactionValidationParams transactionSimulatorParamsAllowFutureNonce =
-      ImmutableTransactionValidationParams.of(true, false, false, false, false, true);
+      ImmutableTransactionValidationParams.of(true, false, false, false, false, true, true);
 
   TransactionValidationParams transactionSimulatorAllowUnderpricedAndFutureNonceParams =
-      ImmutableTransactionValidationParams.of(true, false, true, false, false, true);
+      ImmutableTransactionValidationParams.of(true, false, true, false, false, true, true);
 
   TransactionValidationParams transactionSimulatorAllowExceedingBalanceParams =
-      ImmutableTransactionValidationParams.of(false, true, false, false, false, true);
+      ImmutableTransactionValidationParams.of(false, true, false, false, false, true, true);
 
   TransactionValidationParams transactionSimulatorAllowExceedingBalanceAndFutureNonceParams =
-      ImmutableTransactionValidationParams.of(true, true, false, false, false, true);
+      ImmutableTransactionValidationParams.of(true, true, false, false, false, true, true);
 
   @Value.Default
   default boolean isAllowFutureNonce() {
@@ -74,6 +74,11 @@ public interface TransactionValidationParams {
 
   @Value.Default
   default boolean isAllowContractAddressAsSender() {
+    return false;
+  }
+
+  @Value.Default
+  default boolean isAllowExceedingGasLimit() {
     return false;
   }
 

@@ -285,7 +285,9 @@ public class BlockSimulator {
       final WorldUpdater transactionUpdater = ws.updater();
       long gasLimit =
           transactionSimulator.calculateSimulationGasCap(
-              callParameter.getGas(), blockStateCallSimulationResult.getRemainingGas());
+              blockHeader,
+              callParameter.getGas(),
+              blockStateCallSimulationResult.getRemainingGas());
 
       BiFunction<ProtocolSpec, Optional<BlockHeader>, Wei> blobGasPricePerGasSupplier =
           getBlobGasPricePerGasSupplier(

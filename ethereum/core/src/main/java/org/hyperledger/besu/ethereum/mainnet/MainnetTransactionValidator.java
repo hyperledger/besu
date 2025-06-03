@@ -108,7 +108,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
           TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
     }
 
-    if (transaction.getGasLimit() > gasLimitCalculator.transactionGasLimitCap()) {
+    if (!transactionValidationParams.isAllowExceedingGasLimit()
+        && transaction.getGasLimit() > gasLimitCalculator.transactionGasLimitCap()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.EXCEEDS_TRANSACTION_GAS_LIMIT,
           "Transaction gas limit must be at most " + gasLimitCalculator.transactionGasLimitCap());
