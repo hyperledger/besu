@@ -1,19 +1,48 @@
 # Changelog
 ## Unreleased
 ### Breaking Changes
+- Sunset features - for more context on the reasoning behind the removal of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Remove onchain permissioning [#8597](https://github.com/hyperledger/besu/pull/8597)
+  - Remove Tessera Privacy feature [#8369](https://github.com/hyperledger/besu/pull/8369)
 - Remove `MetricSystem::createLabelledGauge` deprecated since `24.12.0`, replace it with `MetricSystem::createLabelledSuppliedGauge` [#8299](https://github.com/hyperledger/besu/pull/8299)
-- Remove the deprecated `--tx-pool-disable-locals` option, use `--tx-pool-no-local-priority`, instead. [#8614](https://github.com/hyperledger/besu/pull/8614)
+- Remove the deprecated `--tx-pool-disable-locals` option, use `--tx-pool-no-local-priority` instead. [#8614](https://github.com/hyperledger/besu/pull/8614)
+- Remove the deprecated `--Xsnapsync-synchronizer-flat-db-healing-enabled`, use `--Xbonsai-full-flat-db-enabled` instead. [#8415](https://github.com/hyperledger/besu/issues/8415)
+- Change in behavior, the non-standard `strict` parameter of the `eth_estimateGas` method changed its default from `false` to `true`, for more accurate estimations. It is still possible to force the previous behavior, explicitly passing the `strict` parameter in the request, set to `false` [#8629](https://github.com/hyperledger/besu/pull/8629)
 
 ### Upcoming Breaking Changes
+- `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-log-pruning-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.
+- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
+- `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+- Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
+
 ### Additions and Improvements
-- `--Xplugin-rocksdb-blockchain-blob-garbage-collection-enabled` Adds ability to enabled BlobDB GC for BLOCKCHAIN column family [#8599](https://github.com/hyperledger/besu/pull/8599)
-- `--Xplugin-rocksdb-blob-garbage-collection-age-cutoff`, `--Xplugin-rocksdb-blob-garbage-collection-force-threshold` BlobDB GC config options [#8599](https://github.com/hyperledger/besu/pull/8599)
-- Update discovery library to 25.4.0 [#8635](https://github.com/hyperledger/besu/pull/8635)
+- Add eth/69 protocol for optional use by using the `--Xeth-capability-max=69` flag (currently defaults to 68) [#8519](https://github.com/hyperledger/besu/pull/8519)
+- BlobDB GC early access config options:
+  - `--Xplugin-rocksdb-blockchain-blob-garbage-collection-enabled` Adds ability to enable BlobDB GC for BLOCKCHAIN column family [#8599](https://github.com/hyperledger/besu/pull/8599)
+  - `--Xplugin-rocksdb-blob-garbage-collection-age-cutoff`, `--Xplugin-rocksdb-blob-garbage-collection-force-threshold` BlobDB GC config options [#8599](https://github.com/hyperledger/besu/pull/8599)
 - Increase default target-gas-limit to 60M for Ephemery [#8622](https://github.com/hyperledger/besu/pull/8622)
+- Increase default target-gas-limit to 60M for Hoodi [#8705](https://github.com/hyperledger/besu/pull/8705)
+- Gas estimation `eth_estimateGas`:
+  - Estimate gas on pending block by default [#8627](https://github.com/hyperledger/besu/pull/8627)
+  - Estimate gas is now strict by default [#8629](https://github.com/hyperledger/besu/pull/8629)
+
+#### Dependencies
+- Update discovery library to 25.4.0 [#8635](https://github.com/hyperledger/besu/pull/8635)
+- Upgrade Gradle to 8.14 and related plugins [#8638](https://github.com/hyperledger/besu/pull/8638)
+
+### Bug fixes
+- Fix `besu -X` unstable options help [#8662](https://github.com/hyperledger/besu/pull/8662)
+- Prevent parsing of invalid ENR records from crashing DNSDaemon [#8368](https://github.com/hyperledger/besu/issues/8368)
+- ENR records with Base64 padding at the end are not parsed correctly [#8697](https://github.com/hyperledger/besu/issues/8697)
 
 ## 25.5.0
 ### Breaking Changes
 - Changes to gas estimation algorithm for `eth_estimateGas` and `eth_createAccessList` [#8478](https://github.com/hyperledger/besu/pull/8478) - if you require the previous behavior, specify `--estimate-gas-tolerance-ratio=0.0`
+- Transaction indexing is now disabled by default during the initial sync for snap sync and checkpoint sync. This will break RPCs that use transaction hash for historical queries. [#8611](https://github.com/hyperledger/besu/pull/8611). If you need to enable transaction for the initial sync, use `--snapsync-synchronizer-transaction-indexing-enabled`
 
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
@@ -24,7 +53,6 @@
 - `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
     - Tessera privacy
-    - Smart-contract-based (onchain) permissioning
     - Proof of Work consensus
     - Fast Sync
 - Transaction indexing will be disabled by default in a future release for snap sync and checkpoint sync modes. This will break RPCs that use transaction hash for historical queries.
@@ -183,6 +211,7 @@ have support in besu-native can run mainnet ethereum configurations.  Windows su
 
 ### Breaking Changes
 - `rpc-gas-cap` default value has changed from 0 (unlimited) to 50M. If you require `rpc-gas-cap` greater than 50M, you'll need to set that explicitly. [#8251](https://github.com/hyperledger/besu/issues/8251)
+
 ### Upcoming Breaking Changes
 - `MetricSystem::createLabelledGauge` is deprecated and will be removed in a future release, replace it with `MetricSystem::createLabelledSuppliedGauge`
 - k8s (KUBERNETES) Nat method is now deprecated and will be removed in a future release. Use docker or none instead.

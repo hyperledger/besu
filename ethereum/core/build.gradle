@@ -31,6 +31,7 @@ jar {
 dependencies {
   api 'org.slf4j:slf4j-api'
   api 'org.web3j:core'
+  implementation project(path: ':util')
 
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
   annotationProcessor 'org.hyperledger.besu:besu-errorprone-checks'
@@ -38,7 +39,6 @@ dependencies {
   implementation project(':config')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
-  implementation project(':enclave')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
   implementation project(':evm')
@@ -46,8 +46,8 @@ dependencies {
   implementation project(':plugin-api')
   implementation project(':services:kvstore')
 
-
   implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
   implementation 'com.google.guava:guava'
   implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.dagger:dagger'

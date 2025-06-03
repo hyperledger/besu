@@ -17,8 +17,7 @@ package org.hyperledger.besu.evm.code;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
 
-import javax.annotation.Nonnull;
-
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Code factory. */
@@ -74,7 +73,7 @@ public class CodeFactory {
     };
   }
 
-  private @Nonnull Code createV1Code(final Bytes bytes, final boolean createTransaction) {
+  private @NotNull Code createV1Code(final Bytes bytes, final boolean createTransaction) {
     int codeSize = bytes.size();
     if (codeSize > 0 && bytes.get(0) == EOF_LEAD_BYTE) {
       if (codeSize < 3) {
@@ -104,7 +103,7 @@ public class CodeFactory {
     }
   }
 
-  @Nonnull
+  @NotNull
   Code createCode(final EOFLayout layout) {
     if (!layout.isValid()) {
       return new CodeInvalid(layout.container(), "Invalid EOF Layout: " + layout.invalidReason());

@@ -92,7 +92,7 @@ public abstract class BenchmarkExecutor {
   /**
    * Run the benchmark with the specific args. Execution will be done warmup + iterations times
    *
-   * @param arg the bytes areguments to pass into the contract
+   * @param arg the bytes arguments to pass into the contract
    * @param contract the precompiled contract to benchmark
    * @return the mean number of seconds each timed iteration took.
    */
@@ -143,10 +143,9 @@ public abstract class BenchmarkExecutor {
       case LONDON, PARIS -> new LondonGasCalculator();
       case SHANGHAI -> new ShanghaiGasCalculator();
       case CANCUN -> new CancunGasCalculator();
-      case CANCUN_EOF -> new OsakaGasCalculator();
       case PRAGUE -> new PragueGasCalculator();
       case OSAKA, AMSTERDAM, BOGOTA, POLIS, BANGKOK, EXPERIMENTAL_EIPS -> new OsakaGasCalculator();
-      case FUTURE_EIPS -> new EOFGasCalculator();
+      case CANCUN_EOF, FUTURE_EIPS -> new EOFGasCalculator();
     };
   }
 

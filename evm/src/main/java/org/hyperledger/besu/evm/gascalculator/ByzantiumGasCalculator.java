@@ -26,8 +26,10 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Byzantium gas calculator. */
 public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
+  /** word size */
+  protected static final int WORD_SIZE = 32;
+
   private static final int GQUADDIVISOR = 20;
-  private static final int WORD_SIZE = 32;
   private static final int BITS_IN_BYTE = 8;
 
   /** The constant MAX_FIRST_EXPONENT_BYTES. */
@@ -74,7 +76,13 @@ public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
     }
   }
 
-  private static int bitLength(final BigInteger n) {
+  /**
+   * Compute the length in bits of the given integer
+   *
+   * @param n big integer for which to calculate length
+   * @return bit length
+   */
+  protected static int bitLength(final BigInteger n) {
     return n.compareTo(BigInteger.ZERO) == 0 ? 0 : (n.bitLength() - 1);
   }
 }
