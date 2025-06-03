@@ -18,12 +18,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import ethereum.ckzg4844.CKZG4844JNI;
 import ethereum.ckzg4844.CKZGException;
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
@@ -62,15 +58,25 @@ public class TrustedSetupClassLoaderExtension implements BeforeAllCallback {
 
   // Wait for the trusted setup to be loaded by checking if we can create a KZG commitment.
   private void awaitTrustedSetupLoad() {
-    AtomicBoolean trustedSetupLoaded = new AtomicBoolean(false);
+    boolean trustedSetupLoaded = false;
+    long timeoutMillis = 5000; // 5 seconds timeout
+    long pollIntervalMillis = 100; // 100 milliseconds polling interval
+    long startTime = System.currentTimeMillis();
 
-    Awaitility.await()
-        .atMost(5, TimeUnit.SECONDS)
-        .pollDelay(100, TimeUnit.MILLISECONDS)
-        .pollInterval(100, TimeUnit.MILLISECONDS)
-        .until(() -> isTrustedSetupLoaded(trustedSetupLoaded));
+    while (System.currentTimeMillis() - startTime < timeoutMillis) {
+      if (isTrustedSetupLoaded()) {
+        trustedSetupLoaded = true;
+        break;
+      }
+      try {
+        Thread.sleep(pollIntervalMillis);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        fail("Thread interrupted while waiting for trusted setup to load", e);
+      }
+    }
 
-    if (!trustedSetupLoaded.get()) {
+    if (!trustedSetupLoaded) {
       fail("Trusted setup not loaded");
     } else {
       LOG.info("Trusted setup loaded successfully from {}", TRUSTED_SETUP_RESOURCE);
@@ -78,7 +84,7 @@ public class TrustedSetupClassLoaderExtension implements BeforeAllCallback {
   }
 
   // Check if the trusted setup is loaded by attempting to create a KZG commitment.
-  private boolean isTrustedSetupLoaded(final AtomicBoolean trustedSetupLoaded) {
+  private boolean isTrustedSetupLoaded() {
     try {
       // Attempt to create a KZG commitment with an empty blob.
       // If the trusted setup is loaded, this should throw a C_KZG_BADARGS exception.
@@ -87,11 +93,7 @@ public class TrustedSetupClassLoaderExtension implements BeforeAllCallback {
     } catch (CKZGException e) {
       // Check if the exception indicates invalid arguments (C_KZG_BADARGS),
       // which confirms the trusted setup is loaded.
-      if (e.getError() == CKZGException.CKZGError.C_KZG_BADARGS) {
-        trustedSetupLoaded.set(true);
-        return true;
-      }
-      return false;
+      return e.getError() == CKZGException.CKZGError.C_KZG_BADARGS;
     }
   }
 }
