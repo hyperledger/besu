@@ -82,15 +82,16 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   private static final long DEFAULT_TARGET_GAS_LIMIT = 36_000_000L;
   // testnets might have higher gas limits than mainnet and are incrementally updated
-  private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 36_000_000L;
-  private static final long NEXT_STEP_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
+  private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
+  // next target gas limit TBD
+  // private static final long NEXT_STEP_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
 
   private static final Map<BigInteger, Long> TESTNET_CHAIN_IDS =
       Map.of(
-          BigInteger.valueOf(11155111), NEXT_STEP_TARGET_GAS_LIMIT_TESTNET, // Sepolia
-          BigInteger.valueOf(17000), NEXT_STEP_TARGET_GAS_LIMIT_TESTNET, // Holesky
+          BigInteger.valueOf(11155111), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Sepolia
+          BigInteger.valueOf(17000), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Holesky
           BigInteger.valueOf(560048), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Hoodi
-          BigInteger.valueOf(39438135), NEXT_STEP_TARGET_GAS_LIMIT_TESTNET // Ephemery
+          BigInteger.valueOf(39438135), DEFAULT_TARGET_GAS_LIMIT_TESTNET // Ephemery
           );
 
   /** The Mining parameters. */
@@ -536,6 +537,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private void updateFinalized(final Hash finalizedHash) {
+    // If finalizedHash is already set, do nothing
     if (mergeContext
         .getFinalized()
         .map(BlockHeader::getHash)
@@ -548,9 +550,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return;
     }
 
+    if (finalizedHash.equals(Hash.ZERO)) {
+      LOG.warn("Received zero hash as finalized block. Ignoring...");
+      return;
+    }
+
     protocolContext
         .getBlockchain()
         .getBlockHeader(finalizedHash)
+        // Check if the finalized block exists in the blockchain
         .ifPresentOrElse(
             finalizedHeader -> {
               LOG.atDebug()

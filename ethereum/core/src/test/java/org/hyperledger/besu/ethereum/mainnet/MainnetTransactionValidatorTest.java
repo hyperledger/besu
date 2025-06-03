@@ -32,6 +32,7 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -46,6 +47,7 @@ import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -65,7 +67,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, TrustedSetupClassLoaderExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class MainnetTransactionValidatorTest {
 
@@ -99,6 +101,7 @@ public class MainnetTransactionValidatorTest {
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
+        Set.of(BlobType.KZG_PROOF),
         maxInitcodeSize);
   }
 
@@ -401,6 +404,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            Set.of(BlobType.KZG_PROOF),
             Integer.MAX_VALUE);
 
     final Transaction transaction =
@@ -587,6 +591,7 @@ public class MainnetTransactionValidatorTest {
             .blobsWithCommitments(
                 Optional.of(
                     new BlobsWithCommitments(
+                        BlobType.KZG_PROOF,
                         List.of(new KZGCommitment(Bytes48.ZERO)),
                         List.of(new Blob(Bytes.EMPTY)),
                         List.of(new KZGProof(Bytes48.ZERO)),

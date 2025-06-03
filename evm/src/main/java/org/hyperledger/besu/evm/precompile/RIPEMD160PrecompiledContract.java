@@ -18,8 +18,7 @@ import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import javax.annotation.Nonnull;
-
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -40,10 +39,10 @@ public class RIPEMD160PrecompiledContract extends AbstractPrecompiledContract {
     return gasCalculator().ripemd160PrecompiledContractGasCost(input);
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
     return PrecompileContractResult.success(Bytes32.leftPad(Hash.ripemd160(input)));
   }
 }

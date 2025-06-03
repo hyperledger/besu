@@ -1,7 +1,15 @@
 # Changelog
 ## Unreleased
 ### Breaking Changes
-- Remove onchain permissioning [#8597](https://github.com/hyperledger/besu/pull/8597)
+### Upcoming Breaking Changes
+### Additions and Improvements
+### Bug fixes
+
+## 25.6.0
+### Breaking Changes
+- Sunset features - for more context on the reasoning behind the removal of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Remove onchain permissioning [#8597](https://github.com/hyperledger/besu/pull/8597)
+  - Remove Tessera Privacy feature [#8369](https://github.com/hyperledger/besu/pull/8369)
 - Remove `MetricSystem::createLabelledGauge` deprecated since `24.12.0`, replace it with `MetricSystem::createLabelledSuppliedGauge` [#8299](https://github.com/hyperledger/besu/pull/8299)
 - Remove the deprecated `--tx-pool-disable-locals` option, use `--tx-pool-no-local-priority` instead. [#8614](https://github.com/hyperledger/besu/pull/8614)
 - Remove the deprecated `--Xsnapsync-synchronizer-flat-db-healing-enabled`, use `--Xbonsai-full-flat-db-enabled` instead. [#8415](https://github.com/hyperledger/besu/issues/8415)
@@ -16,20 +24,29 @@
 - `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
 - `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
-  - Tessera privacy
-  - Proof of Work consensus
+  - Proof of Work consensus (PoW)
   - Fast Sync
-- Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that in order to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
+- Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
 
 ### Additions and Improvements
 - Add eth/69 protocol for optional use by using the `--Xeth-capability-max=69` flag (currently defaults to 68) [#8519](https://github.com/hyperledger/besu/pull/8519)
-- `--Xplugin-rocksdb-blockchain-blob-garbage-collection-enabled` Adds ability to enabled BlobDB GC for BLOCKCHAIN column family [#8599](https://github.com/hyperledger/besu/pull/8599)
-- `--Xplugin-rocksdb-blob-garbage-collection-age-cutoff`, `--Xplugin-rocksdb-blob-garbage-collection-force-threshold` BlobDB GC config options [#8599](https://github.com/hyperledger/besu/pull/8599)
-- Update discovery library to 25.4.0 [#8635](https://github.com/hyperledger/besu/pull/8635)
+- BlobDB GC early access config options:
+  - `--Xplugin-rocksdb-blockchain-blob-garbage-collection-enabled` Adds ability to enable BlobDB GC for BLOCKCHAIN column family [#8599](https://github.com/hyperledger/besu/pull/8599)
+  - `--Xplugin-rocksdb-blob-garbage-collection-age-cutoff`, `--Xplugin-rocksdb-blob-garbage-collection-force-threshold` BlobDB GC config options [#8599](https://github.com/hyperledger/besu/pull/8599)
 - Increase default target-gas-limit to 60M for Ephemery [#8622](https://github.com/hyperledger/besu/pull/8622)
-- Estimate gas on pending block by default [#8627](https://github.com/hyperledger/besu/pull/8627)
+- Increase default target-gas-limit to 60M for Hoodi [#8705](https://github.com/hyperledger/besu/pull/8705)
+- Gas estimation `eth_estimateGas`:
+  - Estimate gas on pending block by default [#8627](https://github.com/hyperledger/besu/pull/8627)
+  - Estimate gas is now strict by default [#8629](https://github.com/hyperledger/besu/pull/8629)
+- Update ref test to 4.5.0 [#8643](https://github.com/hyperledger/besu/pull/8643)
+- EVM skip unnecssary state access for CALL/LOG [#8639](https://github.com/hyperledger/besu/pull/8639)
+- EIP-5920 - PAY opcode [#8498](https://github.com/hyperledger/besu/pull/8498)
+- EIP-7892 - Blob Parameter Only (BPO) forks [#8671](https://github.com/hyperledger/besu/pull/8671)
+- EIP-7883 - MODEXP gas cost increase [#8707](https://github.com/hyperledger/besu/pull/8707)
+
+#### Dependencies
+- Update discovery library to 25.4.0 [#8635](https://github.com/hyperledger/besu/pull/8635)
 - Upgrade Gradle to 8.14 and related plugins [#8638](https://github.com/hyperledger/besu/pull/8638)
-- Make gas estimation strict by default [#8629](https://github.com/hyperledger/besu/pull/8629)
 
 ### Bug fixes
 - Fix `besu -X` unstable options help [#8662](https://github.com/hyperledger/besu/pull/8662)

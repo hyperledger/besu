@@ -84,7 +84,6 @@ public class BesuNodeFactory {
         config.getExtraCLIOptions(),
         config.getStaticNodes(),
         config.isDnsEnabled(),
-        config.getPrivacyParameters(),
         config.getRunCommand(),
         config.getKeyPair(),
         config.isStrictTxReplayProtectionEnabled(),

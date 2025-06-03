@@ -636,17 +636,6 @@ public interface GasCalculator {
   }
 
   /**
-   * Compute the new value for the excess blob gas, given the parent value and the blob gas used
-   *
-   * @param parentExcessBlobGas excess blob gas from the parent
-   * @param blobGasUsed blob gas used
-   * @return the new excess blob gas value
-   */
-  default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
-    return 0L;
-  }
-
-  /**
    * Returns the upfront gas cost for EIP 7702 authorization processing.
    *
    * @param delegateCodeListLength The length of the code delegation list
