@@ -196,14 +196,14 @@ public class TransactionSimulatorTest {
   public void shouldReturnSuccessfulResultWhenProcessingIsSuccessful() {
     final CallParameter callParameter = legacyTransactionCallParameterBuilder().build();
 
-    mockBlockchainAndWorldState(callParameter);
+    final var blockHeader = mockBlockchainAndWorldState(callParameter);
 
     final Transaction expectedTransaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(callParameter.getGasPrice().orElseThrow())
-            .gasLimit(DEFAULT_BLOCK_GAS_LIMIT)
+            .gasLimit(blockHeader.getGasLimit())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
@@ -223,11 +223,7 @@ public class TransactionSimulatorTest {
   public void simulateOnPendingBlockWorks() {
     final CallParameter callParameter = eip1559TransactionCallParameterBuilder().build();
 
-    final BlockHeader blockHeader =
-        mockBlockHeader(Hash.ZERO, 1L, Wei.ONE, DEFAULT_BLOCK_GAS_LIMIT);
-
-    mockBlockchainForBlockHeader(blockHeader);
-    mockBlockchainAndWorldState(callParameter);
+    final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -262,14 +258,14 @@ public class TransactionSimulatorTest {
     final CallParameter callParameter =
         legacyTransactionCallParameterBuilder().gasPrice(Wei.ONE).build();
 
-    mockBlockchainAndWorldState(callParameter);
+    final var blockHeader = mockBlockchainAndWorldState(callParameter);
 
     final Transaction expectedTransaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(Wei.ZERO)
-            .gasLimit(DEFAULT_BLOCK_GAS_LIMIT)
+            .gasLimit(blockHeader.getGasLimit())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
@@ -329,14 +325,14 @@ public class TransactionSimulatorTest {
     final CallParameter callParameter =
         legacyTransactionCallParameterBuilder().gasPrice(Wei.ONE).build();
 
-    mockBlockchainAndWorldState(callParameter);
+    final var blockHeader = mockBlockchainAndWorldState(callParameter);
 
     final Transaction expectedTransaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(callParameter.getGasPrice().orElseThrow())
-            .gasLimit(DEFAULT_BLOCK_GAS_LIMIT)
+            .gasLimit(blockHeader.getGasLimit())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
@@ -395,18 +391,14 @@ public class TransactionSimulatorTest {
   public void shouldUseDefaultValuesWhenMissingOptionalFields() {
     final CallParameter callParameter = legacyTransactionCallParameterBuilder().build();
 
-    final BlockHeader blockHeader =
-        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
-
-    mockBlockchainForBlockHeader(blockHeader);
-    mockWorldStateForAccount(blockHeader, Address.fromHexString("0x0"), 1L);
+    final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
 
     final Transaction expectedTransaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(Wei.ZERO)
-            .gasLimit(0L)
+            .gasLimit(blockHeader.getGasLimit())
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
             .value(Wei.ZERO)
@@ -424,10 +416,7 @@ public class TransactionSimulatorTest {
   public void shouldUseZeroNonceWhenAccountDoesNotExist() {
     final CallParameter callParameter = legacyTransactionCallParameterBuilder().build();
 
-    final BlockHeader blockHeader =
-        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
-
-    mockBlockchainForBlockHeader(blockHeader);
+    final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
     mockWorldStateForAbsentAccount(blockHeader);
 
     final Transaction expectedTransaction =
@@ -435,7 +424,7 @@ public class TransactionSimulatorTest {
             .type(TransactionType.FRONTIER)
             .nonce(0L)
             .gasPrice(Wei.ZERO)
-            .gasLimit(0L)
+            .gasLimit(blockHeader.getGasLimit())
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
             .value(Wei.ZERO)
@@ -456,18 +445,17 @@ public class TransactionSimulatorTest {
     final CallParameter callParameter =
         eip1559TransactionCallParameterBuilder().nonce(expectedNonce).build();
 
-    final BlockHeader blockHeader =
-        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
-
-    mockBlockchainForBlockHeader(blockHeader);
+    final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
     mockWorldStateForAccount(blockHeader, Address.fromHexString("0x0"), accountNonce);
 
     final Transaction expectedTransaction =
         Transaction.builder()
-            .type(TransactionType.FRONTIER)
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.ONE)
             .nonce(expectedNonce)
-            .gasPrice(Wei.ZERO)
-            .gasLimit(0L)
+            .maxFeePerGas(Wei.ZERO)
+            .maxPriorityFeePerGas(Wei.ZERO)
+            .gasLimit(blockHeader.getGasLimit())
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
             .value(Wei.ZERO)
@@ -484,11 +472,7 @@ public class TransactionSimulatorTest {
   public void shouldReturnFailureResultWhenProcessingFails() {
     final CallParameter callParameter = legacyTransactionCallParameterBuilder().build();
 
-    final BlockHeader blockHeader =
-        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
-
-    mockBlockchainForBlockHeader(blockHeader);
-    mockWorldStateForAccount(blockHeader, Address.fromHexString("0x0"), 1L);
+    final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -526,11 +510,7 @@ public class TransactionSimulatorTest {
   public void shouldReturnSuccessfulResultWhenProcessingIsSuccessfulByHash() {
     final CallParameter callParameter = legacyTransactionCallParameterBuilder().build();
 
-    final BlockHeader blockHeader =
-        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
-
-    mockBlockchainForBlockHeader(blockHeader);
-    mockWorldStateForAccount(blockHeader, callParameter.getSender().orElseThrow(), 1L);
+    final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -557,18 +537,14 @@ public class TransactionSimulatorTest {
   public void shouldUseDefaultValuesWhenMissingOptionalFieldsByHash() {
     final CallParameter callParameter = legacyTransactionCallParameterBuilder().build();
 
-    final BlockHeader blockHeader =
-        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
-
-    mockBlockchainForBlockHeader(blockHeader);
-    mockWorldStateForAccount(blockHeader, Address.fromHexString("0x0"), 1L);
+    final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
 
     final Transaction expectedTransaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(Wei.ZERO)
-            .gasLimit(0L)
+            .gasLimit(blockHeader.getGasLimit())
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
             .value(Wei.ZERO)
@@ -586,10 +562,7 @@ public class TransactionSimulatorTest {
   public void shouldUseZeroNonceWhenAccountDoesNotExistByHash() {
     final CallParameter callParameter = legacyTransactionCallParameterBuilder().build();
 
-    final BlockHeader blockHeader =
-        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
-
-    mockBlockchainForBlockHeader(blockHeader);
+    final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
     mockWorldStateForAbsentAccount(blockHeader);
 
     final Transaction expectedTransaction =
@@ -597,7 +570,7 @@ public class TransactionSimulatorTest {
             .type(TransactionType.FRONTIER)
             .nonce(0L)
             .gasPrice(Wei.ZERO)
-            .gasLimit(0L)
+            .gasLimit(blockHeader.getGasLimit())
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
             .value(Wei.ZERO)
@@ -615,11 +588,7 @@ public class TransactionSimulatorTest {
   public void shouldReturnFailureResultWhenProcessingFailsByHash() {
     final CallParameter callParameter = legacyTransactionCallParameterBuilder().build();
 
-    final BlockHeader blockHeader =
-        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
-
-    mockBlockchainForBlockHeader(blockHeader);
-    mockWorldStateForAccount(blockHeader, Address.fromHexString("0x0"), 1L);
+    final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -646,10 +615,7 @@ public class TransactionSimulatorTest {
   public void shouldReturnSuccessfulResultWhenEip1559TransactionProcessingIsSuccessful() {
     final CallParameter callParameter = eip1559TransactionCallParameterBuilder().build();
 
-    final BlockHeader blockHeader =
-        mockBlockHeader(Hash.ZERO, 1L, Wei.ONE, DEFAULT_BLOCK_GAS_LIMIT);
-
-    mockBlockchainAndWorldState(callParameter);
+    final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -711,9 +677,9 @@ public class TransactionSimulatorTest {
     final CallParameter callParameter =
         eip1559TransactionCallParameterBuilder().gas(GAS_CAP / 2).build();
 
-    mockBlockHeader(Hash.ZERO, 1L, Wei.ONE, DEFAULT_BLOCK_GAS_LIMIT);
+    final var blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE, DEFAULT_BLOCK_GAS_LIMIT);
 
-    mockBlockchainAndWorldState(callParameter);
+    mockBlockchainAndWorldState(callParameter, blockHeader);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -776,12 +742,12 @@ public class TransactionSimulatorTest {
   @Test
   public void shouldUseBlockGasLimitWhenGasLimitNotPresent() {
     // generate call parameters that do not specify a gas limit,
-    // expect the block gas limit to be used for simulation, since lower than the default rpc gas
-    // cap
+    // expect the block gas limit to be used for simulation,
+    // since lower than the default rpc gas cap
     final CallParameter callParameter =
         eip1559TransactionCallParameterBuilder().gas(OptionalLong.empty()).build();
 
-    mockBlockchainAndWorldState(callParameter);
+    final var blockHeader = mockBlockchainAndWorldState(callParameter);
     mockProtocolSpecForProcessWithWorldUpdater();
 
     final Transaction expectedTransaction =
@@ -796,7 +762,7 @@ public class TransactionSimulatorTest {
             .value(callParameter.getValue().orElseThrow())
             .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
-            .gasLimit(DEFAULT_BLOCK_GAS_LIMIT)
+            .gasLimit(blockHeader.getGasLimit())
             .build();
 
     // call process with original transaction
@@ -874,9 +840,44 @@ public class TransactionSimulatorTest {
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
-  private void mockBlockchainAndWorldState(final CallParameter callParameter) {
+  @Test
+  public void shouldSimulateLegacyTransactionWhenBaseFeeNotZero() {
+    // tests that the transaction simulator will simulate a legacy transaction when the base fee is
+    // not zero and the transaction is a legacy transaction
+    final CallParameter callParameter = legacyTransactionCallParameterBuilder().build();
+
+    final var blockHeader = mockBlockchainAndWorldState(callParameter);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.FRONTIER)
+            .nonce(1L)
+            .gasPrice(callParameter.getGasPrice().orElse(Wei.ZERO))
+            .gasLimit(blockHeader.getGasLimit())
+            .to(callParameter.getTo().orElseThrow())
+            .sender(callParameter.getSender().orElseThrow())
+            .value(callParameter.getValue().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
+            .signature(FAKE_SIGNATURE)
+            .build();
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
+
+    final Optional<TransactionSimulatorResult> result =
+        uncappedTransactionSimulator.process(callParameter, 1L);
+
+    verifyTransactionWasProcessed(expectedTransaction);
+    assertThat(result.get().isSuccessful()).isTrue();
+  }
+
+  private BlockHeader mockBlockchainAndWorldState(final CallParameter callParameter) {
     final BlockHeader blockHeader =
         mockBlockHeader(Hash.ZERO, 1L, Wei.ONE, DEFAULT_BLOCK_GAS_LIMIT);
+    mockBlockchainAndWorldState(callParameter, blockHeader);
+    return blockHeader;
+  }
+
+  private void mockBlockchainAndWorldState(
+      final CallParameter callParameter, final BlockHeader blockHeader) {
     mockBlockchainForBlockHeader(blockHeader);
     mockWorldStateForAccount(blockHeader, callParameter.getSender().orElseThrow(), 1L);
   }
@@ -1013,34 +1014,5 @@ public class TransactionSimulatorTest {
         .gas(0L)
         .blobVersionedHashes(bwc.getVersionedHashes())
         .build();
-  }
-
-  @Test
-  public void shouldSimulateLegacyTransactionWhenBaseFeeNotZero() {
-    // tests that the transaction simulator will simulate a legacy transaction when the base fee is
-    // not zero and the transaction is a legacy transaction
-    final CallParameter callParameter = legacyTransactionCallParameterBuilder().build();
-
-    mockBlockchainAndWorldState(callParameter);
-
-    final Transaction expectedTransaction =
-        Transaction.builder()
-            .type(TransactionType.FRONTIER)
-            .nonce(1L)
-            .gasPrice(callParameter.getGasPrice().orElse(Wei.ZERO))
-            .gasLimit(DEFAULT_BLOCK_GAS_LIMIT)
-            .to(callParameter.getTo().orElseThrow())
-            .sender(callParameter.getSender().orElseThrow())
-            .value(callParameter.getValue().orElseThrow())
-            .payload(callParameter.getPayload().orElseThrow())
-            .signature(FAKE_SIGNATURE)
-            .build();
-    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
-
-    final Optional<TransactionSimulatorResult> result =
-        uncappedTransactionSimulator.process(callParameter, 1L);
-
-    verifyTransactionWasProcessed(expectedTransaction);
-    assertThat(result.get().isSuccessful()).isTrue();
   }
 }
