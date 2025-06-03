@@ -65,6 +65,7 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.stream.Stream;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -73,6 +74,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -91,7 +95,7 @@ public class TransactionSimulatorTest {
 
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
-  private static final long GAS_CAP = 500_000L;
+  private static final long RPC_GAS_CAP = 500_000L;
   private static final long TRANSFER_GAS_LIMIT = 21_000L;
   private static final long DEFAULT_BLOCK_GAS_LIMIT = 30_000_000L;
   private TransactionSimulator uncappedTransactionSimulator;
@@ -117,7 +121,7 @@ public class TransactionSimulatorTest {
     // capped at a lower limit
     this.cappedTransactionSimulator =
         new TransactionSimulator(
-            blockchain, worldStateArchive, protocolSchedule, miningConfiguration, GAS_CAP);
+            blockchain, worldStateArchive, protocolSchedule, miningConfiguration, RPC_GAS_CAP);
     // capped at default limit
     this.defaultCappedTransactionSimulator =
         new TransactionSimulator(
@@ -643,7 +647,7 @@ public class TransactionSimulatorTest {
   @Test
   public void shouldCapGasLimitWhenOriginalTransactionExceedsGasCap() {
     final CallParameter callParameter =
-        eip1559TransactionCallParameterBuilder().gas(GAS_CAP + 1).build();
+        eip1559TransactionCallParameterBuilder().gas(RPC_GAS_CAP + 1).build();
 
     mockBlockchainAndWorldState(callParameter);
 
@@ -652,7 +656,7 @@ public class TransactionSimulatorTest {
             .type(TransactionType.EIP1559)
             .chainId(BigInteger.ONE)
             .nonce(1L)
-            .gasLimit(GAS_CAP)
+            .gasLimit(RPC_GAS_CAP)
             .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
             .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
             .to(callParameter.getTo().orElseThrow())
@@ -675,7 +679,7 @@ public class TransactionSimulatorTest {
   @Test
   public void shouldUseProvidedGasLimitWhenBelowRpcCapGas() {
     final CallParameter callParameter =
-        eip1559TransactionCallParameterBuilder().gas(GAS_CAP / 2).build();
+        eip1559TransactionCallParameterBuilder().gas(RPC_GAS_CAP / 2).build();
 
     final var blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE, DEFAULT_BLOCK_GAS_LIMIT);
 
@@ -686,7 +690,7 @@ public class TransactionSimulatorTest {
             .type(TransactionType.EIP1559)
             .chainId(BigInteger.ONE)
             .nonce(1L)
-            .gasLimit(GAS_CAP / 2)
+            .gasLimit(RPC_GAS_CAP / 2)
             .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
             .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
             .to(callParameter.getTo().orElseThrow())
@@ -728,7 +732,7 @@ public class TransactionSimulatorTest {
             .value(callParameter.getValue().orElseThrow())
             .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
-            .gasLimit(GAS_CAP)
+            .gasLimit(RPC_GAS_CAP)
             .build();
 
     // call process with original transaction
@@ -773,14 +777,19 @@ public class TransactionSimulatorTest {
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
-  @Test
-  public void shouldUseTxGasLimitCapWhenWhenGasLimitNotPresent() {
-    final long txGasLimitCap = DEFAULT_BLOCK_GAS_LIMIT - 1;
-
+  @ParameterizedTest
+  @MethodSource("shouldUseTxGasLimitCapWhenWhenGasLimitNotPresent")
+  public void shouldUseTxGasLimitCapWhenWhenGasLimitNotPresent(
+      final RpcGasCapVariant rpcGasCapVariant,
+      final long blockGasLimit,
+      final long txGasLimitCap,
+      final long expectedGasLimit) {
     final CallParameter callParameter =
         eip1559TransactionCallParameterBuilder().gas(OptionalLong.empty()).build();
 
-    mockBlockchainAndWorldState(callParameter);
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE, blockGasLimit);
+
+    mockBlockchainAndWorldState(callParameter, blockHeader);
     mockProtocolSpecForProcessWithWorldUpdater(txGasLimitCap);
 
     final Transaction expectedTransaction =
@@ -795,15 +804,60 @@ public class TransactionSimulatorTest {
             .value(callParameter.getValue().orElseThrow())
             .payload(callParameter.getPayload().orElseThrow())
             .signature(FAKE_SIGNATURE)
-            .gasLimit(txGasLimitCap)
+            .gasLimit(expectedGasLimit)
             .build();
 
-    // call process with original transaction
-    defaultCappedTransactionSimulator.process(
+    final var simulator =
+        switch (rpcGasCapVariant) {
+          case DEFAULT -> defaultCappedTransactionSimulator;
+          case UNCAPPED -> uncappedTransactionSimulator;
+          case CAPPED -> cappedTransactionSimulator;
+        };
+
+    simulator.process(
         callParameter, TransactionValidationParams.transactionSimulator(), NO_TRACING, 1L);
 
-    // expect transaction with the gas limit cap to be processed
     verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  private enum RpcGasCapVariant {
+    DEFAULT,
+    CAPPED,
+    UNCAPPED;
+  }
+
+  private static Stream<Arguments> shouldUseTxGasLimitCapWhenWhenGasLimitNotPresent() {
+    return Stream.of(
+        Arguments.of(
+            RpcGasCapVariant.DEFAULT,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT - 1,
+            DEFAULT_BLOCK_GAS_LIMIT - 1),
+        Arguments.of(
+            RpcGasCapVariant.DEFAULT,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT + 1,
+            DEFAULT_BLOCK_GAS_LIMIT),
+        Arguments.of(
+            RpcGasCapVariant.CAPPED,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT - 1,
+            RPC_GAS_CAP),
+        Arguments.of(
+            RpcGasCapVariant.CAPPED,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT + 1,
+            RPC_GAS_CAP),
+        Arguments.of(
+            RpcGasCapVariant.UNCAPPED,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT - 1,
+            DEFAULT_BLOCK_GAS_LIMIT - 1),
+        Arguments.of(
+            RpcGasCapVariant.UNCAPPED,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT + 1,
+            DEFAULT_BLOCK_GAS_LIMIT));
   }
 
   @Test

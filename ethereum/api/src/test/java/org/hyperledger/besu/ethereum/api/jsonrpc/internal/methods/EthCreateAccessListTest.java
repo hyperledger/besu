@@ -63,10 +63,12 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class EthCreateAccessListTest {
-
-  private final String METHOD = "eth_createAccessList";
-  private EthCreateAccessList method;
   private static final long MIN_TX_GAS_COST = 21_000L;
+  private static final long TX_GAS_LIMIT_CAP = 1_000_000L;
+  private static final long BLOCK_GAS_LIMIT = 2_000_000L;
+  private static final String METHOD = "eth_createAccessList";
+
+  private EthCreateAccessList method;
 
   @Mock private BlockHeader latestBlockHeader;
   @Mock private BlockHeader finalizedBlockHeader;
@@ -89,14 +91,14 @@ public class EthCreateAccessListTest {
     when(blockchainQueries.getMinimumTransactionCost(any())).thenReturn(MIN_TX_GAS_COST);
     when(blockchainQueries.accountBalance(any(), any())).thenReturn(Optional.of(Wei.MAX_WEI));
     when(blockchainQueries.getTransactionGasLimitCap(any())).thenReturn(Long.MAX_VALUE);
-    when(genesisBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
+    when(genesisBlockHeader.getGasLimit()).thenReturn(BLOCK_GAS_LIMIT);
     when(genesisBlockHeader.getNumber()).thenReturn(0L);
-    when(finalizedBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
+    when(finalizedBlockHeader.getGasLimit()).thenReturn(BLOCK_GAS_LIMIT);
     when(finalizedBlockHeader.getNumber()).thenReturn(1L);
     when(blockchain.getChainHeadHeader()).thenReturn(latestBlockHeader);
-    when(latestBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
+    when(latestBlockHeader.getGasLimit()).thenReturn(BLOCK_GAS_LIMIT);
     when(latestBlockHeader.getNumber()).thenReturn(2L);
-    when(pendingBlockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
+    when(pendingBlockHeader.getGasLimit()).thenReturn(BLOCK_GAS_LIMIT);
     when(pendingBlockHeader.getNumber()).thenReturn(3L);
     when(transactionSimulator.simulatePendingBlockHeader()).thenReturn(pendingBlockHeader);
     when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(true);
@@ -346,11 +348,37 @@ public class EthCreateAccessListTest {
 
     // Set TransactionSimulator.process response
     mockTransactionSimulatorResult(true, false, MIN_TX_GAS_COST, genesisBlockHeader);
+
     assertThat(responseWithMockTracer(request, tracer))
         .usingRecursiveComparison()
         .isEqualTo(expectedResponse);
     verify(transactionSimulator, times(1))
         .process(any(), eq(Optional.empty()), any(), any(), eq(genesisBlockHeader));
+  }
+
+  @Test
+  public void shouldUseTxGasLimitCapIfLessThanBlockGasLimit() {
+    when(blockchainQueries.getTransactionGasLimitCap(any())).thenReturn(TX_GAS_LIMIT_CAP);
+
+    final JsonRpcRequestContext request =
+        ethCreateAccessListRequest(
+            eip1559TransactionCallParameter(Optional.empty(), null, Bytes.ofUnsignedLong(1L)));
+    // Generate a random list with one access list entry
+    final List<AccessListEntry> expectedAccessList = generateRandomAccessList();
+
+    // expect a list with the mocked access list
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            null, new CreateAccessListResult(expectedAccessList, TX_GAS_LIMIT_CAP));
+    final AccessListOperationTracer tracer = createMockTracer(expectedAccessList);
+
+    mockTransactionSimulatorResult(true, false, TX_GAS_LIMIT_CAP, pendingBlockHeader);
+
+    assertThat(responseWithMockTracer(request, tracer))
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
+    verify(transactionSimulator, times(2))
+        .processOnPending(any(), eq(Optional.empty()), any(), any(), eq(pendingBlockHeader));
   }
 
   private JsonRpcResponse responseWithMockTracer(
@@ -375,7 +403,14 @@ public class EthCreateAccessListTest {
       final boolean isReverted,
       final long estimateGas,
       final BlockHeader blockHeader) {
+    final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
+    when(mockResult.getRevertReason())
+        .thenReturn(isReverted ? Optional.of(Bytes.of(0)) : Optional.empty());
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
+    when(mockTxSimResult.result()).thenReturn(mockResult);
+    when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
+    when(mockTxSimResult.getGasEstimate()).thenReturn(estimateGas);
+
     if (blockHeader == pendingBlockHeader) {
       when(transactionSimulator.processOnPending(
               any(), eq(Optional.empty()), any(), any(), eq(blockHeader)))
@@ -384,12 +419,6 @@ public class EthCreateAccessListTest {
       when(transactionSimulator.process(any(), eq(Optional.empty()), any(), any(), eq(blockHeader)))
           .thenReturn(Optional.of(mockTxSimResult));
     }
-    final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
-    when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
-    when(mockResult.getRevertReason())
-        .thenReturn(isReverted ? Optional.of(Bytes.of(0)) : Optional.empty());
-    when(mockTxSimResult.result()).thenReturn(mockResult);
-    when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
   }
 
   private CallParameter legacyTransactionCallParameter(final Wei gasPrice) {
@@ -405,20 +434,22 @@ public class EthCreateAccessListTest {
   }
 
   private CallParameter eip1559TransactionCallParameter() {
-    return eip1559TransactionCallParameter(Optional.empty(), null);
+    return eip1559TransactionCallParameter(Optional.empty(), null, Bytes.EMPTY);
   }
 
   private CallParameter eip1559TransactionCallParameter(final Optional<Wei> gasPrice) {
-    return eip1559TransactionCallParameter(gasPrice, null);
+    return eip1559TransactionCallParameter(gasPrice, null, Bytes.EMPTY);
   }
 
   private CallParameter eip1559TransactionCallParameter(
       final List<AccessListEntry> accessListEntries) {
-    return eip1559TransactionCallParameter(Optional.empty(), accessListEntries);
+    return eip1559TransactionCallParameter(Optional.empty(), accessListEntries, Bytes.EMPTY);
   }
 
   private CallParameter eip1559TransactionCallParameter(
-      final Optional<Wei> gasPrice, final List<AccessListEntry> accessListEntries) {
+      final Optional<Wei> gasPrice,
+      final List<AccessListEntry> accessListEntries,
+      final Bytes payload) {
     return ImmutableCallParameter.builder()
         .sender(Address.fromHexString("0x0"))
         .to(Address.fromHexString("0x0"))
@@ -426,7 +457,7 @@ public class EthCreateAccessListTest {
         .maxFeePerGas(Wei.fromHexString("0x10"))
         .maxPriorityFeePerGas(Wei.fromHexString("0x10"))
         .value(Wei.ZERO)
-        .input(Bytes.EMPTY)
+        .input(payload)
         .strict(false)
         .accessList(Optional.ofNullable(accessListEntries))
         .build();
