@@ -293,6 +293,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
         .setFilterPolicy(new BloomFilter(10, false))
         .setPartitionFilters(true)
         .setCacheIndexAndFilterBlocks(false)
+        .setWholeKeyFiltering(true)
         .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 
