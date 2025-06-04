@@ -83,7 +83,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BlockSimulator {
 
   private static final TransactionValidationParams STRICT_VALIDATION_PARAMS =
-      TransactionValidationParams.transactionSimulator();
+      TransactionValidationParams.blockSimulatorStrict();
 
   private static final TransactionValidationParams SIMULATION_PARAMS =
       TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce();
