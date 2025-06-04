@@ -283,7 +283,7 @@ public class Benchmarks {
                     "000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000020e8e77626586f73b955364c7b4bbf0bb7f7685ebd40e852b164633a4acbd3244cfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff01681d2220bfea4bb888a5543db8c0916274ddb1ea93b144c042c01d8164c95"))
             .build();
     final BigIntegerModularExponentiationPrecompiledContract contract =
-        new BigIntegerModularExponentiationPrecompiledContract(new OsakaGasCalculator());
+        BigIntegerModularExponentiationPrecompiledContract.osaka(new OsakaGasCalculator());
 
     for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
       final long timePerCallInNs = runBenchmark(testCase.getValue(), contract);
