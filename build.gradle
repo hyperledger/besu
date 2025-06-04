@@ -719,8 +719,8 @@ startScripts {
     "-XX:StartFlightRecording,settings=default.jfc",
     "-Xlog:jfr*=off"
   ]
-  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
-  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(startScripts) }
 }
 
@@ -729,8 +729,8 @@ task untunedStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'besu-untuned'
-  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
-  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(untunedStartScripts) }
 }
 
@@ -742,8 +742,8 @@ task evmToolStartScripts(type: CreateStartScripts) {
   defaultJvmOpts = [
     "-Dsecp256k1.randomize=false"
   ]
-  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
-  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(evmToolStartScripts) }
 }
 
@@ -1085,7 +1085,7 @@ dependencies {
   errorprone 'com.google.errorprone:error_prone_core'
   // https://github.com/hyperledger/besu-errorprone-checks/
   errorprone 'org.hyperledger.besu:besu-errorprone-checks'
-  implementation project(':besu')
+  implementation project(':app')
   implementation project(':ethereum:evmtool')
 }
 
@@ -1119,7 +1119,7 @@ distributions {
       from("./build/reports/dependency-license/index.html") { into "."}
       rename("index.html","license-dependency.html")
       from("./docs/README.md") { into "." }
-      from("./besu/src/main/scripts/besu-entry.sh") { into "./bin/" }
+      from("./app/src/main/scripts/besu-entry.sh") { into "./bin/" }
       from(autocomplete) { into "." }
     }
   }

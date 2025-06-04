@@ -14,7 +14,7 @@ jar {
 }
 
 dependencies {
-  implementation project(':besu')
+  implementation project(':app')
   implementation project(':config')
   implementation project(':consensus:clique')
   implementation project(':consensus:common')

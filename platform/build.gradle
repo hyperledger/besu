@@ -41,7 +41,7 @@ dependencies {
 
   constraints {
     api project(':acceptance-tests:dsl')
-    api project(':besu')
+    api project(':app')
     api project(':config')
     api project(':consensus:clique')
     api project(':consensus:common')
