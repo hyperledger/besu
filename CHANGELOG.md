@@ -3,6 +3,8 @@
 ### Breaking Changes
 ### Upcoming Breaking Changes
 ### Additions and Improvements
+- EIP-7825: Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
+
 ### Bug fixes
 
 ## 25.6.0
