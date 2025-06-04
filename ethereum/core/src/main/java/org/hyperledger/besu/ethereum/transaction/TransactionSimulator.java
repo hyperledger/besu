@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
@@ -52,10 +53,10 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
-import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -289,7 +290,9 @@ public class TransactionSimulator {
     try (final MutableWorldState ws = getWorldState(header)) {
 
       WorldUpdater updater = getEffectiveWorldStateUpdater(ws);
-
+      if (ws instanceof BonsaiWorldState bonsaiWorldState) {
+        bonsaiWorldState.disableCacheMerkleTrieLoader();
+      }
       // in order to trace the state diff we need to make sure that
       // the world updater always has a parent
       if (operationTracer instanceof DebugOperationTracer) {
@@ -347,7 +350,7 @@ public class TransactionSimulator {
                     "Public world state not available for block " + header.toLogString()));
   }
 
-  @Nonnull
+  @NotNull
   public Optional<TransactionSimulatorResult> processWithWorldUpdater(
       final CallParameter callParams,
       final Optional<StateOverrideMap> maybeStateOverrides,
@@ -395,7 +398,7 @@ public class TransactionSimulator {
         () -> FAKE_SIGNATURE);
   }
 
-  @Nonnull
+  @NotNull
   public Optional<TransactionSimulatorResult> processWithWorldUpdater(
       final CallParameter callParams,
       final Optional<StateOverrideMap> maybeStateOverrides,
@@ -518,17 +521,10 @@ public class TransactionSimulator {
       }
     } else {
       if (rpcGasCap > 0) {
-        if (blockGasLimit > 0) {
-          LOG.trace(
-              "No user provided gas limit, setting simulation gas cap to the value of min(rpc-gas-cap,blockGasLimit) {}",
-              rpcGasCap);
-          simulationGasCap = Math.min(rpcGasCap, blockGasLimit);
-        } else {
-          LOG.trace(
-              "No user provided gas limit, setting simulation gas cap to the value of rpc-gas-cap {}",
-              rpcGasCap);
-          simulationGasCap = rpcGasCap;
-        }
+        LOG.trace(
+            "No user provided gas limit, setting simulation gas cap to the value of min(rpc-gas-cap,blockGasLimit) {}",
+            rpcGasCap);
+        simulationGasCap = Math.min(rpcGasCap, blockGasLimit);
       } else {
         simulationGasCap = blockGasLimit;
         LOG.trace(

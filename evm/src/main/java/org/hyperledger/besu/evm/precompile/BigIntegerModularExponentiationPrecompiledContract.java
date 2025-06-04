@@ -26,9 +26,9 @@ import org.hyperledger.besu.nativelib.arithmetic.LibArithmetic;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.slf4j.Logger;
@@ -124,10 +124,10 @@ public class BigIntegerModularExponentiationPrecompiledContract
     return gasCalculator().modExpGasCost(input);
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
     // https://eips.ethereum.org/EIPS/eip-7823
     // We introduce an upper bound to the inputs of the precompile,
     // each of the length inputs (length_of_BASE, length_of_EXPONENT and length_of_MODULUS)
@@ -148,7 +148,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
     }
   }
 
-  @Nonnull
+  @NotNull
   private PrecompileContractResult computeDefault(
       final Bytes input,
       final long length_of_BASE,
@@ -282,7 +282,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   private PrecompileContractResult computeNative(
-      final @Nonnull Bytes input, final long length_of_MODULUS) {
+      final @NotNull Bytes input, final long length_of_MODULUS) {
     final int modulusLength = clampedToInt(length_of_MODULUS);
     final IntByReference o_len = new IntByReference(modulusLength);
 

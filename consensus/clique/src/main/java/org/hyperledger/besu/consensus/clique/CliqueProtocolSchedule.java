@@ -125,11 +125,11 @@ public class CliqueProtocolSchedule {
 
     return specBuilder
         .blockHeaderValidatorBuilder(
-            (baseFeeMarket, gasCalculator) ->
+            (baseFeeMarket, gasCalculator, gasLimitCalculator) ->
                 getBlockHeaderValidator(
                     epochManager, secondsBetweenBlocks, createEmptyBlocks, baseFeeMarket))
         .ommerHeaderValidatorBuilder(
-            (baseFeeMarket, gasCalculator) ->
+            (baseFeeMarket, gasCalculator, gasLimitCalculator) ->
                 getBlockHeaderValidator(
                     epochManager, secondsBetweenBlocks, createEmptyBlocks, baseFeeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)

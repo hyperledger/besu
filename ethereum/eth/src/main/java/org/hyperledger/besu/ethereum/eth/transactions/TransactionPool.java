@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
-import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -42,10 +42,12 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.transactionpool.TransactionPoolPreProcessor;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.util.Subscribers;
@@ -115,10 +117,9 @@ public class TransactionPool implements BlockAddedObserver {
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
   private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
-  private final ListMultimap<VersionedHash, BlobsWithCommitments.BlobQuad>
-      mapOfBlobsInTransactionPool =
-          Multimaps.synchronizedListMultimap(
-              Multimaps.newListMultimap(new HashMap<>(), () -> new ArrayList<>(1)));
+  private final ListMultimap<VersionedHash, BlobProofBundle> mapOfBlobsInTransactionPool =
+      Multimaps.synchronizedListMultimap(
+          Multimaps.newListMultimap(new HashMap<>(), () -> new ArrayList<>(1)));
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -244,19 +245,25 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private ValidationResult<TransactionInvalidReason> addTransaction(
-      final Transaction transaction, final boolean isLocal, final byte score) {
+      final Transaction baseTransaction, final boolean isLocal, final byte score) {
 
-    final boolean hasPriority = isPriorityTransaction(transaction, isLocal);
+    final boolean hasPriority = isPriorityTransaction(baseTransaction, isLocal);
 
-    if (pendingTransactions.containsTransaction(transaction)) {
+    if (pendingTransactions.containsTransaction(baseTransaction)) {
       LOG.atTrace()
           .setMessage("Discard already present transaction {}")
-          .addArgument(transaction::toTraceLog)
+          .addArgument(baseTransaction::toTraceLog)
           .log();
       // We already have this transaction, don't even validate it.
       metrics.incrementRejected(isLocal, hasPriority, TRANSACTION_ALREADY_KNOWN, "txpool");
       return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
     }
+
+    // Apply any necessary fork related pre-processing before submitting the transaction to the pool
+    Transaction transaction =
+        getTransactionPoolPreProcessor()
+            .map(preProcessor -> preProcessor.prepareTransaction(baseTransaction, isLocal))
+            .orElse(baseTransaction);
 
     final ValidationResultAndAccount validationResult =
         validateTransaction(transaction, isLocal, hasPriority);
@@ -409,6 +416,12 @@ public class TransactionPool implements BlockAddedObserver {
         .get();
   }
 
+  private Optional<TransactionPoolPreProcessor> getTransactionPoolPreProcessor() {
+    return protocolSchedule
+        .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
+        .getTransactionPoolPreProcessor();
+  }
+
   private ValidationResultAndAccount validateTransaction(
       final Transaction transaction, final boolean isLocal, final boolean hasPriority) {
 
@@ -482,6 +495,9 @@ public class TransactionPool implements BlockAddedObserver {
             .getWorldStateArchive()
             .getWorldState(withBlockHeaderAndNoUpdateNodeHead(chainHeadBlockHeader))
             .orElseThrow()) {
+      if (worldState instanceof BonsaiWorldState bonsaiWorldState) {
+        bonsaiWorldState.disableCacheMerkleTrieLoader();
+      }
       final Account senderAccount = worldState.get(transaction.getSender());
       return new ValidationResultAndAccount(
           senderAccount,
@@ -669,10 +685,10 @@ public class TransactionPool implements BlockAddedObserver {
     if (maybeBlobsWithCommitments.isEmpty()) {
       return;
     }
-    final List<BlobsWithCommitments.BlobQuad> blobQuads =
-        maybeBlobsWithCommitments.get().getBlobQuads();
+    final List<BlobProofBundle> blobProofBundles =
+        maybeBlobsWithCommitments.get().getBlobProofBundles();
 
-    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.versionedHash(), bq));
+    blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.getVersionedHash(), bq));
   }
 
   private void unmapBlobsOnTransactionDropped(final Transaction transaction) {
@@ -680,13 +696,13 @@ public class TransactionPool implements BlockAddedObserver {
     if (maybeBlobsWithCommitments.isEmpty()) {
       return;
     }
-    final List<BlobsWithCommitments.BlobQuad> blobQuads =
-        maybeBlobsWithCommitments.get().getBlobQuads();
+    final List<BlobProofBundle> blobProofBundles =
+        maybeBlobsWithCommitments.get().getBlobProofBundles();
 
-    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.versionedHash(), bq));
+    blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.getVersionedHash(), bq));
   }
 
-  public BlobsWithCommitments.BlobQuad getBlobQuad(final VersionedHash vh) {
+  public BlobProofBundle getBlobProofBundle(final VersionedHash vh) {
     try {
       // returns an empty list if the key is not present, so getFirst() will throw
       return mapOfBlobsInTransactionPool.get(vh).getFirst();

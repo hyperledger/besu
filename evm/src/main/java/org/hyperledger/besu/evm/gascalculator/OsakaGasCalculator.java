@@ -35,31 +35,18 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class OsakaGasCalculator extends PragueGasCalculator {
 
-  /** The default mainnet target blobs per block for Osaka */
-  private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_OSAKA = 9;
-
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], DEFAULT_TARGET_BLOBS_PER_BLOCK_OSAKA);
-  }
-
-  /**
-   * Instantiates a new Osaka Gas Calculator
-   *
-   * @param targetBlobsPerBlock the target blobs per block
-   */
-  public OsakaGasCalculator(final int targetBlobsPerBlock) {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], targetBlobsPerBlock);
+    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
   }
 
   /**
    * Instantiates a new Osaka Gas Calculator
    *
    * @param maxPrecompile the max precompile
-   * @param targetBlobsPerBlock the target blobs per block
    */
-  protected OsakaGasCalculator(final int maxPrecompile, final int targetBlobsPerBlock) {
-    super(maxPrecompile, targetBlobsPerBlock);
+  protected OsakaGasCalculator(final int maxPrecompile) {
+    super(maxPrecompile);
   }
 
   @Override
