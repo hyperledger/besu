@@ -40,8 +40,8 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final long parentBaseFeePerGas) {
     final long currentExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed;
 
-    // First check if we're below the target, or if feeMarket doesn't support blob fee
-    if (currentExcessBlobGas < getTargetBlobGasPerBlock() || !feeMarket.implementsBlobFee()) {
+    // First check if we're below the target
+    if (currentExcessBlobGas < getTargetBlobGasPerBlock()) {
       return 0L;
     }
 
