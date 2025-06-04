@@ -4,7 +4,9 @@
 ### Upcoming Breaking Changes
 ### Additions and Improvements
 #### Fusaka Devnet
+- EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
 - EIP-7823 - Modexp upper bounds [#8632](https://github.com/hyperledger/besu/pull/8632)
+
 ### Bug fixes
 
 ## 25.6.0
