@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-api'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -95,7 +95,7 @@ dependencies {
   testImplementation project(':services:kvstore')
   testImplementation project(':testutil')
 
-  testResourceGeneration project(':besu')
+  testResourceGeneration project(':app')
 
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'io.vertx:vertx-auth-jwt'
