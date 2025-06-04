@@ -1,7 +1,7 @@
 # Changelog
 ## Unreleased
 ### Breaking Changes
-- Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins [#8589](https://github.com/hyperledger/besu/pull/8589)
+- Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins [#8589](https://github.com/hyperledger/besu/pull/8589) [#8746](https://github.com/hyperledger/besu/pull/8746)
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements

@@ -35,7 +35,7 @@ dependencies {
 
   testImplementation project(':acceptance-tests:dsl')
   testImplementation project(':acceptance-tests:test-plugins')
-  testImplementation project(':besu')
+  testImplementation project(':app')
   testImplementation project(':config')
   testImplementation project(':consensus:clique')
   testImplementation project(':datatypes')

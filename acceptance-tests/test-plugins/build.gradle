@@ -2,7 +2,7 @@
 dependencies {
   api 'org.slf4j:slf4j-api'
 
-  implementation project(':besu')
+  implementation project(':app')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:core')

@@ -37,7 +37,7 @@ jar {
 
 dependencies {
 
-  implementation project(':besu')
+  implementation project(':app')
   implementation project(':config')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
