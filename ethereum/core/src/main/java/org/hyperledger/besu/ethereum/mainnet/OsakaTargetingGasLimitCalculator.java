@@ -40,16 +40,13 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final long parentBaseFeePerGas) {
     final long currentExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed;
 
-    // First check if we're below the target
-    if (currentExcessBlobGas < getTargetBlobGasPerBlock()) {
+    // First check if we're below the target, or if feeMarket doesn't support blob fee
+    if (currentExcessBlobGas < getTargetBlobGasPerBlock() || !feeMarket.implementsBlobFee()) {
       return 0L;
     }
 
     // EIP-7918 https://eips.ethereum.org/EIPS/eip-7918
-    Wei baseFeeBlobGas = Wei.ZERO;
-    if (feeMarket.implementsBlobFee()) {
-      baseFeeBlobGas = feeMarket.blobGasPricePerGas(BlobGas.of(parentExcessBlobGas));
-    }
+    Wei baseFeeBlobGas = feeMarket.blobGasPricePerGas(BlobGas.of(parentExcessBlobGas));
     long baseFeeBlobGasLong = baseFeeBlobGas.toLong();
     if (BLOB_BASE_COST * parentBaseFeePerGas > getBlobGasPerBlob() * baseFeeBlobGasLong) {
       return parentExcessBlobGas
