@@ -131,7 +131,7 @@ public class Era1BlockImporter implements Closeable {
       Block block = new Block(blockHeader, bodiesFutures.get(i).get(10, TimeUnit.SECONDS));
 
       BlockImportResult importResult =
-          blockImporter.importBlock(context, block, HeaderValidationMode.SKIP_DETACHED);
+          blockImporter.importBlock(context, block, HeaderValidationMode.NONE);
       if (importResult.getStatus() != BlockImportResult.BlockImportStatus.IMPORTED) {
         LOG.warn(
             "Failed to import block {} due to {}",
