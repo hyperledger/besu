@@ -55,30 +55,25 @@ public class SnapServerChecker {
         .setMessage("Checking whether peer {} is a snap server ...")
         .addArgument(peer::getLoggableId)
         .log();
-    final CompletableFuture<AbstractPeerTask.PeerTaskResult<AccountRangeMessage.AccountRangeData>>
-        snapServerCheckCompletableFuture =
-            getAccountRangeFromPeer(peer, blockchain.getGenesisBlockHeader());
-    final CompletableFuture<Boolean> future = new CompletableFuture<>();
-    snapServerCheckCompletableFuture.whenComplete(
-        (peerResult, error) -> {
-          if (peerResult != null) {
-            if (!peerResult.getResult().accounts().isEmpty()
-                || !peerResult.getResult().proofs().isEmpty()) {
-              LOG.atTrace()
-                  .setMessage("Peer {} is a snap server.")
-                  .addArgument(peer::getLoggableId)
-                  .log();
-              future.complete(true);
-            } else {
+    return getAccountRangeFromPeer(peer, blockchain.getGenesisBlockHeader())
+        .thenApply(
+            peerResult -> {
+              if (peerResult != null) {
+                if (!peerResult.getResult().accounts().isEmpty()
+                    || !peerResult.getResult().proofs().isEmpty()) {
+                  LOG.atTrace()
+                      .setMessage("Peer {} is a snap server.")
+                      .addArgument(peer::getLoggableId)
+                      .log();
+                  return true;
+                }
+              }
               LOG.atTrace()
                   .setMessage("Peer {} is not a snap server.")
                   .addArgument(peer::getLoggableId)
                   .log();
-              future.complete(false);
-            }
-          }
-        });
-    return future;
+              return false;
+            });
   }
 
   public CompletableFuture<AbstractPeerTask.PeerTaskResult<AccountRangeMessage.AccountRangeData>>
