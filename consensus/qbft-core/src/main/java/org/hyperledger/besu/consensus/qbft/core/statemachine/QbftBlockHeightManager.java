@@ -70,7 +70,6 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   private Optional<PreparedCertificate> latestPreparedCertificate = Optional.empty();
   private Optional<QbftRound> currentRound = Optional.empty();
-  private boolean isEarlyRoundChangeEnabled = false;
 
   /**
    * Instantiates a new Qbft block height manager.
@@ -97,7 +96,11 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     this.roundFactory = qbftRoundFactory;
     this.validatorProvider = validatorProvider;
     this.transmitter =
-        new QbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
+        new QbftMessageTransmitter(
+            messageFactory,
+            (finalState.isFastRecoveryEnabled()
+                ? finalState.getFrequentRCMulticaster()
+                : finalState.getValidatorMulticaster()));
     this.messageFactory = messageFactory;
     this.clock = clock;
     this.roundChangeManager = roundChangeManager;
@@ -389,7 +392,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final Optional<Collection<RoundChange>> result =
         roundChangeManager.appendRoundChangeMessage(message);
 
-    if (!isEarlyRoundChangeEnabled) {
+    if (!finalState.isEarlyRoundChangeEnabled()) {
       if (result.isPresent()) {
         LOG.debug(
             "Received sufficient RoundChange messages to change round to targetRound={}",
