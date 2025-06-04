@@ -220,7 +220,23 @@ publishing {
           developerConnection = 'scm:git:ssh://github.com/hyperledger/besu.git'
           url = 'https://github.com/hyperledger/besu'
         }
+        withXml {
+          // Workaround since Gradle does not natively support adding classifiers in BOM
+          // https://github.com/gradle/gradle/issues/8561#issuecomment-467456299
+
+          Node pomNode = asNode()
+          Node dependencies = pomNode.dependencyManagement.dependencies.get(0)
+          addDependency(dependencies, "org.hyperledger.besu.internal", "besu-ethereum-core", "test-support", calculateVersion())
+        }
       }
     }
   }
+}
+
+def addDependency(parent, groupId, artifactId, classifier, version) {
+  parent.appendNode('dependency')
+    .appendNode('groupId', groupId).parent()
+    .appendNode('artifactId', artifactId).parent()
+    .appendNode('classifier', classifier).parent()
+    .appendNode('version', version)
 }

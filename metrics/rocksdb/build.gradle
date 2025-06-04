@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-metrics-rocksdb'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -25,12 +25,6 @@ jar {
       'Implementation-Version': calculateVersion(),
       'Commit-Hash': getGitCommitDetails(40).hash
       )
-  }
-}
-
-publishing {
-  publications {
-    mavenJava(MavenPublication) { artifactId 'metrics-rocksdb' }
   }
 }
 
