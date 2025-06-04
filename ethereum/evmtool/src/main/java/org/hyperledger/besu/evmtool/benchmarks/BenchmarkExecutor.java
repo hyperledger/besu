@@ -47,8 +47,8 @@ import org.apache.tuweni.bytes.Bytes;
 /** Abstract class to support benchmarking of various client algorithms */
 public abstract class BenchmarkExecutor {
 
-  static final int MATH_WARMUP = 10_000;
-  static final int MATH_ITERATIONS = 1_000;
+  static final int MATH_WARMUP = 100_000;
+  static final int MATH_ITERATIONS = 100_000;
 
   int warmup;
   int iterations;
