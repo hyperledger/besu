@@ -1086,7 +1086,8 @@ public class MainnetEVMs {
     registerPragueOperations(registry, gasCalculator, chainID);
 
     // EIP-5920 PAY opcode
-    registry.put(new PayOperation(gasCalculator));
+    // Comment for devnet-1 as it is target for devnet-2
+    //registry.put(new PayOperation(gasCalculator));
   }
 
   private static void registerEOFOperations(
