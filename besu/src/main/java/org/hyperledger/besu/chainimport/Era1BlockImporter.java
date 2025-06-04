@@ -113,12 +113,12 @@ public class Era1BlockImporter implements Closeable {
           @Override
           public void handleExecutionBlockReceipts(
               final Era1ExecutionBlockReceipts executionBlockReceipts) {
-            // not really necessary, do nothing
+            // Receipts are generated during the import process. Do nothing
           }
 
           @Override
           public void handleBlockIndex(final Era1BlockIndex blockIndex) {
-            // not really necessary, do nothing
+            // not used for block import, do nothing
           }
         });
 
