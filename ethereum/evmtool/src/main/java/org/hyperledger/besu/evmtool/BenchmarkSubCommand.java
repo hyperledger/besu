@@ -112,7 +112,7 @@ public class BenchmarkSubCommand implements Runnable {
     AbstractBLS12PrecompiledContract.setPrecompileCaching(enablePrecompileCache);
     var benchmarksToRun = benchmarks.isEmpty() ? EnumSet.allOf(Benchmark.class) : benchmarks;
     for (var benchmark : benchmarksToRun) {
-      System.out.println("Benchmarks for " + benchmark);
+      System.out.println("Benchmarks for " + benchmark + " on fork " + parentCommand.getFork());
       benchmark.benchmarkExecutor.runBenchmark(output, nativeCode, parentCommand.getFork());
     }
   }
