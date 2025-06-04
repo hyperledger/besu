@@ -65,6 +65,7 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.stream.Stream;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -73,6 +74,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -773,6 +777,89 @@ public class TransactionSimulatorTest {
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
+  @ParameterizedTest
+  @MethodSource("shouldUseTxGasLimitCapWhenWhenGasLimitNotPresent")
+  public void shouldUseTxGasLimitCapWhenWhenGasLimitNotPresent(
+      final RpcGasCapVariant rpcGasCapVariant,
+      final long blockGasLimit,
+      final long txGasLimitCap,
+      final long expectedGasLimit) {
+    final CallParameter callParameter =
+        eip1559TransactionCallParameterBuilder().gas(OptionalLong.empty()).build();
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE, blockGasLimit);
+
+    mockBlockchainAndWorldState(callParameter, blockHeader);
+    mockProtocolSpecForProcessWithWorldUpdater(txGasLimitCap);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+            .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+            .to(callParameter.getTo().orElseThrow())
+            .sender(callParameter.getSender().orElseThrow())
+            .value(callParameter.getValue().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
+            .signature(FAKE_SIGNATURE)
+            .gasLimit(expectedGasLimit)
+            .build();
+
+    final var simulator =
+        switch (rpcGasCapVariant) {
+          case DEFAULT -> defaultCappedTransactionSimulator;
+          case UNCAPPED -> uncappedTransactionSimulator;
+          case CAPPED -> cappedTransactionSimulator;
+        };
+
+    simulator.process(
+        callParameter, TransactionValidationParams.transactionSimulator(), NO_TRACING, 1L);
+
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  private enum RpcGasCapVariant {
+    DEFAULT,
+    CAPPED,
+    UNCAPPED;
+  }
+
+  private static Stream<Arguments> shouldUseTxGasLimitCapWhenWhenGasLimitNotPresent() {
+    return Stream.of(
+        Arguments.of(
+            RpcGasCapVariant.DEFAULT,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT - 1,
+            DEFAULT_BLOCK_GAS_LIMIT - 1),
+        Arguments.of(
+            RpcGasCapVariant.DEFAULT,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT + 1,
+            DEFAULT_BLOCK_GAS_LIMIT),
+        Arguments.of(
+            RpcGasCapVariant.CAPPED,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT - 1,
+            RPC_GAS_CAP),
+        Arguments.of(
+            RpcGasCapVariant.CAPPED,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT + 1,
+            RPC_GAS_CAP),
+        Arguments.of(
+            RpcGasCapVariant.UNCAPPED,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT - 1,
+            DEFAULT_BLOCK_GAS_LIMIT - 1),
+        Arguments.of(
+            RpcGasCapVariant.UNCAPPED,
+            DEFAULT_BLOCK_GAS_LIMIT,
+            DEFAULT_BLOCK_GAS_LIMIT + 1,
+            DEFAULT_BLOCK_GAS_LIMIT));
+  }
+
   @Test
   public void shouldReturnSuccessfulResultWhenBlobTransactionProcessingIsSuccessful() {
     final CallParameter callParameter = blobTransactionCallParameter();
@@ -906,6 +993,11 @@ public class TransactionSimulatorTest {
   }
 
   private void mockProtocolSpecForProcessWithWorldUpdater() {
+    mockProtocolSpecForProcessWithWorldUpdater(
+        GasLimitCalculator.constant().transactionGasLimitCap());
+  }
+
+  private void mockProtocolSpecForProcessWithWorldUpdater(final long txGasLimitCap) {
     final BlockHeaderFunctions blockHeaderFunctions = mock(BlockHeaderFunctions.class);
     final BlockHashProcessor blockHashProcessor = mock(BlockHashProcessor.class);
     when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
@@ -919,6 +1011,7 @@ public class TransactionSimulatorTest {
     when(protocolSpec.getGasCalculator()).thenReturn(new FrontierGasCalculator());
     when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSpec.getDifficultyCalculator()).thenReturn((time, parent) -> BigInteger.TEN);
+    when(gasLimitCalculator.transactionGasLimitCap()).thenReturn(txGasLimitCap);
     when(gasLimitCalculator.nextGasLimit(anyLong(), anyLong(), anyLong()))
         .thenReturn(DEFAULT_BLOCK_GAS_LIMIT);
   }
