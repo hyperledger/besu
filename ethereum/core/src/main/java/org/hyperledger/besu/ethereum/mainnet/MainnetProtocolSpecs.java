@@ -904,6 +904,7 @@ public abstract class MainnetProtocolSpecs {
                     Set.of(BlobType.KZG_CELL_PROOFS),
                     evm.getMaxInitcodeSize()))
         .transactionPoolPreProcessor(new OsakaTransactionPoolPreProcessor())
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
         .name("Osaka");
   }
 
