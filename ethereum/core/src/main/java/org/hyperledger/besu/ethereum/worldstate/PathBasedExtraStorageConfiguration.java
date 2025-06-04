@@ -27,12 +27,14 @@ public interface PathBasedExtraStorageConfiguration {
       ImmutablePathBasedExtraStorageConfiguration.builder()
           .limitTrieLogsEnabled(false)
           .unstable(PathBasedUnstable.DISABLED)
+          .parallelTxProcessingEnabled(false)
           .build();
 
   long DEFAULT_MAX_LAYERS_TO_LOAD = 512;
   boolean DEFAULT_LIMIT_TRIE_LOGS_ENABLED = true;
   long MINIMUM_TRIE_LOG_RETENTION_LIMIT = DEFAULT_MAX_LAYERS_TO_LOAD;
   int DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE = 5_000;
+  boolean DEFAULT_PARALLEL_TX_PROCESSING = true;
 
   @Value.Default
   default Long getMaxLayersToLoad() {
@@ -47,6 +49,11 @@ public interface PathBasedExtraStorageConfiguration {
   @Value.Default
   default int getTrieLogPruningWindowSize() {
     return DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
+  }
+
+  @Value.Default
+  default boolean getParallelTxProcessingEnabled() {
+    return DEFAULT_PARALLEL_TX_PROCESSING;
   }
 
   @Value.Default
@@ -69,13 +76,10 @@ public interface PathBasedExtraStorageConfiguration {
         ImmutablePathBasedExtraStorageConfiguration.PathBasedUnstable.builder()
             .fullFlatDbEnabled(false)
             .codeStoredByCodeHashEnabled(false)
-            .isParallelTxProcessingEnabled(false)
             .build();
 
     boolean DEFAULT_FULL_FLAT_DB_ENABLED = true;
     boolean DEFAULT_CODE_USING_CODE_HASH_ENABLED = true;
-
-    boolean DEFAULT_PARALLEL_TRX_ENABLED = false;
 
     @Value.Default
     default boolean getFullFlatDbEnabled() {
@@ -85,11 +89,6 @@ public interface PathBasedExtraStorageConfiguration {
     @Value.Default
     default boolean getCodeStoredByCodeHashEnabled() {
       return DEFAULT_CODE_USING_CODE_HASH_ENABLED;
-    }
-
-    @Value.Default
-    default boolean isParallelTxProcessingEnabled() {
-      return DEFAULT_PARALLEL_TRX_ENABLED;
     }
   }
 }
