@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.CallParameterUtil.validateAndGetCallParams;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
@@ -80,9 +79,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final var maybeStateOverrides = getAddressStateOverrideMap(requestContext);
     final var pendingBlockHeader = transactionSimulator.simulatePendingBlockHeader();
     final var minTxCost = getBlockchainQueries().getMinimumTransactionCost(pendingBlockHeader);
-    final var gasLimitUpperBound =
-        calculateGasLimitUpperBound(
-            callParameter, pendingBlockHeader.getParentHash(), pendingBlockHeader.getGasLimit());
+    final var gasLimitUpperBound = calculateGasLimitUpperBound(callParameter, pendingBlockHeader);
     if (gasLimitUpperBound < minTxCost) {
       return errorResponse(requestContext, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
     }
@@ -118,9 +115,7 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
     final var validationParams = getTransactionValidationParams(callParameter);
     final var maybeStateOverrides = getAddressStateOverrideMap(requestContext);
     final var minTxCost = getBlockchainQueries().getMinimumTransactionCost(blockHeader);
-    final var gasLimitUpperBound =
-        calculateGasLimitUpperBound(
-            callParameter, blockHeader.getHash(), blockHeader.getGasLimit());
+    final var gasLimitUpperBound = calculateGasLimitUpperBound(callParameter, blockHeader);
     if (gasLimitUpperBound < minTxCost) {
       return errorResponse(requestContext, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
     }
@@ -235,18 +230,24 @@ public abstract class AbstractEstimateGas extends AbstractBlockParameterMethod {
   }
 
   private long calculateGasLimitUpperBound(
-      final CallParameter callParameters, final Hash blockHash, final long maxTxGasLimit) {
+      final CallParameter callParameters, final ProcessableBlockHeader blockHeader) {
+
+    final var maxTxGasLimit =
+        Math.min(
+            getBlockchainQueries().getTransactionGasLimitCap(blockHeader),
+            blockHeader.getGasLimit());
+
     if (callParameters.getSender().isPresent() && callParameters.getStrict().orElse(Boolean.TRUE)) {
       final var sender = callParameters.getSender().get();
       final var maxGasPrice = calculateTxMaxGasPrice(callParameters);
       if (!maxGasPrice.equals(Wei.ZERO)) {
-        final var maybeBalance = getBlockchainQueries().accountBalance(sender, blockHash);
+        final var maybeBalance =
+            getBlockchainQueries().accountBalance(sender, blockHeader.getParentHash());
         if (maybeBalance.isEmpty() || maybeBalance.get().equals(Wei.ZERO)) {
           return 0;
         }
         final var balance = maybeBalance.get();
-        final var value = callParameters.getValue().orElse(Wei.ZERO);
-        final var balanceForGas = value == null ? balance : balance.subtract(value);
+        final var balanceForGas = callParameters.getValue().map(balance::subtract).orElse(balance);
         final var gasLimitForBalance = balanceForGas.divide(maxGasPrice);
         return gasLimitForBalance.fitsLong()
             ? Math.min(gasLimitForBalance.toLong(), maxTxGasLimit)

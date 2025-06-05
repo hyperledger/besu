@@ -20,9 +20,13 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCalculator {
-
   /** The blob base cost constant for Osaka */
   private static final long BLOB_BASE_COST = 1 << 14; // 2^14
+
+  /** The mainnet transaction gas limit cap for Osaka */
+  private static final long DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA = 30_000_000L;
+
+  private final long transactionGasLimitCap;
 
   public OsakaTargetingGasLimitCalculator(
       final long londonForkBlock,
@@ -30,7 +34,29 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final GasCalculator gasCalculator,
       final int maxBlobsPerBlock,
       final int targetBlobsPerBlock) {
+    this(
+        londonForkBlock,
+        feeMarket,
+        gasCalculator,
+        maxBlobsPerBlock,
+        targetBlobsPerBlock,
+        DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA);
+  }
+
+  public OsakaTargetingGasLimitCalculator(
+      final long londonForkBlock,
+      final BaseFeeMarket feeMarket,
+      final GasCalculator gasCalculator,
+      final int maxBlobsPerBlock,
+      final int targetBlobsPerBlock,
+      final long transactionGasLimitCap) {
     super(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock, targetBlobsPerBlock);
+    this.transactionGasLimitCap = transactionGasLimitCap;
+  }
+
+  @Override
+  public long transactionGasLimitCap() {
+    return transactionGasLimitCap;
   }
 
   @Override

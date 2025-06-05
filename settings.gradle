@@ -13,7 +13,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 pluginManagement {
   repositories {
     gradlePluginPortal()
@@ -25,7 +24,7 @@ include 'acceptance-tests:test-plugins'
 include 'acceptance-tests:dsl'
 include 'acceptance-tests:tests'
 include 'acceptance-tests:tests:shanghai'
-include 'besu'
+include 'app'
 include 'config'
 include 'consensus:clique'
 include 'consensus:common'
@@ -38,7 +37,6 @@ include 'datatypes'
 include 'crypto:algorithms'
 include 'crypto:services'
 include 'datatypes'
-include 'evm'
 include 'ethereum:api'
 include 'ethereum:blockcreation'
 include 'ethereum:core'
