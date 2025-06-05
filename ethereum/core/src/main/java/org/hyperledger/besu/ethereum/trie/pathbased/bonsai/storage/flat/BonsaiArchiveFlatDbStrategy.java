@@ -71,7 +71,6 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   static final byte[] MAX_BLOCK_SUFFIX = Bytes.ofUnsignedLong(Long.MAX_VALUE).toArrayUnsafe();
   static final byte[] MIN_BLOCK_SUFFIX = Bytes.ofUnsignedLong(0L).toArrayUnsafe();
   public static final byte[] DELETED_ACCOUNT_VALUE = new byte[0];
-  public static final byte[] DELETED_CODE_VALUE = new byte[0];
   public static final byte[] DELETED_STORAGE_VALUE = new byte[0];
 
   private Optional<BonsaiContext> getStateArchiveContextForWrite(
@@ -124,7 +123,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       final SegmentedKeyValueStorage storage) {
 
     getAccountCounter.inc();
-    Optional<Bytes> accountFound;
+    Optional<SegmentedKeyValueStorage.NearestKeyValue> accountFound;
 
     // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
     Bytes keyNearest =
@@ -142,30 +141,31 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       accountFound =
           storage
               .getNearestBefore(ACCOUNT_INFO_STATE_ARCHIVE, keyNearest)
-              .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size())
-              .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+              .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size());
 
       if (accountFound.isPresent()) {
         getAccountFromArchiveCounter.inc();
-      }
-    } else {
-      accountFound =
-          nearestAccount
-              .filter(
-                  found ->
-                      !Arrays.areEqual(
-                          DELETED_ACCOUNT_VALUE, found.value().orElse(DELETED_ACCOUNT_VALUE)))
-              // return empty when we find a "deleted value key"
-              .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
-
-      if (accountFound.isPresent()) {
-        getAccountFoundInFlatDatabaseCounter.inc();
       } else {
         getAccountNotFoundInFlatDatabaseCounter.inc();
       }
+    } else {
+
+      accountFound = nearestAccount;
+      getAccountFoundInFlatDatabaseCounter.inc();
     }
 
-    return accountFound;
+    if (accountFound.isPresent()) {
+      // The entry exists (so metrics are still incremented) but we don't return deleted values
+      return accountFound
+          .filter(
+              found ->
+                  !Arrays.areEqual(
+                      DELETED_ACCOUNT_VALUE, found.value().orElse(DELETED_ACCOUNT_VALUE)))
+          // return empty when we find a "deleted value key"
+          .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+    }
+
+    return Optional.empty();
   }
 
   @Override
@@ -314,7 +314,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       final StorageSlotKey storageSlotKey,
       final SegmentedKeyValueStorage storage) {
 
-    Optional<Bytes> storageFound;
+    Optional<SegmentedKeyValueStorage.NearestKeyValue> storageFound;
     getStorageValueCounter.inc();
 
     // get natural key from account hash and slot key
@@ -339,31 +339,31 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
               // don't return accounts that do not have a matching account hash
               .filter(
                   found ->
-                      Bytes.of(naturalKey).commonPrefixLength(found.key()) >= naturalKey.length)
-              .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+                      Bytes.of(naturalKey).commonPrefixLength(found.key()) >= naturalKey.length);
 
       if (storageFound.isPresent()) {
         getStorageFromArchiveCounter.inc();
-      }
-    } else {
-      storageFound =
-          nearestStorage
-              // return empty when we find a "deleted value key"
-              .filter(
-                  found ->
-                      !Arrays.areEqual(
-                          DELETED_STORAGE_VALUE, found.value().orElse(DELETED_STORAGE_VALUE)))
-              // map NearestKey to Bytes-wrapped value
-              .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
-
-      if (storageFound.isPresent()) {
-        getStorageValueFlatDatabaseCounter.inc();
       } else {
         getStorageValueNotFoundInFlatDatabaseCounter.inc();
       }
+    } else {
+      storageFound = nearestStorage;
+      getStorageValueFlatDatabaseCounter.inc();
     }
 
-    return storageFound;
+    // The entry exists (so metrics are still incremented) but we don't return deleted values
+    if (storageFound.isPresent()) {
+      return storageFound
+          // return empty when we find a "deleted value key"
+          .filter(
+              found ->
+                  !Arrays.areEqual(
+                      DELETED_STORAGE_VALUE, found.value().orElse(DELETED_STORAGE_VALUE)))
+          // map NearestKey to Bytes-wrapped value
+          .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+    }
+
+    return Optional.empty();
   }
 
   /*
