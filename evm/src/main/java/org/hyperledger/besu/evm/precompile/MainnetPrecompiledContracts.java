@@ -200,6 +200,8 @@ public interface MainnetPrecompiledContracts {
     registry.put(
         Address.MODEXP,
         new BigIntegerModularExponentiationPrecompiledContract(gasCalculator, 1024L));
+    // RIP-7212 - secp256r1 P256VERIFY
+    registry.put(Address.precompiled(100), new P256VerifyPrecompiledContract(gasCalculator));
   }
 
   /**

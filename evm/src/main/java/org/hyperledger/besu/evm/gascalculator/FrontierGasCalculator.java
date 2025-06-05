@@ -51,6 +51,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long ECREC_PRECOMPILED_GAS_COST = 3_000L;
 
+  private static final long P256VERIFY_PRECOMPILED_GAS_COST = 3_450L;
+
   private static final long SHA256_PRECOMPILED_BASE_GAS_COST = 60L;
 
   private static final long SHA256_PRECOMPILED_WORD_GAS_COST = 12L;
@@ -216,6 +218,11 @@ public class FrontierGasCalculator implements GasCalculator {
   @Override
   public long getEcrecPrecompiledContractGasCost() {
     return ECREC_PRECOMPILED_GAS_COST;
+  }
+
+  @Override
+  public long getP256VerifyPrecompiledContractGasCost() {
+    return P256VERIFY_PRECOMPILED_GAS_COST;
   }
 
   @Override
