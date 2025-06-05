@@ -197,6 +197,8 @@ public interface MainnetPrecompiledContracts {
     // EIP-7823 - Set upper bounds for MODEXP
     registry.put(
         Address.MODEXP, BigIntegerModularExponentiationPrecompiledContract.osaka(gasCalculator));
+    // RIP-7212 - secp256r1 P256VERIFY
+    registry.put(Address.precompiled(100), new P256VerifyPrecompiledContract(gasCalculator));
   }
 
   /**
