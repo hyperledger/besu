@@ -281,6 +281,22 @@ public class Benchmarks {
                 "marcin-3-balanced",
                 Bytes.fromHexString(
                     "000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000020e8e77626586f73b955364c7b4bbf0bb7f7685ebd40e852b164633a4acbd3244cfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff01681d2220bfea4bb888a5543db8c0916274ddb1ea93b144c042c01d8164c95"))
+            .put(
+                "pawel-1-exp-heavy",
+                Bytes.fromHexString(
+                    "0x000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000008ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))
+            .put(
+                "pawel-2-exp-heavy",
+                Bytes.fromHexString(
+                    "0x000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000280000000000000000000000000000000000000000000000000000000000000010ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))
+            .put(
+                "pawel-3-exp-heavy",
+                Bytes.fromHexString(
+                    "0x000000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000150000000000000000000000000000000000000000000000000000000000000018ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))
+            .put(
+                "pawel-4-exp-heavy",
+                Bytes.fromHexString(
+                    "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000020ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))
             .build();
     final BigIntegerModularExponentiationPrecompiledContract contract =
         BigIntegerModularExponentiationPrecompiledContract.osaka(new OsakaGasCalculator());
