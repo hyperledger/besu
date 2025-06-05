@@ -1196,7 +1196,7 @@ tasks.register('generateArtifactsCatalog') {
         group: groupId,
         name: artifactId,
         version: id.version,
-        fileName: artifact.file.name
+        filename: artifact.file.name
       ]
 
       if(artifact.classifier) {
