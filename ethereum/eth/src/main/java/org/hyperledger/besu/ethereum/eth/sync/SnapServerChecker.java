@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -35,29 +34,25 @@ public class SnapServerChecker {
 
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
-  private final Blockchain blockchain;
 
-  private SnapServerChecker(
-      final EthContext ethContext, final MetricsSystem metricsSystem, final Blockchain blockchain) {
+  public SnapServerChecker(final EthContext ethContext, final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
-    this.blockchain = blockchain;
   }
 
   public static void createAndSetSnapServerChecker(
-      final EthContext ethContext, final MetricsSystem metricsSystem, final Blockchain blockchain) {
-    final SnapServerChecker checker = new SnapServerChecker(ethContext, metricsSystem, blockchain);
+      final EthContext ethContext, final MetricsSystem metricsSystem) {
+    final SnapServerChecker checker = new SnapServerChecker(ethContext, metricsSystem);
     ethContext.getEthPeers().setSnapServerChecker(checker);
   }
 
-  public CompletableFuture<Boolean> check(final EthPeer peer) {
+  public CompletableFuture<Boolean> check(final EthPeer peer, final BlockHeader peersHeadHeader) {
     LOG.atTrace()
         .setMessage("Checking whether peer {} is a snap server ...")
         .addArgument(peer::getLoggableId)
         .log();
     final CompletableFuture<AbstractPeerTask.PeerTaskResult<AccountRangeMessage.AccountRangeData>>
-        snapServerCheckCompletableFuture =
-            getAccountRangeFromPeer(peer, blockchain.getGenesisBlockHeader());
+        snapServerCheckCompletableFuture = getAccountRangeFromPeer(peer, peersHeadHeader);
     final CompletableFuture<Boolean> future = new CompletableFuture<>();
     snapServerCheckCompletableFuture.whenComplete(
         (peerResult, error) -> {

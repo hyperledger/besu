@@ -106,8 +106,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
 
     if (syncConfig.getSyncMode() == SyncMode.SNAP
         || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
-      SnapServerChecker.createAndSetSnapServerChecker(
-          ethContext, metricsSystem, protocolContext.getBlockchain());
+      SnapServerChecker.createAndSetSnapServerChecker(ethContext, metricsSystem);
     }
 
     this.blockPropagationManager =
