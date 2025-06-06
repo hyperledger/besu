@@ -212,7 +212,8 @@ dependencies {
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:4.5.0:fixtures_develop@tar.gz'
+  referenceTestImplementation 'ethereum:execution-spec-tests:fusaka-devnet-1@v1.0.0:fixtures_fusaka-devnet-1@tar.gz'
+  // need https://github.com/ethereum/execution-spec-tests/releases/download/fusaka-devnet-1%40v1.0.0/fixtures_fusaka-devnet-0.tar.gz
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.consensys.tuweni:tuweni-bytes'
