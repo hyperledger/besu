@@ -35,27 +35,25 @@ public class SnapServerChecker {
 
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
-  private final Blockchain blockchain;
 
   private SnapServerChecker(
-      final EthContext ethContext, final MetricsSystem metricsSystem, final Blockchain blockchain) {
+      final EthContext ethContext, final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
-    this.blockchain = blockchain;
   }
 
   public static void createAndSetSnapServerChecker(
-      final EthContext ethContext, final MetricsSystem metricsSystem, final Blockchain blockchain) {
-    final SnapServerChecker checker = new SnapServerChecker(ethContext, metricsSystem, blockchain);
+      final EthContext ethContext, final MetricsSystem metricsSystem) {
+    final SnapServerChecker checker = new SnapServerChecker(ethContext, metricsSystem);
     ethContext.getEthPeers().setSnapServerChecker(checker);
   }
 
-  public CompletableFuture<Boolean> check(final EthPeer peer) {
+  public CompletableFuture<Boolean> check(final EthPeer peer, final BlockHeader headBlockHeader) {
     LOG.atTrace()
         .setMessage("Checking whether peer {} is a snap server ...")
         .addArgument(peer::getLoggableId)
         .log();
-    return getAccountRangeFromPeer(peer, blockchain.getGenesisBlockHeader())
+    return getAccountRangeFromPeer(peer, headBlockHeader)
         .thenApply(
             peerResult -> {
               if (peerResult != null) {

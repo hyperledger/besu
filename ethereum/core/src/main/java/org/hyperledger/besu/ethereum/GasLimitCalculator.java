@@ -57,9 +57,11 @@ public interface GasLimitCalculator {
    *
    * @param parentExcessBlobGas excess blob gas from the parent
    * @param blobGasUsed blob gas used
+   * @param parentBaseFeePerGas base fee per gas from the parent
    * @return the new excess blob gas value
    */
-  default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
+  default long computeExcessBlobGas(
+      final long parentExcessBlobGas, final long blobGasUsed, final long parentBaseFeePerGas) {
     return 0L;
   }
 

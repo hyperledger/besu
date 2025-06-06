@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
@@ -558,12 +559,20 @@ public class EthPeers implements PeerSelector {
     LOG.debug("Peer {} status exchanged", peer);
     assert tracker != null : "ChainHeadTracker must be set before EthPeers can be used";
 
-    final CompletableFuture<Void> checkHeadBlockFuture = checkHeadBlock(peer);
+    BlockHeader headBlockHeader;
+    try {
+      headBlockHeader = checkHeadBlock(peer).get(6L, TimeUnit.SECONDS);
+    } catch (final Exception e) {
+        LOG.atDebug()
+            .setMessage("Error checking chain head for peer {}: {}")
+            .addArgument(peer.getLoggableId())
+            .addArgument(e)
+            .log();
+        peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
+        return;
+    }
 
-    final CompletableFuture<Void> checkSnapServerFuture = checkSnapServer(peer);
-
-    CompletableFuture.allOf(checkSnapServerFuture, checkHeadBlockFuture)
-        .orTimeout(6L, TimeUnit.SECONDS)
+    checkSnapServer(peer, headBlockHeader).orTimeout(6L, TimeUnit.SECONDS)
         .handle(
             (result, error) -> {
               if (error != null) {
@@ -584,10 +593,10 @@ public class EthPeers implements PeerSelector {
             });
   }
 
-  private CompletableFuture<Void> checkHeadBlock(final EthPeer peer) {
-    CompletableFuture<Void> checkHeadBlockFuture;
+  private CompletableFuture<BlockHeader> checkHeadBlock(final EthPeer peer) {
+    CompletableFuture<BlockHeader> checkHeadBlockFuture;
     // Handle chain head tracking based on protocol compatibility.
-    if (EthProtocol.isEth69Compatible(peer.getMaxAgreedCapability())) {
+    if (peer.getAgreedCapabilities().stream().anyMatch(EthProtocol::isEth69Compatible)) {
       // For Eth69-compatible peers, the chain head information is included in the status message.
       // Skip fetching the chain head separately and directly check trailing peer requirements.
       checkHeadBlockFuture = CompletableFuture.completedFuture(null);
@@ -614,7 +623,7 @@ public class EthPeers implements PeerSelector {
                           DisconnectMessage.DisconnectReason
                               .USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
                     }
-                    return null;
+                    return peerHeadBlockHeader;
                   });
     }
     return checkHeadBlockFuture;
@@ -641,23 +650,23 @@ public class EthPeers implements PeerSelector {
     }
   }
 
-  private CompletableFuture<Void> checkSnapServer(final EthPeer peer) {
+  private CompletableFuture<Void> checkSnapServer(final EthPeer peer, final BlockHeader headBlockHeader) {
     if ((syncMode == SyncMode.SNAP || syncMode == SyncMode.CHECKPOINT)
         && peer.getAgreedCapabilities().contains(SnapProtocol.SNAP1)) {
       assert snapServerChecker != null
           : "When we are in snap mode SnapServerChecker must be set before EthPeers can be used";
       // even if we have finished the snap sync, we still want to know if the peer is a snap server
-      return checkIsSnapServer(peer);
+      return checkIsSnapServer(peer, headBlockHeader);
     } else {
       return CompletableFuture.completedFuture(null);
     }
   }
 
-  private CompletableFuture<Void> checkIsSnapServer(final EthPeer peer) {
+  private CompletableFuture<Void> checkIsSnapServer(final EthPeer peer, final BlockHeader headBlockHeader) {
     // set that peer is a snap server for doing the test
     peer.setIsServingSnap(true);
     return snapServerChecker
-        .check(peer)
+        .check(peer, headBlockHeader)
         .thenApply(
             isSnapServer -> {
               peer.setIsServingSnap(isSnapServer);
