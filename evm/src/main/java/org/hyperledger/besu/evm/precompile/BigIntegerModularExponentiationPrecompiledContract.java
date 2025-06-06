@@ -172,6 +172,21 @@ public class BigIntegerModularExponentiationPrecompiledContract
     }
 
     final PrecompileContractResult precompileContractResult;
+
+    // OPTIMIZATION: overwrite native setting for this case
+    if (LibArithmetic.ENABLED) {
+      final int modulusOffset = clampedToInt(BASE_OFFSET + length_of_BASE + length_of_EXPONENT);
+      final int modulusLength = clampedToInt(length_of_MODULUS);
+      if (extractLastByte(input, modulusOffset, modulusLength) == 0) {
+        precompileContractResult = computeNative(input, length_of_MODULUS);
+      }
+      if (enableResultCaching) {
+        modexpCache.put(
+            cacheKey, new PrecompileInputResultTuple(input.copy(), precompileContractResult));
+      }
+      return precompileContractResult;
+    }
+
     if (useNative) {
       precompileContractResult = computeNative(input, length_of_MODULUS);
     } else {
@@ -286,6 +301,16 @@ public class BigIntegerModularExponentiationPrecompiledContract
       System.arraycopy(partial.toArray(), 0, raw, 0, partial.size());
       return new BigInteger(1, raw);
     }
+  }
+
+  private static byte extractLastByte(final Bytes input, final int offset, final int length) {
+    if (offset >= input.size() || length == 0) {
+      return 0;
+    } else if (offset + length <= input.size()) {
+      return input.get(offset + length - 1);
+    }
+    Bytes partial = input.slice(offset);
+    return partial.get(partial.size() - 1);
   }
 
   /**
