@@ -14,10 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCalculator {
+  /** The blob base cost constant for Osaka */
+  private static final long BLOB_BASE_COST = 1 << 14; // 2^14
+
   /** The mainnet transaction gas limit cap for Osaka */
   private static final long DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA = 30_000_000L;
 
@@ -52,5 +57,29 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
   @Override
   public long transactionGasLimitCap() {
     return transactionGasLimitCap;
+  }
+
+  @Override
+  public long computeExcessBlobGas(
+      final long parentExcessBlobGas,
+      final long parentBlobGasUsed,
+      final long parentBaseFeePerGas) {
+    final long currentExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed;
+
+    // First check if we're below the target
+    if (currentExcessBlobGas < getTargetBlobGasPerBlock()) {
+      return 0L;
+    }
+
+    // EIP-7918 https://eips.ethereum.org/EIPS/eip-7918
+    Wei baseFeeBlobGas = feeMarket.blobGasPricePerGas(BlobGas.of(parentExcessBlobGas));
+    long baseFeeBlobGasLong = baseFeeBlobGas.toLong();
+    if (BLOB_BASE_COST * parentBaseFeePerGas > getBlobGasPerBlob() * baseFeeBlobGasLong) {
+      return parentExcessBlobGas
+          + parentBlobGasUsed * (maxBlobsPerBlock - targetBlobsPerBlock) / maxBlobsPerBlock;
+    } else {
+      // same as Cancun
+      return currentExcessBlobGas - getTargetBlobGasPerBlock();
+    }
   }
 }
