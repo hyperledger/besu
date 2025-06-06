@@ -83,7 +83,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BlockSimulator {
 
   private static final TransactionValidationParams STRICT_VALIDATION_PARAMS =
-      TransactionValidationParams.transactionSimulator();
+      TransactionValidationParams.blockSimulatorStrict();
 
   private static final TransactionValidationParams SIMULATION_PARAMS =
       TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce();
@@ -285,7 +285,9 @@ public class BlockSimulator {
       final WorldUpdater transactionUpdater = ws.updater();
       long gasLimit =
           transactionSimulator.calculateSimulationGasCap(
-              callParameter.getGas(), blockStateCallSimulationResult.getRemainingGas());
+              blockHeader,
+              callParameter.getGas(),
+              blockStateCallSimulationResult.getRemainingGas());
 
       BiFunction<ProtocolSpec, Optional<BlockHeader>, Wei> blobGasPricePerGasSupplier =
           getBlobGasPricePerGasSupplier(

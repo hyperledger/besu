@@ -42,8 +42,8 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -404,7 +404,7 @@ public abstract class PathBasedWorldState
       final Address address, final StorageSlotKey storageSlotKey);
 
   @Override
-  public abstract Optional<Bytes> getCode(@Nonnull final Address address, final Hash codeHash);
+  public abstract Optional<Bytes> getCode(@NotNull final Address address, final Hash codeHash);
 
   protected abstract Hash calculateRootHash(
       final Optional<PathBasedWorldStateKeyValueStorage.Updater> maybeStateUpdater,

@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.testutil.TestClock;
@@ -86,11 +86,11 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
 
     assertTransactionPending(transactionWithBlobs);
     // assert that the blobs are returned from the tx pool
-    final List<BlobsWithCommitments.BlobQuad> expectedBlobQuads =
-        transactionWithBlobs.getBlobsWithCommitments().get().getBlobQuads();
+    final List<BlobProofBundle> expectedBlobProofBundles =
+        transactionWithBlobs.getBlobsWithCommitments().get().getBlobProofBundles();
 
-    expectedBlobQuads.forEach(
-        bq -> assertThat(transactionPool.getBlobQuad(bq.versionedHash())).isEqualTo(bq));
+    expectedBlobProofBundles.forEach(
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isEqualTo(bq));
   }
 
   @Test
@@ -103,12 +103,12 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
     addAndAssertRemoteTransactionsValid(transactionWithBlobs);
     assertTransactionPending(transactionWithBlobs);
 
-    final List<BlobsWithCommitments.BlobQuad> expectedBlobQuads =
-        transactionWithBlobs.getBlobsWithCommitments().get().getBlobQuads();
+    final List<BlobProofBundle> expectedBlobProofBundles =
+        transactionWithBlobs.getBlobsWithCommitments().get().getBlobProofBundles();
 
     // assert that the blobs are returned from the tx pool
-    expectedBlobQuads.forEach(
-        bq -> assertThat(transactionPool.getBlobQuad(bq.versionedHash())).isEqualTo(bq));
+    expectedBlobProofBundles.forEach(
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isEqualTo(bq));
 
     // add different transaction that contains the same blobs
     addAndAssertRemoteTransactionsValid(transactionWithSameBlobs);
@@ -116,8 +116,8 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
     assertTransactionPending(transactionWithBlobs);
     assertTransactionPending(transactionWithSameBlobs);
     // assert that the blobs are still returned from the tx pool
-    expectedBlobQuads.forEach(
-        bq -> assertThat(transactionPool.getBlobQuad(bq.versionedHash())).isEqualTo(bq));
+    expectedBlobProofBundles.forEach(
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isEqualTo(bq));
 
     // replace the second blob transaction with tx with different blobs
     addAndAssertRemoteTransactionsValid(transactionWithSameBlobsReplacement);
@@ -125,8 +125,8 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
     assertTransactionNotPending(transactionWithSameBlobs);
 
     // assert that the blob is still returned from the tx pool
-    expectedBlobQuads.forEach(
-        bq -> assertThat(transactionPool.getBlobQuad(bq.versionedHash())).isEqualTo(bq));
+    expectedBlobProofBundles.forEach(
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isEqualTo(bq));
 
     // replace the first blob transaction with tx with different blobs
     addAndAssertRemoteTransactionsValid(transactionWithBlobsReplacement);
@@ -135,7 +135,7 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
 
     // All txs containing the expected blobs have been replaced,
     // so the blobs should no longer be returned from the tx pool
-    expectedBlobQuads.forEach(
-        bq -> assertThat(transactionPool.getBlobQuad(bq.versionedHash())).isNull());
+    expectedBlobProofBundles.forEach(
+        bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isNull());
   }
 }
