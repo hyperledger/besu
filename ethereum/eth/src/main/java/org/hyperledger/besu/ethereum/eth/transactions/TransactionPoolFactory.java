@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTrans
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
@@ -149,77 +148,79 @@ public class TransactionPoolFactory {
         transactionsMessageHandler,
         pooledTransactionsMessageHandler);
 
-    if (syncState.isInitialSyncPhaseDone()) {
-      LOG.info("Enabling transaction pool");
-      pooledTransactionsMessageHandler.setEnabled();
-      transactionsMessageHandler.setEnabled();
-      transactionPool.setEnabled();
-    } else {
-      LOG.info("Transaction pool disabled while initial sync in progress");
-    }
-
-    syncState.subscribeCompletionReached(
-        new BesuEvents.InitialSyncCompletionListener() {
-          @Override
-          public void onInitialSyncCompleted() {
-            LOG.info("Enabling transaction handling following initial sync");
-            enableTransactionHandling(
-                transactionTracker,
-                transactionPool,
-                transactionsMessageHandler,
-                pooledTransactionsMessageHandler);
-          }
-
-          @Override
-          public void onInitialSyncRestart() {
-            LOG.info("Disabling transaction handling during re-sync");
-            disableTransactionHandling(
-                transactionPool, transactionsMessageHandler, pooledTransactionsMessageHandler);
-          }
-        });
-
-    syncState.subscribeInSync(
-        isInSync -> {
-          if (isInSync != transactionPool.isEnabled()) {
-            if (isInSync && syncState.isInitialSyncPhaseDone()) {
-              LOG.info("Node is in sync, enabling transaction handling");
-              enableTransactionHandling(
-                  transactionTracker,
-                  transactionPool,
-                  transactionsMessageHandler,
-                  pooledTransactionsMessageHandler);
-            } else {
-              if (transactionPool.isEnabled()) {
-                LOG.info("Node out of sync, disabling transaction handling");
-                disableTransactionHandling(
-                    transactionPool, transactionsMessageHandler, pooledTransactionsMessageHandler);
-              }
-            }
-          }
-        });
-
+    //    if (syncState.isInitialSyncPhaseDone()) {
+    LOG.info("Enabling transaction pool");
+    pooledTransactionsMessageHandler.setEnabled();
+    transactionsMessageHandler.setEnabled();
+    transactionPool.setEnabled();
+    //    } else {
+    //      LOG.info("Transaction pool disabled while initial sync in progress");
+    //    }
+    //
+    //    syncState.subscribeCompletionReached(
+    //        new BesuEvents.InitialSyncCompletionListener() {
+    //          @Override
+    //          public void onInitialSyncCompleted() {
+    //            LOG.info("Enabling transaction handling following initial sync");
+    //            enableTransactionHandling(
+    //                transactionTracker,
+    //                transactionPool,
+    //                transactionsMessageHandler,
+    //                pooledTransactionsMessageHandler);
+    //          }
+    //
+    //          @Override
+    //          public void onInitialSyncRestart() {
+    //            LOG.info("Disabling transaction handling during re-sync");
+    //            disableTransactionHandling(
+    //                transactionPool, transactionsMessageHandler,
+    // pooledTransactionsMessageHandler);
+    //          }
+    //        });
+    //
+    //    syncState.subscribeInSync(
+    //        isInSync -> {
+    //          if (isInSync != transactionPool.isEnabled()) {
+    //            if (isInSync && syncState.isInitialSyncPhaseDone()) {
+    //              LOG.info("Node is in sync, enabling transaction handling");
+    //              enableTransactionHandling(
+    //                  transactionTracker,
+    //                  transactionPool,
+    //                  transactionsMessageHandler,
+    //                  pooledTransactionsMessageHandler);
+    //            } else {
+    //              if (transactionPool.isEnabled()) {
+    //                LOG.info("Node out of sync, disabling transaction handling");
+    //                disableTransactionHandling(
+    //                    transactionPool, transactionsMessageHandler,
+    // pooledTransactionsMessageHandler);
+    //              }
+    //            }
+    //          }
+    //        });
+    //
     return transactionPool;
   }
-
-  private static void enableTransactionHandling(
-      final PeerTransactionTracker transactionTracker,
-      final TransactionPool transactionPool,
-      final TransactionsMessageHandler transactionsMessageHandler,
-      final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
-    transactionTracker.reset();
-    transactionPool.setEnabled();
-    transactionsMessageHandler.setEnabled();
-    pooledTransactionsMessageHandler.setEnabled();
-  }
-
-  private static void disableTransactionHandling(
-      final TransactionPool transactionPool,
-      final TransactionsMessageHandler transactionsMessageHandler,
-      final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
-    transactionPool.setDisabled();
-    transactionsMessageHandler.setDisabled();
-    pooledTransactionsMessageHandler.setDisabled();
-  }
+  //
+  //  private static void enableTransactionHandling(
+  //      final PeerTransactionTracker transactionTracker,
+  //      final TransactionPool transactionPool,
+  //      final TransactionsMessageHandler transactionsMessageHandler,
+  //      final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
+  //    transactionTracker.reset();
+  //    transactionPool.setEnabled();
+  //    transactionsMessageHandler.setEnabled();
+  //    pooledTransactionsMessageHandler.setEnabled();
+  //  }
+  //
+  //  private static void disableTransactionHandling(
+  //      final TransactionPool transactionPool,
+  //      final TransactionsMessageHandler transactionsMessageHandler,
+  //      final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
+  //    transactionPool.setDisabled();
+  //    transactionsMessageHandler.setDisabled();
+  //    pooledTransactionsMessageHandler.setDisabled();
+  //  }
 
   private static void subscribeTransactionHandlers(
       final ProtocolContext protocolContext,
