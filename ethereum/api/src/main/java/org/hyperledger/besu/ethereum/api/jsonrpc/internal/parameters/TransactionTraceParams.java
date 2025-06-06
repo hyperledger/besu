@@ -14,11 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 
+import java.util.LinkedHashMap;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -52,7 +55,25 @@ public interface TransactionTraceParams {
     return false;
   }
 
+  @JsonProperty("tracer")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @Nullable
+  String tracer();
+
+  @JsonProperty("tracerConfig")
+  @Nullable
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @SuppressWarnings("NonApiType") // to allow for LinkedHashMap instead of default Guava Map
+  LinkedHashMap<String, Object> tracerConfig();
+
+  /**
+   * Convert JSON-RPC parameters to a {@link TraceOptions} object.
+   *
+   * @return TraceOptions object containing the tracer type and configuration.
+   */
   default TraceOptions traceOptions() {
-    return new TraceOptions(!disableStorage(), !disableMemory(), !disableStack());
+    var defaultTracerConfig =
+        new DefaultTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
+    return new TraceOptions(tracer(), defaultTracerConfig, tracerConfig());
   }
 }
