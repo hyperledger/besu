@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateC
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -56,6 +57,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   protected PathBasedCachedWorldStorageManager cachedWorldStorageManager;
   protected PathBasedWorldState headWorldState;
   protected final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
+  protected EvmConfiguration evmConfiguration;
   // Configuration that will be shared by all instances of world state at their creation
   protected final WorldStateConfig worldStateConfig;
 
@@ -175,7 +177,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
    * @param queryParams the query parameters
    * @return the stateful world state, if available
    */
-  private Optional<MutableWorldState> getFullWorldState(final WorldStateQueryParams queryParams) {
+  protected Optional<MutableWorldState> getFullWorldState(final WorldStateQueryParams queryParams) {
     return queryParams.shouldWorldStateUpdateHead()
         ? getFullWorldStateFromHead(queryParams.getBlockHash())
         : getFullWorldStateFromCache(queryParams.getBlockHeader());
