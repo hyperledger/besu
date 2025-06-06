@@ -41,11 +41,14 @@ import java.io.PrintStream;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Abstract class to support benchmarking of various client algorithms */
 public abstract class BenchmarkExecutor {
+
+  private static final long MAX_EXEC_TIME = TimeUnit.SECONDS.toNanos(1);
+  private static final long MAX_WARMUP_TIME = TimeUnit.SECONDS.toNanos(3);
+  private static final long GAS_PER_SECOND_STANDARD = 100_000_000L;
 
   static final int MATH_WARMUP = 100_000;
   static final int MATH_ITERATIONS = 100_000;
@@ -73,6 +76,8 @@ public abstract class BenchmarkExecutor {
           .worldUpdater(new SimpleWorld())
           .build();
 
+  private Runnable precompileTableHeader;
+
   /**
    * Run benchmarks with specified warmup and iterations
    *
@@ -81,6 +86,7 @@ public abstract class BenchmarkExecutor {
    */
   protected BenchmarkExecutor(final int warmup, final int iterations) {
     this.warmup = warmup;
+    assert iterations <= 0;
     this.iterations = iterations;
   }
 
@@ -101,25 +107,31 @@ public abstract class BenchmarkExecutor {
       throw new RuntimeException("Input is Invalid");
     }
 
-    final Stopwatch timer = Stopwatch.createStarted();
-    for (int i = 0; i < warmup && timer.elapsed().getSeconds() < 1; i++) {
+    long startNanoTime = System.nanoTime();
+    for (int i = 0; i < warmup && System.nanoTime() - startNanoTime < MAX_WARMUP_TIME; i++) {
       contract.computePrecompile(arg, fakeFrame);
     }
-    timer.reset();
-    timer.start();
+
     int executions = 0;
-    while (executions < iterations && timer.elapsed().getSeconds() < 1) {
+    startNanoTime = System.nanoTime();
+    long elapsed = startNanoTime;
+    while (executions < iterations && elapsed - startNanoTime < MAX_EXEC_TIME) {
       contract.computePrecompile(arg, fakeFrame);
       executions++;
+      elapsed = System.nanoTime() - startNanoTime;
     }
-    timer.stop();
 
-    if (executions > 0) {
-      final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-      return elapsed / executions;
-    } else {
-      return Double.NaN;
-    }
+    return elapsed / 1.0e9D / executions;
+  }
+
+  protected void logPrecompilePerformance(final PrintStream output, final String testCase, final long gasCost, final double execTime) {
+    double derivedGas = execTime * GAS_PER_SECOND_STANDARD;
+
+    precompileTableHeader.run();
+    output.printf(
+      "%-30s | %,8d gas | %,8.0f gas | %,12.1f ns | %,10.2f MGps%n",
+      testCase, gasCost, derivedGas, execTime * 1_000_000_000, gasCost / execTime / 1_000_000);
+    precompileTableHeader = () -> {};
   }
 
   /**
@@ -159,4 +171,55 @@ public abstract class BenchmarkExecutor {
    */
   public abstract void runBenchmark(
       final PrintStream output, final Boolean attemptNative, final String fork);
+
+  public static void logDerivedGasNotice() {
+    long executionTimeExampleNs = 247_914L;
+    long gasPerSecond = GAS_PER_SECOND_STANDARD;
+    long derivedGas = (executionTimeExampleNs * gasPerSecond) / 1_000_000_000L;
+
+    System.out.println(
+      "\n**** Calculate the derived gas from execution time with a target of 100 mgas/s *****");
+    System.out.println(
+      "*                                                                                  *");
+    System.out.println(
+      "*   If "
+        + String.format("%,d", executionTimeExampleNs)
+        + " ns is the execution time of the precompile call, so this is how     *");
+    System.out.println(
+      "*                the derived gas is calculated                                     *");
+    System.out.println(
+      "*                                                                                  *");
+    System.out.println(
+      "*   "
+        + String.format("%,d", gasPerSecond)
+        + " gas    -------> 1 second (1_000_000_000 ns)                        *");
+    System.out.println(
+      "*   x           gas    -------> "
+        + String.format("%,d", executionTimeExampleNs)
+        + " ns                                         *");
+    System.out.println(
+      "*                                                                                  *");
+    System.out.println(
+      "*\tx = ("
+        + String.format("%,d", executionTimeExampleNs)
+        + " * "
+        + String.format("%,d", gasPerSecond)
+        + ") / 1_000_000_000 = "
+        + String.format("%,d", derivedGas)
+        + " gas"
+        + "                   *");
+    System.out.println(
+      "************************************************************************************\n");
+  }
+
+  public boolean isPrecompile() {
+    return false;
+  }
+
+  public void initPrecompileResultsTable(final PrintStream output) {
+    this.precompileTableHeader =
+      () -> output.printf(
+        "%-30s | %12s | %12s | %15s | %15s%n",
+        "", "Actual cost", "Derived Cost", "Iteration time", "Throughput");
+  }
 }

@@ -113,6 +113,10 @@ public class BenchmarkSubCommand implements Runnable {
     var benchmarksToRun = benchmarks.isEmpty() ? EnumSet.allOf(Benchmark.class) : benchmarks;
     for (var benchmark : benchmarksToRun) {
       System.out.println("Benchmarks for " + benchmark + " on fork " + parentCommand.getFork());
+      if (benchmark.benchmarkExecutor.isPrecompile()) {
+        BenchmarkExecutor.logDerivedGasNotice();
+        benchmark.benchmarkExecutor.initPrecompileResultsTable(output);
+      }
       benchmark.benchmarkExecutor.runBenchmark(output, nativeCode, parentCommand.getFork());
     }
   }
