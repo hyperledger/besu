@@ -23,7 +23,7 @@ apply plugin: 'application'
 apply plugin: 'idea'
 
 jar {
-  archiveBaseName = 'besu-evmtool'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -37,7 +37,7 @@ jar {
 
 dependencies {
 
-  implementation project(':besu')
+  implementation project(':app')
   implementation project(':config')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
