@@ -59,8 +59,7 @@ public class PathBasedExtraStorageOptions
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @Option(
       names = {
-        LIMIT_TRIE_LOGS_ENABLED,
-        "--bonsai-limit-trie-logs-enabled"
+        LIMIT_TRIE_LOGS_ENABLED
       },
       fallbackValue = "true",
       description = "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
