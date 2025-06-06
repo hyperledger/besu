@@ -19,6 +19,7 @@ import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecom
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -26,13 +27,12 @@ import org.apache.tuweni.bytes.Bytes;
 public class ModExpBenchmark extends BenchmarkExecutor {
 
   /** Benchmark with default math warmups and iterations */
-  public ModExpBenchmark() {
-    super(MATH_WARMUP, MATH_ITERATIONS);
+  public ModExpBenchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
   }
 
   @Override
-  public void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork) {
+  public void runBenchmark(final Boolean attemptNative, final String fork) {
     final Map<String, Bytes> testcases = new LinkedHashMap<>();
     testcases.put(
         "eip_example1",
@@ -391,10 +391,11 @@ public class ModExpBenchmark extends BenchmarkExecutor {
             : "Java modExp");
 
     for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
-      final double execTime = runPrecompileBenchmark(testCase.getValue(), contract);
+      final double execTime =
+          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
 
       long gasCost = contract.gasRequirement(testCase.getValue());
-      logPrecompilePerformance(output, testCase.getKey(), gasCost, execTime);
+      logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
     }
   }
 

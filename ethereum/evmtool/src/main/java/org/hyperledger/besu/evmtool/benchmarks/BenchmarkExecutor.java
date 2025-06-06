@@ -39,8 +39,10 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import one.profiler.AsyncProfiler;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Abstract class to support benchmarking of various client algorithms */
@@ -53,6 +55,9 @@ public abstract class BenchmarkExecutor {
   static final int MATH_WARMUP = 100_000;
   static final int MATH_ITERATIONS = 100_000;
 
+  protected final PrintStream output;
+  private final String asyncProfilerOptions;
+  private final Optional<AsyncProfiler> asyncProfiler;
   int warmup;
   int iterations;
 
@@ -85,24 +90,35 @@ public abstract class BenchmarkExecutor {
    * @param iterations number of executions to time.
    */
   protected BenchmarkExecutor(final int warmup, final int iterations) {
+    this(warmup, iterations, null, Optional.empty());
+  }
+
+  public BenchmarkExecutor(
+      final int warmup,
+      final int iterations,
+      final PrintStream output,
+      final Optional<String> asyncProfilerOptions) {
     this.warmup = warmup;
     assert iterations <= 0;
     this.iterations = iterations;
-  }
-
-  /** Run benchmarks with warmup and iterations set to MATH style benchmarks. */
-  protected BenchmarkExecutor() {
-    this(MATH_WARMUP, MATH_ITERATIONS);
+    this.output = output;
+    this.asyncProfiler =
+        asyncProfilerOptions.isPresent()
+            ? Optional.of(AsyncProfiler.getInstance())
+            : Optional.empty();
+    this.asyncProfilerOptions = asyncProfilerOptions.orElse(null);
   }
 
   /**
    * Run the benchmark with the specific args. Execution will be done warmup + iterations times
    *
+   * @param testName name of the test execution for the async profiler if configured
    * @param arg the bytes arguments to pass into the contract
    * @param contract the precompiled contract to benchmark
    * @return the mean number of seconds each timed iteration took.
    */
-  protected double runPrecompileBenchmark(final Bytes arg, final PrecompiledContract contract) {
+  protected double runPrecompileBenchmark(
+      final String testName, final Bytes arg, final PrecompiledContract contract) {
     if (contract.computePrecompile(arg, fakeFrame).output() == null) {
       throw new RuntimeException("Input is Invalid");
     }
@@ -111,6 +127,15 @@ public abstract class BenchmarkExecutor {
     for (int i = 0; i < warmup && System.nanoTime() - startNanoTime < MAX_WARMUP_TIME; i++) {
       contract.computePrecompile(arg, fakeFrame);
     }
+
+    asyncProfiler.ifPresent(
+        p -> {
+          try {
+            p.execute(processProfilerArgs(asyncProfilerOptions, testName.replaceAll("\\s", "-")));
+          } catch (Throwable e) {
+            output.println("async profiler unavailable");
+          }
+        });
 
     int executions = 0;
     startNanoTime = System.nanoTime();
@@ -121,16 +146,26 @@ public abstract class BenchmarkExecutor {
       elapsed = System.nanoTime() - startNanoTime;
     }
 
+    asyncProfiler.ifPresent(
+        p -> {
+          try {
+            p.stop();
+          } catch (Throwable e) {
+            output.println("async profiler unavailable");
+          }
+        });
+
     return elapsed / 1.0e9D / executions;
   }
 
-  protected void logPrecompilePerformance(final PrintStream output, final String testCase, final long gasCost, final double execTime) {
+  protected void logPrecompilePerformance(
+      final String testCase, final long gasCost, final double execTime) {
     double derivedGas = execTime * GAS_PER_SECOND_STANDARD;
 
     precompileTableHeader.run();
     output.printf(
-      "%-30s | %,8d gas | %,8.0f gas | %,12.1f ns | %,10.2f MGps%n",
-      testCase, gasCost, derivedGas, execTime * 1_000_000_000, gasCost / execTime / 1_000_000);
+        "%-30s | %,8d gas | %,8.0f gas | %,12.1f ns | %,10.2f MGps%n",
+        testCase, gasCost, derivedGas, execTime * 1_000_000_000, gasCost / execTime / 1_000_000);
     precompileTableHeader = () -> {};
   }
 
@@ -164,52 +199,50 @@ public abstract class BenchmarkExecutor {
   /**
    * Run the benchmarks
    *
-   * @param output stream to print results to (typically System.out)
    * @param attemptNative Should the benchmark attempt to us native libraries? (null use the
    *     default, false disabled, true enabled)
    * @param fork the fork name to run the benchmark against.
    */
-  public abstract void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork);
+  public abstract void runBenchmark(final Boolean attemptNative, final String fork);
 
-  public static void logDerivedGasNotice() {
+  private void logDerivedGasNotice() {
     long executionTimeExampleNs = 247_914L;
     long gasPerSecond = GAS_PER_SECOND_STANDARD;
     long derivedGas = (executionTimeExampleNs * gasPerSecond) / 1_000_000_000L;
 
-    System.out.println(
-      "\n**** Calculate the derived gas from execution time with a target of 100 mgas/s *****");
-    System.out.println(
-      "*                                                                                  *");
-    System.out.println(
-      "*   If "
-        + String.format("%,d", executionTimeExampleNs)
-        + " ns is the execution time of the precompile call, so this is how     *");
-    System.out.println(
-      "*                the derived gas is calculated                                     *");
-    System.out.println(
-      "*                                                                                  *");
-    System.out.println(
-      "*   "
-        + String.format("%,d", gasPerSecond)
-        + " gas    -------> 1 second (1_000_000_000 ns)                        *");
-    System.out.println(
-      "*   x           gas    -------> "
-        + String.format("%,d", executionTimeExampleNs)
-        + " ns                                         *");
-    System.out.println(
-      "*                                                                                  *");
-    System.out.println(
-      "*\tx = ("
-        + String.format("%,d", executionTimeExampleNs)
-        + " * "
-        + String.format("%,d", gasPerSecond)
-        + ") / 1_000_000_000 = "
-        + String.format("%,d", derivedGas)
-        + " gas"
-        + "                   *");
-    System.out.println(
-      "************************************************************************************\n");
+    output.println(
+        "\n**** Calculate the derived gas from execution time with a target of 100 mgas/s *****");
+    output.println(
+        "*                                                                                  *");
+    output.println(
+        "*   If "
+            + String.format("%,d", executionTimeExampleNs)
+            + " ns is the execution time of the precompile call, so this is how     *");
+    output.println(
+        "*                the derived gas is calculated                                     *");
+    output.println(
+        "*                                                                                  *");
+    output.println(
+        "*   "
+            + String.format("%,d", gasPerSecond)
+            + " gas    -------> 1 second (1_000_000_000 ns)                        *");
+    output.println(
+        "*   x           gas    -------> "
+            + String.format("%,d", executionTimeExampleNs)
+            + " ns                                         *");
+    output.println(
+        "*                                                                                  *");
+    output.println(
+        "*\tx = ("
+            + String.format("%,d", executionTimeExampleNs)
+            + " * "
+            + String.format("%,d", gasPerSecond)
+            + ") / 1_000_000_000 = "
+            + String.format("%,d", derivedGas)
+            + " gas"
+            + "                   *");
+    output.println(
+        "************************************************************************************\n");
   }
 
   public boolean isPrecompile() {
@@ -217,9 +250,27 @@ public abstract class BenchmarkExecutor {
   }
 
   public void initPrecompileResultsTable(final PrintStream output) {
+    logDerivedGasNotice();
     this.precompileTableHeader =
-      () -> output.printf(
-        "%-30s | %12s | %12s | %15s | %15s%n",
-        "", "Actual cost", "Derived Cost", "Iteration time", "Throughput");
+        () ->
+            output.printf(
+                "%-30s | %12s | %12s | %15s | %15s%n",
+                "", "Actual cost", "Derived Cost", "Iteration time", "Throughput");
+  }
+
+  @FunctionalInterface
+  public interface Builder {
+    BenchmarkExecutor create(PrintStream output, Optional<String> asyncProfilerOptions);
+  }
+
+  private static String processProfilerArgs(final String asyncProfilerOptions, final String testCaseName) {
+    String[] args = asyncProfilerOptions.split(",");
+    for (int i = 0; i < args.length; i++) {
+      if (args[i].contains("file=")) {
+        args[i] = args[i].replaceAll("%%test-case", testCaseName);
+        break;
+      }
+    }
+    return String.join(",", args);
   }
 }

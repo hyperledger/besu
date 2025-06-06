@@ -16,6 +16,7 @@ package org.hyperledger.besu.evmtool;
 
 import static org.hyperledger.besu.evmtool.BenchmarkSubCommand.COMMAND_NAME;
 import static picocli.CommandLine.ScopeType.INHERIT;
+import static picocli.CommandLine.ScopeType.LOCAL;
 
 import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.PrintStream;
 import java.util.EnumSet;
+import java.util.Optional;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -55,18 +57,18 @@ public class BenchmarkSubCommand implements Runnable {
   private final PrintStream output;
 
   enum Benchmark {
-    altBn128(new AltBN128Benchmark()),
+    altBn128(AltBN128Benchmark::new),
     // blake2f
-    EcRecover(new ECRecoverBenchmark()),
-    ModExp(new ModExpBenchmark()),
-    Secp256k1(new Secp256k1Benchmark()),
+    EcRecover(ECRecoverBenchmark::new),
+    ModExp(ModExpBenchmark::new),
+    Secp256k1(Secp256k1Benchmark::new),
     // bls12
-    Bls12(new BLS12Benchmark());
+    Bls12(BLS12Benchmark::new);
 
-    final BenchmarkExecutor benchmarkExecutor;
+    private final BenchmarkExecutor.Builder executorBuilder;
 
-    Benchmark(final BenchmarkExecutor benchmarkExecutor) {
-      this.benchmarkExecutor = benchmarkExecutor;
+    Benchmark(final BenchmarkExecutor.Builder executorBuilder) {
+      this.executorBuilder = executorBuilder;
     }
   }
 
@@ -83,6 +85,13 @@ public class BenchmarkSubCommand implements Runnable {
       scope = INHERIT,
       negatable = true)
   Boolean enablePrecompileCache = false;
+
+  @Option(
+      names = {"--async-profiler"},
+      description = "Benchmark using async profiler. No profiler command means profiling disabled. '%%test-case' in the" +
+        " file name expands to the test for which the profiler ran.",
+      scope = LOCAL)
+  Optional<String> asyncProfilerOptions = Optional.empty();
 
   @Parameters(description = "One or more of ${COMPLETION-CANDIDATES}.")
   EnumSet<Benchmark> benchmarks = EnumSet.noneOf(Benchmark.class);
@@ -107,17 +116,17 @@ public class BenchmarkSubCommand implements Runnable {
   @Override
   public void run() {
     LogConfigurator.setLevel("", "DEBUG");
-    System.out.println(BesuVersionUtils.version());
+    output.println(BesuVersionUtils.version());
     AbstractPrecompiledContract.setPrecompileCaching(enablePrecompileCache);
     AbstractBLS12PrecompiledContract.setPrecompileCaching(enablePrecompileCache);
     var benchmarksToRun = benchmarks.isEmpty() ? EnumSet.allOf(Benchmark.class) : benchmarks;
     for (var benchmark : benchmarksToRun) {
-      System.out.println("Benchmarks for " + benchmark + " on fork " + parentCommand.getFork());
-      if (benchmark.benchmarkExecutor.isPrecompile()) {
-        BenchmarkExecutor.logDerivedGasNotice();
-        benchmark.benchmarkExecutor.initPrecompileResultsTable(output);
+      output.println("Benchmarks for " + benchmark + " on fork " + parentCommand.getFork());
+      BenchmarkExecutor executor = benchmark.executorBuilder.create(output, asyncProfilerOptions);
+      if (executor.isPrecompile()) {
+        executor.initPrecompileResultsTable(output);
       }
-      benchmark.benchmarkExecutor.runBenchmark(output, nativeCode, parentCommand.getFork());
+      executor.runBenchmark(nativeCode, parentCommand.getFork());
     }
   }
 }
