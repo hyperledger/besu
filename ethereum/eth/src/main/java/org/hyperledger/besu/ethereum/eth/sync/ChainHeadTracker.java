@@ -153,6 +153,11 @@ public class ChainHeadTracker {
 
   public CompletableFuture<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>>
       getBestHeaderFromPeerCompletableFuture(final EthPeer peer) {
+    LOG.atDebug()
+        .setMessage("Requesting chain head (hash: {}) info from {}...")
+        .addArgument(peer.chainState().getBestBlock().getHash())
+        .addArgument(peer::getLoggableId)
+        .log();
     return GetHeadersFromPeerByHashTask.forSingleHash(
             protocolSchedule,
             ethContext,

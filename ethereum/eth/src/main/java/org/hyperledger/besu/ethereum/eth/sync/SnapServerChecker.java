@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -36,8 +35,7 @@ public class SnapServerChecker {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
 
-  private SnapServerChecker(
-      final EthContext ethContext, final MetricsSystem metricsSystem) {
+  private SnapServerChecker(final EthContext ethContext, final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
   }

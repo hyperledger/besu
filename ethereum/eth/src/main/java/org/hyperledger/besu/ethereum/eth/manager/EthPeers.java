@@ -563,16 +563,18 @@ public class EthPeers implements PeerSelector {
     try {
       headBlockHeader = checkHeadBlock(peer).get(6L, TimeUnit.SECONDS);
     } catch (final Exception e) {
-        LOG.atDebug()
-            .setMessage("Error checking chain head for peer {}: {}")
-            .addArgument(peer.getLoggableId())
-            .addArgument(e)
-            .log();
-        peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
-        return;
+      LOG.atTrace()
+          .setMessage("Error checking chain head for peer {}: {}")
+          .addArgument(peer.getLoggableId())
+          .addArgument(e)
+          .log();
+      peer.disconnect(
+          DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
+      return;
     }
 
-    checkSnapServer(peer, headBlockHeader).orTimeout(6L, TimeUnit.SECONDS)
+    checkSnapServer(peer, headBlockHeader)
+        .orTimeout(6L, TimeUnit.SECONDS)
         .handle(
             (result, error) -> {
               if (error != null) {
@@ -608,9 +610,7 @@ public class EthPeers implements PeerSelector {
               .handle(
                   (peerHeadBlockHeader, error) -> {
                     // If we successfully retrieved the chain head, check trailing peer requirements
-                    // and
-                    // update
-                    // the peer's estimated height.
+                    // and update the peer's estimated height.
                     if (peerHeadBlockHeader != null) {
                       peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
                       checkTrailingPeerRequirements(peer);
@@ -650,7 +650,8 @@ public class EthPeers implements PeerSelector {
     }
   }
 
-  private CompletableFuture<Void> checkSnapServer(final EthPeer peer, final BlockHeader headBlockHeader) {
+  private CompletableFuture<Void> checkSnapServer(
+      final EthPeer peer, final BlockHeader headBlockHeader) {
     if ((syncMode == SyncMode.SNAP || syncMode == SyncMode.CHECKPOINT)
         && peer.getAgreedCapabilities().contains(SnapProtocol.SNAP1)) {
       assert snapServerChecker != null
@@ -662,7 +663,8 @@ public class EthPeers implements PeerSelector {
     }
   }
 
-  private CompletableFuture<Void> checkIsSnapServer(final EthPeer peer, final BlockHeader headBlockHeader) {
+  private CompletableFuture<Void> checkIsSnapServer(
+      final EthPeer peer, final BlockHeader headBlockHeader) {
     // set that peer is a snap server for doing the test
     peer.setIsServingSnap(true);
     return snapServerChecker
