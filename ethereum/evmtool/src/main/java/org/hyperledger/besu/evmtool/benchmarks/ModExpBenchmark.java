@@ -384,6 +384,7 @@ public class ModExpBenchmark extends BenchmarkExecutor {
             || !BigIntegerModularExponentiationPrecompiledContract.maybeEnableNative())) {
       BigIntegerModularExponentiationPrecompiledContract.disableNative();
     }
+
     output.println(
         BigIntegerModularExponentiationPrecompiledContract.isNative()
             ? "Native ModExp"
@@ -393,9 +394,12 @@ public class ModExpBenchmark extends BenchmarkExecutor {
       final double execTime = runPrecompileBenchmark(testCase.getValue(), contract);
 
       long gasCost = contract.gasRequirement(testCase.getValue());
-      output.printf(
-          "%-30s | %,7d gas | %,7.1f µs | %,8.2f MGps%n",
-          testCase.getKey(), gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
+      logPrecompilePerformance(output, testCase.getKey(), gasCost, execTime);
     }
+  }
+
+  @Override
+  public boolean isPrecompile() {
+    return true;
   }
 }
