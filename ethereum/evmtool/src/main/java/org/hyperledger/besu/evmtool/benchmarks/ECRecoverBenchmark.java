@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -27,13 +28,12 @@ import org.apache.tuweni.bytes.Bytes;
 public class ECRecoverBenchmark extends BenchmarkExecutor {
 
   /** Use default math based warmup and interations */
-  public ECRecoverBenchmark() {
-    super(MATH_WARMUP, MATH_ITERATIONS);
+  public ECRecoverBenchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
   }
 
   @Override
-  public void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork) {
+  public void runBenchmark(final Boolean attemptNative, final String fork) {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "0x0c65a9d9ffc02c7c99e36e32ce0f950c7804ceda",
@@ -454,7 +454,7 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), contract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
       gasCost += contract.gasRequirement(testCase.getValue());
     }
     execTime /= testCases.size();

@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.precompile.AltBN128PairingPrecompiledContract;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -31,13 +32,12 @@ import org.apache.tuweni.bytes.Bytes;
 public class AltBN128Benchmark extends BenchmarkExecutor {
 
   /** Benchmark AltBN128 add, mul, and pairings with default warmup and iterations */
-  public AltBN128Benchmark() {
-    super(MATH_WARMUP, MATH_ITERATIONS);
+  public AltBN128Benchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
   }
 
   @Override
-  public void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork) {
+  public void runBenchmark(final Boolean attemptNative, final String fork) {
 
     EvmSpecVersion forkVersion = EvmSpecVersion.fromName(fork);
 
@@ -76,7 +76,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : addTestCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), addContract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), addContract);
       gasCost += addContract.gasRequirement(testCase.getValue());
     }
     execTime /= addTestCases.size();
@@ -108,7 +108,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : mulTestCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), mulContract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), mulContract);
       gasCost += mulContract.gasRequirement(testCase.getValue());
     }
     execTime /= mulTestCases.size();
@@ -172,7 +172,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
     iterations = MATH_ITERATIONS / 20;
 
     for (int i = 0; i < pairings.length; i++) {
-      final double execTime = runPrecompileBenchmark(pairings[i], contract);
+      final double execTime = runPrecompileBenchmark("pairings" + i, pairings[i], contract);
       final long gasCost = contract.gasRequirement(pairings[i]);
 
       output.printf(

@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.precompile.BLS12PairingPrecompiledContract;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -34,8 +35,8 @@ import org.apache.tuweni.bytes.Bytes;
 public class BLS12Benchmark extends BenchmarkExecutor {
 
   /** Benchmark BLS12-381 G1 and G2 MSM with default warmup and iterations */
-  public BLS12Benchmark() {
-    super(MATH_WARMUP, MATH_ITERATIONS);
+  public BLS12Benchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
   }
 
   static final String[] scalars = {
@@ -144,8 +145,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
   };
 
   @Override
-  public void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork) {
+  public void runBenchmark(final Boolean attemptNative, final String fork) {
 
     EvmSpecVersion forkVersion = EvmSpecVersion.fromName(fork);
 
@@ -184,7 +184,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), g1addContract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), g1addContract);
       gasCost += g1addContract.gasRequirement(testCase.getValue());
     }
     execTime /= testCases.size();
@@ -203,7 +203,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
       for (int j = 0; j < 1 << i; j++) {
         g1msmPairs.append(g1PointPairs[j]).append(scalars[j]);
       }
-      testCases.put("G1 MSM, " + (1 << i) + " pairs", Bytes.fromHexString(g1msmPairs.toString()));
+      testCases.put("G1 MSM " + (1 << i) + " pairs", Bytes.fromHexString(g1msmPairs.toString()));
     }
 
     BLS12G1MultiExpPrecompiledContract g1msmContract = new BLS12G1MultiExpPrecompiledContract();
@@ -212,7 +212,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), g1msmContract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), g1msmContract);
       gasCost += g1msmContract.gasRequirement(testCase.getValue());
     }
     output.printf(
@@ -232,7 +232,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), g1MapFpToG1Contract);
+      execTime +=
+          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), g1MapFpToG1Contract);
       gasCost += g1MapFpToG1Contract.gasRequirement(testCase.getValue());
     }
     execTime /= testCases.size();
@@ -254,7 +255,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), g1addContract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), g1addContract);
       gasCost += g1addContract.gasRequirement(testCase.getValue());
     }
     execTime /= testCases.size();
@@ -273,7 +274,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
       for (int j = 0; j < 1 << i; j++) {
         g2msmPairs.append(g2PointPairs[j]).append(scalars[j]);
       }
-      testCases.put("G2 MSM, " + (1 << i) + " pairs", Bytes.fromHexString(g2msmPairs.toString()));
+      testCases.put("G2 MSM " + (1 << i) + " pairs", Bytes.fromHexString(g2msmPairs.toString()));
     }
 
     BLS12G2MultiExpPrecompiledContract g2msmContract = new BLS12G2MultiExpPrecompiledContract();
@@ -282,7 +283,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), g2msmContract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), g2msmContract);
       gasCost += g2msmContract.gasRequirement(testCase.getValue());
     }
     output.printf(
@@ -303,7 +304,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), g1MapFp2ToG2Contract);
+      execTime +=
+          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), g1MapFp2ToG2Contract);
       gasCost += g1MapFp2ToG2Contract.gasRequirement(testCase.getValue());
     }
     execTime /= testCases.size();
@@ -322,7 +324,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
       for (int j = 0; j < 1 << i; j++) {
         pairs.append(g1PointPairs[j]).append(g2PointPairs[j]);
       }
-      testCases.put("BLS Pairing, " + (1 << i) + " pairs", Bytes.fromHexString(pairs.toString()));
+      testCases.put("BLS Pairing " + (1 << i) + " pairs", Bytes.fromHexString(pairs.toString()));
     }
 
     BLS12PairingPrecompiledContract blsPairingContract = new BLS12PairingPrecompiledContract();
@@ -331,7 +333,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), blsPairingContract);
+      execTime +=
+          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), blsPairingContract);
       gasCost += blsPairingContract.gasRequirement(testCase.getValue());
     }
 

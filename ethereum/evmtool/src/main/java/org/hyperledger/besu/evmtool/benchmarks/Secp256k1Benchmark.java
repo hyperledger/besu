@@ -24,6 +24,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 
 import java.io.PrintStream;
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -34,13 +35,12 @@ import org.apache.tuweni.bytes.Bytes32;
 public class Secp256k1Benchmark extends BenchmarkExecutor {
 
   /** secp256k1 benchmark using default math warmup and iterations */
-  public Secp256k1Benchmark() {
-    super(MATH_WARMUP, MATH_ITERATIONS);
+  public Secp256k1Benchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
   }
 
   @Override
-  public void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork) {
+  public void runBenchmark(final Boolean attemptNative, final String fork) {
     final SECP256K1 signatureAlgorithm = new SECP256K1();
     if (attemptNative != null && (!attemptNative || !signatureAlgorithm.maybeEnableNative())) {
       signatureAlgorithm.disableNative();
