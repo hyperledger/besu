@@ -43,6 +43,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -52,7 +53,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -559,38 +559,30 @@ public class EthPeers implements PeerSelector {
     LOG.debug("Peer {} status exchanged", peer);
     assert tracker != null : "ChainHeadTracker must be set before EthPeers can be used";
 
-    BlockHeader headBlockHeader;
-    try {
-      headBlockHeader = checkHeadBlock(peer).get(6L, TimeUnit.SECONDS);
-    } catch (final Exception e) {
-      LOG.atTrace()
-          .setMessage("Error checking chain head for peer {}: {}")
-          .addArgument(peer.getLoggableId())
-          .addArgument(e)
-          .log();
-      peer.disconnect(
-          DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
-      return;
-    }
-
-    checkSnapServer(peer, headBlockHeader)
-        .orTimeout(6L, TimeUnit.SECONDS)
-        .handle(
-            (result, error) -> {
-              if (error != null) {
-                LOG.atDebug()
-                    .setMessage("Error checking snap server or chain head for peer {}: {}")
-                    .addArgument(peer.getLoggableId())
-                    .addArgument(error)
-                    .log();
-                peer.disconnect(
-                    DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
-                return null;
-              }
-              if (!peer.getConnection().isDisconnected() && addPeerToEthPeers(peer)) {
-                connectedPeersCounter.inc();
-                connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
-              }
+    checkHeadBlock(peer)
+        .thenApply(
+            blockHeader ->
+                checkSnapServer(peer, blockHeader)
+                    .thenApply(
+                        unused -> {
+                          // here we add the peer to the active connections, if it is still
+                          // connected
+                          if (!peer.getConnection().isDisconnected() && addPeerToEthPeers(peer)) {
+                            connectedPeersCounter.inc();
+                            connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
+                          }
+                          return null;
+                        }))
+        .exceptionally(
+            e -> {
+              LOG.atTrace()
+                  .setMessage(
+                      "Exception while checking head block or snap server. Peer {}, Error {}")
+                  .addArgument(peer.getLoggableId())
+                  .addArgument(Arrays.toString(e.getStackTrace()))
+                  .log();
+              peer.disconnect(
+                  DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
               return null;
             });
   }
