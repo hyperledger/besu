@@ -148,6 +148,10 @@ configure(allprojects - project(':platform')) {
   java {
     sourceCompatibility = 21
     targetCompatibility = 21
+
+    consistentResolution {
+      useCompileClasspathVersions()
+    }
   }
 
   repositories {
@@ -188,6 +192,9 @@ configure(allprojects - project(':platform')) {
     annotationProcessor(platform(project(':platform')))
 
     testAnnotationProcessor(platform(project(':platform')))
+
+    // for validation annotations like @NotNull
+    implementation 'jakarta.validation:jakarta.validation-api'
 
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
@@ -378,7 +385,7 @@ configure(allprojects - project(':platform')) {
   javadoc {
     options.addBooleanOption('Xdoclint:all', true)
     // disable doc lint checking for generated code and acceptance tests dsl.
-    options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated,' +
+    options.addBooleanOption('Xdoclint/package:' +
       '-org.hyperledger.besu.tests.acceptance.*,' +
       '-org.hyperledger.besu.tests.web3j.generated,' +
       // TODO: these are temporary excluded from lint (ethereum sub modules), it should be removed in a future PR.
@@ -402,8 +409,6 @@ configure(allprojects - project(':platform')) {
       '-org.hyperledger.besu.ethereum.forkid,' +
       '-org.hyperledger.besu.ethereum.mainnet,' +
       '-org.hyperledger.besu.ethereum.mainnet.*,' +
-      '-org.hyperledger.besu.ethereum.privacy,' +
-      '-org.hyperledger.besu.ethereum.privacy.*,' +
       '-org.hyperledger.besu.ethereum.processing,' +
       '-org.hyperledger.besu.ethereum.proof,' +
       '-org.hyperledger.besu.ethereum.storage,' +
@@ -455,7 +460,7 @@ task checkMavenCoordinateCollisions {
           if (coordinate.toString().startsWith("org") && coordinates.containsKey(coordinate)) {
             throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
             "both ${coordinates[coordinate]} and ${it.path}.\n" +
-            "Please add a `publishing` script block to one or both subprojects.")
+            "Prefer automatic artifactId creation or if not possible disambiguate manually.")
           }
           coordinates[coordinate] = it.path
         }
@@ -486,7 +491,7 @@ subprojects {
     dependencies { testImplementation sourceSets.testSupport.output }
 
     task testSupportJar(type: Jar) {
-      archiveBaseName = "${project.name}-support-test"
+      archiveBaseName = calculateArtifactId(project) + '-support-test'
       archiveClassifier = 'test-support'
       from sourceSets.testSupport.output
     }
@@ -540,6 +545,7 @@ subprojects {
       publications {
         mavenJava(MavenPublication) {
           groupId "org.hyperledger.besu.internal"
+          artifactId calculateArtifactId(project)
           version "${project.version}"
           if (sourceSetIsPopulated("main")) {
             from components.java
@@ -713,8 +719,8 @@ startScripts {
     "-XX:StartFlightRecording,settings=default.jfc",
     "-Xlog:jfr*=off"
   ]
-  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
-  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(startScripts) }
 }
 
@@ -723,8 +729,8 @@ task untunedStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'besu-untuned'
-  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
-  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(untunedStartScripts) }
 }
 
@@ -736,8 +742,8 @@ task evmToolStartScripts(type: CreateStartScripts) {
   defaultJvmOpts = [
     "-Dsecp256k1.randomize=false"
   ]
-  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
-  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(evmToolStartScripts) }
 }
 
@@ -1009,6 +1015,15 @@ def calculateVersion() {
   }
 }
 
+def calculateArtifactId(configuringProject) {
+  def currentProject = configuringProject
+  def projectNames = [currentProject.name]
+  while((currentProject = currentProject.getParent()) != null) {
+    projectNames << currentProject.name
+  }
+  return projectNames.reverse().join('-')
+}
+
 def getGitCommitDetails(length = 8) {
   try {
     def gitFolder = "$projectDir/.git/"
@@ -1070,7 +1085,7 @@ dependencies {
   errorprone 'com.google.errorprone:error_prone_core'
   // https://github.com/hyperledger/besu-errorprone-checks/
   errorprone 'org.hyperledger.besu:besu-errorprone-checks'
-  implementation project(':besu')
+  implementation project(':app')
   implementation project(':ethereum:evmtool')
 }
 
@@ -1104,7 +1119,7 @@ distributions {
       from("./build/reports/dependency-license/index.html") { into "."}
       rename("index.html","license-dependency.html")
       from("./docs/README.md") { into "." }
-      from("./besu/src/main/scripts/besu-entry.sh") { into "./bin/" }
+      from("./app/src/main/scripts/besu-entry.sh") { into "./bin/" }
       from(autocomplete) { into "." }
     }
   }

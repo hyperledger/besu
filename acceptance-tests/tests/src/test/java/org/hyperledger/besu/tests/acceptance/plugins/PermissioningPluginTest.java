@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.utils.Convert;
@@ -74,6 +75,7 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
         .jsonRpcAdmin();
   }
 
+  @Disabled("flaky see https://github.com/hyperledger/besu/issues/8726")
   @Test
   public void blockedConnectionNodeCanOnlyConnectToTransactionNode() {
     minerNode.verify(admin.hasPeer(aliceNode));

@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 /** Arbitrary data for use in the KZG scheme. */
 public class Blob implements org.hyperledger.besu.datatypes.Blob {
 
-  final Bytes data;
+  private final Bytes data;
 
   /**
    * Create a new Blob.

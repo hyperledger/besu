@@ -1,0 +1,242 @@
+# Every possible CLI should be in this file.
+# The odds are you are reading this because you added a CLI and didn't add it
+# here and a test broke.  To fix the test add your CLI to this file.
+#
+# Please use a plausible value, Besu has to at least be able to parse it.
+# If it is a multi-valued CLI make it a TOML array.
+# If it is a number or boolean make it a number or boolean
+# All other config options are strings, and must be quoted.
+# Please provide some sensible grouping.
+
+# Node Information
+data-path="~/besudata"
+logging="INFO"
+color-enabled=false
+node-private-key-file="./path/to/privateKey"
+pid-path="~/.pid"
+reorg-logging-threshold=0
+static-nodes-file="~/besudata/static-nodes.json"
+version-compatibility-protection=true
+
+profile="NONE"
+# Security Module plugin to use
+security-module="localfile"
+
+# P2P network
+identity="PegaSysEng"
+p2p-enabled=true
+nat-method="NONE"
+Xnat-method-fallback-enabled=true
+discovery-enabled=false
+poa-discovery-retry-bootnodes=true
+bootnodes=[
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567"
+]
+banned-node-ids=["0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0","0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"]
+banned-node-id=["0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"]
+p2p-host="1.2.3.4"
+p2p-interface="0.0.0.0"
+p2p-port=1234
+max-peers=42
+remote-connections-limit-enabled=true
+remote-connections-max-percentage=60
+random-peer-priority-enabled=false
+host-allowlist=["all"]
+engine-host-allowlist=["all"]
+engine-rpc-enabled=true
+engine-jwt-disabled=true
+engine-jwt-secret="/tmp/jwt.hex"
+required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
+discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org"
+net-restrict=["none"]
+
+# chain
+network="MAINNET"
+genesis-file="~/genesis.json"
+genesis-state-hash-cache-enabled=false
+sync-mode="fast"
+fast-sync-min-peers=5
+network-id=303
+kzg-trusted-setup="/etc/besu/kzg-trusted-setup.txt"
+
+# JSON-RPC
+rpc-http-enabled=false
+rpc-http-host="5.6.7.8"
+rpc-http-port=5678
+engine-rpc-port=5679
+rpc-http-max-active-connections=100
+rpc-http-api=["DEBUG","ETH"]
+rpc-http-apis=["DEBUG","ETH"]
+rpc-http-api-method-no-auth=["admin_peers"]
+rpc-http-api-methods-no-auth=["admin_peers"]
+rpc-ws-api-method-no-auth=["admin_peers"]
+rpc-ws-api-methods-no-auth=["admin_peers"]
+rpc-http-cors-origins=["none"]
+rpc-http-authentication-enabled=false
+rpc-http-authentication-credentials-file="none"
+rpc-http-authentication-jwt-public-key-file="none"
+rpc-http-tls-enabled=false
+rpc-http-tls-keystore-file="none.pfx"
+rpc-http-tls-keystore-password-file="none.passwd"
+rpc-http-tls-client-auth-enabled=false
+rpc-http-tls-known-clients-file="rpc_tls_clients.txt"
+rpc-http-tls-ca-clients-enabled=false
+rpc-http-tls-truststore-file="none.pfx"
+rpc-http-tls-truststore-password-file="none.passwd"
+rpc-http-authentication-jwt-algorithm="RS256"
+rpc-ws-authentication-jwt-algorithm="RS256"
+rpc-http-tls-protocols=["TLSv1.2,TlSv1.1"]
+rpc-http-tls-cipher-suites=["TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
+rpc-http-max-batch-size=1
+rpc-http-max-request-content-length = 5242880
+rpc-max-logs-range=100
+json-pretty-print-enabled=false
+cache-last-blocks=512
+cache-precompiles=true
+rpc-gas-cap = 50000000
+rpc-max-trace-filter-range=100
+
+# GRAPHQL HTTP
+graphql-http-enabled=false
+graphql-http-host="6.7.8.9"
+graphql-http-port=6789
+graphql-http-cors-origins=["none"]
+graphql-tls-enabled=false
+graphql-tls-keystore-file="none.pfx"
+graphql-tls-keystore-password-file="none.passwd"
+graphql-mtls-enabled=false
+graphql-tls-truststore-file="none.pfx"
+graphql-tls-truststore-password-file="none.passwd"
+
+# WebSockets API
+rpc-ws-enabled=false
+rpc-ws-api=["DEBUG","ETH"]
+rpc-ws-apis=["DEBUG","ETH"]
+rpc-ws-host="9.10.11.12"
+rpc-ws-port=9101
+rpc-ws-max-active-connections=101
+rpc-ws-max-frame-size=65535
+rpc-ws-authentication-enabled=false
+rpc-ws-authentication-credentials-file="none"
+rpc-ws-authentication-jwt-public-key-file="none"
+rpc-ws-ssl-enabled=false
+rpc-ws-ssl-keystore-file="none.pfx"
+rpc-ws-ssl-keystore-password="none.passwd"
+rpc-ws-ssl-keystore-password-file="none.txt"
+rpc-ws-ssl-keystore-type="none"
+rpc-ws-ssl-client-auth-enabled=false
+rpc-ws-ssl-truststore-file="none.pfx"
+rpc-ws-ssl-truststore-password="none.passwd"
+rpc-ws-ssl-truststore-password-file="none.txt"
+rpc-ws-ssl-truststore-type="none"
+rpc-ws-ssl-key-file="none.pfx"
+rpc-ws-ssl-cert-file="none.pfx"
+rpc-ws-ssl-trustcert-file="none.pfx"
+
+
+
+# API
+api-gas-price-blocks=100
+api-gas-price-percentile=50.0
+api-gas-price-max=500000000000
+estimate-gas-tolerance-ratio=0.02
+
+# Prometheus Metrics Endpoint
+metrics-enabled=false
+metrics-protocol="prometheus"
+metrics-host="8.6.7.5"
+metrics-port=309
+metrics-category=["RPC"]
+metrics-push-enabled=false
+metrics-push-host="5.5.5.1"
+metrics-push-port=212
+metrics-push-interval=42
+metrics-push-prometheus-job="besu-everything"
+
+# Mining
+miner-enabled=false
+miner-stratum-enabled=false
+miner-coinbase="0x0000000000000000000000000000000000000002"
+miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C2021"
+min-gas-price=1
+min-priority-fee=0
+min-block-occupancy-ratio=0.7
+miner-stratum-host="0.0.0.0"
+miner-stratum-port=8008
+block-txs-selection-max-time=5000
+poa-block-txs-selection-max-time=75
+Xminer-remote-sealers-limit=1000
+Xminer-remote-sealers-hashrate-ttl=10
+Xpos-block-creation-max-time=5
+
+# Permissioning
+permissions-nodes-config-file-enabled=false
+permissions-nodes-config-file="./permissions_config.toml"
+permissions-accounts-config-file-enabled=false
+permissions-accounts-config-file="./permissions_config.toml"
+
+# Transaction Pool
+tx-pool="layered"
+tx-pool-price-bump=13
+tx-pool-blob-price-bump=100
+rpc-tx-feecap=2000000000000000000
+strict-tx-replay-protection-enabled=true
+tx-pool-no-local-priority=false
+tx-pool-priority-senders=["0xABC0000000000000000000000000000000001234","0xDEF0000000000000000000000000000000001234"]
+tx-pool-enable-save-restore=true
+tx-pool-save-file="txpool.dump"
+## Layered
+tx-pool-layer-max-capacity=12345678
+tx-pool-max-prioritized=9876
+tx-pool-max-prioritized-by-type=["BLOB=10","FRONTIER=100"]
+tx-pool-max-future-by-sender=321
+## Legacy/Sequenced
+tx-pool-retention-hours=999
+tx-pool-max-size=1234
+tx-pool-limit-by-account-percentage=0.017
+tx-pool-min-gas-price=1000
+tx-pool-min-score=100
+
+# Revert Reason
+revert-reason-enabled=false
+
+# Storage plugin to use
+key-value-storage="rocksdb"
+
+# Gas limit
+target-gas-limit=8000000
+
+# transaction log bloom filter caching
+auto-log-bloom-caching-enabled=true
+
+# ethstats
+ethstats="nodename:secret@host:1234"
+ethstats-contact="contact@mail.n"
+ethstats-cacert-file="./root.cert"
+
+# Data storage
+data-storage-format="BONSAI"
+bonsai-historical-block-limit=512
+bonsai-limit-trie-logs-enabled=true
+bonsai-trie-logs-pruning-window-size=100_000
+receipt-compaction-enabled=true
+
+# feature flags
+Xsecp256k1-native-enabled=false
+Xaltbn128-native-enabled=false
+Xsnapsync-server-enabled=true
+Xbonsai-full-flat-db-enabled=true
+Xpeertask-system-enabled=false
+
+#contracts
+Xevm-jumpdest-cache-weight-kb=32000
+
+# plugins
+Xplugins-external-enabled=true
+plugins=["none"]
+plugin-continue-on-error=false
+
+# snapsync
+snapsync-synchronizer-transaction-indexing-enabled=true

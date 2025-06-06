@@ -43,13 +43,6 @@ public interface MergeContext extends ConsensusContext {
   MergeContext setTerminalTotalDifficulty(final Difficulty newTerminalTotalDifficulty);
 
   /**
-   * Sets is post merge.
-   *
-   * @param totalDifficulty the total difficulty
-   */
-  void setIsPostMerge(final Difficulty totalDifficulty);
-
-  /**
    * Is post merge.
    *
    * @return the boolean

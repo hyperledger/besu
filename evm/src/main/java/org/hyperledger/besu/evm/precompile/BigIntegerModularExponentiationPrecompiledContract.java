@@ -26,9 +26,9 @@ import org.hyperledger.besu.nativelib.arithmetic.LibArithmetic;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.slf4j.Logger;
@@ -52,13 +52,42 @@ public class BigIntegerModularExponentiationPrecompiledContract
   private static final int EXPONENT_LENGTH_OFFSET = 32;
   private static final int MODULUS_LENGTH_OFFSET = 64;
 
+  private static final long BYZANTIUM_UPPER_BOUND = Long.MAX_VALUE;
+  private static final long OSAKA_UPPER_BOUND = 1024L;
+  private final long upperBound;
+
   /**
    * Instantiates a new BigInteger modular exponentiation precompiled contract.
    *
    * @param gasCalculator the gas calculator
    */
-  public BigIntegerModularExponentiationPrecompiledContract(final GasCalculator gasCalculator) {
+  private BigIntegerModularExponentiationPrecompiledContract(
+      final GasCalculator gasCalculator, final long upperBound) {
     super("BigIntModExp", gasCalculator);
+    this.upperBound = upperBound;
+  }
+
+  /**
+   * Create the Byzantium BigIntegerModularExponentiationPrecompiledContract.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the BigIntegerModularExponentiationPrecompiledContract
+   */
+  public static BigIntegerModularExponentiationPrecompiledContract byzantium(
+      final GasCalculator gasCalculator) {
+    return new BigIntegerModularExponentiationPrecompiledContract(
+        gasCalculator, BYZANTIUM_UPPER_BOUND);
+  }
+
+  /**
+   * Create the Osaka BigIntegerModularExponentiationPrecompiledContract. Introduced in EIP-7823
+   *
+   * @param gasCalculator the gas calculator
+   * @return the BigIntegerModularExponentiationPrecompiledContract
+   */
+  public static BigIntegerModularExponentiationPrecompiledContract osaka(
+      final GasCalculator gasCalculator) {
+    return new BigIntegerModularExponentiationPrecompiledContract(gasCalculator, OSAKA_UPPER_BOUND);
   }
 
   /** Disable native Arithmetic libraries. */
@@ -95,28 +124,39 @@ public class BigIntegerModularExponentiationPrecompiledContract
     return gasCalculator().modExpGasCost(input);
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
+    // https://eips.ethereum.org/EIPS/eip-7823
+    // We introduce an upper bound to the inputs of the precompile,
+    // each of the length inputs (length_of_BASE, length_of_EXPONENT and length_of_MODULUS)
+    // MUST be less than or equal to 1024 bytes
+    final long length_of_BASE = baseLength(input);
+    final long length_of_EXPONENT = exponentLength(input);
+    final long length_of_MODULUS = modulusLength(input);
+    if (length_of_BASE > upperBound
+        || length_of_EXPONENT > upperBound
+        || length_of_MODULUS > upperBound) {
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+    }
     if (useNative) {
-      return computeNative(input);
+      return computeNative(input, length_of_MODULUS);
     } else {
-      return computeDefault(input);
+      return computeDefault(input, length_of_BASE, length_of_EXPONENT, length_of_MODULUS);
     }
   }
 
-  /**
-   * Compute default precompile contract.
-   *
-   * @param input the input
-   * @return the precompile contract result
-   */
-  @Nonnull
-  public PrecompileContractResult computeDefault(final Bytes input) {
-    final int baseLength = clampedToInt(baseLength(input));
-    final int exponentLength = clampedToInt(exponentLength(input));
-    final int modulusLength = clampedToInt(modulusLength(input));
+  @NotNull
+  private PrecompileContractResult computeDefault(
+      final Bytes input,
+      final long length_of_BASE,
+      final long length_of_EXPONENT,
+      final long length_of_MODULUS) {
+    final int baseLength = clampedToInt(length_of_BASE);
+    final int exponentLength = clampedToInt(length_of_EXPONENT);
+    final int modulusLength = clampedToInt(length_of_MODULUS);
     // If baseLength and modulusLength are zero
     // we could have a massively overflowing exp because it wouldn't have been filtered out at the
     // gas cost phase
@@ -241,14 +281,9 @@ public class BigIntegerModularExponentiationPrecompiledContract
     return clampedMultiply(n, n);
   }
 
-  /**
-   * Compute native precompile contract.
-   *
-   * @param input the input
-   * @return the precompile contract result
-   */
-  public PrecompileContractResult computeNative(final @Nonnull Bytes input) {
-    final int modulusLength = clampedToInt(modulusLength(input));
+  private PrecompileContractResult computeNative(
+      final @NotNull Bytes input, final long length_of_MODULUS) {
+    final int modulusLength = clampedToInt(length_of_MODULUS);
     final IntByReference o_len = new IntByReference(modulusLength);
 
     final byte[] result = new byte[modulusLength];

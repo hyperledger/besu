@@ -767,6 +767,13 @@ public class BlockchainQueries {
     return protocolSchedule.getByBlockHeader(header).getGasCalculator().getMinimumTransactionCost();
   }
 
+  public long getTransactionGasLimitCap(final ProcessableBlockHeader header) {
+    return protocolSchedule
+        .getByBlockHeader(header)
+        .getGasLimitCalculator()
+        .transactionGasLimitCap();
+  }
+
   /**
    * Calculates the blob gas price for data in a transaction.
    *

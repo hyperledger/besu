@@ -23,10 +23,8 @@ public class JsonRpcErrorConverter {
       final TransactionInvalidReason reason) {
     switch (reason) {
       case NONCE_TOO_LOW:
-      case PRIVATE_NONCE_TOO_LOW:
         return RpcErrorType.NONCE_TOO_LOW;
       case NONCE_TOO_HIGH:
-      case PRIVATE_NONCE_TOO_HIGH:
         return RpcErrorType.NONCE_TOO_HIGH;
       case INVALID_SIGNATURE:
         return RpcErrorType.INVALID_TRANSACTION_SIGNATURE;
@@ -36,6 +34,8 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
       case EXCEEDS_BLOCK_GAS_LIMIT:
         return RpcErrorType.EXCEEDS_BLOCK_GAS_LIMIT;
+      case EXCEEDS_TRANSACTION_GAS_LIMIT:
+        return RpcErrorType.EXCEEDS_TRANSACTION_GAS_LIMIT;
       case WRONG_CHAIN_ID:
         return RpcErrorType.WRONG_CHAIN_ID;
       case REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED:
@@ -44,13 +44,6 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.REPLAY_PROTECTED_SIGNATURE_REQUIRED;
       case TX_SENDER_NOT_AUTHORIZED:
         return RpcErrorType.TX_SENDER_NOT_AUTHORIZED;
-      // Private Transaction Invalid Reasons
-      case PRIVATE_TRANSACTION_INVALID:
-        return RpcErrorType.PRIVATE_TRANSACTION_INVALID;
-      case PRIVATE_TRANSACTION_FAILED:
-        return RpcErrorType.PRIVATE_TRANSACTION_FAILED;
-      case PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE:
-        return RpcErrorType.UNSUPPORTED_PRIVATE_TRANSACTION_TYPE;
       case CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE:
         return RpcErrorType.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
       case GAS_PRICE_TOO_LOW:
@@ -61,8 +54,6 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.TX_FEECAP_EXCEEDED;
       case MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS:
         return RpcErrorType.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
-      case OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST:
-        return RpcErrorType.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST;
       case INVALID_TRANSACTION_FORMAT:
         return RpcErrorType.INVALID_TRANSACTION_TYPE;
       case TRANSACTION_ALREADY_KNOWN:
