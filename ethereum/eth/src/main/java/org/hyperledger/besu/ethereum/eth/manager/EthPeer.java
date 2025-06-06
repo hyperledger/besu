@@ -42,7 +42,6 @@ import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioni
 
 import java.time.Clock;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -630,12 +629,6 @@ public class EthPeer implements Comparable<EthPeer> {
   public boolean hasSupportForMessage(final int messageCode) {
     return getAgreedCapabilities().stream()
         .anyMatch(cap -> EthProtocol.get().isValidMessageCode(cap.getVersion(), messageCode));
-  }
-
-  public Capability getMaxAgreedCapability() {
-    return getAgreedCapabilities().stream()
-        .max(Comparator.comparingInt(Capability::getVersion))
-        .orElseThrow(() -> new IllegalStateException("No capabilities available"));
   }
 
   @Override
