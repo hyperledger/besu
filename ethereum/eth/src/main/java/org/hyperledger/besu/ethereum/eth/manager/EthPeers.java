@@ -560,10 +560,10 @@ public class EthPeers implements PeerSelector {
     assert tracker != null : "ChainHeadTracker must be set before EthPeers can be used";
 
     checkHeadBlock(peer)
-        .thenApply(
+        .thenCompose(
             blockHeader ->
                 checkSnapServer(peer, blockHeader)
-                    .thenApply(
+                    .thenCompose(
                         unused -> {
                           // here we add the peer to the active connections, if it is still
                           // connected
