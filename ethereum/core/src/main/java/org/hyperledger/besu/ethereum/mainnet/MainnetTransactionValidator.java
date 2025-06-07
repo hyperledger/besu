@@ -79,7 +79,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
     this.chainId = chainId;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
     this.maxInitcodeSize = maxInitcodeSize;
-    this.blobsValidator = new MainnetBlobsValidator(acceptedBlobVersions);
+    this.blobsValidator =
+        new MainnetBlobsValidator(acceptedBlobVersions, gasLimitCalculator, gasCalculator);
   }
 
   @Override

@@ -76,4 +76,16 @@ public interface GasLimitCalculator {
   default long transactionGasLimitCap() {
     return Long.MAX_VALUE;
   }
+
+  /**
+   * Returns the transaction blob gas limit cap .
+   *
+   * <p>Before Osaka, there was no limit, the max number of blobs a transaction could have was
+   * limited by the blob gas limit.
+   *
+   * @return the transaction blob gas limit cap
+   */
+  default long transactionBlobGasLimitCap() {
+    return BLOB_GAS_LIMIT;
+  }
 }
