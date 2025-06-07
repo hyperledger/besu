@@ -666,7 +666,8 @@ public class MainnetTransactionValidatorTest {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
-            new OsakaTargetingGasLimitCalculator(0L, feeMarket, gasCalculator, 6, 3, gasLimitCap),
+            new OsakaTargetingGasLimitCalculator(
+                0L, feeMarket, gasCalculator, 6, 3, gasLimitCap, 6),
             feeMarket,
             false,
             Optional.of(BigInteger.ONE),

@@ -49,7 +49,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     final OsakaTargetingGasLimitCalculator osakaTargetingGasLimitCalculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, maxBlobs);
 
     final long usedBlobGas = osakaGasCalculator.blobGasCost(used);
     assertThat(
@@ -87,7 +87,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     var osakaTargetingGasLimitCalculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, maxBlobs);
 
     // if maxBlobs = 10, then the gas limit would be 131072 * 10 = 1310720
     assertThat(osakaTargetingGasLimitCalculator.currentBlobGasLimit())
@@ -104,7 +104,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     var calculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, maxBlobs);
     assertThat(calculator.maxBlobsPerBlock).isEqualTo(maxBlobs);
     assertThat(calculator.targetBlobsPerBlock).isEqualTo(targetBlobs);
 

@@ -133,7 +133,7 @@ public class BlobScheduleOptions {
    * @return the blob schedule
    */
   public Optional<BlobSchedule> getBlobSchedule(final String key) {
-    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, key).map(BlobSchedule::new);
+    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, key).map(BlobSchedule::create);
   }
 
   /**
