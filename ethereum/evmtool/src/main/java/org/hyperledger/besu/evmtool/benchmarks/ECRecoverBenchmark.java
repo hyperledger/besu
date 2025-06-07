@@ -27,7 +27,12 @@ import org.apache.tuweni.bytes.Bytes;
 /** Benchmark ECRecover precompile (ECDSA key extraction + keccak hash) */
 public class ECRecoverBenchmark extends BenchmarkExecutor {
 
-  /** Use default math based warmup and interations */
+  /**
+   * The constructor. Use default math based warmup and interations.
+   *
+   * @param output where to write the stats.
+   * @param asyncProfilerOptions starting options for the AsyncProfiler.
+   */
   public ECRecoverBenchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
     super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
   }

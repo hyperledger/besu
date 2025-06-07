@@ -31,7 +31,12 @@ import org.apache.tuweni.bytes.Bytes;
 /** Benchmark AltBN128 add, mul, and pairings */
 public class AltBN128Benchmark extends BenchmarkExecutor {
 
-  /** Benchmark AltBN128 add, mul, and pairings with default warmup and iterations */
+  /**
+   * The constructor. Use default math based warmup and interations.
+   *
+   * @param output where to write the stats.
+   * @param asyncProfilerOptions starting options for the AsyncProfiler.
+   */
   public AltBN128Benchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
     super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
   }
