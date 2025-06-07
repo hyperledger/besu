@@ -34,7 +34,12 @@ import org.apache.tuweni.bytes.Bytes;
 /** Benchmark BLS12-381 G1 and G2 MSM */
 public class BLS12Benchmark extends BenchmarkExecutor {
 
-  /** Benchmark BLS12-381 G1 and G2 MSM with default warmup and iterations */
+  /**
+   * The constructor. Use default math based warmup and interations.
+   *
+   * @param output where to write the stats.
+   * @param asyncProfilerOptions starting options for the AsyncProfiler.
+   */
   public BLS12Benchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
     super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
   }

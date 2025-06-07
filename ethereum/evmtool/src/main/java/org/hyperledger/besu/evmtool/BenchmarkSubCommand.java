@@ -54,6 +54,7 @@ public class BenchmarkSubCommand implements Runnable {
    */
   public static final String COMMAND_NAME = "benchmark";
 
+  /** Stream for where to write the output to. */
   private final PrintStream output;
 
   enum Benchmark {
@@ -125,7 +126,7 @@ public class BenchmarkSubCommand implements Runnable {
       output.println("Benchmarks for " + benchmark + " on fork " + parentCommand.getFork());
       BenchmarkExecutor executor = benchmark.executorBuilder.create(output, asyncProfilerOptions);
       if (executor.isPrecompile()) {
-        executor.initPrecompileResultsTable(output);
+        BenchmarkExecutor.logPrecompileDerivedGasNotice(output);
       }
       executor.runBenchmark(nativeCode, parentCommand.getFork());
     }

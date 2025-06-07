@@ -55,9 +55,12 @@ public abstract class BenchmarkExecutor {
   static final int MATH_WARMUP = 100_000;
   static final int MATH_ITERATIONS = 100_000;
 
+  /** Where to write the output of the benchmarks. */
   protected final PrintStream output;
+
   private final String asyncProfilerOptions;
   private final Optional<AsyncProfiler> asyncProfiler;
+  private Runnable precompileTableHeader;
   int warmup;
   int iterations;
 
@@ -81,18 +84,14 @@ public abstract class BenchmarkExecutor {
           .worldUpdater(new SimpleWorld())
           .build();
 
-  private Runnable precompileTableHeader;
-
   /**
    * Run benchmarks with specified warmup and iterations
    *
    * @param warmup number of executions to run before timing
    * @param iterations number of executions to time.
+   * @param output print stream to print the output to.
+   * @param asyncProfilerOptions options to give to the Async Profiler while starting up.
    */
-  protected BenchmarkExecutor(final int warmup, final int iterations) {
-    this(warmup, iterations, null, Optional.empty());
-  }
-
   public BenchmarkExecutor(
       final int warmup,
       final int iterations,
@@ -102,6 +101,11 @@ public abstract class BenchmarkExecutor {
     assert iterations <= 0;
     this.iterations = iterations;
     this.output = output;
+    this.precompileTableHeader =
+        () ->
+            output.printf(
+                "%-30s | %12s | %12s | %15s | %15s%n",
+                "", "Actual cost", "Derived Cost", "Iteration time", "Throughput");
     this.asyncProfiler =
         asyncProfilerOptions.isPresent()
             ? Optional.of(AsyncProfiler.getInstance())
@@ -158,6 +162,13 @@ public abstract class BenchmarkExecutor {
     return elapsed / 1.0e9D / executions;
   }
 
+  /**
+   * Logging after a Precompile run with all the normalized and required stats.
+   *
+   * @param testCase name of the running test case.
+   * @param gasCost actual gas cost of the Precompile contract.
+   * @param execTime time that took for an iteration to complete.
+   */
   protected void logPrecompilePerformance(
       final String testCase, final long gasCost, final double execTime) {
     double derivedGas = execTime * GAS_PER_SECOND_STANDARD;
@@ -205,7 +216,12 @@ public abstract class BenchmarkExecutor {
    */
   public abstract void runBenchmark(final Boolean attemptNative, final String fork);
 
-  private void logDerivedGasNotice() {
+  /**
+   * Little disclaimer about how derived gas is computed for Precompiles.
+   *
+   * @param output print stream to print the output to.
+   */
+  public static void logPrecompileDerivedGasNotice(final PrintStream output) {
     long executionTimeExampleNs = 247_914L;
     long gasPerSecond = GAS_PER_SECOND_STANDARD;
     long derivedGas = (executionTimeExampleNs * gasPerSecond) / 1_000_000_000L;
@@ -245,21 +261,25 @@ public abstract class BenchmarkExecutor {
         "************************************************************************************\n");
   }
 
+  /**
+   * Check if this is a Precompile.
+   *
+   * @return true if this is a benchmark concerning a Precompile, false otherwise
+   */
   public boolean isPrecompile() {
     return false;
   }
 
-  public void initPrecompileResultsTable(final PrintStream output) {
-    logDerivedGasNotice();
-    this.precompileTableHeader =
-        () ->
-            output.printf(
-                "%-30s | %12s | %12s | %15s | %15s%n",
-                "", "Actual cost", "Derived Cost", "Iteration time", "Throughput");
-  }
-
+  /** Interface in how to construct a BenchmarkExecutor statically. */
   @FunctionalInterface
   public interface Builder {
+    /**
+     * Creates a new BenchmarkExecutor.
+     *
+     * @param output where to write the stats.
+     * @param asyncProfilerOptions starting options for the AsyncProfiler.
+     * @return the newly created executor.
+     */
     BenchmarkExecutor create(PrintStream output, Optional<String> asyncProfilerOptions);
   }
 

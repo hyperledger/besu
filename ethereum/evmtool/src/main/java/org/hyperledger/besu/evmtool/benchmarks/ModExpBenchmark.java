@@ -26,7 +26,12 @@ import org.apache.tuweni.bytes.Bytes;
 /** Benchmark Modular Exponentiation */
 public class ModExpBenchmark extends BenchmarkExecutor {
 
-  /** Benchmark with default math warmups and iterations */
+  /**
+   * The constructor. Use default math based warmup and interations.
+   *
+   * @param output where to write the stats.
+   * @param asyncProfilerOptions starting options for the AsyncProfiler.
+   */
   public ModExpBenchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
     super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
   }

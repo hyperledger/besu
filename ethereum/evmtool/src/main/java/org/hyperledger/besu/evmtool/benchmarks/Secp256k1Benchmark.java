@@ -34,7 +34,12 @@ import org.apache.tuweni.bytes.Bytes32;
 /** Benchmark secp256k1 public key extraction */
 public class Secp256k1Benchmark extends BenchmarkExecutor {
 
-  /** secp256k1 benchmark using default math warmup and iterations */
+  /**
+   * The constructor. Use default math based warmup and interations.
+   *
+   * @param output where to write the stats.
+   * @param asyncProfilerOptions starting options for the AsyncProfiler.
+   */
   public Secp256k1Benchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
     super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
   }
