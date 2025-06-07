@@ -263,7 +263,8 @@ public abstract class BenchmarkExecutor {
     BenchmarkExecutor create(PrintStream output, Optional<String> asyncProfilerOptions);
   }
 
-  private static String processProfilerArgs(final String asyncProfilerOptions, final String testCaseName) {
+  private static String processProfilerArgs(
+      final String asyncProfilerOptions, final String testCaseName) {
     String[] args = asyncProfilerOptions.split(",");
     for (int i = 0; i < args.length; i++) {
       if (args[i].contains("file=")) {
