@@ -577,9 +577,10 @@ public class EthPeers implements PeerSelector {
             e -> {
               LOG.atTrace()
                   .setMessage(
-                      "Exception while checking head block or snap server. Peer {}, Error {}")
+                      "Exception while checking head block or snap server. Peer {}, Error: {}")
                   .addArgument(peer.getLoggableId())
-                  .addArgument(Arrays.toString(e.getStackTrace()))
+                  .addArgument(e.getMessage())
+                  .addArgument(e)
                   .log();
               peer.disconnect(
                   DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
