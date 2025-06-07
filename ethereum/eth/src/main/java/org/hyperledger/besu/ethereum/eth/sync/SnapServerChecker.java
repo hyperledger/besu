@@ -46,7 +46,8 @@ public class SnapServerChecker {
     ethContext.getEthPeers().setSnapServerChecker(checker);
   }
 
-  public CompletableFuture<Boolean> check(final EthPeer peer, final BlockHeader headBlockHeader) {
+  public CompletableFuture<Void> checkAndSet(
+      final EthPeer peer, final BlockHeader headBlockHeader) {
     LOG.atTrace()
         .setMessage("Checking whether peer {} is a snap server ...")
         .addArgument(peer::getLoggableId)
@@ -61,14 +62,16 @@ public class SnapServerChecker {
                       .setMessage("Peer {} is a snap server.")
                       .addArgument(peer::getLoggableId)
                       .log();
-                  return true;
+                  peer.setIsServingSnap(true);
+                  return null;
                 }
               }
               LOG.atTrace()
                   .setMessage("Peer {} is not a snap server.")
                   .addArgument(peer::getLoggableId)
                   .log();
-              return false;
+              peer.setIsServingSnap(false);
+              return null;
             });
   }
 
