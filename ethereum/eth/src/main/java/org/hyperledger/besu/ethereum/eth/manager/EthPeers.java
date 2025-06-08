@@ -41,6 +41,8 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Collection;
@@ -575,15 +577,22 @@ public class EthPeers implements PeerSelector {
             e -> {
               LOG.atTrace()
                   .setMessage(
-                      "Exception while checking head block or snap server. Peer {}, Error: {}")
+                      "Exception while checking head block or snap server. Peer {}, Error: {}, Stacktrace: {}")
                   .addArgument(peer.getLoggableId())
                   .addArgument(e.getMessage())
+                  .addArgument(getStackTraceAsString(e))
                   .addArgument(e)
                   .log();
               peer.disconnect(
                   DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
               return null;
             });
+  }
+
+  static String getStackTraceAsString(Throwable throwable) {
+    StringWriter sw = new StringWriter();
+    throwable.printStackTrace(new PrintWriter(sw));
+    return sw.toString();
   }
 
   private CompletableFuture<BlockHeader> checkAndMaybeReturnTheHeadBlockHeader(final EthPeer peer) {
@@ -636,7 +645,7 @@ public class EthPeers implements PeerSelector {
         // to do this check we need the header, because we need to know the state root hash
         return tracker
             .getBestHeaderFromPeer(peer)
-            .thenCompose(header -> checkSnapServer(peer, header));
+            .thenCompose(header -> checkIsSnapServer(peer, header));
       } else {
         return checkIsSnapServer(peer, headBlockHeader);
       }
