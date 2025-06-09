@@ -19,6 +19,9 @@ import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
@@ -34,6 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
  * </UL>
  */
 public class OsakaGasCalculator extends PragueGasCalculator {
+  private static final int MAX_CODE_SIZE_WITH_NO_ACCESS_COST = 0x6000; // 24KB
 
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
@@ -107,5 +111,39 @@ public class OsakaGasCalculator extends PragueGasCalculator {
     } else {
       return clampedAdd(clampedMultiply(16, (exponentLength - WORD_SIZE)), bitLength);
     }
+  }
+
+  /**
+   * Computes the additional gas cost for accessing cold, large contract code, as defined in
+   * EIP-7907.
+   *
+   * <p>If the code is cold and exceeds the size threshold, an extra gas cost is applied. The code
+   * is also marked as warm to avoid repeated costs within the same transaction. Returns 0 if the
+   * account is null, has no code, is already warm, or the code size is within the threshold.
+   *
+   * @param frame the current execution frame
+   * @param account the account whose code is being accessed
+   * @return the excess code access gas cost, or 0 if no cost applies
+   */
+  @Override
+  public long calculateExcessCodeAccessGasCost(final MessageFrame frame, final Account account) {
+    if (account == null) {
+      return 0;
+    }
+    final Hash codeHash = account.getCodeHash();
+    if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
+      return 0;
+    }
+    boolean isCodeWarm = frame.warmUpCode(account.getAddress());
+    if (isCodeWarm) {
+      return 0L;
+    }
+    // This is temporary, until we have codeHash => size indexing in place.
+    long codeSize = account.getCode().size();
+    long excessCodeSize = Math.max(codeSize - MAX_CODE_SIZE_WITH_NO_ACCESS_COST, 0L);
+    if (excessCodeSize == 0L) {
+      return 0L;
+    }
+    return INIT_CODE_COST * Words.numWords(clampedToInt(excessCodeSize)) / 32;
   }
 }

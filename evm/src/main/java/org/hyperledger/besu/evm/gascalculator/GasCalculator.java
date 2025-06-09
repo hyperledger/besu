@@ -678,4 +678,16 @@ public interface GasCalculator {
       final MessageFrame frame, final Account targetAccount) {
     return 0L;
   }
+
+  /**
+   * Computes the additional gas cost for accessing cold, large contract code, as defined in
+   * EIP-7907.
+   *
+   * @param frame the current execution frame
+   * @param account the account whose code is being accessed
+   * @return the excess code access gas cost, or 0 if no cost applies
+   */
+  default long calculateExcessCodeAccessGasCost(final MessageFrame frame, final Account account) {
+    return 0L;
+  }
 }
