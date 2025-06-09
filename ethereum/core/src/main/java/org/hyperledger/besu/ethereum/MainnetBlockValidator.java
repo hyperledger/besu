@@ -200,7 +200,7 @@ public class MainnetBlockValidator implements BlockValidator {
     }
   }
 
-  private void handleFailedBlockProcessing(
+  protected void handleFailedBlockProcessing(
       final Block failedBlock,
       final BlockValidationResult result,
       final boolean shouldRecordBadBlock,
