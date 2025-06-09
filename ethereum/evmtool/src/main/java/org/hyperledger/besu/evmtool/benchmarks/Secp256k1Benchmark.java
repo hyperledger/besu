@@ -24,7 +24,6 @@ import org.hyperledger.besu.crypto.SECPSignature;
 
 import java.io.PrintStream;
 import java.math.BigInteger;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -38,10 +37,10 @@ public class Secp256k1Benchmark extends BenchmarkExecutor {
    * The constructor. Use default math based warmup and interations.
    *
    * @param output where to write the stats.
-   * @param asyncProfilerOptions starting options for the AsyncProfiler.
+   * @param benchmarkConfig benchmark configurations.
    */
-  public Secp256k1Benchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
-    super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
+  public Secp256k1Benchmark(final PrintStream output, final BenchmarkConfig benchmarkConfig) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, benchmarkConfig);
   }
 
   @Override
@@ -60,11 +59,11 @@ public class Secp256k1Benchmark extends BenchmarkExecutor {
     final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
     final SECPSignature signature = signatureAlgorithm.sign(dataHash, keyPair);
-    for (int i = 0; i < warmup; i++) {
+    for (int i = 0; i < warmIterations; i++) {
       signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
     }
     final Stopwatch timer = Stopwatch.createStarted();
-    for (int i = 0; i < iterations; i++) {
+    for (int i = 0; i < execIterations; i++) {
       signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
     }
     timer.stop();

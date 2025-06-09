@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evmtool.benchmarks.AltBN128Benchmark;
 import org.hyperledger.besu.evmtool.benchmarks.BLS12Benchmark;
+import org.hyperledger.besu.evmtool.benchmarks.BenchmarkConfig;
 import org.hyperledger.besu.evmtool.benchmarks.BenchmarkExecutor;
 import org.hyperledger.besu.evmtool.benchmarks.ECRecoverBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.ModExpBenchmark;
@@ -78,7 +79,7 @@ public class BenchmarkSubCommand implements Runnable {
       description = "Use the native libraries.",
       scope = INHERIT,
       negatable = true)
-  Boolean nativeCode;
+  Boolean nativeCode = false;
 
   @Option(
       names = {"--use-precompile-cache"},
@@ -91,9 +92,45 @@ public class BenchmarkSubCommand implements Runnable {
       names = {"--async-profiler"},
       description =
           "Benchmark using async profiler. No profiler command means profiling disabled. '%%test-case' in the"
-              + " file name expands to the test for which the profiler ran.",
+              + " file name expands to the test for which the profiler ran,"
+              + "e.g. \"start,jfr,event=cpu,wall,file=/home/lpinto/%%test-case-%p.jfr\".",
       scope = LOCAL)
   Optional<String> asyncProfilerOptions = Optional.empty();
+
+  @Option(
+      names = {"--pattern"},
+      description =
+          "Only tests cases with this pattern will be run, e.g. --pattern \"guido-3*\". Default runs all test cases.",
+      scope = LOCAL)
+  Optional<String> testCasePattern = Optional.empty();
+
+  @Option(
+      names = {"--exec-iterations"},
+      description =
+          "Number of iterations that the benchmark should run (measurement) for, regardless of how long it takes.",
+      scope = LOCAL)
+  Optional<Integer> execIterations = Optional.empty();
+
+  @Option(
+      names = {"--exec-time"},
+      description =
+          "Run the maximum number of iterations during execution (measurement) within the given period. Time is in seconds.",
+      scope = LOCAL)
+  Optional<Integer> execTime = Optional.empty();
+
+  @Option(
+      names = {"--warm-iterations"},
+      description =
+          "Number of iterations that the benchmark should warm up for, regardless of how long it takes.",
+      scope = LOCAL)
+  Optional<Integer> warmIterations = Optional.empty();
+
+  @Option(
+      names = {"--warm-time"},
+      description =
+          "Run the maximum number of iterations during warmup within the given period. Time is in seconds.",
+      scope = LOCAL)
+  Optional<Integer> warmTime = Optional.empty();
 
   @Parameters(description = "One or more of ${COMPLETION-CANDIDATES}.")
   EnumSet<Benchmark> benchmarks = EnumSet.noneOf(Benchmark.class);
@@ -122,9 +159,19 @@ public class BenchmarkSubCommand implements Runnable {
     AbstractPrecompiledContract.setPrecompileCaching(enablePrecompileCache);
     AbstractBLS12PrecompiledContract.setPrecompileCaching(enablePrecompileCache);
     var benchmarksToRun = benchmarks.isEmpty() ? EnumSet.allOf(Benchmark.class) : benchmarks;
+    final BenchmarkConfig benchmarkConfig =
+        new BenchmarkConfig(
+            nativeCode,
+            enablePrecompileCache,
+            asyncProfilerOptions,
+            testCasePattern,
+            execIterations,
+            execTime,
+            warmIterations,
+            warmTime);
     for (var benchmark : benchmarksToRun) {
       output.println("Benchmarks for " + benchmark + " on fork " + parentCommand.getFork());
-      BenchmarkExecutor executor = benchmark.executorBuilder.create(output, asyncProfilerOptions);
+      BenchmarkExecutor executor = benchmark.executorBuilder.create(output, benchmarkConfig);
       if (executor.isPrecompile()) {
         BenchmarkExecutor.logPrecompileDerivedGasNotice(output);
       }

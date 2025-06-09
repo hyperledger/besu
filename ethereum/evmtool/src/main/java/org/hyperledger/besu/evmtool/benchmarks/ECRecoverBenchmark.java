@@ -20,7 +20,6 @@ import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -31,10 +30,10 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
    * The constructor. Use default math based warmup and interations.
    *
    * @param output where to write the stats.
-   * @param asyncProfilerOptions starting options for the AsyncProfiler.
+   * @param benchmarkConfig benchmark configurations.
    */
-  public ECRecoverBenchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
-    super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
+  public ECRecoverBenchmark(final PrintStream output, final BenchmarkConfig benchmarkConfig) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, benchmarkConfig);
   }
 
   @Override
@@ -454,8 +453,8 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
     final ECRECPrecompiledContract contract =
         new ECRECPrecompiledContract(gasCalculatorForFork(fork), signatureAlgorithm);
 
-    warmup = warmup / testCases.size();
-    iterations = iterations / testCases.size();
+    warmIterations = warmIterations / testCases.size();
+    execIterations = execIterations / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
