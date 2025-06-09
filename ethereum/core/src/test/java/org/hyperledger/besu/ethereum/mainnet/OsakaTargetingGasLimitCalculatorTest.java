@@ -127,6 +127,27 @@ class OsakaTargetingGasLimitCalculatorTest {
   }
 
   @Test
+  void maxBlobPerTransactionMustNotExceedMaxBlobsPerBlock() {
+    int maxBlobsPerBlock = 10;
+    int targetBlobsPerBlock = 9;
+    int maxBlobsPerTransaction = 11;
+    Assertions.assertThatThrownBy(
+            () ->
+                new OsakaTargetingGasLimitCalculator(
+                    0L,
+                    feeMarket,
+                    osakaGasCalculator,
+                    maxBlobsPerBlock,
+                    targetBlobsPerBlock,
+                    maxBlobsPerTransaction))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            String.format(
+                "maxBlobsPerTransaction (%d) must not be greater than maxBlobsPerBlock (%d)",
+                maxBlobsPerTransaction, maxBlobsPerBlock));
+  }
+
+  @Test
   void dryRunDetector() {
     Assertions.assertThat(true)
         .withFailMessage("This test is here so gradle --dry-run executes this class")

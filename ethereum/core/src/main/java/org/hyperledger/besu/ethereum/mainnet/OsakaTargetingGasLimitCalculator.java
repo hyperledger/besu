@@ -55,6 +55,13 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final long transactionGasLimitCap,
       final int maxBlobsPerTransaction) {
     super(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock, targetBlobsPerBlock);
+    if (maxBlobsPerTransaction > maxBlobsPerBlock) {
+      String errorMessage =
+          String.format(
+              "maxBlobsPerTransaction (%d) must not be greater than maxBlobsPerBlock (%d)",
+              maxBlobsPerTransaction, maxBlobsPerBlock);
+      throw new IllegalArgumentException(errorMessage);
+    }
     this.transactionGasLimitCap = transactionGasLimitCap;
     this.transactionBlobGasLimitCap = gasCalculator.getBlobGasPerBlob() * maxBlobsPerTransaction;
   }
