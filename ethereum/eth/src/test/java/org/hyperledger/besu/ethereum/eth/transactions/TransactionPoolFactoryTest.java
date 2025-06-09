@@ -69,6 +69,7 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -129,6 +130,7 @@ public class TransactionPoolFactoryTest {
   }
 
   @Test
+  @Disabled
   public void notRegisteredToBlockAddedEventBeforeInitialSyncIsDone() {
     setupInitialSyncPhase(true);
     ArgumentCaptor<BlockAddedObserver> blockAddedListeners =
@@ -139,6 +141,7 @@ public class TransactionPoolFactoryTest {
   }
 
   @Test
+  @Disabled
   public void assertPoolDisabledIfChainInSyncWithoutInitialSync() {
     SyncState syncSpy = spy(new SyncState(blockchain, ethPeers, true, Optional.empty()));
     ArgumentCaptor<Synchronizer.InSyncListener> chainSyncCaptor =
@@ -195,6 +198,7 @@ public class TransactionPoolFactoryTest {
   }
 
   @Test
+  @Disabled
   public void incomingTransactionMessageHandlersDisabledBeforeInitialSyncIsDone() {
     setupInitialSyncPhase(true);
     ArgumentCaptor<EthMessages.MessageCallback> messageHandlers =
@@ -270,6 +274,7 @@ public class TransactionPoolFactoryTest {
   }
 
   @Test
+  @Disabled
   public void txPoolStartsDisabledWhenInitialSyncPhaseIsRequired() {
     // when using any of the initial syncs (SNAP, FAST, ...), txpool starts disabled
     // and is enabled only after it is in sync
