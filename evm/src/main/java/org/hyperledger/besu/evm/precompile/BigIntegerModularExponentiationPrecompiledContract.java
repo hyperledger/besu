@@ -177,7 +177,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
     if (LibArithmetic.ENABLED) {
       final int modulusOffset = clampedToInt(BASE_OFFSET + length_of_BASE + length_of_EXPONENT);
       final int modulusLength = clampedToInt(length_of_MODULUS);
-      if (extractLastByte(input, modulusOffset, modulusLength) == 0) {
+      if ((extractLastByte(input, modulusOffset, modulusLength) & 1) != 1) {
         precompileContractResult = computeNative(input, length_of_MODULUS);
       }
       if (enableResultCaching) {
