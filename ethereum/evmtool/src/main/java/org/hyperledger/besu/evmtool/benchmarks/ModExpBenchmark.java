@@ -264,6 +264,15 @@ public class ModExpBenchmark extends BenchmarkExecutor {
                 + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2cffffffffffffffffffffffffffffffffffffffffffffffffffffffff3b10000000006c01ffffffffffffffffffffffffffffffffffffffffffffffdffffb97ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3bffffffffffffffffffffffffffffffffffffffffffffffffffffffffebafd93b37ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5bb6affffffff3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
                 + "ff2a"));
     testcases.put(
+        "guido-4-even-nethermind",
+        Bytes.fromHexString(
+            "0000000000000000000000000000000000000000000000000000000000000008"
+                + "0000000000000000000000000000000000000000000000000000000000000051"
+                + "0000000000000000000000000000000000000000000000000000000000000008"
+                + "0001020304050607"
+                + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                + "0001020304050607"));
+    testcases.put(
         "marcin-1-base-heavy",
         Bytes.fromHexString(
             "00000000000000000000000000000000000000000000000000000000000000c0"
@@ -281,6 +290,15 @@ public class ModExpBenchmark extends BenchmarkExecutor {
                 + "0001020304050607"
                 + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
                 + "0001020304050607"));
+    testcases.put(
+        "marcin-modexp-215gas-exp-heavy",
+        Bytes.fromHexString(
+            "0000000000000000000000000000000000000000000000000000000000000001"
+                + "0000000000000000000000000000000000000000000000000000000000000181"
+                + "0000000000000000000000000000000000000000000000000000000000000008"
+                + "01"
+                + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2cffffffffffffffffffffffffffffffffffffffffffffffffffffffff3b10000000006c01ffffffffffffffffffffffffffffffffffffffffffffffdffffb97ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3bffffffffffffffffffffffffffffffffffffffffffffffffffffffffebafd93b37ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5bb6affffffff3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                + "ff2a000000000000"));
     testcases.put(
         "marcin-1-balanced",
         Bytes.fromHexString(
