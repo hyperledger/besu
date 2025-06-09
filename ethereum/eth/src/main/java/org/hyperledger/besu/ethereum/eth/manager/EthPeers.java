@@ -589,7 +589,7 @@ public class EthPeers implements PeerSelector {
             });
   }
 
-  static String getStackTraceAsString(Throwable throwable) {
+  static String getStackTraceAsString(final Throwable throwable) {
     StringWriter sw = new StringWriter();
     throwable.printStackTrace(new PrintWriter(sw));
     return sw.toString();
