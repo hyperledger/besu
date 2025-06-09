@@ -184,7 +184,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
         precompileContractResult = computeNative(input, length_of_MODULUS);
         if (enableResultCaching) {
           modexpCache.put(
-            cacheKey, new PrecompileInputResultTuple(input.copy(), precompileContractResult));
+              cacheKey, new PrecompileInputResultTuple(input.copy(), precompileContractResult));
         }
         return precompileContractResult;
       }
