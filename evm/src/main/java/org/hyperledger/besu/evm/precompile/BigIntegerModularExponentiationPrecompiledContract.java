@@ -175,9 +175,12 @@ public class BigIntegerModularExponentiationPrecompiledContract
 
     // OPTIMIZATION: overwrite native setting for this case
     if (LibArithmetic.ENABLED) {
+      final int baseOffset = clampedToInt(BASE_OFFSET);
+      final int baseLength = clampedToInt(length_of_BASE);
       final int modulusOffset = clampedToInt(BASE_OFFSET + length_of_BASE + length_of_EXPONENT);
       final int modulusLength = clampedToInt(length_of_MODULUS);
-      if ((extractLastByte(input, modulusOffset, modulusLength) & 1) != 1) {
+      if ((extractLastByte(input, baseOffset, baseLength) & 1) != 1
+          && (extractLastByte(input, modulusOffset, modulusLength) & 1) != 1) {
         precompileContractResult = computeNative(input, length_of_MODULUS);
       }
       if (enableResultCaching) {
