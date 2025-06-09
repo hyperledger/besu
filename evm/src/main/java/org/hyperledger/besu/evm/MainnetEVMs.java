@@ -52,6 +52,7 @@ import org.hyperledger.besu.evm.operation.ChainIdOperation;
 import org.hyperledger.besu.evm.operation.CodeCopyOperation;
 import org.hyperledger.besu.evm.operation.CodeSizeOperation;
 import org.hyperledger.besu.evm.operation.CoinbaseOperation;
+import org.hyperledger.besu.evm.operation.CountLeadingZerosOperation;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.CreateOperation;
 import org.hyperledger.besu.evm.operation.DataCopyOperation;
@@ -100,7 +101,6 @@ import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.OrOperation;
 import org.hyperledger.besu.evm.operation.OriginOperation;
 import org.hyperledger.besu.evm.operation.PCOperation;
-import org.hyperledger.besu.evm.operation.PayOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
@@ -1085,8 +1085,8 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerPragueOperations(registry, gasCalculator, chainID);
 
-    // EIP-5920 PAY opcode
-    registry.put(new PayOperation(gasCalculator));
+    // EIP-7939: CLZ opcode
+    registry.put(new CountLeadingZerosOperation(gasCalculator));
   }
 
   private static void registerEOFOperations(
