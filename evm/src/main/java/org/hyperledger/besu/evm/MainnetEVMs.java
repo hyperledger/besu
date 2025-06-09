@@ -101,6 +101,7 @@ import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.OrOperation;
 import org.hyperledger.besu.evm.operation.OriginOperation;
 import org.hyperledger.besu.evm.operation.PCOperation;
+import org.hyperledger.besu.evm.operation.PayOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
@@ -1470,6 +1471,9 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerBogotaOperations(registry, gasCalculator, chainID);
+
+    // EIP-5920 PAY opcode
+    registry.put(new PayOperation(gasCalculator));
   }
 
   /**
