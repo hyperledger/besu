@@ -39,8 +39,8 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import one.profiler.AsyncProfiler;
 import org.apache.tuweni.bytes.Bytes;
@@ -48,8 +48,8 @@ import org.apache.tuweni.bytes.Bytes;
 /** Abstract class to support benchmarking of various client algorithms */
 public abstract class BenchmarkExecutor {
 
-  private static final long MAX_EXEC_TIME = TimeUnit.SECONDS.toNanos(1);
-  private static final long MAX_WARMUP_TIME = TimeUnit.SECONDS.toNanos(3);
+  private static final int MAX_EXEC_TIME_IN_SECONDS = 1;
+  private static final int MAX_WARMUP_TIME_IN_SECONDS = 3;
   private static final long GAS_PER_SECOND_STANDARD = 100_000_000L;
 
   static final int MATH_WARMUP = 100_000;
@@ -58,11 +58,14 @@ public abstract class BenchmarkExecutor {
   /** Where to write the output of the benchmarks. */
   protected final PrintStream output;
 
-  private final String asyncProfilerOptions;
-  private final Optional<AsyncProfiler> asyncProfiler;
+  /** Config for running benchmarks. * */
+  protected final BenchmarkConfig config;
+
   private Runnable precompileTableHeader;
-  int warmup;
-  int iterations;
+  int warmIterations;
+  private final long warmTimeInNano;
+  int execIterations;
+  private final long execTimeInNano;
 
   static final MessageFrame fakeFrame =
       MessageFrame.builder()
@@ -90,27 +93,48 @@ public abstract class BenchmarkExecutor {
    * @param warmup number of executions to run before timing
    * @param iterations number of executions to time.
    * @param output print stream to print the output to.
-   * @param asyncProfilerOptions options to give to the Async Profiler while starting up.
+   * @param benchmarkConfig options to give to the benchmark runner.
    */
   public BenchmarkExecutor(
       final int warmup,
       final int iterations,
       final PrintStream output,
-      final Optional<String> asyncProfilerOptions) {
-    this.warmup = warmup;
-    assert iterations <= 0;
-    this.iterations = iterations;
+      final BenchmarkConfig benchmarkConfig) {
+    this.warmIterations =
+        benchmarkConfig
+            .warmIterations()
+            .orElseGet(() -> benchmarkConfig.warmTime().isEmpty() ? warmup : Integer.MAX_VALUE);
+    this.warmTimeInNano =
+        TimeUnit.SECONDS.toNanos(
+            benchmarkConfig
+                .warmTime()
+                .orElseGet(
+                    () ->
+                        benchmarkConfig.warmIterations().isEmpty()
+                            ? MAX_WARMUP_TIME_IN_SECONDS
+                            : Integer.MAX_VALUE));
+    this.execIterations =
+        benchmarkConfig
+            .execIterations()
+            .orElseGet(() -> benchmarkConfig.execTime().isEmpty() ? iterations : Integer.MAX_VALUE);
+    this.execTimeInNano =
+        TimeUnit.SECONDS.toNanos(
+            benchmarkConfig
+                .execTime()
+                .orElseGet(
+                    () ->
+                        benchmarkConfig.warmIterations().isEmpty()
+                            ? MAX_EXEC_TIME_IN_SECONDS
+                            : Integer.MAX_VALUE));
     this.output = output;
     this.precompileTableHeader =
         () ->
             output.printf(
                 "%-30s | %12s | %12s | %15s | %15s%n",
                 "", "Actual cost", "Derived Cost", "Iteration time", "Throughput");
-    this.asyncProfiler =
-        asyncProfilerOptions.isPresent()
-            ? Optional.of(AsyncProfiler.getInstance())
-            : Optional.empty();
-    this.asyncProfilerOptions = asyncProfilerOptions.orElse(null);
+    this.config = benchmarkConfig;
+    assert warmIterations <= 0;
+    assert execIterations <= 0;
   }
 
   /**
@@ -128,36 +152,41 @@ public abstract class BenchmarkExecutor {
     }
 
     long startNanoTime = System.nanoTime();
-    for (int i = 0; i < warmup && System.nanoTime() - startNanoTime < MAX_WARMUP_TIME; i++) {
+    for (int i = 0; i < warmIterations && System.nanoTime() - startNanoTime < warmTimeInNano; i++) {
       contract.computePrecompile(arg, fakeFrame);
     }
 
-    asyncProfiler.ifPresent(
-        p -> {
-          try {
-            p.execute(processProfilerArgs(asyncProfilerOptions, testName.replaceAll("\\s", "-")));
-          } catch (Throwable e) {
-            output.println("async profiler unavailable");
-          }
-        });
+    final AtomicReference<AsyncProfiler> asyncProfiler = new AtomicReference<>();
+    config
+        .asyncProfilerOptions()
+        .ifPresent(
+            options -> {
+              asyncProfiler.set(AsyncProfiler.getInstance());
+              try {
+                asyncProfiler
+                    .get()
+                    .execute(processProfilerArgs(options, testName.replaceAll("\\s", "-")));
+              } catch (Throwable e) {
+                output.println("async profiler unavailable");
+              }
+            });
 
     int executions = 0;
+    long elapsed = 0;
     startNanoTime = System.nanoTime();
-    long elapsed = startNanoTime;
-    while (executions < iterations && elapsed - startNanoTime < MAX_EXEC_TIME) {
+    while (executions < execIterations && elapsed < execTimeInNano) {
       contract.computePrecompile(arg, fakeFrame);
       executions++;
       elapsed = System.nanoTime() - startNanoTime;
     }
 
-    asyncProfiler.ifPresent(
-        p -> {
-          try {
-            p.stop();
-          } catch (Throwable e) {
-            output.println("async profiler unavailable");
-          }
-        });
+    if (asyncProfiler.get() != null) {
+      try {
+        asyncProfiler.get().stop();
+      } catch (Throwable e) {
+        output.println("async profiler unavailable");
+      }
+    }
 
     return elapsed / 1.0e9D / executions;
   }
@@ -280,7 +309,7 @@ public abstract class BenchmarkExecutor {
      * @param asyncProfilerOptions starting options for the AsyncProfiler.
      * @return the newly created executor.
      */
-    BenchmarkExecutor create(PrintStream output, Optional<String> asyncProfilerOptions);
+    BenchmarkExecutor create(PrintStream output, BenchmarkConfig asyncProfilerOptions);
   }
 
   private static String processProfilerArgs(

@@ -27,7 +27,6 @@ import org.hyperledger.besu.evm.precompile.BLS12PairingPrecompiledContract;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -38,10 +37,10 @@ public class BLS12Benchmark extends BenchmarkExecutor {
    * The constructor. Use default math based warmup and interations.
    *
    * @param output where to write the stats.
-   * @param asyncProfilerOptions starting options for the AsyncProfiler.
+   * @param benchmarkConfig benchmark configurations.
    */
-  public BLS12Benchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
-    super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
+  public BLS12Benchmark(final PrintStream output, final BenchmarkConfig benchmarkConfig) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, benchmarkConfig);
   }
 
   static final String[] scalars = {
@@ -184,8 +183,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     }
 
     BLS12G1AddPrecompiledContract g1addContract = new BLS12G1AddPrecompiledContract();
-    warmup = MATH_WARMUP / testCases.size();
-    iterations = MATH_ITERATIONS / testCases.size();
+    warmIterations = MATH_WARMUP / testCases.size();
+    execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
@@ -212,8 +211,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     }
 
     BLS12G1MultiExpPrecompiledContract g1msmContract = new BLS12G1MultiExpPrecompiledContract();
-    warmup = MATH_WARMUP / testCases.size();
-    iterations = MATH_ITERATIONS / testCases.size();
+    warmIterations = MATH_WARMUP / testCases.size();
+    execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
@@ -232,8 +231,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     }
 
     BLS12MapFpToG1PrecompiledContract g1MapFpToG1Contract = new BLS12MapFpToG1PrecompiledContract();
-    warmup = MATH_WARMUP / testCases.size();
-    iterations = MATH_ITERATIONS / testCases.size();
+    warmIterations = MATH_WARMUP / testCases.size();
+    execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
@@ -255,8 +254,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     }
 
     BLS12G2AddPrecompiledContract g1addContract = new BLS12G2AddPrecompiledContract();
-    warmup = MATH_WARMUP / testCases.size();
-    iterations = MATH_ITERATIONS / testCases.size();
+    warmIterations = MATH_WARMUP / testCases.size();
+    execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
@@ -283,8 +282,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     }
 
     BLS12G2MultiExpPrecompiledContract g2msmContract = new BLS12G2MultiExpPrecompiledContract();
-    warmup = MATH_WARMUP / testCases.size();
-    iterations = MATH_ITERATIONS / testCases.size();
+    warmIterations = MATH_WARMUP / testCases.size();
+    execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
@@ -304,8 +303,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
 
     BLS12MapFp2ToG2PrecompiledContract g1MapFp2ToG2Contract =
         new BLS12MapFp2ToG2PrecompiledContract();
-    warmup = MATH_WARMUP / testCases.size();
-    iterations = MATH_ITERATIONS / testCases.size();
+    warmIterations = MATH_WARMUP / testCases.size();
+    execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
@@ -333,8 +332,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
     }
 
     BLS12PairingPrecompiledContract blsPairingContract = new BLS12PairingPrecompiledContract();
-    warmup = MATH_WARMUP / testCases.size();
-    iterations = MATH_ITERATIONS / testCases.size();
+    warmIterations = MATH_WARMUP / testCases.size();
+    execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {

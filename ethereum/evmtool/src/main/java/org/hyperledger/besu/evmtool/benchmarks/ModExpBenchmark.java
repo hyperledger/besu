@@ -19,7 +19,7 @@ import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecom
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -30,10 +30,10 @@ public class ModExpBenchmark extends BenchmarkExecutor {
    * The constructor. Use default math based warmup and interations.
    *
    * @param output where to write the stats.
-   * @param asyncProfilerOptions starting options for the AsyncProfiler.
+   * @param benchmarkConfig benchmark configurations.
    */
-  public ModExpBenchmark(final PrintStream output, final Optional<String> asyncProfilerOptions) {
-    super(MATH_WARMUP, MATH_ITERATIONS, output, asyncProfilerOptions);
+  public ModExpBenchmark(final PrintStream output, final BenchmarkConfig benchmarkConfig) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, benchmarkConfig);
   }
 
   @Override
@@ -414,6 +414,11 @@ public class ModExpBenchmark extends BenchmarkExecutor {
             : "Java modExp");
 
     for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
+      if (config.testCasePattern().isPresent()
+          && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
+        continue;
+      }
+
       final double execTime =
           runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
 
