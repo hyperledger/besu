@@ -141,6 +141,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
+    disableNative();
     if (useNative) {
       return computeNative(input, length_of_MODULUS);
     } else {
