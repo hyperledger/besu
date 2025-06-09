@@ -42,7 +42,8 @@ public class StackedUpdater<W extends WorldView, A extends Account>
   }
 
   @Override
-  protected UpdateTrackingAccount<A> getForMutation(final Address address) {
+  protected UpdateTrackingAccount<A> getForMutation(
+      final Address address, final boolean isEvmRead) {
     final AbstractWorldUpdater<W, A> wrapped = wrappedWorldView();
     final UpdateTrackingAccount<A> wrappedTracker = wrapped.updatedAccounts.get(address);
     if (wrappedTracker != null) {
@@ -55,7 +56,7 @@ public class StackedUpdater<W extends WorldView, A extends Account>
     // don't add him yet to his tracking map) because we need it to satisfy the type system.
     // We will recognize this case in commit below and use that tracker "pay back" our
     // allocation, so this isn't lost.
-    final A account = wrappedWorldView().getForMutation(address);
+    final A account = wrappedWorldView().getForMutation(address, isEvmRead);
     return account == null ? null : new UpdateTrackingAccount<>(account);
   }
 

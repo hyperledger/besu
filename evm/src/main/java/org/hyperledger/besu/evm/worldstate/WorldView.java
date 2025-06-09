@@ -20,7 +20,7 @@ import org.hyperledger.besu.evm.account.Account;
 /** Generic interface for a view over the accounts of the world state. */
 public interface WorldView {
   /** The constant EMPTY. */
-  WorldView EMPTY = address -> null;
+  WorldView EMPTY = (address, isEvmRead) -> null;
 
   /**
    * Get an account provided its address.
@@ -29,5 +29,9 @@ public interface WorldView {
    * @return the {@link Account} corresponding to {@code address} or {@code null} if there is no
    *     such account.
    */
-  Account get(Address address);
+  default Account get(final Address address) {
+    return get(address, false);
+  }
+
+  Account get(final Address address, final boolean isEvmRead);
 }

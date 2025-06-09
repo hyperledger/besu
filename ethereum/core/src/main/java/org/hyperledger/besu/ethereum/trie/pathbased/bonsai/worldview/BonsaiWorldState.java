@@ -386,7 +386,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
   }
 
   @Override
-  public Account get(final Address address) {
+  public Account get(final Address address, final boolean isEvmRead) {
     return getWorldStateStorage()
         .getAccount(address.addressHash())
         .map(bytes -> BonsaiAccount.fromRLP(accumulator, address, bytes, true, codeCache))

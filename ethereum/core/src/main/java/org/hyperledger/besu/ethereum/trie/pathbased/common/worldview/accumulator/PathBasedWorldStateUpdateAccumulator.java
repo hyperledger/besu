@@ -300,12 +300,14 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
   }
 
   @Override
-  protected ACCOUNT getForMutation(final Address address) {
-    return loadAccount(address, PathBasedValue::getUpdated);
+  protected ACCOUNT getForMutation(final Address address, final boolean isEvmRead) {
+    return loadAccount(address, PathBasedValue::getUpdated, isEvmRead);
   }
 
   protected ACCOUNT loadAccount(
-      final Address address, final Function<PathBasedValue<ACCOUNT>, ACCOUNT> accountFunction) {
+      final Address address,
+      final Function<PathBasedValue<ACCOUNT>, ACCOUNT> accountFunction,
+      final boolean isEvmRead) {
     try {
       final PathBasedValue<ACCOUNT> pathBasedValue = accountsToUpdate.get(address);
       if (pathBasedValue == null) {
@@ -313,18 +315,20 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
         if (wrappedWorldView() instanceof PathBasedWorldStateUpdateAccumulator) {
           final PathBasedWorldStateUpdateAccumulator<ACCOUNT> worldStateUpdateAccumulator =
               (PathBasedWorldStateUpdateAccumulator<ACCOUNT>) wrappedWorldView();
-          account = worldStateUpdateAccumulator.loadAccount(address, accountFunction);
+          account = worldStateUpdateAccumulator.loadAccount(address, accountFunction, isEvmRead);
         } else {
-          account = wrappedWorldView().get(address);
+          account = wrappedWorldView().get(address, isEvmRead);
         }
         if (account instanceof PathBasedAccount pathBasedAccount) {
           ACCOUNT mutableAccount = copyAccount((ACCOUNT) pathBasedAccount, this, true);
           accountsToUpdate.put(
-              address, new PathBasedValue<>((ACCOUNT) pathBasedAccount, mutableAccount));
+              address,
+              new PathBasedValue<>(
+                  (ACCOUNT) pathBasedAccount, mutableAccount, false, false, isEvmRead));
           return mutableAccount;
         } else {
           // add the empty read in accountsToUpdate
-          accountsToUpdate.put(address, new PathBasedValue<>(null, null));
+          accountsToUpdate.put(address, new PathBasedValue<>(null, null, false, false, isEvmRead));
           return null;
         }
       } else {

@@ -54,7 +54,7 @@ public class SimpleWorld implements WorldUpdater {
   }
 
   @Override
-  public Account get(final Address address) {
+  public Account get(final Address address, final boolean isEvmRead) {
     Optional<SimpleAccount> account = Optional.empty();
     if (accounts.containsKey(address)) {
       account = accounts.get(address);

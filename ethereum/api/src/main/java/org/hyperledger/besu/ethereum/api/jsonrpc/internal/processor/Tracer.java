@@ -88,8 +88,8 @@ public class Tracer {
     }
 
     @Override
-    public Account get(final Address address) {
-      return mutableWorldState.get(address);
+    public Account get(final Address address, final boolean isEvmRead) {
+      return mutableWorldState.get(address, isEvmRead);
     }
 
     @Override

@@ -74,12 +74,12 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
    * @param address the account at the address, for mutaton.
    * @return the mutable account
    */
-  protected MutableAccount getForMutation(final Address address) {
+  protected MutableAccount getForMutation(final Address address, final boolean isEvmRead) {
     final JournaledAccount wrappedTracker = accounts.get(address);
     if (wrappedTracker != null) {
       return wrappedTracker;
     }
-    final MutableAccount account = rootWorld.getForMutation(address);
+    final MutableAccount account = rootWorld.getForMutation(address, isEvmRead);
     return account == null ? null : new UpdateTrackingAccount<>(account);
   }
 
@@ -166,7 +166,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   }
 
   @Override
-  public Account get(final Address address) {
+  public Account get(final Address address, final boolean isEvmRead) {
     final MutableAccount existing = accounts.get(address);
     if (existing != null) {
       return existing;
