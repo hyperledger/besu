@@ -117,9 +117,7 @@ public class MainnetBlobsValidatorTest {
             gasCalculator);
     var result = validator.validateTransactionsBlobs(transaction);
     assertInvalidResult(
-        result,
-        TransactionInvalidReason.INVALID_BLOBS,
-        "Blob gas cost (100) exceeds the allowed maximum per transaction (50)");
+        result, TransactionInvalidReason.INVALID_BLOBS, "Blob transaction has too many blobs: 1");
   }
 
   private void assertInvalidResult(

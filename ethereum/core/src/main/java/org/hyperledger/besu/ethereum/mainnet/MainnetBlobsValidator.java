@@ -74,9 +74,7 @@ public class MainnetBlobsValidator {
     final long blobGasCost = gasCalculator.blobGasCost(versionedHashes.size());
     if (blobGasCost > gasLimitCalculator.transactionBlobGasLimitCap()) {
       final String error =
-          String.format(
-              "Blob gas cost (%d) exceeds the allowed maximum per transaction (%d)",
-              blobGasCost, gasLimitCalculator.transactionBlobGasLimitCap());
+          String.format("Blob transaction has too many blobs: %d", versionedHashes.size());
       return ValidationResult.invalid(TransactionInvalidReason.INVALID_BLOBS, error);
     }
 

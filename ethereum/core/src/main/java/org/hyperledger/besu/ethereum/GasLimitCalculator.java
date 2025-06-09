@@ -78,7 +78,7 @@ public interface GasLimitCalculator {
   }
 
   /**
-   * Returns the transaction blob gas limit cap .
+   * Returns the transaction blob gas limit cap.
    *
    * <p>Before Osaka, there was no limit, the max number of blobs a transaction could have was
    * limited by the blob gas limit.
