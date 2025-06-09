@@ -182,12 +182,12 @@ public class BigIntegerModularExponentiationPrecompiledContract
       if ((extractLastByte(input, baseOffset, baseLength) & 1) != 1
           && (extractLastByte(input, modulusOffset, modulusLength) & 1) != 1) {
         precompileContractResult = computeNative(input, length_of_MODULUS);
-      }
-      if (enableResultCaching) {
-        modexpCache.put(
+        if (enableResultCaching) {
+          modexpCache.put(
             cacheKey, new PrecompileInputResultTuple(input.copy(), precompileContractResult));
+        }
+        return precompileContractResult;
       }
-      return precompileContractResult;
     }
 
     if (useNative) {
