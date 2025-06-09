@@ -15,8 +15,6 @@
 package org.hyperledger.besu.ethereum.util;
 
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -95,10 +93,7 @@ public final class RawBlockIterator implements Iterator<Block>, Closeable {
 
       final Bytes rlpBytes = Bytes.wrap(Bytes.wrapByteBuffer(readBuffer, 0, length).toArray());
       final RLPInput rlp = new BytesValueRLPInput(rlpBytes, false);
-      rlp.enterList();
-      final BlockHeader header = BlockHeader.readFrom(rlp, blockHeaderFunctions);
-      final BlockBody body = BlockBody.readFrom(rlp, blockHeaderFunctions);
-      next = new Block(header, body);
+      next = Block.readFrom(rlp, blockHeaderFunctions);
       readBuffer.position(length);
       readBuffer.compact();
       readBuffer.position(initial - length);
