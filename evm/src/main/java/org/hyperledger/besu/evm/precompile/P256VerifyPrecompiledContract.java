@@ -89,8 +89,8 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
       final SECPPublicKey publicKey =
           SECPPublicKey.create(pubKeyBytes, SignatureAlgorithm.ALGORITHM);
 
-      // Perform verification TODO: use the malleable signature version once available
-      final boolean isValid = algorithm.verify(messageHash, signature, publicKey);
+      // Perform verification TODO: implement bouncycastle malleable
+      final boolean isValid = algorithm.verifyMalleable(messageHash, signature, publicKey);
 
       return PrecompileContractResult.success(isValid ? VALID : INVALID);
     } catch (Exception e) {
