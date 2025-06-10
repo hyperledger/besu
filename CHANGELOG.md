@@ -2,6 +2,7 @@
 ## Unreleased
 ### Breaking Changes
 - Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins [#8589](https://github.com/hyperledger/besu/pull/8589) [#8746](https://github.com/hyperledger/besu/pull/8746)
+- `BesuContext` is removed, since deprecated in favor of `ServiceManager` since `24.12.0`
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
