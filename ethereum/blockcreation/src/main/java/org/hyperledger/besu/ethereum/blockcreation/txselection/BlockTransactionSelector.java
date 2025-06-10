@@ -152,6 +152,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     blockWorldStateUpdater = worldState.updater();
     txWorldStateUpdater = blockWorldStateUpdater.updater();
     blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
+    // TODO: We can create a BAL builder here
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -327,6 +328,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     final TransactionProcessingResult processingResult =
         processTransaction(evaluationContext.getTransaction());
 
+    // This is fine because we are using StackedUpdater, must not use Bonsai accumulator!
     txWorldStateUpdater.markTransactionBoundary();
 
     var postProcessingSelectionResult = evaluatePostProcessing(evaluationContext, processingResult);
@@ -489,6 +491,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
               .addArgument(transaction::toTraceLog)
               .log();
         });
+
+    // TODO: Use txWorldStateUpdater to update a BAL data structure as a pending action
 
     if (isTimeout.get()) {
       // even if this tx passed all the checks, it is too late to include it in this block,
