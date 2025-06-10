@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineJsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -36,7 +37,11 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonRpcRequest {
 
-  private final JsonRpcParameter parameterAccessor = new JsonRpcParameter();
+  private final JsonRpcParameter parameterAccessor;
+
+  protected JsonRpcParameter getParameterAccessor() {
+    return parameterAccessor;
+  }
 
   private JsonRpcRequestId id;
   private final String method;
@@ -55,6 +60,12 @@ public class JsonRpcRequest {
     if (method == null) {
       throw new InvalidJsonRpcRequestException(
           "Field 'method' is required", RpcErrorType.INVALID_METHOD_PARAMS);
+    }
+    // Use EngineJsonRpcParameter for engine methods that may have large payloads
+    if (method != null && method.startsWith("engine_")) {
+      this.parameterAccessor = new EngineJsonRpcParameter();
+    } else {
+      this.parameterAccessor = new JsonRpcParameter();
     }
   }
 
@@ -135,17 +146,17 @@ public class JsonRpcRequest {
 
   public <T> T getRequiredParameter(final int index, final Class<T> paramClass)
       throws JsonRpcParameterException {
-    return parameterAccessor.required(params, index, paramClass);
+    return getParameterAccessor().required(params, index, paramClass);
   }
 
   public <T> Optional<T> getOptionalParameter(final int index, final Class<T> paramClass)
       throws JsonRpcParameterException {
-    return parameterAccessor.optional(params, index, paramClass);
+    return getParameterAccessor().optional(params, index, paramClass);
   }
 
   public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> paramClass)
       throws JsonRpcParameterException {
-    return parameterAccessor.optionalList(params, index, paramClass);
+    return getParameterAccessor().optionalList(params, index, paramClass);
   }
 
   @Override
