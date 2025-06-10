@@ -18,6 +18,14 @@ import java.util.List;
 
 /** A class to hold the blobs, commitments, proofs and versioned hashes for a set of blobs. */
 public interface BlobsWithCommitments {
+
+  /**
+   * Get the blob type.
+   *
+   * @return the blob type
+   */
+  BlobType getBlobType();
+
   /**
    * Get the blobs.
    *

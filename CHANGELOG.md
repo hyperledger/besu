@@ -1,6 +1,19 @@
 # Changelog
 ## Unreleased
 ### Breaking Changes
+- Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins [#8589](https://github.com/hyperledger/besu/pull/8589) [#8746](https://github.com/hyperledger/besu/pull/8746)
+
+### Upcoming Breaking Changes
+### Additions and Improvements
+#### Fusaka Devnet
+- EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
+- EIP-7823 - Modexp upper bounds [#8632](https://github.com/hyperledger/besu/pull/8632)
+- implement rewardPercentile cap in eth_feeHistory [#8748](https://github.com/hyperledger/besu/pull/8748)
+
+### Bug fixes
+
+## 25.6.0
+### Breaking Changes
 - Sunset features - for more context on the reasoning behind the removal of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Remove onchain permissioning [#8597](https://github.com/hyperledger/besu/pull/8597)
   - Remove Tessera Privacy feature [#8369](https://github.com/hyperledger/besu/pull/8369)
@@ -29,6 +42,11 @@
 - Gas estimation `eth_estimateGas`:
   - Estimate gas on pending block by default [#8627](https://github.com/hyperledger/besu/pull/8627)
   - Estimate gas is now strict by default [#8629](https://github.com/hyperledger/besu/pull/8629)
+- Update ref test to 4.5.0 [#8643](https://github.com/hyperledger/besu/pull/8643)
+- EVM skip unnecssary state access for CALL/LOG [#8639](https://github.com/hyperledger/besu/pull/8639)
+- EIP-5920 - PAY opcode [#8498](https://github.com/hyperledger/besu/pull/8498)
+- EIP-7892 - Blob Parameter Only (BPO) forks [#8671](https://github.com/hyperledger/besu/pull/8671)
+- EIP-7883 - MODEXP gas cost increase [#8707](https://github.com/hyperledger/besu/pull/8707)
 
 #### Dependencies
 - Update discovery library to 25.4.0 [#8635](https://github.com/hyperledger/besu/pull/8635)
