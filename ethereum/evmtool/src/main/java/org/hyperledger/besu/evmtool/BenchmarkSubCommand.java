@@ -65,7 +65,6 @@ public class BenchmarkSubCommand implements Runnable {
     Bls12(new BLS12Benchmark()),
     p256Verify(new P256VerifyBenchmark());
 
-
     final BenchmarkExecutor benchmarkExecutor;
 
     Benchmark(final BenchmarkExecutor benchmarkExecutor) {
