@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
+import static org.hyperledger.besu.datatypes.Address.P256_VERIFY;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
@@ -37,7 +38,7 @@ public class OsakaGasCalculator extends PragueGasCalculator {
 
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
+    this(P256_VERIFY.getInt(16));
   }
 
   /**
@@ -47,6 +48,25 @@ public class OsakaGasCalculator extends PragueGasCalculator {
    */
   protected OsakaGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
+  }
+
+  @Override
+  public boolean isPrecompile(final Address address) {
+    final byte[] addressBytes = address.toArrayUnsafe();
+
+    // First 18 bytes must be zero:
+    for (int i = 0; i < 18; i++) {
+      if (addressBytes[i] != 0) {
+        return false;
+      }
+    }
+
+    // Interpret last two bytes as big-endian unsigned short.
+    final int precompileValue =
+        (Byte.toUnsignedInt(addressBytes[18]) << 8) | Byte.toUnsignedInt(addressBytes[19]);
+
+    // values in range [1, 0x01FF] inclusive to include L1 and L2 precompiles:
+    return precompileValue > 0 && precompileValue <= 0x01FF;
   }
 
   @Override
