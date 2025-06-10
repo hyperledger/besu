@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256R1;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.code.CodeV0;
@@ -83,15 +82,22 @@ public class Benchmarks {
 
   private static void benchSecp256r1Verify() {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
-    testCases.put("wycheproof/ecdsa_secp256r1_sha256_p1363_test.json EcdsaP1363Verify SHA-256 #1: signature malleability",
-        Bytes.fromHexString("bb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca6050232ba3a8be6b94d5ec80a6d9d1190a436effe50d85a1eee859b8cc6af9bd5c2e184cd60b855d442f5b3c7b11eb6c4e0ae7525fe710fab9aa7c77a67f79e6fadd762927b10512bae3eddcfe467828128bad2903269919f7086069c8c4df6c732838c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e"));
+    testCases.put(
+        "wycheproof/ecdsa_secp256r1_sha256_p1363_test.json EcdsaP1363Verify SHA-256 #1: signature malleability",
+        Bytes.fromHexString(
+            "bb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca6050232ba3a8be6b94d5ec80a6d9d1190a436effe50d85a1eee859b8cc6af9bd5c2e184cd60b855d442f5b3c7b11eb6c4e0ae7525fe710fab9aa7c77a67f79e6fadd762927b10512bae3eddcfe467828128bad2903269919f7086069c8c4df6c732838c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e"));
     testCases.put(
         "wycheproof/ecdsa_secp256r1_sha256_p1363_test.json EcdsaP1363Verify SHA-256 #3: Modified r or s, e.g. by adding or subtracting the order of the group",
         Bytes.fromHexString(
             "0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca605023d45c5740946b2a147f59262ee6f5bc90bd01ed280528b62b3aed5fc93f06f739b329f479a2bbd0a5c384ee1493b1f5186a87139cac5df4087c134b49156847db2927b10512bae3eddcfe467828128bad2903269919f7086069c8c4df6c732838c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e"));
-    testCases.put("wycheproof/ecdsa_secp256r1_sha256_p1363_test.json EcdsaP1363Verify SHA-256 #5: Modified r or s, e.g. by adding or subtracting the order of the group",
-        Bytes.fromHexString("0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca605023d45c5741946b2a137f59262ee6f5bc91001af27a5e1117a64733950642a3d1e8b329f479a2bbd0a5c384ee1493b1f5186a87139cac5df4087c134b49156847db2927b10512bae3eddcfe467828128bad2903269919f7086069c8c4df6c732838c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e"));
-    testCases.put("canonical case", Bytes.fromHexString("0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca605023555555550000000055555555555555553ef7a8e48d07df81a693439654210c7044a5ad0ad0636d9f12bc9e0a6bdd5e1cbcb012ea7bf091fcec15b0c43202d52ed8adc00023a8edc02576e2b63e3e30621a471e2b2320620187bf067a1ac1ff3233e2b50ec09807accb36131fff95ed12a09a86b4ea9690aa32861576ba2362e1"));
+    testCases.put(
+        "wycheproof/ecdsa_secp256r1_sha256_p1363_test.json EcdsaP1363Verify SHA-256 #5: Modified r or s, e.g. by adding or subtracting the order of the group",
+        Bytes.fromHexString(
+            "0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca605023d45c5741946b2a137f59262ee6f5bc91001af27a5e1117a64733950642a3d1e8b329f479a2bbd0a5c384ee1493b1f5186a87139cac5df4087c134b49156847db2927b10512bae3eddcfe467828128bad2903269919f7086069c8c4df6c732838c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e"));
+    testCases.put(
+        "canonical case",
+        Bytes.fromHexString(
+            "0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca605023555555550000000055555555555555553ef7a8e48d07df81a693439654210c7044a5ad0ad0636d9f12bc9e0a6bdd5e1cbcb012ea7bf091fcec15b0c43202d52ed8adc00023a8edc02576e2b63e3e30621a471e2b2320620187bf067a1ac1ff3233e2b50ec09807accb36131fff95ed12a09a86b4ea9690aa32861576ba2362e1"));
     final P256VerifyPrecompiledContract contract =
         new P256VerifyPrecompiledContract(new IstanbulGasCalculator());
 
