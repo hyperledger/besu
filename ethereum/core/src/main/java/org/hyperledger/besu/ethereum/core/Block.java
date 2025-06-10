@@ -78,7 +78,7 @@ public class Block {
   }
 
   public static Block readFrom(final RLPInput in, final BlockHeaderFunctions hashFunction) {
-    int size = in.nextSize();
+    int size = in.currentSize();
     in.enterList();
     final BlockHeader header = BlockHeader.readFrom(in, hashFunction);
     final List<Transaction> transactions = in.readList(Transaction::readFrom);
