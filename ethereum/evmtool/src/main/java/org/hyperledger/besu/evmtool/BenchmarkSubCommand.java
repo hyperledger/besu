@@ -91,9 +91,9 @@ public class BenchmarkSubCommand implements Runnable {
   @Option(
       names = {"--async-profiler"},
       description =
-          "Benchmark using async profiler. No profiler command means profiling disabled. '%%test-case' in the"
+          "Benchmark using async profiler. No profiler command means profiling disabled. '%%%%test-case' in the"
               + " file name expands to the test for which the profiler ran,"
-              + "e.g. \"start,jfr,event=cpu,wall,file=/home/lpinto/%%test-case-%p.jfr\".",
+              + "e.g. \"start,jfr,event=cpu,wall,file=/home/lpinto/%%%%test-case-%%p.jfr\".",
       scope = LOCAL)
   Optional<String> asyncProfilerOptions = Optional.empty();
 
