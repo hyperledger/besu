@@ -35,8 +35,8 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class OsakaGasCalculator extends PragueGasCalculator {
   public static final int MAX_BLOCK_SIZE = 10_485_760;
-  public static final int MARGIN = 524_288;
-  public static final int MAX_RLP_BLOCK_SIZE = MAX_BLOCK_SIZE - MARGIN;
+  public static final int SAFETY_MARGIN = 2_097_152;
+  public static final int MAX_RLP_BLOCK_SIZE = MAX_BLOCK_SIZE - SAFETY_MARGIN;
 
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
