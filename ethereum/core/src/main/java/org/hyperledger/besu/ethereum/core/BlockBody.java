@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.core.BlockAccessList;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountAccess;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,10 +40,13 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
 
+  private final Optional<BlockAccessList> blockAccessList;
+
   public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = Optional.empty();
+    this.blockAccessList = Optional.empty();
   }
 
   public BlockBody(
@@ -51,6 +56,18 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = withdrawals;
+    this.blockAccessList = Optional.empty();
+  }
+
+  public BlockBody(
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<BlockAccessList> blockAccessList) {
+    this.transactions = transactions;
+    this.ommers = ommers;
+    this.withdrawals = withdrawals;
+    this.blockAccessList = blockAccessList;
   }
 
   public static BlockBody empty() {
@@ -83,6 +100,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     return withdrawals;
   }
 
+  public Optional<BlockAccessList> getBlockAccessList() {
+    return blockAccessList;
+  }
+
   /**
    * Writes Block to {@link RLPOutput}.
    *
@@ -97,7 +118,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   public void writeTo(final RLPOutput output) {
     output.writeList(getTransactions(), Transaction::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
+    // Must write empty list markers for each empty list
     withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
+    blockAccessList.ifPresent(bal -> output.writeList(bal.getAccountAccesses(), AccountAccess::writeTo));
+    // TODO: Write balance, code, nonce diffs
   }
 
   public static BlockBody readWrappedBodyFrom(
@@ -146,7 +170,13 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
         input.isEndOfCurrentList()
             ? Optional.empty()
-            : Optional.of(input.readList(Withdrawal::readFrom)));
+            : Optional.of(input.readList(Withdrawal::readFrom)),
+        input.isEndOfCurrentList()
+            ? Optional.empty()
+            : Optional.of(new BlockAccessList(input.readList((valueReader) -> {
+              return AccountAccess.readFrom(valueReader);
+            })))
+        );
   }
 
   @Override

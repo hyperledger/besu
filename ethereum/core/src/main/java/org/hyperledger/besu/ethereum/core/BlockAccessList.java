@@ -17,6 +17,10 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.ethereum.core.encoding.AccountAccessDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.AccountAccessEncoder;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -38,7 +42,7 @@ public class BlockAccessList {
 
   private final List<AccountAccess> accountAccesses;
 
-  private BlockAccessList(final List<AccountAccess> accountAccesses) {
+  public BlockAccessList(final List<AccountAccess> accountAccesses) {
     this.accountAccesses = accountAccesses;
   }
 
@@ -50,12 +54,12 @@ public class BlockAccessList {
     private final Optional<Integer> txIndex;
     private final Optional<Bytes> valueAfter;
 
-    private PerTxAccess(final Integer txIndex, final Bytes valueAfter) {
+    public PerTxAccess(final Integer txIndex, final Bytes valueAfter) {
       this.txIndex = Optional.of(txIndex);
       this.valueAfter = Optional.of(valueAfter);
     }
 
-    private PerTxAccess() {
+    public PerTxAccess() {
       this.txIndex = Optional.empty();
       this.valueAfter = Optional.empty();
     }
@@ -64,7 +68,7 @@ public class BlockAccessList {
       return txIndex;
     }
 
-    public Optional<Bytes> valueAfter() {
+    public Optional<Bytes> getValueAfter() {
       return valueAfter;
     }
   }
@@ -73,7 +77,7 @@ public class BlockAccessList {
     private final StorageSlotKey slot;
     private final List<PerTxAccess> accesses;
 
-    private SlotAccess(final StorageSlotKey slot, final List<PerTxAccess> accesses) {
+    public SlotAccess(final StorageSlotKey slot, final List<PerTxAccess> accesses) {
       this.slot = slot;
       this.accesses = accesses;
     }
@@ -82,7 +86,7 @@ public class BlockAccessList {
       return slot;
     }
 
-    public List<PerTxAccess> getAccesses() {
+    public List<PerTxAccess> getPerTxAccesses() {
       return accesses;
     }
   }
@@ -91,7 +95,7 @@ public class BlockAccessList {
     private final Address address;
     private final List<SlotAccess> accesses;
 
-    private AccountAccess(final Address address, final List<SlotAccess> accesses) {
+    public AccountAccess(final Address address, final List<SlotAccess> accesses) {
       this.address = address;
       this.accesses = accesses;
     }
@@ -100,8 +104,16 @@ public class BlockAccessList {
       return address;
     }
 
-    public List<SlotAccess> getAccesses() {
+    public List<SlotAccess> getSlotAccesses() {
       return accesses;
+    }
+
+    public void writeTo(final RLPOutput out) {
+      AccountAccessEncoder.encode(this, out);
+    }
+
+    public static AccountAccess readFrom(final RLPInput rlpInput) {
+      return AccountAccessDecoder.decode(rlpInput);
     }
   }
 
