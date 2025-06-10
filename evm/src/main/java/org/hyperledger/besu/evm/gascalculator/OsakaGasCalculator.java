@@ -34,6 +34,9 @@ import org.apache.tuweni.bytes.Bytes;
  * </UL>
  */
 public class OsakaGasCalculator extends PragueGasCalculator {
+  public static final int MAX_BLOCK_SIZE = 10_485_760;
+  public static final int MARGIN = 524_288;
+  public static final int MAX_RLP_BLOCK_SIZE = MAX_BLOCK_SIZE - MARGIN;
 
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
@@ -107,5 +110,10 @@ public class OsakaGasCalculator extends PragueGasCalculator {
     } else {
       return clampedAdd(clampedMultiply(16, (exponentLength - WORD_SIZE)), bitLength);
     }
+  }
+
+  @Override
+  public int maxRlpBlockSize() {
+    return MAX_RLP_BLOCK_SIZE;
   }
 }

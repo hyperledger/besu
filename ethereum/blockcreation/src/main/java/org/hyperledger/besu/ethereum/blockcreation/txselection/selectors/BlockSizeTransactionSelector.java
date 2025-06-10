@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.BlockSizeBlockValidator;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
@@ -163,8 +162,7 @@ public class BlockSizeTransactionSelector
    */
   private boolean blockSizeAboveThreshold(
       final Transaction transaction, final long cumulativeBlockSize) {
-    final long blockSizeRemaining =
-        BlockSizeBlockValidator.MAX_RLP_BLOCK_SIZE - cumulativeBlockSize;
+    final long blockSizeRemaining = context.gasCalculator().maxRlpBlockSize() - cumulativeBlockSize;
 
     if (blockSizeRemaining < transaction.getSize()) {
       LOG.trace(

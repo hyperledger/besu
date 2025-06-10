@@ -678,4 +678,8 @@ public interface GasCalculator {
       final MessageFrame frame, final Account targetAccount) {
     return 0L;
   }
+
+  default int maxRlpBlockSize() {
+    return Integer.MAX_VALUE;
+  }
 }

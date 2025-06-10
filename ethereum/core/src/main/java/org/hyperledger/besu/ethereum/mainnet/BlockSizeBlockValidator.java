@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator.MAX_RLP_BLOCK_SIZE;
+
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -21,9 +23,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 /** Validates blocks ensuring they do not exceed the maximum allowed size. */
 public class BlockSizeBlockValidator extends MainnetBlockValidator {
-  public static final int MAX_BLOCK_SIZE = 10_485_760;
-  public static final int MARGIN = 524_288;
-  public static final int MAX_RLP_BLOCK_SIZE = MAX_BLOCK_SIZE - MARGIN;
 
   /**
    * Constructs a new MainnetBlockValidator with the given BlockHeaderValidator, BlockBodyValidator,
