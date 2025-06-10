@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
@@ -39,6 +40,9 @@ public class TransactionSelectionResults {
   private final Map<TransactionType, List<Transaction>> transactionsByType =
       new EnumMap<>(TransactionType.class);
   private final List<TransactionReceipt> receipts = Lists.newArrayList();
+
+  // TODO: Do we want to make BAL perpetually mutable to fit in with the pattern? Or workaround by building on retrieval or something
+  private BlockAccessList blockAccessList;
 
   /**
    * Access to this field needs to be guarded, since it is possible to read it while another
@@ -70,6 +74,10 @@ public class TransactionSelectionResults {
     notSelectedTransactions.put(transaction, res);
   }
 
+  public void setBlockAccessList(final BlockAccessList blockAccessList) {
+    this.blockAccessList = blockAccessList;
+  }
+
   public List<Transaction> getSelectedTransactions() {
     return selectedTransactions;
   }
@@ -88,6 +96,10 @@ public class TransactionSelectionResults {
 
   public Map<Transaction, TransactionSelectionResult> getNotSelectedTransactions() {
     return Map.copyOf(notSelectedTransactions);
+  }
+
+  public BlockAccessList getBlockAccessList() {
+    return blockAccessList;
   }
 
   public void logSelectionStats() {
@@ -126,7 +138,8 @@ public class TransactionSelectionResults {
     return cumulativeGasUsed == that.cumulativeGasUsed
         && selectedTransactions.equals(that.selectedTransactions)
         && notSelectedTransactions.equals(that.notSelectedTransactions)
-        && receipts.equals(that.receipts);
+        && receipts.equals(that.receipts)
+        && blockAccessList.equals(that.blockAccessList);
   }
 
   @Override

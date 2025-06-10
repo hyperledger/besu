@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -26,8 +28,13 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 // TODO: Maybe implementing an interface defined in plugin-api will be useful?
 public class BlockAccessList {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BlockAccessList.class);
 
   private final List<AccountAccess> accountAccesses;
 
@@ -110,6 +117,27 @@ public class BlockAccessList {
           .computeIfAbsent(address.addressHash(), k -> new AccountAccessBuilder(address))
           .slot(slot);
     }
+
+  public void updateFromTransactionAccumulator(final WorldUpdater txnAccumulator, final int txnIndex) {
+    if (txnAccumulator instanceof PathBasedWorldStateUpdateAccumulator<?> accum) {
+      accum
+          .getStorageToUpdate()
+          .forEach((address, slotMap) -> {
+              slotMap.forEach((slotKey, value) -> {
+                  var prior = value.getPrior();
+                  var updated = value.getUpdated();
+                  var isEvmRead = value.isEvmRead();
+                  if (prior.equals(updated) && isEvmRead) {
+                      this.accessSlot(address, slotKey).read();
+                  } else {
+                      this.accessSlot(address, slotKey).write(txnIndex, updated.toBytes());
+                  }
+              });
+          });
+    } else {
+      LOG.error("Attempted to update update BAL with unexpected accumulator instance");
+    }
+  }
 
     public BlockAccessList build() {
       return new BlockAccessList(

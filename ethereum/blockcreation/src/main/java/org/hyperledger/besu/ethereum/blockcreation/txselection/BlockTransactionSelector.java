@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTr
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.ProcessingResultTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.SkipSenderTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -108,10 +109,12 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
   private final long blockTxsSelectionMaxTime;
+  private final BlockAccessList.Builder balBuilder;
   private WorldUpdater blockWorldStateUpdater;
   private WorldUpdater txWorldStateUpdater;
   private volatile TransactionEvaluationContext currTxEvaluationContext;
   private final List<Runnable> selectedTxPendingActions = new ArrayList<>(1);
+  private int currentTxnLocation;
 
   public BlockTransactionSelector(
       final MiningConfiguration miningConfiguration,
@@ -152,7 +155,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     blockWorldStateUpdater = worldState.updater();
     txWorldStateUpdater = blockWorldStateUpdater.updater();
     blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
-    // TODO: We can create a BAL builder here
+    currentTxnLocation = 0;
+    balBuilder = new BlockAccessList.Builder();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -183,6 +187,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
         .log();
+    transactionSelectionResults.setBlockAccessList(balBuilder.build());
     return transactionSelectionResults;
   }
 
@@ -283,6 +288,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
     transactions.forEach(
         transaction -> evaluateTransaction(new PendingTransaction.Local.Priority(transaction)));
+
+    transactionSelectionResults.setBlockAccessList(balBuilder.build());
     return transactionSelectionResults;
   }
 
@@ -485,14 +492,15 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
           transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
 
+          balBuilder.updateFromTransactionAccumulator(txWorldStateUpdater, currentTxnLocation);
           notifySelected(evaluationContext, processingResult);
           LOG.atTrace()
-              .setMessage("Selected and commited {} for block creation")
+              .setMessage("Selected and commited {} with location {} for block creation")
               .addArgument(transaction::toTraceLog)
+              .addArgument(currentTxnLocation)
               .log();
+          currentTxnLocation += 1;
         });
-
-    // TODO: Use txWorldStateUpdater to update a BAL data structure as a pending action
 
     if (isTimeout.get()) {
       // even if this tx passed all the checks, it is too late to include it in this block,
@@ -505,8 +513,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
     LOG.atTrace()
         .setMessage(
-            "Potentially selected {} for block creation, evaluated in {}, waiting for commit")
+            "Potentially selected {} with location {} for block creation, evaluated in {}, waiting for commit")
         .addArgument(transaction::toTraceLog)
+        .addArgument(currentTxnLocation)
         .addArgument(evaluationContext.getEvaluationTimer())
         .log();
     return SELECTED;
