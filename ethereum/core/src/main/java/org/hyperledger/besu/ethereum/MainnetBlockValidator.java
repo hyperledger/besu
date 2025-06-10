@@ -200,6 +200,14 @@ public class MainnetBlockValidator implements BlockValidator {
     }
   }
 
+  /**
+   * Handles the processing of a block that has failed validation or processing.
+   *
+   * @param failedBlock the block that failed processing
+   * @param result the result of the block processing
+   * @param shouldRecordBadBlock whether to record the block as a bad block
+   * @param context the ProtocolContext
+   */
   protected void handleFailedBlockProcessing(
       final Block failedBlock,
       final BlockValidationResult result,
