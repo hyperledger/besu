@@ -159,6 +159,7 @@ import org.hyperledger.besu.plugin.services.TraceService;
 import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
+import org.hyperledger.besu.plugin.services.TransactionValidatorService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.mining.MiningService;
@@ -188,6 +189,7 @@ import org.hyperledger.besu.services.TransactionPoolServiceImpl;
 import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
+import org.hyperledger.besu.services.TransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.EphemeryGenesisUpdater;
@@ -409,7 +411,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   P2PDiscoveryConfiguration p2PDiscoveryConfig;
 
   private final TransactionSelectionServiceImpl transactionSelectionServiceImpl;
-  private final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl;
+  private final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl;
+  private final TransactionValidatorServiceImpl transactionValidatorServiceImpl;
   private final TransactionSimulationServiceImpl transactionSimulationServiceImpl;
   private final BlockchainServiceImpl blockchainServiceImpl;
   private BesuComponent besuComponent;
@@ -659,6 +662,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new TransactionPoolValidatorServiceImpl(),
         new TransactionSimulationServiceImpl(),
         new BlockchainServiceImpl(),
+        new TransactionValidatorServiceImpl(),
         commandLogger);
   }
 
@@ -678,9 +682,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param permissioningService instance of PermissioningServiceImpl
    * @param rpcEndpointServiceImpl instance of RpcEndpointServiceImpl
    * @param transactionSelectionServiceImpl instance of TransactionSelectionServiceImpl
-   * @param transactionValidatorServiceImpl instance of TransactionValidatorServiceImpl
+   * @param transactionPoolValidatorServiceImpl instance of TransactionPoolValidatorServiceImpl
    * @param transactionSimulationServiceImpl instance of TransactionSimulationServiceImpl
    * @param blockchainServiceImpl instance of BlockchainServiceImpl
+   * @param transactionValidatorServiceImpl instance of TransactionValidatorServiceImpl
    * @param commandLogger instance of Logger for outputting to the CLI
    */
   @VisibleForTesting
@@ -698,9 +703,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PermissioningServiceImpl permissioningService,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
-      final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl,
+      final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl,
       final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
       final BlockchainServiceImpl blockchainServiceImpl,
+      final TransactionValidatorServiceImpl transactionValidatorServiceImpl,
       final Logger commandLogger) {
 
     this.logger = commandLogger;
@@ -724,9 +730,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
     this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
-    this.transactionValidatorServiceImpl = transactionValidatorServiceImpl;
+    this.transactionPoolValidatorServiceImpl = transactionPoolValidatorServiceImpl;
     this.transactionSimulationServiceImpl = transactionSimulationServiceImpl;
     this.blockchainServiceImpl = blockchainServiceImpl;
+    this.transactionValidatorServiceImpl = transactionValidatorServiceImpl;
   }
 
   /**
@@ -1116,10 +1123,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
-        TransactionPoolValidatorService.class, transactionValidatorServiceImpl);
+        TransactionPoolValidatorService.class, transactionPoolValidatorServiceImpl);
     besuPluginContext.addService(
         TransactionSimulationService.class, transactionSimulationServiceImpl);
     besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
+    besuPluginContext.addService(
+        TransactionValidatorService.class, transactionValidatorServiceImpl);
 
     // register built-in plugins
     rocksDBPlugin = new RocksDBPlugin();
@@ -1840,7 +1849,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
-    transactionPoolOptions.setPluginTransactionValidatorService(transactionValidatorServiceImpl);
+    transactionPoolOptions.setPluginTransactionValidatorService(
+        transactionPoolValidatorServiceImpl);
     final var txPoolConf = transactionPoolOptions.toDomainObject();
     final var txPoolConfBuilder =
         ImmutableTransactionPoolConfiguration.builder()
@@ -2031,6 +2041,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
             .allowedSubnets(p2PDiscoveryConfig.allowedSubnets())
             .poaDiscoveryRetryBootnodes(p2PDiscoveryConfig.poaDiscoveryRetryBootnodes())
+            .transactionValidatorService(transactionValidatorServiceImpl)
             .build();
 
     addShutdownHook(runner);
