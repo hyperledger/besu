@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.config;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECP256R1;
 import org.hyperledger.besu.evm.precompile.AltBN128PairingPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BLS12PairingPrecompiledContract;
 
@@ -47,6 +48,15 @@ public interface NativeRequirement {
                 secp256k1.maybeEnableNative()
                     ? Optional.empty()
                     : Optional.of("secp256k1: Native secp256k1 failed to load")));
+
+        var secp256r1 = new SECP256R1();
+        requirements.add(
+            new NativeRequirementResult(
+                secp256r1.maybeEnableNative(),
+                "secp256r1",
+                secp256r1.maybeEnableNative()
+                    ? Optional.empty()
+                    : Optional.of("secp256r1: Native secp256r1 failed to load")));
 
         requirements.add(
             new NativeRequirementResult(
