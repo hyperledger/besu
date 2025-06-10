@@ -31,6 +31,8 @@ jar {
 configurations { testResourceGeneration.extendsFrom testImplementation }
 
 dependencies {
+  annotationProcessor 'com.google.dagger:dagger-compiler'
+
   api 'org.slf4j:slf4j-api'
   api 'org.apache.logging.log4j:log4j-api'
 
@@ -53,6 +55,7 @@ dependencies {
   implementation project(':services:pipeline')
   implementation project(':services:tasks')
 
+  implementation 'com.google.dagger:dagger'
   implementation 'com.google.guava:guava'
   implementation 'com.graphql-java:graphql-java'
   implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'

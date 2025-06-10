@@ -25,6 +25,8 @@ import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code size operation. */
@@ -79,21 +81,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       } else {
         final Account account = frame.getWorldUpdater().get(address);
 
-        Bytes codeSize;
-        if (account == null) {
-          codeSize = Bytes.EMPTY;
-        } else {
-          final Bytes code = account.getCode();
-          if (enableEIP3540
-              && code.size() >= 2
-              && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
-              && code.get(1) == 0) {
-            codeSize = EOF_SIZE;
-          } else {
-            codeSize = Words.intBytes(code.size());
-          }
-        }
-        frame.pushStackItem(codeSize);
+        frame.pushStackItem(getCodeSize(account));
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {
@@ -101,5 +89,28 @@ public class ExtCodeSizeOperation extends AbstractOperation {
     } catch (final OverflowException ofe) {
       return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
+  }
+
+  private Bytes getCodeSize(final Account account) {
+    if (account == null) {
+      return Bytes.EMPTY;
+    }
+
+    // flat db has the code size stored in the account
+    final Optional<Integer> maybeStoredCodeSize = account.getCodeSize();
+    if (maybeStoredCodeSize.isPresent()) {
+      return Words.intBytes(maybeStoredCodeSize.get());
+    }
+
+    // retrieve the code size from the trie and return the size
+    final Bytes code = account.getCode();
+    if (enableEIP3540
+        && code.size() >= 2
+        && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
+        && code.get(1) == 0) {
+      return EOF_SIZE;
+    }
+
+    return Words.intBytes(code.size());
   }
 }

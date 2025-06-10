@@ -22,6 +22,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
@@ -42,6 +44,7 @@ public class BonsaiAccountTest {
             Wei.ONE,
             Hash.EMPTY_TRIE_HASH,
             Hash.EMPTY,
+            Optional.empty(),
             true);
     trackedAccount.setCode(Bytes.of(1));
     final UpdateTrackingAccount<BonsaiAccount> bonsaiAccountUpdateTrackingAccount =
@@ -65,6 +68,7 @@ public class BonsaiAccountTest {
             Wei.ONE,
             Hash.EMPTY_TRIE_HASH,
             Hash.EMPTY,
+            Optional.empty(),
             true);
     account.setCode(Bytes.of(1));
     account.setStorageValue(UInt256.ONE, UInt256.ONE);

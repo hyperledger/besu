@@ -31,6 +31,7 @@ import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.NavigableMap;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -46,8 +47,9 @@ public class BonsaiAccount extends PathBasedAccount {
       final Wei balance,
       final Hash storageRoot,
       final Hash codeHash,
+      final Optional<Integer> maybeCodeSize,
       final boolean mutable) {
-    super(context, address, addressHash, nonce, balance, codeHash, mutable);
+    super(context, address, addressHash, nonce, balance, codeHash, maybeCodeSize, mutable);
     this.storageRoot = storageRoot;
   }
 
@@ -63,6 +65,7 @@ public class BonsaiAccount extends PathBasedAccount {
         stateTrieAccount.getNonce(),
         stateTrieAccount.getBalance(),
         stateTrieAccount.getCodeHash(),
+        stateTrieAccount.getCodeHash().equals(Hash.EMPTY) ? Optional.of(0) : Optional.empty(),
         mutable);
     this.storageRoot = stateTrieAccount.getStorageRoot();
   }
@@ -115,10 +118,21 @@ public class BonsaiAccount extends PathBasedAccount {
     final Hash storageRoot = Hash.wrap(in.readBytes32());
     final Hash codeHash = Hash.wrap(in.readBytes32());
 
+    final Optional<Integer> maybeCodeSize =
+        in.isEndOfCurrentList() ? Optional.empty() : Optional.of(in.readIntScalar());
+
     in.leaveList();
 
     return new BonsaiAccount(
-        context, address, address.addressHash(), nonce, balance, storageRoot, codeHash, mutable);
+        context,
+        address,
+        address.addressHash(),
+        nonce,
+        balance,
+        storageRoot,
+        codeHash,
+        maybeCodeSize,
+        mutable);
   }
 
   @Override
@@ -141,6 +155,22 @@ public class BonsaiAccount extends PathBasedAccount {
     out.writeUInt256Scalar(balance);
     out.writeBytes(storageRoot);
     out.writeBytes(codeHash);
+
+    out.endList();
+  }
+
+  @Override
+  protected void writeToWithExtras(final RLPOutput out) {
+    out.startList();
+
+    out.writeLongScalar(nonce);
+    out.writeUInt256Scalar(balance);
+    out.writeBytes(storageRoot);
+    out.writeBytes(codeHash);
+
+    if (maybeCodeSize.isPresent()) {
+      out.writeIntScalar(code.size());
+    }
 
     out.endList();
   }

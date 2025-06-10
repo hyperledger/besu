@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMer
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.util.backfill.BackfillRegistry;
+import org.hyperledger.besu.util.backfill.BackfillRegistryModule;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -37,7 +39,8 @@ import org.slf4j.Logger;
       MetricsSystemModule.class,
       BonsaiCachedMerkleTrieLoaderModule.class,
       BesuPluginContextModule.class,
-      BlobCacheModule.class
+      BlobCacheModule.class,
+      BackfillRegistryModule.class,
     })
 public interface BesuComponent {
 
@@ -83,4 +86,11 @@ public interface BesuComponent {
    * @return BlobCache
    */
   BlobCache getBlobCache();
+
+  /**
+   * Backfill registry to manage backfill tasks.
+   *
+   * @return BackfillRegistry
+   */
+  BackfillRegistry getBackfillRegistry();
 }

@@ -64,6 +64,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.util.backfill.BackfillRegistry;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -71,6 +72,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -87,6 +89,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
   private long lastExecutionTime = 0L;
+
+  @Inject BackfillRegistry backfillRegistry;
 
   public AbstractEngineNewPayload(
       final Vertx vertx,
@@ -108,282 +112,308 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    engineCallListener.executionEngineCalled();
-    final EnginePayloadParameter blockParam;
-    try {
-      blockParam = requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
-    } catch (JsonRpcParameterException e) {
-      throw new InvalidJsonRpcRequestException(
-          "Invalid engine payload parameter (index 0)",
-          RpcErrorType.INVALID_ENGINE_NEW_PAYLOAD_PARAMS,
-          e);
-    }
 
-    final Optional<List<String>> maybeVersionedHashParam;
-    try {
-      maybeVersionedHashParam = requestContext.getOptionalList(1, String.class);
-    } catch (JsonRpcParameterException e) {
-      throw new InvalidJsonRpcRequestException(
-          "Invalid versioned hash parameters (index 1)",
-          RpcErrorType.INVALID_VERSIONED_HASH_PARAMS,
-          e);
-    }
-
-    final Object reqId = requestContext.getRequest().getId();
-
-    Optional<String> maybeParentBeaconBlockRootParam;
-    try {
-      maybeParentBeaconBlockRootParam = requestContext.getOptionalParameter(2, String.class);
-    } catch (JsonRpcParameterException e) {
-      throw new InvalidJsonRpcRequestException(
-          "Invalid parent beacon block root parameters (index 2)",
-          RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
-          e);
-    }
-    final Optional<Bytes32> maybeParentBeaconBlockRoot =
-        maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
-
-    final Optional<List<String>> maybeRequestsParam;
-    try {
-      maybeRequestsParam = requestContext.getOptionalList(3, String.class);
-    } catch (JsonRpcParameterException e) {
-      throw new InvalidJsonRpcRequestException(
-          "Invalid execution request parameters (index 3)",
-          RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS,
-          e);
-    }
-
-    final ValidationResult<RpcErrorType> forkValidationResult =
-        validateForkSupported(blockParam.getTimestamp());
-    if (!forkValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(reqId, forkValidationResult);
-    }
-
-    final ValidationResult<RpcErrorType> parameterValidationResult =
-        validateParameters(
-            blockParam,
-            maybeVersionedHashParam,
-            maybeParentBeaconBlockRootParam,
-            maybeRequestsParam);
-    if (!parameterValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(reqId, parameterValidationResult);
-    }
-
-    final Optional<List<VersionedHash>> maybeVersionedHashes;
-    try {
-      maybeVersionedHashes = extractVersionedHashes(maybeVersionedHashParam);
-    } catch (RuntimeException ex) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          INVALID,
-          "Invalid versionedHash");
-    }
-
-    final Optional<BlockHeader> maybeParentHeader =
-        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
-
-    LOG.atTrace()
-        .setMessage("blockparam: {}")
-        .addArgument(() -> Json.encodePrettily(blockParam))
-        .log();
-
-    final Optional<List<Withdrawal>> maybeWithdrawals =
-        Optional.ofNullable(blockParam.getWithdrawals())
-            .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
-
-    if (!getWithdrawalsValidator(
-            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
-        .validateWithdrawals(maybeWithdrawals)) {
-      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_WITHDRAWALS_PARAMS);
-    }
-
-    final Optional<List<Request>> maybeRequests;
-    try {
-      maybeRequests = extractRequests(maybeRequestsParam);
-    } catch (RequestType.InvalidRequestTypeException ex) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          INVALID,
-          "Invalid execution requests");
-    } catch (Exception ex) {
-      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
-    }
-
-    if (!getRequestsValidator(
-            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
-        .validate(maybeRequests)) {
-      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
-    }
-
-    if (mergeContext.get().isSyncing()) {
-      LOG.debug("We are syncing");
-      return respondWith(reqId, blockParam, null, SYNCING);
-    }
-
-    final List<Transaction> transactions;
-    try {
-      transactions =
-          blockParam.getTransactions().stream()
-              .map(Bytes::fromHexString)
-              .map(in -> TransactionDecoder.decodeOpaqueBytes(in, EncodingContext.BLOCK_BODY))
-              .toList();
-      precomputeSenders(transactions);
-    } catch (final RLPException | IllegalArgumentException e) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          INVALID,
-          "Failed to decode transactions from block parameter");
-    }
-
-    if (blockParam.getExtraData() == null) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          INVALID,
-          "Field extraData must not be null");
-    }
-
-    final BlockHeader newBlockHeader =
-        new BlockHeader(
-            blockParam.getParentHash(),
-            OMMERS_HASH_CONSTANT,
-            blockParam.getFeeRecipient(),
-            blockParam.getStateRoot(),
-            BodyValidation.transactionsRoot(transactions),
-            blockParam.getReceiptsRoot(),
-            blockParam.getLogsBloom(),
-            Difficulty.ZERO,
-            blockParam.getBlockNumber(),
-            blockParam.getGasLimit(),
-            blockParam.getGasUsed(),
-            blockParam.getTimestamp(),
-            Bytes.fromHexString(blockParam.getExtraData()),
-            blockParam.getBaseFeePerGas(),
-            blockParam.getPrevRandao(),
-            0,
-            maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
-            blockParam.getBlobGasUsed(),
-            blockParam.getExcessBlobGas() == null
-                ? null
-                : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
-            maybeParentBeaconBlockRoot.orElse(null),
-            maybeRequests.map(BodyValidation::requestsHash).orElse(null),
-            headerFunctions);
-
-    // ensure the block hash matches the blockParam hash
-    // this must be done before any other check
-    if (!newBlockHeader.getHash().equals(blockParam.getBlockHash())) {
-      String errorMessage =
-          String.format(
-              "Computed block hash %s does not match block hash parameter %s",
-              newBlockHeader.getBlockHash(), blockParam.getBlockHash());
-      LOG.debug(errorMessage);
-      return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
-    }
-
-    final var blobTransactions =
-        transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
-
-    ValidationResult<RpcErrorType> blobValidationResult =
-        validateBlobs(
-            blobTransactions,
-            newBlockHeader,
-            maybeParentHeader,
-            maybeVersionedHashes,
-            protocolSchedule.get().getByBlockHeader(newBlockHeader));
-    if (!blobValidationResult.isValid()) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          getInvalidBlockHashStatus(),
-          blobValidationResult.getErrorMessage());
-    }
-
-    // do we already have this payload
-    if (protocolContext.getBlockchain().getBlockByHash(newBlockHeader.getBlockHash()).isPresent()) {
-      LOG.debug("block already present");
-      return respondWith(reqId, blockParam, blockParam.getBlockHash(), VALID);
-    }
-    if (mergeCoordinator.isBadBlock(blockParam.getBlockHash())) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator
-              .getLatestValidHashOfBadBlock(blockParam.getBlockHash())
-              .orElse(Hash.ZERO),
-          INVALID,
-          "Block already present in bad block manager.");
-    }
-
-    if (maybeParentHeader.isPresent()
-        && (Long.compareUnsigned(maybeParentHeader.get().getTimestamp(), blockParam.getTimestamp())
-            >= 0)) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          INVALID,
-          "block timestamp not greater than parent");
-    }
-
-    final var block =
-        new Block(
-            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals));
-
-    if (maybeParentHeader.isEmpty()) {
-      LOG.atDebug()
-          .setMessage("Parent of block {} is not present, append it to backward sync")
-          .addArgument(block::toLogString)
-          .log();
-      mergeCoordinator.appendNewPayloadToSync(block);
-      return respondWith(reqId, blockParam, null, SYNCING);
-    }
-
-    final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);
-
-    if (latestValidAncestor.isEmpty()) {
-      return respondWith(reqId, blockParam, null, ACCEPTED);
-    }
-
-    // execute block and return result response
-    final long startTimeMs = System.currentTimeMillis();
-    final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
-    if (executionResult.isSuccessful()) {
-      lastExecutionTime = System.currentTimeMillis() - startTimeMs;
-      logImportedBlockInfo(
-          block,
-          blobTransactions.stream()
-              .map(Transaction::getVersionedHashes)
-              .flatMap(Optional::stream)
-              .mapToInt(List::size)
-              .sum(),
-          lastExecutionTime / 1000.0,
-          executionResult.getNbParallelizedTransactions());
-      return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
-    } else {
-      if (executionResult.causedBy().isPresent()) {
-        Throwable causedBy = executionResult.causedBy().get();
-        if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
-          RpcErrorType error = RpcErrorType.INTERNAL_ERROR;
-          JsonRpcErrorResponse response = new JsonRpcErrorResponse(reqId, error);
-          return response;
-        }
+    boolean backfillPaused = false;
+    if (backfillRegistry.anyRunning()) {
+      backfillPaused = true;
+      backfillRegistry.pauseAll();
+      try {
+        backfillRegistry.awaitAllPaused();
+      } catch (final InterruptedException e) {
+        LOG.warn("Interrupted while waiting for backfill registry to pause: {}", e.getMessage());
       }
-      LOG.debug("New payload is invalid: {}", executionResult.errorMessage.get());
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          latestValidAncestor.get(),
-          INVALID,
-          executionResult.errorMessage.get());
+    }
+
+    try {
+      engineCallListener.executionEngineCalled();
+      final EnginePayloadParameter blockParam;
+      try {
+        blockParam = requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
+      } catch (JsonRpcParameterException e) {
+        throw new InvalidJsonRpcRequestException(
+            "Invalid engine payload parameter (index 0)",
+            RpcErrorType.INVALID_ENGINE_NEW_PAYLOAD_PARAMS,
+            e);
+      }
+
+      final Optional<List<String>> maybeVersionedHashParam;
+      try {
+        maybeVersionedHashParam = requestContext.getOptionalList(1, String.class);
+      } catch (JsonRpcParameterException e) {
+        throw new InvalidJsonRpcRequestException(
+            "Invalid versioned hash parameters (index 1)",
+            RpcErrorType.INVALID_VERSIONED_HASH_PARAMS,
+            e);
+      }
+
+      final Object reqId = requestContext.getRequest().getId();
+
+      Optional<String> maybeParentBeaconBlockRootParam;
+      try {
+        maybeParentBeaconBlockRootParam = requestContext.getOptionalParameter(2, String.class);
+      } catch (JsonRpcParameterException e) {
+        throw new InvalidJsonRpcRequestException(
+            "Invalid parent beacon block root parameters (index 2)",
+            RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
+            e);
+      }
+      final Optional<Bytes32> maybeParentBeaconBlockRoot =
+          maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
+
+      final Optional<List<String>> maybeRequestsParam;
+      try {
+        maybeRequestsParam = requestContext.getOptionalList(3, String.class);
+      } catch (JsonRpcParameterException e) {
+        throw new InvalidJsonRpcRequestException(
+            "Invalid execution request parameters (index 3)",
+            RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS,
+            e);
+      }
+
+      final ValidationResult<RpcErrorType> forkValidationResult =
+          validateForkSupported(blockParam.getTimestamp());
+      if (!forkValidationResult.isValid()) {
+        return new JsonRpcErrorResponse(reqId, forkValidationResult);
+      }
+
+      final ValidationResult<RpcErrorType> parameterValidationResult =
+          validateParameters(
+              blockParam,
+              maybeVersionedHashParam,
+              maybeParentBeaconBlockRootParam,
+              maybeRequestsParam);
+      if (!parameterValidationResult.isValid()) {
+        return new JsonRpcErrorResponse(reqId, parameterValidationResult);
+      }
+
+      final Optional<List<VersionedHash>> maybeVersionedHashes;
+      try {
+        maybeVersionedHashes = extractVersionedHashes(maybeVersionedHashParam);
+      } catch (RuntimeException ex) {
+        return respondWithInvalid(
+            reqId,
+            blockParam,
+            mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+            INVALID,
+            "Invalid versionedHash");
+      }
+
+      final Optional<BlockHeader> maybeParentHeader =
+          protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+
+      LOG.atTrace()
+          .setMessage("blockparam: {}")
+          .addArgument(() -> Json.encodePrettily(blockParam))
+          .log();
+
+      final Optional<List<Withdrawal>> maybeWithdrawals =
+          Optional.ofNullable(blockParam.getWithdrawals())
+              .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
+
+      if (!getWithdrawalsValidator(
+              protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
+          .validateWithdrawals(maybeWithdrawals)) {
+        return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_WITHDRAWALS_PARAMS);
+      }
+
+      final Optional<List<Request>> maybeRequests;
+      try {
+        maybeRequests = extractRequests(maybeRequestsParam);
+      } catch (RequestType.InvalidRequestTypeException ex) {
+        return respondWithInvalid(
+            reqId,
+            blockParam,
+            mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+            INVALID,
+            "Invalid execution requests");
+      } catch (Exception ex) {
+        return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
+      }
+
+      if (!getRequestsValidator(
+              protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
+          .validate(maybeRequests)) {
+        return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
+      }
+
+      if (mergeContext.get().isSyncing()) {
+        LOG.debug("We are syncing");
+        return respondWith(reqId, blockParam, null, SYNCING);
+      }
+
+      final List<Transaction> transactions;
+      try {
+        transactions =
+            blockParam.getTransactions().stream()
+                .map(Bytes::fromHexString)
+                .map(in -> TransactionDecoder.decodeOpaqueBytes(in, EncodingContext.BLOCK_BODY))
+                .toList();
+        precomputeSenders(transactions);
+      } catch (final RLPException | IllegalArgumentException e) {
+        return respondWithInvalid(
+            reqId,
+            blockParam,
+            mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+            INVALID,
+            "Failed to decode transactions from block parameter");
+      }
+
+      if (blockParam.getExtraData() == null) {
+        return respondWithInvalid(
+            reqId,
+            blockParam,
+            mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+            INVALID,
+            "Field extraData must not be null");
+      }
+
+      final BlockHeader newBlockHeader =
+          new BlockHeader(
+              blockParam.getParentHash(),
+              OMMERS_HASH_CONSTANT,
+              blockParam.getFeeRecipient(),
+              blockParam.getStateRoot(),
+              BodyValidation.transactionsRoot(transactions),
+              blockParam.getReceiptsRoot(),
+              blockParam.getLogsBloom(),
+              Difficulty.ZERO,
+              blockParam.getBlockNumber(),
+              blockParam.getGasLimit(),
+              blockParam.getGasUsed(),
+              blockParam.getTimestamp(),
+              Bytes.fromHexString(blockParam.getExtraData()),
+              blockParam.getBaseFeePerGas(),
+              blockParam.getPrevRandao(),
+              0,
+              maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
+              blockParam.getBlobGasUsed(),
+              blockParam.getExcessBlobGas() == null
+                  ? null
+                  : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
+              maybeParentBeaconBlockRoot.orElse(null),
+              maybeRequests.map(BodyValidation::requestsHash).orElse(null),
+              headerFunctions);
+
+      // ensure the block hash matches the blockParam hash
+      // this must be done before any other check
+      if (!newBlockHeader.getHash().equals(blockParam.getBlockHash())) {
+        String errorMessage =
+            String.format(
+                "Computed block hash %s does not match block hash parameter %s",
+                newBlockHeader.getBlockHash(), blockParam.getBlockHash());
+        LOG.debug(errorMessage);
+        return respondWithInvalid(
+            reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
+      }
+
+      final var blobTransactions =
+          transactions.stream()
+              .filter(transaction -> transaction.getType().supportsBlob())
+              .toList();
+
+      ValidationResult<RpcErrorType> blobValidationResult =
+          validateBlobs(
+              blobTransactions,
+              newBlockHeader,
+              maybeParentHeader,
+              maybeVersionedHashes,
+              protocolSchedule.get().getByBlockHeader(newBlockHeader));
+      if (!blobValidationResult.isValid()) {
+        return respondWithInvalid(
+            reqId,
+            blockParam,
+            mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+            getInvalidBlockHashStatus(),
+            blobValidationResult.getErrorMessage());
+      }
+
+      // do we already have this payload
+      if (protocolContext
+          .getBlockchain()
+          .getBlockByHash(newBlockHeader.getBlockHash())
+          .isPresent()) {
+        LOG.debug("block already present");
+        return respondWith(reqId, blockParam, blockParam.getBlockHash(), VALID);
+      }
+      if (mergeCoordinator.isBadBlock(blockParam.getBlockHash())) {
+        return respondWithInvalid(
+            reqId,
+            blockParam,
+            mergeCoordinator
+                .getLatestValidHashOfBadBlock(blockParam.getBlockHash())
+                .orElse(Hash.ZERO),
+            INVALID,
+            "Block already present in bad block manager.");
+      }
+
+      if (maybeParentHeader.isPresent()
+          && (Long.compareUnsigned(
+                  maybeParentHeader.get().getTimestamp(), blockParam.getTimestamp())
+              >= 0)) {
+        return respondWithInvalid(
+            reqId,
+            blockParam,
+            mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+            INVALID,
+            "block timestamp not greater than parent");
+      }
+
+      final var block =
+          new Block(
+              newBlockHeader,
+              new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals));
+
+      if (maybeParentHeader.isEmpty()) {
+        LOG.atDebug()
+            .setMessage("Parent of block {} is not present, append it to backward sync")
+            .addArgument(block::toLogString)
+            .log();
+        mergeCoordinator.appendNewPayloadToSync(block);
+        return respondWith(reqId, blockParam, null, SYNCING);
+      }
+
+      final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);
+
+      if (latestValidAncestor.isEmpty()) {
+        return respondWith(reqId, blockParam, null, ACCEPTED);
+      }
+
+      // execute block and return result response
+      final long startTimeMs = System.currentTimeMillis();
+      final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
+      if (executionResult.isSuccessful()) {
+        lastExecutionTime = System.currentTimeMillis() - startTimeMs;
+        logImportedBlockInfo(
+            block,
+            blobTransactions.stream()
+                .map(Transaction::getVersionedHashes)
+                .flatMap(Optional::stream)
+                .mapToInt(List::size)
+                .sum(),
+            lastExecutionTime / 1000.0,
+            executionResult.getNbParallelizedTransactions());
+        return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
+      } else {
+        if (executionResult.causedBy().isPresent()) {
+          Throwable causedBy = executionResult.causedBy().get();
+          if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
+            RpcErrorType error = RpcErrorType.INTERNAL_ERROR;
+            JsonRpcErrorResponse response = new JsonRpcErrorResponse(reqId, error);
+            return response;
+          }
+        }
+        LOG.debug("New payload is invalid: {}", executionResult.errorMessage.get());
+        return respondWithInvalid(
+            reqId,
+            blockParam,
+            latestValidAncestor.get(),
+            INVALID,
+            executionResult.errorMessage.get());
+      }
+    } finally {
+      if (backfillPaused) {
+        backfillRegistry.resumeAll();
+      }
     }
   }
 

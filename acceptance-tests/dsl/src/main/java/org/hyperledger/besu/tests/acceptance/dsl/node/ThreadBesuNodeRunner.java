@@ -95,6 +95,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
+import org.hyperledger.besu.util.backfill.BackfillRegistryModule;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -717,7 +718,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         BonsaiCachedMerkleTrieLoaderModule.class,
         MetricsSystemModule.class,
         ThreadBesuNodeRunner.BesuNodeProviderModule.class,
-        BlobCacheModule.class
+        BlobCacheModule.class,
+        BackfillRegistryModule.class,
       })
   public interface AcceptanceTestBesuComponent extends BesuComponent {
     BesuController besuController();
