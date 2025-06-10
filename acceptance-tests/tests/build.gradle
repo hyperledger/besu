@@ -124,7 +124,6 @@ task acceptanceTest(type: Test) {
 
 task acceptanceTestNotPrivacy(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
-  exclude '**/permissioning/**'
   exclude '**/bftsoak/**'
   exclude '**/acceptanceqbft/**'
 
@@ -204,34 +203,6 @@ task acceptanceTestBftSoak(type: Test) {
     exceptionFormat = 'full'
     showStackTraces = true
     showStandardStreams = true
-    showExceptions = true
-    showCauses = true
-  }
-
-  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
-}
-
-task acceptanceTestPermissioning(type: Test) {
-  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
-  include '**/permissioning/**'
-
-  useJUnitPlatform {}
-
-  dependsOn(rootProject.installDist)
-  setSystemProperties(test.getSystemProperties())
-  systemProperty 'acctests.runBesuAsProcess', 'true'
-  systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
-  def javaProjects = rootProject.subprojects - project(':platform')
-  mustRunAfter javaProjects.test
-  description = 'Runs Permissioning Besu acceptance tests.'
-  group = 'verification'
-
-  jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
-
-  testLogging {
-    exceptionFormat = 'full'
-    showStackTraces = true
-    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
     showExceptions = true
     showCauses = true
   }
