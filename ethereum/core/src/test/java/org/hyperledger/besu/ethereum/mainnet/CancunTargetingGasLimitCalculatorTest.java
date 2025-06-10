@@ -179,7 +179,8 @@ class CancunTargetingGasLimitCalculatorTest {
           FeeMarket.cancunDefault(0L, Optional.empty()),
           osakaGasCalculator,
           BlobSchedule.PRAGUE_DEFAULT.getMax(),
-          newTargetCount);
+          newTargetCount,
+          BlobSchedule.PRAGUE_DEFAULT.getMaxPerTransaction());
 
   private static final long TARGET_BLOB_GAS_PER_BLOCK_OSAKA = 0x120000;
 

@@ -27,20 +27,23 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
   private static final long DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA = 30_000_000L;
 
   private final long transactionGasLimitCap;
+  private final long transactionBlobGasLimitCap;
 
   public OsakaTargetingGasLimitCalculator(
       final long londonForkBlock,
       final BaseFeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final int maxBlobsPerBlock,
-      final int targetBlobsPerBlock) {
+      final int targetBlobsPerBlock,
+      final int maxBlobsPerTransaction) {
     this(
         londonForkBlock,
         feeMarket,
         gasCalculator,
         maxBlobsPerBlock,
         targetBlobsPerBlock,
-        DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA);
+        DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA,
+        maxBlobsPerTransaction);
   }
 
   public OsakaTargetingGasLimitCalculator(
@@ -49,14 +52,28 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final GasCalculator gasCalculator,
       final int maxBlobsPerBlock,
       final int targetBlobsPerBlock,
-      final long transactionGasLimitCap) {
+      final long transactionGasLimitCap,
+      final int maxBlobsPerTransaction) {
     super(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock, targetBlobsPerBlock);
+    if (maxBlobsPerTransaction > maxBlobsPerBlock) {
+      String errorMessage =
+          String.format(
+              "maxBlobsPerTransaction (%d) must not be greater than maxBlobsPerBlock (%d)",
+              maxBlobsPerTransaction, maxBlobsPerBlock);
+      throw new IllegalArgumentException(errorMessage);
+    }
     this.transactionGasLimitCap = transactionGasLimitCap;
+    this.transactionBlobGasLimitCap = gasCalculator.getBlobGasPerBlob() * maxBlobsPerTransaction;
   }
 
   @Override
   public long transactionGasLimitCap() {
     return transactionGasLimitCap;
+  }
+
+  @Override
+  public long transactionBlobGasLimitCap() {
+    return transactionBlobGasLimitCap;
   }
 
   @Override
