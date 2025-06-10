@@ -60,6 +60,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
@@ -85,6 +87,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.core.net.SocketAddress;
@@ -229,6 +232,13 @@ public class EngineJsonRpcService {
     }
     final CompletableFuture<Void> resultFuture = new CompletableFuture<>();
     try {
+
+      // TODO SLD: Enables very large transaction decoding for perfnet testing
+      ObjectMapper om = DatabindCodec.mapper();
+      StreamReadConstraints src =
+          StreamReadConstraints.builder().maxStringLength(Integer.MAX_VALUE).build();
+      om.getFactory().setStreamReadConstraints(src); // registers globally in vert.x
+
       // Create the HTTP server and a router object.
       httpServer = vertx.createHttpServer(getHttpServerOptions());
       httpServer.webSocketHandler(webSocketHandler());
