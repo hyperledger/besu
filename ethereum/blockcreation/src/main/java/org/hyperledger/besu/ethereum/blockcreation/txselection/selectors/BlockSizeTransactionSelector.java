@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.BlockSizeBlockValidator;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
@@ -29,14 +30,21 @@ import org.slf4j.LoggerFactory;
  * evaluating transactions based on block size. It checks if a transaction is too large for the
  * block and determines the selection result accordingly.
  */
-public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSelector<Long> {
+public class BlockSizeTransactionSelector
+    extends AbstractStatefulTransactionSelector<
+        BlockSizeTransactionSelector.BlockSizeWorkingState> {
   private static final Logger LOG = LoggerFactory.getLogger(BlockSizeTransactionSelector.class);
+  public static final long MAX_HEADER_SIZE = 1024L;
 
   private final long blockGasLimit;
 
   public BlockSizeTransactionSelector(
       final BlockSelectionContext context, final SelectorsStateManager selectorsStateManager) {
-    super(context, selectorsStateManager, 0L, SelectorsStateManager.StateDuplicator::duplicateLong);
+    super(
+        context,
+        selectorsStateManager,
+        new BlockSizeWorkingState(0L, MAX_HEADER_SIZE),
+        BlockSizeWorkingState::duplicate);
     this.blockGasLimit = context.pendingBlockHeader().getGasLimit();
   }
 
@@ -51,7 +59,9 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
   public TransactionSelectionResult evaluateTransactionPreProcessing(
       final TransactionEvaluationContext evaluationContext) {
 
-    final long cumulativeGasUsed = getWorkingState();
+    final BlockSizeWorkingState workingState = getWorkingState();
+    final long cumulativeGasUsed = workingState.cumulativeGasUsed;
+    final long cumulativeBlockSize = workingState.cumulativeBlockSize;
 
     if (transactionTooLargeForBlock(evaluationContext.getTransaction(), cumulativeGasUsed)) {
       LOG.atTrace()
@@ -64,6 +74,9 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
       } else if (blockFull(cumulativeGasUsed)) {
         LOG.trace("Block full, completing operation");
         return TransactionSelectionResult.BLOCK_FULL;
+      } else if (blockSizeAboveThreshold(evaluationContext.getTransaction(), cumulativeBlockSize)) {
+        LOG.trace("Block size exceeds block limit, completing operation");
+        return TransactionSelectionResult.BLOCK_SIZE_ABOVE_THRESHOLD;
       } else {
         return TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
       }
@@ -77,7 +90,13 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
       final TransactionProcessingResult processingResult) {
     final long gasUsedByTransaction =
         evaluationContext.getTransaction().getGasLimit() - processingResult.getGasRemaining();
-    setWorkingState(getWorkingState() + gasUsedByTransaction);
+    final BlockSizeWorkingState currentWorkingState = getWorkingState();
+    final BlockSizeWorkingState updatedWorkingState =
+        new BlockSizeWorkingState(
+            currentWorkingState.cumulativeGasUsed + gasUsedByTransaction,
+            currentWorkingState.cumulativeBlockSize()
+                + evaluationContext.getTransaction().getSize());
+    setWorkingState(updatedWorkingState);
 
     return TransactionSelectionResult.SELECTED;
   }
@@ -133,5 +152,34 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
       return true;
     }
     return false;
+  }
+
+  /**
+   * Checks if the block max size has been reached
+   *
+   * @param transaction The transaction to be checked.
+   * @param cumulativeBlockSize The cumulative block size used by previous txs.
+   * @return True if the transaction would go over the block size limit, false otherwise.
+   */
+  private boolean blockSizeAboveThreshold(
+      final Transaction transaction, final long cumulativeBlockSize) {
+    final long blockSizeRemaining =
+        BlockSizeBlockValidator.MAX_RLP_BLOCK_SIZE - cumulativeBlockSize;
+
+    if (blockSizeRemaining < transaction.getSize()) {
+      LOG.trace(
+          "Block full, transaction bytes gas {} is less than minimum transaction gas cost {}",
+          blockSizeRemaining,
+          context.gasCalculator().getMinimumTransactionCost());
+      return true;
+    }
+    return false;
+  }
+
+  public record BlockSizeWorkingState(long cumulativeGasUsed, long cumulativeBlockSize) {
+
+    static BlockSizeWorkingState duplicate(final BlockSizeWorkingState state) {
+      return new BlockSizeWorkingState(state.cumulativeGasUsed, state.cumulativeBlockSize);
+    }
   }
 }
