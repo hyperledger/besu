@@ -595,7 +595,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.Option(
       names = {"--cache-precompiles"},
       description = "Specifies whether to cache precompile results (default: ${DEFAULT-VALUE})")
-  private final Boolean enablePrecompileCaching = true;
+  private final Boolean enablePrecompileCaching = false;
 
   // Plugins Configuration Option Group
   @CommandLine.ArgGroup(validate = false)
