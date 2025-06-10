@@ -98,9 +98,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 
 @SuppressWarnings("unchecked")
-@ExtendWith({MockitoExtension.class, TrustedSetupClassLoaderExtension.class})
+@ExtendWith({MockitoExtension.class})
 @MockitoSettings(strictness = LENIENT)
-public abstract class AbstractTransactionPoolTestBase {
+public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassLoaderExtension {
 
   protected static final KeyPair KEY_PAIR1 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
