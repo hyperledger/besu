@@ -37,12 +37,12 @@ import org.slf4j.LoggerFactory;
 public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   private static final Logger LOG = LoggerFactory.getLogger(P256VerifyPrecompiledContract.class);
   private static final String PRECOMPILE_NAME = "P256VERIFY";
-  private static final SECP256R1 algorithm = new SECP256R1();
-  private static final BigInteger CURVE_ORDER = algorithm.getCurve().getCurve().getOrder();
   private static final Bytes32 VALID = Bytes32.leftPad(Bytes.of(1), (byte) 0);
   private static final Bytes INVALID = Bytes.EMPTY;
 
   private final GasCalculator gasCalculator;
+  private final SignatureAlgorithm signatureAlgorithm;
+  private  final BigInteger curveOrder;
 
   //  private static final Cache<Integer, PrecompileInputResultTuple> p256VerifyCache =
   //      Caffeine.newBuilder().maximumSize(1000).build();
@@ -52,9 +52,15 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
    *
    * @param gasCalculator the gas calculator
    */
-  protected P256VerifyPrecompiledContract(final GasCalculator gasCalculator) {
+  public P256VerifyPrecompiledContract(final GasCalculator gasCalculator) {
+    this(gasCalculator, new SECP256R1());
+  }
+
+  public P256VerifyPrecompiledContract(final GasCalculator gasCalculator, final SignatureAlgorithm signatureAlgorithm) {
     super(PRECOMPILE_NAME, gasCalculator);
     this.gasCalculator = gasCalculator;
+    this.signatureAlgorithm = signatureAlgorithm;
+    this.curveOrder = signatureAlgorithm.getCurve().getCurve().getOrder();
   }
 
   @Override
@@ -83,14 +89,14 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
       final BigInteger s = sBytes.toUnsignedBigInteger();
 
       // Create the signature; recID is not used in verification - use 0
-      final SECPSignature signature = SECPSignature.create(r, s, (byte) 0, CURVE_ORDER);
+      final SECPSignature signature = SECPSignature.create(r, s, (byte) 0, curveOrder);
 
       // Construct public key from 64-byte uncompressed format (x || y)
       final SECPPublicKey publicKey =
           SECPPublicKey.create(pubKeyBytes, SignatureAlgorithm.ALGORITHM);
 
       // Perform verification TODO: implement bouncycastle malleable
-      final boolean isValid = algorithm.verifyMalleable(messageHash, signature, publicKey);
+      final boolean isValid = signatureAlgorithm.verifyMalleable(messageHash, signature, publicKey);
 
       return PrecompileContractResult.success(isValid ? VALID : INVALID);
     } catch (Exception e) {
