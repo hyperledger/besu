@@ -56,8 +56,6 @@ public class PathBasedExtraStorageOptions
   public static final String TRIE_LOG_PRUNING_WINDOW_SIZE =
       "--bonsai-trie-logs-pruning-window-size";
 
-  // remove in a future release
-  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @Option(
       names = {LIMIT_TRIE_LOGS_ENABLED},
       fallbackValue = "true",
