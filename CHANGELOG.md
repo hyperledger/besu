@@ -2,6 +2,7 @@
 ## Unreleased
 ### Breaking Changes
 - Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins [#8589](https://github.com/hyperledger/besu/pull/8589) [#8746](https://github.com/hyperledger/besu/pull/8746)
+- `BesuContext` is removed, since deprecated in favor of `ServiceManager` since `24.12.0`
 - Remove the deprecated `--Xbonsai-limit-trie-logs-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
 - Remove the deprecated `--Xbonsai-trie-log-pruning-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
 
@@ -10,6 +11,7 @@
 #### Fusaka Devnet
 - EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
 - EIP-7823 - Modexp upper bounds [#8632](https://github.com/hyperledger/besu/pull/8632)
+- implement rewardPercentile cap in eth_feeHistory [#8748](https://github.com/hyperledger/besu/pull/8748)
 
 ### Bug fixes
 

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
@@ -73,7 +74,7 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public String getName() {
-    return "engine_getBlobsV1";
+    return RpcMethod.ENGINE_GET_BLOBS_V1.getMethodName();
   }
 
   @Override

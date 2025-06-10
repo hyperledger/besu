@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
@@ -48,7 +49,8 @@ public class BlobGasValidationRule implements DetachedBlockHeaderValidationRule 
     long parentBlobGasUsed = parent.getBlobGasUsed().orElse(0L);
 
     long calculatedExcessBlobGas =
-        gasLimitCalculator.computeExcessBlobGas(parentExcessBlobGas, parentBlobGasUsed);
+        gasLimitCalculator.computeExcessBlobGas(
+            parentExcessBlobGas, parentBlobGasUsed, parent.getBaseFee().orElse(Wei.ZERO).toLong());
 
     if (headerExcessBlobGas != calculatedExcessBlobGas) {
       LOG.info(
