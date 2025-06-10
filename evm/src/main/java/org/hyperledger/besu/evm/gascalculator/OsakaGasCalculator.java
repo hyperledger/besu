@@ -34,8 +34,13 @@ import org.apache.tuweni.bytes.Bytes;
  * </UL>
  */
 public class OsakaGasCalculator extends PragueGasCalculator {
+  /** The maximum size of a block in bytes */
   public static final int MAX_BLOCK_SIZE = 10_485_760;
+
+  /** The safety margin to take the CL block overhead into account */
   public static final int SAFETY_MARGIN = 2_097_152;
+
+  /** The maximum size of an RLP encoded block size in bytes */
   public static final int MAX_RLP_BLOCK_SIZE = MAX_BLOCK_SIZE - SAFETY_MARGIN;
 
   /** Instantiates a new Osaka Gas Calculator. */
@@ -112,6 +117,11 @@ public class OsakaGasCalculator extends PragueGasCalculator {
     }
   }
 
+  /**
+   * Returns the maximum size of an RLP encoded block size in bytes
+   *
+   * @return the maximum rlp block size
+   */
   @Override
   public int maxRlpBlockSize() {
     return MAX_RLP_BLOCK_SIZE;
