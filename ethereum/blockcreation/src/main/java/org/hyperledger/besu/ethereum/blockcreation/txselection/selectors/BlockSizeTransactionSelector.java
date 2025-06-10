@@ -73,12 +73,12 @@ public class BlockSizeTransactionSelector
       } else if (blockFull(cumulativeGasUsed)) {
         LOG.trace("Block full, completing operation");
         return TransactionSelectionResult.BLOCK_FULL;
-      } else if (blockSizeAboveThreshold(evaluationContext.getTransaction(), cumulativeBlockSize)) {
-        LOG.trace("Block size exceeds block limit, completing operation");
-        return TransactionSelectionResult.BLOCK_SIZE_ABOVE_THRESHOLD;
       } else {
         return TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
       }
+    } else if (blockSizeAboveThreshold(evaluationContext.getTransaction(), cumulativeBlockSize)) {
+      LOG.trace("Block size above threshold, completing operation");
+      return TransactionSelectionResult.BLOCK_SIZE_ABOVE_THRESHOLD;
     }
     return TransactionSelectionResult.SELECTED;
   }

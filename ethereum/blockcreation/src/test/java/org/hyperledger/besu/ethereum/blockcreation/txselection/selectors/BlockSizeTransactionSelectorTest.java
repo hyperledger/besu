@@ -21,6 +21,7 @@ import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -71,6 +72,9 @@ class BlockSizeTransactionSelectorTest {
     miningConfiguration = MiningConfiguration.newDefault();
     when(blockSelectionContext.pendingBlockHeader().getGasLimit()).thenReturn(BLOCK_GAS_LIMIT);
     when(blockSelectionContext.miningConfiguration()).thenReturn(miningConfiguration);
+    lenient()
+        .when(blockSelectionContext.gasCalculator().maxRlpBlockSize())
+        .thenReturn(Integer.MAX_VALUE);
 
     selectorsStateManager = new SelectorsStateManager();
     selector = new BlockSizeTransactionSelector(blockSelectionContext, selectorsStateManager);
@@ -86,7 +90,7 @@ class BlockSizeTransactionSelectorTest {
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext, remainingGas(0));
 
-    assertThat(selector.getWorkingState()).isEqualTo(TRANSFER_GAS_LIMIT);
+    assertThat(selector.getWorkingState().cumulativeGasUsed()).isEqualTo(TRANSFER_GAS_LIMIT);
   }
 
   @Test
@@ -99,7 +103,7 @@ class BlockSizeTransactionSelectorTest {
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertNotSelected(txEvaluationContext, TX_TOO_LARGE_FOR_REMAINING_GAS);
 
-    assertThat(selector.getWorkingState()).isEqualTo(0);
+    assertThat(selector.getWorkingState().cumulativeGasUsed()).isEqualTo(0);
   }
 
   @Test
@@ -113,7 +117,8 @@ class BlockSizeTransactionSelectorTest {
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext, remainingGas(remainingGas));
 
-    assertThat(selector.getWorkingState()).isEqualTo(TRANSFER_GAS_LIMIT * 2 - remainingGas);
+    assertThat(selector.getWorkingState().cumulativeGasUsed())
+        .isEqualTo(TRANSFER_GAS_LIMIT * 2 - remainingGas);
   }
 
   @Test
@@ -133,7 +138,8 @@ class BlockSizeTransactionSelectorTest {
               evaluateAndAssertSelected(txEvaluationContext, remainingGas(0));
             });
 
-    assertThat(selector.getWorkingState()).isEqualTo(TRANSFER_GAS_LIMIT * txCount);
+    assertThat(selector.getWorkingState().cumulativeGasUsed())
+        .isEqualTo(TRANSFER_GAS_LIMIT * txCount);
   }
 
   @Test
@@ -153,7 +159,8 @@ class BlockSizeTransactionSelectorTest {
               evaluateAndAssertSelected(txEvaluationContext, remainingGas(0));
             });
 
-    assertThat(selector.getWorkingState()).isEqualTo(TRANSFER_GAS_LIMIT * txCount);
+    assertThat(selector.getWorkingState().cumulativeGasUsed())
+        .isEqualTo(TRANSFER_GAS_LIMIT * txCount);
 
     // last tx is too big for the remaining gas
     final long tooBigGasLimit = BLOCK_GAS_LIMIT - (TRANSFER_GAS_LIMIT * txCount) + 1;
@@ -167,7 +174,8 @@ class BlockSizeTransactionSelectorTest {
             null);
     evaluateAndAssertNotSelected(bigTxEvaluationContext, TX_TOO_LARGE_FOR_REMAINING_GAS);
 
-    assertThat(selector.getWorkingState()).isEqualTo(TRANSFER_GAS_LIMIT * txCount);
+    assertThat(selector.getWorkingState().cumulativeGasUsed())
+        .isEqualTo(TRANSFER_GAS_LIMIT * txCount);
   }
 
   @Test
@@ -185,7 +193,8 @@ class BlockSizeTransactionSelectorTest {
             blockSelectionContext.pendingBlockHeader(), tx1, null, null, null);
     evaluateAndAssertSelected(txEvaluationContext1, remainingGas(0));
 
-    assertThat(selector.getWorkingState()).isEqualTo(justAboveOccupancyRatioGasLimit);
+    assertThat(selector.getWorkingState().cumulativeGasUsed())
+        .isEqualTo(justAboveOccupancyRatioGasLimit);
 
     final var tx2 = createPendingTransaction(justAboveOccupancyRatioGasLimit);
 
@@ -194,7 +203,8 @@ class BlockSizeTransactionSelectorTest {
             blockSelectionContext.pendingBlockHeader(), tx2, null, null, null);
     evaluateAndAssertNotSelected(txEvaluationContext2, BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
 
-    assertThat(selector.getWorkingState()).isEqualTo(justAboveOccupancyRatioGasLimit);
+    assertThat(selector.getWorkingState().cumulativeGasUsed())
+        .isEqualTo(justAboveOccupancyRatioGasLimit);
   }
 
   @Test
@@ -217,7 +227,7 @@ class BlockSizeTransactionSelectorTest {
             blockSelectionContext.pendingBlockHeader(), tx1, null, null, null);
     evaluateAndAssertSelected(txEvaluationContext1, remainingGas(0));
 
-    assertThat(selector.getWorkingState()).isEqualTo(fillBlockGasLimit);
+    assertThat(selector.getWorkingState().cumulativeGasUsed()).isEqualTo(fillBlockGasLimit);
 
     final var tx2 = createPendingTransaction(TRANSFER_GAS_LIMIT);
 
@@ -226,7 +236,7 @@ class BlockSizeTransactionSelectorTest {
             blockSelectionContext.pendingBlockHeader(), tx2, null, null, null);
     evaluateAndAssertNotSelected(txEvaluationContext2, BLOCK_FULL);
 
-    assertThat(selector.getWorkingState()).isEqualTo(fillBlockGasLimit);
+    assertThat(selector.getWorkingState().cumulativeGasUsed()).isEqualTo(fillBlockGasLimit);
   }
 
   private void evaluateAndAssertSelected(
