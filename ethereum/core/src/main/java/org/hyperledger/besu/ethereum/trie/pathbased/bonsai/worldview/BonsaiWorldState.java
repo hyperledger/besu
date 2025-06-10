@@ -190,9 +190,10 @@ public class BonsaiWorldState extends PathBasedWorldState {
           accountTrie.put(addressHash, accountValueTrie);
 
           // put the account into the flat database
-          final Bytes accountValueFlat = updatedAccount.serializeAccountWithCodeSize();
           maybeStateUpdater.ifPresent(
               bonsaiUpdater -> {
+                final Bytes accountValueFlat = updatedAccount.serializeAccountWithExtras();
+
                 bonsaiUpdater.putAccountInfoState(
                     hashAndSavePreImage(accountKey), accountValueFlat);
               });

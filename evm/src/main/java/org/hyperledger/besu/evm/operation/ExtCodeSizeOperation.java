@@ -96,7 +96,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       return Bytes.EMPTY;
     }
 
-    // flat db has the code size stored in the account
+    // flat db has the code size stored in the account or will calculate it from the code
     final Optional<Integer> maybeStoredCodeSize = account.getCodeSize();
     if (maybeStoredCodeSize.isPresent()) {
       return Words.intBytes(maybeStoredCodeSize.get());

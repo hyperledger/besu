@@ -215,7 +215,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     return out.encoded();
   }
 
-  public Bytes serializeAccountWithCodeSize() {
+  public Bytes serializeAccountWithExtras() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     writeToWithExtras(out);
     return out.encoded();

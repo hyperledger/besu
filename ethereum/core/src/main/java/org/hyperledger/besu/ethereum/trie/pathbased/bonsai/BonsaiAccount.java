@@ -167,12 +167,28 @@ public class BonsaiAccount extends PathBasedAccount {
     out.writeUInt256Scalar(balance);
     out.writeBytes(storageRoot);
     out.writeBytes(codeHash);
-
-    if (maybeCodeSize.isPresent()) {
-      out.writeIntScalar(code.size());
-    }
+    writeCodeSizeIfPresent(out);
 
     out.endList();
+  }
+
+  private void writeCodeSizeIfPresent(final RLPOutput out) {
+    if (maybeCodeSize.isPresent()) {
+      out.writeIntScalar(maybeCodeSize.get());
+      return;
+    }
+
+    if (codeHash.equals(Hash.EMPTY)) {
+      out.writeIntScalar(0);
+      return;
+    }
+
+    if (code == null) {
+      return; // Code is not loaded or does not exist, so we cannot write its size
+    }
+
+    maybeCodeSize = Optional.of(code.size());
+    out.writeIntScalar(maybeCodeSize.get());
   }
 
   @Override

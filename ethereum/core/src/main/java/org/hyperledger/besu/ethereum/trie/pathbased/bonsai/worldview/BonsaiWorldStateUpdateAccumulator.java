@@ -29,6 +29,8 @@ import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class BonsaiWorldStateUpdateAccumulator
     extends PathBasedWorldStateUpdateAccumulator<BonsaiAccount> {
   public BonsaiWorldStateUpdateAccumulator(
@@ -89,7 +91,7 @@ public class BonsaiWorldStateUpdateAccumulator
         balance,
         storageRoot,
         codeHash,
-        Optional.of(0),
+        codeHash.equals(Bytes.EMPTY) ? Optional.of(0) : Optional.empty(),
         mutable);
   }
 
