@@ -34,20 +34,20 @@ public class BlockSizeBlockValidator extends MainnetBlockValidator {
    * @param blockProcessor the BlockProcessor used to process blocks
    */
   public BlockSizeBlockValidator(
-      BlockHeaderValidator blockHeaderValidator,
-      BlockBodyValidator blockBodyValidator,
-      BlockProcessor blockProcessor) {
+      final BlockHeaderValidator blockHeaderValidator,
+      final BlockBodyValidator blockBodyValidator,
+      final BlockProcessor blockProcessor) {
     super(blockHeaderValidator, blockBodyValidator, blockProcessor);
   }
 
   @Override
   public BlockProcessingResult validateAndProcessBlock(
-      ProtocolContext context,
-      Block block,
-      HeaderValidationMode headerValidationMode,
-      HeaderValidationMode ommerValidationMode,
-      boolean shouldUpdateHead,
-      boolean shouldRecordBadBlock) {
+      final ProtocolContext context,
+      final Block block,
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode,
+      final boolean shouldUpdateHead,
+      final boolean shouldRecordBadBlock) {
     final int blockSize = block.calculateSize();
     if (blockSize > MAX_RLP_BLOCK_SIZE) {
       final String errorMessage =
