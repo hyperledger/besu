@@ -30,31 +30,31 @@
       "bpo1": {
         "target": 11,
         "max": 12,
-        "maxPerTx": 13,
+        "maxBlobsPerTx": 13,
         "baseFeeUpdateFraction": 5007716
       },
       "bpo2": {
         "target": 21,
         "max": 22,
-        "maxPerTx": 23,
+        "maxBlobsPerTx": 23,
         "baseFeeUpdateFraction": 5007716
       },
       "bpo3": {
         "target": 31,
         "max": 32,
-        "maxPerTx": 33,
+        "maxBlobsPerTx": 33,
         "baseFeeUpdateFraction": 5007716
       },
       "bpo4": {
         "target": 41,
         "max": 42,
-        "maxPerTx": 43,
+        "maxBlobsPerTx": 43,
         "baseFeeUpdateFraction": 5007716
       },
       "bpo5": {
         "target": 51,
         "max": 52,
-        "maxPerTx": 53,
+        "maxBlobsPerTx": 53,
         "baseFeeUpdateFraction": 5007716
       },
       "future_eips": {

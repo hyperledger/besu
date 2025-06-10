@@ -51,7 +51,7 @@ public class BlobSchedule {
   public static BlobSchedule create(final ObjectNode blobScheduleConfigRoot) {
     int target = JsonUtil.getInt(blobScheduleConfigRoot, "target").orElseThrow();
     int max = JsonUtil.getInt(blobScheduleConfigRoot, "max").orElseThrow();
-    int maxPerTransaction = JsonUtil.getInt(blobScheduleConfigRoot, "maxpertx").orElse(max);
+    int maxPerTransaction = JsonUtil.getInt(blobScheduleConfigRoot, "maxblobspertx").orElse(max);
     int baseFeeUpdateFraction =
         JsonUtil.getInt(blobScheduleConfigRoot, "basefeeupdatefraction").orElseThrow();
     return create(target, max, maxPerTransaction, baseFeeUpdateFraction);
