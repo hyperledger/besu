@@ -166,8 +166,8 @@ public abstract class BenchmarkExecutor {
                 asyncProfiler
                     .get()
                     .execute(processProfilerArgs(options, testName.replaceAll("\\s", "-")));
-              } catch (Throwable e) {
-                output.println("async profiler unavailable");
+              } catch (Throwable t) {
+                output.println("async profiler unavailable: " + t.getMessage());
               }
             });
 
@@ -183,8 +183,8 @@ public abstract class BenchmarkExecutor {
     if (asyncProfiler.get() != null) {
       try {
         asyncProfiler.get().stop();
-      } catch (Throwable e) {
-        output.println("async profiler unavailable");
+      } catch (Throwable t) {
+        output.println("async profiler unavailable: " + t.getMessage());
       }
     }
 
