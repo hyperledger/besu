@@ -23,6 +23,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -42,10 +44,9 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
 
   private final GasCalculator gasCalculator;
   private final SignatureAlgorithm signatureAlgorithm;
-  private  final BigInteger curveOrder;
 
-  //  private static final Cache<Integer, PrecompileInputResultTuple> p256VerifyCache =
-  //      Caffeine.newBuilder().maximumSize(1000).build();
+  private static final Cache<Integer, PrecompileInputResultTuple> p256VerifyCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
 
   /**
    * Instantiates a new Abstract precompiled contract.
@@ -56,11 +57,11 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
     this(gasCalculator, new SECP256R1());
   }
 
-  public P256VerifyPrecompiledContract(final GasCalculator gasCalculator, final SignatureAlgorithm signatureAlgorithm) {
+  public P256VerifyPrecompiledContract(
+      final GasCalculator gasCalculator, final SignatureAlgorithm signatureAlgorithm) {
     super(PRECOMPILE_NAME, gasCalculator);
     this.gasCalculator = gasCalculator;
     this.signatureAlgorithm = signatureAlgorithm;
-    this.curveOrder = signatureAlgorithm.getCurve().getCurve().getOrder();
   }
 
   @Override
@@ -77,6 +78,29 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
           input.size());
       return PrecompileContractResult.success(INVALID);
     }
+    PrecompileInputResultTuple res;
+    Integer cacheKey = null;
+    if (enableResultCaching) {
+      cacheKey = getCacheKey(input);
+      res = p256VerifyCache.getIfPresent(cacheKey);
+
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          LOG.debug(
+              "false positive p256verify {}, cache key {}, cached input: {}, input: {}",
+              input.getClass().getSimpleName(),
+              cacheKey,
+              res.cachedInput().toHexString(),
+              input.toHexString());
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
+      }
+    }
 
     final Bytes messageHash = input.slice(0, 32);
     final Bytes rBytes = input.slice(32, 32);
@@ -89,16 +113,23 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
       final BigInteger s = sBytes.toUnsignedBigInteger();
 
       // Create the signature; recID is not used in verification - use 0
-      final SECPSignature signature = SECPSignature.create(r, s, (byte) 0, curveOrder);
+      final SECPSignature signature = signatureAlgorithm.createSignature(r, s, (byte) 0);
 
       // Construct public key from 64-byte uncompressed format (x || y)
-      final SECPPublicKey publicKey =
-          SECPPublicKey.create(pubKeyBytes, SignatureAlgorithm.ALGORITHM);
+      final SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(pubKeyBytes);
 
       // Perform verification TODO: implement bouncycastle malleable
       final boolean isValid = signatureAlgorithm.verifyMalleable(messageHash, signature, publicKey);
 
-      return PrecompileContractResult.success(isValid ? VALID : INVALID);
+      res =
+          new PrecompileInputResultTuple(
+              enableResultCaching ? input.copy() : input,
+              PrecompileContractResult.success(isValid ? VALID : INVALID));
+      if (enableResultCaching) {
+        p256VerifyCache.put(cacheKey, res);
+      }
+      return res.cachedResult();
+
     } catch (Exception e) {
       LOG.warn("P256VERIFY verification failed: {}", e.getMessage());
       System.err.println("P256VERIFY verification failed: " + e.getMessage());
