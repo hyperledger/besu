@@ -94,6 +94,9 @@ public class TrustedSetupClassLoaderExtension implements BeforeAllCallback {
       // Check if the exception indicates invalid arguments (C_KZG_BADARGS),
       // which confirms the trusted setup is loaded.
       return e.getError() == CKZGException.CKZGError.C_KZG_BADARGS;
+    } catch (RuntimeException e) {
+      // If we encounter a RuntimeException, native library is not loaded
+      return false;
     }
   }
 }
