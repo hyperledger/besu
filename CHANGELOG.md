@@ -2,6 +2,9 @@
 ## Unreleased
 ### Breaking Changes
 - Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins [#8589](https://github.com/hyperledger/besu/pull/8589) [#8746](https://github.com/hyperledger/besu/pull/8746)
+- `BesuContext` is removed, since deprecated in favor of `ServiceManager` since `24.12.0`
+- Remove the deprecated `--Xbonsai-limit-trie-logs-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
+- Remove the deprecated `--Xbonsai-trie-log-pruning-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
 
 ### Upcoming Breaking Changes
 ### Additions and Improvements
@@ -21,6 +24,7 @@
 - Remove the deprecated `--tx-pool-disable-locals` option, use `--tx-pool-no-local-priority` instead. [#8614](https://github.com/hyperledger/besu/pull/8614)
 - Remove the deprecated `--Xsnapsync-synchronizer-flat-db-healing-enabled`, use `--Xbonsai-full-flat-db-enabled` instead. [#8415](https://github.com/hyperledger/besu/issues/8415)
 - Change in behavior, the non-standard `strict` parameter of the `eth_estimateGas` method changed its default from `false` to `true`, for more accurate estimations. It is still possible to force the previous behavior, explicitly passing the `strict` parameter in the request, set to `false` [#8629](https://github.com/hyperledger/besu/pull/8629)
+
 
 ### Upcoming Breaking Changes
 - `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.

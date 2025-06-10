@@ -52,7 +52,7 @@ public class DataStorageOptionsTest
                         .getPathBasedExtraStorageConfiguration()
                         .getTrieLogPruningWindowSize())
                 .isEqualTo(600),
-        "--Xbonsai-limit-trie-logs-enabled",
+        "--bonsai-limit-trie-logs-enabled",
         "--Xbonsai-trie-logs-pruning-window-size",
         "600");
   }
