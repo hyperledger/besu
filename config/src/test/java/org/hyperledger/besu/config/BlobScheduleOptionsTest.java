@@ -39,6 +39,7 @@ public class BlobScheduleOptionsTest {
   public void blobScheduleIsParsed() {
     assertParsed(options::getCancun, 4, 7, 3338477);
     assertParsed(options::getPrague, 7, 10, 5007716);
+    assertParsed(options::getOsaka, 8, 11, 5007716);
     assertParsed(options::getBpo1, 11, 12, 5007716);
     assertParsed(options::getBpo2, 21, 22, 5007716);
     assertParsed(options::getBpo3, 31, 32, 5007716);
