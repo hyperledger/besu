@@ -399,6 +399,76 @@ public class ModExpBenchmark extends BenchmarkExecutor {
                 + "ffffffffffffffffffffffff"
                 + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
 
+    testcases.put(
+        "ModexpVulnerabilityPawel1ExpHeavyCACHABLE",
+        Bytes.fromHexString(
+            "0000000000000000000000000000000000000000000000000000000000000008"
+                + "0000000000000000000000000000000000000000000000000000000000000070"
+                + "0000000000000000000000000000000000000000000000000000000000000008"
+                + "ffffffffffffffff"
+                + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                + "ffffffffffffff00"));
+
+    testcases.put(
+        "ModexpMinGasExpHeavyUNCACHABLE",
+        Bytes.fromHexString(
+            "0000000000000000000000000000000000000000000000000000000000000008"
+                + "000000000000000000000000000000000000000000000000000000000000004c"
+                + "0000000000000000000000000000000000000000000000000000000000000008"
+                + "ffffff8effffffff"
+                + "07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                + "0100000000000000"));
+
+    testcases.put(
+        "Modexp215GasExpHeavyUNCACHABLE",
+        Bytes.fromHexString(
+            "0000000000000000000000000000000000000000000000000000000000000008"
+                + "000000000000000000000000000000000000000000000000000000000000004c"
+                + "0000000000000000000000000000000000000000000000000000000000000008"
+                + "ff23ffe7ffffffff"
+                + "07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                + "5b00000000000000"));
+
+    testcases.put(
+        "Modexp298GasExpHeavyUNCACHABLE",
+        Bytes.fromHexString(
+            "0000000000000000000000000000000000000000000000000000000000000008"
+                + "000000000000000000000000000000000000000000000000000000000000004c"
+                + "0000000000000000000000000000000000000000000000000000000000000008"
+                + "ffff0fe7ffffffff"
+                + "07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                + "5a00000000000000"));
+
+    testcases.put(
+        "Modexp298GasExpHeavyUNCACHABLE2",
+        Bytes.fromHexString(
+            "0000000000000000000000000000000000000000000000000000000000000008"
+                + "000000000000000000000000000000000000000000000000000000000000004c"
+                + "0000000000000000000000000000000000000000000000000000000000000008"
+                + "f5ffffe7ffffffff"
+                + "07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                + "5b00000000000000"));
+
+    testcases.put(
+        "ModexpMinGasExpHeavyUNCACHABLE2",
+        Bytes.fromHexString(
+            "0000000000000000000000000000000000000000000000000000000000000008"
+                + "000000000000000000000000000000000000000000000000000000000000004c"
+                + "0000000000000000000000000000000000000000000000000000000000000008"
+                + "ff93ffe7ffffffff"
+                + "07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                + "6e00000000000000"));
+
+    testcases.put(
+        "Modexp215GasExpHeavyUNCACHABLE2",
+        Bytes.fromHexString(
+            "0000000000000000000000000000000000000000000000000000000000000008"
+                + "000000000000000000000000000000000000000000000000000000000000004c"
+                + "0000000000000000000000000000000000000000000000000000000000000008"
+                + "ffffd7e7ffffffff"
+                + "07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                + "6000000000000000"));
+
     final BigIntegerModularExponentiationPrecompiledContract contract =
         BigIntegerModularExponentiationPrecompiledContract.osaka(gasCalculatorForFork(fork));
 
