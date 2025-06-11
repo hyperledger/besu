@@ -27,20 +27,21 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.asn1.sec.SECNamedCurves;
+import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Draft implementation of RIP-7212 / EIP-7951.
- *
- * <p>TODO: malleable signatures, point at infinity check, modular comparison, caching
- * implementation
- */
+/** Implementation of EIP-7951. */
 public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   private static final Logger LOG = LoggerFactory.getLogger(P256VerifyPrecompiledContract.class);
   private static final String PRECOMPILE_NAME = "P256VERIFY";
   private static final Bytes32 VALID = Bytes32.leftPad(Bytes.of(1), (byte) 0);
   private static final Bytes INVALID = Bytes.EMPTY;
+
+  private static final X9ECParameters R1_PARAMS = SECNamedCurves.getByName("secp256r1");
+  private static final BigInteger N = R1_PARAMS.getN();
+  private static final BigInteger P = R1_PARAMS.getCurve().getField().getCharacteristic();
 
   private final GasCalculator gasCalculator;
   private final SignatureAlgorithm signatureAlgorithm;
@@ -49,7 +50,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
       Caffeine.newBuilder().maximumSize(1000).build();
 
   /**
-   * Instantiates a new Abstract precompiled contract.
+   * Instantiates a new P256Verify precompiled contract.
    *
    * @param gasCalculator the gas calculator
    */
@@ -57,6 +58,12 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
     this(gasCalculator, new SECP256R1());
   }
 
+  /**
+   * Instantiates a new P256Verify precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   * @param signatureAlgorithm the signature algorithm
+   */
   public P256VerifyPrecompiledContract(
       final GasCalculator gasCalculator, final SignatureAlgorithm signatureAlgorithm) {
     super(PRECOMPILE_NAME, gasCalculator);
@@ -78,7 +85,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
           input.size());
       return PrecompileContractResult.success(INVALID);
     }
-    PrecompileInputResultTuple res;
+    PrecompileInputResultTuple res = null;
     Integer cacheKey = null;
     if (enableResultCaching) {
       cacheKey = getCacheKey(input);
@@ -106,25 +113,55 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
     final Bytes rBytes = input.slice(32, 32);
     final Bytes sBytes = input.slice(64, 32);
     final Bytes pubKeyBytes = input.slice(96, 64);
+    final BigInteger qx = pubKeyBytes.slice(0, 32).toUnsignedBigInteger();
+    final BigInteger qy = pubKeyBytes.slice(32, 32).toUnsignedBigInteger();
 
     try {
       // Convert r and s to BigIntegers (unsigned)
       final BigInteger r = rBytes.toUnsignedBigInteger();
       final BigInteger s = sBytes.toUnsignedBigInteger();
 
-      // Create the signature; recID is not used in verification - use 0
-      final SECPSignature signature = signatureAlgorithm.createSignature(r, s, (byte) 0);
+      // Check r, s in (0, n)
+      if (r.signum() <= 0 || r.compareTo(N) >= 0 || s.signum() <= 0 || s.compareTo(N) >= 0) {
+        LOG.trace("Invalid r or s: must satisfy 0 < r,s < n");
+        res =
+            new PrecompileInputResultTuple(
+                enableResultCaching ? input.copy() : input,
+                PrecompileContractResult.success(INVALID));
+      }
 
-      // Construct public key from 64-byte uncompressed format (x || y)
-      final SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(pubKeyBytes);
+      // Check qx, qy in [0, p)
+      if (qx.signum() < 0 || qx.compareTo(P) >= 0 || qy.signum() < 0 || qy.compareTo(P) >= 0) {
+        LOG.trace("Invalid qx or qy: must satisfy 0 <= qx,qy < p");
+        res =
+            new PrecompileInputResultTuple(
+                enableResultCaching ? input.copy() : input,
+                PrecompileContractResult.success(INVALID));
+      }
 
-      // Perform verification TODO: implement bouncycastle malleable
-      final boolean isValid = signatureAlgorithm.verifyMalleable(messageHash, signature, publicKey);
+      // Check point not at infinity (qx, qy ≠ 0,0), and non-trivial infinity encoding
+      if ((qx.signum() == 0 && qy.signum() == 0)) {
+        LOG.trace("Invalid public key: point at infinity");
+        res =
+            new PrecompileInputResultTuple(
+                enableResultCaching ? input.copy() : input,
+                PrecompileContractResult.success(INVALID));
+      }
 
-      res =
-          new PrecompileInputResultTuple(
-              enableResultCaching ? input.copy() : input,
-              PrecompileContractResult.success(isValid ? VALID : INVALID));
+      if (res == null) {
+        // Create the signature; recID is not used in verification - use 0
+        final SECPSignature signature = signatureAlgorithm.createSignature(r, s, (byte) 0);
+        final SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(pubKeyBytes);
+
+        final boolean isValid =
+            signatureAlgorithm.verifyMalleable(messageHash, signature, publicKey);
+
+        res =
+            new PrecompileInputResultTuple(
+                enableResultCaching ? input.copy() : input,
+                PrecompileContractResult.success(isValid ? VALID : INVALID));
+      }
+
       if (enableResultCaching) {
         p256VerifyCache.put(cacheKey, res);
       }

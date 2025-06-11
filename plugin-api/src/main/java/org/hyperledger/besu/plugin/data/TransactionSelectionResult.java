@@ -62,6 +62,7 @@ public class TransactionSelectionResult {
     BLOCK_FULL(true, false, false),
     BLOBS_FULL(false, false, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false, false),
+    BLOCK_SIZE_ABOVE_THRESHOLD(true, false, false),
     BLOCK_SELECTION_TIMEOUT(true, false, false),
     BLOCK_SELECTION_TIMEOUT_INVALID_TX(true, true, true),
     TX_EVALUATION_TOO_LONG(true, false, true),
@@ -141,6 +142,10 @@ public class TransactionSelectionResult {
    */
   public static final TransactionSelectionResult BLOCK_OCCUPANCY_ABOVE_THRESHOLD =
       new TransactionSelectionResult(BaseStatus.BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
+
+  /** The transaction has not been selected since it would exceed the block size limit */
+  public static final TransactionSelectionResult BLOCK_SIZE_ABOVE_THRESHOLD =
+      new TransactionSelectionResult(BaseStatus.BLOCK_SIZE_ABOVE_THRESHOLD);
 
   /**
    * The transaction has not been selected since its gas limit is greater than the block remaining
