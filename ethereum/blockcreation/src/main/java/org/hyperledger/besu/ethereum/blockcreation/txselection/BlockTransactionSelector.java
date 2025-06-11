@@ -172,8 +172,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         new PriceTransactionSelector(context),
         new BlobPriceTransactionSelector(context),
         new MinPriorityFeePerGasTransactionSelector(context),
-        new ProcessingResultTransactionSelector(context),
-        new BlockRlpSizeTransactionSelector(context, selectorsStateManager));
+        new BlockRlpSizeTransactionSelector(context, selectorsStateManager),
+        new ProcessingResultTransactionSelector(context));
   }
 
   /**
