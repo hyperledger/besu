@@ -780,10 +780,8 @@ public class RunnerBuilder {
         .map(DefaultPeer::fromEnodeURL)
         .forEach(peerNetwork::addMaintainedConnectionPeer);
 
-    if (!transactionValidatorService.getTransactionValidatorRules().isEmpty()) {
-      protocolSchedule.setAdditionalValidationRules(
-          transactionValidatorService.getTransactionValidatorRules());
-    }
+    protocolSchedule.setAdditionalValidationRules(
+        transactionValidatorService.getTransactionValidatorRules());
 
     final Optional<NodeLocalConfigPermissioningController> nodeLocalConfigPermissioningController =
         nodePermissioningController.flatMap(NodePermissioningController::localConfigController);

@@ -117,10 +117,12 @@ public class TransactionValidatorFactory {
 
   public void setAdditionalValidationRules(
       final List<TransactionValidationRule> additionalValidationRules) {
-    final TransactionValidator baseTxValidator = transactionValidatorSupplier.get();
-    transactionValidatorSupplier =
-        Suppliers.memoize(
-            () -> new ExtendableTransactionValidator(baseTxValidator, additionalValidationRules));
+    if (!additionalValidationRules.isEmpty()) {
+      final TransactionValidator baseTxValidator = transactionValidatorSupplier.get();
+      transactionValidatorSupplier =
+          Suppliers.memoize(
+              () -> new ExtendableTransactionValidator(baseTxValidator, additionalValidationRules));
+    }
   }
 
   public TransactionValidator get() {

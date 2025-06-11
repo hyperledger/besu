@@ -47,7 +47,7 @@ public class TestTransactionValidatorPlugin implements BesuPlugin {
     serviceManager
         .getService(TransactionValidatorService.class)
         .orElseThrow()
-        .registerTransactionValidator(
+        .registerTransactionValidatorRule(
             tx ->
                 enabled && !tx.getType().equals(TransactionType.FRONTIER)
                     ? Optional.of("Only Frontier transactions are allowed here")

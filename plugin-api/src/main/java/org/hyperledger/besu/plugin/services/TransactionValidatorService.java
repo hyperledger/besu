@@ -26,5 +26,5 @@ public interface TransactionValidatorService extends BesuService {
    *
    * @param rule The rule to register
    */
-  void registerTransactionValidator(final TransactionValidationRule rule);
+  void registerTransactionValidatorRule(final TransactionValidationRule rule);
 }
