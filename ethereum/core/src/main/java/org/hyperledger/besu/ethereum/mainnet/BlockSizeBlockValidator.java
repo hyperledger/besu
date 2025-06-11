@@ -47,7 +47,7 @@ public class BlockSizeBlockValidator extends MainnetBlockValidator {
       final HeaderValidationMode ommerValidationMode,
       final boolean shouldUpdateHead,
       final boolean shouldRecordBadBlock) {
-    final int blockSize = block.calculateSize();
+    final int blockSize = block.getSize();
     if (blockSize > MAX_RLP_BLOCK_SIZE) {
       final String errorMessage =
           "Block size of " + blockSize + " bytes exceeds limit of " + MAX_RLP_BLOCK_SIZE + " bytes";
