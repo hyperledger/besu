@@ -53,7 +53,6 @@ public class PoWSolverTest {
         new PoWSolver(
             createMiningParameters(noncesToTry, 1000, 8),
             PoWHasher.ETHASH_LIGHT,
-            false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
 
@@ -86,7 +85,6 @@ public class PoWSolverTest {
         new PoWSolver(
             createMiningParameters(noncesToTry, 1000, 8),
             hasher,
-            false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
 
@@ -155,7 +153,6 @@ public class PoWSolverTest {
                 1000,
                 8),
             PoWHasher.ETHASH_LIGHT,
-            false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
 
@@ -217,7 +214,6 @@ public class PoWSolverTest {
                 1000,
                 8),
             PoWHasher.ETHASH_LIGHT,
-            true,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
 
@@ -300,7 +296,6 @@ public class PoWSolverTest {
                 10000,
                 8),
             PoWHasher.ETHASH_LIGHT,
-            true,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
 
@@ -393,7 +388,6 @@ public class PoWSolverTest {
                 1000,
                 8),
             PoWHasher.ETHASH_LIGHT,
-            true,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
 
@@ -488,7 +482,6 @@ public class PoWSolverTest {
                 1000,
                 8),
             PoWHasher.ETHASH_LIGHT,
-            true,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
 

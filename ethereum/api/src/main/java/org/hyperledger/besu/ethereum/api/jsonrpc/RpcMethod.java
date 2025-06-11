@@ -106,8 +106,6 @@ public enum RpcMethod {
   ETH_GET_UNCLE_BY_BLOCK_NUMBER_AND_INDEX("eth_getUncleByBlockNumberAndIndex"),
   ETH_GET_UNCLE_COUNT_BY_BLOCK_HASH("eth_getUncleCountByBlockHash"),
   ETH_GET_UNCLE_COUNT_BY_BLOCK_NUMBER("eth_getUncleCountByBlockNumber"),
-  ETH_GET_WORK("eth_getWork"),
-  ETH_HASHRATE("eth_hashrate"),
   ETH_MINING("eth_mining"),
   ETH_NEW_BLOCK_FILTER("eth_newBlockFilter"),
   ETH_NEW_FILTER("eth_newFilter"),

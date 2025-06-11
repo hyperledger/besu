@@ -91,7 +91,7 @@ public class JsonRpcHttpOptionsTest extends CommandTestAbstract {
   public void rpcApiNoAuthMethodsIgnoresDuplicatesAndMustBeUsed() {
     parseCommand(
         "--rpc-http-api-methods-no-auth",
-        "admin_peers, admin_peers, eth_getWork",
+        "admin_peers, admin_peers, eth_getCode",
         "--rpc-http-enabled");
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
@@ -99,7 +99,7 @@ public class JsonRpcHttpOptionsTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getNoAuthRpcApis())
         .containsExactlyInAnyOrder(
-            RpcMethod.ADMIN_PEERS.getMethodName(), RpcMethod.ETH_GET_WORK.getMethodName());
+            RpcMethod.ADMIN_PEERS.getMethodName(), RpcMethod.ETH_GET_CODE.getMethodName());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
