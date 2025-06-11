@@ -38,6 +38,16 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  /**
+   * Static operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
+  public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes value = frame.popStackItem();
     frame.pushStackItem(Words.intBytes(value.numberOfLeadingZeros()));
     return clzSuccess;
