@@ -72,16 +72,15 @@ public class JsonRpcParameter {
     }
 
     final T param;
+
     final Object rawParam = params[index];
     if (paramClass.isAssignableFrom(rawParam.getClass())) {
       // If we're dealing with a simple type, just cast the value
       param = paramClass.cast(rawParam);
     } else {
-      // Otherwise, serialize param back to json and then deserialize to the paramClass type
       try {
-        final String json = mapper.writeValueAsString(rawParam);
-        param = mapper.readValue(json, paramClass);
-      } catch (final JsonProcessingException e) {
+        param = mapper.convertValue(rawParam, paramClass);
+      } catch (final Exception e) {
         throw new JsonRpcParameterException(
             String.format(
                 "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected type: '%s'",
