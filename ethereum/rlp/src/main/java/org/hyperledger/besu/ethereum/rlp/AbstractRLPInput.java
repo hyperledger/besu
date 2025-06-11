@@ -43,6 +43,7 @@ abstract class AbstractRLPInput implements RLPInput {
   private RLPDecodingHelpers.Kind currentKind; // Kind of the item.
   private long currentPayloadOffset; // Offset to the beginning of the current item payload.
   private int currentPayloadSize; // Size of the current item payload.
+  private int currentRlpSize; // Size of the current item.
 
   // Information regarding opened list. The depth is how many list deep we are, and endOfListOffset
   // holds the offset in value at which each list ends (indexed by depth). Allows to know if we're
@@ -139,6 +140,7 @@ abstract class AbstractRLPInput implements RLPInput {
       currentKind = elementMetadata.kind;
       currentPayloadOffset = elementMetadata.payloadStart;
       currentPayloadSize = elementMetadata.payloadSize;
+      currentRlpSize = Math.toIntExact(currentPayloadOffset - currentItem) + currentPayloadSize;
     } catch (final RLPException exception) {
       final String message =
           String.format(exception.getMessage() + errorMessageSuffix, getErrorMessageSuffixParams());
@@ -557,6 +559,11 @@ abstract class AbstractRLPInput implements RLPInput {
   @Override
   public int nextSize() {
     return currentPayloadSize;
+  }
+
+  @Override
+  public int currentSize() {
+    return currentRlpSize;
   }
 
   @Override
