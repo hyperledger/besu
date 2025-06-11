@@ -905,6 +905,7 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .transactionPoolPreProcessor(new OsakaTransactionPoolPreProcessor())
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
+        .blockValidatorBuilder(BlockSizeBlockValidator::new)
         .name("Osaka");
   }
 
