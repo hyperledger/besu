@@ -73,6 +73,7 @@ import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
+import org.hyperledger.besu.services.TransactionValidatorServiceImpl;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.io.IOException;
@@ -222,7 +223,8 @@ public final class RunnerTest {
             .staticNodes(emptySet())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .rpcEndpointService(new RpcEndpointServiceImpl())
-            .apiConfiguration(ImmutableApiConfiguration.builder().build());
+            .apiConfiguration(ImmutableApiConfiguration.builder().build())
+            .transactionValidatorService(new TransactionValidatorServiceImpl());
 
     Runner runnerBehind = null;
     final Runner runnerAhead =

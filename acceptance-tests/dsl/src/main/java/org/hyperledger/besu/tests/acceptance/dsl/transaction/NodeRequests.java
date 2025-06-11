@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.debug.DebugRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
@@ -41,6 +42,7 @@ public class NodeRequests {
   private final LoginRequestFactory login;
   private final MinerRequestFactory miner;
   private final TxPoolRequestFactory txPool;
+  private final DebugRequestFactory debug;
 
   public NodeRequests(
       final Web3jService web3jService,
@@ -52,6 +54,7 @@ public class NodeRequests {
       final CustomRequestFactory custom,
       final MinerRequestFactory miner,
       final TxPoolRequestFactory txPool,
+      final DebugRequestFactory debug,
       final Optional<WebSocketService> websocketService,
       final LoginRequestFactory login) {
     this.web3jService = web3jService;
@@ -63,6 +66,7 @@ public class NodeRequests {
     this.custom = custom;
     this.miner = miner;
     this.txPool = txPool;
+    this.debug = debug;
     this.websocketService = websocketService;
     this.login = login;
   }
@@ -105,6 +109,10 @@ public class NodeRequests {
 
   public TxPoolRequestFactory txPool() {
     return txPool;
+  }
+
+  public DebugRequestFactory debug() {
+    return debug;
   }
 
   public void shutdown() {
