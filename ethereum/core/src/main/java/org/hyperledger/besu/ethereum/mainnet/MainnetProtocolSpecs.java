@@ -874,6 +874,11 @@ public abstract class MainnetProtocolSpecs {
             miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem)
+        .blobSchedule(
+            genesisConfigOptions
+                .getBlobScheduleOptions()
+                .flatMap(BlobScheduleOptions::getOsaka)
+                .orElse(BlobSchedule.PRAGUE_DEFAULT))
         .gasCalculator(OsakaGasCalculator::new)
         // tx gas limit cap EIP-7825
         .gasLimitCalculatorBuilder(
