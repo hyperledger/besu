@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Validates a transaction based on mainnet rule and other custom rules that can added by plugins.
- * Note that custom validation rules can only be more restrictive and cannot override standard
- * mainnet rules.
+ * Validates a transaction based on mainnet rule and other custom rules that can be added by plugins.
+ * Note that custom validation rules can only be more restrictive and standard
+ * mainnet rules will still apply.
  */
 public class ExtendableTransactionValidator implements TransactionValidator {
   private final TransactionValidator delegate;
