@@ -50,7 +50,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
       Caffeine.newBuilder().maximumSize(1000).build();
 
   /**
-   * Instantiates a new Abstract precompiled contract.
+   * Instantiates a new P256Verify precompiled contract.
    *
    * @param gasCalculator the gas calculator
    */
@@ -58,6 +58,12 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
     this(gasCalculator, new SECP256R1());
   }
 
+  /**
+   * Instantiates a new P256Verify precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   * @param signatureAlgorithm the signature algorithm
+   */
   public P256VerifyPrecompiledContract(
       final GasCalculator gasCalculator, final SignatureAlgorithm signatureAlgorithm) {
     super(PRECOMPILE_NAME, gasCalculator);
