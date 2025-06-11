@@ -29,13 +29,11 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-@ExtendWith({TrustedSetupClassLoaderExtension.class})
-public class BlobTransactionEncodingTest {
+public class BlobTransactionEncodingTest extends TrustedSetupClassLoaderExtension {
   private static Stream<Arguments> provideOpaqueBytesNoBlobsWithCommitments() {
     return Stream.of(
         createArgument(
