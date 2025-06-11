@@ -37,15 +37,15 @@ public class TransactionValidatorServiceImpl implements TransactionValidatorServ
   @Override
   public void registerTransactionValidator(final TransactionValidationRule rule) {
     transactionValidationRules.add(rule);
-    LOG.info("Registered new transaction validator.");
+    LOG.info("Registered new transaction validator rule");
   }
 
   /**
-   * Gets transaction validators.
+   * Gets transaction validator rules.
    *
-   * @return the transaction validators
+   * @return the transaction validator rules
    */
-  public List<TransactionValidationRule> getTransactionValidators() {
+  public List<TransactionValidationRule> getTransactionValidatorRules() {
     return transactionValidationRules;
   }
 }
