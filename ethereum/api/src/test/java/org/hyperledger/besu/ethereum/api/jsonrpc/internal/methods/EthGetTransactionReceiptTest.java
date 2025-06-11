@@ -149,7 +149,8 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           new FrontierBlockHashProcessor(),
           true,
-          true);
+          true,
+          Optional.empty());
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
           "status",
@@ -179,7 +180,8 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           new FrontierBlockHashProcessor(),
           true,
-          true);
+          true,
+          Optional.empty());
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);

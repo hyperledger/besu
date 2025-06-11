@@ -90,7 +90,7 @@ public class BlockResultFactory {
             .map(TextNode::new)
             .collect(Collectors.toList());
     return new BlockResult(
-        block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.calculateSize());
+        block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.getSize());
   }
 
   public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
@@ -181,6 +181,38 @@ public class BlockResultFactory {
         requestsWithoutRequestId,
         Quantity.create(payload.blockValue()),
         blobsBundleV1);
+  }
+
+  public EngineGetPayloadResultV5 payloadTransactionCompleteV5(final PayloadWrapper payload) {
+    final var blockWithReceipts = payload.blockWithReceipts();
+    final List<String> txs =
+        blockWithReceipts.getBlock().getBody().getTransactions().stream()
+            .map(
+                transaction ->
+                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
+    final Optional<List<String>> requestsWithoutRequestId =
+        payload
+            .requests()
+            .map(
+                rqs ->
+                    rqs.stream()
+                        .sorted(Comparator.comparing(Request::getType))
+                        .filter(r -> !r.getData().isEmpty())
+                        .map(Request::getEncodedRequest)
+                        .map(Bytes::toHexString)
+                        .toList());
+
+    final BlobsBundleV2 blobsBundleV2 =
+        new BlobsBundleV2(blockWithReceipts.getBlock().getBody().getTransactions());
+    return new EngineGetPayloadResultV5(
+        blockWithReceipts.getHeader(),
+        txs,
+        blockWithReceipts.getBlock().getBody().getWithdrawals(),
+        requestsWithoutRequestId,
+        Quantity.create(payload.blockValue()),
+        blobsBundleV2);
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {

@@ -1,0 +1,111 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+apply plugin: 'java-library'
+
+jar {
+  archiveBaseName = calculateArtifactId(project)
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
+      )
+  }
+}
+
+dependencies {
+  api project(':datatypes')
+
+  api 'org.slf4j:slf4j-api'
+
+  implementation project(':config')
+  implementation project(':consensus:clique')
+  implementation project(':consensus:common')
+  implementation project(':consensus:ibft')
+  implementation project(':consensus:ibftlegacy')
+  implementation project(':consensus:merge')
+  implementation project(':consensus:qbft')
+  implementation project(':consensus:qbft-core')
+  implementation project(':crypto:services')
+  implementation project(':datatypes')
+  implementation project(':ethereum:api')
+  implementation project(':ethereum:blockcreation')
+  implementation project(':ethereum:core')
+  implementation project(':ethereum:eth')
+  implementation project(':ethereum:p2p')
+  implementation project(':ethereum:permissioning')
+  implementation project(':ethereum:rlp')
+  implementation project(':ethereum:trie')
+  implementation project(':ethereum:stratum')
+  implementation project(':ethereum:ethstats')
+  implementation project(':evm')
+  implementation project(':metrics:core')
+  implementation project(':nat')
+  implementation project(':plugin-api')
+  implementation project(':plugins:rocksdb')
+  implementation project(':services:kvstore')
+  implementation project(':util')
+
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+  implementation 'com.github.oshi:oshi-core'
+  implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
+  implementation 'com.graphql-java:graphql-java'
+  implementation 'commons-net:commons-net'
+  implementation 'info.picocli:picocli'
+  implementation 'io.vertx:vertx-core'
+  implementation 'io.vertx:vertx-web'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-config'
+  implementation 'io.consensys.tuweni:tuweni-toml'
+  implementation 'io.consensys.tuweni:tuweni-units'
+  implementation 'org.apache.commons:commons-lang3'
+  implementation 'org.apache.logging.log4j:log4j-core'
+  implementation 'org.hibernate.validator:hibernate-validator'
+  implementation 'org.rocksdb:rocksdbjni'
+  implementation 'org.springframework.security:spring-security-crypto'
+  implementation 'org.xerial.snappy:snappy-java'
+  implementation 'io.consensys.protocols:jc-kzg-4844'
+
+  runtimeOnly 'org.apache.logging.log4j:log4j-jul'
+  runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
+  runtimeOnly 'org.fusesource.jansi:jansi' // for color logging in windows
+
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
+  testImplementation project(':testutil')
+
+  testImplementation 'com.google.auto.service:auto-service'
+  testImplementation 'com.squareup.okhttp3:okhttp'
+  testImplementation 'commons-io:commons-io'
+  testImplementation 'io.opentelemetry:opentelemetry-api'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
+  testImplementation 'org.apache.commons:commons-text'
+  testImplementation 'io.consensys.tuweni:tuweni-bytes'
+  testImplementation 'io.consensys.tuweni:tuweni-units'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+  testImplementation 'org.mockito:mockito-core'
+  testImplementation 'tech.pegasys.discovery:discovery'
+  testImplementation 'com.google.dagger:dagger'
+
+  annotationProcessor 'com.google.dagger:dagger-compiler'
+  testAnnotationProcessor 'com.google.dagger:dagger-compiler'
+}
