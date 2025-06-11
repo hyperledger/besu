@@ -90,7 +90,7 @@ public class BlockResultFactory {
             .map(TextNode::new)
             .collect(Collectors.toList());
     return new BlockResult(
-        block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.calculateSize());
+        block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.getSize());
   }
 
   public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
