@@ -79,7 +79,6 @@ public class PoWSolver {
 
   private final PoWHasher poWHasher;
   private volatile long hashesPerSecond = NO_MINING_CONDUCTED;
-  private final Subscribers<PoWObserver> ethHashObservers;
   private final EpochCalculator epochCalculator;
   private volatile Optional<PoWSolverJob> currentJob = Optional.empty();
   private final ExpiringMap<Bytes, PoWSolverJob> currentJobs = new ExpiringMap<>();
@@ -91,7 +90,6 @@ public class PoWSolver {
       final EpochCalculator epochCalculator) {
     this.miningConfiguration = miningConfiguration;
     this.poWHasher = poWHasher;
-    this.ethHashObservers = ethHashObservers;
     ethHashObservers.forEach(observer -> observer.setSubmitWorkCallback(this::submitSolution));
     this.epochCalculator = epochCalculator;
   }
