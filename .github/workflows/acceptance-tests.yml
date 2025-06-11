@@ -45,9 +45,9 @@ jobs:
         with:
           cache-disabled: true
       - name: List all acceptance tests
-        run: ./gradlew acceptanceTestNotPrivacy --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew acceptanceTest --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
-        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo ' acceptanceTestNotPrivacy'" | tee tmp/currentTests.list
+        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo ' acceptanceTest'" | tee tmp/currentTests.list
       - name: Get acceptance test reports
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         continue-on-error: true
@@ -80,7 +80,7 @@ jobs:
           name: test-args-${{ matrix.runner_index }}.txt
           path: '*.txt'
       - name: run acceptance tests
-        run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.caching=true
+        run: ./gradlew acceptanceTest `cat gradleArgs.txt` -Dorg.gradle.caching=true
       - name: Remove downloaded test results
         run: rm -rf tmp/junit-xml-reports-downloaded
       - name: Upload Acceptance Test Results
