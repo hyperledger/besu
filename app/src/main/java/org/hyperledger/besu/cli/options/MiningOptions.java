@@ -62,27 +62,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
   private Boolean isMiningEnabled = false;
 
   @Option(
-      names = {"--miner-stratum-enabled"},
-      description =
-          DEPRECATION_PREFIX
-              + "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})."
-              + " Compatible with Proof of Work (PoW) only."
-              + " Requires the network option (--network) to be set to CLASSIC.")
-  private Boolean iStratumMiningEnabled = false;
-
-  @Option(
-      names = {"--miner-stratum-host"},
-      description =
-          DEPRECATION_PREFIX
-              + "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
-  private String stratumNetworkInterface = "0.0.0.0";
-
-  @Option(
-      names = {"--miner-stratum-port"},
-      description = DEPRECATION_PREFIX + "Stratum port binding (default: ${DEFAULT-VALUE})")
-  private Integer stratumPort = 8008;
-
-  @Option(
       names = {"--miner-coinbase"},
       description =
           "Account to which mining rewards are paid. You must specify a valid coinbase if "
@@ -184,14 +163,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xminer-stratum-extranonce"},
-        description =
-            DEPRECATION_PREFIX
-                + "Extranonce for Stratum network miners (default: ${DEFAULT-VALUE})")
-    private String stratumExtranonce = "080c";
-
-    @CommandLine.Option(
-        hidden = true,
         names = {"--Xpos-block-creation-max-time"},
         description =
             "Specifies the maximum time, in milliseconds, a PoS block creation jobs is allowed to run. Must be positive and ≤ 12000 (default: ${DEFAULT-VALUE} milliseconds)")
@@ -253,12 +224,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
           "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled) "
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
     }
-    if (Boolean.FALSE.equals(isMiningEnabled) && Boolean.TRUE.equals(iStratumMiningEnabled)) {
-      throw new ParameterException(
-          commandLine,
-          "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
-              + "or specify mining is enabled (--miner-enabled)");
-    }
 
     // Check that block producer options work
     if (!isMergeEnabled && genesisConfigOptions.isEthHash()) {
@@ -280,10 +245,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
           commandLine,
           "--miner-enabled",
           !isMiningEnabled,
-          asList(
-              "--miner-stratum-enabled",
-              "--Xminer-remote-sealers-limit",
-              "--Xminer-remote-sealers-hashrate-ttl"));
+          asList("--Xminer-remote-sealers-limit", "--Xminer-remote-sealers-hashrate-ttl"));
     }
 
     if (unstableOptions.posBlockCreationMaxTime <= 0
@@ -322,9 +284,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     miningOptions.setTransactionSelectionService(
         miningConfiguration.getTransactionSelectionService());
     miningOptions.isMiningEnabled = miningConfiguration.isMiningEnabled();
-    miningOptions.iStratumMiningEnabled = miningConfiguration.isStratumMiningEnabled();
-    miningOptions.stratumNetworkInterface = miningConfiguration.getStratumNetworkInterface();
-    miningOptions.stratumPort = miningConfiguration.getStratumPort();
     miningOptions.extraData = miningConfiguration.getExtraData();
     miningOptions.minTransactionGasPrice = miningConfiguration.getMinTransactionGasPrice();
     miningOptions.minPriorityFeePerGas = miningConfiguration.getMinPriorityFeePerGas();
@@ -342,8 +301,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         miningConfiguration.getUnstable().getPowJobTimeToLive();
     miningOptions.unstableOptions.maxOmmersDepth =
         miningConfiguration.getUnstable().getMaxOmmerDepth();
-    miningOptions.unstableOptions.stratumExtranonce =
-        miningConfiguration.getUnstable().getStratumExtranonce();
     miningOptions.unstableOptions.posBlockCreationMaxTime =
         miningConfiguration.getUnstable().getPosBlockCreationMaxTime();
     miningOptions.unstableOptions.posBlockCreationRepetitionMinDuration =
@@ -378,9 +335,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     return ImmutableMiningConfiguration.builder()
         .transactionSelectionService(transactionSelectionService)
         .mutableInitValues(updatableInitValuesBuilder.build())
-        .isStratumMiningEnabled(iStratumMiningEnabled)
-        .stratumNetworkInterface(stratumNetworkInterface)
-        .stratumPort(stratumPort)
         .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
         .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
         .unstable(
@@ -389,7 +343,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
                 .remoteSealersTimeToLive(unstableOptions.remoteSealersTimeToLive)
                 .powJobTimeToLive(unstableOptions.powJobTimeToLive)
                 .maxOmmerDepth(unstableOptions.maxOmmersDepth)
-                .stratumExtranonce(unstableOptions.stratumExtranonce)
                 .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
                 .posBlockCreationRepetitionMinDuration(
                     unstableOptions.posBlockCreationRepetitionMinDuration)
