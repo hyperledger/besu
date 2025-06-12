@@ -42,20 +42,25 @@ public class BlobPooledTransactionDecoder {
    * @return the decoded transaction
    */
   public static Transaction decode(final RLPInput input) {
-    input.enterList();
+    final RLPInput txRlp = input.readAsRlp();
+    final int sizeForAnnouncement = txRlp.currentSize();
+    txRlp.enterList();
     int versionId = 0;
     final Transaction.Builder builder = Transaction.builder();
-    BlobTransactionDecoder.readTransactionPayloadInner(builder, input);
+    BlobTransactionDecoder.readTransactionPayloadInner(builder, txRlp);
 
-    boolean hasVersionId = !input.nextIsList();
+    boolean hasVersionId = !txRlp.nextIsList();
     if (hasVersionId) {
-      versionId = input.readIntScalar();
+      versionId = txRlp.readIntScalar();
     }
-    List<Blob> blobs = input.readList(Blob::readFrom);
-    List<KZGCommitment> commitments = input.readList(KZGCommitment::readFrom);
-    List<KZGProof> proofs = input.readList(KZGProof::readFrom);
-    input.leaveList();
+    List<Blob> blobs = txRlp.readList(Blob::readFrom);
+    List<KZGCommitment> commitments = txRlp.readList(KZGCommitment::readFrom);
+    List<KZGProof> proofs = txRlp.readList(KZGProof::readFrom);
+    txRlp.leaveList();
 
-    return builder.kzgBlobs(BlobType.of(versionId), commitments, blobs, proofs).build();
+    return builder
+        .kzgBlobs(BlobType.of(versionId), commitments, blobs, proofs)
+        .sizeForAnnouncement(sizeForAnnouncement)
+        .build();
   }
 }

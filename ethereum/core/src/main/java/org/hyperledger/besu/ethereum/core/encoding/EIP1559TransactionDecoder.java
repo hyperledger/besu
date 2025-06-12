@@ -18,6 +18,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -38,6 +39,7 @@ public class EIP1559TransactionDecoder {
 
   public static Transaction decode(final RLPInput input) {
     RLPInput transactionRlp = input.readAsRlp();
+    int size = transactionRlp.currentSize();
     transactionRlp.enterList();
     final BigInteger chainId = transactionRlp.readBigIntegerScalar();
     final Transaction.Builder builder =
@@ -62,7 +64,10 @@ public class EIP1559TransactionDecoder {
                               accessListEntryRLPInput.readList(RLPInput::readBytes32));
                       accessListEntryRLPInput.leaveList();
                       return accessListEntry;
-                    }));
+                    }))
+            .sizeForAnnouncement(size)
+            .sizeForBlockInclusion(size)
+            .hash(Hash.hash(transactionRlp.raw()));
     final byte recId = (byte) transactionRlp.readUnsignedByteScalar();
     final Transaction transaction =
         builder

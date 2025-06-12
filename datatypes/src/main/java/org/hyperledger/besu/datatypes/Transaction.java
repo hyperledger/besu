@@ -247,7 +247,14 @@ public interface Transaction {
    *
    * @return the size in bytes of the encoded transaction.
    */
-  int getSize();
+  int getSizeForAnnouncement();
+
+  /**
+   * Returns the size in bytes of the encoded transaction for block inclusion.
+   *
+   * @return the size in bytes of the encoded transaction for block inclusion.
+   */
+  int getSizeForBlockInclusion();
 
   /**
    * Returns whether the transaction is a contract creation

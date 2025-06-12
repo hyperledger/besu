@@ -20,6 +20,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.CodeDelegation;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -40,6 +41,7 @@ public class CodeDelegationTransactionDecoder {
 
   public static Transaction decode(final RLPInput input) {
     RLPInput transactionRlp = input.readAsRlp();
+    int size = transactionRlp.currentSize();
     transactionRlp.enterList();
     final BigInteger chainId = transactionRlp.readBigIntegerScalar();
     final Transaction.Builder builder =
@@ -66,7 +68,10 @@ public class CodeDelegationTransactionDecoder {
                       return accessListEntry;
                     }))
             .codeDelegations(
-                transactionRlp.readList(CodeDelegationTransactionDecoder::decodeInnerPayload));
+                transactionRlp.readList(CodeDelegationTransactionDecoder::decodeInnerPayload))
+            .sizeForBlockInclusion(size)
+            .sizeForAnnouncement(size)
+            .hash(Hash.hash(transactionRlp.raw()));
 
     final byte recId = (byte) transactionRlp.readUnsignedByteScalar();
     final BigInteger r = transactionRlp.readUInt256Scalar().toUnsignedBigInteger();

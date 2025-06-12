@@ -158,7 +158,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     txTo = Transaction.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
     System.out.println(txTo.getSender());
     System.out.println(txTo.getHash());
-    System.out.println(txTo.getSize());
+    System.out.println(txTo.getSizeForAnnouncement());
 
     Optional<Address> to = txTo.getTo();
     final ClassLayout cl = ClassLayout.parseInstance(to);
@@ -213,7 +213,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
         Transaction.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
     System.out.println(txPayload.getSender());
     System.out.println(txPayload.getHash());
-    System.out.println(txPayload.getSize());
+    System.out.println(txPayload.getSizeForAnnouncement());
 
     final Bytes payload = txPayload.getPayload();
     final ClassLayout cl = ClassLayout.parseInstance(payload);
@@ -306,7 +306,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
             .detachedCopy();
     System.out.println(txBlob.getSender());
     System.out.println(txBlob.getHash());
-    System.out.println(txBlob.getSize());
+    System.out.println(txBlob.getSizeForAnnouncement());
 
     final List<? extends Object> list = containerExtractor.apply(txBlob);
 
@@ -339,7 +339,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
             .detachedCopy();
     System.out.println(txBlob.getSender());
     System.out.println(txBlob.getHash());
-    System.out.println(txBlob.getSize());
+    System.out.println(txBlob.getSizeForAnnouncement());
 
     final BlobsWithCommitments bwc = txBlob.getBlobsWithCommitments().get();
     final ClassLayout cl = ClassLayout.parseInstance(bwc);
@@ -373,7 +373,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
         Transaction.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
     System.out.println(txPayload.getSender());
     System.out.println(txPayload.getHash());
-    System.out.println(txPayload.getSize());
+    System.out.println(txPayload.getSizeForAnnouncement());
 
     final PendingTransaction pendingTx = new PendingTransaction.Remote(txPayload);
 
@@ -406,7 +406,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
         Transaction.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
     System.out.println(txAccessList.getSender());
     System.out.println(txAccessList.getHash());
-    System.out.println(txAccessList.getSize());
+    System.out.println(txAccessList.getSizeForAnnouncement());
 
     final var optAL = txAccessList.getAccessList();
 
@@ -461,7 +461,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
         Transaction.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
     System.out.println(txDelegateCode.getSender());
     System.out.println(txDelegateCode.getHash());
-    System.out.println(txDelegateCode.getSize());
+    System.out.println(txDelegateCode.getSizeForAnnouncement());
 
     final var optCD = txDelegateCode.getCodeDelegationList();
 
@@ -509,9 +509,6 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     final var baseTx =
         Transaction.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
-    System.out.println(baseTx.getSender());
-    System.out.println(baseTx.getHash());
-    System.out.println(baseTx.getSize());
 
     final ClassLayout cl = ClassLayout.parseInstance(baseTx);
     System.out.println(cl.toPrintable());

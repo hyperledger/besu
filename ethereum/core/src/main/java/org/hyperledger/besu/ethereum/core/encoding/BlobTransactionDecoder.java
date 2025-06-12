@@ -18,6 +18,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -50,7 +51,10 @@ public class BlobTransactionDecoder {
 
   private static Transaction readTransactionPayload(final RLPInput input) {
     final Transaction.Builder builder = Transaction.builder();
-    readTransactionPayloadInner(builder, input);
+    final RLPInput txRlp = input.readAsRlp();
+    int size = txRlp.currentSize();
+    builder.sizeForAnnouncement(size).sizeForBlockInclusion(size).hash(Hash.hash(txRlp.raw()));
+    readTransactionPayloadInner(builder, txRlp);
     return builder.build();
   }
 
