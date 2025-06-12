@@ -89,6 +89,8 @@ public class ExtCodeHashOperation extends AbstractOperation {
           final Bytes code = account.getCode();
           if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
             frame.pushStackItem(EOF_REPLACEMENT_HASH);
+          } else {
+            frame.pushStackItem(account.getCodeHash());
           }
         } else {
           frame.pushStackItem(account.getCodeHash());
