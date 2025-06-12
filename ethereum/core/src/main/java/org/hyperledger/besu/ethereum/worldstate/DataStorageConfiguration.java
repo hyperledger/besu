@@ -34,6 +34,11 @@ public interface DataStorageConfiguration {
 
   DataStorageConfiguration DEFAULT_BONSAI_CONFIG = DEFAULT_CONFIG;
 
+  DataStorageConfiguration DEFAULT_BONSAI_ARCHIVE_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE)
+          .build();
+
   DataStorageConfiguration DEFAULT_BONSAI_PARTIAL_DB_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.BONSAI)
