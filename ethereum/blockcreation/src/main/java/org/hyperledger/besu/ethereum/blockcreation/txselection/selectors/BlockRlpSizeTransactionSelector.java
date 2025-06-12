@@ -74,9 +74,9 @@ public class BlockRlpSizeTransactionSelector extends AbstractStatefulTransaction
 
     if (blockSizeRemaining < transaction.getSize()) {
       LOG.trace(
-          "Block full, transaction bytes gas {} is less than minimum transaction gas cost {}",
+          "Transaction with size of {} bytes too large for block limit of {} bytes",
           blockSizeRemaining,
-          context.gasCalculator().getMinimumTransactionCost());
+          context.gasCalculator().maxRlpBlockSize());
       return true;
     }
     return false;
