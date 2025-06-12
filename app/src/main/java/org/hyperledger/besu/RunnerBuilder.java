@@ -115,6 +115,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
+import org.hyperledger.besu.services.TransactionValidatorServiceImpl;
 import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
@@ -185,6 +186,7 @@ public class RunnerBuilder {
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
   private List<SubnetInfo> allowedSubnets = new ArrayList<>();
   private boolean poaDiscoveryRetryBootnodes = true;
+  private TransactionValidatorServiceImpl transactionValidatorService;
 
   /** Instantiates a new Runner builder. */
   public RunnerBuilder() {}
@@ -582,6 +584,18 @@ public class RunnerBuilder {
   }
 
   /**
+   * Set the transaction validator service.
+   *
+   * @param transactionValidatorService the transaction validator service
+   * @return the runner builder
+   */
+  public RunnerBuilder transactionValidatorService(
+      final TransactionValidatorServiceImpl transactionValidatorService) {
+    this.transactionValidatorService = transactionValidatorService;
+    return this;
+  }
+
+  /**
    * Build Runner instance.
    *
    * @return the runner
@@ -742,6 +756,9 @@ public class RunnerBuilder {
     sanitizePeers(network, staticNodes)
         .map(DefaultPeer::fromEnodeURL)
         .forEach(peerNetwork::addMaintainedConnectionPeer);
+
+    protocolSchedule.setAdditionalValidationRules(
+        transactionValidatorService.getTransactionValidatorRules());
 
     final Optional<NodeLocalConfigPermissioningController> nodeLocalConfigPermissioningController =
         nodePermissioningController.flatMap(NodePermissioningController::localConfigController);

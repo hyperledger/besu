@@ -23,8 +23,10 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.plugin.services.txvalidator.TransactionValidationRule;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -219,6 +221,14 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     transitionUtils.dispatchConsumerAccordingToMergeState(
         protocolSchedule ->
             protocolSchedule.setPermissionTransactionFilter(permissionTransactionFilter));
+  }
+
+  @Override
+  public void setAdditionalValidationRules(
+      final List<TransactionValidationRule> additionalValidationRules) {
+    transitionUtils.dispatchConsumerAccordingToMergeState(
+        protocolSchedule ->
+            protocolSchedule.setAdditionalValidationRules(additionalValidationRules));
   }
 
   /**
