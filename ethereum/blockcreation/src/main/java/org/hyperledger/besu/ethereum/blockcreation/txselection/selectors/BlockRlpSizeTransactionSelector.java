@@ -47,7 +47,7 @@ public class BlockRlpSizeTransactionSelector extends AbstractStatefulTransaction
     final long cumulativeBlockSize = getWorkingState();
     if (blockSizeAboveThreshold(evaluationContext.getTransaction(), cumulativeBlockSize)) {
       LOG.trace("Block RLP size above threshold, completing operation");
-      return TransactionSelectionResult.BLOCK_SIZE_ABOVE_THRESHOLD;
+      return TransactionSelectionResult.TOO_LARGE_FOR_REMAINING_BLOCK_SIZE;
     }
     return TransactionSelectionResult.SELECTED;
   }

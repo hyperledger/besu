@@ -52,8 +52,6 @@ class BlockRlpSizeTransactionSelectorTest {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
-  //  private static final int MAX_RLP_BLOCK_SIZE = 100;
-
   @Mock(answer = RETURNS_DEEP_STUBS)
   BlockSelectionContext blockSelectionContext;
 
@@ -93,6 +91,38 @@ class BlockRlpSizeTransactionSelectorTest {
   }
 
   @Test
+  void smallTransactionSelectedAfterLargeTransaction() {
+    final var tx1 = createEIP1559PendingTransaction(Bytes.random(10));
+    final var tx2 = createEIP1559PendingTransaction(Bytes.random(100));
+    final var tx3 = createEIP1559PendingTransaction(Bytes.random(20));
+    final int maxRlpBlockSize =
+        (int) (MAX_HEADER_SIZE + tx1.getTransaction().getSize() + tx3.getTransaction().getSize());
+    when(blockSelectionContext.gasCalculator().maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
+
+    // transaction is under the total block size limit, so it should be selected
+    var txEvaluationContext1 =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null);
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertSelected(txEvaluationContext1);
+
+    // add another transaction which is too large for the block, so it should not be selected
+    var txEvaluationContext2 =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null);
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertNotSelected(
+        txEvaluationContext2, TransactionSelectionResult.TOO_LARGE_FOR_REMAINING_BLOCK_SIZE);
+
+    // transaction is under the total block size limit, so it should be selected
+    var txEvaluationContext3 =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), tx3, null, null, null);
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertSelected(txEvaluationContext3);
+  }
+
+  @Test
   void transactionRejectedWhenEqualToBlockSize() {
     final var tx1 = createEIP1559PendingTransaction(Bytes.random(50));
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(50));
@@ -112,7 +142,7 @@ class BlockRlpSizeTransactionSelectorTest {
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext2);
     evaluateAndAssertNotSelected(
-        txEvaluationContext2, TransactionSelectionResult.BLOCK_SIZE_ABOVE_THRESHOLD);
+        txEvaluationContext2, TransactionSelectionResult.TOO_LARGE_FOR_REMAINING_BLOCK_SIZE);
   }
 
   @Test
@@ -135,7 +165,7 @@ class BlockRlpSizeTransactionSelectorTest {
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext2);
     evaluateAndAssertNotSelected(
-        txEvaluationContext2, TransactionSelectionResult.BLOCK_SIZE_ABOVE_THRESHOLD);
+        txEvaluationContext2, TransactionSelectionResult.TOO_LARGE_FOR_REMAINING_BLOCK_SIZE);
   }
 
   private void evaluateAndAssertSelected(final TransactionEvaluationContext txEvaluationContext) {

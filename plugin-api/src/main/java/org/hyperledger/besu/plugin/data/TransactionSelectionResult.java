@@ -143,10 +143,6 @@ public class TransactionSelectionResult {
   public static final TransactionSelectionResult BLOCK_OCCUPANCY_ABOVE_THRESHOLD =
       new TransactionSelectionResult(BaseStatus.BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
 
-  /** The transaction has not been selected since it would exceed the block size limit */
-  public static final TransactionSelectionResult BLOCK_SIZE_ABOVE_THRESHOLD =
-      new TransactionSelectionResult(BaseStatus.BLOCK_SIZE_ABOVE_THRESHOLD);
-
   /**
    * The transaction has not been selected since its gas limit is greater than the block remaining
    * gas, but the selection should continue.
@@ -160,6 +156,13 @@ public class TransactionSelectionResult {
    */
   public static final TransactionSelectionResult TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS =
       TransactionSelectionResult.invalidTransient("TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS");
+
+  /**
+   * The transaction has not been selected since there is not enough remaining block bytes in the
+   * block to fit the transaction, but selection should continue.
+   */
+  public static final TransactionSelectionResult TOO_LARGE_FOR_REMAINING_BLOCK_SIZE =
+      TransactionSelectionResult.invalidTransient("TOO_LARGE_FOR_REMAINING_BLOCK_SIZE");
 
   /**
    * The transaction has not been selected since its current price is below the configured min
