@@ -85,15 +85,16 @@ public class ExtCodeHashOperation extends AbstractOperation {
       if (account == null || account.isEmpty()) {
         frame.pushStackItem(Bytes.EMPTY);
       } else {
-        final Bytes code = account.getCode();
-        if (enableEIP3540
-            && code.size() >= 2
-            && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
-            && code.get(1) == 0) {
-          frame.pushStackItem(EOF_REPLACEMENT_HASH);
-        } else {
-          frame.pushStackItem(account.getCodeHash());
-        }
+        if (enableEIP3540) {
+          final Bytes code = account.getCode();
+          if (code.size() >= 2
+                  && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
+                  && code.get(1) == 0) {
+              frame.pushStackItem(EOF_REPLACEMENT_HASH);
+            }
+          } else {
+            frame.pushStackItem(account.getCodeHash());
+          }
       }
       return new OperationResult(cost, null);
 
