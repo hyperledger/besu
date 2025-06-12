@@ -432,8 +432,6 @@ configure(allprojects - project(':platform')) {
       '-org.hyperledger.besu.ethereum.referencetests,' +
       //rlp module
       '-org.hyperledger.besu.ethereum.rlp,' +
-      // stratum module
-      '-org.hyperledger.besu.ethereum.stratum,' +
       // trie module
       '-org.hyperledger.besu.ethereum.trie.*,' +
       '-org.hyperledger.besu.ethereum.trie,' +

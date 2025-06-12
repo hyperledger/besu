@@ -1,16 +1,66 @@
 # Changelog
 ## Unreleased
 ### Breaking Changes
-- Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins [#8589](https://github.com/hyperledger/besu/pull/8589) [#8746](https://github.com/hyperledger/besu/pull/8746)
+- Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins. See [Appendix A](#appendix-a) for a mapping. [#8589](https://github.com/hyperledger/besu/pull/8589) [#8746](https://github.com/hyperledger/besu/pull/8746)
+- `BesuContext` is removed, since deprecated in favor of `ServiceManager` since `24.12.0`
+- Remove the deprecated `--Xbonsai-limit-trie-logs-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
+- Remove the deprecated `--Xbonsai-trie-log-pruning-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Stratum mining has been removed (part of PoW) [#8802](https://github.com/hyperledger/besu/pull/8802)
+  - PoW RPCs removed: `eth_getWork`, `eth_submitWork`, `eth_getHashrate`, `eth_submitHashrate`, `eth_hashrate`
 
 ### Upcoming Breaking Changes
+- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
+- `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+- Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
+
 ### Additions and Improvements
+- Introduce the `TransactionValidatorService` to allow plugins to add custom validation rules [#8793](https://github.com/hyperledger/besu/pull/8793)
+
 #### Fusaka Devnet
 - EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
 - EIP-7823 - Modexp upper bounds [#8632](https://github.com/hyperledger/besu/pull/8632)
-- implement rewardPercentile cap in eth_feeHistory [#8748](https://github.com/hyperledger/besu/pull/8748)
+- Implement rewardPercentile cap in eth_feeHistory [#8748](https://github.com/hyperledger/besu/pull/8748)
 
 ### Bug fixes
+
+#### Appendix A
+| Old Module Name | New Module Name |
+|---|---|
+| org.hyperledger.besu.internal:dsl | org.hyperledger.besu.internal:besu-acceptance-tests-dsl |
+| org.hyperledger.besu.internal:besu | org.hyperledger.besu.internal:besu-app |
+| org.hyperledger.besu.internal:config | org.hyperledger.besu.internal:besu-config |
+| org.hyperledger.besu.internal:clique | org.hyperledger.besu.internal:besu-consensus-clique |
+| org.hyperledger.besu.internal:common | org.hyperledger.besu.internal:besu-consensus-common |
+| org.hyperledger.besu.internal:ibft | org.hyperledger.besu.internal:besu-consensus-ibft |
+| org.hyperledger.besu.internal:ibftlegacy | org.hyperledger.besu.internal:besu-consensus-ibftlegacy |
+| org.hyperledger.besu.internal:merge | org.hyperledger.besu.internal:besu-consensus-merge |
+| org.hyperledger.besu.internal:qbft | org.hyperledger.besu.internal:besu-consensus-qbft |
+| org.hyperledger.besu.internal:qbft-core | org.hyperledger.besu.internal:besu-consensus-qbft-core |
+| org.hyperledger.besu.internal:algorithms | org.hyperledger.besu.internal:besu-crypto-algorithms |
+| org.hyperledger.besu.internal:services | org.hyperledger.besu.internal:besu-crypto-services |
+| org.hyperledger.besu:besu-datatypes | org.hyperledger.besu:besu-datatypes |
+| org.hyperledger.besu.internal:api | org.hyperledger.besu.internal:besu-ethereum-api |
+| org.hyperledger.besu.internal:blockcreation | org.hyperledger.besu.internal:besu-ethereum-blockcreation |
+| org.hyperledger.besu.internal:core | org.hyperledger.besu.internal:besu-ethereum-core |
+| org.hyperledger.besu.internal:eth | org.hyperledger.besu.internal:besu-ethereum-eth |
+| org.hyperledger.besu.internal:p2p | org.hyperledger.besu.internal:besu-ethereum-p2p |
+| org.hyperledger.besu.internal:permissioning | org.hyperledger.besu.internal:besu-ethereum-permissioning |
+| org.hyperledger.besu.internal:referencetests | org.hyperledger.besu.internal:besu-ethereum-referencetests |
+| org.hyperledger.besu.internal:rlp | org.hyperledger.besu.internal:besu-ethereum-rlp |
+| org.hyperledger.besu.internal:trie | org.hyperledger.besu.internal:besu-ethereum-trie |
+| org.hyperledger.besu:evm | org.hyperledger.besu:besu-evm |
+| org.hyperledger.besu.internal:metrics-core | org.hyperledger.besu.internal:besu-metrics-core |
+| org.hyperledger.besu:plugin-api | org.hyperledger.besu:besu-plugin-api |
+| org.hyperledger.besu.internal:testutil | org.hyperledger.besu.internal:besu-testutil |
+| org.hyperledger.besu.internal:util | org.hyperledger.besu.internal:besu-util |
+| org.hyperledger.besu.internal:nat | org.hyperledger.besu.internal:besu-nat |
+| org.hyperledger.besu.internal:tasks | org.hyperledger.besu.internal:besu-services-tasks |
+| org.hyperledger.besu.internal:pipeline | org.hyperledger.besu.internal:besu-services-pipeline |
+| org.hyperledger.besu.internal:kvstore | org.hyperledger.besu.internal:besu-services-kvstore |
 
 ## 25.6.0
 ### Breaking Changes
@@ -21,6 +71,7 @@
 - Remove the deprecated `--tx-pool-disable-locals` option, use `--tx-pool-no-local-priority` instead. [#8614](https://github.com/hyperledger/besu/pull/8614)
 - Remove the deprecated `--Xsnapsync-synchronizer-flat-db-healing-enabled`, use `--Xbonsai-full-flat-db-enabled` instead. [#8415](https://github.com/hyperledger/besu/issues/8415)
 - Change in behavior, the non-standard `strict` parameter of the `eth_estimateGas` method changed its default from `false` to `true`, for more accurate estimations. It is still possible to force the previous behavior, explicitly passing the `strict` parameter in the request, set to `false` [#8629](https://github.com/hyperledger/besu/pull/8629)
+
 
 ### Upcoming Breaking Changes
 - `--Xbonsai-limit-trie-logs-enabled` is deprecated, use `--bonsai-limit-trie-logs-enabled` instead.

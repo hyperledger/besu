@@ -20,8 +20,10 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.plugin.services.txvalidator.TransactionValidationRule;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -111,6 +113,16 @@ public class TransactionValidatorFactory {
     transactionValidatorSupplier =
         Suppliers.memoize(
             () -> new PermissionTransactionValidator(baseTxValidator, permissionTransactionFilter));
+  }
+
+  public void setAdditionalValidationRules(
+      final List<TransactionValidationRule> additionalValidationRules) {
+    if (!additionalValidationRules.isEmpty()) {
+      final TransactionValidator baseTxValidator = transactionValidatorSupplier.get();
+      transactionValidatorSupplier =
+          Suppliers.memoize(
+              () -> new ExtendableTransactionValidator(baseTxValidator, additionalValidationRules));
+    }
   }
 
   public TransactionValidator get() {

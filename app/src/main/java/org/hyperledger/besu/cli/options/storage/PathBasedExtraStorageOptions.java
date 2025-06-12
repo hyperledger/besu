@@ -56,15 +56,8 @@ public class PathBasedExtraStorageOptions
   public static final String TRIE_LOG_PRUNING_WINDOW_SIZE =
       "--bonsai-trie-logs-pruning-window-size";
 
-  // TODO --Xbonsai-limit-trie-logs-enabled and --Xbonsai-trie-log-pruning-enabled are deprecated,
-  // remove in a future release
-  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @Option(
-      names = {
-        LIMIT_TRIE_LOGS_ENABLED,
-        "--Xbonsai-limit-trie-logs-enabled", // deprecated
-        "--Xbonsai-trie-log-pruning-enabled" // deprecated
-      },
+      names = {LIMIT_TRIE_LOGS_ENABLED},
       fallbackValue = "true",
       description = "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
   private Boolean limitTrieLogsEnabled = DEFAULT_LIMIT_TRIE_LOGS_ENABLED;
