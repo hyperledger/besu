@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** The CLZ operation. */
 public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
@@ -49,7 +50,8 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes value = frame.popStackItem();
-    frame.pushStackItem(Words.intBytes(value.numberOfLeadingZeros()));
+    final int numberOfLeadingZeros = UInt256.fromBytes(value).numberOfLeadingZeros();
+    frame.pushStackItem(Words.intBytes(numberOfLeadingZeros));
     return clzSuccess;
   }
 }
