@@ -64,6 +64,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -123,7 +124,8 @@ public class CliqueBlockCreatorTest {
     CliqueHelpers.setCliqueContext(cliqueContext);
 
     final Block genesis =
-        GenesisState.fromConfig(GenesisConfig.mainnet(), protocolSchedule).getBlock();
+        GenesisState.fromConfig(GenesisConfig.mainnet(), protocolSchedule, new CodeCache())
+            .getBlock();
     blockchain = createInMemoryBlockchain(genesis);
     protocolContext =
         new ProtocolContext.Builder()

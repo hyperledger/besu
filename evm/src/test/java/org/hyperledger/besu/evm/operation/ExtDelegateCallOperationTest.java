@@ -47,13 +47,13 @@ public class ExtDelegateCallOperationTest {
   //  private final MutableAccount targetAccount = mock(MutableAccount.class);
   private static final EVM EOF_EVM = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
   public static final Code LEGACY_CODE =
-      EOF_EVM.getCodeUncached(Bytes.of(ExtDelegateCallOperation.OPCODE, 1));
+      EOF_EVM.wrapCode(Bytes.of(ExtDelegateCallOperation.OPCODE, 1));
   public static final Code SIMPLE_EOF =
-      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
-  public static final Code SIMPLE_LEGACY = EOF_EVM.getCodeUncached(Bytes.fromHexString("0x00"));
-  public static final Code EMPTY_CODE = EOF_EVM.getCodeUncached(Bytes.fromHexString(""));
+      EOF_EVM.wrapCode(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
+  public static final Code SIMPLE_LEGACY = EOF_EVM.wrapCode(Bytes.fromHexString("0x00"));
+  public static final Code EMPTY_CODE = EOF_EVM.wrapCode(Bytes.fromHexString(""));
   public static final Code INVALID_EOF =
-      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000023"));
+      EOF_EVM.wrapCode(Bytes.fromHexString("0xEF00010100040200010001040000000080000023"));
   private static final Address CONTRACT_ADDRESS = Address.fromHexString("0xc0de");
 
   static Iterable<Arguments> data() {

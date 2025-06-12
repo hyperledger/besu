@@ -14,18 +14,15 @@
  */
 package org.hyperledger.besu.evm;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
@@ -89,7 +86,6 @@ public class EVM {
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
   private final CodeFactory codeFactory;
-  private final CodeCache codeCache;
   private final EvmConfiguration evmConfiguration;
   private final EvmSpecVersion evmSpecVersion;
 
@@ -113,7 +109,6 @@ public class EVM {
     this.gasCalculator = gasCalculator;
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
     this.evmConfiguration = evmConfiguration;
-    this.codeCache = new CodeCache(evmConfiguration);
     this.evmSpecVersion = evmSpecVersion;
 
     codeFactory =
@@ -367,39 +362,22 @@ public class EVM {
   }
 
   /**
-   * Gets code.
-   *
-   * @param codeHash the code hash
-   * @param codeBytes the code bytes
-   * @return the code
-   */
-  public Code getCode(final Hash codeHash, final Bytes codeBytes) {
-    checkNotNull(codeHash);
-    Code result = codeCache.getIfPresent(codeHash);
-    if (result == null) {
-      result = getCodeUncached(codeBytes);
-      codeCache.put(codeHash, result);
-    }
-    return result;
-  }
-
-  /**
-   * Gets code skipping the code cache.
+   * Wraps code bytes into the correct Code object
    *
    * @param codeBytes the code bytes
-   * @return the code
+   * @return the wrapped code
    */
-  public Code getCodeUncached(final Bytes codeBytes) {
+  public Code wrapCode(final Bytes codeBytes) {
     return codeFactory.createCode(codeBytes);
   }
 
   /**
-   * Gets code for creation. Skips code cache and allows for extra data after EOF contracts.
+   * Wraps code for creation. Allows dangling data, which is not allowed in a transaction.
    *
    * @param codeBytes the code bytes
-   * @return the code
+   * @return the wrapped code
    */
-  public Code getCodeForCreation(final Bytes codeBytes) {
+  public Code wrapCodeForCreation(final Bytes codeBytes) {
     return codeFactory.createCode(codeBytes, true);
   }
 

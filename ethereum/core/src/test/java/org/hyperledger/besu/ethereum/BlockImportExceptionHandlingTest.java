@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -106,7 +107,8 @@ class BlockImportExceptionHandlingTest {
               (BonsaiWorldStateKeyValueStorage)
                   worldStateStorageCoordinator.worldStateKeyValueStorage(),
               EvmConfiguration.DEFAULT,
-              createStatefulConfigWithTrie()));
+              createStatefulConfigWithTrie(),
+              new CodeCache()));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 

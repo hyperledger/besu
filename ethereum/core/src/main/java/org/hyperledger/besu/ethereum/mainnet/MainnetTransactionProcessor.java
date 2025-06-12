@@ -15,7 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetAccount;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetAddress;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetCode;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
@@ -33,7 +34,6 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeInvalid;
@@ -313,7 +313,7 @@ public class MainnetTransactionProcessor {
             Address.contractAddress(senderAddress, sender.getNonce() - 1L);
 
         final Bytes initCodeBytes = transaction.getPayload();
-        Code code = contractCreationProcessor.getCodeFromEVMForCreation(initCodeBytes);
+        Code code = contractCreationProcessor.wrapCodeForCreation(initCodeBytes);
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -551,18 +551,16 @@ public class MainnetTransactionProcessor {
       return delegationTargetCode(worldUpdater, warmAddressList, contract);
     }
 
-    return messageCallProcessor.getCodeFromEVM(contract.getCodeHash(), contract.getCode());
+    return messageCallProcessor.wrapCode(contract.getCode());
   }
 
   private Code delegationTargetCode(
       final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract) {
     // we need to look up the target account and its code, but do NOT charge gas for it
-    final CodeDelegationAccount targetAccount =
-        getTargetAccount(worldUpdater, gasCalculator::isPrecompile, contract);
-    warmAddressList.add(targetAccount.getTargetAddress());
+    final Code targetCode = getTargetCode(worldUpdater, gasCalculator::isPrecompile, contract);
+    warmAddressList.add(getTargetAddress(targetCode.getBytes()));
 
-    return messageCallProcessor.getCodeFromEVM(
-        targetAccount.getCodeHash(), targetAccount.getCode());
+    return targetCode;
   }
 
   public static Builder builder() {

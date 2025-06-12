@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.processor;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
@@ -28,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -229,23 +227,22 @@ public abstract class AbstractMessageProcessor {
   }
 
   /**
-   * Gets code from evm.
+   * Wraps code in the correct Code object.
    *
-   * @param codeHash the code hash
    * @param codeBytes the code bytes
-   * @return the code from evm
+   * @return the wrapped code from the evm
    */
-  public Code getCodeFromEVM(@NotNull final Hash codeHash, final Bytes codeBytes) {
-    return evm.getCode(codeHash, codeBytes);
+  public Code wrapCode(final Bytes codeBytes) {
+    return evm.wrapCode(codeBytes);
   }
 
   /**
-   * Gets code from evm, with handling for EOF code plus calldata
+   * Wraps the code from the evm, with handling for EOF code plus calldata
    *
    * @param codeBytes the code bytes
-   * @return the code from evm
+   * @return the wrapped code from the evm
    */
-  public Code getCodeFromEVMForCreation(final Bytes codeBytes) {
-    return evm.getCodeForCreation(codeBytes);
+  public Code wrapCodeForCreation(final Bytes codeBytes) {
+    return evm.wrapCodeForCreation(codeBytes);
   }
 }

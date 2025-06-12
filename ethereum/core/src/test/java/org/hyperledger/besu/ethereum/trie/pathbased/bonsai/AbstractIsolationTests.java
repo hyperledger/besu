@@ -70,6 +70,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMer
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -110,7 +111,8 @@ public abstract class AbstractIsolationTests {
           false,
           new NoOpMetricsSystem());
   protected final GenesisState genesisState =
-      GenesisState.fromConfig(GenesisConfig.fromResource("/dev.json"), protocolSchedule);
+      GenesisState.fromConfig(
+          GenesisConfig.fromResource("/dev.json"), protocolSchedule, new CodeCache());
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
   protected final TransactionPoolConfiguration poolConfiguration =
@@ -169,7 +171,8 @@ public abstract class AbstractIsolationTests {
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
             EvmConfiguration.DEFAULT,
-            throwingWorldStateHealerSupplier());
+            throwingWorldStateHealerSupplier(),
+            new CodeCache());
     var ws = archive.getWorldState();
     genesisState.writeStateTo(ws);
     protocolContext =

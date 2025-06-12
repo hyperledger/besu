@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMer
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.ServiceManager;
@@ -115,7 +116,8 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         bonsaiCachedMerkleTrieLoader,
         serviceManager,
         evmConfiguration,
-        throwingWorldStateHealerSupplier());
+        throwingWorldStateHealerSupplier(),
+        new CodeCache());
   }
 
   public static MutableWorldState createInMemoryWorldState() {

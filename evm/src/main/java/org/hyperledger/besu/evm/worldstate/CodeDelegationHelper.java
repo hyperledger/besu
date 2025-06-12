@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.evm.worldstate;
 
+import static org.hyperledger.besu.evm.code.CodeV0.EMPTY_CODE;
+
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 
 import java.util.function.Predicate;
 
@@ -48,6 +50,17 @@ public class CodeDelegationHelper {
   }
 
   /**
+   * return the target address from the byte code. The method assumes that the byte code is a valid
+   * according to EIP-7702
+   *
+   * @param code the 7702 byte code in the form CODE_DELEGATION_PREFIX + target address
+   * @return the address of the target
+   */
+  public static Address getTargetAddress(final Bytes code) {
+    return Address.wrap(code.slice(CODE_DELEGATION_PREFIX.size()));
+  }
+
+  /**
    * Returns the target account of the delegated code.
    *
    * @param worldUpdater the world updater.
@@ -56,7 +69,7 @@ public class CodeDelegationHelper {
    * @return the target account of the delegated code, throws IllegalArgumentException if account is
    *     null or doesn't have code delegation.
    */
-  public static CodeDelegationAccount getTargetAccount(
+  public static Code getTargetCode(
       final WorldUpdater worldUpdater, final Predicate<Address> isPrecompile, final Account account)
       throws IllegalArgumentException {
     if (account == null) {
@@ -70,24 +83,23 @@ public class CodeDelegationHelper {
     final Address targetAddress =
         Address.wrap(account.getCode().slice(CODE_DELEGATION_PREFIX.size()));
 
-    final Bytes targetCode = processTargetCode(worldUpdater, isPrecompile, targetAddress);
-
-    return new CodeDelegationAccount(account, targetAddress, targetCode);
+    return processTargetCode(worldUpdater, isPrecompile, targetAddress);
   }
 
-  private static Bytes processTargetCode(
+  private static Code processTargetCode(
       final WorldUpdater worldUpdater,
       final Predicate<Address> isPrecompile,
       final Address targetAddress) {
     if (targetAddress == null) {
-      return Bytes.EMPTY;
+      return EMPTY_CODE;
     }
 
     final Account targetAccount = worldUpdater.get(targetAddress);
 
     if (targetAccount == null || isPrecompile.test(targetAddress)) {
-      return Bytes.EMPTY;
+      return EMPTY_CODE;
     }
-    return targetAccount.getCode();
+
+    return targetAccount.getAnalyzedCode();
   }
 }

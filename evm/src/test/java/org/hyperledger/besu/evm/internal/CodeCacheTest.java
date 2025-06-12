@@ -16,27 +16,55 @@ package org.hyperledger.besu.evm.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.MainnetEVMs;
-import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class CodeCacheTest {
 
-  private final String op = Bytes.of(JumpDestOperation.OPCODE).toUnprefixedHexString();
+  private CodeCache codeCache;
+
+  @BeforeEach
+  void setUp() {
+    codeCache = new CodeCache();
+  }
 
   @Test
-  void testScale() {
-    EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
-    final Bytes contractBytes =
-        Bytes.fromHexString("0xDEAD" + op + "BEEF" + op + "B0B0" + op + "C0DE" + op + "FACE");
-    final CodeScale scale = new CodeScale();
-    final Code contractCode = evm.getCodeUncached(contractBytes);
-    final int weight = scale.weigh(contractCode.getCodeHash(), contractCode);
-    assertThat(weight)
-        .isEqualTo(contractCode.getCodeHash().size() + (contractBytes.size() * 9 + 7) / 8);
+  void shouldReturnNullWhenCodeIsNotPresent() {
+    Hash missingHash = Hash.hash(Bytes.of(1, 2, 3));
+
+    Code result = codeCache.getIfPresent(missingHash);
+
+    assertThat(result).isNull();
+  }
+
+  @Test
+  void shouldReturnCodeAfterItIsPut() {
+    Hash codeHash = Hash.hash(Bytes.of(10, 20, 30));
+    Code code = Mockito.mock(Code.class);
+
+    codeCache.put(codeHash, code);
+
+    Code retrieved = codeCache.getIfPresent(codeHash);
+
+    assertThat(retrieved).isSameAs(code);
+  }
+
+  @Test
+  void shouldOverwriteExistingCodeForSameHash() {
+    Hash codeHash = Hash.hash(Bytes.of(1, 2, 3));
+    Code originalCode = Mockito.mock(Code.class);
+    Code newCode = Mockito.mock(Code.class);
+
+    codeCache.put(codeHash, originalCode);
+    codeCache.put(codeHash, newCode);
+
+    Code retrieved = codeCache.getIfPresent(codeHash);
+
+    assertThat(retrieved).isSameAs(newCode);
   }
 }

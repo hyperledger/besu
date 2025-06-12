@@ -20,11 +20,15 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.internal.CodeCache;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -37,7 +41,8 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
   protected Hash codeHash;
   protected long nonce;
   protected Wei balance;
-  protected Bytes code;
+  protected Code code;
+  protected final CodeCache codeCache;
 
   protected final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
@@ -56,6 +61,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
    * @param codeHash The hash of the account's code.
    * @param mutable A boolean indicating if the account is mutable. If false, the account is
    *     considered immutable.
+   * @param codeCache The global cache used to store and retrieve the account's code.
    */
   public PathBasedAccount(
       final PathBasedWorldView context,
@@ -64,15 +70,21 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
       final long nonce,
       final Wei balance,
       final Hash codeHash,
-      final boolean mutable) {
+      final boolean mutable,
+      final CodeCache codeCache) {
     this.context = context;
     this.address = address;
     this.addressHash = addressHash;
     this.nonce = nonce;
     this.balance = balance;
     this.codeHash = codeHash;
+    this.codeCache = codeCache;
 
     this.immutable = !mutable;
+
+    if (codeHash.equals(Hash.EMPTY)) {
+      this.code = CodeV0.EMPTY_CODE;
+    }
   }
 
   /**
@@ -100,8 +112,9 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
       final long nonce,
       final Wei balance,
       final Hash codeHash,
-      final Bytes code,
-      final boolean mutable) {
+      final Code code,
+      final boolean mutable,
+      final CodeCache codeCache) {
     this.context = context;
     this.address = address;
     this.addressHash = addressHash;
@@ -110,6 +123,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     this.codeHash = codeHash;
     this.code = code;
     this.immutable = !mutable;
+    this.codeCache = codeCache;
   }
 
   @Override
@@ -150,22 +164,74 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
 
   @Override
   public Bytes getCode() {
-    if (code == null) {
-      code = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
+    if (code != null) {
+      // code is cached in the object, but not in the cache
+      Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
+
+      return code.getBytes();
     }
+
+    // try to get the code from the cache
+    final Code cachedCode =
+        Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
+    if (cachedCode != null) {
+      code = cachedCode;
+      return code.getBytes();
+    }
+
+    // cache miss: get the code from the disk and put it in the cache
+    final Bytes byteCode = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
+    code = new CodeV0(byteCode);
+    Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
+
+    return byteCode;
+  }
+
+  @Override
+  public Code getAnalyzedCode() {
+    final Code cachedCode =
+        Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
+    if (cachedCode != null) {
+      if (code == null) {
+        code = cachedCode; // cache hit, set the code if it was not set before
+      }
+
+      return cachedCode;
+    }
+
+    // if code is already set, put it in the cache and return it
+    if (code != null) {
+      Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
+
+      return code;
+    }
+
+    // cache miss: get the code from the disk and put it in the cache
+    final Bytes bytecode = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
+    code = new CodeV0(bytecode, codeHash);
+    Optional.ofNullable(codeCache).ifPresent(codeCache -> codeCache.put(codeHash, code));
+
     return code;
   }
 
   @Override
-  public void setCode(final Bytes code) {
+  public void setCode(final Bytes byteCode) {
     if (immutable) {
       throw new ModificationNotAllowedException();
     }
-    this.code = code;
-    if (code == null || code.isEmpty()) {
+
+    if (byteCode == null || byteCode.isEmpty()) {
+      this.code = CodeV0.EMPTY_CODE;
       this.codeHash = Hash.EMPTY;
-    } else {
-      this.codeHash = Hash.hash(code);
+      return;
+    }
+
+    this.codeHash = Hash.hash(byteCode);
+    this.code = Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
+
+    if (this.code == null) {
+      this.code = new CodeV0(byteCode, codeHash);
+      Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, this.code));
     }
   }
 

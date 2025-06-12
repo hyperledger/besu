@@ -16,7 +16,7 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetAccount;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetCode;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -25,7 +25,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -342,7 +341,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @param account the account which codes needs to be retrieved
    * @return the code
    */
-  protected static Code getCode(final EVM evm, final MessageFrame frame, final Account account) {
+  protected Code getCode(final EVM evm, final MessageFrame frame, final Account account) {
     if (account == null) {
       return CodeV0.EMPTY_CODE;
     }
@@ -352,13 +351,11 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return CodeV0.EMPTY_CODE;
     }
 
-    if (!hasCodeDelegation(account.getCode())) {
-      return evm.getCode(account.getCodeHash(), account.getCode());
+    Code code = account.getAnalyzedCode();
+    if (!hasCodeDelegation(code.getBytes())) {
+      return code;
     }
 
-    final CodeDelegationAccount targetAccount =
-        getTargetAccount(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account);
-
-    return evm.getCode(targetAccount.getCodeHash(), targetAccount.getCode());
+    return getTargetCode(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account);
   }
 }

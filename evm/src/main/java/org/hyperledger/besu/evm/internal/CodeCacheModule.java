@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,14 +14,31 @@
  */
 package org.hyperledger.besu.evm.internal;
 
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.Code;
+import javax.inject.Singleton;
 
-import com.github.benmanes.caffeine.cache.Weigher;
+import dagger.Module;
+import dagger.Provides;
 
-class CodeScale implements Weigher<Hash, Code> {
-  @Override
-  public int weigh(final Hash key, final Code code) {
-    return ((code.getSize() * 9 + 7) / 8) + key.size();
+/**
+ * Module for providing the CodeCache instance. This module is used to inject a singleton instance
+ * of CodeCache into the application.
+ */
+@Module
+public class CodeCacheModule {
+
+  /** Creates a new instance of CodeCacheModule. */
+  public CodeCacheModule() {
+    // Default constructor
+  }
+
+  /**
+   * Provides a singleton instance of CodeCache.
+   *
+   * @return a new instance of CodeCache
+   */
+  @Provides
+  @Singleton
+  public CodeCache provideCodeCache() {
+    return new CodeCache();
   }
 }

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
+import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.HashMap;
@@ -63,7 +64,8 @@ class BonsaiWorldStateTest {
             InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain),
             bonsaiWorldStateKeyValueStorage,
             EvmConfiguration.DEFAULT,
-            createStatefulConfigWithTrie());
+            createStatefulConfigWithTrie(),
+            new CodeCache());
   }
 
   @ParameterizedTest
