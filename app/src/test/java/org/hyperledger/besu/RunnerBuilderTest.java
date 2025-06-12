@@ -71,6 +71,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
+import org.hyperledger.besu.services.TransactionValidatorServiceImpl;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -169,6 +170,7 @@ public final class RunnerBuilderTest {
             .storageProvider(mock(KeyValueStorageProvider.class, RETURNS_DEEP_STUBS))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
+            .transactionValidatorService(mock(TransactionValidatorServiceImpl.class))
             .build();
     runner.startEthereumMainLoop();
 
@@ -215,6 +217,7 @@ public final class RunnerBuilderTest {
             .storageProvider(storageProvider)
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
+            .transactionValidatorService(mock(TransactionValidatorServiceImpl.class))
             .build();
     runner.startEthereumMainLoop();
 
@@ -276,6 +279,7 @@ public final class RunnerBuilderTest {
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
+            .transactionValidatorService(mock(TransactionValidatorServiceImpl.class))
             .build();
 
     assertThat(runner.getJsonRpcPort()).isPresent();
@@ -320,6 +324,7 @@ public final class RunnerBuilderTest {
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
+            .transactionValidatorService(mock(TransactionValidatorServiceImpl.class))
             .build();
 
     assertThat(runner.getEngineJsonRpcPort()).isPresent();
@@ -363,6 +368,7 @@ public final class RunnerBuilderTest {
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
+            .transactionValidatorService(mock(TransactionValidatorServiceImpl.class))
             .build();
 
     assertThat(runner.getEngineJsonRpcPort()).isPresent();
@@ -408,6 +414,7 @@ public final class RunnerBuilderTest {
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .networkingConfiguration(NetworkingConfiguration.create())
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
+            .transactionValidatorService(mock(TransactionValidatorServiceImpl.class))
             .build();
 
     assertThat(runner.getJsonRpcPort()).isPresent();

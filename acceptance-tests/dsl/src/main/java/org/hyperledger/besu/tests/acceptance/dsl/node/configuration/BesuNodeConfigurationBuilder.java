@@ -178,12 +178,6 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder enablePrivateTransactions() {
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.EEA.name());
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.PRIV.name());
-    return this;
-  }
-
   public BesuNodeConfigurationBuilder jsonRpcTxPool() {
     this.jsonRpcConfiguration.addRpcApi(RpcApis.TXPOOL.name());
     return this;

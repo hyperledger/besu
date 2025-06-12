@@ -47,7 +47,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
-import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -62,7 +61,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith({MockitoExtension.class, TrustedSetupClassLoaderExtension.class})
+@ExtendWith({MockitoExtension.class})
 public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
 
   public EngineGetPayloadV4Test() {
