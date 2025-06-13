@@ -175,7 +175,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
   @Override
   public Code getAnalyzedCode() {
     final Code cachedCode =
-      Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
+        Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
 
     if (code != null) {
       if (cachedCode == null) {
