@@ -16,7 +16,7 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetCode;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTarget;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -356,6 +356,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return code;
     }
 
-    return getTargetCode(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account);
+    return getTarget(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account).code();
   }
 }

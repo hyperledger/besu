@@ -20,7 +20,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
@@ -69,21 +68,19 @@ class CodeDelegationHelperTest {
   @Test
   void getTargetAccountReturnsEmptyIfCodeIsNull() {
     assertThatThrownBy(
-            () ->
-                CodeDelegationHelper.getTargetCode(worldUpdater, gasCalculator::isPrecompile, null))
+            () -> CodeDelegationHelper.getTarget(worldUpdater, gasCalculator::isPrecompile, null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Account must not be null.");
   }
 
   @Test
-  void getTargetCodeReturnsEmptyIfNoDelegation() {
+  void getTargetReturnsEmptyIfNoDelegation() {
     Bytes code = Bytes.fromHexString("600035"); // random code, not delegated
     when(account.getCode()).thenReturn(code);
 
     assertThatThrownBy(
             () ->
-                CodeDelegationHelper.getTargetCode(
-                    worldUpdater, gasCalculator::isPrecompile, account))
+                CodeDelegationHelper.getTarget(worldUpdater, gasCalculator::isPrecompile, account))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Account does not have code delegation.");
   }
@@ -96,10 +93,11 @@ class CodeDelegationHelperTest {
     Address targetAddress = Address.wrap(validCode.slice(CODE_PREFIX.size()));
     when(worldUpdater.get(targetAddress)).thenReturn(null);
 
-    Code result =
-        CodeDelegationHelper.getTargetCode(worldUpdater, gasCalculator::isPrecompile, account);
+    CodeDelegationHelper.Target target =
+        CodeDelegationHelper.getTarget(worldUpdater, gasCalculator::isPrecompile, account);
 
-    assertThat(result.getBytes()).isEqualTo(Bytes.EMPTY);
+    assertThat(target.code().getBytes()).isEqualTo(Bytes.EMPTY);
+    assertThat(target.address()).isEqualTo(targetAddress);
   }
 
   @Test
@@ -113,10 +111,11 @@ class CodeDelegationHelperTest {
     when(worldUpdater.get(targetAddress)).thenReturn(targetAccount);
     when(gasCalculator.isPrecompile(targetAddress)).thenReturn(true);
 
-    Code result =
-        CodeDelegationHelper.getTargetCode(worldUpdater, gasCalculator::isPrecompile, account);
+    CodeDelegationHelper.Target target =
+        CodeDelegationHelper.getTarget(worldUpdater, gasCalculator::isPrecompile, account);
 
-    assertThat(result.getBytes()).isEqualTo(Bytes.EMPTY);
+    assertThat(target.code().getBytes()).isEqualTo(Bytes.EMPTY);
+    assertThat(target.address()).isEqualTo(targetAddress);
   }
 
   @Test
@@ -132,9 +131,10 @@ class CodeDelegationHelperTest {
     when(targetAccount.getAnalyzedCode()).thenReturn(new CodeV0(targetCode));
     when(gasCalculator.isPrecompile(targetAddress)).thenReturn(false);
 
-    Code result =
-        CodeDelegationHelper.getTargetCode(worldUpdater, gasCalculator::isPrecompile, account);
+    CodeDelegationHelper.Target target =
+        CodeDelegationHelper.getTarget(worldUpdater, gasCalculator::isPrecompile, account);
 
-    assertThat(result.getBytes()).isEqualTo(targetCode);
+    assertThat(target.code().getBytes()).isEqualTo(targetCode);
+    assertThat(target.address()).isEqualTo(targetAddress);
   }
 }

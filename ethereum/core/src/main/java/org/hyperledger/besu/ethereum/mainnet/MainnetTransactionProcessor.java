@@ -15,8 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetAddress;
-import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetCode;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTarget;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
@@ -45,6 +44,7 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -557,10 +557,11 @@ public class MainnetTransactionProcessor {
   private Code delegationTargetCode(
       final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract) {
     // we need to look up the target account and its code, but do NOT charge gas for it
-    final Code targetCode = getTargetCode(worldUpdater, gasCalculator::isPrecompile, contract);
-    warmAddressList.add(getTargetAddress(targetCode.getBytes()));
+    final CodeDelegationHelper.Target target =
+        getTarget(worldUpdater, gasCalculator::isPrecompile, contract);
+    warmAddressList.add(target.address());
 
-    return targetCode;
+    return target.code();
   }
 
   public static Builder builder() {

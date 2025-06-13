@@ -26,6 +26,14 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** Helper class for 7702 delegated code interactions */
 public class CodeDelegationHelper {
+  /**
+   * Represents a target for code delegation, containing the target address and the code to execute
+   *
+   * @param address the address of the target account
+   * @param code the code to execute at the target address
+   */
+  public record Target(Address address, Code code) {}
+
   /** The prefix that is used to identify delegated code */
   public static final Bytes CODE_DELEGATION_PREFIX = Bytes.fromHexString("ef0100");
 
@@ -66,10 +74,10 @@ public class CodeDelegationHelper {
    * @param worldUpdater the world updater.
    * @param isPrecompile function to check if an address belongs to a precompile account.
    * @param account the account which has a code delegation.
-   * @return the target account of the delegated code, throws IllegalArgumentException if account is
-   *     null or doesn't have code delegation.
+   * @return the target address and its code. Throws an exception if the account does not have a
+   *     code delegation or if the account is null.
    */
-  public static Code getTargetCode(
+  public static Target getTarget(
       final WorldUpdater worldUpdater, final Predicate<Address> isPrecompile, final Account account)
       throws IllegalArgumentException {
     if (account == null) {
@@ -83,7 +91,7 @@ public class CodeDelegationHelper {
     final Address targetAddress =
         Address.wrap(account.getCode().slice(CODE_DELEGATION_PREFIX.size()));
 
-    return processTargetCode(worldUpdater, isPrecompile, targetAddress);
+    return new Target(targetAddress, processTargetCode(worldUpdater, isPrecompile, targetAddress));
   }
 
   private static Code processTargetCode(
