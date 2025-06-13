@@ -218,7 +218,7 @@ public class Address extends DelegatingBytes {
    */
   public static Address precompiled(final int value) {
     // Allow values up to 0x01FF (511) to encompass layer2 precompile address space
-    checkArgument(value < 0x01FF, "Precompiled value must be <= 0x01FF");
+    checkArgument(value <= 0x01FF, "Precompiled value must be <= 0x01FF");
     final byte[] address = new byte[SIZE];
     address[SIZE - 2] = (byte) (value >>> 8); // High byte
     address[SIZE - 1] = (byte) (value & 0xFF); // Low byte
