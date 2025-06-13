@@ -59,7 +59,7 @@ public class PathBasedExtraStorageOptions
 
   /** The bonsai parallel tx processing enabled option name. */
   public static final String PARALLEL_TX_PROCESSING_ENABLED =
-    "--bonsai-parallel-tx-processing-enabled";
+      "--bonsai-parallel-tx-processing-enabled";
 
   @Option(
       names = {LIMIT_TRIE_LOGS_ENABLED},
