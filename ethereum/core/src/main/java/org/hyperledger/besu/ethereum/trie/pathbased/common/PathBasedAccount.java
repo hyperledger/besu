@@ -121,9 +121,14 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     this.nonce = nonce;
     this.balance = balance;
     this.codeHash = codeHash;
-    this.code = code;
     this.immutable = !mutable;
     this.codeCache = codeCache;
+
+    if (code == null) {
+      this.code = CodeV0.EMPTY_CODE;
+    } else {
+      this.code = code;
+    }
   }
 
   @Override
@@ -164,52 +169,34 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
 
   @Override
   public Bytes getCode() {
-    if (code != null) {
-      // code is cached in the object, but not in the cache
-      Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
-
-      return code.getBytes();
-    }
-
-    // try to get the code from the cache
-    final Code cachedCode =
-        Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
-    if (cachedCode != null) {
-      code = cachedCode;
-      return code.getBytes();
-    }
-
-    // cache miss: get the code from the disk and put it in the cache
-    final Bytes byteCode = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
-    code = new CodeV0(byteCode);
-    Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
-
-    return byteCode;
+    return getAnalyzedCode().getBytes();
   }
 
   @Override
   public Code getAnalyzedCode() {
     final Code cachedCode =
-        Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
-    if (cachedCode != null) {
-      if (code == null) {
-        code = cachedCode; // cache hit, set the code if it was not set before
-      }
+      Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
 
-      return cachedCode;
-    }
-
-    // if code is already set, put it in the cache and return it
     if (code != null) {
-      Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
+      if (cachedCode == null) {
+        // if code is already set, but not in the cache, put it there
+        Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
+      }
 
       return code;
     }
 
-    // cache miss: get the code from the disk and put it in the cache
-    final Bytes bytecode = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
-    code = new CodeV0(bytecode, codeHash);
-    Optional.ofNullable(codeCache).ifPresent(codeCache -> codeCache.put(codeHash, code));
+    // cache hit, but code was not set before, set it
+    if (cachedCode != null) {
+      code = cachedCode;
+      return cachedCode;
+    }
+
+    // cache miss, code not set: get the code from the disk, set it and put it in the cache
+    // code cannot be empty here, as it would have been set to EMPTY_CODE in the constructor
+    final Bytes byteCode = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
+    code = new CodeV0(byteCode);
+    Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
 
     return code;
   }
