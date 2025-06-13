@@ -54,7 +54,9 @@ public class BonsaiAccountTest {
     expectedAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     assertThat(
             new BonsaiAccount(
-                bonsaiWorldState, bonsaiAccountUpdateTrackingAccount, new CodeCache()))
+                bonsaiWorldState,
+                bonsaiAccountUpdateTrackingAccount,
+                trackedAccount.getCodeCache()))
         .isEqualToComparingFieldByField(expectedAccount);
   }
 

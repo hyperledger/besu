@@ -279,4 +279,13 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
         + codeHash
         + '}';
   }
+
+  /**
+   * Returns the code cache associated with this account.
+   *
+   * @return the code cache.
+   */
+  public CodeCache getCodeCache() {
+    return codeCache;
+  }
 }
