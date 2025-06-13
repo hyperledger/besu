@@ -5,7 +5,7 @@
 - `BesuContext` is removed, since deprecated in favor of `ServiceManager` since `24.12.0`
 - Remove the deprecated `--Xbonsai-limit-trie-logs-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
 - Remove the deprecated `--Xbonsai-trie-log-pruning-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
-- Remove methods from gas calculator deprecated since 24.2 `create2OperationGasCost`, `callOperationGasCost`, `createOperationGasCost`, and `cost`
+- Remove methods from gas calculator deprecated since 24.2 `create2OperationGasCost`, `callOperationGasCost`, `createOperationGasCost`, and `cost` [#8817](https://github.com/hyperledger/besu/pull/8817)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Stratum mining has been removed (part of PoW) [#8802](https://github.com/hyperledger/besu/pull/8802)
   - PoW RPCs removed: `eth_getWork`, `eth_submitWork`, `eth_getHashrate`, `eth_submitHashrate`, `eth_hashrate`
