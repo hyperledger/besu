@@ -32,6 +32,7 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
   private final long blobGasPerBlob;
   protected final int maxBlobsPerBlock;
   protected final int targetBlobsPerBlock;
+  private final long transactionBlobGasLimitCap;
 
   public CancunTargetingGasLimitCalculator(
       final long londonForkBlock,
@@ -42,7 +43,8 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
         feeMarket,
         gasCalculator,
         DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN,
-        DEFAULT_TARGET_BLOBS_PER_BLOCK_CANCUN);
+        DEFAULT_TARGET_BLOBS_PER_BLOCK_CANCUN,
+        DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN);
   }
 
   /**
@@ -54,13 +56,15 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
       final BaseFeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final int maxBlobsPerBlock,
-      final int targetBlobsPerBlock) {
+      final int targetBlobsPerBlock,
+      final int maxBlobsPerTransaction) {
     super(londonForkBlock, feeMarket);
     this.blobGasPerBlob = gasCalculator.getBlobGasPerBlob();
     this.targetBlobGasPerBlock = blobGasPerBlob * targetBlobsPerBlock;
     this.maxBlobGasPerBlock = blobGasPerBlob * maxBlobsPerBlock;
     this.maxBlobsPerBlock = maxBlobsPerBlock;
     this.targetBlobsPerBlock = targetBlobsPerBlock;
+    this.transactionBlobGasLimitCap = gasCalculator.getBlobGasPerBlob() * maxBlobsPerTransaction;
   }
 
   @Override
@@ -95,5 +99,10 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
 
   public long getMaxBlobGasPerBlock() {
     return maxBlobGasPerBlock;
+  }
+
+  @Override
+  public long transactionBlobGasLimitCap() {
+    return transactionBlobGasLimitCap;
   }
 }

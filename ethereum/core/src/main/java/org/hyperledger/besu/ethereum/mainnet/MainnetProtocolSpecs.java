@@ -697,7 +697,8 @@ public abstract class MainnetProtocolSpecs {
                     (BaseFeeMarket) feeMarket,
                     gasCalculator,
                     blobSchedule.getMax(),
-                    blobSchedule.getTarget()))
+                    blobSchedule.getTarget(),
+                    blobSchedule.getMaxPerTransaction()))
         // EVM changes to support EIP-1153: TSTORE and EIP-5656: MCOPY
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
