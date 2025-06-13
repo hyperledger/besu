@@ -19,9 +19,12 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Class responsible for decoding blob transactions from the transaction pool. Blob transactions
@@ -41,9 +44,8 @@ public class BlobPooledTransactionDecoder {
    * @param input the RLP input to decode
    * @return the decoded transaction
    */
-  public static Transaction decode(final RLPInput input) {
-    final RLPInput txRlp = input.readAsRlp();
-    final int sizeForAnnouncement = txRlp.currentSize();
+  public static Transaction decode(final Bytes input) {
+    final RLPInput txRlp = RLP.input(input.slice(1)); // Skip the transaction type byte
     txRlp.enterList();
     int versionId = 0;
     final Transaction.Builder builder = Transaction.builder();
@@ -60,7 +62,7 @@ public class BlobPooledTransactionDecoder {
 
     return builder
         .kzgBlobs(BlobType.of(versionId), commitments, blobs, proofs)
-        .sizeForAnnouncement(sizeForAnnouncement)
+        .sizeForAnnouncement(input.size())
         .build();
   }
 }
