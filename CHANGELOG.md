@@ -3,6 +3,7 @@
 ### Breaking Changes
 - Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins. See [Appendix A](#appendix-a) for a mapping. [#8589](https://github.com/hyperledger/besu/pull/8589) [#8746](https://github.com/hyperledger/besu/pull/8746)
 - `BesuContext` is removed, since deprecated in favor of `ServiceManager` since `24.12.0`
+- Remove the deprecated `--Xbonsai-trie-logs-pruning-window-size`, use `--bonsai-trie-logs-pruning-window-size` instead. []()
 - Remove the deprecated `--Xbonsai-limit-trie-logs-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
 - Remove the deprecated `--Xbonsai-trie-log-pruning-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
@@ -10,7 +11,6 @@
   - PoW RPCs removed: `eth_getWork`, `eth_submitWork`, `eth_getHashrate`, `eth_submitHashrate`, `eth_hashrate`
 
 ### Upcoming Breaking Changes
-- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
 - `--Xbonsai-parallel-tx-processing-enabled` is deprecated, use `--bonsai-parallel-tx-processing-enabled` instead.
 - `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
