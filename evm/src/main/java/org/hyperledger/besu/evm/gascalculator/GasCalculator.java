@@ -35,6 +35,7 @@ import org.hyperledger.besu.evm.operation.MStoreOperation;
 import org.hyperledger.besu.evm.operation.SLoadOperation;
 import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.P256VerifyPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.IDPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.RIPEMD160PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.SHA256PrecompiledContract;
@@ -77,7 +78,7 @@ public interface GasCalculator {
   long getEcrecPrecompiledContractGasCost();
 
   /**
-   * Returns the gas cost to execute the {@link ECRECPrecompiledContract}.
+   * Returns the gas cost to execute the {@link P256VerifyPrecompiledContract}.
    *
    * @return the gas cost to execute the P256Verify precompiled contract
    */
