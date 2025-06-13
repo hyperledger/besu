@@ -1043,7 +1043,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 genesisState.getBlock().getHeader().getNumber() + 1,
                 genesisState.getBlock().getHeader().getBaseFee().orElse(Wei.of(0x3b9aca00)),
                 0,
-                15000000l))
+                15000000L))
         .timestamp(1)
         .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
         .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
@@ -1066,7 +1066,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 genesisState.getBlock().getHeader().getNumber() + 1,
                 parentHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
                 0,
-                15000000l))
+                15000000L))
         .buildHeader();
   }
 
