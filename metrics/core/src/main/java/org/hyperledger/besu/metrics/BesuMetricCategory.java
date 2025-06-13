@@ -52,8 +52,6 @@ public enum BesuMetricCategory implements MetricCategory {
   SYNCHRONIZER("synchronizer"),
   /** Transaction pool besu metric category. */
   TRANSACTION_POOL("transaction_pool"),
-  /** Stratum besu metric category. */
-  STRATUM("stratum"),
   /** Block processing besu metric category. */
   BLOCK_PROCESSING("block_processing");
 

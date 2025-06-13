@@ -20,20 +20,17 @@ import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
 import ethereum.ckzg4844.CKZG4844JNI;
 import ethereum.ckzg4844.CKZGException;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TrustedSetupClassLoaderExtension implements BeforeAllCallback {
+public class TrustedSetupClassLoaderExtension {
   private static final Logger LOG = LoggerFactory.getLogger(TrustedSetupClassLoaderExtension.class);
   private static final String TRUSTED_SETUP_RESOURCE = "/kzg-trusted-setups/mainnet.txt";
 
-  @Override
-  public void beforeAll(final ExtensionContext context) {
+  static {
     try {
       tearDownExistingSetup();
-      loadTrustedSetup(context);
+      loadTrustedSetup();
       awaitTrustedSetupLoad();
     } catch (Exception e) {
       fail("Failed to load trusted setup or native library", e);
@@ -41,7 +38,7 @@ public class TrustedSetupClassLoaderExtension implements BeforeAllCallback {
   }
 
   // Tear down any existing setup to ensure a clean state before loading the trusted setup.
-  private void tearDownExistingSetup() {
+  private static void tearDownExistingSetup() {
     try {
       KZGPointEvalPrecompiledContract.tearDown();
     } catch (Throwable ignore) {
@@ -50,14 +47,14 @@ public class TrustedSetupClassLoaderExtension implements BeforeAllCallback {
   }
 
   // Load the trusted setup from the specified resource.
-  private void loadTrustedSetup(final ExtensionContext context) {
+  private static void loadTrustedSetup() {
     CKZG4844JNI.loadNativeLibrary();
     CKZG4844JNI.loadTrustedSetupFromResource(
-        TRUSTED_SETUP_RESOURCE, context.getTestClass().orElseThrow(), 0);
+        TRUSTED_SETUP_RESOURCE, (Class<?>) TrustedSetupClassLoaderExtension.class, 0);
   }
 
   // Wait for the trusted setup to be loaded by checking if we can create a KZG commitment.
-  private void awaitTrustedSetupLoad() {
+  private static void awaitTrustedSetupLoad() {
     boolean trustedSetupLoaded = false;
     long timeoutMillis = 5000; // 5 seconds timeout
     long pollIntervalMillis = 100; // 100 milliseconds polling interval
@@ -84,7 +81,7 @@ public class TrustedSetupClassLoaderExtension implements BeforeAllCallback {
   }
 
   // Check if the trusted setup is loaded by attempting to create a KZG commitment.
-  private boolean isTrustedSetupLoaded() {
+  private static boolean isTrustedSetupLoaded() {
     try {
       // Attempt to create a KZG commitment with an empty blob.
       // If the trusted setup is loaded, this should throw a C_KZG_BADARGS exception.

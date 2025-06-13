@@ -44,7 +44,8 @@ class CancunTargetingGasLimitCalculatorTest {
   public void shouldCalculateCancunExcessBlobGasCorrectly(
       final long parentExcess, final long used, final long expected) {
     final long usedBlobGas = new CancunGasCalculator().blobGasCost(used);
-    assertThat(cancunTargetingGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
+    assertThat(
+            cancunTargetingGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas, 0L))
         .isEqualTo(expected);
   }
 
@@ -126,7 +127,7 @@ class CancunTargetingGasLimitCalculatorTest {
   public void shouldCalculatePragueExcessBlobGasCorrectly(
       final long parentExcess, final long used, final long expected) {
     final long usedBlobGas = pragueGasCalculator.blobGasCost(used);
-    assertThat(pragueGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
+    assertThat(pragueGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas, 0L))
         .isEqualTo(expected);
   }
 
@@ -172,8 +173,8 @@ class CancunTargetingGasLimitCalculatorTest {
   int newTargetCount = 9;
   public static final OsakaGasCalculator osakaGasCalculator = new OsakaGasCalculator();
   // CancunTargetingGasLimitCalculator with Osaka numbers
-  private final CancunTargetingGasLimitCalculator osakaGasLimitCalculator =
-      new CancunTargetingGasLimitCalculator(
+  private final OsakaTargetingGasLimitCalculator osakaGasLimitCalculator =
+      new OsakaTargetingGasLimitCalculator(
           0L,
           FeeMarket.cancunDefault(0L, Optional.empty()),
           osakaGasCalculator,
@@ -187,7 +188,7 @@ class CancunTargetingGasLimitCalculatorTest {
   public void shouldCalculateOsakaExcessBlobGasCorrectly(
       final long parentExcess, final long used, final long expected) {
     final long usedBlobGas = osakaGasCalculator.blobGasCost(used);
-    assertThat(osakaGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas))
+    assertThat(osakaGasLimitCalculator.computeExcessBlobGas(parentExcess, usedBlobGas, 0L))
         .isEqualTo(expected);
   }
 

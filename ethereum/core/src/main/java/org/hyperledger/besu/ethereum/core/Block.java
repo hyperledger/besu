@@ -29,10 +29,18 @@ public class Block {
 
   private final BlockHeader header;
   private final BlockBody body;
+  private int size;
+
+  public Block(final BlockHeader header, final BlockBody body, final int size) {
+    this.header = header;
+    this.body = body;
+    this.size = size;
+  }
 
   public Block(final BlockHeader header, final BlockBody body) {
     this.header = header;
     this.body = body;
+    this.size = -1; // Size will be calculated on demand
   }
 
   public BlockHeader getHeader() {
@@ -51,8 +59,11 @@ public class Block {
     return RLP.encode(this::writeTo);
   }
 
-  public int calculateSize() {
-    return toRlp().size();
+  public int getSize() {
+    if (size < 0) {
+      size = toRlp().size();
+    }
+    return size;
   }
 
   public void writeTo(final RLPOutput out) {
@@ -67,6 +78,7 @@ public class Block {
   }
 
   public static Block readFrom(final RLPInput in, final BlockHeaderFunctions hashFunction) {
+    int size = in.currentSize();
     in.enterList();
     final BlockHeader header = BlockHeader.readFrom(in, hashFunction);
     final List<Transaction> transactions = in.readList(Transaction::readFrom);
@@ -75,7 +87,7 @@ public class Block {
         in.isEndOfCurrentList() ? Optional.empty() : Optional.of(in.readList(Withdrawal::readFrom));
     in.leaveList();
 
-    return new Block(header, new BlockBody(transactions, ommers, withdrawals));
+    return new Block(header, new BlockBody(transactions, ommers, withdrawals), size);
   }
 
   @Override

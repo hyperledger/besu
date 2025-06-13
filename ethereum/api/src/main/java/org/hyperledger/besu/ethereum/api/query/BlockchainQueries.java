@@ -452,7 +452,7 @@ public class BlockchainQueries {
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
-                                      final int size = new Block(header, body).calculateSize();
+                                      final int size = new Block(header, body).getSize();
                                       return new BlockWithMetadata<>(
                                           header,
                                           formattedTxs,
@@ -512,7 +512,7 @@ public class BlockchainQueries {
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
-                                      final int size = new Block(header, body).calculateSize();
+                                      final int size = new Block(header, body).getSize();
                                       return new BlockWithMetadata<>(
                                           header, txs, ommers, td, size, body.getWithdrawals());
                                     })));
@@ -765,6 +765,13 @@ public class BlockchainQueries {
 
   public long getMinimumTransactionCost(final ProcessableBlockHeader header) {
     return protocolSchedule.getByBlockHeader(header).getGasCalculator().getMinimumTransactionCost();
+  }
+
+  public long getTransactionGasLimitCap(final ProcessableBlockHeader header) {
+    return protocolSchedule
+        .getByBlockHeader(header)
+        .getGasLimitCalculator()
+        .transactionGasLimitCap();
   }
 
   /**
