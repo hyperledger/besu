@@ -1327,7 +1327,7 @@ public class Transaction
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
     protected Bytes rawRlp = null;
-    private Optional<Hash> hash;
+    private Optional<Hash> hash = Optional.empty();
     private Optional<Integer> sizeForAnnouncement = Optional.empty();
     private Optional<Integer> sizeForBlockInclusion = Optional.empty();
 
