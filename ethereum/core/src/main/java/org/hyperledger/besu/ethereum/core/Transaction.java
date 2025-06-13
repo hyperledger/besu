@@ -1243,9 +1243,9 @@ public class Transaction
             detachedBlobsWithCommitments,
             detachedCodeDelegationList,
             Optional.empty(),
-            hash,
-            -1,
-            -1);
+            Optional.ofNullable(hash),
+            Optional.of(sizeForAnnouncement),
+            Optional.of(sizeForBlockInclusion));
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
@@ -1327,9 +1327,9 @@ public class Transaction
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
     protected Bytes rawRlp = null;
-    private Hash hash;
-    private int sizeForAnnouncement = -1;
-    private int sizeForBlockInclusion = -1;
+    private Optional<Hash> hash;
+    private Optional<Integer> sizeForAnnouncement = Optional.empty();
+    private Optional<Integer> sizeForBlockInclusion = Optional.empty();
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1441,17 +1441,17 @@ public class Transaction
     }
 
     public Builder hash(final Hash hash) {
-      this.hash = hash;
+      this.hash = Optional.ofNullable(hash);
       return this;
     }
 
     public Builder sizeForAnnouncement(final int sizeForAnnouncement) {
-      this.sizeForAnnouncement = sizeForAnnouncement;
+      this.sizeForAnnouncement = Optional.of(sizeForAnnouncement);
       return this;
     }
 
     public Builder sizeForBlockInclusion(final int sizeForBlockInclusion) {
-      this.sizeForBlockInclusion = sizeForBlockInclusion;
+      this.sizeForBlockInclusion = Optional.of(sizeForBlockInclusion);
       return this;
     }
 
