@@ -116,7 +116,7 @@ public class Transaction
   private volatile Address sender;
 
   // Caches the hash used to uniquely identify the transaction.
-  private volatile Optional<Hash> hash;
+  private volatile Hash hash;
   // Caches the size in bytes of the encoded transaction.
   private volatile int sizeForAnnouncement;
   private volatile int sizeForBlockInclusion;
@@ -207,7 +207,7 @@ public class Transaction
       final Optional<BlobsWithCommitments> blobsWithCommitments,
       final Optional<List<CodeDelegation>> maybeCodeDelegationList,
       final Optional<Bytes> rawRlp,
-      final Optional<Hash> hash,
+      final Hash hash,
       final int sizeForAnnouncement,
       final int sizeForBlockInclusion) {
 
@@ -583,10 +583,10 @@ public class Transaction
    */
   @Override
   public Hash getHash() {
-    if (hash.isEmpty()) {
+    if (hash == null) {
       memoizeHashAndSizeForBlockInclusion();
     }
-    return hash.get();
+    return hash;
   }
 
   /**
@@ -617,7 +617,7 @@ public class Transaction
 
   private void memoizeHashAndSizeForBlockInclusion() {
     final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
-    hash = Optional.of(Hash.hash(bytes));
+    hash = Hash.hash(bytes);
     sizeForBlockInclusion = bytes.size();
     if (!transactionType.supportsBlob() || this.getBlobsWithCommitments().isEmpty()) {
       sizeForAnnouncement = sizeForBlockInclusion;
@@ -630,8 +630,8 @@ public class Transaction
     sizeForAnnouncement = pooledBytes.size();
     if (!transactionType.supportsBlob() || this.getBlobsWithCommitments().isEmpty()) {
       sizeForBlockInclusion = pooledBytes.size();
-      if (hash.isEmpty()) {
-        hash = Optional.of(Hash.hash(pooledBytes));
+      if (hash == null) {
+        hash = Hash.hash(pooledBytes);
       }
     }
   }
@@ -1324,7 +1324,7 @@ public class Transaction
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
     protected Bytes rawRlp = null;
-    private Optional<Hash> hash = Optional.empty();
+    private Hash hash;
     private int sizeForAnnouncement = -1;
     private int sizeForBlockInclusion = -1;
 
@@ -1438,7 +1438,7 @@ public class Transaction
     }
 
     public Builder hash(final Hash hash) {
-      this.hash = Optional.of(hash);
+      this.hash = hash;
       return this;
     }
 

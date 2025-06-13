@@ -509,6 +509,9 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     final var baseTx =
         Transaction.readFrom(new BytesValueRLPInput(rlpOut.encoded(), false)).detachedCopy();
+    System.out.println(baseTx.getSender());
+    System.out.println(baseTx.getHash());
+    System.out.println(baseTx.getSizeForAnnouncement());
 
     final ClassLayout cl = ClassLayout.parseInstance(baseTx);
     System.out.println(cl.toPrintable());
