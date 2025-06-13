@@ -42,6 +42,19 @@ public class ProtocolScheduleFixture {
           new BadBlockManager(),
           false,
           new NoOpMetricsSystem());
+  public static final ProtocolSchedule MAINNET =
+      MainnetProtocolSchedule.fromConfig(
+          getMainnetConfigOptions(),
+          Optional.empty(),
+          Optional.empty(),
+          MiningConfiguration.newDefault(),
+          new BadBlockManager(),
+          false,
+          new NoOpMetricsSystem());
+
+  private static GenesisConfigOptions getMainnetConfigOptions() {
+    return getGenesisConfigOptions("/mainnet.json");
+  }
 
   private static GenesisConfigOptions getSepoliaConfigOptions() {
     return getGenesisConfigOptions("/sepolia.json");
