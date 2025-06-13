@@ -68,7 +68,7 @@ final class GenesisStateTest {
         GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis1.json"),
-            ProtocolScheduleFixture.MAINNET);
+            ProtocolScheduleFixture.SEPOLIA);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getStateRoot())
         .isEqualTo(
@@ -98,7 +98,7 @@ final class GenesisStateTest {
         GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis2.json"),
-            ProtocolScheduleFixture.MAINNET);
+            ProtocolScheduleFixture.SEPOLIA);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getStateRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(header.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
@@ -116,7 +116,7 @@ final class GenesisStateTest {
         GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource(sourceFile),
-            ProtocolScheduleFixture.MAINNET);
+            ProtocolScheduleFixture.SEPOLIA);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash()).isEqualTo(Hash.fromHexString(blockHash));
 
@@ -151,7 +151,7 @@ final class GenesisStateTest {
         GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesisNonce.json"),
-            ProtocolScheduleFixture.MAINNET);
+            ProtocolScheduleFixture.SEPOLIA);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash())
         .isEqualTo(
@@ -166,7 +166,7 @@ final class GenesisStateTest {
         GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis-olympic.json"),
-            ProtocolScheduleFixture.MAINNET);
+            ProtocolScheduleFixture.SEPOLIA);
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     genesisState.getBlock().writeTo(tmp);
     assertThat(Hex.toHexString(genesisState.getBlock().getHeader().getHash().toArray()))
@@ -186,7 +186,7 @@ final class GenesisStateTest {
         GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis_shanghai.json"),
-            ProtocolScheduleFixture.MAINNET);
+            ProtocolScheduleFixture.SEPOLIA);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash())
         .isEqualTo(
@@ -235,7 +235,7 @@ final class GenesisStateTest {
         GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis_cancun.json"),
-            ProtocolScheduleFixture.MAINNET);
+            ProtocolScheduleFixture.SEPOLIA);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash())
         .isEqualTo(
@@ -285,7 +285,7 @@ final class GenesisStateTest {
         GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis_prague.json"),
-            ProtocolScheduleFixture.MAINNET);
+            ProtocolScheduleFixture.SEPOLIA);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash())
         .isEqualTo(

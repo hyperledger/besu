@@ -30,7 +30,7 @@ public class MainnetProtocolScheduleTest {
 
   @Test
   public void shouldReturnDefaultProtocolSpecsWhenCustomNumbersAreNotUsed() {
-    final ProtocolSchedule sched = ProtocolScheduleFixture.MAINNET;
+    final ProtocolSchedule sched = ProtocolScheduleFixture.SEPOLIA;
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_150_000L)).getName())
         .isEqualTo("Homestead");

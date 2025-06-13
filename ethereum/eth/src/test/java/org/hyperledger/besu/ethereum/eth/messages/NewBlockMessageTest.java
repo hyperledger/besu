@@ -30,7 +30,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 public class NewBlockMessageTest {
-  private static final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
+  private static final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.SEPOLIA;
   private static final int maxMessageSize = 10 * ByteUnits.MEGABYTE;
 
   @Test

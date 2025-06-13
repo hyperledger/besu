@@ -214,7 +214,7 @@ public class ProofOfWorkValidationRuleTest {
   }
 
   private BlockHeaderFunctions mainnetBlockHashFunction() {
-    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
+    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.SEPOLIA;
     return ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 

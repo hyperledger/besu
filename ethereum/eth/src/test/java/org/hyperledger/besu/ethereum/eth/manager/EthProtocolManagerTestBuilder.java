@@ -45,7 +45,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class EthProtocolManagerTestBuilder {
   private static final BigInteger DEFAULT_NETWORK_ID = BigInteger.ONE;
-  private static final ProtocolSchedule DEFAULT_PROTOCOL_SCHEDULE = ProtocolScheduleFixture.MAINNET;
+  private static final ProtocolSchedule DEFAULT_PROTOCOL_SCHEDULE = ProtocolScheduleFixture.SEPOLIA;
 
   private ProtocolSchedule protocolSchedule;
   private GenesisConfig genesisConfig;
