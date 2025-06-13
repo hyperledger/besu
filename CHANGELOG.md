@@ -19,11 +19,11 @@
 
 ### Additions and Improvements
 - Introduce the `TransactionValidatorService` to allow plugins to add custom validation rules [#8793](https://github.com/hyperledger/besu/pull/8793)
+- Implement rewardPercentile cap in eth_feeHistory [#8748](https://github.com/hyperledger/besu/pull/8748)
 
-#### Fusaka Devnet
+#### Fusaka
 - EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
 - EIP-7823 - Modexp upper bounds [#8632](https://github.com/hyperledger/besu/pull/8632)
-- Implement rewardPercentile cap in eth_feeHistory [#8748](https://github.com/hyperledger/besu/pull/8748)
 
 ### Bug fixes
 
@@ -94,7 +94,7 @@
   - Estimate gas on pending block by default [#8627](https://github.com/hyperledger/besu/pull/8627)
   - Estimate gas is now strict by default [#8629](https://github.com/hyperledger/besu/pull/8629)
 - Update ref test to 4.5.0 [#8643](https://github.com/hyperledger/besu/pull/8643)
-- EVM skip unnecssary state access for CALL/LOG [#8639](https://github.com/hyperledger/besu/pull/8639)
+- EVM skip unnecessary state access for CALL/LOG [#8639](https://github.com/hyperledger/besu/pull/8639)
 - EIP-5920 - PAY opcode [#8498](https://github.com/hyperledger/besu/pull/8498)
 - EIP-7892 - Blob Parameter Only (BPO) forks [#8671](https://github.com/hyperledger/besu/pull/8671)
 - EIP-7883 - MODEXP gas cost increase [#8707](https://github.com/hyperledger/besu/pull/8707)
@@ -140,7 +140,7 @@
 
 ### Bug fixes
 - Fix block import tracing, refactor BlockProcessor interface [#8549](https://github.com/hyperledger/besu/pull/8549)
-- Shorten and standardise log labels in AbstractEngineNewPayload and AbstractEngineForkchoiceUpdated [#8568](https://github.com/hyperledger/besu/pull/8568)
+- Shorten and standardize log labels in AbstractEngineNewPayload and AbstractEngineForkchoiceUpdated [#8568](https://github.com/hyperledger/besu/pull/8568)
 
 ## 25.4.1
 
