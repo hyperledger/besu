@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -81,6 +82,7 @@ class TransactionCollisionDetectorTest {
         Wei.ONE,
         Hash.EMPTY_TRIE_HASH,
         Hash.EMPTY,
+        Optional.empty(),
         false);
   }
 
