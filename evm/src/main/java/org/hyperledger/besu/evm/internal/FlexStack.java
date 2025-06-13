@@ -55,7 +55,7 @@ public class FlexStack<T> {
   public FlexStack(final int maxSize, final Class<T> klass) {
     checkArgument(maxSize > 0, "max size must be positive");
 
-    final int initialSize = (int) Math.round(maxSize * INITIAL_SIZE_COEFICIENT) + 1;
+    int initialSize = (int) Math.round(maxSize * INITIAL_SIZE_COEFICIENT) + 1;
     this.currentCapacity = Math.min(initialSize, maxSize);
     this.entries = (T[]) Array.newInstance(klass, currentCapacity);
     this.maxSize = maxSize;
@@ -169,11 +169,15 @@ public class FlexStack<T> {
       throw new OverflowException();
     }
     if (nextTop >= currentCapacity) {
-      final int newCapacity = currentCapacity + (currentCapacity >> 1);
+      final int newCapacity = newLength(currentCapacity, currentCapacity + 1, currentCapacity >> 1);
       expandEntries(Math.min(newCapacity, maxSize));
     }
     entries[nextTop] = operand;
     top = nextTop;
+  }
+
+  private static int newLength(final int oldCapacity, final int minGrowth, final int prefGrowth) {
+    return oldCapacity + Math.max(minGrowth, prefGrowth);
   }
 
   /**
