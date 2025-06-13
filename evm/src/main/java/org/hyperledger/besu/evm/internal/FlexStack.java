@@ -31,10 +31,10 @@ import java.util.Objects;
  */
 public class FlexStack<T> {
   /**
-   * Formula `x = round( y / ( (1 + 0,5)^n ) ) + 1`, computes the initial stack size, `x` that one has to start with
-   * to reach a maximum stack size, `y`, in `n` number of array resizes at a growth rate of 50%.
-   * Currently, for mainnet y=1024 and, if considering n=6 in the worst case, the start size is 91 which is reasonable
-   * for mainnet.
+   * Formula `x = round( y / ( (1 + 0,5)^n ) ) + 1`, computes the initial stack size, `x` that one
+   * has to start with to reach a maximum stack size, `y`, in `n` number of array resizes at a
+   * growth rate of 50%. Currently, for mainnet y=1024 and, if considering n=6 in the worst case,
+   * the start size is 91 which is reasonable for mainnet.
    */
   private static final double INITIAL_SIZE_COEFICIENT = 1 / Math.pow(1.5D, 6D);
 
