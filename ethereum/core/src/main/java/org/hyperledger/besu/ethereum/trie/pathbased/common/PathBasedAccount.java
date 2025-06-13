@@ -124,7 +124,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     this.immutable = !mutable;
     this.codeCache = codeCache;
 
-    if (code == null) {
+    if (code == null && codeHash.equals(Hash.EMPTY)) {
       this.code = CodeV0.EMPTY_CODE;
     } else {
       this.code = code;
