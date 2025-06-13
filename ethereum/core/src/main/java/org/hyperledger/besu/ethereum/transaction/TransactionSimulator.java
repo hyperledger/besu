@@ -361,7 +361,8 @@ public class TransactionSimulator {
       final Address miningBeneficiary) {
 
     final long simulationGasCap =
-        calculateSimulationGasCap(callParams.getGas(), processableHeader.getGasLimit());
+        calculateSimulationGasCap(
+            processableHeader, callParams.getGas(), processableHeader.getGasLimit());
 
     MainnetTransactionProcessor transactionProcessor =
         simulationTransactionProcessorFactory.getTransactionProcessor(
@@ -504,7 +505,9 @@ public class TransactionSimulator {
   }
 
   public long calculateSimulationGasCap(
-      final OptionalLong maybeUserProvidedGasLimit, final long blockGasLimit) {
+      final ProcessableBlockHeader blockHeader,
+      final OptionalLong maybeUserProvidedGasLimit,
+      final long blockGasLimit) {
     final long simulationGasCap;
 
     if (maybeUserProvidedGasLimit.isPresent()) {
@@ -520,23 +523,26 @@ public class TransactionSimulator {
         simulationGasCap = userProvidedGasLimit;
       }
     } else {
+      final long txGasLimitCap =
+          protocolSchedule
+              .getByBlockHeader(blockHeader)
+              .getGasLimitCalculator()
+              .transactionGasLimitCap();
       if (rpcGasCap > 0) {
-        if (blockGasLimit > 0) {
-          LOG.trace(
-              "No user provided gas limit, setting simulation gas cap to the value of min(rpc-gas-cap,blockGasLimit) {}",
-              rpcGasCap);
-          simulationGasCap = Math.min(rpcGasCap, blockGasLimit);
-        } else {
-          LOG.trace(
-              "No user provided gas limit, setting simulation gas cap to the value of rpc-gas-cap {}",
-              rpcGasCap);
-          simulationGasCap = rpcGasCap;
-        }
-      } else {
-        simulationGasCap = blockGasLimit;
+        simulationGasCap = Math.min(rpcGasCap, Math.min(txGasLimitCap, blockGasLimit));
         LOG.trace(
-            "No user provided gas limit and rpc-gas-cap options is not set, setting simulation gas cap to block gas limit {}",
-            blockGasLimit);
+            "No user provided gas limit, setting simulation gas cap to the value of min(rpc-gas-cap={},txGasLimitCap={},blockGasLimit={})={}",
+            rpcGasCap,
+            txGasLimitCap,
+            blockGasLimit,
+            simulationGasCap);
+      } else {
+        simulationGasCap = Math.min(txGasLimitCap, blockGasLimit);
+        LOG.trace(
+            "No user provided gas limit and rpc-gas-cap options is not set, setting simulation gas cap to min(txGasLimitCap={},blockGasLimit={})={}",
+            txGasLimitCap,
+            blockGasLimit,
+            simulationGasCap);
       }
     }
     return simulationGasCap;

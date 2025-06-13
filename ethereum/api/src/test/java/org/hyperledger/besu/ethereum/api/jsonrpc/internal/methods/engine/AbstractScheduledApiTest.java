@@ -25,6 +25,7 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -33,7 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
-public class AbstractScheduledApiTest {
+public class AbstractScheduledApiTest extends TrustedSetupClassLoaderExtension {
 
   protected final ScheduledProtocolSpec.Hardfork londonHardfork =
       new ScheduledProtocolSpec.Hardfork("London", 0);

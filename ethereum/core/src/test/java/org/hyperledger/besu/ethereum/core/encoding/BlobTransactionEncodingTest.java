@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,7 +33,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class BlobTransactionEncodingTest {
+public class BlobTransactionEncodingTest extends TrustedSetupClassLoaderExtension {
   private static Stream<Arguments> provideOpaqueBytesNoBlobsWithCommitments() {
     return Stream.of(
         createArgument(
@@ -48,7 +49,8 @@ public class BlobTransactionEncodingTest {
   }
 
   private static Stream<Arguments> provideOpaqueBytesForNetwork() throws IOException {
-    return Stream.of(createArgumentFromFile("blob2.txt"));
+    return Stream.of(
+        createArgumentFromFile("blob2.txt"), createArgumentFromFile("blob_version1.txt"));
   }
 
   @ParameterizedTest(name = "{index} {0}")

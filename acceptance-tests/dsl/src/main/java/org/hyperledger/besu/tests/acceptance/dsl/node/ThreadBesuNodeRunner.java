@@ -74,6 +74,7 @@ import org.hyperledger.besu.plugin.services.TraceService;
 import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
+import org.hyperledger.besu.plugin.services.TransactionValidatorService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.mining.MiningService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
@@ -94,6 +95,7 @@ import org.hyperledger.besu.services.TransactionPoolServiceImpl;
 import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
+import org.hyperledger.besu.services.TransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 
 import java.io.File;
@@ -203,7 +205,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .autoLogBloomCaching(false)
         .storageProvider(besuController.getStorageProvider())
         .rpcEndpointService(component.rpcEndpointService())
-        .inProcessRpcConfiguration(inProcessRpcConfiguration);
+        .inProcessRpcConfiguration(inProcessRpcConfiguration)
+        .transactionValidatorService(component.getTransactionValidatorService());
     node.engineRpcConfiguration().ifPresent(runnerBuilder::engineJsonRpcConfiguration);
     besuPluginContext.beforeExternalServices();
     final Runner runner = runnerBuilder.build();
@@ -381,6 +384,12 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
+    @Singleton
+    TransactionValidatorServiceImpl provideTransactionValidatorService() {
+      return new TransactionValidatorServiceImpl();
+    }
+
+    @Provides
     DataStorageConfiguration provideDataStorageConfiguration(final BesuNode node) {
       return node.getDataStorageConfiguration();
     }
@@ -495,6 +504,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final PermissioningServiceImpl permissioningService,
         final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
         final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl,
+        final TransactionValidatorServiceImpl transactionValidatorServiceImpl,
         final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
         final MetricsConfiguration metricsConfiguration,
         final MetricCategoryRegistryImpl metricCategoryRegistry,
@@ -525,6 +535,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           permissioningService,
           transactionSelectionServiceImpl,
           transactionPoolValidatorServiceImpl,
+          transactionValidatorServiceImpl,
           transactionSimulationServiceImpl,
           metricsConfiguration,
           metricCategoryRegistry,
@@ -574,6 +585,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final PermissioningServiceImpl permissioningService,
         final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
         final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl,
+        final TransactionValidatorServiceImpl transactionValidatorServiceImpl,
         final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
         final MetricsConfiguration metricsConfiguration,
         final MetricCategoryRegistryImpl metricCategoryRegistry,
@@ -595,6 +607,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           TransactionSelectionService.class, transactionSelectionServiceImpl);
       besuPluginContext.addService(
           TransactionPoolValidatorService.class, transactionPoolValidatorServiceImpl);
+      besuPluginContext.addService(
+          TransactionValidatorService.class, transactionValidatorServiceImpl);
       besuPluginContext.addService(
           TransactionSimulationService.class, transactionSimulationServiceImpl);
       final Path pluginsPath;
@@ -733,5 +747,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     ObservableMetricsSystem getObservableMetricsSystem();
 
     ThreadBesuNodeRunner getThreadBesuNodeRunner();
+
+    TransactionValidatorServiceImpl getTransactionValidatorService();
   }
 }

@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-eth'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -30,7 +30,7 @@ jar {
 
 configurations { testArtifacts }
 task testJar(type: Jar) {
-  archiveBaseName = "${project.name}-test"
+  archiveBaseName = calculateArtifactId(project)+ '-test'
   from sourceSets.test.output
 }
 
@@ -91,7 +91,7 @@ dependencies {
   testSupportImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testSupportImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
-  jmhImplementation project(':besu')
+  jmhImplementation project(':app')
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   jmhImplementation project(':plugins:rocksdb')
 }

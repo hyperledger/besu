@@ -23,7 +23,7 @@ public class LondonTargetingGasLimitCalculator extends FrontierTargetingGasLimit
   private static final Logger LOG =
       LoggerFactory.getLogger(LondonTargetingGasLimitCalculator.class);
   private final long londonForkBlock;
-  private final BaseFeeMarket feeMarket;
+  protected final BaseFeeMarket feeMarket;
 
   public LondonTargetingGasLimitCalculator(
       final long londonForkBlock, final BaseFeeMarket feeMarket) {
