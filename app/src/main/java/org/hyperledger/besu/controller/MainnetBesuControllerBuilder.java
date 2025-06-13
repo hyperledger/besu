@@ -71,7 +71,6 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
             miningConfiguration.getUnstable().getRemoteSealersLimit(),
             miningConfiguration.getUnstable().getRemoteSealersTimeToLive());
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
-    miningCoordinator.setStratumMiningEnabled(miningConfiguration.isStratumMiningEnabled());
     if (miningConfiguration.isMiningEnabled()) {
       miningCoordinator.enable();
     }

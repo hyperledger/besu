@@ -64,41 +64,6 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
   }
 
   @Test
-  public void stratumMiningIsEnabledWhenSpecified() {
-    final String coinbaseStr = String.format("%040x", 1);
-    internalTestSuccess(
-        miningOpts -> {
-          assertThat(miningOpts.isMiningEnabled()).isTrue();
-          assertThat(miningOpts.getCoinbase())
-              .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
-          assertThat(miningOpts.isStratumMiningEnabled()).isTrue();
-        },
-        "--miner-enabled",
-        "--miner-coinbase=" + coinbaseStr,
-        "--miner-stratum-enabled");
-  }
-
-  @Test
-  public void stratumMiningOptionsRequiresServiceToBeEnabled() {
-    internalTestFailure(
-        "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)",
-        "--network",
-        "dev",
-        "--miner-stratum-enabled");
-  }
-
-  @Test
-  public void stratumMiningOptionsRequiresServiceToBeEnabledToml() throws IOException {
-    final Path toml = createTempFile("toml", "miner-stratum-enabled=true\n");
-    internalTestFailure(
-        "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)",
-        "--network",
-        "dev",
-        "--config-file",
-        toml.toString());
-  }
-
-  @Test
   public void blockProducingOptionsWarnsMinerShouldBeEnabled() {
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
     internalTestSuccess(
@@ -400,7 +365,6 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
                 .minBlockOccupancyRatio(0.5)
                 .coinbase(Address.ZERO)
                 .build())
-        .isStratumMiningEnabled(true)
         .unstable(Unstable.builder().posBlockCreationMaxTime(1000).build())
         .build();
   }
