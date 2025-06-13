@@ -158,7 +158,7 @@ public class TransactionSizeAndHashTest {
   }
 
   @Test
-  public void returnsRightSizeWithBlobs1a() {
+  public void returnsRightSizeWithBlobsGetOrderAnnmBlockHash() {
     final Transaction transaction = buildBlobTransaction();
 
     final Bytes bytes =
@@ -181,7 +181,7 @@ public class TransactionSizeAndHashTest {
   }
 
   @Test
-  public void returnsRightSizeWithBlobs1b() {
+  public void returnsRightSizeWithBlobsAnnmHashBlock() {
     final Transaction transaction = buildBlobTransaction();
 
     final Bytes bytes =
@@ -204,7 +204,7 @@ public class TransactionSizeAndHashTest {
   }
 
   @Test
-  public void returnsRightSizeWithBlobs2a() {
+  public void returnsRightSizeWithBlobsHashAnnmBlock() {
     final Transaction transaction = buildBlobTransaction();
 
     final Bytes bytes =
@@ -227,7 +227,7 @@ public class TransactionSizeAndHashTest {
   }
 
   @Test
-  public void returnsRightSizeWithBlobs2b() {
+  public void returnsRightSizeWithBlobsHashBlockAnnm() {
     final Transaction transaction = buildBlobTransaction();
 
     final Bytes bytes =
@@ -250,7 +250,7 @@ public class TransactionSizeAndHashTest {
   }
 
   @Test
-  public void returnsRightSizeWithBlobs3a() {
+  public void returnsRightSizeWithBlobsBlockHashAnnm() {
     final Transaction transaction = buildBlobTransaction();
 
     final Bytes bytes =
@@ -273,7 +273,7 @@ public class TransactionSizeAndHashTest {
   }
 
   @Test
-  public void returnsRightSizeWithBlobs3b() {
+  public void returnsRightSizeWithBlobsBlockAnnmHash() {
     final Transaction transaction = buildBlobTransaction();
 
     final Bytes bytes =

@@ -118,8 +118,8 @@ public class Transaction
   // Caches the hash used to uniquely identify the transaction.
   private volatile Hash hash;
   // Caches the size in bytes of the encoded transaction.
-  private volatile int sizeForAnnouncement;
-  private volatile int sizeForBlockInclusion;
+  private volatile int sizeForAnnouncement = -1;
+  private volatile int sizeForBlockInclusion = -1;
   private final TransactionType transactionType;
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
@@ -207,9 +207,9 @@ public class Transaction
       final Optional<BlobsWithCommitments> blobsWithCommitments,
       final Optional<List<CodeDelegation>> maybeCodeDelegationList,
       final Optional<Bytes> rawRlp,
-      final Hash hash,
-      final int sizeForAnnouncement,
-      final int sizeForBlockInclusion) {
+      final Optional<Hash> hash,
+      final Optional<Integer> sizeForAnnouncement,
+      final Optional<Integer> sizeForBlockInclusion) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -271,9 +271,9 @@ public class Transaction
     this.blobsWithCommitments = blobsWithCommitments;
     this.maybeCodeDelegationList = maybeCodeDelegationList;
     this.rawRlp = rawRlp;
-    this.hash = hash;
-    this.sizeForAnnouncement = sizeForAnnouncement;
-    this.sizeForBlockInclusion = sizeForBlockInclusion;
+    hash.ifPresent(h -> this.hash = h);
+    sizeForAnnouncement.ifPresent(i -> this.sizeForAnnouncement = i);
+    sizeForBlockInclusion.ifPresent(i -> this.sizeForBlockInclusion = i);
   }
 
   /**
@@ -620,6 +620,7 @@ public class Transaction
     hash = Hash.hash(bytes);
     sizeForBlockInclusion = bytes.size();
     if (!transactionType.supportsBlob() || this.getBlobsWithCommitments().isEmpty()) {
+      // for transactions not containing blobs the encoding is the same, so we can set this as well:
       sizeForAnnouncement = sizeForBlockInclusion;
     }
   }
@@ -629,7 +630,9 @@ public class Transaction
         TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.POOLED_TRANSACTION);
     sizeForAnnouncement = pooledBytes.size();
     if (!transactionType.supportsBlob() || this.getBlobsWithCommitments().isEmpty()) {
-      sizeForBlockInclusion = pooledBytes.size();
+      // for transactions not containing blobs the encoding is the same, so we can set these as
+      // well:
+      sizeForBlockInclusion = sizeForAnnouncement;
       if (hash == null) {
         hash = Hash.hash(pooledBytes);
       }

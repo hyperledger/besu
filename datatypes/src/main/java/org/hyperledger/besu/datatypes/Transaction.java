@@ -243,14 +243,20 @@ public interface Transaction {
   Bytes encodedPreimage();
 
   /**
-   * Returns the size in bytes of the encoded transaction.
+   * Returns the size in bytes of the encoded transaction. This is the size of the transaction when
+   * it is announced to other peers. The difference between this and {@link
+   * #getSizeForBlockInclusion()} is that transactions that are included in a block cannot contain
+   * blobs, whereas transactions that are announced and sent to other peers have to contain blobs.
    *
    * @return the size in bytes of the encoded transaction.
    */
   int getSizeForAnnouncement();
 
   /**
-   * Returns the size in bytes of the encoded transaction for block inclusion.
+   * Returns the size in bytes of the encoded transaction for block inclusion. This is the size of
+   * the transaction when it is included in a block. The difference between this and {@link
+   * #getSizeForAnnouncement()} is that transactions that are included in a block cannot contain
+   * blobs, whereas transactions that are announced and sent to other peers have to contain blobs.
    *
    * @return the size in bytes of the encoded transaction for block inclusion.
    */

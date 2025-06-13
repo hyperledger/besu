@@ -35,13 +35,13 @@ public class TransactionDecoder {
 
   private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
       ImmutableMap.of(
-          TransactionType.ACCESS_LIST, input -> AccessListTransactionDecoder.decode(input),
-          TransactionType.EIP1559, input -> EIP1559TransactionDecoder.decode(input),
-          TransactionType.BLOB, input -> BlobTransactionDecoder.decode(input),
-          TransactionType.DELEGATE_CODE, input -> CodeDelegationTransactionDecoder.decode(input));
+          TransactionType.ACCESS_LIST, AccessListTransactionDecoder::decode,
+          TransactionType.EIP1559, EIP1559TransactionDecoder::decode,
+          TransactionType.BLOB, BlobTransactionDecoder::decode,
+          TransactionType.DELEGATE_CODE, CodeDelegationTransactionDecoder::decode);
 
   private static final ImmutableMap<TransactionType, Decoder> POOLED_TRANSACTION_DECODERS =
-      ImmutableMap.of(TransactionType.BLOB, input -> BlobPooledTransactionDecoder.decode(input));
+      ImmutableMap.of(TransactionType.BLOB, BlobPooledTransactionDecoder::decode);
 
   /**
    * Decodes an RLP input into a transaction. If the input represents a typed transaction, it uses
