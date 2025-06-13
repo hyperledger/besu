@@ -30,8 +30,13 @@ import java.util.Objects;
  * @param <T> the type parameter
  */
 public class FlexStack<T> {
-
-  private static final int INCREMENT = 32;
+  /**
+   * Formula `x = round( y / ( (1 + 0,5)^n ) ) + 1`, computes the initial stack size, `x` that one
+   * has to start with to reach a maximum stack size, `y`, in `n` number of array resizes at a
+   * growth rate of 50%. Currently, for mainnet y=1024 and, if considering n=6 in the worst case,
+   * the start size is 91 which is reasonable for mainnet.
+   */
+  private static final double INITIAL_SIZE_COEFICIENT = 1 / Math.pow(1.5D, 6D);
 
   private T[] entries;
 
@@ -50,7 +55,8 @@ public class FlexStack<T> {
   public FlexStack(final int maxSize, final Class<T> klass) {
     checkArgument(maxSize > 0, "max size must be positive");
 
-    this.currentCapacity = Math.min(INCREMENT, maxSize);
+    int initialSize = (int) Math.round(maxSize * INITIAL_SIZE_COEFICIENT) + 1;
+    this.currentCapacity = Math.min(initialSize, maxSize);
     this.entries = (T[]) Array.newInstance(klass, currentCapacity);
     this.maxSize = maxSize;
     this.top = -1;
@@ -163,10 +169,15 @@ public class FlexStack<T> {
       throw new OverflowException();
     }
     if (nextTop >= currentCapacity) {
-      expandEntries(Math.min(currentCapacity + INCREMENT, maxSize));
+      final int newCapacity = newLength(currentCapacity, currentCapacity + 1, currentCapacity >> 1);
+      expandEntries(Math.min(newCapacity, maxSize));
     }
     entries[nextTop] = operand;
     top = nextTop;
+  }
+
+  private static int newLength(final int oldCapacity, final int minGrowth, final int prefGrowth) {
+    return oldCapacity + Math.max(minGrowth, prefGrowth);
   }
 
   /**
