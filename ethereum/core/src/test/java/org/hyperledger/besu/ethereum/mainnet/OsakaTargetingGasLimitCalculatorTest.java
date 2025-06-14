@@ -49,7 +49,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     final OsakaTargetingGasLimitCalculator osakaTargetingGasLimitCalculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, maxBlobs);
 
     final long usedBlobGas = osakaGasCalculator.blobGasCost(used);
     assertThat(
@@ -87,7 +87,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     var osakaTargetingGasLimitCalculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, maxBlobs);
 
     // if maxBlobs = 10, then the gas limit would be 131072 * 10 = 1310720
     assertThat(osakaTargetingGasLimitCalculator.currentBlobGasLimit())
@@ -104,7 +104,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     var calculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, maxBlobs);
     assertThat(calculator.maxBlobsPerBlock).isEqualTo(maxBlobs);
     assertThat(calculator.targetBlobsPerBlock).isEqualTo(targetBlobs);
 
@@ -124,6 +124,27 @@ class OsakaTargetingGasLimitCalculatorTest {
     long result2 = calculator.computeExcessBlobGas(highExcess, parentBlobGasUsed, 0L);
     // Expected value based on the test case
     assertThat(result2).isEqualTo(10878976L);
+  }
+
+  @Test
+  void maxBlobPerTransactionMustNotExceedMaxBlobsPerBlock() {
+    int maxBlobsPerBlock = 10;
+    int targetBlobsPerBlock = 9;
+    int maxBlobsPerTransaction = 11;
+    Assertions.assertThatThrownBy(
+            () ->
+                new OsakaTargetingGasLimitCalculator(
+                    0L,
+                    feeMarket,
+                    osakaGasCalculator,
+                    maxBlobsPerBlock,
+                    targetBlobsPerBlock,
+                    maxBlobsPerTransaction))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            String.format(
+                "maxBlobsPerTransaction (%d) must not be greater than maxBlobsPerBlock (%d)",
+                maxBlobsPerTransaction, maxBlobsPerBlock));
   }
 
   @Test
