@@ -63,7 +63,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
 public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
-  private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
+  private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.SEPOLIA;
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 

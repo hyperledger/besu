@@ -991,7 +991,7 @@ class FastWorldStateDownloaderTest {
             mock(Blockchain.class),
             remoteWorldStateArchive,
             mock(TransactionPool.class),
-            ProtocolScheduleFixture.MAINNET,
+            ProtocolScheduleFixture.SEPOLIA,
             .5f);
     final RespondingEthPeer.Responder emptyResponder = RespondingEthPeer.emptyResponder();
 

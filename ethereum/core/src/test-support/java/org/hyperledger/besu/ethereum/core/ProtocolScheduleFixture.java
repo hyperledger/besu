@@ -33,6 +33,15 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ProtocolScheduleFixture {
+  public static final ProtocolSchedule SEPOLIA =
+      MainnetProtocolSchedule.fromConfig(
+          getSepoliaConfigOptions(),
+          Optional.empty(),
+          Optional.empty(),
+          MiningConfiguration.newDefault(),
+          new BadBlockManager(),
+          false,
+          new NoOpMetricsSystem());
   public static final ProtocolSchedule MAINNET =
       MainnetProtocolSchedule.fromConfig(
           getMainnetConfigOptions(),
@@ -45,6 +54,10 @@ public class ProtocolScheduleFixture {
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
     return getGenesisConfigOptions("/mainnet.json");
+  }
+
+  private static GenesisConfigOptions getSepoliaConfigOptions() {
+    return getGenesisConfigOptions("/sepolia.json");
   }
 
   public static GenesisConfigOptions getGenesisConfigOptions(final String genesisConfig) {
