@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
+import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -53,10 +54,18 @@ class TransactionCollisionDetectorTest {
     collisionDetector = new TransactionCollisionDetector();
     bonsaiUpdater =
         new BonsaiWorldStateUpdateAccumulator(
-            worldState, (__, ___) -> {}, (__, ___) -> {}, EvmConfiguration.DEFAULT);
+            worldState,
+            (__, ___) -> {},
+            (__, ___) -> {},
+            EvmConfiguration.DEFAULT,
+            new CodeCache());
     trxUpdater =
         new BonsaiWorldStateUpdateAccumulator(
-            worldState, (__, ___) -> {}, (__, ___) -> {}, EvmConfiguration.DEFAULT);
+            worldState,
+            (__, ___) -> {},
+            (__, ___) -> {},
+            EvmConfiguration.DEFAULT,
+            new CodeCache());
   }
 
   private Transaction createTransaction(final Address sender, final Address to) {
@@ -81,7 +90,8 @@ class TransactionCollisionDetectorTest {
         Wei.ONE,
         Hash.EMPTY_TRIE_HASH,
         Hash.EMPTY,
-        false);
+        false,
+        new CodeCache());
   }
 
   @Test

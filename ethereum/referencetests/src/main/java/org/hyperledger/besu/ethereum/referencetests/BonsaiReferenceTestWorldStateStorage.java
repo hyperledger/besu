@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.Comparator;
@@ -78,7 +79,8 @@ public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerS
                         address ->
                             new WorldState.StreamableAccount(
                                 Optional.of(address),
-                                BonsaiAccount.fromRLP(context, address, entry.getValue(), false))))
+                                BonsaiAccount.fromRLP(
+                                    context, address, entry.getValue(), false, new CodeCache()))))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .filter(acct -> context.updater().getAccount(acct.getAddress().orElse(null)) != null)

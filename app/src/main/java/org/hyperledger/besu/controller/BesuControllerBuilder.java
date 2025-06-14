@@ -97,6 +97,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive.WorldStateHeal
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.ServiceManager;
@@ -216,6 +217,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** When enabled, round changes on f+1 RC messages from higher rounds */
   protected boolean isEarlyRoundChangeEnabled = false;
+
+  /** The global code cache */
+  protected CodeCache codeCache;
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -563,6 +567,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(apiConfiguration, "Missing API configuration");
     checkNotNull(dataStorageConfiguration, "Missing data storage configuration");
     checkNotNull(besuComponent, "Must supply a BesuComponent");
+
+    this.codeCache = besuComponent.map(BesuComponent::getCodeCache).orElse(null);
+
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
@@ -581,7 +588,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final var genesisState =
         getGenesisState(
             maybeStoredGenesisBlockHash.flatMap(blockchainStorage::getBlockHeader),
-            protocolSchedule);
+            protocolSchedule,
+            codeCache);
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -830,7 +838,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private GenesisState getGenesisState(
       final Optional<BlockHeader> maybeGenesisBlockHeader,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final CodeCache codeCache) {
     final Optional<Hash> maybeGenesisStateRoot =
         genesisStateHashCacheEnabled
             ? maybeGenesisBlockHeader.map(BlockHeader::getStateRoot)
@@ -842,7 +851,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 GenesisState.fromStorage(genesisStateRoot, genesisConfig, protocolSchedule))
         .orElseGet(
             () ->
-                GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule));
+                GenesisState.fromConfig(
+                    dataStorageConfiguration, genesisConfig, protocolSchedule, codeCache));
   }
 
   private TrieLogPruner createTrieLogPruner(
@@ -1153,7 +1163,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
-            worldStateHealerSupplier);
+            worldStateHealerSupplier,
+            codeCache);
       }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =

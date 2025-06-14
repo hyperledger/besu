@@ -138,10 +138,7 @@ public class SystemCallProcessor {
         .inputData(inputData)
         .sender(SYSTEM_ADDRESS)
         .blockHashLookup(blockHashLookup)
-        .code(
-            maybeContract
-                .map(c -> processor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
-                .orElse(CodeV0.EMPTY_CODE))
+        .code(maybeContract.map(c -> processor.wrapCode(c.getCode())).orElse(CodeV0.EMPTY_CODE))
         .build();
   }
 }

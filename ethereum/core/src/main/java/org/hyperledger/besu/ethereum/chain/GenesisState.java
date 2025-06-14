@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -66,8 +67,9 @@ public final class GenesisState {
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
-  public static GenesisState fromJson(final String json, final ProtocolSchedule protocolSchedule) {
-    return fromConfig(GenesisConfig.fromConfig(json), protocolSchedule);
+  public static GenesisState fromJson(
+      final String json, final ProtocolSchedule protocolSchedule, final CodeCache codeCache) {
+    return fromConfig(GenesisConfig.fromConfig(json), protocolSchedule, codeCache);
   }
 
   /**
@@ -85,7 +87,10 @@ public final class GenesisState {
       final URL jsonSource,
       final ProtocolSchedule protocolSchedule) {
     return fromConfig(
-        dataStorageConfiguration, GenesisConfig.fromConfig(jsonSource), protocolSchedule);
+        dataStorageConfiguration,
+        GenesisConfig.fromConfig(jsonSource),
+        protocolSchedule,
+        new CodeCache());
   }
 
   /**
@@ -96,8 +101,10 @@ public final class GenesisState {
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
-      final GenesisConfig config, final ProtocolSchedule protocolSchedule) {
-    return fromConfig(DataStorageConfiguration.DEFAULT_CONFIG, config, protocolSchedule);
+      final GenesisConfig config,
+      final ProtocolSchedule protocolSchedule,
+      final CodeCache codeCache) {
+    return fromConfig(DataStorageConfiguration.DEFAULT_CONFIG, config, protocolSchedule, codeCache);
   }
 
   /**
@@ -112,8 +119,10 @@ public final class GenesisState {
   public static GenesisState fromConfig(
       final DataStorageConfiguration dataStorageConfiguration,
       final GenesisConfig genesisConfig,
-      final ProtocolSchedule protocolSchedule) {
-    final var genesisStateRoot = calculateGenesisStateRoot(dataStorageConfiguration, genesisConfig);
+      final ProtocolSchedule protocolSchedule,
+      final CodeCache codeCache) {
+    final var genesisStateRoot =
+        calculateGenesisStateRoot(dataStorageConfiguration, genesisConfig, codeCache);
     final Block block =
         new Block(
             buildHeader(genesisConfig, genesisStateRoot, protocolSchedule),
@@ -178,8 +187,10 @@ public final class GenesisState {
   }
 
   private static Hash calculateGenesisStateRoot(
-      final DataStorageConfiguration dataStorageConfiguration, final GenesisConfig genesisConfig) {
-    try (var worldState = createGenesisWorldState(dataStorageConfiguration)) {
+      final DataStorageConfiguration dataStorageConfiguration,
+      final GenesisConfig genesisConfig,
+      final CodeCache codeCache) {
+    try (var worldState = createGenesisWorldState(dataStorageConfiguration, codeCache)) {
       writeAccountsTo(worldState, genesisConfig.streamAllocations(), null);
       return worldState.rootHash();
     } catch (Exception e) {

@@ -16,50 +16,23 @@ package org.hyperledger.besu.evm.internal;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
-
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import org.hyperledger.besu.util.cache.MemoryBoundCache;
 
 /** The Code cache. */
 public class CodeCache {
 
-  private final Cache<Hash, Code> cache;
-  private final long weightLimit;
+  private final MemoryBoundCache<Hash, Code> cache;
 
-  /**
-   * Instantiates a new Code cache.
-   *
-   * @param config the config
-   */
-  public CodeCache(final EvmConfiguration config) {
-    this(config.getJumpDestCacheWeightBytes());
-  }
-
-  private CodeCache(final long maxWeightBytes) {
-    this.weightLimit = maxWeightBytes;
-    this.cache =
-        Caffeine.newBuilder().maximumWeight(maxWeightBytes).weigher(new CodeScale()).build();
-  }
-
-  /**
-   * Invalidate cache for given key.
-   *
-   * @param key the key
-   */
-  public void invalidate(final Hash key) {
-    this.cache.invalidate(key);
-  }
-
-  /** Clean up. */
-  public void cleanUp() {
-    this.cache.cleanUp();
+  /** Instantiates a new Code cache. */
+  public CodeCache() {
+    this.cache = new MemoryBoundCache<>(256 * 1024 * 1024, CodeMemoryFootprint::estimate);
   }
 
   /**
    * Gets if present.
    *
    * @param codeHash the code hash
-   * @return the if present
+   * @return the code if present
    */
   public Code getIfPresent(final Hash codeHash) {
     return cache.getIfPresent(codeHash);
@@ -68,29 +41,10 @@ public class CodeCache {
   /**
    * Put.
    *
-   * @param key the key
-   * @param value the value
+   * @param codeHash the code hash
+   * @param code the code
    */
-  public void put(final Hash key, final Code value) {
-    cache.put(key, value);
-  }
-
-  /**
-   * Size of cache.
-   *
-   * @return the long
-   */
-  public long size() {
-    cache.cleanUp();
-    return cache.estimatedSize();
-  }
-
-  /**
-   * Gets weight limit.
-   *
-   * @return the weight limit
-   */
-  public long getWeightLimit() {
-    return weightLimit;
+  public void put(final Hash codeHash, final Code code) {
+    cache.put(codeHash, code);
   }
 }

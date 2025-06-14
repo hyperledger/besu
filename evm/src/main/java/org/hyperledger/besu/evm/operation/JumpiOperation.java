@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -29,6 +28,8 @@ public class JumpiOperation extends AbstractFixedCostOperation {
       new Operation.OperationResult(10L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
   private static final OperationResult jumpiResponse = new OperationResult(10L, null, 0);
   private static final OperationResult nojumpResponse = new OperationResult(10L, null);
+
+  private static final JumpService jumpService = new JumpService();
 
   /**
    * Instantiates a new JUMPI operation.
@@ -57,19 +58,8 @@ public class JumpiOperation extends AbstractFixedCostOperation {
     // If condition is zero (false), no jump is will be performed. Therefore, skip the test.
     if (condition.size() == 0) {
       return nojumpResponse;
-    } else {
-      final int jumpDestination;
-      try {
-        jumpDestination = dest.toInt();
-      } catch (final RuntimeException re) {
-        return invalidJumpResponse;
-      }
-      final Code code = frame.getCode();
-      if (code.isJumpDestInvalid(jumpDestination)) {
-        return invalidJumpResponse;
-      }
-      frame.setPC(jumpDestination);
-      return jumpiResponse;
     }
+
+    return jumpService.performJump(frame, dest, jumpiResponse, invalidJumpResponse);
   }
 }
