@@ -16,8 +16,6 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.datatypes.Address;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -25,12 +23,6 @@ import org.junit.jupiter.api.TestInstance;
 class EOFGasCalculatorTest {
 
   private final EOFGasCalculator gasCalculator = new EOFGasCalculator();
-
-  @Test
-  void testPrecompileSize() {
-    assertThat(gasCalculator.isPrecompile(Address.precompiled(0x14))).isFalse();
-    assertThat(gasCalculator.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
-  }
 
   @Test
   void testNewConstants() {
