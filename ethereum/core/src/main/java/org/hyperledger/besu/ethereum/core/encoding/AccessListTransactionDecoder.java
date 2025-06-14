@@ -18,15 +18,18 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 
 class AccessListTransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -36,24 +39,24 @@ class AccessListTransactionDecoder {
     // private constructor
   }
 
-  public static Transaction decode(final RLPInput rlpInput) {
-    RLPInput transactionRlp = rlpInput.readAsRlp();
-    transactionRlp.enterList();
+  public static Transaction decode(final Bytes input) {
+    final RLPInput txRlp = RLP.input(input.slice(1)); // Skip the transaction type byte
+    txRlp.enterList();
     final Transaction.Builder preSignatureTransactionBuilder =
         Transaction.builder()
             .type(TransactionType.ACCESS_LIST)
-            .chainId(BigInteger.valueOf(transactionRlp.readLongScalar()))
-            .nonce(transactionRlp.readLongScalar())
-            .gasPrice(Wei.of(transactionRlp.readUInt256Scalar()))
-            .gasLimit(transactionRlp.readLongScalar())
+            .chainId(BigInteger.valueOf(txRlp.readLongScalar()))
+            .nonce(txRlp.readLongScalar())
+            .gasPrice(Wei.of(txRlp.readUInt256Scalar()))
+            .gasLimit(txRlp.readLongScalar())
             .to(
-                transactionRlp.readBytes(
+                txRlp.readBytes(
                     addressBytes -> addressBytes.isEmpty() ? null : Address.wrap(addressBytes)))
-            .value(Wei.of(transactionRlp.readUInt256Scalar()))
-            .payload(transactionRlp.readBytes())
-            .rawRlp(transactionRlp.raw())
+            .value(Wei.of(txRlp.readUInt256Scalar()))
+            .payload(txRlp.readBytes())
+            .rawRlp(txRlp.raw())
             .accessList(
-                transactionRlp.readList(
+                txRlp.readList(
                     accessListEntryRLPInput -> {
                       accessListEntryRLPInput.enterList();
                       final AccessListEntry accessListEntry =
@@ -62,19 +65,22 @@ class AccessListTransactionDecoder {
                               accessListEntryRLPInput.readList(RLPInput::readBytes32));
                       accessListEntryRLPInput.leaveList();
                       return accessListEntry;
-                    }));
-    final byte recId = (byte) transactionRlp.readUnsignedByteScalar();
+                    }))
+            .sizeForAnnouncement(input.size())
+            .sizeForBlockInclusion(input.size())
+            .hash(Hash.hash(input));
+    final byte recId = (byte) txRlp.readUnsignedByteScalar();
     final Transaction transaction =
         preSignatureTransactionBuilder
             .signature(
                 SIGNATURE_ALGORITHM
                     .get()
                     .createSignature(
-                        transactionRlp.readUInt256Scalar().toUnsignedBigInteger(),
-                        transactionRlp.readUInt256Scalar().toUnsignedBigInteger(),
+                        txRlp.readUInt256Scalar().toUnsignedBigInteger(),
+                        txRlp.readUInt256Scalar().toUnsignedBigInteger(),
                         recId))
             .build();
-    transactionRlp.leaveList();
+    txRlp.leaveList();
     return transaction;
   }
 }

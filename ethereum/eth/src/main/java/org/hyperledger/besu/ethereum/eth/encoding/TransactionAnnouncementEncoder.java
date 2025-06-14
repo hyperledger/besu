@@ -82,7 +82,7 @@ public class TransactionAnnouncementEncoder {
     for (int i = 0; i < transactions.size(); i++) {
       final TransactionType type = transactions.get(i).getType();
       types[i] = type.getEthSerializedType();
-      sizes.add(transactions.get(i).getSize());
+      sizes.add(transactions.get(i).getSizeForAnnouncement());
       hashes.add(transactions.get(i).getHash());
     }
 
