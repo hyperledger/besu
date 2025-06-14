@@ -33,14 +33,18 @@ import org.apache.tuweni.bytes.Bytes32;
 /** Benchmark secp256k1 public key extraction */
 public class Secp256k1Benchmark extends BenchmarkExecutor {
 
-  /** secp256k1 benchmark using default math warmup and iterations */
-  public Secp256k1Benchmark() {
-    super(MATH_WARMUP, MATH_ITERATIONS);
+  /**
+   * The constructor. Use default math based warmup and interations.
+   *
+   * @param output where to write the stats.
+   * @param benchmarkConfig benchmark configurations.
+   */
+  public Secp256k1Benchmark(final PrintStream output, final BenchmarkConfig benchmarkConfig) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, benchmarkConfig);
   }
 
   @Override
-  public void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork) {
+  public void runBenchmark(final Boolean attemptNative, final String fork) {
     final SECP256K1 signatureAlgorithm = new SECP256K1();
     if (attemptNative != null && (!attemptNative || !signatureAlgorithm.maybeEnableNative())) {
       signatureAlgorithm.disableNative();
@@ -55,11 +59,11 @@ public class Secp256k1Benchmark extends BenchmarkExecutor {
     final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
     final SECPSignature signature = signatureAlgorithm.sign(dataHash, keyPair);
-    for (int i = 0; i < warmup; i++) {
+    for (int i = 0; i < warmIterations; i++) {
       signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
     }
     final Stopwatch timer = Stopwatch.createStarted();
-    for (int i = 0; i < iterations; i++) {
+    for (int i = 0; i < execIterations; i++) {
       signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
     }
     timer.stop();

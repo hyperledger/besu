@@ -30,14 +30,18 @@ import org.apache.tuweni.bytes.Bytes;
 /** Benchmark AltBN128 add, mul, and pairings */
 public class AltBN128Benchmark extends BenchmarkExecutor {
 
-  /** Benchmark AltBN128 add, mul, and pairings with default warmup and iterations */
-  public AltBN128Benchmark() {
-    super(MATH_WARMUP, MATH_ITERATIONS);
+  /**
+   * The constructor. Use default math based warmup and interations.
+   *
+   * @param output where to write the stats.
+   * @param benchmarkConfig benchmark configurations.
+   */
+  public AltBN128Benchmark(final PrintStream output, final BenchmarkConfig benchmarkConfig) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, benchmarkConfig);
   }
 
   @Override
-  public void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork) {
+  public void runBenchmark(final Boolean attemptNative, final String fork) {
 
     EvmSpecVersion forkVersion = EvmSpecVersion.fromName(fork);
 
@@ -71,12 +75,12 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
         EvmSpecVersion.ISTANBUL.compareTo(forkVersion) < 0
             ? AltBN128AddPrecompiledContract.byzantium(gasCalculator)
             : AltBN128AddPrecompiledContract.istanbul(gasCalculator);
-    warmup = MATH_WARMUP / addTestCases.size();
-    iterations = MATH_ITERATIONS / addTestCases.size();
+    warmIterations = MATH_WARMUP / addTestCases.size();
+    execIterations = MATH_ITERATIONS / addTestCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : addTestCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), addContract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), addContract);
       gasCost += addContract.gasRequirement(testCase.getValue());
     }
     execTime /= addTestCases.size();
@@ -103,12 +107,12 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
         EvmSpecVersion.ISTANBUL.compareTo(forkVersion) < 0
             ? AltBN128MulPrecompiledContract.byzantium(gasCalculator)
             : AltBN128MulPrecompiledContract.istanbul(gasCalculator);
-    warmup = MATH_WARMUP / mulTestCases.size();
-    iterations = MATH_ITERATIONS / mulTestCases.size();
+    warmIterations = MATH_WARMUP / mulTestCases.size();
+    execIterations = MATH_ITERATIONS / mulTestCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : mulTestCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), mulContract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), mulContract);
       gasCost += mulContract.gasRequirement(testCase.getValue());
     }
     execTime /= mulTestCases.size();
@@ -168,11 +172,11 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
             ? AltBN128PairingPrecompiledContract.byzantium(gasCalculator)
             : AltBN128PairingPrecompiledContract.istanbul(gasCalculator);
 
-    warmup = MATH_WARMUP / 20;
-    iterations = MATH_ITERATIONS / 20;
+    warmIterations = MATH_WARMUP / 20;
+    execIterations = MATH_ITERATIONS / 20;
 
     for (int i = 0; i < pairings.length; i++) {
-      final double execTime = runPrecompileBenchmark(pairings[i], contract);
+      final double execTime = runPrecompileBenchmark("pairings" + i, pairings[i], contract);
       final long gasCost = contract.gasRequirement(pairings[i]);
 
       output.printf(
