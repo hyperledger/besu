@@ -191,6 +191,10 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     final Account contract = frame.getWorldUpdater().get(to);
+    cost = clampedAdd(cost, gasCalculator().calculateExcessCodeAccessGasCost(frame, contract));
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
     cost = clampedAdd(cost, gasCalculator().calculateCodeDelegationResolutionGas(frame, contract));
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
