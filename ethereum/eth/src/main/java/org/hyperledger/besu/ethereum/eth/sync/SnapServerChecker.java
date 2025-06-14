@@ -35,7 +35,7 @@ public class SnapServerChecker {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
 
-  public SnapServerChecker(final EthContext ethContext, final MetricsSystem metricsSystem) {
+  private SnapServerChecker(final EthContext ethContext, final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
   }
@@ -46,34 +46,33 @@ public class SnapServerChecker {
     ethContext.getEthPeers().setSnapServerChecker(checker);
   }
 
-  public CompletableFuture<Boolean> check(final EthPeer peer, final BlockHeader peersHeadHeader) {
+  public CompletableFuture<Void> checkAndSet(
+      final EthPeer peer, final BlockHeader headBlockHeader) {
     LOG.atTrace()
         .setMessage("Checking whether peer {} is a snap server ...")
         .addArgument(peer::getLoggableId)
         .log();
-    final CompletableFuture<AbstractPeerTask.PeerTaskResult<AccountRangeMessage.AccountRangeData>>
-        snapServerCheckCompletableFuture = getAccountRangeFromPeer(peer, peersHeadHeader);
-    final CompletableFuture<Boolean> future = new CompletableFuture<>();
-    snapServerCheckCompletableFuture.whenComplete(
-        (peerResult, error) -> {
-          if (peerResult != null) {
-            if (!peerResult.getResult().accounts().isEmpty()
-                || !peerResult.getResult().proofs().isEmpty()) {
-              LOG.atTrace()
-                  .setMessage("Peer {} is a snap server.")
-                  .addArgument(peer::getLoggableId)
-                  .log();
-              future.complete(true);
-            } else {
+    return getAccountRangeFromPeer(peer, headBlockHeader)
+        .thenApply(
+            peerResult -> {
+              if (peerResult != null) {
+                if (!peerResult.getResult().accounts().isEmpty()
+                    || !peerResult.getResult().proofs().isEmpty()) {
+                  LOG.atTrace()
+                      .setMessage("Peer {} is a snap server.")
+                      .addArgument(peer::getLoggableId)
+                      .log();
+                  peer.setIsServingSnap(true);
+                  return null;
+                }
+              }
               LOG.atTrace()
                   .setMessage("Peer {} is not a snap server.")
                   .addArgument(peer::getLoggableId)
                   .log();
-              future.complete(false);
-            }
-          }
-        });
-    return future;
+              peer.setIsServingSnap(false);
+              return null;
+            });
   }
 
   public CompletableFuture<AbstractPeerTask.PeerTaskResult<AccountRangeMessage.AccountRangeData>>
