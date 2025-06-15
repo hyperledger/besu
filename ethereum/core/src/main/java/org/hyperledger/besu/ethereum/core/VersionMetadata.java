@@ -20,12 +20,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.constraints.NotNull;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -164,7 +164,7 @@ public class VersionMetadata implements Comparable<VersionMetadata> {
   }
 
   @Override
-  public int compareTo(@Nonnull final VersionMetadata versionMetadata) {
+  public int compareTo(@NotNull final VersionMetadata versionMetadata) {
     final String thisVersion = this.getBesuVersion().split("-", 2)[0];
     final String metadataVersion = versionMetadata.getBesuVersion().split("-", 2)[0];
     return new ComparableVersion(thisVersion).compareTo(new ComparableVersion(metadataVersion));

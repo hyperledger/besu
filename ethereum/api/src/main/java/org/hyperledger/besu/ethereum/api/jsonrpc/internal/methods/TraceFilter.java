@@ -57,9 +57,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -206,7 +206,7 @@ public class TraceFilter extends TraceBlock {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result.getArrayNode());
   }
 
-  @Nonnull
+  @NotNull
   private List<Block> getBlockList(
       final long fromBlock, final long toBlock, final Optional<Block> block) {
     List<Block> blockList = new ArrayList<>();

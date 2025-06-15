@@ -41,7 +41,7 @@ dependencies {
 
   constraints {
     api project(':acceptance-tests:dsl')
-    api project(':besu')
+    api project(':app')
     api project(':config')
     api project(':consensus:clique')
     api project(':consensus:common')
@@ -65,6 +65,9 @@ dependencies {
     api project(':evm')
     api project(':metrics:core')
     api project(':plugin-api')
+    api project(':services:kvstore')
+    api project(':services:pipeline')
+    api project(':services:tasks')
     api project(':testutil')
     api project(':util')
 
@@ -116,6 +119,8 @@ dependencies {
     api 'io.consensys.tuweni:tuweni-rlp:2.7.0'
     api 'io.consensys.tuweni:tuweni-toml:2.7.0'
     api 'io.consensys.tuweni:tuweni-units:2.7.0'
+
+    api 'jakarta.validation:jakarta.validation-api:3.0.2'
 
     api 'javax.inject:javax.inject:1'
 
@@ -215,7 +220,23 @@ publishing {
           developerConnection = 'scm:git:ssh://github.com/hyperledger/besu.git'
           url = 'https://github.com/hyperledger/besu'
         }
+        withXml {
+          // Workaround since Gradle does not natively support adding classifiers in BOM
+          // https://github.com/gradle/gradle/issues/8561#issuecomment-467456299
+
+          Node pomNode = asNode()
+          Node dependencies = pomNode.dependencyManagement.dependencies.get(0)
+          addDependency(dependencies, "org.hyperledger.besu.internal", "besu-ethereum-core", "test-support", calculateVersion())
+        }
       }
     }
   }
+}
+
+def addDependency(parent, groupId, artifactId, classifier, version) {
+  parent.appendNode('dependency')
+    .appendNode('groupId', groupId).parent()
+    .appendNode('artifactId', artifactId).parent()
+    .appendNode('classifier', classifier).parent()
+    .appendNode('version', version)
 }

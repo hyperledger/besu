@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,13 +77,13 @@ public class EthCallTest {
   private EthCall method;
 
   @Mock private Blockchain blockchain;
-  @Mock ChainHead chainHead;
+  @Mock private ChainHead chainHead;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
-
   @Mock private BlockHeader blockHeader;
 
   @Captor ArgumentCaptor<PreCloseStateHandler<Optional<JsonRpcResponse>>> mapperCaptor;
+  @Captor ArgumentCaptor<CallParameter> callParameterCaptor;
 
   @BeforeEach
   public void setUp() {
@@ -463,38 +464,77 @@ public class EthCallTest {
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenGasPriceIsZero() {
-    final CallParameter callParameters = callParameter(Wei.ZERO, null, null);
+    final CallParameter callParameters = callParameter();
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), true);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenGasPriceIsZeroAfterEIP1559() {
-    final CallParameter callParameters = callParameter(Wei.ZERO, null, null);
+    final CallParameter callParameters = callParameter();
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenGasPriceIsNotZero() {
-    final CallParameter callParameters = callParameter(Wei.ONE, null, null);
+    final CallParameter callParameters =
+        callParameter(
+            Optional.of(Wei.ONE), Optional.empty(), Optional.empty(), OptionalLong.empty());
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), false);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenGasPriceIsNotZeroAfterEIP1559() {
-    final CallParameter callParameters = callParameter(Wei.ONE, null, null);
+    final CallParameter callParameters =
+        callParameter(
+            Optional.of(Wei.ONE), Optional.empty(), Optional.empty(), OptionalLong.empty());
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), false);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenFeesAreZero() {
-    final CallParameter callParameters = callParameter(null, Wei.ZERO, Wei.ZERO);
+    final CallParameter callParameters =
+        callParameter(
+            Optional.empty(), Optional.of(Wei.ZERO), Optional.of(Wei.ZERO), OptionalLong.empty());
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenFeesAreZero() {
-    final CallParameter callParameters = callParameter(null, Wei.ONE, Wei.ONE);
+    final CallParameter callParameters =
+        callParameter(
+            Optional.empty(), Optional.of(Wei.ONE), Optional.of(Wei.ONE), OptionalLong.empty());
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), false);
+  }
+
+  @Test
+  public void shouldAllowTxGasLimitBiggerThanCap() {
+    final long txGasLimitCap = 100_000L;
+    final long txGasLimitParameter = txGasLimitCap * 2;
+    final CallParameter callParameters =
+        callParameter(
+            Optional.empty(),
+            Optional.of(Wei.ONE),
+            Optional.of(Wei.ONE),
+            OptionalLong.of(txGasLimitParameter));
+    final JsonRpcRequestContext request = ethCallRequest(callParameters, "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, Bytes.of(1).toString());
+    mockTransactionProcessorSuccessResult(expectedResponse);
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchainQueries.getTransactionGasLimitCap(any())).thenReturn(txGasLimitCap);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
+
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
+
+    final JsonRpcResponse response = method.response(request);
+
+    verify(transactionSimulator)
+        .process(callParameterCaptor.capture(), eq(Optional.empty()), any(), any(), any(), any());
+
+    assertThat(callParameterCaptor.getValue().getGas()).hasValue(txGasLimitParameter);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private void internalAutoSelectIsAllowedExceedingBalance(
@@ -523,17 +563,22 @@ public class EthCallTest {
   }
 
   private CallParameter callParameter() {
-    return callParameter(Wei.ZERO, null, null);
+    return callParameter(
+        Optional.of(Wei.ZERO), Optional.empty(), Optional.empty(), OptionalLong.empty());
   }
 
   private CallParameter callParameter(
-      final Wei gasPrice, final Wei maxFeesPerGas, final Wei maxPriorityFeesPerGas) {
+      final Optional<Wei> gasPrice,
+      final Optional<Wei> maxFeesPerGas,
+      final Optional<Wei> maxPriorityFeesPerGas,
+      final OptionalLong gasLimit) {
     return ImmutableCallParameter.builder()
         .sender(Address.fromHexString("0x0"))
         .to(Address.fromHexString("0x0"))
-        .gasPrice(Optional.ofNullable(gasPrice))
-        .maxFeePerGas(Optional.ofNullable(maxFeesPerGas))
-        .maxPriorityFeePerGas(Optional.ofNullable(maxPriorityFeesPerGas))
+        .gasPrice(gasPrice)
+        .maxFeePerGas(maxFeesPerGas)
+        .maxPriorityFeePerGas(maxPriorityFeesPerGas)
+        .gas(gasLimit)
         .build();
   }
 

@@ -18,8 +18,9 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
+import com.google.common.annotations.VisibleForTesting;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -53,9 +54,9 @@ public interface PrecompiledContract {
    * @param messageFrame context for this message
    * @return the output of the pre-compiled contract.
    */
-  @Nonnull
+  @NotNull
   PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame);
+      final Bytes input, @NotNull final MessageFrame messageFrame);
 
   /**
    * Encapsulated result of precompiled contract.
@@ -107,6 +108,16 @@ public interface PrecompiledContract {
       }
       return new PrecompileContractResult(
           output, false, MessageFrame.State.EXCEPTIONAL_HALT, haltReason);
+    }
+
+    @VisibleForTesting
+    boolean isSuccessful() {
+      return state.equals(MessageFrame.State.COMPLETED_SUCCESS);
+    }
+
+    @VisibleForTesting
+    Optional<ExceptionalHaltReason> getHaltReason() {
+      return haltReason;
     }
   }
 

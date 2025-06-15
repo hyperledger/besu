@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
+import org.hyperledger.besu.ethereum.mainnet.transactionpool.TransactionPoolPreProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -38,9 +39,10 @@ import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ProtocolSpecBuilder {
-  private Function<BlobSchedule, GasCalculator> gasCalculatorBuilder;
+  private Supplier<GasCalculator> gasCalculatorBuilder;
   private GasLimitCalculatorBuilder gasLimitCalculatorBuilder;
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
@@ -79,9 +81,9 @@ public class ProtocolSpecBuilder {
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
   private boolean isReplayProtectionSupported = false;
+  private TransactionPoolPreProcessor transactionPoolPreProcessor;
 
-  public ProtocolSpecBuilder gasCalculator(
-      final Function<BlobSchedule, GasCalculator> gasCalculatorBuilder) {
+  public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
     return this;
   }
@@ -270,6 +272,12 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder transactionPoolPreProcessor(
+      final TransactionPoolPreProcessor transactionPoolPreProcessor) {
+    this.transactionPoolPreProcessor = transactionPoolPreProcessor;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
@@ -297,7 +305,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(blobSchedule, "Missing blob schedule");
 
     final FeeMarket feeMarket = feeMarketBuilder.apply(blobSchedule);
-    final GasCalculator gasCalculator = gasCalculatorBuilder.apply(blobSchedule);
+    final GasCalculator gasCalculator = gasCalculatorBuilder.get();
     final GasLimitCalculator gasLimitCalculator =
         gasLimitCalculatorBuilder.apply(feeMarket, gasCalculator, blobSchedule);
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
@@ -320,10 +328,12 @@ public class ProtocolSpecBuilder {
             messageCallProcessor);
 
     final BlockHeaderValidator blockHeaderValidator =
-        createBlockHeaderValidator(blockHeaderValidatorBuilder, feeMarket, gasCalculator);
+        createBlockHeaderValidator(
+            blockHeaderValidatorBuilder, feeMarket, gasCalculator, gasLimitCalculator);
 
     final BlockHeaderValidator ommerHeaderValidator =
-        createBlockHeaderValidator(ommerHeaderValidatorBuilder, feeMarket, gasCalculator);
+        createBlockHeaderValidator(
+            ommerHeaderValidatorBuilder, feeMarket, gasCalculator, gasLimitCalculator);
 
     final BlockBodyValidator blockBodyValidator = blockBodyValidatorBuilder.apply(protocolSchedule);
 
@@ -360,7 +370,8 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(requestProcessorCoordinator),
         blockHashProcessor,
         isPoS,
-        isReplayProtectionSupported);
+        isReplayProtectionSupported,
+        Optional.ofNullable(transactionPoolPreProcessor));
   }
 
   private BlockProcessor createBlockProcessor(
@@ -378,9 +389,10 @@ public class ProtocolSpecBuilder {
   private BlockHeaderValidator createBlockHeaderValidator(
       final BlockHeaderValidatorBuilder blockHeaderValidatorBuilder,
       final FeeMarket feeMarket,
-      final GasCalculator gasCalculator) {
+      final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator) {
     return blockHeaderValidatorBuilder
-        .apply(feeMarket, gasCalculator)
+        .apply(feeMarket, gasCalculator, gasLimitCalculator)
         .difficultyCalculator(difficultyCalculator)
         .build();
   }
@@ -421,7 +433,8 @@ public class ProtocolSpecBuilder {
 
   @FunctionalInterface
   public interface BlockHeaderValidatorBuilder {
-    BlockHeaderValidator.Builder apply(FeeMarket feeMarket, GasCalculator gasCalculator);
+    BlockHeaderValidator.Builder apply(
+        FeeMarket feeMarket, GasCalculator gasCalculator, GasLimitCalculator gasLimitCalculator);
   }
 
   @FunctionalInterface
