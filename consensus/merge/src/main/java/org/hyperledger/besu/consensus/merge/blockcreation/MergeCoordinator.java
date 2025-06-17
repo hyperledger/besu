@@ -488,9 +488,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
               payloadIdentifier,
               new BlockWithReceipts(bestBlock, resultBest.getReceipts()),
               resultBest.getRequests()));
-      LOG.atDebug()
+      LOG.atInfo()
           .setMessage(
-              "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms")
+              "Successfully built candidate block {} for proposal identified by {}, with {} transactions, in {}ms, ready for consensus client to fetch")
           .addArgument(bestBlock::toLogString)
           .addArgument(payloadIdentifier)
           .addArgument(bestBlock.getBody().getTransactions()::size)

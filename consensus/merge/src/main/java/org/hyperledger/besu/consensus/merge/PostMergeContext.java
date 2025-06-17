@@ -210,7 +210,7 @@ public class PostMergeContext implements MergeContext {
       maybeCurrBestPayload.ifPresent(
           currBestPayload -> {
             if (newBlockValue.greaterThan(currBestPayload.blockValue())) {
-              LOG.atDebug()
+              LOG.atInfo()
                   .setMessage(
                       "New proposal for payloadId {} {} is better than the previous one {} by {}")
                   .addArgument(newPayload.payloadIdentifier())
