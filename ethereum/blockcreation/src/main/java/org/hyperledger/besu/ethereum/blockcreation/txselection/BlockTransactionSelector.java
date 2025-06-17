@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.SkipSen
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -46,8 +45,12 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
@@ -91,12 +94,13 @@ import org.slf4j.LoggerFactory;
  * Once "used" this class must be discarded and another created. This class contains state which is
  * not cleared between executions of buildTransactionListForBlock().
  */
+@SuppressWarnings("unchecked")
 public class BlockTransactionSelector implements BlockTransactionSelectionService {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
-  private final MutableWorldState worldState;
+  private final PathBasedWorldState worldState;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final BlockSelectionContext blockSelectionContext;
   private final TransactionSelectionResults transactionSelectionResults =
@@ -110,8 +114,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
   private final long blockTxsSelectionMaxTime;
   private final BlockAccessList.Builder balBuilder;
-  private WorldUpdater blockWorldStateUpdater;
-  private WorldUpdater txWorldStateUpdater;
+  private PathBasedWorldStateUpdateAccumulator<BonsaiAccount> blockWorldStateUpdater;
+  private PathBasedWorldStateUpdateAccumulator<BonsaiAccount> txWorldStateUpdater;
   private volatile TransactionEvaluationContext currTxEvaluationContext;
   private final List<Runnable> selectedTxPendingActions = new ArrayList<>(1);
   private int currentTxnLocation;
@@ -120,7 +124,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       final MiningConfiguration miningConfiguration,
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
-      final MutableWorldState worldState,
+      final PathBasedWorldState worldState,
       final TransactionPool transactionPool,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
@@ -152,8 +156,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     this.pluginTransactionSelector = pluginTransactionSelector;
     this.operationTracer =
         new InterruptibleOperationTracer(pluginTransactionSelector.getOperationTracer());
-    blockWorldStateUpdater = worldState.updater();
-    txWorldStateUpdater = blockWorldStateUpdater.updater();
+    blockWorldStateUpdater = (PathBasedWorldStateUpdateAccumulator<BonsaiAccount>) worldState.updater();
+    txWorldStateUpdater = blockWorldStateUpdater.copy();
     blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
     currentTxnLocation = 0;
     balBuilder = new BlockAccessList.Builder();
@@ -335,9 +339,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     final TransactionProcessingResult processingResult =
         processTransaction(evaluationContext.getTransaction());
 
-    // This is fine because we are using StackedUpdater, must not use Bonsai accumulator!
-    txWorldStateUpdater.markTransactionBoundary();
-
     var postProcessingSelectionResult = evaluatePostProcessing(evaluationContext, processingResult);
 
     return postProcessingSelectionResult.selected()
@@ -353,7 +354,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     synchronized (isTimeout) {
       if (!isTimeout.get()) {
         selectorsStateManager.commit();
-        txWorldStateUpdater.commit();
+        blockWorldStateUpdater.importStateChangesFromSource(txWorldStateUpdater);
         blockWorldStateUpdater.commit();
         for (final var pendingAction : selectedTxPendingActions) {
           pendingAction.run();
@@ -363,8 +364,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       }
     }
     selectedTxPendingActions.clear();
-    blockWorldStateUpdater = worldState.updater();
-    txWorldStateUpdater = blockWorldStateUpdater.updater();
+    blockWorldStateUpdater = (PathBasedWorldStateUpdateAccumulator<BonsaiAccount>) worldState.updater();
+    txWorldStateUpdater = blockWorldStateUpdater.copy();
     return false;
   }
 
@@ -372,7 +373,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   public void rollback() {
     selectedTxPendingActions.clear();
     selectorsStateManager.rollback();
-    txWorldStateUpdater = blockWorldStateUpdater.updater();
+    txWorldStateUpdater = blockWorldStateUpdater.copy();
   }
 
   private TransactionEvaluationContext createTransactionEvaluationContext(

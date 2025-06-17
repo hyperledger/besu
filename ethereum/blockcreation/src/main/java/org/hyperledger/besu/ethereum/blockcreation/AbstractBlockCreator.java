@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -384,7 +385,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             miningConfiguration,
             transactionProcessor,
             protocolContext.getBlockchain(),
-            disposableWorldState,
+            (BonsaiWorldState) disposableWorldState,
             transactionPool,
             processableBlockHeader,
             transactionReceiptFactory,
