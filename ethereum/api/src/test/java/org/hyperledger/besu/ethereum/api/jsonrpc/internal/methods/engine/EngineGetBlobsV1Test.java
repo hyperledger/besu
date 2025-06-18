@@ -64,9 +64,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-@ExtendWith({MockitoExtension.class, TrustedSetupClassLoaderExtension.class})
+@ExtendWith({MockitoExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class EngineGetBlobsV1Test {
+public class EngineGetBlobsV1Test extends TrustedSetupClassLoaderExtension {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -121,9 +121,12 @@ public class EngineGetBlobsV1Test {
     // for loop to check each blob and proof
     for (int i = 0; i < versionedHashes.length; i++) {
       assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getBlob()))
-          .isEqualTo(blobsWithCommitments.getBlobQuads().get(i).blob().getData());
+          .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).getBlob().getData());
+      assertThat(blobsWithCommitments.getBlobProofBundles().get(i).getKzgProof().size())
+          .isEqualTo(1);
       assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getProof()))
-          .isEqualTo(blobsWithCommitments.getBlobQuads().get(i).kzgProof().getData());
+          .isEqualTo(
+              blobsWithCommitments.getBlobProofBundles().get(i).getKzgProof().getFirst().getData());
     }
   }
 
@@ -151,9 +154,17 @@ public class EngineGetBlobsV1Test {
     for (int i = 0; i < versionedHashesList.size(); i++) {
       if (i != 1) {
         assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getBlob()))
-            .isEqualTo(blobsWithCommitments.getBlobQuads().get(i).blob().getData());
+            .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).getBlob().getData());
+        assertThat(blobsWithCommitments.getBlobProofBundles().get(i).getKzgProof().size())
+            .isEqualTo(1);
         assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getProof()))
-            .isEqualTo(blobsWithCommitments.getBlobQuads().get(i).kzgProof().getData());
+            .isEqualTo(
+                blobsWithCommitments
+                    .getBlobProofBundles()
+                    .get(i)
+                    .getKzgProof()
+                    .getFirst()
+                    .getData());
       } else {
         assertThat(blobAndProofV1s.get(i)).isNull();
       }
@@ -229,10 +240,11 @@ public class EngineGetBlobsV1Test {
 
   private void mockTransactionPoolMethod(final BlobsWithCommitments blobsWithCommitments) {
     blobsWithCommitments
-        .getBlobQuads()
+        .getBlobProofBundles()
         .forEach(
-            blobQuad ->
-                when(transactionPool.getBlobQuad(blobQuad.versionedHash())).thenReturn(blobQuad));
+            blobProofBundle ->
+                when(transactionPool.getBlobProofBundle(blobProofBundle.getVersionedHash()))
+                    .thenReturn(blobProofBundle));
   }
 
   private JsonRpcResponse resp(final VersionedHash[] versionedHashes) {

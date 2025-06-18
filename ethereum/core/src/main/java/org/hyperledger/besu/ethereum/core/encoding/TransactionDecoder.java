@@ -30,19 +30,15 @@ public class TransactionDecoder {
 
   @FunctionalInterface
   interface Decoder {
-    Transaction decode(RLPInput input);
+    Transaction decode(Bytes input);
   }
 
   private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
       ImmutableMap.of(
-          TransactionType.ACCESS_LIST,
-          AccessListTransactionDecoder::decode,
-          TransactionType.EIP1559,
-          EIP1559TransactionDecoder::decode,
-          TransactionType.BLOB,
-          BlobTransactionDecoder::decode,
-          TransactionType.DELEGATE_CODE,
-          CodeDelegationTransactionDecoder::decode);
+          TransactionType.ACCESS_LIST, AccessListTransactionDecoder::decode,
+          TransactionType.EIP1559, EIP1559TransactionDecoder::decode,
+          TransactionType.BLOB, BlobTransactionDecoder::decode,
+          TransactionType.DELEGATE_CODE, CodeDelegationTransactionDecoder::decode);
 
   private static final ImmutableMap<TransactionType, Decoder> POOLED_TRANSACTION_DECODERS =
       ImmutableMap.of(TransactionType.BLOB, BlobPooledTransactionDecoder::decode);
@@ -97,9 +93,8 @@ public class TransactionDecoder {
       final TransactionType transactionType,
       final EncodingContext context) {
     // Slice the transaction bytes to exclude the transaction type and prepare for decoding
-    final RLPInput transactionInput = RLP.input(transactionBytes.slice(1));
     // Use the appropriate decoder for the transaction type to decode the remaining bytes
-    return getDecoder(transactionType, context).decode(transactionInput);
+    return getDecoder(transactionType, context).decode(transactionBytes);
   }
 
   /**

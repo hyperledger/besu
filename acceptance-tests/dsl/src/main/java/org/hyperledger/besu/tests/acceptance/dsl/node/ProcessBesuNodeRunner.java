@@ -195,10 +195,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add(node.getMiningParameters().getExtraData().toHexString());
       params.add("--miner-coinbase");
       params.add(node.getMiningParameters().getCoinbase().get().toString());
-      params.add("--miner-stratum-port");
-      params.add(Integer.toString(node.getMiningParameters().getStratumPort()));
-      params.add("--miner-stratum-host");
-      params.add(node.getMiningParameters().getStratumNetworkInterface());
       params.add("--min-gas-price");
       params.add(
           Integer.toString(node.getMiningParameters().getMinTransactionGasPrice().intValue()));
@@ -208,9 +204,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--Xminer-remote-sealers-hashrate-ttl");
       params.add(
           Long.toString(node.getMiningParameters().getUnstable().getRemoteSealersTimeToLive()));
-    }
-    if (node.getMiningParameters().isStratumMiningEnabled()) {
-      params.add("--miner-stratum-enabled");
     }
 
     if (!node.getBootnodes().isEmpty()) {

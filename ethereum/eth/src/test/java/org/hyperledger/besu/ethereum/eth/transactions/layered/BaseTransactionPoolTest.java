@@ -22,6 +22,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -111,6 +113,7 @@ public class BaseTransactionPoolTest {
         Wei.of(5000L).multiply(gasFeeMultiplier).divide(10),
         0,
         blobCount,
+        BlobType.KZG_PROOF,
         null,
         keys);
   }
@@ -134,14 +137,31 @@ public class BaseTransactionPoolTest {
 
     final TransactionType txType =
         TransactionType.values()[
-            randomizeTxType.nextInt(txSize < blobTransaction0.getSize() ? 3 : 4)];
+            randomizeTxType.nextInt(txSize < blobTransaction0.getSizeForAnnouncement() ? 3 : 4)];
 
     final Transaction baseTx =
-        createTransaction(txType, nonce, maxGasPrice, maxGasPrice.divide(10), 0, 1, null, keys);
-    final int payloadSize = txSize - baseTx.getSize();
+        createTransaction(
+            txType,
+            nonce,
+            maxGasPrice,
+            maxGasPrice.divide(10),
+            0,
+            1,
+            BlobType.KZG_PROOF,
+            null,
+            keys);
+    final int payloadSize = txSize - baseTx.getSizeForAnnouncement();
 
     return createTransaction(
-        txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, null, keys);
+        txType,
+        nonce,
+        maxGasPrice,
+        maxGasPrice.divide(10),
+        payloadSize,
+        1,
+        BlobType.KZG_PROOF,
+        null,
+        keys);
   }
 
   protected Transaction createTransaction(
@@ -154,7 +174,15 @@ public class BaseTransactionPoolTest {
           createTransaction(txType, nonce, maxGasPrice, payloadSize, null, keys);
       case BLOB ->
           createTransaction(
-              txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, null, keys);
+              txType,
+              nonce,
+              maxGasPrice,
+              maxGasPrice.divide(10),
+              payloadSize,
+              1,
+              BlobType.KZG_PROOF,
+              null,
+              keys);
       case DELEGATE_CODE ->
           createTransaction(
               txType, nonce, maxGasPrice, payloadSize, List.of(CODE_DELEGATION_SENDER_1), keys);
@@ -169,7 +197,15 @@ public class BaseTransactionPoolTest {
       final List<CodeDelegation> codeDelegations,
       final KeyPair keys) {
     return createTransaction(
-        type, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 0, codeDelegations, keys);
+        type,
+        nonce,
+        maxGasPrice,
+        maxGasPrice.divide(10),
+        payloadSize,
+        0,
+        BlobType.KZG_PROOF,
+        codeDelegations,
+        keys);
   }
 
   protected Transaction createTransaction(
@@ -179,10 +215,18 @@ public class BaseTransactionPoolTest {
       final Wei maxPriorityFeePerGas,
       final int payloadSize,
       final int blobCount,
+      final BlobType blobType,
       final List<CodeDelegation> codeDelegations,
       final KeyPair keys) {
     return prepareTransaction(
-            type, nonce, maxGasPrice, maxPriorityFeePerGas, payloadSize, blobCount, codeDelegations)
+            type,
+            nonce,
+            maxGasPrice,
+            maxPriorityFeePerGas,
+            payloadSize,
+            blobCount,
+            blobType,
+            codeDelegations)
         .createTransaction(keys);
   }
 
@@ -193,6 +237,7 @@ public class BaseTransactionPoolTest {
       final Wei maxPriorityFeePerGas,
       final int payloadSize,
       final int blobCount,
+      final BlobType blobType,
       final List<CodeDelegation> codeDelegations) {
 
     var tx =
@@ -218,13 +263,19 @@ public class BaseTransactionPoolTest {
             IntStream.range(0, blobCount)
                 .mapToObj(i -> new KZGCommitment(Bytes48.random()))
                 .toList();
-        final var kzgProofs =
-            IntStream.range(0, blobCount).mapToObj(i -> new KZGProof(Bytes48.random())).toList();
+        int totalKzgProofs =
+            blobType == BlobType.KZG_PROOF
+                ? blobCount
+                : blobCount * CKZG4844Helper.CELL_PROOFS_PER_BLOB;
+        final List<KZGProof> kzgProofs =
+            IntStream.range(0, totalKzgProofs)
+                .mapToObj(i -> new KZGProof(Bytes48.random()))
+                .toList();
         final var blobs =
             IntStream.range(0, blobCount).mapToObj(i -> new Blob(Bytes.random(32 * 4096))).toList();
         tx.versionedHashes(Optional.of(versionHashes));
         final var blobsWithCommitments =
-            new BlobsWithCommitments(kgzCommitments, blobs, kzgProofs, versionHashes);
+            new BlobsWithCommitments(blobType, kgzCommitments, blobs, kzgProofs, versionHashes);
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
       } else if (type.supportsDelegateCode()) {
         tx.codeDelegations(codeDelegations);
@@ -244,6 +295,10 @@ public class BaseTransactionPoolTest {
         originalTransaction.getMaxGasPrice().multiply(2).divide(10),
         0,
         1,
+        originalTransaction
+            .getBlobsWithCommitments()
+            .map(BlobsWithCommitments::getBlobType)
+            .orElse(BlobType.KZG_PROOF),
         originalTransaction.getCodeDelegationList().orElse(null),
         keys);
   }

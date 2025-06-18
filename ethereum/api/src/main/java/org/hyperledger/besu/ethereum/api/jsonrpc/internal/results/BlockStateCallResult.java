@@ -43,7 +43,7 @@ public class BlockStateCallResult extends BlockResult {
         transactions,
         List.of(),
         null,
-        block.calculateSize(),
+        block.getSize(),
         false,
         block.getBody().getWithdrawals());
     this.callProcessingResults = callProcessingResults;

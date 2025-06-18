@@ -444,7 +444,7 @@ public abstract class PendingTransaction
     int OPTIONAL_SHALLOW_SIZE = 16;
     int KZG_COMMITMENT_OR_PROOF_SIZE = 112;
     int BLOB_SIZE = 131136;
-    int BLOBS_WITH_COMMITMENTS_SIZE = 40;
+    int BLOBS_WITH_COMMITMENTS_SIZE = 48;
     int PENDING_TRANSACTION_SHALLOW_SIZE = 40;
   }
 }

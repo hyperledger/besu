@@ -39,6 +39,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminTransact
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.contract.ContractTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.debug.DebugTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
@@ -96,6 +97,7 @@ public class AcceptanceTestBase {
   protected final TxPoolConditions txPoolConditions;
   protected final TxPoolTransactions txPoolTransactions;
   protected final ExitedWithCode exitedSuccessfully;
+  protected final DebugTransactions debug;
 
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
 
@@ -125,6 +127,7 @@ public class AcceptanceTestBase {
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());
     permissionedNodeBuilder = new PermissionedNodeBuilder();
     exitedSuccessfully = new ExitedWithCode(0);
+    debug = new DebugTransactions();
   }
 
   @BeforeEach
