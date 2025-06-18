@@ -20,17 +20,32 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 public record BlockSelectionContext(
     MiningConfiguration miningConfiguration,
-    GasCalculator gasCalculator,
-    GasLimitCalculator gasLimitCalculator,
-    BlockHashProcessor blockHashProcessor,
     ProcessableBlockHeader pendingBlockHeader,
-    FeeMarket feeMarket,
+    ProtocolSpec protocolSpec,
     Wei blobGasPrice,
     Address miningBeneficiary,
-    TransactionPool transactionPool) {}
+    TransactionPool transactionPool) {
+
+  public FeeMarket feeMarket() {
+    return protocolSpec.getFeeMarket();
+  }
+
+  public GasCalculator gasCalculator() {
+    return protocolSpec.getGasCalculator();
+  }
+
+  public GasLimitCalculator gasLimitCalculator() {
+    return protocolSpec.getGasLimitCalculator();
+  }
+
+  public BlockHashProcessor blockHashProcessor() {
+    return protocolSpec.getBlockHashProcessor();
+  }
+}

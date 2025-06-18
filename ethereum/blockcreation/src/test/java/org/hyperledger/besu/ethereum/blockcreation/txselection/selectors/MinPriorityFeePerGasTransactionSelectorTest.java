@@ -47,8 +47,7 @@ public class MinPriorityFeePerGasTransactionSelectorTest {
     MiningConfiguration miningConfiguration =
         MiningConfiguration.newDefault().setMinPriorityFeePerGas(Wei.of(minPriorityFeeParameter));
     BlockSelectionContext context =
-        new BlockSelectionContext(
-            miningConfiguration, null, null, null, pendingBlockHeader, null, null, null, null);
+        new BlockSelectionContext(miningConfiguration, pendingBlockHeader, null, null, null, null);
     transactionSelector = new MinPriorityFeePerGasTransactionSelector(context);
   }
 
