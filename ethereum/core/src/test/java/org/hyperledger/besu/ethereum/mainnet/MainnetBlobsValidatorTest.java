@@ -20,11 +20,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.BlobType;
+import org.hyperledger.besu.datatypes.VersionedHash;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,65 +39,94 @@ import org.junit.jupiter.api.Test;
 public class MainnetBlobsValidatorTest {
 
   private MainnetBlobsValidator validator;
-  private Transaction mockTransaction;
-  private BlobsWithCommitments mockBlobsWithCommitments;
+  private Transaction transaction;
+  private BlobsWithCommitments blobsWithCommitments;
 
   @BeforeEach
-  public void setUp() {
-    validator = new MainnetBlobsValidator(Set.of(BlobType.KZG_PROOF, BlobType.KZG_CELL_PROOFS));
-    mockTransaction = mock(Transaction.class);
-    mockBlobsWithCommitments = mock(BlobsWithCommitments.class);
+  void setUp() {
+    validator =
+        new MainnetBlobsValidator(
+            Set.of(BlobType.KZG_PROOF, BlobType.KZG_CELL_PROOFS),
+            mock(GasLimitCalculator.class),
+            mock(GasCalculator.class));
+
+    transaction = mock(Transaction.class);
+    blobsWithCommitments = mock(BlobsWithCommitments.class);
   }
 
   @Test
-  public void shouldFailValidateTransactionsBlobs_EmptyBlobs() {
-    when(mockTransaction.getBlobsWithCommitments()).thenReturn(Optional.empty());
+  void failsWhenBlobsAreEmpty() {
+    when(transaction.getBlobsWithCommitments()).thenReturn(Optional.empty());
 
-    ValidationResult<TransactionInvalidReason> result =
-        validator.validateTransactionsBlobs(mockTransaction);
+    var result = validator.validateTransactionsBlobs(transaction);
 
-    assertFalse(result.isValid());
-    assertEquals(TransactionInvalidReason.INVALID_BLOBS, result.getInvalidReason());
-    assertEquals(
-        "transaction blobs are empty, cannot verify without blobs", result.getErrorMessage());
+    assertInvalidResult(
+        result,
+        TransactionInvalidReason.INVALID_BLOBS,
+        "transaction blobs are empty, cannot verify without blobs");
   }
 
   @Test
-  public void shouldFailValidateTransactionsBlobs_MismatchedBlobAndCommitmentSizes() {
-    when(mockTransaction.getBlobsWithCommitments())
-        .thenReturn(Optional.of(mockBlobsWithCommitments));
-    when(mockBlobsWithCommitments.getBlobType())
-        .thenReturn(BlobType.KZG_CELL_PROOFS); // Valid version
-    when(mockBlobsWithCommitments.getBlobs()).thenReturn(List.of(mock(Blob.class)));
-    when(mockBlobsWithCommitments.getKzgCommitments()).thenReturn(List.of()); // Empty commitments
+  void failsWhenBlobAndCommitmentSizesMismatch() {
+    when(transaction.getBlobsWithCommitments()).thenReturn(Optional.of(blobsWithCommitments));
+    when(blobsWithCommitments.getBlobType()).thenReturn(BlobType.KZG_CELL_PROOFS);
+    when(blobsWithCommitments.getBlobs()).thenReturn(List.of(mock(Blob.class)));
+    when(blobsWithCommitments.getKzgCommitments()).thenReturn(List.of());
 
-    ValidationResult<TransactionInvalidReason> result =
-        validator.validateTransactionsBlobs(mockTransaction);
+    var result = validator.validateTransactionsBlobs(transaction);
 
-    assertFalse(result.isValid());
-    assertEquals(TransactionInvalidReason.INVALID_BLOBS, result.getInvalidReason());
-    assertEquals(
-        "transaction blobs and commitments are not the same size", result.getErrorMessage());
+    assertInvalidResult(
+        result,
+        TransactionInvalidReason.INVALID_BLOBS,
+        "transaction blobs and commitments are not the same size");
   }
 
   @Test
-  public void shouldFailValidateTransactionsBlobs_EmptyVersionedHashes() {
-    when(mockTransaction.getBlobsWithCommitments())
-        .thenReturn(Optional.of(mockBlobsWithCommitments));
-    when(mockBlobsWithCommitments.getBlobType())
-        .thenReturn(BlobType.KZG_CELL_PROOFS); // Valid version
-    when(mockBlobsWithCommitments.getBlobs()).thenReturn(List.of(mock(Blob.class)));
-    when(mockBlobsWithCommitments.getKzgCommitments())
-        .thenReturn(List.of(mock(KZGCommitment.class)));
-    when(mockTransaction.getVersionedHashes()).thenReturn(Optional.empty());
+  void failsWhenVersionedHashesAreEmpty() {
+    when(transaction.getBlobsWithCommitments()).thenReturn(Optional.of(blobsWithCommitments));
+    when(blobsWithCommitments.getBlobType()).thenReturn(BlobType.KZG_CELL_PROOFS);
+    when(blobsWithCommitments.getBlobs()).thenReturn(List.of(mock(Blob.class)));
+    when(blobsWithCommitments.getKzgCommitments()).thenReturn(List.of(mock(KZGCommitment.class)));
+    when(transaction.getVersionedHashes()).thenReturn(Optional.empty());
 
-    ValidationResult<TransactionInvalidReason> result =
-        validator.validateTransactionsBlobs(mockTransaction);
+    var result = validator.validateTransactionsBlobs(transaction);
+
+    assertInvalidResult(
+        result,
+        TransactionInvalidReason.INVALID_BLOBS,
+        "transaction versioned hashes are empty, cannot verify without versioned hashes");
+  }
+
+  @Test
+  void failsWhenBlobsExceedMaxPerTransaction() {
+    when(transaction.getBlobsWithCommitments()).thenReturn(Optional.of(blobsWithCommitments));
+    when(blobsWithCommitments.getBlobType()).thenReturn(BlobType.KZG_CELL_PROOFS);
+    when(blobsWithCommitments.getBlobs()).thenReturn(List.of(mock(Blob.class)));
+    when(blobsWithCommitments.getKzgCommitments()).thenReturn(List.of(mock(KZGCommitment.class)));
+    when(transaction.getVersionedHashes())
+        .thenReturn(Optional.of(List.of(mock(VersionedHash.class))));
+
+    GasLimitCalculator gasLimitCalculator = mock(GasLimitCalculator.class);
+    GasCalculator gasCalculator = mock(GasCalculator.class);
+    when(gasCalculator.blobGasCost(1)).thenReturn(100L);
+    when(gasLimitCalculator.transactionBlobGasLimitCap()).thenReturn(50L);
+    validator =
+        new MainnetBlobsValidator(
+            Set.of(BlobType.KZG_PROOF, BlobType.KZG_CELL_PROOFS),
+            gasLimitCalculator,
+            gasCalculator);
+    var result = validator.validateTransactionsBlobs(transaction);
+    assertInvalidResult(
+        result, TransactionInvalidReason.INVALID_BLOBS, "Blob transaction has too many blobs: 1");
+  }
+
+  private void assertInvalidResult(
+      final ValidationResult<TransactionInvalidReason> result,
+      final TransactionInvalidReason expectedReason,
+      final String expectedMessage) {
 
     assertFalse(result.isValid());
-    assertEquals(TransactionInvalidReason.INVALID_BLOBS, result.getInvalidReason());
-    assertEquals(
-        "transaction versioned hashes are empty, cannot verify without versioned hashes",
-        result.getErrorMessage());
+    assertEquals(expectedReason, result.getInvalidReason());
+    assertEquals(expectedMessage, result.getErrorMessage());
   }
 }
