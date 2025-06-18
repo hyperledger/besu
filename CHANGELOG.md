@@ -11,6 +11,7 @@
 
 ### Upcoming Breaking Changes
 - `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
+- `--Xbonsai-parallel-tx-processing-enabled` is deprecated, use `--bonsai-parallel-tx-processing-enabled` instead.
 - `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Proof of Work consensus (PoW)
@@ -19,6 +20,9 @@
 
 ### Additions and Improvements
 - Introduce the `TransactionValidatorService` to allow plugins to add custom validation rules [#8793](https://github.com/hyperledger/besu/pull/8793)
+- Enable parallel tx processing by default if Bonsai is used [#8668](https://github.com/hyperledger/besu/pull/8668)
+- Increase mainnet gas limit to 45M [#8824](https://github.com/hyperledger/besu/pull/8824)
+
 
 #### Fusaka Devnet
 - EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
