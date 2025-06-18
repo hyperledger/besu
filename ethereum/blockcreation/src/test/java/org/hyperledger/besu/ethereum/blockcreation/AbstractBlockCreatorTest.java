@@ -78,6 +78,7 @@ import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
@@ -101,7 +102,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith({MockitoExtension.class})
-abstract class AbstractBlockCreatorTest {
+class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final SECPPrivateKey PRIVATE_KEY1 =
