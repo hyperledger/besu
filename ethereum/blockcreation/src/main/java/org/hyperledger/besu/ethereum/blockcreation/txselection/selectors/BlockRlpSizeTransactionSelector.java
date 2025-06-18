@@ -56,7 +56,8 @@ public class BlockRlpSizeTransactionSelector extends AbstractStatefulTransaction
   public TransactionSelectionResult evaluateTransactionPostProcessing(
       final TransactionEvaluationContext evaluationContext,
       final TransactionProcessingResult processingResult) {
-    setWorkingState(getWorkingState() + evaluationContext.getTransaction().getSize());
+    setWorkingState(
+        getWorkingState() + evaluationContext.getTransaction().getSizeForBlockInclusion());
 
     return TransactionSelectionResult.SELECTED;
   }
@@ -72,7 +73,7 @@ public class BlockRlpSizeTransactionSelector extends AbstractStatefulTransaction
       final Transaction transaction, final long cumulativeBlockSize) {
     final long blockSizeRemaining = context.maxRlpBlockSize() - cumulativeBlockSize;
 
-    if (blockSizeRemaining < transaction.getSize()) {
+    if (blockSizeRemaining < transaction.getSizeForBlockInclusion()) {
       LOG.trace(
           "Transaction with size of {} bytes too large for block limit of {} bytes",
           blockSizeRemaining,

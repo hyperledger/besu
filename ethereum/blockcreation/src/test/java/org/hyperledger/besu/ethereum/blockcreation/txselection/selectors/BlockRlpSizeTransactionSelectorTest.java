@@ -71,7 +71,10 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx1 = createEIP1559PendingTransaction(Bytes.random(10));
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(80));
     final int maxRlpBlockSize =
-        (int) (MAX_HEADER_SIZE + tx1.getTransaction().getSize() + tx2.getTransaction().getSize())
+        (int)
+                (MAX_HEADER_SIZE
+                    + tx1.getTransaction().getSizeForBlockInclusion()
+                    + tx2.getTransaction().getSizeForBlockInclusion())
             + 20; // ensure there's some room left
     when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
 
@@ -96,7 +99,10 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(100));
     final var tx3 = createEIP1559PendingTransaction(Bytes.random(20));
     final int maxRlpBlockSize =
-        (int) (MAX_HEADER_SIZE + tx1.getTransaction().getSize() + tx3.getTransaction().getSize());
+        (int)
+            (MAX_HEADER_SIZE
+                + tx1.getTransaction().getSizeForBlockInclusion()
+                + tx3.getTransaction().getSizeForBlockInclusion());
     when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
 
     // transaction is under the total block size limit, so it should be selected
@@ -127,7 +133,10 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx1 = createEIP1559PendingTransaction(Bytes.random(50));
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(50));
     final int maxRlpBlockSize =
-        (int) (MAX_HEADER_SIZE + tx1.getTransaction().getSize() + tx2.getTransaction().getSize());
+        (int)
+            (MAX_HEADER_SIZE
+                + tx1.getTransaction().getSizeForBlockInclusion()
+                + tx2.getTransaction().getSizeForBlockInclusion());
     when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
 
     final var txEvaluationContext1 =
@@ -150,7 +159,10 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx1 = createEIP1559PendingTransaction(Bytes.random(50));
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(100));
     final int maxRlpBlockSize =
-        (int) (MAX_HEADER_SIZE + tx1.getTransaction().getSize() + tx2.getTransaction().getSize());
+        (int)
+            (MAX_HEADER_SIZE
+                + tx1.getTransaction().getSizeForBlockInclusion()
+                + tx2.getTransaction().getSizeForBlockInclusion());
     when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
 
     final var txEvaluationContext1 =
