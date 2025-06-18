@@ -73,7 +73,7 @@ class BlockRlpSizeTransactionSelectorTest {
     final int maxRlpBlockSize =
         (int) (MAX_HEADER_SIZE + tx1.getTransaction().getSize() + tx2.getTransaction().getSize())
             + 20; // ensure there's some room left
-    when(blockSelectionContext.gasCalculator().maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
+    when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
 
     // transaction is under the total block size limit, so it should be selected
     var txEvaluationContext1 =
@@ -97,7 +97,7 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx3 = createEIP1559PendingTransaction(Bytes.random(20));
     final int maxRlpBlockSize =
         (int) (MAX_HEADER_SIZE + tx1.getTransaction().getSize() + tx3.getTransaction().getSize());
-    when(blockSelectionContext.gasCalculator().maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
+    when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
 
     // transaction is under the total block size limit, so it should be selected
     var txEvaluationContext1 =
@@ -128,7 +128,7 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(50));
     final int maxRlpBlockSize =
         (int) (MAX_HEADER_SIZE + tx1.getTransaction().getSize() + tx2.getTransaction().getSize());
-    when(blockSelectionContext.gasCalculator().maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
+    when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
 
     final var txEvaluationContext1 =
         new TransactionEvaluationContext(
@@ -151,7 +151,7 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(100));
     final int maxRlpBlockSize =
         (int) (MAX_HEADER_SIZE + tx1.getTransaction().getSize() + tx2.getTransaction().getSize());
-    when(blockSelectionContext.gasCalculator().maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
+    when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
 
     final var txEvaluationContext1 =
         new TransactionEvaluationContext(

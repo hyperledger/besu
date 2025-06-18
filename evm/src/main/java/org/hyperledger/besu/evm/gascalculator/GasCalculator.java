@@ -678,13 +678,4 @@ public interface GasCalculator {
       final MessageFrame frame, final Account targetAccount) {
     return 0L;
   }
-
-  /**
-   * Returns the maximum size of an RLP encoded block size in bytes
-   *
-   * @return the maximum rlp block size
-   */
-  default int maxRlpBlockSize() {
-    return Integer.MAX_VALUE;
-  }
 }

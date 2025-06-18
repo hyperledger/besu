@@ -70,13 +70,13 @@ public class BlockRlpSizeTransactionSelector extends AbstractStatefulTransaction
    */
   private boolean blockSizeAboveThreshold(
       final Transaction transaction, final long cumulativeBlockSize) {
-    final long blockSizeRemaining = context.gasCalculator().maxRlpBlockSize() - cumulativeBlockSize;
+    final long blockSizeRemaining = context.maxRlpBlockSize() - cumulativeBlockSize;
 
     if (blockSizeRemaining < transaction.getSize()) {
       LOG.trace(
           "Transaction with size of {} bytes too large for block limit of {} bytes",
           blockSizeRemaining,
-          context.gasCalculator().maxRlpBlockSize());
+          context.maxRlpBlockSize());
       return true;
     }
     return false;

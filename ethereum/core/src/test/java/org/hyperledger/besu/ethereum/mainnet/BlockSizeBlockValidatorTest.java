@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.Optional;
@@ -50,7 +49,7 @@ class BlockSizeBlockValidatorTest {
     when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
 
     final Transaction transaction =
-        generator.transaction(Bytes.random(OsakaGasCalculator.MAX_RLP_BLOCK_SIZE + 1));
+        generator.transaction(Bytes.random(BlockSizeBlockValidator.MAX_RLP_BLOCK_SIZE + 1));
     BlockDataGenerator.BlockOptions blockOptions =
         new BlockDataGenerator.BlockOptions().setBlockNumber(1).addTransaction(transaction);
     Block block = generator.block(blockOptions);

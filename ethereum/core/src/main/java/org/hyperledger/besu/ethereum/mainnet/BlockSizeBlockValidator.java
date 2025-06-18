@@ -14,15 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator.MAX_RLP_BLOCK_SIZE;
-
-import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Block;
 
 /** Validates blocks ensuring they do not exceed the maximum allowed size. */
 public class BlockSizeBlockValidator extends MainnetBlockValidator {
+  /** The maximum size of a block in bytes */
+  public static final int MAX_BLOCK_SIZE = 10_485_760;
+
+  /** The safety margin to take the CL block overhead into account */
+  public static final int SAFETY_MARGIN = 2_097_152;
+
+  /** The maximum size of an RLP encoded block size in bytes */
+  public static final int MAX_RLP_BLOCK_SIZE = MAX_BLOCK_SIZE - SAFETY_MARGIN;
 
   /**
    * Constructs a new MainnetBlockValidator with the given BlockHeaderValidator, BlockBodyValidator,
@@ -36,32 +39,6 @@ public class BlockSizeBlockValidator extends MainnetBlockValidator {
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor) {
-    super(blockHeaderValidator, blockBodyValidator, blockProcessor);
-  }
-
-  @Override
-  public BlockProcessingResult validateAndProcessBlock(
-      final ProtocolContext context,
-      final Block block,
-      final HeaderValidationMode headerValidationMode,
-      final HeaderValidationMode ommerValidationMode,
-      final boolean shouldUpdateHead,
-      final boolean shouldRecordBadBlock) {
-    final int blockSize = block.getSize();
-    if (blockSize > MAX_RLP_BLOCK_SIZE) {
-      final String errorMessage =
-          "Block size of " + blockSize + " bytes exceeds limit of " + MAX_RLP_BLOCK_SIZE + " bytes";
-      var retval = new BlockProcessingResult(errorMessage);
-      handleFailedBlockProcessing(block, retval, true, context);
-      return retval;
-    }
-
-    return super.validateAndProcessBlock(
-        context,
-        block,
-        headerValidationMode,
-        ommerValidationMode,
-        shouldUpdateHead,
-        shouldRecordBadBlock);
+    super(blockHeaderValidator, blockBodyValidator, blockProcessor, MAX_RLP_BLOCK_SIZE);
   }
 }

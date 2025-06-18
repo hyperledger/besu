@@ -55,9 +55,12 @@ public class MainnetBlockValidator implements BlockValidator {
   /** The BlockProcessor used to process blocks. */
   protected final BlockProcessor blockProcessor;
 
+  /** The maximum size of a block in RLP encoding. */
+  private final int maxRlpBlockSize;
+
   /**
    * Constructs a new MainnetBlockValidator with the given BlockHeaderValidator, BlockBodyValidator,
-   * BlockProcessor, and BadBlockManager.
+   * and BlockProcessor.
    *
    * @param blockHeaderValidator the BlockHeaderValidator used to validate block headers
    * @param blockBodyValidator the BlockBodyValidator used to validate block bodies
@@ -67,9 +70,27 @@ public class MainnetBlockValidator implements BlockValidator {
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor) {
+    this(blockHeaderValidator, blockBodyValidator, blockProcessor, Integer.MAX_VALUE);
+  }
+
+  /**
+   * Constructs a new MainnetBlockValidator with the given BlockHeaderValidator, BlockBodyValidator,
+   * BlockProcessor, and maximum RLP block size.
+   *
+   * @param blockHeaderValidator the BlockHeaderValidator used to validate block headers
+   * @param blockBodyValidator the BlockBodyValidator used to validate block bodies
+   * @param blockProcessor the BlockProcessor used to process blocks
+   * @param maxRlpBlockSize the maximum size of a block in RLP encoding
+   */
+  public MainnetBlockValidator(
+      final BlockHeaderValidator blockHeaderValidator,
+      final BlockBodyValidator blockBodyValidator,
+      final BlockProcessor blockProcessor,
+      final int maxRlpBlockSize) {
     this.blockHeaderValidator = blockHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
     this.blockProcessor = blockProcessor;
+    this.maxRlpBlockSize = maxRlpBlockSize;
   }
 
   /**
@@ -111,6 +132,15 @@ public class MainnetBlockValidator implements BlockValidator {
       final HeaderValidationMode ommerValidationMode,
       final boolean shouldUpdateHead,
       final boolean shouldRecordBadBlock) {
+
+    final int blockSize = block.getSize();
+    if (blockSize > maxRlpBlockSize) {
+      final String errorMessage =
+          "Block size of " + blockSize + " bytes exceeds limit of " + maxRlpBlockSize + " bytes";
+      var retval = new BlockProcessingResult(errorMessage);
+      handleFailedBlockProcessing(block, retval, true, context);
+      return retval;
+    }
 
     final BlockHeader header = block.getHeader();
     final BlockHeader parentHeader;
@@ -288,5 +318,10 @@ public class MainnetBlockValidator implements BlockValidator {
       return false;
     }
     return true;
+  }
+
+  @Override
+  public int maxRlpBlockSize() {
+    return maxRlpBlockSize;
   }
 }
