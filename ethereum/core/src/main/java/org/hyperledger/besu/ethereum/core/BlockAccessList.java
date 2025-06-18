@@ -17,13 +17,18 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.AccountAccessDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.AccountAccessEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.AccountBalanceDiffDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.AccountBalanceDiffEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,18 +46,32 @@ public class BlockAccessList {
   private static final Logger LOG = LoggerFactory.getLogger(BlockAccessList.class);
 
   private final List<AccountAccess> accountAccesses;
+  private final List<AccountBalanceDiff> balanceDiffs;
 
-  public BlockAccessList(final List<AccountAccess> accountAccesses) {
+  public BlockAccessList(final List<AccountAccess> accountAccesses, final List<AccountBalanceDiff> balanceDiffs) {
     this.accountAccesses = accountAccesses;
+    this.balanceDiffs = balanceDiffs;
   }
 
   public List<AccountAccess> getAccountAccesses() {
     return accountAccesses;
   }
 
+  public List<AccountBalanceDiff> getAccountBalanceDiffs() {
+    return balanceDiffs;
+  }
+
+  @Override
+  public String toString() {
+    return "BlockAccessList{"
+        + "accountAccesses=" + accountAccesses
+        + ", balanceDiffs=" + balanceDiffs
+        + '}';
+  }
+
   public static class PerTxAccess {
     private final Optional<Integer> txIndex;
-    private final Optional<Bytes> valueAfter;
+    private final Optional<Bytes> valueAfter; // TODO: Find better suited type
 
     public PerTxAccess(final Integer txIndex, final Bytes valueAfter) {
       this.txIndex = Optional.of(txIndex);
@@ -71,6 +90,14 @@ public class BlockAccessList {
     public Optional<Bytes> getValueAfter() {
       return valueAfter;
     }
+
+    @Override
+    public String toString() {
+      return "PerTxAccess{"
+          + "txIndex=" + txIndex
+          + ", valueAfter=" + valueAfter
+          + '}';
+    }
   }
 
   public static class SlotAccess {
@@ -88,6 +115,14 @@ public class BlockAccessList {
 
     public List<PerTxAccess> getPerTxAccesses() {
       return accesses;
+    }
+
+    @Override
+    public String toString() {
+      return "SlotAccess{"
+          + "slot=" + slot
+          + ", accesses=" + accesses
+          + '}';
     }
   }
 
@@ -115,6 +150,74 @@ public class BlockAccessList {
     public static AccountAccess readFrom(final RLPInput rlpInput) {
       return AccountAccessDecoder.decode(rlpInput);
     }
+
+    @Override
+    public String toString() {
+      return "AccountAccess{"
+          + "address=" + address
+          + ", accesses=" + accesses
+          + '}';
+    }
+  }
+
+  public static class BalanceChange {
+    private final Integer txIndex;
+    private final BigInteger delta; // TODO: Find better suited type
+
+    public BalanceChange(final int txIndex, final BigInteger delta) {
+      this.txIndex = txIndex;
+      this.delta = delta;
+    }
+
+    public Integer getTxIndex() {
+      return txIndex;
+    }
+
+    public BigInteger getDelta() {
+      return delta;
+    }
+
+    @Override
+    public String toString() {
+      return "BalanceChange{"
+          + "txIndex=" + txIndex
+          + ", delta=" + delta
+          + '}';
+    }
+  }
+
+  public static class AccountBalanceDiff {
+    private final Address address;
+    private final List<BalanceChange> changes;
+
+    public AccountBalanceDiff(final Address address, final List<BalanceChange> changes) {
+      this.address = address;
+      this.changes = changes;
+    }
+
+    public Address getAddress() {
+      return address;
+    }
+
+    public List<BalanceChange> getBalanceChanges() {
+      return changes;
+    }
+
+    public void writeTo(final RLPOutput out) {
+      AccountBalanceDiffEncoder.encode(this, out);
+    }
+
+    public static AccountBalanceDiff readFrom(final RLPInput rlpInput) {
+      return AccountBalanceDiffDecoder.decode(rlpInput);
+    }
+
+    @Override
+    public String toString() {
+      return "AccountBalanceDiff{"
+          + "address=" + address
+          + ", changes=" + changes
+          + '}';
+    }
   }
 
   public static Builder builder() {
@@ -123,6 +226,7 @@ public class BlockAccessList {
 
   public static class Builder {
     private final Map<Hash, AccountAccessBuilder> accounts = new LinkedHashMap<>();
+    private final Map<Hash, AccountBalanceDiffBuilder> changes = new LinkedHashMap<>();
 
     public SlotAccessBuilder accessSlot(final Address address, final StorageSlotKey slot) {
       return accounts
@@ -130,7 +234,13 @@ public class BlockAccessList {
           .slot(slot);
     }
 
-  public void updateFromTransactionAccumulator(final WorldUpdater txnAccumulator, final int txnIndex) {
+    public void accountBalanceChange(final Address address, final int txIndex, final BigInteger delta) {
+      changes
+          .computeIfAbsent(address.addressHash(), k -> new AccountBalanceDiffBuilder(address))
+          .addBalanceChange(txIndex, delta);
+    }
+
+  public void updateFromTransactionAccumulator(final WorldUpdater txnAccumulator, final int txIndex) {
     if (txnAccumulator instanceof PathBasedWorldStateUpdateAccumulator<?> accum) {
       accum
           .getStorageToUpdate()
@@ -139,21 +249,37 @@ public class BlockAccessList {
                   var prior = value.getPrior();
                   var updated = value.getUpdated();
                   var isEvmRead = value.isEvmRead();
+                  // TODO: This check is wrong
                   if (prior.equals(updated) && isEvmRead) {
                       this.accessSlot(address, slotKey).read();
                   } else {
-                      this.accessSlot(address, slotKey).write(txnIndex, updated.toBytes());
+                      this.accessSlot(address, slotKey).write(txIndex, updated.toBytes());
                   }
               });
           });
+
+        accum
+            .getAccountsToUpdate()
+            .forEach((address, value) -> {
+              // TODO: This check is wrong
+              if (!value.isEvmRead() && value.getPrior() != null && !value.getPrior().equals(value.getUpdated())) {
+                final BigInteger prior = Optional.ofNullable(value.getPrior()).map(PathBasedAccount::getBalance).map(Wei::getAsBigInteger).orElse(BigInteger.ZERO);
+                final BigInteger updated = Optional.ofNullable(value.getUpdated()).map(PathBasedAccount::getBalance).map(Wei::getAsBigInteger).orElse(BigInteger.ZERO);
+                final BigInteger delta = updated.subtract(prior);
+                this.accountBalanceChange(address, txIndex, delta);
+              }
+            });
     } else {
       LOG.error("Attempted to update update BAL with unexpected accumulator instance");
     }
   }
 
     public BlockAccessList build() {
-      return new BlockAccessList(
-          accounts.values().stream().map(AccountAccessBuilder::build).toList());
+      final List<AccountAccess> accesses =
+          accounts.values().stream().map(AccountAccessBuilder::build).toList();
+      final List<AccountBalanceDiff> diffs =
+          changes.values().stream().map(AccountBalanceDiffBuilder::build).toList();
+      return new BlockAccessList(accesses, diffs);
     }
   }
 
@@ -197,6 +323,23 @@ public class BlockAccessList {
 
     public SlotAccess build() {
       return new SlotAccess(slot, List.copyOf(accesses));
+    }
+  }
+
+  public static class AccountBalanceDiffBuilder {
+    private final Address address;
+    private final List<BalanceChange> changes = new ArrayList<>();
+
+    public AccountBalanceDiffBuilder(final Address address) {
+      this.address = address;
+    }
+
+    public void addBalanceChange(final int txIndex, final BigInteger delta) {
+      changes.add(new BalanceChange(txIndex, delta));
+    }
+
+    public AccountBalanceDiff build() {
+      return new AccountBalanceDiff(address, List.copyOf(changes));
     }
   }
 }

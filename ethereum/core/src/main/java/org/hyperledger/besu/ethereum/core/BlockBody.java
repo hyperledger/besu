@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountAccess;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountBalanceDiff;
 
 import java.util.Collections;
 import java.util.List;
@@ -121,7 +122,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     // Must write empty list markers for each empty list
     withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
     blockAccessList.ifPresent(bal -> output.writeList(bal.getAccountAccesses(), AccountAccess::writeTo));
-    // TODO: Write balance, code, nonce diffs
+    blockAccessList.ifPresent(bal -> output.writeList(bal.getAccountBalanceDiffs(), AccountBalanceDiff::writeTo));
+    // TODO: Write code, nonce diffs
   }
 
   public static BlockBody readWrappedBodyFrom(
@@ -175,6 +177,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
             ? Optional.empty()
             : Optional.of(new BlockAccessList(input.readList((valueReader) -> {
               return AccountAccess.readFrom(valueReader);
+            }), input.readList(valueReader -> {
+              return AccountBalanceDiff.readFrom(valueReader);
             })))
         );
   }

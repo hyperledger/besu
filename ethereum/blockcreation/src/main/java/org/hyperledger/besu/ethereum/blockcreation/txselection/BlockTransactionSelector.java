@@ -356,6 +356,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         selectorsStateManager.commit();
         blockWorldStateUpdater.importStateChangesFromSource(txWorldStateUpdater);
         blockWorldStateUpdater.commit();
+        // TODO: Check - commit tx updater before or after exporting changes to block updater
+        txWorldStateUpdater.commit();
         for (final var pendingAction : selectedTxPendingActions) {
           pendingAction.run();
         }
