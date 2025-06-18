@@ -2267,8 +2267,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-port=11",
         "--rpc-ws-port=12",
         "--metrics-port=13",
-        "--metrics-push-port=14",
-        "--miner-stratum-port=15");
+        "--metrics-push-port=14");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 

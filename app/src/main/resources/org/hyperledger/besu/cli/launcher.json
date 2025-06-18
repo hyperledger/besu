@@ -152,25 +152,6 @@
           "question": "What is the account to which mining rewards are paid ?",
           "config-key": "miner-coinbase",
           "regex": "^0x[0-9a-fA-F]{40}$"
-        },
-        {
-          "prompt-type": "CONFIRM",
-          "question": "Do you want to use Stratum ?",
-          "default-option": "no",
-          "config-key": "miner-stratum-enabled",
-          "sub-questions": [
-            {
-              "prompt-type": "INPUT",
-              "question": "What is the Stratum host address ?",
-              "config-key": "miner-stratum-host"
-            },
-            {
-              "prompt-type": "INPUT",
-              "question": "What is the Stratum port service ?",
-              "config-key": "miner-stratum-port",
-              "regex": "[0-9]+"
-            }
-          ]
         }
       ]
     }
