@@ -47,6 +47,16 @@ public class BlobScheduleOptionsTest {
   }
 
   @Test
+  public void blobScheduleDefaults() {
+    assertThat(BlobSchedule.CANCUN_DEFAULT.getTarget()).isEqualTo(3);
+    assertThat(BlobSchedule.CANCUN_DEFAULT.getMaxPerTransaction()).isEqualTo(6);
+    assertThat(BlobSchedule.CANCUN_DEFAULT.getMax()).isEqualTo(6);
+    assertThat(BlobSchedule.PRAGUE_DEFAULT.getTarget()).isEqualTo(6);
+    assertThat(BlobSchedule.PRAGUE_DEFAULT.getMaxPerTransaction()).isEqualTo(9);
+    assertThat(BlobSchedule.PRAGUE_DEFAULT.getMax()).isEqualTo(9);
+  }
+
+  @Test
   public void blobScheduleMaxPerTransactionDefaultsToMax() {
     Optional<BlobSchedule> cancun = options.getCancun();
     assertThat(cancun).isNotEmpty();

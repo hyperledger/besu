@@ -667,7 +667,7 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
         createTransactionValidator(
             gasCalculator,
             new OsakaTargetingGasLimitCalculator(
-                0L, feeMarket, gasCalculator, 6, 3, gasLimitCap, 6),
+                0L, feeMarket, gasCalculator, 6, 3, 6, gasLimitCap),
             feeMarket,
             false,
             Optional.of(BigInteger.ONE),
