@@ -27,7 +27,7 @@ import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.MainnetBlockValidator;
+import org.hyperledger.besu.ethereum.MainnetBlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -168,7 +168,7 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
                 : MainnetBlockProcessor::new)
-        .blockValidatorBuilder(MainnetBlockValidator::new)
+        .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
@@ -902,7 +902,7 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .transactionPoolPreProcessor(new OsakaTransactionPoolPreProcessor())
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
-        .blockValidatorBuilder(BlockSizeBlockValidator::new)
+        .blockValidatorBuilder(MainnetBlockValidatorBuilder::osaka)
         .name("Osaka");
   }
 

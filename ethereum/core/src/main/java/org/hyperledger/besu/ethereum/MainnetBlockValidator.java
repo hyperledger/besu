@@ -60,21 +60,6 @@ public class MainnetBlockValidator implements BlockValidator {
 
   /**
    * Constructs a new MainnetBlockValidator with the given BlockHeaderValidator, BlockBodyValidator,
-   * and BlockProcessor.
-   *
-   * @param blockHeaderValidator the BlockHeaderValidator used to validate block headers
-   * @param blockBodyValidator the BlockBodyValidator used to validate block bodies
-   * @param blockProcessor the BlockProcessor used to process blocks
-   */
-  public MainnetBlockValidator(
-      final BlockHeaderValidator blockHeaderValidator,
-      final BlockBodyValidator blockBodyValidator,
-      final BlockProcessor blockProcessor) {
-    this(blockHeaderValidator, blockBodyValidator, blockProcessor, Integer.MAX_VALUE);
-  }
-
-  /**
-   * Constructs a new MainnetBlockValidator with the given BlockHeaderValidator, BlockBodyValidator,
    * BlockProcessor, and maximum RLP block size.
    *
    * @param blockHeaderValidator the BlockHeaderValidator used to validate block headers
@@ -82,7 +67,7 @@ public class MainnetBlockValidator implements BlockValidator {
    * @param blockProcessor the BlockProcessor used to process blocks
    * @param maxRlpBlockSize the maximum size of a block in RLP encoding
    */
-  public MainnetBlockValidator(
+  protected MainnetBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor,
