@@ -512,6 +512,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         return ValidationResult.invalid(
             RpcErrorType.INVALID_BLOB_COUNT, "There must be at least one blob");
       }
+      if (protocolSpec.getGasCalculator().blobGasCost(versionedHashes.get().size())
+          > protocolSpec.getGasLimitCalculator().transactionBlobGasLimitCap()) {
+        return ValidationResult.invalid(
+            RpcErrorType.INVALID_BLOB_COUNT,
+            String.format("Blob transaction has too many blobs: %d", versionedHashes.get().size()));
+      }
       transactionVersionedHashes.addAll(versionedHashes.get());
     }
 
