@@ -1249,9 +1249,7 @@ public class Transaction
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
-    copiedTx.hash = this.hash;
     copiedTx.hashNoSignature = this.hashNoSignature;
-    copiedTx.sizeForAnnouncement = this.sizeForAnnouncement;
 
     return copiedTx;
   }
