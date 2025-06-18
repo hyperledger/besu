@@ -35,6 +35,9 @@ import java.io.PrintStream;
 import java.util.EnumSet;
 import java.util.Optional;
 
+import oshi.SystemInfo;
+import oshi.hardware.CentralProcessor;
+import oshi.hardware.HardwareAbstractionLayer;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -179,5 +182,22 @@ public class BenchmarkSubCommand implements Runnable {
       }
       executor.runBenchmark(nativeCode, parentCommand.getFork());
     }
+    logSystemInfo(output);
+  }
+
+  private static void logSystemInfo(final PrintStream output) {
+    output.println("\n****************************** Hardware Specs ******************************");
+    output.println("*");
+    SystemInfo si = new SystemInfo();
+    HardwareAbstractionLayer hal = si.getHardware();
+    CentralProcessor processor = hal.getProcessor();
+    output.println("* OS: " + si.getOperatingSystem());
+    output.println("* Processor: " + processor.getProcessorIdentifier().getName());
+    output.println("* Microarchitecture: " + processor.getProcessorIdentifier().getMicroarchitecture());
+    output.println("* Physical CPU packages: " + processor.getPhysicalPackageCount());
+    output.println("* Physical CPU cores: " + processor.getPhysicalProcessorCount());
+    output.println("* Logical CPU cores: " + processor.getLogicalProcessorCount());
+    output.println("* Average Max Frequency per core: " + processor.getMaxFreq() / 100_000 / processor.getPhysicalProcessorCount() + " MHz");
+    output.println("* Memory Total: " + hal.getMemory().getTotal() / 1_000_000_000 + " GB");
   }
 }

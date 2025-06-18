@@ -44,6 +44,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import one.profiler.AsyncProfiler;
 import org.apache.tuweni.bytes.Bytes;
+import oshi.SystemInfo;
+import oshi.hardware.CentralProcessor;
+import oshi.hardware.HardwareAbstractionLayer;
 
 /** Abstract class to support benchmarking of various client algorithms */
 public abstract class BenchmarkExecutor {
