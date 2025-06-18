@@ -48,4 +48,8 @@ public record BlockSelectionContext(
   public BlockHashProcessor blockHashProcessor() {
     return protocolSpec.getBlockHashProcessor();
   }
+
+  public int maxRlpBlockSize() {
+    return protocolSpec.getBlockValidator().maxRlpBlockSize();
+  }
 }
