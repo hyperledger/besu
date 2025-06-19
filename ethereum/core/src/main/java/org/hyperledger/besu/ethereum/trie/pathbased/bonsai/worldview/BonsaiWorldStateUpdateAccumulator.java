@@ -27,6 +27,10 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+
 public class BonsaiWorldStateUpdateAccumulator
     extends PathBasedWorldStateUpdateAccumulator<BonsaiAccount> {
   public BonsaiWorldStateUpdateAccumulator(
@@ -80,7 +84,15 @@ public class BonsaiWorldStateUpdateAccumulator
       final Hash codeHash,
       final boolean mutable) {
     return new BonsaiAccount(
-        context, address, addressHash, nonce, balance, storageRoot, codeHash, mutable);
+        context,
+        address,
+        addressHash,
+        nonce,
+        balance,
+        storageRoot,
+        codeHash,
+        codeHash.equals(Bytes.EMPTY) ? Optional.of(0) : Optional.empty(),
+        mutable);
   }
 
   @Override
