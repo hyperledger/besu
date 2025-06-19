@@ -619,14 +619,13 @@ public class BlockchainQueries {
   private TransactionWithMetadata transactionByHeaderAndIndex(
       final BlockHeader header, final int txIndex) {
     final Hash blockHeaderHash = header.getHash();
-    // headers should not exist w/o bodies, so not being present is exceptional
-    final BlockBody blockBody = blockchain.getBlockBody(blockHeaderHash).orElseThrow();
-    final List<Transaction> txs = blockBody.getTransactions();
-    if (txIndex >= txs.size()) {
-      return null;
-    }
-    return new TransactionWithMetadata(
-        txs.get(txIndex), header.getNumber(), header.getBaseFee(), blockHeaderHash, txIndex);
+
+    return blockchain.getBlockBody(blockHeaderHash)
+            .map(BlockBody::getTransactions)
+            .filter((txs) -> txIndex < txs.size())
+            .map((txs) -> new TransactionWithMetadata(
+                    txs.get(txIndex), header.getNumber(), header.getBaseFee(), blockHeaderHash, txIndex))
+            .orElse(null);
   }
 
   public Optional<TransactionLocation> transactionLocationByHash(final Hash transactionHash) {
