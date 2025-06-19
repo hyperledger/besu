@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +47,8 @@ public class BlockAccessList {
   private final List<AccountAccess> accountAccesses;
   private final List<AccountBalanceDiff> balanceDiffs;
 
-  public BlockAccessList(final List<AccountAccess> accountAccesses, final List<AccountBalanceDiff> balanceDiffs) {
+  public BlockAccessList(
+      final List<AccountAccess> accountAccesses, final List<AccountBalanceDiff> balanceDiffs) {
     this.accountAccesses = accountAccesses;
     this.balanceDiffs = balanceDiffs;
   }
@@ -64,8 +64,10 @@ public class BlockAccessList {
   @Override
   public String toString() {
     return "BlockAccessList{"
-        + "accountAccesses=" + accountAccesses
-        + ", balanceDiffs=" + balanceDiffs
+        + "accountAccesses="
+        + accountAccesses
+        + ", balanceDiffs="
+        + balanceDiffs
         + '}';
   }
 
@@ -93,10 +95,7 @@ public class BlockAccessList {
 
     @Override
     public String toString() {
-      return "PerTxAccess{"
-          + "txIndex=" + txIndex
-          + ", valueAfter=" + valueAfter
-          + '}';
+      return "PerTxAccess{" + "txIndex=" + txIndex + ", valueAfter=" + valueAfter + '}';
     }
   }
 
@@ -119,10 +118,7 @@ public class BlockAccessList {
 
     @Override
     public String toString() {
-      return "SlotAccess{"
-          + "slot=" + slot
-          + ", accesses=" + accesses
-          + '}';
+      return "SlotAccess{" + "slot=" + slot + ", accesses=" + accesses + '}';
     }
   }
 
@@ -153,10 +149,7 @@ public class BlockAccessList {
 
     @Override
     public String toString() {
-      return "AccountAccess{"
-          + "address=" + address
-          + ", accesses=" + accesses
-          + '}';
+      return "AccountAccess{" + "address=" + address + ", accesses=" + accesses + '}';
     }
   }
 
@@ -179,10 +172,7 @@ public class BlockAccessList {
 
     @Override
     public String toString() {
-      return "BalanceChange{"
-          + "txIndex=" + txIndex
-          + ", delta=" + delta
-          + '}';
+      return "BalanceChange{" + "txIndex=" + txIndex + ", delta=" + delta + '}';
     }
   }
 
@@ -213,10 +203,7 @@ public class BlockAccessList {
 
     @Override
     public String toString() {
-      return "AccountBalanceDiff{"
-          + "address=" + address
-          + ", changes=" + changes
-          + '}';
+      return "AccountBalanceDiff{" + "address=" + address + ", changes=" + changes + '}';
     }
   }
 
@@ -234,45 +221,60 @@ public class BlockAccessList {
           .slot(slot);
     }
 
-    public void accountBalanceChange(final Address address, final int txIndex, final BigInteger delta) {
+    public void accountBalanceChange(
+        final Address address, final int txIndex, final BigInteger delta) {
       changes
           .computeIfAbsent(address.addressHash(), k -> new AccountBalanceDiffBuilder(address))
           .addBalanceChange(txIndex, delta);
     }
 
-  public void updateFromTransactionAccumulator(final WorldUpdater txnAccumulator, final int txIndex) {
-    if (txnAccumulator instanceof PathBasedWorldStateUpdateAccumulator<?> accum) {
-      accum
-          .getStorageToUpdate()
-          .forEach((address, slotMap) -> {
-              slotMap.forEach((slotKey, value) -> {
-                  var prior = value.getPrior();
-                  var updated = value.getUpdated();
-                  var isEvmRead = value.isEvmRead();
-                  // TODO: This check is wrong
-                  if (prior.equals(updated) && isEvmRead) {
-                      this.accessSlot(address, slotKey).read();
-                  } else {
-                      this.accessSlot(address, slotKey).write(txIndex, updated.toBytes());
-                  }
-              });
-          });
+    public void updateFromTransactionAccumulator(
+        final WorldUpdater txnAccumulator, final int txIndex) {
+      if (txnAccumulator instanceof PathBasedWorldStateUpdateAccumulator<?> accum) {
+        accum
+            .getStorageToUpdate()
+            .forEach(
+                (address, slotMap) -> {
+                  slotMap.forEach(
+                      (slotKey, value) -> {
+                        var prior = value.getPrior();
+                        var updated = value.getUpdated();
+                        var isEvmRead = value.isEvmRead();
+                        // TODO: This check is wrong
+                        if (prior.equals(updated) && isEvmRead) {
+                          this.accessSlot(address, slotKey).read();
+                        } else {
+                          this.accessSlot(address, slotKey).write(txIndex, updated.toBytes());
+                        }
+                      });
+                });
 
         accum
             .getAccountsToUpdate()
-            .forEach((address, value) -> {
-              // TODO: This check is wrong
-              if (!value.isEvmRead() && value.getPrior() != null && !value.getPrior().equals(value.getUpdated())) {
-                final BigInteger prior = Optional.ofNullable(value.getPrior()).map(PathBasedAccount::getBalance).map(Wei::getAsBigInteger).orElse(BigInteger.ZERO);
-                final BigInteger updated = Optional.ofNullable(value.getUpdated()).map(PathBasedAccount::getBalance).map(Wei::getAsBigInteger).orElse(BigInteger.ZERO);
-                final BigInteger delta = updated.subtract(prior);
-                this.accountBalanceChange(address, txIndex, delta);
-              }
-            });
-    } else {
-      LOG.error("Attempted to update update BAL with unexpected accumulator instance");
+            .forEach(
+                (address, value) -> {
+                  // TODO: This check is wrong
+                  if (!value.isEvmRead()
+                      && value.getPrior() != null
+                      && !value.getPrior().equals(value.getUpdated())) {
+                    final BigInteger prior =
+                        Optional.ofNullable(value.getPrior())
+                            .map(PathBasedAccount::getBalance)
+                            .map(Wei::getAsBigInteger)
+                            .orElse(BigInteger.ZERO);
+                    final BigInteger updated =
+                        Optional.ofNullable(value.getUpdated())
+                            .map(PathBasedAccount::getBalance)
+                            .map(Wei::getAsBigInteger)
+                            .orElse(BigInteger.ZERO);
+                    final BigInteger delta = updated.subtract(prior);
+                    this.accountBalanceChange(address, txIndex, delta);
+                  }
+                });
+      } else {
+        LOG.error("Attempted to update update BAL with unexpected accumulator instance");
+      }
     }
-  }
 
     public BlockAccessList build() {
       final List<AccountAccess> accesses =

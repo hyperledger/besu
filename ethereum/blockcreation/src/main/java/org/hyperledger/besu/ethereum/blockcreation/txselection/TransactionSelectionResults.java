@@ -41,7 +41,8 @@ public class TransactionSelectionResults {
       new EnumMap<>(TransactionType.class);
   private final List<TransactionReceipt> receipts = Lists.newArrayList();
 
-  // TODO: Do we want to make BAL perpetually mutable to fit in with the pattern? Or workaround by building on retrieval or something
+  // TODO: Do we want to make BAL perpetually mutable to fit in with the pattern? Or workaround by
+  // building on retrieval or something
   private BlockAccessList blockAccessList;
 
   /**

@@ -15,13 +15,14 @@
 
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import java.util.List;
-
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountBalanceDiff;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.BalanceChange;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+
+import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class AccountBalanceDiffDecoder {
 
@@ -33,13 +34,15 @@ public class AccountBalanceDiffDecoder {
     RLPInput accountBalanceRlp = in.readAsRlp();
     accountBalanceRlp.enterList();
     Address address = Address.readFrom(in);
-    List<BalanceChange> changes = in.readList((changeIn) -> {
-      changeIn.enterList();
-      int txIndex = changeIn.readInt();
-      Bytes delta = changeIn.readBytes();
-      changeIn.leaveList();
-      return new BalanceChange(txIndex, delta.toBigInteger());
-    });
+    List<BalanceChange> changes =
+        in.readList(
+            (changeIn) -> {
+              changeIn.enterList();
+              int txIndex = changeIn.readInt();
+              Bytes delta = changeIn.readBytes();
+              changeIn.leaveList();
+              return new BalanceChange(txIndex, delta.toBigInteger());
+            });
     return new AccountBalanceDiff(address, changes);
   }
 }

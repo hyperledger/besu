@@ -14,11 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountAccess;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountBalanceDiff;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Collections;
 import java.util.List;
@@ -121,8 +120,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     output.writeList(getOmmers(), BlockHeader::writeTo);
     // Must write empty list markers for each empty list
     withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
-    blockAccessList.ifPresent(bal -> output.writeList(bal.getAccountAccesses(), AccountAccess::writeTo));
-    blockAccessList.ifPresent(bal -> output.writeList(bal.getAccountBalanceDiffs(), AccountBalanceDiff::writeTo));
+    blockAccessList.ifPresent(
+        bal -> output.writeList(bal.getAccountAccesses(), AccountAccess::writeTo));
+    blockAccessList.ifPresent(
+        bal -> output.writeList(bal.getAccountBalanceDiffs(), AccountBalanceDiff::writeTo));
     // TODO: Write code, nonce diffs
   }
 
@@ -175,12 +176,16 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
             : Optional.of(input.readList(Withdrawal::readFrom)),
         input.isEndOfCurrentList()
             ? Optional.empty()
-            : Optional.of(new BlockAccessList(input.readList((valueReader) -> {
-              return AccountAccess.readFrom(valueReader);
-            }), input.readList(valueReader -> {
-              return AccountBalanceDiff.readFrom(valueReader);
-            })))
-        );
+            : Optional.of(
+                new BlockAccessList(
+                    input.readList(
+                        (valueReader) -> {
+                          return AccountAccess.readFrom(valueReader);
+                        }),
+                    input.readList(
+                        valueReader -> {
+                          return AccountBalanceDiff.readFrom(valueReader);
+                        }))));
   }
 
   @Override

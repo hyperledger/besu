@@ -320,7 +320,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
       final BlockBody blockBody =
           new BlockBody(
-              transactionResults.getSelectedTransactions(), ommers, withdrawals, Optional.of(transactionResults.getBlockAccessList()));
+              transactionResults.getSelectedTransactions(),
+              ommers,
+              withdrawals,
+              Optional.of(transactionResults.getBlockAccessList()));
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);

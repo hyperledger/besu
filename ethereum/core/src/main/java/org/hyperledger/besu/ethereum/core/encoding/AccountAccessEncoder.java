@@ -26,16 +26,20 @@ public class AccountAccessEncoder {
   public static void encode(final AccountAccess accountAccess, final RLPOutput out) {
     out.startList();
     out.writeBytes(accountAccess.getAddress());
-    out.writeList(accountAccess.getSlotAccesses(), (slotAccess, slotAccessOut) -> {
-      slotAccessOut.startList();
-      out.writeUInt256Scalar(slotAccess.getSlot().getSlotKey().orElse(UInt256.ZERO));
-      out.writeList(slotAccess.getPerTxAccesses(), (perTxAccess, perTxAccessOut) -> {
-        // TODO: Really not sure about the null value cases
-        perTxAccessOut.writeInt(perTxAccess.getTxIndex().orElse(0));
-        perTxAccessOut.writeBytes(perTxAccess.getValueAfter().orElse(Bytes.EMPTY));
-      });
-      slotAccessOut.endList();
-    });
+    out.writeList(
+        accountAccess.getSlotAccesses(),
+        (slotAccess, slotAccessOut) -> {
+          slotAccessOut.startList();
+          out.writeUInt256Scalar(slotAccess.getSlot().getSlotKey().orElse(UInt256.ZERO));
+          out.writeList(
+              slotAccess.getPerTxAccesses(),
+              (perTxAccess, perTxAccessOut) -> {
+                // TODO: Really not sure about the null value cases
+                perTxAccessOut.writeInt(perTxAccess.getTxIndex().orElse(0));
+                perTxAccessOut.writeBytes(perTxAccess.getValueAfter().orElse(Bytes.EMPTY));
+              });
+          slotAccessOut.endList();
+        });
     out.endList();
   }
 }

@@ -49,8 +49,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
@@ -156,7 +154,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     this.pluginTransactionSelector = pluginTransactionSelector;
     this.operationTracer =
         new InterruptibleOperationTracer(pluginTransactionSelector.getOperationTracer());
-    blockWorldStateUpdater = (PathBasedWorldStateUpdateAccumulator<BonsaiAccount>) worldState.updater();
+    blockWorldStateUpdater =
+        (PathBasedWorldStateUpdateAccumulator<BonsaiAccount>) worldState.updater();
     txWorldStateUpdater = blockWorldStateUpdater.copy();
     blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
     currentTxnLocation = 0;
@@ -366,7 +365,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       }
     }
     selectedTxPendingActions.clear();
-    blockWorldStateUpdater = (PathBasedWorldStateUpdateAccumulator<BonsaiAccount>) worldState.updater();
+    blockWorldStateUpdater =
+        (PathBasedWorldStateUpdateAccumulator<BonsaiAccount>) worldState.updater();
     txWorldStateUpdater = blockWorldStateUpdater.copy();
     return false;
   }

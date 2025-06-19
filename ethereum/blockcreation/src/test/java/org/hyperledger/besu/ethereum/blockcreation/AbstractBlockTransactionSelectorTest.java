@@ -178,7 +178,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
 
-    worldState = (PathBasedWorldState) InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain).getWorldState();
+    worldState =
+        (PathBasedWorldState)
+            InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain)
+                .getWorldState();
     final var worldStateUpdater = worldState.updater();
     Arrays.stream(Sender.values())
         .map(Sender::address)

@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockAccessList;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountBalanceDiff;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -56,7 +57,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountBalanceDiff;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -302,32 +302,36 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
     final AbstractBlockCreator blockCreator = miningOn.blockCreator;
     final GenesisAccount sender = accounts.get(1);
     final GenesisAccount recipient = accounts.get(2);
-    final KeyPair keyPair = SIGNATURE_ALGORITHM
-        .get()
-        .createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
+    final KeyPair keyPair =
+        SIGNATURE_ALGORITHM
+            .get()
+            .createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
     final BigInteger delta = BigInteger.valueOf(1_000_000_000_000_000_000L);
-    final Transaction txn = new TransactionTestFixture()
-        .sender(sender.address())
-        .to(Optional.of(recipient.address()))
-        .value(Wei.of(delta))
-        .gasLimit(21_000L)
-        .nonce(sender.nonce())
-        .createTransaction(keyPair);
+    final Transaction txn =
+        new TransactionTestFixture()
+            .sender(sender.address())
+            .to(Optional.of(recipient.address()))
+            .value(Wei.of(delta))
+            .gasLimit(21_000L)
+            .nonce(sender.nonce())
+            .createTransaction(keyPair);
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
             Optional.of(List.of(txn)),
             Optional.empty(),
             System.currentTimeMillis(),
             miningOn.parentHeader);
-    final Optional<BlockAccessList> maybeBlockAccessList = blockCreationResult.getBlock().getBody().getBlockAccessList();
-    assertThat(maybeBlockAccessList).isNotEmpty(); 
+    final Optional<BlockAccessList> maybeBlockAccessList =
+        blockCreationResult.getBlock().getBody().getBlockAccessList();
+    assertThat(maybeBlockAccessList).isNotEmpty();
     final BlockAccessList blockAccessList = maybeBlockAccessList.get();
     final List<AccountBalanceDiff> accountBalanceDiffs = blockAccessList.getAccountBalanceDiffs();
     assertThat(accountBalanceDiffs.size()).isEqualTo(2);
     final AccountBalanceDiff accountBalanceDiff1 = accountBalanceDiffs.get(0);
     assertThat(accountBalanceDiff1.getAddress()).isIn(sender.address(), recipient.address());
     assertThat(accountBalanceDiff1.getBalanceChanges().size()).isEqualTo(1);
-    assertThat(accountBalanceDiff1.getBalanceChanges().get(0).getDelta().negate()).isGreaterThan(delta);
+    assertThat(accountBalanceDiff1.getBalanceChanges().get(0).getDelta().negate())
+        .isGreaterThan(delta);
     final AccountBalanceDiff accountBalanceDiff2 = accountBalanceDiffs.get(1);
     assertThat(accountBalanceDiff2.getAddress()).isIn(sender.address(), recipient.address());
     assertThat(accountBalanceDiff2.getBalanceChanges().size()).isEqualTo(1);
