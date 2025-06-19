@@ -26,14 +26,18 @@ import org.apache.tuweni.bytes.Bytes;
 /** Benchmark ECRecover precompile (ECDSA key extraction + keccak hash) */
 public class ECRecoverBenchmark extends BenchmarkExecutor {
 
-  /** Use default math based warmup and interations */
-  public ECRecoverBenchmark() {
-    super(MATH_WARMUP, MATH_ITERATIONS);
+  /**
+   * The constructor. Use default math based warmup and interations.
+   *
+   * @param output where to write the stats.
+   * @param benchmarkConfig benchmark configurations.
+   */
+  public ECRecoverBenchmark(final PrintStream output, final BenchmarkConfig benchmarkConfig) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, benchmarkConfig);
   }
 
   @Override
-  public void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork) {
+  public void runBenchmark(final Boolean attemptNative, final String fork) {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "0x0c65a9d9ffc02c7c99e36e32ce0f950c7804ceda",
@@ -449,12 +453,12 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
     final ECRECPrecompiledContract contract =
         new ECRECPrecompiledContract(gasCalculatorForFork(fork), signatureAlgorithm);
 
-    warmup = warmup / testCases.size();
-    iterations = iterations / testCases.size();
+    warmIterations = warmIterations / testCases.size();
+    execIterations = execIterations / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), contract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
       gasCost += contract.gasRequirement(testCase.getValue());
     }
     execTime /= testCases.size();

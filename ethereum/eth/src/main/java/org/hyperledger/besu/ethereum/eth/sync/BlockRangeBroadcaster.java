@@ -140,7 +140,7 @@ public class BlockRangeBroadcaster {
   void broadcastBlockRange(
       final long earliestBlockNumber, final long latestBlockNumber, final Hash blockHash) {
     List<EthPeer> peers = getPeersSupportingBlockRangeUpdate();
-    LOG.info(
+    LOG.debug(
         "Broadcasting blockRange=[{}, {}, {}] to {} peers",
         earliestBlockNumber,
         latestBlockNumber,

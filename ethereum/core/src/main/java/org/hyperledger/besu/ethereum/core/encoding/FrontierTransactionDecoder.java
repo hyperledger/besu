@@ -24,6 +24,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -42,6 +43,7 @@ public class FrontierTransactionDecoder {
 
   public static Transaction decode(final RLPInput input) {
     RLPInput transactionRlp = input.readAsRlp();
+    int size = transactionRlp.currentSize();
     transactionRlp.enterList();
     final Transaction.Builder builder =
         Transaction.builder()
@@ -52,7 +54,10 @@ public class FrontierTransactionDecoder {
             .to(transactionRlp.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
             .value(Wei.of(transactionRlp.readUInt256Scalar()))
             .payload(transactionRlp.readBytes())
-            .rawRlp(transactionRlp.raw());
+            .rawRlp(transactionRlp.raw())
+            .sizeForBlockInclusion(size)
+            .sizeForAnnouncement(size)
+            .hash(Hash.hash(transactionRlp.raw()));
 
     final BigInteger v = transactionRlp.readBigIntegerScalar();
     final byte recId;
