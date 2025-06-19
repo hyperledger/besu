@@ -51,74 +51,66 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
     output.println(
         AbstractAltBnPrecompiledContract.isNative() ? "Native AltBN128" : "Java AltBN128");
 
-    benchmarkAdd(output, forkVersion);
-    benchmarkMul(output, forkVersion);
-    benchmarkPairings(output, forkVersion);
+    benchmarkAdd(forkVersion);
+    benchmarkMul(forkVersion);
+    benchmarkPairings(forkVersion);
   }
 
-  private void benchmarkAdd(final PrintStream output, final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> addTestCases = new LinkedHashMap<>();
-    addTestCases.put(
-        "Add",
+  private void benchmarkAdd(final EvmSpecVersion forkVersion) {
+    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    testCases.put(
+        "add",
         Bytes.fromHexString(
             "17c139df0efee0f766bc0204762b774362e4ded88953a39ce849a8a7fa163fa9"
                 + "01e0559bacb160664764a357af8a9fe70baa9258e0b959273ffc5718c6d4cc7c"
                 + "17c139df0efee0f766bc0204762b774362e4ded88953a39ce849a8a7fa163fa9"
                 + "2e83f8d734803fc370eba25ed1f6b8768bd6d83887b87165fc2434fe11a830cb"));
+        testCases.put(
+            "AddMarius",
+            Bytes.fromHexString("1581d9d4d7eb0e3cdc75739f7098479097d579573f23e70b07cbd40a" +
+                "5d97bbc118da69b1d2cb7b89fdb3bba2524bf135453ce828faea190d8f4d48d572cbe3fe20" +
+                "34b5942fbdd612f2553a9fd9fa5eb4c3e5ce6a34ed100f62de0e380f4e67f8016027893e1f" +
+                "5082bdc48651667776e2b1e32a85edd33ff430eef15e8e68b3d460"));
 
-    PrecompiledContract addContract =
+    PrecompiledContract contract =
         EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.ALTBN128_ADD);
-    warmIterations = MATH_WARMUP / addTestCases.size();
-    execIterations = MATH_ITERATIONS / addTestCases.size();
-    double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
-    long gasCost = 0;
-    for (final Map.Entry<String, Bytes> testCase : addTestCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), addContract);
-      gasCost += addContract.gasRequirement(testCase.getValue());
-    }
-    execTime /= addTestCases.size();
-    gasCost /= addTestCases.size();
-    output.printf(
-        "AltBN128 Add %,6d gas @%,7.1f µs /%,8.1f MGps%n",
-        gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
+
+    precompile(testCases, contract);
   }
 
-  private void benchmarkMul(final PrintStream output, final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> mulTestCases = new LinkedHashMap<>();
-    mulTestCases.put(
-        "mul",
+  private void benchmarkMul(final EvmSpecVersion forkVersion) {
+    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    testCases.put(
+        "mul1",
         Bytes.fromHexString(
             "17c139df0efee0f766bc0204762b774362e4ded88953a39ce849a8a7fa163fa9"
                 + "01e0559bacb160664764a357af8a9fe70baa9258e0b959273ffc5718c6d4cc7c"
                 + "17c139df0efee0f766bc0204762b774362e4ded88953a39ce849a8a7fa163fa9"
                 + "2e83f8d734803fc370eba25ed1f6b8768bd6d83887b87165fc2434fe11a830cb"));
+    testCases.put(
+        "mul2",
+        Bytes.fromHexString(
+            "0x00000000000000000000000000000000000000000000000000000000000000"
+                + "0130644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd"
+                + "45ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
 
-    PrecompiledContract mulContract =
+    PrecompiledContract contract =
         EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.ALTBN128_MUL);
-    warmIterations = MATH_WARMUP / mulTestCases.size();
-    execIterations = MATH_ITERATIONS / mulTestCases.size();
-    double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
-    long gasCost = 0;
-    for (final Map.Entry<String, Bytes> testCase : mulTestCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), mulContract);
-      gasCost += mulContract.gasRequirement(testCase.getValue());
-    }
-    execTime /= mulTestCases.size();
-    gasCost /= mulTestCases.size();
-    output.printf(
-        "AltBN128 Mul %,6d gas @%,7.1f µs /%,8.1f MGps%n",
-        gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
+
+    precompile(testCases, contract);
   }
 
-  private void benchmarkPairings(final PrintStream output, final EvmSpecVersion forkVersion) {
-    final Bytes[] pairings = {
+  private void benchmarkPairings(final EvmSpecVersion forkVersion) {
+    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    testCases.put("2 pairings",
       Bytes.fromHexString(
           "0x0fc6ebd1758207e311a99674dc77d28128643c057fb9ca2c92b4205b6bf57ed2"
               + "1e50042f97b7a1f2768fa15f6683eca9ee7fa8ee655d94246ab85fb1da3f0b90"
               + "198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2"
               + "1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed"
               + "090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b"
-              + "12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa"),
+              + "12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa"));
+    testCases.put("4 pairings",
       Bytes.fromHexString(
           "0x2b101be01b2f064cba109e065dc0b5e5bf6b64ed4054b82af3a7e6e34c1e2005"
               + "1a4d9ceecf9115a98efd147c4abb2684102d3e925938989153b9ff330523cdb4"
@@ -131,7 +123,8 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
               + "19156e854972d656d1020003e5781972d84081309cdf71baacf6c6e29272f5ff"
               + "2acded377df8902b7a75de6c0f53c161f3a2ff3f374470b78d5b3c4d826d84d5"
               + "1731ef3b84913296c30a649461b2ca35e3fcc2e3031ea2386d32f885ff096559"
-              + "0919e7685f6ea605db14f311dede6e83f21937f05cfc53ac1dbe45891c47bf2a"),
+              + "0919e7685f6ea605db14f311dede6e83f21937f05cfc53ac1dbe45891c47bf2a"));
+    testCases.put("6 pairings",
       Bytes.fromHexString(
           "0x1a3fabea802788c8aa88741c6a68f271b221eb75838bb1079381f3f1ae414f40"
               + "126308d6cdb6b7efceb1ec0016b99cf7a1e5780f5a9a775d43bc7f2b6fd510e2"
@@ -150,21 +143,16 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
               + "10520008be7609bdb92145596ac6bf37da0269f7460e04e8e4701c3afbae0e52"
               + "0664e736b2af7bf9125f69fe5c3706cd893cd769b1dae8a6e3d639e2d76e66e2"
               + "1cacce8776f5ada6b35036f9343faab26c91b9aea83d3cb59cf5628ffe18ab1b"
-              + "03b48ca7e6d84fca619aaf81745fbf9c30e5a78ed4766cc62b0f12aea5044f56")
-    };
+              + "03b48ca7e6d84fca619aaf81745fbf9c30e5a78ed4766cc62b0f12aea5044f56"));
+
     final PrecompiledContract contract =
         EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.ALTBN128_PAIRING);
 
-    warmIterations = MATH_WARMUP / 20;
-    execIterations = MATH_ITERATIONS / 20;
+    precompile(testCases, contract);
+  }
 
-    for (int i = 0; i < pairings.length; i++) {
-      final double execTime = runPrecompileBenchmark("pairings" + i, pairings[i], contract);
-      final long gasCost = contract.gasRequirement(pairings[i]);
-
-      output.printf(
-          "AltBN128 %d pairing %,6d gas @%,7.1f µs /%,8.1f MGps%n",
-          i * 2 + 2, gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
-    }
+  @Override
+  public boolean isPrecompile() {
+    return true;
   }
 }

@@ -39,8 +39,10 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 import one.profiler.AsyncProfiler;
 import org.apache.tuweni.bytes.Bytes;
@@ -61,8 +63,7 @@ public abstract class BenchmarkExecutor {
   /** Where to write the output of the benchmarks. */
   protected final PrintStream output;
 
-  /** Config for running benchmarks. * */
-  protected final BenchmarkConfig config;
+  private final BenchmarkConfig config;
 
   private Runnable precompileTableHeader;
   int warmIterations;
@@ -140,6 +141,21 @@ public abstract class BenchmarkExecutor {
     assert execIterations <= 0;
   }
 
+  public void precompile(final Map<String, Bytes> testCases, final PrecompiledContract contract) {
+    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+      if (config.testCasePattern().isPresent()
+        && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
+        continue;
+      }
+
+      final double execTime =
+        runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
+
+      long gasCost = contract.gasRequirement(testCase.getValue());
+      logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+    }
+  }
+
   /**
    * Run the benchmark with the specific args. Execution will be done warmup + iterations times
    *
@@ -194,14 +210,7 @@ public abstract class BenchmarkExecutor {
     return elapsed / 1.0e9D / executions;
   }
 
-  /**
-   * Logging after a Precompile run with all the normalized and required stats.
-   *
-   * @param testCase name of the running test case.
-   * @param gasCost actual gas cost of the Precompile contract.
-   * @param execTime time that took for an iteration to complete.
-   */
-  protected void logPrecompilePerformance(
+  private void logPrecompilePerformance(
       final String testCase, final long gasCost, final double execTime) {
     double derivedGas = execTime * GAS_PER_SECOND_STANDARD;
 

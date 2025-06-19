@@ -175,7 +175,7 @@ public class BenchmarkSubCommand implements Runnable {
             warmIterations,
             warmTime);
     for (var benchmark : benchmarksToRun) {
-      output.println("Benchmarks for " + benchmark + " on fork " + parentCommand.getFork());
+      output.println("\nBenchmarks for " + benchmark + " on fork " + parentCommand.getFork());
       BenchmarkExecutor executor = benchmark.executorBuilder.create(output, benchmarkConfig);
       if (executor.isPrecompile()) {
         BenchmarkExecutor.logPrecompileDerivedGasNotice(output);
