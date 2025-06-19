@@ -138,7 +138,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     if (currentGas < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
-    cost = clampedAdd(cost, gasCalculator().calculateExcessCodeAccessGasCost(frame, contract));
+    cost = clampedAdd(cost, gasCalculator().calculateCodeAccessGas(frame, contract));
     if (currentGas < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }

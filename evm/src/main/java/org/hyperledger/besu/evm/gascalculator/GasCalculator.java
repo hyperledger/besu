@@ -687,7 +687,7 @@ public interface GasCalculator {
    * @param account the account whose code is being accessed
    * @return the excess code access gas cost, or 0 if no cost applies
    */
-  default long calculateExcessCodeAccessGasCost(final MessageFrame frame, final Account account) {
+  default long calculateCodeAccessGas(final MessageFrame frame, final Account account) {
     return 0L;
   }
 }

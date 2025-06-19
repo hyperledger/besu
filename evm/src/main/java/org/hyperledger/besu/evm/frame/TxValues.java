@@ -37,6 +37,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param maxStackSize The maximum stack size
  * @param warmedUpAddresses The warmed-up addresses
  * @param warmedUpStorage The warmed-up storage
+ * @param warmedUpCodes The warmed-up codes
  * @param originator The originator address
  * @param gasPrice The gas price
  * @param blobGasPrice The blob gas price
