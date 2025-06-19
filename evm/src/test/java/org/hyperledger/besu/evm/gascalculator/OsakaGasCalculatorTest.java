@@ -36,8 +36,7 @@ class OsakaGasCalculatorTest {
   private static final int VERY_LARGE_CODE_SIZE = 0x40000; // 256KB
   private static final int MAX_INITCODE_SIZE = 0x80000; // 512KB
 
-  private static final Address ADDRESS = Address.fromHexString("0x01");
-
+  private Address address;
   private OsakaGasCalculator gasCalculator;
   private MessageFrame frame;
   private Account account;
@@ -47,6 +46,7 @@ class OsakaGasCalculatorTest {
     gasCalculator = new OsakaGasCalculator();
     frame = mock(MessageFrame.class);
     account = mock(Account.class);
+    address = mock(Address.class);
   }
 
   // Precompile range test
@@ -59,38 +59,38 @@ class OsakaGasCalculatorTest {
 
   // Code access gas (EIP-7907)
   @Test
-  void shouldNotChargeGasWhenAccountIsNull() {
-    assertThat(gasCalculator.calculateCodeAccessGas(frame, null)).isEqualTo(0L);
+  void shouldNotChargeCodeLargeAccessGasWhenAccountIsNull() {
+    assertThat(gasCalculator.calculateLargeCodeAccessCost(frame, null)).isEqualTo(0L);
   }
 
   @Test
-  void shouldNotChargeGasWhenCodeHashIsEmpty() {
+  void shouldNotChargeCodeLargeAccessGasWhenCodeHashIsEmpty() {
     when(account.getCodeHash()).thenReturn(Hash.EMPTY);
-    assertThat(gasCalculator.calculateCodeAccessGas(frame, account)).isEqualTo(0L);
+    assertThat(gasCalculator.calculateLargeCodeAccessCost(frame, account)).isEqualTo(0L);
   }
 
   @Test
-  void shouldNotChargeGasWhenCodeSizeIsZero() {
+  void shouldNotChargeCodeLargeAccessGasWhenCodeSizeIsZero() {
     assertCodeAccessCost(0, false, 0L);
   }
 
   @Test
-  void shouldNotChargeGasWhenCodeSizeIsBelowThreshold() {
+  void shouldNotChargeCodeLargeAccessGasWhenCodeSizeIsBelowThreshold() {
     assertCodeAccessCost(MAX_NO_COST_CODE_SIZE - 1, false, 0L);
   }
 
   @Test
-  void shouldNotChargeGasWhenCodeSizeEqualsThreshold() {
+  void shouldNotChargeCodeLargeAccessGasWhenCodeSizeEqualsThreshold() {
     assertCodeAccessCost(MAX_NO_COST_CODE_SIZE, false, 0L);
   }
 
   @Test
-  void shouldNotChargeGasWhenCodeIsAlreadyWarm() {
+  void shouldNotChargeCodeLargeAccessGasWhenCodeIsAlreadyWarm() {
     assertCodeAccessCost(COLD_LARGE_CODE_SIZE, true, 0L);
   }
 
   @Test
-  void shouldChargeGasWhenCodeIsColdAndExceedsThreshold() {
+  void shouldChargeCodeLargeAccessGasWhenCodeIsColdAndExceedsThreshold() {
     assertCodeAccessCost(COLD_LARGE_CODE_SIZE, false, 2L);
   }
 
@@ -99,7 +99,6 @@ class OsakaGasCalculatorTest {
     assertCodeAccessCost(VERY_LARGE_CODE_SIZE, false, 14848L);
   }
 
-  // Delegation resolution gas (EIP-7907)
   @Test
   void shouldIncludeExcessCodeAccessGasInDelegationCost() {
     mockAccount(COLD_LARGE_CODE_SIZE, false);
@@ -108,36 +107,36 @@ class OsakaGasCalculatorTest {
   }
 
   @Test
-  void shouldChargeGasWhenInitcodeExceedsThreshold() {
+  void shouldChargeCodeLargeAccessGasWhenInitCodeExceedsThreshold() {
     assertThat(gasCalculator.initcodeCost(COLD_LARGE_CODE_SIZE)).isEqualTo(1538L);
   }
 
   @Test
-  void shouldChargeGasWhenInitcodeEqualsThreshold() {
+  void shouldChargeCodeLargeAccessGasWhenInitCodeEqualsThreshold() {
     assertThat(gasCalculator.initcodeCost(MAX_NO_COST_CODE_SIZE)).isEqualTo(1536L);
   }
 
   @Test
-  void shouldChargeGasWhenInitcodeJustBelowThreshold() {
+  void shouldChargeCodeLargeAccessGasWhenInitcodeJustBelowThreshold() {
     assertThat(gasCalculator.initcodeCost(MAX_NO_COST_CODE_SIZE - 1)).isEqualTo(1536L);
   }
 
   @Test
-  void shouldChargeMaximumGasWhenInitcodeIsAtMaximumAllowedSize() {
+  void shouldChargeCodeLargeAccessGasWhenInitCodeIsAtMaximumAllowedSize() {
     assertThat(gasCalculator.initcodeCost(MAX_INITCODE_SIZE)).isEqualTo(32768L);
   }
 
   private void assertCodeAccessCost(
       final int codeSize, final boolean isWarm, final long expectedCost) {
     mockAccount(codeSize, isWarm);
-    long result = gasCalculator.calculateCodeAccessGas(frame, account);
-    verify(frame).warmUpCode(ADDRESS);
+    long result = gasCalculator.calculateLargeCodeAccessCost(frame, account);
+    verify(frame).warmUpCode(address);
     assertThat(result).isEqualTo(expectedCost);
   }
 
   private void mockAccount(final int codeSize, final boolean isWarm) {
     when(account.getCodeHash()).thenReturn(Hash.hash(Bytes.of(1)));
-    when(account.getAddress()).thenReturn(ADDRESS);
+    when(account.getAddress()).thenReturn(address);
     when(account.getCodeSize()).thenReturn(codeSize);
     when(frame.warmUpCode(any())).thenReturn(isWarm);
   }

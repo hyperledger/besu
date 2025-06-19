@@ -131,7 +131,7 @@ public class OsakaGasCalculator extends PragueGasCalculator {
    * @return additional gas cost, or 0 if no cost applies
    */
   @Override
-  public long calculateCodeAccessGas(final MessageFrame frame, final Account account) {
+  public long calculateLargeCodeAccessCost(final MessageFrame frame, final Account account) {
     if (account == null) {
       return 0;
     }
@@ -143,7 +143,7 @@ public class OsakaGasCalculator extends PragueGasCalculator {
     if (isCodeWarm) {
       return 0L;
     }
-    return calculateExcessCodeSizeGas(account.getCodeSize());
+    return calculateLargeCodeSizeCost(account.getCodeSize());
   }
 
   /**
@@ -164,7 +164,7 @@ public class OsakaGasCalculator extends PragueGasCalculator {
   public long calculateCodeDelegationResolutionGas(
       final MessageFrame frame, final Account targetAccount) {
     long accessCost = super.calculateCodeDelegationResolutionGas(frame, targetAccount);
-    return clampedAdd(accessCost, calculateCodeAccessGas(frame, targetAccount));
+    return clampedAdd(accessCost, calculateLargeCodeAccessCost(frame, targetAccount));
   }
 
   /**
@@ -177,7 +177,7 @@ public class OsakaGasCalculator extends PragueGasCalculator {
    * @param codeSize the size of the code in bytes
    * @return the calculated code access cost
    */
-  private long calculateExcessCodeSizeGas(final long codeSize) {
+  private long calculateLargeCodeSizeCost(final long codeSize) {
     long excessCodeSize = Math.max(codeSize - MAX_CODE_SIZE_WITH_NO_ACCESS_COST, 0L);
     if (excessCodeSize == 0L) {
       return 0L;
