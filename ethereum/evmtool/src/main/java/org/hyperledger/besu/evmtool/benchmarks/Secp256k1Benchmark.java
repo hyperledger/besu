@@ -14,21 +14,15 @@
  */
 package org.hyperledger.besu.evmtool.benchmarks;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.crypto.Hash.keccak256;
-
-import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECPPrivateKey;
-import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
+import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
 
 import java.io.PrintStream;
-import java.math.BigInteger;
-import java.util.concurrent.TimeUnit;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /** Benchmark secp256k1 public key extraction */
 public class Secp256k1Benchmark extends BenchmarkExecutor {
@@ -45,32 +39,25 @@ public class Secp256k1Benchmark extends BenchmarkExecutor {
 
   @Override
   public void runBenchmark(final Boolean attemptNative, final String fork) {
+    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    testCases.put(
+        "secp256k1",
+        Bytes.fromHexString(
+            "0x0049872459827432342344987245982743234234498724598274323423429943000000000000000000000000000000000000000000000000000000000000001be8359c341771db7f9ea3a662a1741d27775ce277961470028e054ed3285aab8e31f63eaac35c4e6178abbc2a1073040ac9bbb0b67f2bc89a2e9593ba9abe8c53"));
+
     final SECP256K1 signatureAlgorithm = new SECP256K1();
     if (attemptNative != null && (!attemptNative || !signatureAlgorithm.maybeEnableNative())) {
       signatureAlgorithm.disableNative();
     }
     output.println(signatureAlgorithm.isNative() ? "Native secp256k1" : "Java secp256k1");
+    final ECRECPrecompiledContract contract =
+        new ECRECPrecompiledContract(new IstanbulGasCalculator(), signatureAlgorithm);
 
-    final SECPPrivateKey privateKey =
-        signatureAlgorithm.createPrivateKey(
-            new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
-    final KeyPair keyPair = signatureAlgorithm.createKeyPair(privateKey);
+    precompile(testCases, contract);
+  }
 
-    final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
-    final Bytes32 dataHash = keccak256(data);
-    final SECPSignature signature = signatureAlgorithm.sign(dataHash, keyPair);
-    for (int i = 0; i < warmIterations; i++) {
-      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
-    }
-    final Stopwatch timer = Stopwatch.createStarted();
-    for (int i = 0; i < execIterations; i++) {
-      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
-    }
-    timer.stop();
-
-    final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-    final double perCall = elapsed / MATH_ITERATIONS;
-
-    output.printf("secp256k1 signature recovery for %,.1f µs%n", perCall * 1_000_000);
+  @Override
+  public boolean isPrecompile() {
+    return true;
   }
 }
