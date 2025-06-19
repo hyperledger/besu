@@ -88,6 +88,7 @@ import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
+import org.hyperledger.besu.services.TransactionValidatorServiceImpl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -216,6 +217,7 @@ public abstract class CommandTestAbstract {
   @Mock protected Era1BlockImporter era1BlockImporter;
   @Mock protected StorageServiceImpl storageService;
   @Mock protected TransactionSelectionServiceImpl txSelectionService;
+  @Mock protected TransactionValidatorServiceImpl txValidatorService;
   @Mock protected SecurityModuleServiceImpl securityModuleService;
   @Mock protected SecurityModule securityModule;
   @Spy protected BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
@@ -333,6 +335,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.bannedNodeIds(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.metricsSystem(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.permissioningService(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.transactionValidatorService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.metricsConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.staticNodes(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.identityString(any())).thenReturn(mockRunnerBuilder);
@@ -556,6 +559,7 @@ public abstract class CommandTestAbstract {
           new TransactionPoolValidatorServiceImpl(),
           new TransactionSimulationServiceImpl(),
           new BlockchainServiceImpl(),
+          new TransactionValidatorServiceImpl(),
           commandLogger);
     }
 

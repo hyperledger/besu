@@ -189,7 +189,6 @@ public class JsonRpcTestMethodsFactory {
     apis.add(RpcApis.ETH.name());
     apis.add(RpcApis.NET.name());
     apis.add(RpcApis.WEB3.name());
-    apis.add(RpcApis.PRIV.name());
     apis.add(RpcApis.DEBUG.name());
 
     final Path dataDir = mock(Path.class);

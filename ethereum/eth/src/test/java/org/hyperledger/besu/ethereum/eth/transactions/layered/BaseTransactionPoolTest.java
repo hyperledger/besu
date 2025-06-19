@@ -137,7 +137,7 @@ public class BaseTransactionPoolTest {
 
     final TransactionType txType =
         TransactionType.values()[
-            randomizeTxType.nextInt(txSize < blobTransaction0.getSize() ? 3 : 4)];
+            randomizeTxType.nextInt(txSize < blobTransaction0.getSizeForAnnouncement() ? 3 : 4)];
 
     final Transaction baseTx =
         createTransaction(
@@ -150,7 +150,7 @@ public class BaseTransactionPoolTest {
             BlobType.KZG_PROOF,
             null,
             keys);
-    final int payloadSize = txSize - baseTx.getSize();
+    final int payloadSize = txSize - baseTx.getSizeForAnnouncement();
 
     return createTransaction(
         txType,
