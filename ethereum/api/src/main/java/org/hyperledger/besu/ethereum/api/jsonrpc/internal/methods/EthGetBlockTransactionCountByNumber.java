@@ -48,7 +48,7 @@ public class EthGetBlockTransactionCountByNumber extends AbstractBlockParameterM
   protected String resultByBlockNumber(final JsonRpcRequestContext req, final long blockNumber) {
     return getBlockchainQueries()
         .getTransactionCount(blockNumber)
-            .filter((count) -> count >= 0)
+        .filter((count) -> count >= 0)
         .map(Quantity::create)
         .orElse(null);
   }

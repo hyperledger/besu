@@ -620,12 +620,19 @@ public class BlockchainQueries {
       final BlockHeader header, final int txIndex) {
     final Hash blockHeaderHash = header.getHash();
 
-    return blockchain.getBlockBody(blockHeaderHash)
-            .map(BlockBody::getTransactions)
-            .filter((txs) -> txIndex < txs.size())
-            .map((txs) -> new TransactionWithMetadata(
-                    txs.get(txIndex), header.getNumber(), header.getBaseFee(), blockHeaderHash, txIndex))
-            .orElse(null);
+    return blockchain
+        .getBlockBody(blockHeaderHash)
+        .map(BlockBody::getTransactions)
+        .filter((txs) -> txIndex < txs.size())
+        .map(
+            (txs) ->
+                new TransactionWithMetadata(
+                    txs.get(txIndex),
+                    header.getNumber(),
+                    header.getBaseFee(),
+                    blockHeaderHash,
+                    txIndex))
+        .orElse(null);
   }
 
   public Optional<TransactionLocation> transactionLocationByHash(final Hash transactionHash) {
