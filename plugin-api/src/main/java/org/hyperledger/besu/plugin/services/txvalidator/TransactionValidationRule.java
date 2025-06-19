@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,8 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin;
+package org.hyperledger.besu.plugin.services.txvalidator;
 
-/** Deprecated in favor of the more precisely named ServiceManager interface. */
-@Deprecated(since = "24.12.0")
-public interface BesuContext extends ServiceManager {}
+import org.hyperledger.besu.datatypes.Transaction;
+
+import java.util.Optional;
+
+/** Allows you to implement a custom transaction validator */
+@FunctionalInterface
+public interface TransactionValidationRule {
+  /**
+   * Can be used to validate transactions according to custom needs
+   *
+   * @param transaction current transaction to validate
+   * @return an optional reason if the transaction is invalid or empty if it is valid
+   */
+  Optional<String> validate(final Transaction transaction);
+}

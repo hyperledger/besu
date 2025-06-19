@@ -31,10 +31,8 @@ import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
-@ExtendWith(TrustedSetupClassLoaderExtension.class)
-public class BlobProofBundleTest {
+public class BlobProofBundleTest extends TrustedSetupClassLoaderExtension {
 
   final Blob blob = new Blob(Bytes.EMPTY);
   final KZGCommitment kzgCommitment = new KZGCommitment(Bytes48.ZERO);

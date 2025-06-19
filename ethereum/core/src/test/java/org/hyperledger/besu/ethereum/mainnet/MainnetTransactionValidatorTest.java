@@ -72,9 +72,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-@ExtendWith({MockitoExtension.class, TrustedSetupClassLoaderExtension.class})
+@ExtendWith({MockitoExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class MainnetTransactionValidatorTest {
+public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExtension {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -666,7 +666,8 @@ public class MainnetTransactionValidatorTest {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
-            new OsakaTargetingGasLimitCalculator(0L, feeMarket, gasCalculator, 6, 3, gasLimitCap),
+            new OsakaTargetingGasLimitCalculator(
+                0L, feeMarket, gasCalculator, 6, 3, 6, gasLimitCap),
             feeMarket,
             false,
             Optional.of(BigInteger.ONE),

@@ -29,14 +29,6 @@ public class EthConditions {
     this.transactions = transactions;
   }
 
-  public Condition getWork() {
-    return new SanityCheckEthGetWorkValues(transactions.getWork());
-  }
-
-  public Condition getWorkExceptional(final String expectedMessage) {
-    return new ExpectEthGetWorkException(transactions.getWork(), expectedMessage);
-  }
-
   public Condition accountsExceptional(final String expectedMessage) {
     return new ExpectEthAccountsException(transactions.accounts(), expectedMessage);
   }

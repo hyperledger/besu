@@ -55,21 +55,27 @@ public class MainnetBlockValidator implements BlockValidator {
   /** The BlockProcessor used to process blocks. */
   protected final BlockProcessor blockProcessor;
 
+  /** The maximum size of a block in RLP encoding. */
+  private final int maxRlpBlockSize;
+
   /**
    * Constructs a new MainnetBlockValidator with the given BlockHeaderValidator, BlockBodyValidator,
-   * BlockProcessor, and BadBlockManager.
+   * BlockProcessor, and maximum RLP block size.
    *
    * @param blockHeaderValidator the BlockHeaderValidator used to validate block headers
    * @param blockBodyValidator the BlockBodyValidator used to validate block bodies
    * @param blockProcessor the BlockProcessor used to process blocks
+   * @param maxRlpBlockSize the maximum size of a block in RLP encoding
    */
-  public MainnetBlockValidator(
+  protected MainnetBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
-      final BlockProcessor blockProcessor) {
+      final BlockProcessor blockProcessor,
+      final int maxRlpBlockSize) {
     this.blockHeaderValidator = blockHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
     this.blockProcessor = blockProcessor;
+    this.maxRlpBlockSize = maxRlpBlockSize;
   }
 
   /**
@@ -111,6 +117,15 @@ public class MainnetBlockValidator implements BlockValidator {
       final HeaderValidationMode ommerValidationMode,
       final boolean shouldUpdateHead,
       final boolean shouldRecordBadBlock) {
+
+    final int blockSize = block.getSize();
+    if (blockSize > maxRlpBlockSize) {
+      final String errorMessage =
+          "Block size of " + blockSize + " bytes exceeds limit of " + maxRlpBlockSize + " bytes";
+      var retval = new BlockProcessingResult(errorMessage);
+      handleFailedBlockProcessing(block, retval, true, context);
+      return retval;
+    }
 
     final BlockHeader header = block.getHeader();
     final BlockHeader parentHeader;
@@ -200,7 +215,15 @@ public class MainnetBlockValidator implements BlockValidator {
     }
   }
 
-  private void handleFailedBlockProcessing(
+  /**
+   * Handles the processing of a block that has failed validation or processing.
+   *
+   * @param failedBlock the block that failed processing
+   * @param result the result of the block processing
+   * @param shouldRecordBadBlock whether to record the block as a bad block
+   * @param context the ProtocolContext
+   */
+  protected void handleFailedBlockProcessing(
       final Block failedBlock,
       final BlockValidationResult result,
       final boolean shouldRecordBadBlock,
@@ -280,5 +303,10 @@ public class MainnetBlockValidator implements BlockValidator {
       return false;
     }
     return true;
+  }
+
+  @Override
+  public int maxRlpBlockSize() {
+    return maxRlpBlockSize;
   }
 }

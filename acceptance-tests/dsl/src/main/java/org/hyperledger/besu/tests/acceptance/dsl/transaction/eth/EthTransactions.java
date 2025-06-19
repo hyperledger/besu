@@ -23,10 +23,6 @@ import org.web3j.protocol.core.DefaultBlockParameterName;
 
 public class EthTransactions {
 
-  public EthGetWorkTransaction getWork() {
-    return new EthGetWorkTransaction();
-  }
-
   public EthBlockNumberTransaction blockNumber() {
     return new EthBlockNumberTransaction();
   }
