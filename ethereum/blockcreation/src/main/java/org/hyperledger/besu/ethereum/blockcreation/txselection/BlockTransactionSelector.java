@@ -495,7 +495,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
           transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
 
-          balBuilder.updateFromTransactionAccumulator(txWorldStateUpdater, currentTxnLocation);
+          balBuilder.updateFromTransactionAccumulator(
+              txWorldStateUpdater, currentTxnLocation, transaction.isContractCreation());
           notifySelected(evaluationContext, processingResult);
           LOG.atTrace()
               .setMessage("Selected and commited {} with location {} for block creation")

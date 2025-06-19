@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountAccess;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountBalanceDiff;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountCodeDiff;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountNonceDiff;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -124,7 +126,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         bal -> output.writeList(bal.getAccountAccesses(), AccountAccess::writeTo));
     blockAccessList.ifPresent(
         bal -> output.writeList(bal.getAccountBalanceDiffs(), AccountBalanceDiff::writeTo));
-    // TODO: Write code, nonce diffs
+    blockAccessList.ifPresent(
+        bal -> output.writeList(bal.getAccountCodeDiffs(), AccountCodeDiff::writeTo));
+    blockAccessList.ifPresent(
+        bal -> output.writeList(bal.getAccountNonceDiffs(), AccountNonceDiff::writeTo));
   }
 
   public static BlockBody readWrappedBodyFrom(
@@ -185,6 +190,14 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
                     input.readList(
                         valueReader -> {
                           return AccountBalanceDiff.readFrom(valueReader);
+                        }),
+                    input.readList(
+                        valueReader -> {
+                          return AccountCodeDiff.readFrom(valueReader);
+                        }),
+                    input.readList(
+                        valueReader -> {
+                          return AccountNonceDiff.readFrom(valueReader);
                         }))));
   }
 

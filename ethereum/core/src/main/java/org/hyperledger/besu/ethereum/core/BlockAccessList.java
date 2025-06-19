@@ -22,6 +22,10 @@ import org.hyperledger.besu.ethereum.core.encoding.AccountAccessDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.AccountAccessEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.AccountBalanceDiffDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.AccountBalanceDiffEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.AccountCodeDiffDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.AccountCodeDiffEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.AccountNonceDiffDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.AccountNonceDiffEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
@@ -37,20 +41,23 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BlockAccessList {
 
-  private static final Logger LOG = LoggerFactory.getLogger(BlockAccessList.class);
-
   private final List<AccountAccess> accountAccesses;
   private final List<AccountBalanceDiff> balanceDiffs;
+  private final List<AccountCodeDiff> codeDiffs;
+  private final List<AccountNonceDiff> nonceDiffs;
 
   public BlockAccessList(
-      final List<AccountAccess> accountAccesses, final List<AccountBalanceDiff> balanceDiffs) {
+      final List<AccountAccess> accountAccesses,
+      final List<AccountBalanceDiff> balanceDiffs,
+      final List<AccountCodeDiff> codeDiffs,
+      final List<AccountNonceDiff> nonceDiffs) {
     this.accountAccesses = accountAccesses;
     this.balanceDiffs = balanceDiffs;
+    this.codeDiffs = codeDiffs;
+    this.nonceDiffs = nonceDiffs;
   }
 
   public List<AccountAccess> getAccountAccesses() {
@@ -59,6 +66,14 @@ public class BlockAccessList {
 
   public List<AccountBalanceDiff> getAccountBalanceDiffs() {
     return balanceDiffs;
+  }
+
+  public List<AccountCodeDiff> getAccountCodeDiffs() {
+    return codeDiffs;
+  }
+
+  public List<AccountNonceDiff> getAccountNonceDiffs() {
+    return nonceDiffs;
   }
 
   @Override
@@ -202,6 +217,91 @@ public class BlockAccessList {
     }
   }
 
+  public static class AccountCodeDiff {
+    private final Address address;
+    private final CodeChange change;
+
+    public AccountCodeDiff(final Address address, final CodeChange change) {
+      this.address = address;
+      this.change = change;
+    }
+
+    public Address getAddress() {
+      return address;
+    }
+
+    public CodeChange getChange() {
+      return change;
+    }
+
+    public void writeTo(final RLPOutput out) {
+      AccountCodeDiffEncoder.encode(this, out);
+    }
+
+    public static AccountCodeDiff readFrom(final RLPInput rlpInput) {
+      return AccountCodeDiffDecoder.decode(rlpInput);
+    }
+
+    @Override
+    public String toString() {
+      return "AccountCodeDiff{" + "address=" + address + ", change=" + change + '}';
+    }
+  }
+
+  public static class CodeChange {
+    private final int txIndex;
+    private final Bytes newCode;
+
+    public CodeChange(final int txIndex, final Bytes newCode) {
+      this.txIndex = txIndex;
+      this.newCode = newCode;
+    }
+
+    public int getTxIndex() {
+      return txIndex;
+    }
+
+    public Bytes getNewCode() {
+      return newCode;
+    }
+
+    @Override
+    public String toString() {
+      return "CodeChange{" + "txIndex=" + txIndex + ", newCode=" + newCode + '}';
+    }
+  }
+
+  public static class AccountNonceDiff {
+    private final Address address;
+    private final long nonceBefore;
+
+    public AccountNonceDiff(final Address address, final long nonceBefore) {
+      this.address = address;
+      this.nonceBefore = nonceBefore;
+    }
+
+    public Address getAddress() {
+      return address;
+    }
+
+    public long getNonceBefore() {
+      return nonceBefore;
+    }
+
+    @Override
+    public String toString() {
+      return "AccountNonceDiff{" + "address=" + address + ", nonceBefore=" + nonceBefore + '}';
+    }
+
+    public void writeTo(final RLPOutput out) {
+      AccountNonceDiffEncoder.encode(this, out);
+    }
+
+    public static AccountNonceDiff readFrom(final RLPInput rlpInput) {
+      return AccountNonceDiffDecoder.decode(rlpInput);
+    }
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -209,6 +309,8 @@ public class BlockAccessList {
   public static class Builder {
     private final Map<Hash, AccountAccessBuilder> accounts = new LinkedHashMap<>();
     private final Map<Hash, AccountBalanceDiffBuilder> changes = new LinkedHashMap<>();
+    private final Map<Hash, AccountCodeDiff> codeChanges = new LinkedHashMap<>();
+    private final Map<Hash, AccountNonceDiff> nonceChanges = new LinkedHashMap<>();
 
     public SlotAccessBuilder accessSlot(final Address address, final StorageSlotKey slot) {
       return accounts
@@ -223,8 +325,17 @@ public class BlockAccessList {
           .addBalanceChange(txIndex, delta);
     }
 
+    public void accountCodeChange(final Address address, final int txIndex, final Bytes code) {
+      codeChanges.put(
+          address.addressHash(), new AccountCodeDiff(address, new CodeChange(txIndex, code)));
+    }
+
+    public void accountNonceDiff(final Address address, final long nonceBefore) {
+      nonceChanges.putIfAbsent(address.addressHash(), new AccountNonceDiff(address, nonceBefore));
+    }
+
     public void updateFromTransactionAccumulator(
-        final WorldUpdater txnAccumulator, final int txIndex) {
+        final WorldUpdater txnAccumulator, final int txIndex, final boolean isContractCreation) {
       if (txnAccumulator instanceof PathBasedWorldStateUpdateAccumulator<?> accum) {
         accum
             .getStorageToUpdate()
@@ -253,23 +364,44 @@ public class BlockAccessList {
             .getAccountsToUpdate()
             .forEach(
                 (address, value) -> {
-                  final BigInteger prior =
+                  final BigInteger priorBalance =
                       Optional.ofNullable(value.getPrior())
                           .map(PathBasedAccount::getBalance)
                           .map(Wei::getAsBigInteger)
                           .orElse(BigInteger.ZERO);
-                  final BigInteger updated =
+                  final BigInteger updatedBalance =
                       Optional.ofNullable(value.getUpdated())
                           .map(PathBasedAccount::getBalance)
                           .map(Wei::getAsBigInteger)
                           .orElse(BigInteger.ZERO);
-                  final BigInteger delta = updated.subtract(prior);
+                  final BigInteger delta = updatedBalance.subtract(priorBalance);
                   if (!value.isEvmRead() && delta.compareTo(BigInteger.ZERO) != 0) {
                     this.accountBalanceChange(address, txIndex, delta);
                   }
+
+                  final Bytes priorCode =
+                      Optional.ofNullable(value.getPrior())
+                          .map(PathBasedAccount::getCode)
+                          .orElse(Bytes.EMPTY);
+                  final Bytes updatedCode =
+                      Optional.ofNullable(value.getUpdated())
+                          .map(PathBasedAccount::getCode)
+                          .orElse(Bytes.EMPTY);
+                  if (priorCode != updatedCode) {
+                    this.accountCodeChange(address, txIndex, updatedCode);
+                  }
+
+                  final long priorNonce =
+                      Optional.ofNullable(value.getPrior())
+                          .map(PathBasedAccount::getNonce)
+                          .orElse(0L);
+                  if (isContractCreation) {
+                    this.accountNonceDiff(address, priorNonce);
+                  }
                 });
       } else {
-        LOG.error("Attempted to update update BAL with unexpected accumulator instance");
+        throw new RuntimeException(
+            "Attempted to update update BAL with unexpected accumulator instance");
       }
     }
 
@@ -278,7 +410,9 @@ public class BlockAccessList {
           accounts.values().stream().map(AccountAccessBuilder::build).toList();
       final List<AccountBalanceDiff> diffs =
           changes.values().stream().map(AccountBalanceDiffBuilder::build).toList();
-      return new BlockAccessList(accesses, diffs);
+      final List<AccountCodeDiff> codes = new ArrayList<>(codeChanges.values());
+      final List<AccountNonceDiff> nonces = new ArrayList<>(nonceChanges.values());
+      return new BlockAccessList(accesses, diffs, codes, nonces);
     }
   }
 

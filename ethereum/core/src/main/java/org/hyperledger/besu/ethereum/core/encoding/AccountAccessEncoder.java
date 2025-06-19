@@ -19,6 +19,10 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 public class AccountAccessEncoder {
 
+  private AccountAccessEncoder() {
+    // private constructor
+  }
+
   public static void encode(final AccountAccess accountAccess, final RLPOutput out) {
     out.startList();
     out.writeBytes(accountAccess.getAddress());

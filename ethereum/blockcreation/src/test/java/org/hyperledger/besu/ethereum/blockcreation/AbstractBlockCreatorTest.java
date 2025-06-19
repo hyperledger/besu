@@ -124,12 +124,11 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
   public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
-  protected final GenesisConfig genesisConfig = GenesisConfig.fromResource("/block-creation-genesis.json");
+  protected final GenesisConfig genesisConfig =
+      GenesisConfig.fromResource("/block-creation-genesis.json");
 
-  protected final List<GenesisAccount> accounts = genesisConfig
-          .streamAllocations()
-          .filter(ga -> ga.privateKey() != null)
-          .toList();
+  protected final List<GenesisAccount> accounts =
+      genesisConfig.streamAllocations().filter(ga -> ga.privateKey() != null).toList();
 
   @Test
   void findDepositRequestsFromReceipts() {
@@ -330,15 +329,18 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
     final List<AccountBalanceDiff> accountBalanceDiffs = blockAccessList.getAccountBalanceDiffs();
     assertThat(accountBalanceDiffs.size()).isEqualTo(3);
     final AccountBalanceDiff accountBalanceDiff1 = accountBalanceDiffs.get(0);
-    assertThat(accountBalanceDiff1.getAddress()).isIn(sender.address(), recipient.address(), coinbase);
+    assertThat(accountBalanceDiff1.getAddress())
+        .isIn(sender.address(), recipient.address(), coinbase);
     assertThat(accountBalanceDiff1.getBalanceChanges().size()).isEqualTo(1);
     assertThat(accountBalanceDiff1.getBalanceChanges().get(0).getDelta()).isNotZero();
     final AccountBalanceDiff accountBalanceDiff2 = accountBalanceDiffs.get(1);
-    assertThat(accountBalanceDiff2.getAddress()).isIn(sender.address(), recipient.address(), coinbase);
+    assertThat(accountBalanceDiff2.getAddress())
+        .isIn(sender.address(), recipient.address(), coinbase);
     assertThat(accountBalanceDiff2.getBalanceChanges().size()).isEqualTo(1);
     assertThat(accountBalanceDiff2.getBalanceChanges().get(0).getDelta()).isNotZero();
     final AccountBalanceDiff accountBalanceDiff3 = accountBalanceDiffs.get(2);
-    assertThat(accountBalanceDiff3.getAddress()).isIn(sender.address(), recipient.address(), coinbase);
+    assertThat(accountBalanceDiff3.getAddress())
+        .isIn(sender.address(), recipient.address(), coinbase);
     assertThat(accountBalanceDiff3.getBalanceChanges().size()).isEqualTo(1);
     assertThat(accountBalanceDiff3.getBalanceChanges().get(0).getDelta()).isNotZero();
   }

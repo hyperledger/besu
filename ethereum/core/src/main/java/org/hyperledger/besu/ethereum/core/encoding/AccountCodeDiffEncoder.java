@@ -14,28 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountBalanceDiff;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountCodeDiff;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import org.apache.tuweni.bytes.Bytes;
+public class AccountCodeDiffEncoder {
 
-public class AccountBalanceDiffEncoder {
-
-  private AccountBalanceDiffEncoder() {
+  private AccountCodeDiffEncoder() {
     // private constructor
   }
 
-  public static void encode(final AccountBalanceDiff accountBalanceDiff, final RLPOutput out) {
+  public static void encode(final AccountCodeDiff codeDiff, final RLPOutput out) {
     out.startList();
-    out.writeBytes(accountBalanceDiff.getAddress());
-    out.writeList(
-        accountBalanceDiff.getBalanceChanges(),
-        (balanceChange, balanceChangeOut) -> {
-          balanceChangeOut.startList();
-          out.writeInt(balanceChange.getTxIndex());
-          out.writeBytes(Bytes.of(balanceChange.getDelta().toByteArray()));
-          balanceChangeOut.endList();
-        });
+    out.writeBytes(codeDiff.getAddress());
+    out.startList();
+    out.writeInt(codeDiff.getChange().getTxIndex());
+    out.writeBytes(codeDiff.getChange().getNewCode());
+    out.endList();
     out.endList();
   }
 }
