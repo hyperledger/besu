@@ -23,8 +23,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The CodeV0. */
@@ -36,10 +38,10 @@ public class CodeV0 implements Code {
   /** The bytes representing the code. */
   private final Bytes bytes;
 
-  private final int size;
+  private final Supplier<Integer> sizeSupplier;
 
   /** The hash of the code, needed for accessing metadata about the bytecode */
-  private final Hash codeHash;
+  private final Supplier<Hash> codeHashSupplier;
 
   /** Used to cache valid jump destinations. */
   private long[] validJumpDestinationsBitMask;
@@ -53,20 +55,22 @@ public class CodeV0 implements Code {
    * @param byteCode The byte representation of the code.
    */
   public CodeV0(final Bytes byteCode) {
-    this(byteCode, byteCode.isEmpty() ? Hash.EMPTY : Hash.hash(byteCode));
+    this(
+        byteCode,
+        byteCode.isEmpty() ? () -> Hash.EMPTY : Suppliers.memoize(() -> Hash.hash(byteCode)));
   }
 
   /**
    * Public constructor.
    *
    * @param byteCode The byte representation of the code.
-   * @param codeHash the hash of the bytecode
+   * @param codeHashSupplier the hash of the bytecode
    */
-  public CodeV0(final Bytes byteCode, final Hash codeHash) {
+  public CodeV0(final Bytes byteCode, final Supplier<Hash> codeHashSupplier) {
     this.bytes = byteCode;
-    this.size = byteCode.size();
-    this.codeHash = codeHash;
-    this.codeSectionZero = new CodeSection(this.size, 0, -1, -1, 0);
+    this.sizeSupplier = Suppliers.memoize(byteCode::size);
+    this.codeHashSupplier = codeHashSupplier;
+    this.codeSectionZero = new CodeSection(this.sizeSupplier, 0, -1, -1, 0);
   }
 
   /**
@@ -81,7 +85,7 @@ public class CodeV0 implements Code {
     if (other == this) return true;
     if (!(other instanceof CodeV0 that)) return false;
 
-    return this.bytes.equals(that.bytes);
+    return this.codeHashSupplier.get().equals(that.codeHashSupplier.get());
   }
 
   @Override
@@ -96,7 +100,7 @@ public class CodeV0 implements Code {
    */
   @Override
   public int getSize() {
-    return size;
+    return sizeSupplier.get();
   }
 
   @Override
@@ -121,7 +125,7 @@ public class CodeV0 implements Code {
 
   @Override
   public Hash getCodeHash() {
-    return codeHash;
+    return codeHashSupplier.get();
   }
 
   @Override

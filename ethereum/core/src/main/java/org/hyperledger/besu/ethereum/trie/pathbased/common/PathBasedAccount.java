@@ -19,12 +19,12 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
-import org.hyperledger.besu.evm.internal.CodeCache;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -174,28 +174,23 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
 
   @Override
   public Code getAnalyzedCode() {
-    final Code cachedCode =
-        Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
-
     if (code != null) {
-      if (cachedCode == null) {
-        // if code is already set, but not in the cache, put it there
-        Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
-      }
-
       return code;
     }
+
+    final Code cachedCode =
+        Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
 
     // cache hit, but code was not set before, set it
     if (cachedCode != null) {
       code = cachedCode;
-      return cachedCode;
+      return code;
     }
 
     // cache miss, code not set: get the code from the disk, set it and put it in the cache
     // code cannot be empty here, as it would have been set to EMPTY_CODE in the constructor
     final Bytes byteCode = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
-    code = new CodeV0(byteCode);
+    code = new CodeV0(byteCode, () -> codeHash);
     Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
 
     return code;
@@ -217,7 +212,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     this.code = Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
 
     if (this.code == null) {
-      this.code = new CodeV0(byteCode, codeHash);
+      this.code = new CodeV0(byteCode, () -> codeHash);
       Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, this.code));
     }
   }

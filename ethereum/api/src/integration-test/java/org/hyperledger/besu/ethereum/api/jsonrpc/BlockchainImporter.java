@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
-import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.net.URL;

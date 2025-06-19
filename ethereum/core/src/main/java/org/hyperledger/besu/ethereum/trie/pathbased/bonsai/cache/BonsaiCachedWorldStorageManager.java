@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWor
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
-import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 public class BonsaiCachedWorldStorageManager extends PathBasedCachedWorldStorageManager {
