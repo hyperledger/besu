@@ -1139,7 +1139,7 @@ public final class EthProtocolManagerTest {
           .isEqualTo(Collections.singletonList(EthProtocol.LATEST));
 
       // assert that all messages transmitted contain the expected block & total difficulty.
-      final ProtocolSchedule protocolSchdeule = ProtocolScheduleFixture.MAINNET;
+      final ProtocolSchedule protocolSchdeule = ProtocolScheduleFixture.SEPOLIA;
       for (final NewBlockMessage msg : messageSentCaptor.getAllValues()) {
         assertThat(msg.block(protocolSchdeule)).isEqualTo(minedBlock);
         assertThat(msg.totalDifficulty(protocolSchdeule)).isEqualTo(expectedTotalDifficulty);
