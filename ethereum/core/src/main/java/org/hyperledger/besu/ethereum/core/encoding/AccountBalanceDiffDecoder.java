@@ -31,15 +31,15 @@ public class AccountBalanceDiffDecoder {
   }
 
   public static AccountBalanceDiff decode(final RLPInput in) {
-    RLPInput accountBalanceRlp = in.readAsRlp();
+    final RLPInput accountBalanceRlp = in.readAsRlp();
     accountBalanceRlp.enterList();
-    Address address = Address.readFrom(in);
-    List<BalanceChange> changes =
-        in.readList(
+    final Address address = Address.readFrom(accountBalanceRlp);
+    final List<BalanceChange> changes =
+        accountBalanceRlp.readList(
             (changeIn) -> {
               changeIn.enterList();
-              int txIndex = changeIn.readInt();
-              Bytes delta = changeIn.readBytes();
+              final int txIndex = changeIn.readInt();
+              final Bytes delta = changeIn.readBytes();
               changeIn.leaveList();
               return new BalanceChange(txIndex, delta.toBigInteger());
             });

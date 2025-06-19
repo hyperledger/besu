@@ -264,7 +264,7 @@ public class BlockAccessList {
                           .map(Wei::getAsBigInteger)
                           .orElse(BigInteger.ZERO);
                   final BigInteger delta = updated.subtract(prior);
-                  if (!value.isEvmRead() && delta.compareTo(BigInteger.ZERO) > 0) {
+                  if (!value.isEvmRead() && delta.compareTo(BigInteger.ZERO) != 0) {
                     this.accountBalanceChange(address, txIndex, delta);
                   }
                 });

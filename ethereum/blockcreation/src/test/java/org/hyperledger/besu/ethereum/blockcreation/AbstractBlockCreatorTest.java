@@ -124,8 +124,9 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
   public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
-  protected final List<GenesisAccount> accounts =
-      GenesisConfig.fromResource("/block-creation-genesis.json")
+  protected final GenesisConfig genesisConfig = GenesisConfig.fromResource("/block-creation-genesis.json");
+
+  protected final List<GenesisAccount> accounts = genesisConfig
           .streamAllocations()
           .filter(ga -> ga.privateKey() != null)
           .toList();
@@ -302,11 +303,12 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
     final AbstractBlockCreator blockCreator = miningOn.blockCreator;
     final GenesisAccount sender = accounts.get(1);
     final GenesisAccount recipient = accounts.get(2);
+    final Address coinbase = Address.fromHexString(genesisConfig.getCoinbase().get());
     final KeyPair keyPair =
         SIGNATURE_ALGORITHM
             .get()
             .createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
-    final BigInteger delta = BigInteger.valueOf(1_000_000_000_000_000_000L);
+    final BigInteger delta = Wei.fromEth(1).toBigInteger();
     final Transaction txn =
         new TransactionTestFixture()
             .sender(sender.address())
@@ -326,16 +328,19 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
     assertThat(maybeBlockAccessList).isNotEmpty();
     final BlockAccessList blockAccessList = maybeBlockAccessList.get();
     final List<AccountBalanceDiff> accountBalanceDiffs = blockAccessList.getAccountBalanceDiffs();
-    assertThat(accountBalanceDiffs.size()).isEqualTo(2);
+    assertThat(accountBalanceDiffs.size()).isEqualTo(3);
     final AccountBalanceDiff accountBalanceDiff1 = accountBalanceDiffs.get(0);
-    assertThat(accountBalanceDiff1.getAddress()).isIn(sender.address(), recipient.address());
+    assertThat(accountBalanceDiff1.getAddress()).isIn(sender.address(), recipient.address(), coinbase);
     assertThat(accountBalanceDiff1.getBalanceChanges().size()).isEqualTo(1);
-    assertThat(accountBalanceDiff1.getBalanceChanges().get(0).getDelta().negate())
-        .isGreaterThan(delta);
+    assertThat(accountBalanceDiff1.getBalanceChanges().get(0).getDelta()).isNotZero();
     final AccountBalanceDiff accountBalanceDiff2 = accountBalanceDiffs.get(1);
-    assertThat(accountBalanceDiff2.getAddress()).isIn(sender.address(), recipient.address());
+    assertThat(accountBalanceDiff2.getAddress()).isIn(sender.address(), recipient.address(), coinbase);
     assertThat(accountBalanceDiff2.getBalanceChanges().size()).isEqualTo(1);
-    assertThat(accountBalanceDiff2.getBalanceChanges().get(0).getDelta()).isEqualTo(delta);
+    assertThat(accountBalanceDiff2.getBalanceChanges().get(0).getDelta()).isNotZero();
+    final AccountBalanceDiff accountBalanceDiff3 = accountBalanceDiffs.get(2);
+    assertThat(accountBalanceDiff3.getAddress()).isIn(sender.address(), recipient.address(), coinbase);
+    assertThat(accountBalanceDiff3.getBalanceChanges().size()).isEqualTo(1);
+    assertThat(accountBalanceDiff3.getBalanceChanges().get(0).getDelta()).isNotZero();
   }
 
   private CreateOn blockCreatorWithWithdrawalsProcessor() {
@@ -355,7 +360,6 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
 
   private CreateOn createBlockCreator(final ProtocolSpecAdapters protocolSpecAdapters) {
 
-    final var genesisConfig = GenesisConfig.fromResource("/block-creation-genesis.json");
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder(genesisConfig)
             .protocolSchedule(

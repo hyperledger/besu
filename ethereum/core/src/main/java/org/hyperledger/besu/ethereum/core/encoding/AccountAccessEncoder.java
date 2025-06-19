@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountAccess;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-// TODO: Doublecheck writing to the correct output
 public class AccountAccessEncoder {
 
   public static void encode(final AccountAccess accountAccess, final RLPOutput out) {
@@ -31,12 +30,14 @@ public class AccountAccessEncoder {
           out.writeList(
               slotAccess.getPerTxAccesses(),
               (perTxAccess, perTxAccessOut) -> {
+                perTxAccessOut.startList();
                 perTxAccessOut.writeInt(perTxAccess.getTxIndex());
                 if (perTxAccess.getValueAfter().isPresent()) {
                   perTxAccessOut.writeBytes(perTxAccess.getValueAfter().get());
                 } else {
                   perTxAccessOut.writeNull();
                 }
+                perTxAccessOut.endList();
               });
           slotAccessOut.endList();
         });

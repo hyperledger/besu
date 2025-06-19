@@ -33,20 +33,26 @@ public class AccountAccessDecoder {
   }
 
   public static AccountAccess decode(final RLPInput in) {
-    RLPInput transactionRlp = in.readAsRlp();
+    final RLPInput transactionRlp = in.readAsRlp();
     transactionRlp.enterList();
-    Address address = Address.readFrom(in);
+    final Address address = Address.readFrom(transactionRlp);
     List<SlotAccess> slotAccesses =
-        in.readList(
+        transactionRlp.readList(
             (slotAccessIn) -> {
               slotAccessIn.enterList();
-              StorageSlotKey slotKey = new StorageSlotKey(slotAccessIn.readUInt256Scalar());
-              List<PerTxAccess> accesses =
+              final StorageSlotKey slotKey = new StorageSlotKey(slotAccessIn.readUInt256Scalar());
+              final List<PerTxAccess> accesses =
                   slotAccessIn.readList(
                       (perTxAccessIn) -> {
-                        int txIndex = perTxAccessIn.readInt();
-                        Bytes valueAfter = perTxAccessIn.readBytes();
-                        return new PerTxAccess(txIndex, Optional.ofNullable(valueAfter));
+                        perTxAccessIn.enterList();
+                        final int txIndex = perTxAccessIn.readInt();
+                        final Bytes valueAfter = perTxAccessIn.readBytes();
+                        perTxAccessIn.leaveList();
+                        if (valueAfter != Bytes.EMPTY) {
+                          return new PerTxAccess(txIndex, Optional.ofNullable(valueAfter));
+                        } else {
+                          return new PerTxAccess(txIndex, Optional.empty());
+                        }
                       });
               slotAccessIn.leaveList();
               return new SlotAccess(slotKey, accesses);
