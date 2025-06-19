@@ -36,10 +36,10 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO: Maybe implementing an interface defined in plugin-api will be useful?
 public class BlockAccessList {
 
   private static final Logger LOG = LoggerFactory.getLogger(BlockAccessList.class);
@@ -72,20 +72,15 @@ public class BlockAccessList {
   }
 
   public static class PerTxAccess {
-    private final Optional<Integer> txIndex;
-    private final Optional<Bytes> valueAfter; // TODO: Find better suited type
+    private final Integer txIndex;
+    private final Optional<Bytes> valueAfter;
 
-    public PerTxAccess(final Integer txIndex, final Bytes valueAfter) {
-      this.txIndex = Optional.of(txIndex);
-      this.valueAfter = Optional.of(valueAfter);
+    public PerTxAccess(final Integer txIndex, final Optional<Bytes> valueAfter) {
+      this.txIndex = txIndex;
+      this.valueAfter = valueAfter;
     }
 
-    public PerTxAccess() {
-      this.txIndex = Optional.empty();
-      this.valueAfter = Optional.empty();
-    }
-
-    public Optional<Integer> getTxIndex() {
+    public Integer getTxIndex() {
       return txIndex;
     }
 
@@ -155,7 +150,7 @@ public class BlockAccessList {
 
   public static class BalanceChange {
     private final Integer txIndex;
-    private final BigInteger delta; // TODO: Find better suited type
+    private final BigInteger delta;
 
     public BalanceChange(final int txIndex, final BigInteger delta) {
       this.txIndex = txIndex;
@@ -237,14 +232,19 @@ public class BlockAccessList {
                 (address, slotMap) -> {
                   slotMap.forEach(
                       (slotKey, value) -> {
-                        var prior = value.getPrior();
-                        var updated = value.getUpdated();
-                        var isEvmRead = value.isEvmRead();
-                        // TODO: This check is wrong
-                        if (prior.equals(updated) && isEvmRead) {
+                        final UInt256 prior = value.getPrior();
+                        final UInt256 updated = value.getUpdated();
+                        final boolean isEvmRead = value.isEvmRead();
+                        final boolean areEqual =
+                            ((prior == null && updated == null)
+                                || (prior != null && prior.equals(updated)));
+                        if (areEqual && isEvmRead) {
                           this.accessSlot(address, slotKey).read();
                         } else {
-                          this.accessSlot(address, slotKey).write(txIndex, updated.toBytes());
+                          this.accessSlot(address, slotKey)
+                              .write(
+                                  txIndex,
+                                  Optional.ofNullable(updated).orElse(UInt256.ZERO).toBytes());
                         }
                       });
                 });
@@ -253,21 +253,18 @@ public class BlockAccessList {
             .getAccountsToUpdate()
             .forEach(
                 (address, value) -> {
-                  // TODO: This check is wrong
-                  if (!value.isEvmRead()
-                      && value.getPrior() != null
-                      && !value.getPrior().equals(value.getUpdated())) {
-                    final BigInteger prior =
-                        Optional.ofNullable(value.getPrior())
-                            .map(PathBasedAccount::getBalance)
-                            .map(Wei::getAsBigInteger)
-                            .orElse(BigInteger.ZERO);
-                    final BigInteger updated =
-                        Optional.ofNullable(value.getUpdated())
-                            .map(PathBasedAccount::getBalance)
-                            .map(Wei::getAsBigInteger)
-                            .orElse(BigInteger.ZERO);
-                    final BigInteger delta = updated.subtract(prior);
+                  final BigInteger prior =
+                      Optional.ofNullable(value.getPrior())
+                          .map(PathBasedAccount::getBalance)
+                          .map(Wei::getAsBigInteger)
+                          .orElse(BigInteger.ZERO);
+                  final BigInteger updated =
+                      Optional.ofNullable(value.getUpdated())
+                          .map(PathBasedAccount::getBalance)
+                          .map(Wei::getAsBigInteger)
+                          .orElse(BigInteger.ZERO);
+                  final BigInteger delta = updated.subtract(prior);
+                  if (!value.isEvmRead() && delta.compareTo(BigInteger.ZERO) > 0) {
                     this.accountBalanceChange(address, txIndex, delta);
                   }
                 });
@@ -312,14 +309,12 @@ public class BlockAccessList {
     }
 
     public SlotAccessBuilder read() {
-      accesses.add(new PerTxAccess());
       return this;
     }
 
     public SlotAccessBuilder write(final int txIndex, final Bytes valueAfter) {
-      // TODO: If there was a previous read get rid of it
-      // TODO: If there was a write with the same tx index get rid of it (or maybe when building)
-      accesses.add(new PerTxAccess(txIndex, valueAfter));
+      accesses.removeIf(access -> access.getTxIndex().equals(txIndex));
+      accesses.add(new PerTxAccess(txIndex, Optional.of(valueAfter)));
       return this;
     }
 

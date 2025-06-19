@@ -17,9 +17,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountAccess;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
-
 // TODO: Doublecheck writing to the correct output
 public class AccountAccessEncoder {
 
@@ -30,13 +27,16 @@ public class AccountAccessEncoder {
         accountAccess.getSlotAccesses(),
         (slotAccess, slotAccessOut) -> {
           slotAccessOut.startList();
-          out.writeUInt256Scalar(slotAccess.getSlot().getSlotKey().orElse(UInt256.ZERO));
+          out.writeUInt256Scalar(slotAccess.getSlot().getSlotKey().get());
           out.writeList(
               slotAccess.getPerTxAccesses(),
               (perTxAccess, perTxAccessOut) -> {
-                // TODO: Really not sure about the null value cases
-                perTxAccessOut.writeInt(perTxAccess.getTxIndex().orElse(0));
-                perTxAccessOut.writeBytes(perTxAccess.getValueAfter().orElse(Bytes.EMPTY));
+                perTxAccessOut.writeInt(perTxAccess.getTxIndex());
+                if (perTxAccess.getValueAfter().isPresent()) {
+                  perTxAccessOut.writeBytes(perTxAccess.getValueAfter().get());
+                } else {
+                  perTxAccessOut.writeNull();
+                }
               });
           slotAccessOut.endList();
         });

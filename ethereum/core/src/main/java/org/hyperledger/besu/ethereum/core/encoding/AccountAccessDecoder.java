@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockAccessList.SlotAccess;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -45,7 +46,7 @@ public class AccountAccessDecoder {
                       (perTxAccessIn) -> {
                         int txIndex = perTxAccessIn.readInt();
                         Bytes valueAfter = perTxAccessIn.readBytes();
-                        return new PerTxAccess(txIndex, valueAfter);
+                        return new PerTxAccess(txIndex, Optional.ofNullable(valueAfter));
                       });
               slotAccessIn.leaveList();
               return new SlotAccess(slotKey, accesses);
