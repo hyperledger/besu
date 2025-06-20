@@ -485,7 +485,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
           notifySelected(evaluationContext, processingResult);
           LOG.atTrace()
-              .setMessage("Selected and commited {} for block creation")
+              .setMessage("Selected and committed {} for block creation")
               .addArgument(transaction::toTraceLog)
               .log();
         });
