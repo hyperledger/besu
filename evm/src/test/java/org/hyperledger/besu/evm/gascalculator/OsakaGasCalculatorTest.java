@@ -25,7 +25,11 @@ class OsakaGasCalculatorTest {
   @Test
   void testPrecompileSize() {
     OsakaGasCalculator subject = new OsakaGasCalculator();
-    assertThat(subject.isPrecompile(Address.precompiled(0x14))).isFalse();
+    // past last l1 precompile address
+    assertThat(subject.isPrecompile(Address.precompiled(0x12))).isFalse();
+    // past last l2 precompile address
+    assertThat(subject.isPrecompile(Address.precompiled(0x0101))).isFalse();
+    assertThat(subject.isPrecompile(Address.P256_VERIFY)).isTrue();
     assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
   }
 }
