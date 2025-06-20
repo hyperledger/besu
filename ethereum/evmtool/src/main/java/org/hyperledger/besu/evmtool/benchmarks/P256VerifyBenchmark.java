@@ -25,15 +25,44 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** Benchmark P256Verify precompile (ECDSA key extraction + keccak hash) */
 public class P256VerifyBenchmark extends BenchmarkExecutor {
+  static Map<String, Bytes> TEST_CASES = createTestCases();
+  static int P256_MATH_WARMUP = MATH_WARMUP / TEST_CASES.size();
+  static int P256_MATH_ITERATIONS = MATH_ITERATIONS / TEST_CASES.size();
 
-  /** Use default math based warmup and interations */
-  public P256VerifyBenchmark() {
-    super(MATH_WARMUP, MATH_ITERATIONS);
+  /**
+   * The constructor. Use default math based warmup and interations.
+   *
+   * @param output where to write the stats.
+   * @param benchmarkConfig benchmark configurations.
+   */
+  public P256VerifyBenchmark(final PrintStream output, final BenchmarkConfig benchmarkConfig) {
+    super(P256_MATH_WARMUP, P256_MATH_ITERATIONS, output, benchmarkConfig);
   }
 
   @Override
-  public void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork) {
+  public void runBenchmark(final Boolean attemptNative, final String fork) {
+    final SECP256R1 signatureAlgorithm = new SECP256R1();
+    if (attemptNative != null && (!attemptNative || !signatureAlgorithm.maybeEnableNative())) {
+      signatureAlgorithm.disableNative();
+    }
+    output.println(signatureAlgorithm.isNative() ? "Native secp256r1" : "Java secp256r1");
+
+    final P256VerifyPrecompiledContract contract =
+        new P256VerifyPrecompiledContract(gasCalculatorForFork(fork), signatureAlgorithm);
+    double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
+    long gasCost = 0;
+    for (final Map.Entry<String, Bytes> testCase : TEST_CASES.entrySet()) {
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
+      gasCost += contract.gasRequirement(testCase.getValue());
+    }
+    execTime /= TEST_CASES.size();
+    gasCost /= TEST_CASES.size();
+    output.printf(
+        "p256verify %,6d gas @%,7.1f µs /%,8.1f MGps%n",
+        gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
+  }
+
+  private static Map<String, Bytes> createTestCases() {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "wycheproof/ecdsa_secp256r1_sha256_p1363_test.json",
@@ -3147,28 +3176,6 @@ public class P256VerifyBenchmark extends BenchmarkExecutor {
         "wycheproof/ecdsa_webcrypto_test.json",
         Bytes.fromHexString(
             "0x2f77668a9dfbf8d5848b9eeb4a7145ca94c6ed9236e4a773f6dcafa5132b2f9170bebe684cdcb5ca72a42f0d873879359bd1781a591809947628d313a3814f67aec03aca8f5587a4d535fa31027bbe9cc0e464b1c3577f4c2dcde6b2094798a9bcbb2914c79f045eaa6ecbbc612816b3be5d2d6796707d8125e9f851c18af015fffffffeecad44b6f05d15b33146549c2297b522a5eed8430cff596758e6c43d"));
-
-    final SECP256R1 signatureAlgorithm = new SECP256R1();
-    if (attemptNative != null && (!attemptNative || !signatureAlgorithm.maybeEnableNative())) {
-      signatureAlgorithm.disableNative();
-    }
-    output.println(signatureAlgorithm.isNative() ? "Native secp256r1" : "Java secp256r1");
-
-    final P256VerifyPrecompiledContract contract =
-        new P256VerifyPrecompiledContract(gasCalculatorForFork(fork), signatureAlgorithm);
-
-    warmup = warmup / testCases.size();
-    iterations = iterations / testCases.size();
-    double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
-    long gasCost = 0;
-    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), contract);
-      gasCost += contract.gasRequirement(testCase.getValue());
-    }
-    execTime /= testCases.size();
-    gasCost /= testCases.size();
-    output.printf(
-        "p256verify %,6d gas @%,7.1f µs /%,8.1f MGps%n",
-        gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
+    return testCases;
   }
 }

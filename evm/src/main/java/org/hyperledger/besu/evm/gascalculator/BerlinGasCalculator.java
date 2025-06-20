@@ -145,32 +145,6 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   // Redefined costs from EIP-2929
   @Override
-  @SuppressWarnings("java:S5738")
-  public long callOperationGasCost(
-      final MessageFrame frame,
-      final long stipend,
-      final long inputDataOffset,
-      final long inputDataLength,
-      final long outputDataOffset,
-      final long outputDataLength,
-      final Wei transferValue,
-      final Account recipient,
-      final Address to) {
-    return callOperationGasCost(
-        frame,
-        stipend,
-        inputDataOffset,
-        inputDataLength,
-        outputDataOffset,
-        outputDataLength,
-        transferValue,
-        recipient,
-        to,
-        frame.warmUpAddress(to) || isPrecompile(to));
-  }
-
-  // Redefined costs from EIP-2929
-  @Override
   public long callOperationGasCost(
       final MessageFrame frame,
       final long stipend,
