@@ -18,8 +18,8 @@ import static org.hyperledger.besu.evm.internal.Words.numWords;
 
 /** The Shanghai gas calculator. */
 public class ShanghaiGasCalculator extends LondonGasCalculator {
-
-  private static final long INIT_CODE_COST = 2L;
+  /** The constant INIT_CODE_COST. */
+  protected static final long INIT_CODE_COST = 2L;
 
   /**
    * Instantiates a new ShanghaiGasCalculator

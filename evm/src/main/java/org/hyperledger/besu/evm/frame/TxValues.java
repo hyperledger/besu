@@ -37,6 +37,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param maxStackSize The maximum stack size
  * @param warmedUpAddresses The warmed-up addresses
  * @param warmedUpStorage The warmed-up storage
+ * @param warmedUpCodes The warmed-up codes
  * @param originator The originator address
  * @param gasPrice The gas price
  * @param blobGasPrice The blob gas price
@@ -54,6 +55,7 @@ public record TxValues(
     int maxStackSize,
     UndoSet<Address> warmedUpAddresses,
     UndoTable<Address, Bytes32, Boolean> warmedUpStorage,
+    UndoSet<Address> warmedUpCodes,
     Address originator,
     Wei gasPrice,
     Wei blobGasPrice,
@@ -74,6 +76,7 @@ public record TxValues(
   public void undoChanges(final long mark) {
     warmedUpAddresses.undo(mark);
     warmedUpStorage.undo(mark);
+    warmedUpCodes.undo(mark);
     transientStorage.undo(mark);
     creates.undo(mark);
     selfDestructs.undo(mark);

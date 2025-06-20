@@ -20,6 +20,9 @@ import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
@@ -31,10 +34,13 @@ import org.apache.tuweni.bytes.Bytes;
  * Gas Calculator for Osaka
  *
  * <UL>
- *   <LI>TBD
+ *   <LI>EIP-7883: ModExp Gas Cost Increase
+ *   <LI>EIP-7907: Meter Contract Code Size And Increase Limit
  * </UL>
  */
 public class OsakaGasCalculator extends PragueGasCalculator {
+  /** The constant MAX_CODE_SIZE_WITH_NO_ACCESS_COST. */
+  private static final int MAX_CODE_SIZE_WITH_NO_ACCESS_COST = 0x6000; // 24KB
 
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
@@ -126,5 +132,75 @@ public class OsakaGasCalculator extends PragueGasCalculator {
     } else {
       return clampedAdd(clampedMultiply(16, (exponentLength - WORD_SIZE)), bitLength);
     }
+  }
+
+  /**
+   * Computes the gas cost for cold access to large contract code, as defined in EIP-7907.
+   *
+   * <p>This method:
+   *
+   * <ul>
+   *   <li>Returns 0 if the code is already warm, or if the account has no code
+   *   <li>Marks the code as warm if cold
+   *   <li>Applies additional gas cost if code size exceeds 24KB
+   * </ul>
+   *
+   * @param frame the current execution frame
+   * @param account the target account
+   * @return additional gas cost, or 0 if no cost applies
+   */
+  @Override
+  public long calculateLargeCodeAccessCost(final MessageFrame frame, final Account account) {
+    if (account == null) {
+      return 0;
+    }
+    final Hash codeHash = account.getCodeHash();
+    if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
+      return 0;
+    }
+    boolean isCodeWarm = frame.warmUpCode(account.getAddress());
+    if (isCodeWarm) {
+      return 0L;
+    }
+    return calculateLargeCodeSizeCost(account.getCodeSize());
+  }
+
+  /**
+   * Compute the gas cost for delegated code resolution.
+   *
+   * <p>Per EIP-7907, this includes:
+   *
+   * <ul>
+   *   <li>Standard access cost inherited from Prague calculator
+   *   <li>Additional cost if the target has cold, large code
+   * </ul>
+   *
+   * @param frame the current message frame
+   * @param targetAccount the account being delegated to
+   * @return total gas cost for code delegation resolution
+   */
+  @Override
+  public long calculateCodeDelegationResolutionGas(
+      final MessageFrame frame, final Account targetAccount) {
+    long accessCost = super.calculateCodeDelegationResolutionGas(frame, targetAccount);
+    return clampedAdd(accessCost, calculateLargeCodeAccessCost(frame, targetAccount));
+  }
+
+  /**
+   * Calculates the gas cost for accessing code based on its size.
+   *
+   * <p>Contracts with code sizes exceeding 24KB are charged proportionally to the number of excess
+   * 32-byte words, based on {@code INIT_CODE_COST}. Code sizes under or equal to the threshold
+   * incur no extra cost.
+   *
+   * @param codeSize the size of the code in bytes
+   * @return the calculated code access cost
+   */
+  private long calculateLargeCodeSizeCost(final long codeSize) {
+    long excessCodeSize = Math.max(codeSize - MAX_CODE_SIZE_WITH_NO_ACCESS_COST, 0L);
+    if (excessCodeSize == 0L) {
+      return 0L;
+    }
+    return INIT_CODE_COST * Words.numWords(clampedToInt(excessCodeSize));
   }
 }

@@ -56,19 +56,19 @@ public enum EvmSpecVersion {
   /** Prague evm spec version. */
   PRAGUE(MainnetHardforkId.PRAGUE, 0x6000, 0xc000, 0),
   /** Osaka evm spec version. */
-  OSAKA(MainnetHardforkId.OSAKA, 0x6000, 0xc000, 0),
+  OSAKA(MainnetHardforkId.OSAKA, 0x40000, 0x80000, 0),
   /** Amsterdam evm spec version. */
-  AMSTERDAM(MainnetHardforkId.AMSTERDAM, 0x6000, 0xc000, 0),
+  AMSTERDAM(MainnetHardforkId.AMSTERDAM, 0x40000, 0x80000, 0),
   /** Bogota evm spec version. */
-  BOGOTA(MainnetHardforkId.BOGOTA, 0x6000, 0xc000, 0),
+  BOGOTA(MainnetHardforkId.BOGOTA, 0x40000, 0x80000, 0),
   /** Polis evm spec version. */
-  POLIS(MainnetHardforkId.POLIS, 0x6000, 0xc000, 0),
+  POLIS(MainnetHardforkId.POLIS, 0x40000, 0x80000, 0),
   /** Bangkok evm spec version. */
-  BANGKOK(MainnetHardforkId.BANGKOK, 0x6000, 0xc000, 0),
+  BANGKOK(MainnetHardforkId.BANGKOK, 0x40000, 0x80000, 0),
   /** Development fork for unscheduled EIPs */
-  FUTURE_EIPS(MainnetHardforkId.FUTURE_EIPS, 0x6000, 0xc000, 1),
+  FUTURE_EIPS(MainnetHardforkId.FUTURE_EIPS, 0x40000, 0x80000, 1),
   /** Development fork for EIPs that are not yet accepted to Mainnet */
-  EXPERIMENTAL_EIPS(MainnetHardforkId.EXPERIMENTAL_EIPS, 0x6000, 0xc000, 1);
+  EXPERIMENTAL_EIPS(MainnetHardforkId.EXPERIMENTAL_EIPS, 0x40000, 0x80000, 1);
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EvmSpecVersion.class);
 
