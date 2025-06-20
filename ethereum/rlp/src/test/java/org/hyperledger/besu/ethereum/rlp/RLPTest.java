@@ -171,7 +171,7 @@ public class RLPTest {
 
   @Test
   public void testValidateWithListEndingAtStartOfList() {
-    // The structue of the RLP is as shown below
+    // The structure of the RLP is as shown below
     // [
     //  ["0x01"],
     //  ["0x02"]
