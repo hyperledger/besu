@@ -953,6 +953,16 @@ public class MessageFrame {
   }
 
   /**
+   * "Warms up" the code at the address as per EIP-7907
+   *
+   * @param address the address whose code is being warmed up
+   * @return true if the code was already warmed up
+   */
+  public boolean warmUpCode(final Address address) {
+    return !txValues.warmedUpCodes().add(address);
+  }
+
+  /**
    * Returns whether an address has been warmed up. Is deliberately publicly exposed for access from
    * tracers.
    *
@@ -1672,6 +1682,7 @@ public class MessageFrame {
                 maxStackSize,
                 UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
                 UndoTable.of(HashBasedTable.create()),
+                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
                 originator,
                 gasPrice,
                 blobGasPrice,

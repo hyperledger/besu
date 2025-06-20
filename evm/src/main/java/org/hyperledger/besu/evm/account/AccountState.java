@@ -139,4 +139,13 @@ public interface AccountState {
    * @return the requested storage entries as a map of key hash to entry.
    */
   NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(Bytes32 startKeyHash, int limit);
+
+  /**
+   * The size of the code in bytes.
+   *
+   * @return the size of the code in bytes.
+   */
+  default int getCodeSize() {
+    return getCode().size();
+  }
 }
