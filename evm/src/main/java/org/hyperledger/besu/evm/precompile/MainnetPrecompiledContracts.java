@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
+import static org.hyperledger.besu.datatypes.Address.P256_VERIFY;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -200,8 +202,8 @@ public interface MainnetPrecompiledContracts {
     registry.put(
         Address.MODEXP,
         new BigIntegerModularExponentiationPrecompiledContract(gasCalculator, 1024L));
-    // RIP-7212 - secp256r1 P256VERIFY
-    registry.put(Address.precompiled(100), new P256VerifyPrecompiledContract(gasCalculator));
+    // EIP-7951 - secp256r1 P256VERIFY
+    registry.put(P256_VERIFY, new P256VerifyPrecompiledContract(gasCalculator));
   }
 
   /**

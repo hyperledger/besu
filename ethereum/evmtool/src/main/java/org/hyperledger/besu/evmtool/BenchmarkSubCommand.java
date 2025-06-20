@@ -66,7 +66,7 @@ public class BenchmarkSubCommand implements Runnable {
     ModExp(ModExpBenchmark::new),
     Secp256k1(Secp256k1Benchmark::new),
     // bls12
-    Bls12(BLS12Benchmark::new);
+    Bls12(BLS12Benchmark::new),
     p256Verify(P256VerifyBenchmark::new);
 
     private final BenchmarkExecutor.Builder executorBuilder;

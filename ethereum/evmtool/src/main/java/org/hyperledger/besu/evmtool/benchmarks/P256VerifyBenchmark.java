@@ -27,13 +27,12 @@ import org.apache.tuweni.bytes.Bytes;
 public class P256VerifyBenchmark extends BenchmarkExecutor {
 
   /** Use default math based warmup and interations */
-  public P256VerifyBenchmark() {
-    super(MATH_WARMUP, MATH_ITERATIONS);
+  public P256VerifyBenchmark(final PrintStream output, final BenchmarkConfig benchmarkConfig) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, benchmarkConfig);
   }
 
   @Override
-  public void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork) {
+  public void runBenchmark(final Boolean attemptNative, final String fork) {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "wycheproof/ecdsa_secp256r1_sha256_p1363_test.json",
@@ -3157,12 +3156,10 @@ public class P256VerifyBenchmark extends BenchmarkExecutor {
     final P256VerifyPrecompiledContract contract =
         new P256VerifyPrecompiledContract(gasCalculatorForFork(fork), signatureAlgorithm);
 
-    warmup = warmup / testCases.size();
-    iterations = iterations / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), contract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
       gasCost += contract.gasRequirement(testCase.getValue());
     }
     execTime /= testCases.size();

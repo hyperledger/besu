@@ -15,10 +15,12 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
+import static org.hyperledger.besu.datatypes.Address.P256_VERIFY;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
@@ -34,10 +36,12 @@ import org.apache.tuweni.bytes.Bytes;
  * </UL>
  */
 public class OsakaGasCalculator extends PragueGasCalculator {
+  public static final int MAX_L1_PRECOMPILE = 255;
+  protected int maxL2Precompile;
 
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
+    this(BLS12_MAP_FP2_TO_G2.getInt(16), P256_VERIFY.getInt(16));
   }
 
   /**
@@ -45,8 +49,33 @@ public class OsakaGasCalculator extends PragueGasCalculator {
    *
    * @param maxPrecompile the max precompile
    */
-  protected OsakaGasCalculator(final int maxPrecompile) {
+  protected OsakaGasCalculator(final int maxPrecompile, final int maxL2Precompile) {
     super(maxPrecompile);
+    this.maxL2Precompile = maxL2Precompile;
+  }
+
+  protected OsakaGasCalculator(final int maxPrecompile) {
+    this(maxPrecompile, P256_VERIFY.getInt(16));
+  }
+
+  @Override
+  public boolean isPrecompile(final Address address) {
+    final byte[] addressBytes = address.toArrayUnsafe();
+
+    // First 18 bytes must be zero:
+    for (int i = 0; i < 18; i++) {
+      if (addressBytes[i] != 0) {
+        return false;
+      }
+    }
+    // Interpret last two bytes as big-endian unsigned short.
+    final int precompileValue = address.getInt(16);
+
+    // values in range [1, 0x01FF] inclusive to include L1 and L2 precompiles,
+    // assert max precompile in each range:
+    return (precompileValue <= MAX_L1_PRECOMPILE)
+        ? precompileValue <= this.maxPrecompile
+        : precompileValue <= maxL2Precompile;
   }
 
   @Override
