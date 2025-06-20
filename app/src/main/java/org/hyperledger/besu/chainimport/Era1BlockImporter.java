@@ -21,15 +21,11 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.util.era1.Era1BlockIndex;
 import org.hyperledger.besu.util.era1.Era1ExecutionBlockBody;
 import org.hyperledger.besu.util.era1.Era1ExecutionBlockHeader;
@@ -87,8 +83,6 @@ public class Era1BlockImporter implements Closeable {
 
     final List<Future<BlockHeader>> headersFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
     final List<Future<BlockBody>> bodiesFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
-    final List<Future<List<TransactionReceipt>>> receiptsFutures =
-        new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
     reader.read(
         new FileInputStream(path.toFile()),
         new Era1ReaderListener() {
@@ -119,44 +113,25 @@ public class Era1BlockImporter implements Closeable {
           @Override
           public void handleExecutionBlockReceipts(
               final Era1ExecutionBlockReceipts executionBlockReceipts) {
-            receiptsFutures.add(
-                CompletableFuture.supplyAsync(
-                    () -> {
-                      RLPInput input =
-                          new BytesValueRLPInput(
-                              Bytes.wrap(executionBlockReceipts.receipts()), false);
-                      final List<TransactionReceipt> receiptsForBlock = new ArrayList<>();
-                      input.readList(
-                          (in) ->
-                              receiptsForBlock.add(TransactionReceiptDecoder.readFrom(in, false)));
-                      return receiptsForBlock;
-                    }));
+            // Receipts are generated during the import process. Do nothing
           }
 
           @Override
           public void handleBlockIndex(final Era1BlockIndex blockIndex) {
-            // not really necessary, do nothing
+            // not used for block import, do nothing
           }
         });
 
     LOG.info("Read {} blocks, now importing", headersFutures.size());
 
-    Block block = null;
     for (int i = 0; i < headersFutures.size(); i++) {
       BlockHeader blockHeader = headersFutures.get(i).get(10, TimeUnit.SECONDS);
       BlockImporter blockImporter =
           protocolSchedule.getByBlockHeader(blockHeader).getBlockImporter();
-      block = new Block(blockHeader, bodiesFutures.get(i).get(10, TimeUnit.SECONDS));
+      Block block = new Block(blockHeader, bodiesFutures.get(i).get(10, TimeUnit.SECONDS));
 
       BlockImportResult importResult =
-          blockImporter.importBlockForSyncing(
-              context,
-              block,
-              receiptsFutures.get(i).get(10, TimeUnit.SECONDS),
-              HeaderValidationMode.NONE,
-              HeaderValidationMode.NONE,
-              BodyValidationMode.NONE,
-              false);
+          blockImporter.importBlock(context, block, HeaderValidationMode.NONE);
       if (importResult.getStatus() != BlockImportResult.BlockImportStatus.IMPORTED) {
         LOG.warn(
             "Failed to import block {} due to {}",
