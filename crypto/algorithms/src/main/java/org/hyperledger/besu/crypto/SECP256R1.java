@@ -104,7 +104,17 @@ public class SECP256R1 extends AbstractSECP256 {
   @Override
   public boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
     if (useNative) {
-      return verifyNative(data, signature, pub);
+      return verifyNative(data, signature, pub, false);
+    } else {
+      return super.verify(data, signature, pub);
+    }
+  }
+
+  @Override
+  public boolean verifyMalleable(
+      final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
+    if (useNative) {
+      return verifyNative(data, signature, pub, true);
     } else {
       return super.verify(data, signature, pub);
     }
@@ -164,12 +174,16 @@ public class SECP256R1 extends AbstractSECP256 {
   }
 
   private boolean verifyNative(
-      final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
+      final Bytes data,
+      final SECPSignature signature,
+      final SECPPublicKey pub,
+      final boolean allowMalleable) {
 
     return libSECP256R1.verify(
         data.toArrayUnsafe(),
         signature.getR().toByteArray(),
         signature.getS().toByteArray(),
-        pub.getEncoded());
+        pub.getEncoded(),
+        allowMalleable);
   }
 }
