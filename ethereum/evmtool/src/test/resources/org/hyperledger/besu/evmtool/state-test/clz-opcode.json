@@ -1,0 +1,136 @@
+{
+    "cli": [
+        "state-test",
+        "stdin",
+        "--trace",
+        "--trace.memory",
+        "--trace.stack",
+        "--trace.returndata",
+        "--notime"
+    ],
+    "stdin": {
+        "clz-opcode-test": {
+            "env": {
+                "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                "currentGasLimit": "0x044aa200",
+                "currentNumber": "0x01",
+                "currentTimestamp": "0x03e8",
+                "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "currentDifficulty": "0x00",
+                "currentBaseFee": "0x07",
+                "currentExcessBlobGas": "0x00"
+            },
+            "pre": {
+                "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                    "nonce": "0x00",
+                    "balance": "0x3635c9adc5dea00000",
+                    "code": "0x",
+                    "storage": {}
+                },
+                "0x0000000000000000000000000000000000001000": {
+                    "nonce": "0x01",
+                    "balance": "0x00",
+                    "code": "0x7f123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01e600055",
+                    "storage": {
+                        "0x00": "0xdeadbeef"
+                    }
+                }
+            },
+            "transaction": {
+                "nonce": "0x00",
+                "gasPrice": "0x0a",
+                "gasLimit": [
+                    "0x030d40"
+                ],
+                "to": "0x0000000000000000000000000000000000001000",
+                "value": [
+                    "0x00"
+                ],
+                "data": [
+                    "0x"
+                ],
+                "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+            },
+            "post": {
+                "Prague": [
+                    {
+                        "hash": "0x8c0f416ca6cee3f1bf82320928d73ec26d7ffbbdd25f6184ba4de360e1652ff6",
+                        "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                        "txbytes": "0xf860800a83030d40940000000000000000000000000000000000001000808026a046e476fb983dadf35cef7295c6720df87da3496cb6e0440214fcc3471069ee66a01b3f93462e3d1df98adedfbb6920d99009ea711a5bc55af4fa411c161db966b4",
+                        "indexes": {
+                            "data": 0,
+                            "gas": 0,
+                            "value": 0
+                        }
+                    }
+                ],
+                "Osaka": [
+                    {
+                        "hash": "0x8c0f416ca6cee3f1bf82320928d73ec26d7ffbbdd25f6184ba4de360e1652ff6",
+                        "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                        "txbytes": "0xf860800a83030d40940000000000000000000000000000000000001000808026a046e476fb983dadf35cef7295c6720df87da3496cb6e0440214fcc3471069ee66a01b3f93462e3d1df98adedfbb6920d99009ea711a5bc55af4fa411c161db966b4",
+                        "indexes": {
+                            "data": 0,
+                            "gas": 0,
+                            "value": 0
+                        },
+                        "state": {
+                            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                                "nonce": "0x01",
+                                "balance": "0x3635c9adc5de9c0806",
+                                "code": "0x",
+                                "storage": {}
+                            },
+                            "0x0000000000000000000000000000000000001000": {
+                                "nonce": "0x01",
+                                "balance": "0x00",
+                                "code": "0x7f123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01e600055",
+                                "storage": {
+                                    "0x00": "0x03"
+                                }
+                            },
+                            "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                                "nonce": "0x00",
+                                "balance": "0x0130cb",
+                                "code": "0x",
+                                "storage": {}
+                            }
+                        }
+                    }
+                ]
+            },
+            "config": {
+                "blobSchedule": {
+                    "Cancun": {
+                        "target": "0x03",
+                        "max": "0x06",
+                        "baseFeeUpdateFraction": "0x32f0ed"
+                    },
+                    "Prague": {
+                        "target": "0x06",
+                        "max": "0x09",
+                        "baseFeeUpdateFraction": "0x4c6964"
+                    },
+                    "Osaka": {
+                        "target": "0x06",
+                        "max": "0x09",
+                        "baseFeeUpdateFraction": "0x4c6964"
+                    }
+                },
+                "chainid": "0x01"
+            }
+        }
+    },
+    "stdout":  [
+        {"pc":0,"op":127,"gas":"0x2bb38","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH32"},
+        {"pc":33,"op":30,"gas":"0x2bb35","gasCost":"0x0","memSize":0,"stack":["0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"],"depth":1,"refund":0,"opName":"INVALID","error":"Invalid opcode: 0x1e"},
+        {"output":"","gasUsed":"0x30d40","test":"clz-opcode-test","fork":"Prague","d":0,"g":0,"v":0,"stateRoot":"0xbb80fba01e2ba774bf675ec2d1e559fa37d5b80a6d4cdb19c5d2a753d952b0e4","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":false,"error":"Invalid opcode: 0x1e"},
+
+        {"pc":0,"op":127,"gas":"0x2bb38","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH32"},
+        {"pc":33,"op":30,"gas":"0x2bb35","gasCost":"0x3","memSize":0,"stack":["0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"],"depth":1,"refund":0,"opName":"CLZ"},
+        {"pc":34,"op":96,"gas":"0x2bb32","gasCost":"0x3","memSize":0,"stack":["0x3"],"depth":1,"refund":0,"opName":"PUSH1"},
+        {"pc":36,"op":85,"gas":"0x2bb2f","gasCost":"0x1388","memSize":0,"stack":["0x3","0x0"],"depth":1,"refund":0,"opName":"SSTORE"},
+        {"output":"","gasUsed":"0x6599","test":"clz-opcode-test","fork":"Osaka","d":0,"g":0,"v":0,"stateRoot":"0x8c0f416ca6cee3f1bf82320928d73ec26d7ffbbdd25f6184ba4de360e1652ff6","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
+    ]
+}

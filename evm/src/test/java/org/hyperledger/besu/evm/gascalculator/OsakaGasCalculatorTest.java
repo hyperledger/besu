@@ -53,7 +53,9 @@ class OsakaGasCalculatorTest {
   @Test
   void shouldIdentifyPrecompileAddressesCorrectly() {
     OsakaGasCalculator subject = new OsakaGasCalculator();
-    assertThat(subject.isPrecompile(Address.precompiled(0x14))).isFalse();
+    assertThat(subject.isPrecompile(Address.precompiled(0x14))).isTrue();
+    assertThat(subject.isPrecompile(Address.precompiled(0x01FF))).isTrue();
+    assertThat(subject.isPrecompile(Address.P256_VERIFY)).isTrue();
     assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
   }
 
