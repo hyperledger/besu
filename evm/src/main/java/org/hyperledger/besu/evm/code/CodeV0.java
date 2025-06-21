@@ -39,11 +39,13 @@ public class CodeV0 implements Code {
   /** The bytes representing the code. */
   private final Bytes bytes;
 
+  private final Supplier<Integer> sizeSupplier;
+
   /** The hash of the code, needed for accessing metadata about the bytecode */
-  private final Supplier<Hash> codeHash;
+  private final Supplier<Hash> codeHashSupplier;
 
   /** Used to cache valid jump destinations. */
-  private long[] validJumpDestinations;
+  private long[] validJumpDestinationsBitMask;
 
   /** Code section info for the legacy code */
   private final CodeSection codeSectionZero;
@@ -51,12 +53,25 @@ public class CodeV0 implements Code {
   /**
    * Public constructor.
    *
-   * @param bytes The byte representation of the code.
+   * @param byteCode The byte representation of the code.
    */
-  CodeV0(final Bytes bytes) {
-    this.bytes = bytes;
-    this.codeHash = Suppliers.memoize(() -> Hash.hash(bytes));
-    this.codeSectionZero = new CodeSection(bytes.size(), 0, -1, -1, 0);
+  public CodeV0(final Bytes byteCode) {
+    this(
+        byteCode,
+        byteCode.isEmpty() ? () -> Hash.EMPTY : Suppliers.memoize(() -> Hash.hash(byteCode)));
+  }
+
+  /**
+   * Public constructor.
+   *
+   * @param byteCode The byte representation of the code.
+   * @param codeHashSupplier the hash of the bytecode
+   */
+  public CodeV0(final Bytes byteCode, final Supplier<Hash> codeHashSupplier) {
+    this.bytes = byteCode;
+    this.sizeSupplier = Suppliers.memoize(byteCode::size);
+    this.codeHashSupplier = codeHashSupplier;
+    this.codeSectionZero = new CodeSection(this.sizeSupplier, 0, -1, -1, 0);
   }
 
   /**
@@ -71,7 +86,7 @@ public class CodeV0 implements Code {
     if (other == this) return true;
     if (!(other instanceof CodeV0 that)) return false;
 
-    return this.bytes.equals(that.bytes);
+    return this.codeHashSupplier.get().equals(that.codeHashSupplier.get());
   }
 
   @Override
@@ -86,7 +101,7 @@ public class CodeV0 implements Code {
    */
   @Override
   public int getSize() {
-    return bytes.size();
+    return sizeSupplier.get();
   }
 
   @Override
@@ -111,7 +126,7 @@ public class CodeV0 implements Code {
 
   @Override
   public Hash getCodeHash() {
-    return codeHash.get();
+    return codeHashSupplier.get();
   }
 
   @Override
@@ -119,12 +134,21 @@ public class CodeV0 implements Code {
     if (jumpDestination < 0 || jumpDestination >= getSize()) {
       return true;
     }
-    if (validJumpDestinations == null || validJumpDestinations.length == 0) {
-      validJumpDestinations = calculateJumpDests();
+
+    if (validJumpDestinationsBitMask == null) {
+      validJumpDestinationsBitMask = calculateJumpDestBitMask();
     }
 
-    final long targetLong = validJumpDestinations[jumpDestination >>> 6];
+    // This selects which long in the array holds the bit for the given offset:
+    //	1)	>>> 6 is equivalent to jumpDestination / 64
+    //	2)	Each long holds 64 bits, so this finds the correct chunk
+    final long targetLong = validJumpDestinationsBitMask[jumpDestination >>> 6];
+
+    // 1) & 0x3F is jumpDestination % 64
+    // 2)	1L << ... gives a mask for the specific bit in that long
     final long targetBit = 1L << (jumpDestination & 0x3F);
+
+    // If the bit is not set, then it is an invalid jump destination
     return (targetLong & targetBit) == 0L;
   }
 
@@ -172,7 +196,7 @@ public class CodeV0 implements Code {
    *
    * @return the long [ ]
    */
-  long[] calculateJumpDests() {
+  long[] calculateJumpDestBitMask() {
     final int size = getSize();
     final long[] bitmap = new long[(size >> 6) + 1];
     final byte[] rawCode = bytes.toArrayUnsafe();

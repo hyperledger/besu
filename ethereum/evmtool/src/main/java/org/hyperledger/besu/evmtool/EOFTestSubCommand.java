@@ -232,7 +232,7 @@ public class EOFTestSubCommand implements Runnable {
       return failed("layout - " + layout.invalidReason());
     }
 
-    var code = evm.getCodeUncached(codeBytes);
+    var code = evm.wrapCode(codeBytes);
     if (!code.isValid()) {
       return failed("validate " + ((CodeInvalid) code).getInvalidReason());
     }

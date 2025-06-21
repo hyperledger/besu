@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
@@ -39,7 +40,8 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
       final Consumer<StorageSlotKey> storagePreloader,
       final BonsaiPreImageProxy preImageProxy,
       final EvmConfiguration evmConfiguration) {
-    super(world, accountPreloader, storagePreloader, evmConfiguration);
+    // only used in tests no global code cache is needed
+    super(world, accountPreloader, storagePreloader, evmConfiguration, new CodeCache());
     this.preImageProxy = preImageProxy;
   }
 

@@ -134,9 +134,9 @@ public class EOFReferenceTestTools {
       if (layout.isValid()) {
         Code parsedCode;
         if ("INITCODE".equals(containerKind)) {
-          parsedCode = evm.getCodeForCreation(code);
+          parsedCode = evm.wrapCodeForCreation(code);
         } else {
-          parsedCode = evm.getCodeUncached(code);
+          parsedCode = evm.wrapCode(code);
         }
 
         if (expected.result()) {
