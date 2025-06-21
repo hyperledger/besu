@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
@@ -333,18 +332,7 @@ public class EVMExecutor {
    * @return the evm executor
    */
   public EVMExecutor code(final Bytes codeBytes) {
-    return code(codeBytes, Hash.hash(codeBytes));
-  }
-
-  /**
-   * Sets Code.
-   *
-   * @param codeBytes the code bytes
-   * @param hash the hash
-   * @return the evm executor
-   */
-  public EVMExecutor code(final Bytes codeBytes, final Hash hash) {
-    this.code = evmSpec.getEvm().wrapCode(hash, codeBytes);
+    this.code = evmSpec.getEvm().wrapCode(codeBytes);
     return this;
   }
 
