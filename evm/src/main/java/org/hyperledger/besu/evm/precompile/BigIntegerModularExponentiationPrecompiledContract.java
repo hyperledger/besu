@@ -42,7 +42,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
       LoggerFactory.getLogger(BigIntegerModularExponentiationPrecompiledContract.class);
 
   /** Use native Arithmetic libraries. */
-  static boolean useNative;
+  private static boolean useNative;
 
   /** The constant BASE_OFFSET. */
   public static final int BASE_OFFSET = 96;
