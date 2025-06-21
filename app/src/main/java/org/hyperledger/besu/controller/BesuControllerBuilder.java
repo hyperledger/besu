@@ -569,7 +569,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(besuComponent, "Must supply a BesuComponent");
 
     this.codeCache = besuComponent.map(BesuComponent::getCodeCache).orElse(new CodeCache());
-    this.codeCache.setMetricsSystem(metricsSystem);
+    this.codeCache.setupMetricsSystem(metricsSystem);
 
     prepForBuild();
 

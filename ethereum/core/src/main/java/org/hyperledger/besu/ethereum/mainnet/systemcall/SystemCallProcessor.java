@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -117,8 +118,6 @@ public class SystemCallProcessor {
       final Bytes inputData) {
 
     final Optional<Account> maybeContract = Optional.ofNullable(worldUpdater.get(callAddress));
-    final AbstractMessageProcessor processor =
-        mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
 
     return MessageFrame.builder()
         .maxStackSize(DEFAULT_MAX_STACK_SIZE)
@@ -138,7 +137,7 @@ public class SystemCallProcessor {
         .inputData(inputData)
         .sender(SYSTEM_ADDRESS)
         .blockHashLookup(blockHashLookup)
-        .code(maybeContract.map(c -> processor.wrapCode(c.getCode())).orElse(CodeV0.EMPTY_CODE))
+        .code(maybeContract.map(AccountState::getAnalyzedCode).orElse(CodeV0.EMPTY_CODE))
         .build();
   }
 }

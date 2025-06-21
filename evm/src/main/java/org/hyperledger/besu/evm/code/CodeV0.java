@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -196,32 +197,156 @@ public class CodeV0 implements Code {
    * @return the long [ ]
    */
   long[] calculateJumpDestBitMask() {
-    final byte[] code = bytes.toArrayUnsafe();
-    final int length = code.length;
-
-    // Allocate enough longs: one bit per byte, 64 bits per long
-    final long[] bitmap = new long[(length + 63) >>> 6];
-
+    final int size = getSize();
+    final long[] bitmap = new long[(size >> 6) + 1];
+    final byte[] rawCode = bytes.toArrayUnsafe();
+    final int length = rawCode.length;
     for (int i = 0; i < length; ) {
-      final int byteIndex = i;
-      final int unsignedOpcode = code[i] & 0xFF;
-
-      // JUMPDEST opcode is 0x5B
-      if (unsignedOpcode == (byte) 0x5B) {
-        int wordIndex = byteIndex >>> 6; // index into long[] bitmap
-        int bitIndex = byteIndex & 0x3F; // bit position within the long
-        bitmap[wordIndex] |= 1L << bitIndex; // mark this offset as JUMPDEST
-        i += 1;
-      } else if (unsignedOpcode >= 0x60 && unsignedOpcode <= 0x7F) {
-        // PUSH1 (0x60) to PUSH32 (0x7F) — skip over immediate bytes
-        int pushDataLength = unsignedOpcode - 0x5F; // PUSHn pushes n bytes
-        i += 1 + pushDataLength;
-      } else {
-        // Other instructions: just advance 1 byte
-        i += 1;
+      long thisEntry = 0L;
+      final int entryPos = i >> 6;
+      final int max = Math.min(64, length - (entryPos << 6));
+      int j = i & 0x3F;
+      for (; j < max; i++, j++) {
+        final byte operationNum = rawCode[i];
+        if (operationNum >= JumpDestOperation.OPCODE) {
+          switch (operationNum) {
+            case JumpDestOperation.OPCODE:
+              thisEntry |= 1L << j;
+              break;
+            case 0x60:
+              i += 1;
+              j += 1;
+              break;
+            case 0x61:
+              i += 2;
+              j += 2;
+              break;
+            case 0x62:
+              i += 3;
+              j += 3;
+              break;
+            case 0x63:
+              i += 4;
+              j += 4;
+              break;
+            case 0x64:
+              i += 5;
+              j += 5;
+              break;
+            case 0x65:
+              i += 6;
+              j += 6;
+              break;
+            case 0x66:
+              i += 7;
+              j += 7;
+              break;
+            case 0x67:
+              i += 8;
+              j += 8;
+              break;
+            case 0x68:
+              i += 9;
+              j += 9;
+              break;
+            case 0x69:
+              i += 10;
+              j += 10;
+              break;
+            case 0x6a:
+              i += 11;
+              j += 11;
+              break;
+            case 0x6b:
+              i += 12;
+              j += 12;
+              break;
+            case 0x6c:
+              i += 13;
+              j += 13;
+              break;
+            case 0x6d:
+              i += 14;
+              j += 14;
+              break;
+            case 0x6e:
+              i += 15;
+              j += 15;
+              break;
+            case 0x6f:
+              i += 16;
+              j += 16;
+              break;
+            case 0x70:
+              i += 17;
+              j += 17;
+              break;
+            case 0x71:
+              i += 18;
+              j += 18;
+              break;
+            case 0x72:
+              i += 19;
+              j += 19;
+              break;
+            case 0x73:
+              i += 20;
+              j += 20;
+              break;
+            case 0x74:
+              i += 21;
+              j += 21;
+              break;
+            case 0x75:
+              i += 22;
+              j += 22;
+              break;
+            case 0x76:
+              i += 23;
+              j += 23;
+              break;
+            case 0x77:
+              i += 24;
+              j += 24;
+              break;
+            case 0x78:
+              i += 25;
+              j += 25;
+              break;
+            case 0x79:
+              i += 26;
+              j += 26;
+              break;
+            case 0x7a:
+              i += 27;
+              j += 27;
+              break;
+            case 0x7b:
+              i += 28;
+              j += 28;
+              break;
+            case 0x7c:
+              i += 29;
+              j += 29;
+              break;
+            case 0x7d:
+              i += 30;
+              j += 30;
+              break;
+            case 0x7e:
+              i += 31;
+              j += 31;
+              break;
+            case 0x7f:
+              i += 32;
+              j += 32;
+              break;
+            default:
+          }
+        }
       }
+      bitmap[entryPos] = thisEntry;
     }
-
     return bitmap;
   }
 

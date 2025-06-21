@@ -29,7 +29,6 @@ public class CodeCache {
 
   // private final MemoryBoundCache<Hash, Code> cache;
   private final Cache<Hash, Code> cache;
-  private ObservableMetricsSystem metricsSystem;
   private OperationTimer lookupTimer;
 
   /** Instantiates a new Code cache. */
@@ -38,14 +37,12 @@ public class CodeCache {
     this.cache = Caffeine.newBuilder().maximumSize(16_000L).recordStats().build();
   }
 
-  public void setMetricsSystem(final ObservableMetricsSystem metricsSystem) {
-    this.metricsSystem = metricsSystem;
-
+  public void setupMetricsSystem(final ObservableMetricsSystem metricsSystem) {
     this.lookupTimer =
         metricsSystem.createTimer(
             BONSAI_CACHE, "code_cache_lookup_time", "Time spent performing CodeCache lookups");
 
-    this.metricsSystem.createLongGauge(
+    metricsSystem.createLongGauge(
         BONSAI_CACHE,
         "code_cache_size",
         "Current number of entries in the code cache",

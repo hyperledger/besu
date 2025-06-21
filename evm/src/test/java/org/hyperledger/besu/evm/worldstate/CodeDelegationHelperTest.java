@@ -21,7 +21,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -39,7 +38,7 @@ class CodeDelegationHelperTest {
 
   private @Mock WorldUpdater worldUpdater;
   private @Mock GasCalculator gasCalculator;
-  private @Mock CodeDelegationAccount account;
+  private @Mock Account account;
 
   @Test
   void hasCodeDelegationReturnsFalseForNull() {
