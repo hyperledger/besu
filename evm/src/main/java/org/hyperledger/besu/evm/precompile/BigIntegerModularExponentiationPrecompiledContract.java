@@ -52,8 +52,6 @@ public class BigIntegerModularExponentiationPrecompiledContract
   private static final int EXPONENT_LENGTH_OFFSET = 32;
   private static final int MODULUS_LENGTH_OFFSET = 64;
 
-  private static final long BYZANTIUM_UPPER_BOUND = Long.MAX_VALUE;
-  private static final long OSAKA_UPPER_BOUND = 1024L;
   private final long upperBound;
 
   /**
@@ -61,33 +59,10 @@ public class BigIntegerModularExponentiationPrecompiledContract
    *
    * @param gasCalculator the gas calculator
    */
-  private BigIntegerModularExponentiationPrecompiledContract(
+  BigIntegerModularExponentiationPrecompiledContract(
       final GasCalculator gasCalculator, final long upperBound) {
     super("BigIntModExp", gasCalculator);
     this.upperBound = upperBound;
-  }
-
-  /**
-   * Create the Byzantium BigIntegerModularExponentiationPrecompiledContract.
-   *
-   * @param gasCalculator the gas calculator
-   * @return the BigIntegerModularExponentiationPrecompiledContract
-   */
-  public static BigIntegerModularExponentiationPrecompiledContract byzantium(
-      final GasCalculator gasCalculator) {
-    return new BigIntegerModularExponentiationPrecompiledContract(
-        gasCalculator, BYZANTIUM_UPPER_BOUND);
-  }
-
-  /**
-   * Create the Osaka BigIntegerModularExponentiationPrecompiledContract. Introduced in EIP-7823
-   *
-   * @param gasCalculator the gas calculator
-   * @return the BigIntegerModularExponentiationPrecompiledContract
-   */
-  public static BigIntegerModularExponentiationPrecompiledContract osaka(
-      final GasCalculator gasCalculator) {
-    return new BigIntegerModularExponentiationPrecompiledContract(gasCalculator, OSAKA_UPPER_BOUND);
   }
 
   /** Disable native Arithmetic libraries. */

@@ -19,10 +19,10 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -69,7 +69,8 @@ public class Benchmarks {
     final SECP256K1 signatureAlgorithm = new SECP256K1();
 
     final ECRECPrecompiledContract contract =
-        new ECRECPrecompiledContract(new IstanbulGasCalculator(), signatureAlgorithm);
+        new ECRECPrecompiledContract(
+            EvmSpec.evmSpec().getEvm().getGasCalculator(), signatureAlgorithm);
 
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
       final long timePerCallInNs = runBenchmark(testCase.getValue(), contract);
@@ -79,8 +80,8 @@ public class Benchmarks {
   }
 
   public static void benchSha256() {
-    final SHA256PrecompiledContract contract =
-        new SHA256PrecompiledContract(new IstanbulGasCalculator());
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.SHA256);
 
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
@@ -95,7 +96,7 @@ public class Benchmarks {
 
   private static void benchKeccak256() {
     fakeFrame.expandMemory(0, 1024);
-    var istanbulGasCalculator = new IstanbulGasCalculator();
+    var gasCalculator = EvmSpec.evmSpec().getEvm().getGasCalculator();
 
     for (int len = 0; len <= 512; len += 8) {
       final byte[] data = new byte[len];
@@ -112,14 +113,14 @@ public class Benchmarks {
 
       final long elapsed = timer.elapsed(TimeUnit.NANOSECONDS);
       final long timePerCallInNs = elapsed / MATH_ITERATIONS;
-      long gasRequirement = istanbulGasCalculator.keccak256OperationGasCost(fakeFrame, 0, len);
+      long gasRequirement = gasCalculator.keccak256OperationGasCost(fakeFrame, 0, len);
       logPerformance(String.format("Keccak256 %,d bytes", len), gasRequirement, timePerCallInNs);
     }
   }
 
   private static void benchRipeMD() {
-    final RIPEMD160PrecompiledContract contract =
-        new RIPEMD160PrecompiledContract(new IstanbulGasCalculator());
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.SHA256);
 
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
@@ -147,8 +148,8 @@ public class Benchmarks {
                 "0x2e83f8d734803fc370eba25ed1f6b8768bd6d83887b87165fc2434fe11a830cb"));
     final Bytes arg = Bytes.concatenate(g1Point0, g1Point1);
 
-    final AltBN128AddPrecompiledContract contract =
-        AltBN128AddPrecompiledContract.istanbul(new IstanbulGasCalculator());
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.ALTBN128_ADD);
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
@@ -166,8 +167,8 @@ public class Benchmarks {
         Bytes.fromHexString("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     final Bytes arg = Bytes.concatenate(g1Point1, scalar);
 
-    final AltBN128MulPrecompiledContract contract =
-        AltBN128MulPrecompiledContract.istanbul(new IstanbulGasCalculator());
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.ALTBN128_MUL);
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
@@ -216,8 +217,8 @@ public class Benchmarks {
               + "1cacce8776f5ada6b35036f9343faab26c91b9aea83d3cb59cf5628ffe18ab1b"
               + "03b48ca7e6d84fca619aaf81745fbf9c30e5a78ed4766cc62b0f12aea5044f56")
     };
-    final AltBN128PairingPrecompiledContract contract =
-        AltBN128PairingPrecompiledContract.istanbul(new IstanbulGasCalculator());
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.ALTBN128_PAIRING);
 
     for (int i = 0; i < args.length; i++) {
       final long timePerCallInNs = runBenchmark(args[i], contract);
@@ -234,7 +235,8 @@ public class Benchmarks {
                 + "000000000000000000000000000000000001101098f5c39893765766af4512a0c74e1bb89bc7e6fdf14e3e7337d257cc0f94658179d83320b99f31ff94cd2bac"
                 + "0000000000000000000000000000000003e1a9f9f44ca2cdab4f43a1a3ee3470fdf90b2fc228eb3b709fcd72f014838ac82a6d797aeefed9a0804b22ed1ce8f7");
 
-    final BLS12G1AddPrecompiledContract contract = new BLS12G1AddPrecompiledContract();
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.BLS12_G1ADD);
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
@@ -280,7 +282,8 @@ public class Benchmarks {
               + "94c68bc8d91ac8c489ee87dbfc4b94c93c8bbd5fc04c27db8b02303f3a659054")
     };
 
-    final BLS12G1MultiExpPrecompiledContract contract = new BLS12G1MultiExpPrecompiledContract();
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.BLS12_G1MULTIEXP);
 
     for (int i = 0; i < args.length; i++) {
       final long timePerCallInNs = runBenchmark(args[i], contract);
@@ -297,7 +300,8 @@ public class Benchmarks {
                 + "00000000000000000000000000000000192fa5d8732ff9f38e0b1cf12eadfd2608f0c7a39aced7746837833ae253bb57ef9c0d98a4b69eeb2950901917e99d1e0000000000000000000000000000000009aeb10c372b5ef1010675c6a4762fda33636489c23b581c75220589afbc0cc46249f921eea02dd1b761e036ffdbae22"
                 + "0000000000000000000000000000000002d225447600d49f932b9dd3ca1e6959697aa603e74d8666681a2dca8160c3857668ae074440366619eb8920256c4e4a00000000000000000000000000000000174882cdd3551e0ce6178861ff83e195fecbcffd53a67b6f10b4431e423e28a480327febe70276036f60bb9c99cf7633");
 
-    final BLS12G2AddPrecompiledContract contract = new BLS12G2AddPrecompiledContract();
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.BLS12_G2ADD);
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
@@ -343,7 +347,8 @@ public class Benchmarks {
               + "94c68bc8d91ac8c489ee87dbfc4b94c93c8bbd5fc04c27db8b02303f3a659054")
     };
 
-    final BLS12G2MultiExpPrecompiledContract contract = new BLS12G2MultiExpPrecompiledContract();
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.BLS12_G2MULTIEXP);
 
     for (int i = 0; i < args.length; i++) {
       final long timePerCallInNs = runBenchmark(args[i], contract);
@@ -382,7 +387,8 @@ public class Benchmarks {
               + "000000000000000000000000000000001498b1412f52b07a0e4f91cbf5e1852ea38fc111613523f1e61b97ebf1fd7fd2cdf36d7f73f1e33719c0b63d7bf66b8f"
               + "00000000000000000000000000000000153ba4ab4fecc724c843b8f78db2db1943e91051b8cb9be2eb7e610a570f1f5925b7981334951b505cce1a3992ff05c9000000000000000000000000000000000c1e79925e9ebfd99e5d11489c56a994e0f855a759f0652cc9bb5151877cfea5c37896f56b949167b9cd2226f14333dd"),
     };
-    final BLS12PairingPrecompiledContract contract = new BLS12PairingPrecompiledContract();
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.BLS12_PAIRING);
 
     for (int i = 0; i < args.length; i++) {
       final long timePerCallInNs = runBenchmark(args[i], contract);
@@ -397,7 +403,8 @@ public class Benchmarks {
         Bytes.fromHexString(
             "0000000000000000000000000000000014406e5bfb9209256a3820879a29ac2f62d6aca82324bf3ae2aa7d3c54792043bd8c791fccdb080c1a52dc68b8b69350");
 
-    final BLS12MapFpToG1PrecompiledContract contract = new BLS12MapFpToG1PrecompiledContract();
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.BLS12_MAP_FP_TO_G1);
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
@@ -409,7 +416,8 @@ public class Benchmarks {
         Bytes.fromHexString(
             "0000000000000000000000000000000014406e5bfb9209256a3820879a29ac2f62d6aca82324bf3ae2aa7d3c54792043bd8c791fccdb080c1a52dc68b8b69350000000000000000000000000000000000e885bb33996e12f07da69073e2c0cc880bc8eff26d2a724299eb12d54f4bcf26f4748bb020e80a7e3794a7b0e47a641");
 
-    final BLS12MapFp2ToG2PrecompiledContract contract = new BLS12MapFp2ToG2PrecompiledContract();
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.BLS12_MAP_FP2_TO_G2);
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);
@@ -440,7 +448,8 @@ public class Benchmarks {
         Bytes.fromHexString(
             "010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e0000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
     KZGPointEvalPrecompiledContract.init();
-    final KZGPointEvalPrecompiledContract contract = new KZGPointEvalPrecompiledContract();
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.KZG_POINT_EVAL);
 
     final long timePerCallInNs = runBenchmark(arg, contract);
     long gasRequirement = contract.gasRequirement(arg);

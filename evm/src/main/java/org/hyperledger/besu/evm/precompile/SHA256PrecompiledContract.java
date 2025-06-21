@@ -29,7 +29,7 @@ public class SHA256PrecompiledContract extends AbstractPrecompiledContract {
    *
    * @param gasCalculator the gas calculator
    */
-  public SHA256PrecompiledContract(final GasCalculator gasCalculator) {
+  SHA256PrecompiledContract(final GasCalculator gasCalculator) {
     super("SHA256", gasCalculator);
   }
 
