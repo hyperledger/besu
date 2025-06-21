@@ -14,15 +14,11 @@
  */
 package org.hyperledger.besu.evmtool.benchmarks;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G1AddPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G1MultiExpPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G2AddPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G2MultiExpPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12MapFp2ToG2PrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12MapFpToG1PrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12PairingPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
@@ -167,22 +163,23 @@ public class BLS12Benchmark extends BenchmarkExecutor {
       return;
     }
 
-    benchmarkG1Add(output);
-    benchmarkG1MultiExp32Pairs(output);
-    benchmarkMapFpToG1(output);
-    benchmarkG2Add(output);
-    benchmarkG2MultiExp32Pairs(output);
-    benchmarkMapFp2ToG2(output);
-    benchmarkBlsPairing(output);
+    benchmarkG1Add(output, forkVersion);
+    benchmarkG1MultiExp32Pairs(output, forkVersion);
+    benchmarkMapFpToG1(output, forkVersion);
+    benchmarkG2Add(output, forkVersion);
+    benchmarkG2MultiExp32Pairs(output, forkVersion);
+    benchmarkMapFp2ToG2(output, forkVersion);
+    benchmarkBlsPairing(output, forkVersion);
   }
 
-  private void benchmarkG1Add(final PrintStream output) {
+  private void benchmarkG1Add(final PrintStream output, final EvmSpecVersion forkVersion) {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
     for (int i = 0; i < g1PointPairs.length - 1; i++) {
       testCases.put("G1 Add " + i, Bytes.fromHexString(g1PointPairs[i] + g1PointPairs[i + 1]));
     }
 
-    BLS12G1AddPrecompiledContract g1addContract = new BLS12G1AddPrecompiledContract();
+    PrecompiledContract g1addContract =
+        EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.BLS12_G1ADD);
     warmIterations = MATH_WARMUP / testCases.size();
     execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
@@ -198,7 +195,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
         gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
   }
 
-  private void benchmarkG1MultiExp32Pairs(final PrintStream output) {
+  private void benchmarkG1MultiExp32Pairs(
+      final PrintStream output, final EvmSpecVersion forkVersion) {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
 
     // add test cases for 2, 4, 8, 16, and 32 point/scalar pairs
@@ -210,7 +208,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
       testCases.put("G1 MSM " + (1 << i) + " pairs", Bytes.fromHexString(g1msmPairs.toString()));
     }
 
-    BLS12G1MultiExpPrecompiledContract g1msmContract = new BLS12G1MultiExpPrecompiledContract();
+    PrecompiledContract g1msmContract =
+        EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.BLS12_G1MULTIEXP);
     warmIterations = MATH_WARMUP / testCases.size();
     execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
@@ -224,13 +223,16 @@ public class BLS12Benchmark extends BenchmarkExecutor {
         gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
   }
 
-  private void benchmarkMapFpToG1(final PrintStream output) {
+  private void benchmarkMapFpToG1(final PrintStream output, final EvmSpecVersion forkVersion) {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
     for (int i = 0; i < g1PointPairs.length; i++) {
       testCases.put("Map Fp to G1 " + i, Bytes.fromHexString(g1PointPairs[i].substring(0, 128)));
     }
 
-    BLS12MapFpToG1PrecompiledContract g1MapFpToG1Contract = new BLS12MapFpToG1PrecompiledContract();
+    PrecompiledContract g1MapFpToG1Contract =
+        EvmSpec.evmSpec(forkVersion)
+            .getPrecompileContractRegistry()
+            .get(Address.BLS12_MAP_FP_TO_G1);
     warmIterations = MATH_WARMUP / testCases.size();
     execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
@@ -247,13 +249,14 @@ public class BLS12Benchmark extends BenchmarkExecutor {
         gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
   }
 
-  private void benchmarkG2Add(final PrintStream output) {
+  private void benchmarkG2Add(final PrintStream output, final EvmSpecVersion forkVersion) {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
     for (int i = 0; i < g2PointPairs.length - 1; i++) {
       testCases.put("G2 Add " + i, Bytes.fromHexString(g2PointPairs[i] + g2PointPairs[i + 1]));
     }
 
-    BLS12G2AddPrecompiledContract g1addContract = new BLS12G2AddPrecompiledContract();
+    PrecompiledContract g1addContract =
+        EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.BLS12_G2ADD);
     warmIterations = MATH_WARMUP / testCases.size();
     execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
@@ -269,7 +272,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
         gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
   }
 
-  private void benchmarkG2MultiExp32Pairs(final PrintStream output) {
+  private void benchmarkG2MultiExp32Pairs(
+      final PrintStream output, final EvmSpecVersion forkVersion) {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
 
     // add test cases for 2, 4, 8, 16, and 32 point/scalar pairs
@@ -281,7 +285,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
       testCases.put("G2 MSM " + (1 << i) + " pairs", Bytes.fromHexString(g2msmPairs.toString()));
     }
 
-    BLS12G2MultiExpPrecompiledContract g2msmContract = new BLS12G2MultiExpPrecompiledContract();
+    PrecompiledContract g2msmContract =
+        EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.BLS12_G2MULTIEXP);
     warmIterations = MATH_WARMUP / testCases.size();
     execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
@@ -295,14 +300,16 @@ public class BLS12Benchmark extends BenchmarkExecutor {
         gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
   }
 
-  private void benchmarkMapFp2ToG2(final PrintStream output) {
+  private void benchmarkMapFp2ToG2(final PrintStream output, final EvmSpecVersion forkVersion) {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
     for (int i = 0; i < g2PointPairs.length; i++) {
       testCases.put("Map Fp2 to G2 " + i, Bytes.fromHexString(g2PointPairs[i].substring(0, 256)));
     }
 
-    BLS12MapFp2ToG2PrecompiledContract g1MapFp2ToG2Contract =
-        new BLS12MapFp2ToG2PrecompiledContract();
+    PrecompiledContract g1MapFp2ToG2Contract =
+        EvmSpec.evmSpec(forkVersion)
+            .getPrecompileContractRegistry()
+            .get(Address.BLS12_MAP_FP2_TO_G2);
     warmIterations = MATH_WARMUP / testCases.size();
     execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
@@ -319,7 +326,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
         gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
   }
 
-  private void benchmarkBlsPairing(final PrintStream output) {
+  private void benchmarkBlsPairing(final PrintStream output, final EvmSpecVersion forkVersion) {
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
 
     // add test cases for 2, 4, 8, 16, and 32 point/scalar pairs
@@ -331,7 +338,8 @@ public class BLS12Benchmark extends BenchmarkExecutor {
       testCases.put("BLS Pairing " + (1 << i) + " pairs", Bytes.fromHexString(pairs.toString()));
     }
 
-    BLS12PairingPrecompiledContract blsPairingContract = new BLS12PairingPrecompiledContract();
+    PrecompiledContract blsPairingContract =
+        EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.BLS12_PAIRING);
     warmIterations = MATH_WARMUP / testCases.size();
     execIterations = MATH_ITERATIONS / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero

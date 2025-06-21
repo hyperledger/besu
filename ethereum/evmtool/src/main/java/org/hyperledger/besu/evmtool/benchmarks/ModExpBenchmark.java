@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.evmtool.benchmarks;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
@@ -399,8 +403,10 @@ public class ModExpBenchmark extends BenchmarkExecutor {
                 + "ffffffffffffffffffffffff"
                 + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
 
-    final BigIntegerModularExponentiationPrecompiledContract contract =
-        BigIntegerModularExponentiationPrecompiledContract.osaka(gasCalculatorForFork(fork));
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec(EvmSpecVersion.fromName(fork))
+            .getPrecompileContractRegistry()
+            .get(Address.MODEXP);
 
     if (attemptNative != null
         && (!attemptNative

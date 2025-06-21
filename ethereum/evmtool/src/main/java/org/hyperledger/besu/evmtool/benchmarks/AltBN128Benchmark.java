@@ -14,12 +14,11 @@
  */
 package org.hyperledger.besu.evmtool.benchmarks;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.AltBN128AddPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.AltBN128MulPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.AltBN128PairingPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
@@ -51,17 +50,13 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
     }
     output.println(
         AbstractAltBnPrecompiledContract.isNative() ? "Native AltBN128" : "Java AltBN128");
-    GasCalculator gasCalculator = gasCalculatorForFork(fork);
 
-    benchmarkAdd(output, gasCalculator, forkVersion);
-    benchmarkMul(output, gasCalculator, forkVersion);
-    benchmarkPairings(output, gasCalculator, forkVersion);
+    benchmarkAdd(output, forkVersion);
+    benchmarkMul(output, forkVersion);
+    benchmarkPairings(output, forkVersion);
   }
 
-  private void benchmarkAdd(
-      final PrintStream output,
-      final GasCalculator gasCalculator,
-      final EvmSpecVersion forkVersion) {
+  private void benchmarkAdd(final PrintStream output, final EvmSpecVersion forkVersion) {
     final Map<String, Bytes> addTestCases = new LinkedHashMap<>();
     addTestCases.put(
         "Add",
@@ -71,10 +66,8 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
                 + "17c139df0efee0f766bc0204762b774362e4ded88953a39ce849a8a7fa163fa9"
                 + "2e83f8d734803fc370eba25ed1f6b8768bd6d83887b87165fc2434fe11a830cb"));
 
-    AltBN128AddPrecompiledContract addContract =
-        EvmSpecVersion.ISTANBUL.compareTo(forkVersion) < 0
-            ? AltBN128AddPrecompiledContract.byzantium(gasCalculator)
-            : AltBN128AddPrecompiledContract.istanbul(gasCalculator);
+    PrecompiledContract addContract =
+        EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.ALTBN128_ADD);
     warmIterations = MATH_WARMUP / addTestCases.size();
     execIterations = MATH_ITERATIONS / addTestCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
@@ -90,10 +83,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
         gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
   }
 
-  private void benchmarkMul(
-      final PrintStream output,
-      final GasCalculator gasCalculator,
-      final EvmSpecVersion forkVersion) {
+  private void benchmarkMul(final PrintStream output, final EvmSpecVersion forkVersion) {
     final Map<String, Bytes> mulTestCases = new LinkedHashMap<>();
     mulTestCases.put(
         "mul",
@@ -103,10 +93,8 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
                 + "17c139df0efee0f766bc0204762b774362e4ded88953a39ce849a8a7fa163fa9"
                 + "2e83f8d734803fc370eba25ed1f6b8768bd6d83887b87165fc2434fe11a830cb"));
 
-    AltBN128MulPrecompiledContract mulContract =
-        EvmSpecVersion.ISTANBUL.compareTo(forkVersion) < 0
-            ? AltBN128MulPrecompiledContract.byzantium(gasCalculator)
-            : AltBN128MulPrecompiledContract.istanbul(gasCalculator);
+    PrecompiledContract mulContract =
+        EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.ALTBN128_MUL);
     warmIterations = MATH_WARMUP / mulTestCases.size();
     execIterations = MATH_ITERATIONS / mulTestCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
@@ -122,10 +110,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
         gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
   }
 
-  private void benchmarkPairings(
-      final PrintStream output,
-      final GasCalculator gasCalculator,
-      final EvmSpecVersion forkVersion) {
+  private void benchmarkPairings(final PrintStream output, final EvmSpecVersion forkVersion) {
     final Bytes[] pairings = {
       Bytes.fromHexString(
           "0x0fc6ebd1758207e311a99674dc77d28128643c057fb9ca2c92b4205b6bf57ed2"
@@ -167,10 +152,8 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
               + "1cacce8776f5ada6b35036f9343faab26c91b9aea83d3cb59cf5628ffe18ab1b"
               + "03b48ca7e6d84fca619aaf81745fbf9c30e5a78ed4766cc62b0f12aea5044f56")
     };
-    final AltBN128PairingPrecompiledContract contract =
-        EvmSpecVersion.ISTANBUL.compareTo(forkVersion) < 0
-            ? AltBN128PairingPrecompiledContract.byzantium(gasCalculator)
-            : AltBN128PairingPrecompiledContract.istanbul(gasCalculator);
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.ALTBN128_PAIRING);
 
     warmIterations = MATH_WARMUP / 20;
     execIterations = MATH_ITERATIONS / 20;
