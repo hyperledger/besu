@@ -18,7 +18,6 @@ import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
