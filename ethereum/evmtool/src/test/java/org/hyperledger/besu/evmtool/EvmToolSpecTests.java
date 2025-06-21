@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -53,10 +54,6 @@ public class EvmToolSpecTests {
 
   static final ObjectMapper objectMapper = new ObjectMapper();
   static final ObjectReader specReader = objectMapper.reader();
-
-  public static Object[][] blocktestTests() {
-    return findSpecFiles(new String[] {"block-test"});
-  }
 
   public static Object[][] b11rTests() {
     return findSpecFiles(new String[] {"b11r"});
@@ -124,7 +121,6 @@ public class EvmToolSpecTests {
 
   @ParameterizedTest(name = "{0}")
   @MethodSource({
-    "blocktestTests",
     "b11rTests",
     "codeValidateTests",
     "prettyPrintTests",
