@@ -23,7 +23,6 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -419,7 +418,7 @@ public class ModExpBenchmark extends BenchmarkExecutor {
             ? "Native ModExp"
             : "Java modExp");
 
-    precompile(testcases, contract);
+    precompile(testcases, contract, EvmSpecVersion.fromName(fork));
   }
 
   @Override

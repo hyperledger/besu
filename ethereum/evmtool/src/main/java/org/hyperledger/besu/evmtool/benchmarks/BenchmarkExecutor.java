@@ -46,9 +46,6 @@ import java.util.regex.Pattern;
 
 import one.profiler.AsyncProfiler;
 import org.apache.tuweni.bytes.Bytes;
-import oshi.SystemInfo;
-import oshi.hardware.CentralProcessor;
-import oshi.hardware.HardwareAbstractionLayer;
 
 /** Abstract class to support benchmarking of various client algorithms */
 public abstract class BenchmarkExecutor {
@@ -141,7 +138,15 @@ public abstract class BenchmarkExecutor {
     assert execIterations <= 0;
   }
 
-  public void precompile(final Map<String, Bytes> testCases, final PrecompiledContract contract) {
+  public void precompile(
+    final Map<String, Bytes> testCases,
+    final PrecompiledContract contract,
+    final EvmSpecVersion evmSpecVersion) {
+
+    if (contract == null) {
+      throw new UnsupportedOperationException("contract is unsupported on " + evmSpecVersion + " fork");
+    }
+
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
       if (config.testCasePattern().isPresent()
         && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {

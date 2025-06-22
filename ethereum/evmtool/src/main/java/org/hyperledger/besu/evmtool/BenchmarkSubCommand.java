@@ -197,7 +197,7 @@ public class BenchmarkSubCommand implements Runnable {
     output.println("* Physical CPU packages: " + processor.getPhysicalPackageCount());
     output.println("* Physical CPU cores: " + processor.getPhysicalProcessorCount());
     output.println("* Logical CPU cores: " + processor.getLogicalProcessorCount());
-    output.println("* Average Max Frequency per core: " + processor.getMaxFreq() / 100_000 / processor.getPhysicalProcessorCount() + " MHz");
+    output.println("* Average Max Frequency per core: " + processor.getMaxFreq() / 100_000 / processor.getLogicalProcessorCount() + " MHz");
     output.println("* Memory Total: " + hal.getMemory().getTotal() / 1_000_000_000 + " GB");
   }
 }

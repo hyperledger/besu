@@ -75,7 +75,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
     PrecompiledContract contract =
         EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.ALTBN128_ADD);
 
-    precompile(testCases, contract);
+    precompile(testCases, contract, forkVersion);
   }
 
   private void benchmarkMul(final EvmSpecVersion forkVersion) {
@@ -97,7 +97,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
     PrecompiledContract contract =
         EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.ALTBN128_MUL);
 
-    precompile(testCases, contract);
+    precompile(testCases, contract, forkVersion);
   }
 
   private void benchmarkPairings(final EvmSpecVersion forkVersion) {
@@ -148,7 +148,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
     final PrecompiledContract contract =
         EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.ALTBN128_PAIRING);
 
-    precompile(testCases, contract);
+    precompile(testCases, contract, forkVersion);
   }
 
   @Override

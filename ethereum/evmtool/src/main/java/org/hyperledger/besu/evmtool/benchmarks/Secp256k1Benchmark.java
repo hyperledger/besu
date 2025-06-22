@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 
 /** Benchmark secp256k1 public key extraction */
 public class Secp256k1Benchmark extends BenchmarkExecutor {
@@ -53,7 +54,7 @@ public class Secp256k1Benchmark extends BenchmarkExecutor {
     final ECRECPrecompiledContract contract =
         new ECRECPrecompiledContract(new IstanbulGasCalculator(), signatureAlgorithm);
 
-    precompile(testCases, contract);
+    precompile(testCases, contract, EvmSpecVersion.fromName(fork));
   }
 
   @Override
