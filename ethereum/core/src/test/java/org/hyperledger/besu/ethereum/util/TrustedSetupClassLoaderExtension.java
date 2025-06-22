@@ -19,27 +19,78 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
 import ethereum.ckzg4844.CKZG4844JNI;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import ethereum.ckzg4844.CKZGException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/** JUnit extension to load the native library and trusted setup for the entire test class. */
-public class TrustedSetupClassLoaderExtension implements BeforeAllCallback {
+public class TrustedSetupClassLoaderExtension {
+  private static final Logger LOG = LoggerFactory.getLogger(TrustedSetupClassLoaderExtension.class);
   private static final String TRUSTED_SETUP_RESOURCE = "/kzg-trusted-setups/mainnet.txt";
 
-  @Override
-  public void beforeAll(final ExtensionContext context) {
+  static {
     try {
-      // Optimistically tear down any previously loaded trusted setup.
-      try {
-        KZGPointEvalPrecompiledContract.tearDown();
-      } catch (Throwable ignore) {
-        // Ignore errors if no trusted setup was already loaded.
-      }
-      CKZG4844JNI.loadNativeLibrary();
-      CKZG4844JNI.loadTrustedSetupFromResource(
-          TRUSTED_SETUP_RESOURCE, context.getTestClass().orElseThrow(), 0);
+      tearDownExistingSetup();
+      loadTrustedSetup();
+      awaitTrustedSetupLoad();
     } catch (Exception e) {
       fail("Failed to load trusted setup or native library", e);
+    }
+  }
+
+  // Tear down any existing setup to ensure a clean state before loading the trusted setup.
+  private static void tearDownExistingSetup() {
+    try {
+      KZGPointEvalPrecompiledContract.tearDown();
+    } catch (Throwable ignore) {
+      // Ignore errors if no trusted setup was already loaded.
+    }
+  }
+
+  // Load the trusted setup from the specified resource.
+  private static void loadTrustedSetup() {
+    CKZG4844JNI.loadNativeLibrary();
+    CKZG4844JNI.loadTrustedSetupFromResource(
+        TRUSTED_SETUP_RESOURCE, (Class<?>) TrustedSetupClassLoaderExtension.class, 0);
+  }
+
+  // Wait for the trusted setup to be loaded by checking if we can create a KZG commitment.
+  private static void awaitTrustedSetupLoad() {
+    boolean trustedSetupLoaded = false;
+    long timeoutMillis = 5000; // 5 seconds timeout
+    long pollIntervalMillis = 100; // 100 milliseconds polling interval
+    long startTime = System.currentTimeMillis();
+
+    while (System.currentTimeMillis() - startTime < timeoutMillis) {
+      if (isTrustedSetupLoaded()) {
+        trustedSetupLoaded = true;
+        break;
+      }
+      try {
+        Thread.sleep(pollIntervalMillis);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        fail("Thread interrupted while waiting for trusted setup to load", e);
+      }
+    }
+
+    if (!trustedSetupLoaded) {
+      fail("Trusted setup not loaded");
+    } else {
+      LOG.info("Trusted setup loaded successfully from {}", TRUSTED_SETUP_RESOURCE);
+    }
+  }
+
+  // Check if the trusted setup is loaded by attempting to create a KZG commitment.
+  private static boolean isTrustedSetupLoaded() {
+    try {
+      // Attempt to create a KZG commitment with an empty blob.
+      // If the trusted setup is loaded, this should throw a C_KZG_BADARGS exception.
+      CKZG4844JNI.blobToKzgCommitment(new byte[0]);
+      return false;
+    } catch (CKZGException e) {
+      // Check if the exception indicates invalid arguments (C_KZG_BADARGS),
+      // which confirms the trusted setup is loaded.
+      return e.getError() == CKZGException.CKZGError.C_KZG_BADARGS;
     }
   }
 }

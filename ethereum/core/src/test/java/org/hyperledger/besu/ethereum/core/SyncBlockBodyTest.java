@@ -215,6 +215,7 @@ public class SyncBlockBodyTest {
         Optional.empty(),
         null,
         true,
-        true);
+        true,
+        Optional.empty());
   }
 }

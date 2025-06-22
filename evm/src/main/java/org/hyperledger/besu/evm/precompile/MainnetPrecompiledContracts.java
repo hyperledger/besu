@@ -78,11 +78,13 @@ public interface MainnetPrecompiledContracts {
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForFrontier(registry, gasCalculator);
     registry.put(
-        Address.MODEXP, new BigIntegerModularExponentiationPrecompiledContract(gasCalculator));
-    registry.put(Address.ALTBN128_ADD, AltBN128AddPrecompiledContract.byzantium(gasCalculator));
-    registry.put(Address.ALTBN128_MUL, AltBN128MulPrecompiledContract.byzantium(gasCalculator));
+        Address.MODEXP,
+        new BigIntegerModularExponentiationPrecompiledContract(gasCalculator, Long.MAX_VALUE));
+    registry.put(Address.ALTBN128_ADD, new AltBN128AddPrecompiledContract(gasCalculator, 500L));
+    registry.put(Address.ALTBN128_MUL, new AltBN128MulPrecompiledContract(gasCalculator, 40_000L));
     registry.put(
-        Address.ALTBN128_PAIRING, AltBN128PairingPrecompiledContract.byzantium(gasCalculator));
+        Address.ALTBN128_PAIRING,
+        new AltBN128PairingPrecompiledContract(gasCalculator, 80_000L, 100_000L));
   }
 
   /**
@@ -106,10 +108,11 @@ public interface MainnetPrecompiledContracts {
   static void populateForIstanbul(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForByzantium(registry, gasCalculator);
-    registry.put(Address.ALTBN128_ADD, AltBN128AddPrecompiledContract.istanbul(gasCalculator));
-    registry.put(Address.ALTBN128_MUL, AltBN128MulPrecompiledContract.istanbul(gasCalculator));
+    registry.put(Address.ALTBN128_ADD, new AltBN128AddPrecompiledContract(gasCalculator, 150L));
+    registry.put(Address.ALTBN128_MUL, new AltBN128MulPrecompiledContract(gasCalculator, 6_000L));
     registry.put(
-        Address.ALTBN128_PAIRING, AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
+        Address.ALTBN128_PAIRING,
+        new AltBN128PairingPrecompiledContract(gasCalculator, 34_000L, 45_000L));
     registry.put(Address.BLAKE2B_F_COMPRESSION, new BLAKE2BFPrecompileContract(gasCalculator));
   }
 
@@ -169,6 +172,34 @@ public interface MainnetPrecompiledContracts {
     registry.put(Address.BLS12_PAIRING, new BLS12PairingPrecompiledContract());
     registry.put(Address.BLS12_MAP_FP_TO_G1, new BLS12MapFpToG1PrecompiledContract());
     registry.put(Address.BLS12_MAP_FP2_TO_G2, new BLS12MapFp2ToG2PrecompiledContract());
+  }
+
+  /**
+   * Osaka precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
+  static PrecompileContractRegistry osaka(final GasCalculator gasCalculator) {
+    PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
+    populateForOsaka(precompileContractRegistry, gasCalculator);
+    return precompileContractRegistry;
+  }
+
+  /**
+   * Populate registry for Osaka.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
+  static void populateForOsaka(
+      final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
+    populateForPrague(registry, gasCalculator);
+
+    // EIP-7823 - Set upper bounds for MODEXP
+    registry.put(
+        Address.MODEXP,
+        new BigIntegerModularExponentiationPrecompiledContract(gasCalculator, 1024L));
   }
 
   /**

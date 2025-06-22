@@ -51,4 +51,41 @@ public interface GasLimitCalculator {
   default long currentBlobGasLimit() {
     return BLOB_GAS_LIMIT;
   }
+
+  /**
+   * Compute the new value for the excess blob gas, given the parent value and the blob gas used
+   *
+   * @param parentExcessBlobGas excess blob gas from the parent
+   * @param blobGasUsed blob gas used
+   * @param parentBaseFeePerGas base fee per gas from the parent
+   * @return the new excess blob gas value
+   */
+  default long computeExcessBlobGas(
+      final long parentExcessBlobGas, final long blobGasUsed, final long parentBaseFeePerGas) {
+    return 0L;
+  }
+
+  /**
+   * Return the transaction gas limit cap.
+   *
+   * <p>Before Osaka, there was no limit, and it is safe to use long max value to represent that,
+   * since no transaction has ever reached it.
+   *
+   * @return the transaction gas limit cap.
+   */
+  default long transactionGasLimitCap() {
+    return Long.MAX_VALUE;
+  }
+
+  /**
+   * Returns the transaction blob gas limit cap.
+   *
+   * <p>Before Osaka, there was no limit, the max number of blobs a transaction could have was
+   * limited by the blob gas limit.
+   *
+   * @return the transaction blob gas limit cap
+   */
+  default long transactionBlobGasLimitCap() {
+    return BLOB_GAS_LIMIT;
+  }
 }

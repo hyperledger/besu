@@ -35,31 +35,18 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class OsakaGasCalculator extends PragueGasCalculator {
 
-  /** The default mainnet target blobs per block for Osaka */
-  private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_OSAKA = 9;
-
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], DEFAULT_TARGET_BLOBS_PER_BLOCK_OSAKA);
-  }
-
-  /**
-   * Instantiates a new Osaka Gas Calculator
-   *
-   * @param targetBlobsPerBlock the target blobs per block
-   */
-  public OsakaGasCalculator(final int targetBlobsPerBlock) {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], targetBlobsPerBlock);
+    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
   }
 
   /**
    * Instantiates a new Osaka Gas Calculator
    *
    * @param maxPrecompile the max precompile
-   * @param targetBlobsPerBlock the target blobs per block
    */
-  protected OsakaGasCalculator(final int maxPrecompile, final int targetBlobsPerBlock) {
-    super(maxPrecompile, targetBlobsPerBlock);
+  protected OsakaGasCalculator(final int maxPrecompile) {
+    super(maxPrecompile);
   }
 
   @Override
@@ -73,20 +60,19 @@ public class OsakaGasCalculator extends PragueGasCalculator {
         clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
 
     final long maxLength = Math.max(modulusLength, baseLength);
-    long multiplicationComplexity = (maxLength + 7L) / 8L;
-    multiplicationComplexity =
-        Words.clampedMultiply(multiplicationComplexity, multiplicationComplexity);
+    if (maxLength <= 0) {
+      return 500L;
+    }
+    long multiplicationComplexity = 16;
+    long words = (maxLength + 7L) / 8L;
+    words = Words.clampedMultiply(words, words);
     if (maxLength > 32) {
-      multiplicationComplexity *= 2;
+      multiplicationComplexity = words * 2;
     }
 
-    if (multiplicationComplexity == 0) {
-      return 500L;
-    } else if (multiplicationComplexity > 0) {
-      long maxExponentLength = Long.MAX_VALUE / multiplicationComplexity * 3 / 8;
-      if (exponentLength > maxExponentLength) {
-        return Long.MAX_VALUE;
-      }
+    long maxExponentLength = Long.MAX_VALUE / words * 3 / 8;
+    if (exponentLength > maxExponentLength) {
+      return Long.MAX_VALUE;
     }
 
     final long firstExponentBytesCap =
