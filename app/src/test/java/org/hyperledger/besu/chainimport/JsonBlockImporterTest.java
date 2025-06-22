@@ -48,6 +48,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
+import org.hyperledger.besu.util.backfill.BackfillRegistryModule;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -493,7 +494,8 @@ public abstract class JsonBlockImporterTest {
         MetricsSystemModule.class,
         JsonBlockImporterModule.class,
         BesuPluginContextModule.class,
-        BlobCacheModule.class
+        BlobCacheModule.class,
+        BackfillRegistryModule.class,
       })
   interface JsonBlockImportComponent extends BesuComponent {}
 }

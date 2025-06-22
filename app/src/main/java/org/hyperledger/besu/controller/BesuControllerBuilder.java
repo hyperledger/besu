@@ -88,6 +88,7 @@ import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.CodeSizeBackfillTask;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -104,8 +105,10 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.util.backfill.BackfillRegistry;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -789,6 +792,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createAdditionalJsonRpcMethodFactory(
             protocolContext, protocolSchedule, miningConfiguration);
 
+    final BackfillRegistry backfillRegistry =
+        besuComponent.map(BesuComponent::getBackfillRegistry).orElse(new BackfillRegistry());
     if (DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
       final PathBasedExtraStorageConfiguration subStorageConfiguration =
           dataStorageConfiguration.getPathBasedExtraStorageConfiguration();
@@ -801,11 +806,25 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             createTrieLogPruner(worldStateKeyValueStorage, blockchain, scheduler);
         trieLogManager.subscribe(trieLogPruner);
       }
+
+      final CodeSizeBackfillTask codeSizeBackfillTask = new CodeSizeBackfillTask(backfillRegistry);
+      codeSizeBackfillTask.start();
     }
 
     final List<Closeable> closeables = new ArrayList<>();
     closeables.add(protocolContext.getWorldStateArchive());
     closeables.add(storageProvider);
+    closeables.add(
+        () -> {
+          backfillRegistry.pauseAll();
+          try {
+            backfillRegistry.awaitAllPaused();
+          } catch (InterruptedException e) {
+            throw new IOException("Interrupted while waiting for backfill tasks to pause", e);
+          }
+
+          backfillRegistry.stopAll();
+        });
 
     return new BesuController(
         protocolSchedule,
