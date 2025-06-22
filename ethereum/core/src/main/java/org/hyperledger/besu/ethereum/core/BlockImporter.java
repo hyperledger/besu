@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.List;
@@ -60,6 +61,29 @@ public interface BlockImporter {
       Block block,
       HeaderValidationMode headerValidationMode,
       HeaderValidationMode ommerValidationMode);
+
+  /**
+   * Attempts to import the given block. Uses "fast" validation. Performs light validation using the
+   * block's receipts rather than processing all transactions and fully validating world state.
+   *
+   * @param context The context to attempt to update
+   * @param block The block
+   * @param receipts The receipts associated with this block.
+   * @param headerValidationMode Determines the validation to perform on this header.
+   * @param ommerValidationMode Determines the validation to perform on ommer headers.
+   * @param bodyValidationMode Determines the validation to perform on the block's body.
+   * @param importWithTxIndexing Whether to import the block with transaction indexing.
+   * @return {@code BlockImportResult}
+   * @see BlockImportResult
+   */
+  BlockImportResult importBlockForSyncing(
+      ProtocolContext context,
+      Block block,
+      List<TransactionReceipt> receipts,
+      HeaderValidationMode headerValidationMode,
+      HeaderValidationMode ommerValidationMode,
+      BodyValidationMode bodyValidationMode,
+      boolean importWithTxIndexing);
 
   /**
    * Attempts to import the given syncBlock. No validation. Body and Receipts have already been

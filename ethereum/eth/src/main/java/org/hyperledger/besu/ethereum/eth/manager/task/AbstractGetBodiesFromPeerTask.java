@@ -18,11 +18,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -48,7 +49,7 @@ public abstract class AbstractGetBodiesFromPeerTask<T, B> extends AbstractPeerRe
       final EthContext ethContext,
       final List<BlockHeader> headers,
       final MetricsSystem metricsSystem) {
-    super(ethContext, EthPV62.GET_BLOCK_BODIES, metricsSystem);
+    super(ethContext, EthProtocol.NAME, EthProtocolMessages.GET_BLOCK_BODIES, metricsSystem);
     checkArgument(!headers.isEmpty());
     this.protocolSchedule = protocolSchedule;
     this.headers = headers;

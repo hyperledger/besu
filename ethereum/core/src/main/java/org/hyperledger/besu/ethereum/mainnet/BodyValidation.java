@@ -100,9 +100,13 @@ public final class BodyValidation {
     final ArrayList<Bytes> bytesList = new ArrayList<>(receipts.size());
     receipts.forEach(
         receipt ->
-            bytesList.add( RLP.encode(rlpOutput -> TransactionReceiptEncoder.writeTo(
-                        receipt, rlpOutput,
-                        TransactionReceiptEncodingConfiguration.TRIE_ROOT))));
+            bytesList.add(
+                RLP.encode(
+                    rlpOutput ->
+                        TransactionReceiptEncoder.writeTo(
+                            receipt,
+                            rlpOutput,
+                            TransactionReceiptEncodingConfiguration.TRIE_ROOT))));
 
     return Util.getRootFromListOfBytes(bytesList);
   }

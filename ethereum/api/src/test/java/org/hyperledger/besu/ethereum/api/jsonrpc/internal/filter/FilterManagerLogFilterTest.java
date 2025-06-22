@@ -88,7 +88,6 @@ public class FilterManagerLogFilterTest {
   @Test
   public void shouldCheckMatchingLogsWhenRecordedNewBlockEventForPrivateFiltersOnly() {
     filterManager.installLogFilter(latest(), latest(), logsQuery());
-    final Hash blockAddedHash = recordBlockEvents(1).get(0).getHeader().getHash();
 
     verify(blockchainQueries, never()).matchingLogs(eq(100L), eq(100L), eq(logsQuery()), any());
   }
@@ -96,8 +95,6 @@ public class FilterManagerLogFilterTest {
   @Test
   public void shouldUseBlockHashWhenCheckingLogsForChangesForPrivateFiltersOnly() {
     filterManager.installLogFilter(blockNum(1L), blockNum(10L), logsQuery());
-
-    final Hash blockAddedHash = recordBlockEvents(1).get(0).getHeader().getHash();
 
     verify(blockchainQueries, never()).matchingLogs(any(Hash.class), any(LogsQuery.class), any());
   }

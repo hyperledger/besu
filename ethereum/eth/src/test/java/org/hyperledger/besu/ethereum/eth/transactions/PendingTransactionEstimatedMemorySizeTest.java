@@ -462,7 +462,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   public void baseEIP1559AndEIP4844TransactionMemorySize() {
     Transaction txEip1559 = createEIP1559Transaction(1, KEYS1, 10);
     assertThat(baseTransactionMemorySize(txEip1559, EIP1559_EIP4844_CONSTANT_FIELD_PATHS))
-        .isEqualTo(EIP1559_AND_EIP4844_SHALLOW_SIZE);
+        .isEqualTo(EIP1559_AND_EIP4844_SHALLOW_SIZE);maru
   }
 
   @Test

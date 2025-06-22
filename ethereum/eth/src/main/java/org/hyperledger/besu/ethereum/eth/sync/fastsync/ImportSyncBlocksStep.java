@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts>> {
   private static final Logger LOG = LoggerFactory.getLogger(ImportSyncBlocksStep.class);
-    private static final int PRINT_DELAY_SECONDS = 30;
+  private static final int PRINT_DELAY_SECONDS = 30;
 
   private final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;

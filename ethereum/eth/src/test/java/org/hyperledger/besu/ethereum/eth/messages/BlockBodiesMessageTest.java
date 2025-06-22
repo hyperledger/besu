@@ -128,7 +128,8 @@ public final class BlockBodiesMessageTest {
                   rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
-    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.BLOCK_BODIES, initialMessage.getData());
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
     final Iterator<SyncBlockBody> readBodies = message.syncBodies(protocolSchedule).iterator();
     for (int i = 0; i < 50; ++i) {
@@ -150,7 +151,8 @@ public final class BlockBodiesMessageTest {
     options.setWithdrawals(Optional.of(List.of(withdrawal)));
     final Block block = generator.block(options);
     final MessageData initialMessage = BlockBodiesMessage.create(List.of(block.getBody()));
-    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.BLOCK_BODIES, initialMessage.getData());
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
     final List<SyncBlockBody> bodies = message.syncBodies(protocolSchedule);
     Assertions.assertThat(bodies.size()).isEqualTo(1);
