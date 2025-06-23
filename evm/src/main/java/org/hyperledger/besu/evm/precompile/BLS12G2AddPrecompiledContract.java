@@ -28,7 +28,7 @@ public class BLS12G2AddPrecompiledContract extends AbstractBLS12PrecompiledContr
       Caffeine.newBuilder().maximumSize(1000).build();
 
   /** Instantiates a new BLS12_G2 Add precompiled contract. */
-  public BLS12G2AddPrecompiledContract() {
+  BLS12G2AddPrecompiledContract() {
     super("BLS12_G2ADD", LibGnarkEIP2537.BLS12_G2ADD_OPERATION_SHIM_VALUE, PARAMETER_LENGTH);
   }
 

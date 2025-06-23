@@ -18,10 +18,12 @@ import static org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper.verify4844Kz
 
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.List;
 import java.util.Set;
@@ -31,9 +33,16 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
 
 public class MainnetBlobsValidator {
   final Set<BlobType> acceptedBlobVersions;
+  final GasLimitCalculator gasLimitCalculator;
+  final GasCalculator gasCalculator;
 
-  public MainnetBlobsValidator(final Set<BlobType> acceptedBlobVersions) {
+  public MainnetBlobsValidator(
+      final Set<BlobType> acceptedBlobVersions,
+      final GasLimitCalculator gasLimitCalculator,
+      final GasCalculator gasCalculator) {
     this.acceptedBlobVersions = acceptedBlobVersions;
+    this.gasLimitCalculator = gasLimitCalculator;
+    this.gasCalculator = gasCalculator;
   }
 
   public ValidationResult<TransactionInvalidReason> validateTransactionsBlobs(
@@ -61,6 +70,13 @@ public class MainnetBlobsValidator {
           "transaction versioned hashes are empty, cannot verify without versioned hashes");
     }
     final List<VersionedHash> versionedHashes = transaction.getVersionedHashes().get();
+
+    final long blobGasCost = gasCalculator.blobGasCost(versionedHashes.size());
+    if (blobGasCost > gasLimitCalculator.transactionBlobGasLimitCap()) {
+      final String error =
+          String.format("Blob transaction has too many blobs: %d", versionedHashes.size());
+      return ValidationResult.invalid(TransactionInvalidReason.INVALID_BLOBS, error);
+    }
 
     for (int i = 0; i < versionedHashes.size(); i++) {
       final KZGCommitment commitment = blobsWithCommitments.getKzgCommitments().get(i);

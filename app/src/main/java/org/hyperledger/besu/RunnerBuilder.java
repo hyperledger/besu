@@ -64,7 +64,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending.
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscriptionService;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -99,7 +98,6 @@ import org.hyperledger.besu.ethereum.permissioning.node.InsufficientPeersPermiss
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.node.PeerPermissionsAdapter;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethstats.EthStatsService;
 import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
@@ -755,27 +753,6 @@ public class RunnerBuilder {
 
     final P2PNetwork peerNetwork = networkRunner.getNetwork();
 
-    Optional<StratumServer> stratumServer = Optional.empty();
-
-    if (miningConfiguration.isStratumMiningEnabled()) {
-      if (!(miningCoordinator instanceof PoWMiningCoordinator powMiningCoordinator)) {
-        throw new IllegalArgumentException(
-            "Stratum mining requires the network option(--network) to be set to CLASSIC. Stratum server requires a PoWMiningCoordinator not "
-                + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
-      }
-      stratumServer =
-          Optional.of(
-              new StratumServer(
-                  vertx,
-                  powMiningCoordinator,
-                  miningConfiguration.getStratumPort(),
-                  miningConfiguration.getStratumNetworkInterface(),
-                  miningConfiguration.getUnstable().getStratumExtranonce(),
-                  metricsSystem));
-      miningCoordinator.addEthHashObserver(stratumServer.get());
-      LOG.debug("added ethash observer: {}", stratumServer.get());
-    }
-
     sanitizePeers(network, staticNodes)
         .map(DefaultPeer::fromEnodeURL)
         .forEach(peerNetwork::addMaintainedConnectionPeer);
@@ -1096,7 +1073,6 @@ public class RunnerBuilder {
         webSocketService,
         jsonRpcIpcService,
         inProcessRpcMethods,
-        stratumServer,
         metricsService,
         ethStatsService,
         besuController,
