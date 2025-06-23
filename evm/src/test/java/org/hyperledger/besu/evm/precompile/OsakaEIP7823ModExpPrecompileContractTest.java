@@ -18,10 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract.disableNative;
 import static org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract.maybeEnableNative;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
 import java.util.Optional;
 import java.util.Random;
@@ -38,10 +39,10 @@ class OsakaEIP7823ModExpPrecompiledContractTest {
   private static final Random RANDOM = new Random();
   @Mock private MessageFrame messageFrame;
 
-  private final BigIntegerModularExponentiationPrecompiledContract pragueContract =
-      BigIntegerModularExponentiationPrecompiledContract.byzantium(new PragueGasCalculator());
-  private final BigIntegerModularExponentiationPrecompiledContract osakaContract =
-      BigIntegerModularExponentiationPrecompiledContract.osaka(new OsakaGasCalculator());
+  private final PrecompiledContract pragueContract =
+      EvmSpec.evmSpec(EvmSpecVersion.PRAGUE).getPrecompileContractRegistry().get(Address.MODEXP);
+  private final PrecompiledContract osakaContract =
+      EvmSpec.evmSpec(EvmSpecVersion.OSAKA).getPrecompileContractRegistry().get(Address.MODEXP);
 
   static Stream<Arguments> validParameters() {
     return Stream.of(
