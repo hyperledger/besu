@@ -23,13 +23,14 @@
 - Introduce the `TransactionValidatorService` to allow plugins to add custom validation rules [#8793](https://github.com/hyperledger/besu/pull/8793)
 - Enable parallel tx processing by default if Bonsai is used [#8668](https://github.com/hyperledger/besu/pull/8668)
 - Increase mainnet gas limit to 45M [#8824](https://github.com/hyperledger/besu/pull/8824)
-
+- Expose a method to get blob gas price from plugins [#8843](https://github.com/hyperledger/besu/pull/8843)
 
 #### Fusaka Devnet
 - EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
 - EIP-7823 - Modexp upper bounds [#8632](https://github.com/hyperledger/besu/pull/8632)
 - EIP-7892 - Max number of blobs per transaction [#8761](https://github.com/hyperledger/besu/pull/8761)
 - Implement rewardPercentile cap in eth_feeHistory [#8748](https://github.com/hyperledger/besu/pull/8748)
+- Experimental Bonsai Archive support [#7475](https://github.com/hyperledger/besu/pull/7475)
 
 ### Bug fixes
 
@@ -108,6 +109,7 @@
 #### Dependencies
 - Update discovery library to 25.4.0 [#8635](https://github.com/hyperledger/besu/pull/8635)
 - Upgrade Gradle to 8.14 and related plugins [#8638](https://github.com/hyperledger/besu/pull/8638)
+- Make gas estimation strict by default [#8629](https://github.com/hyperledger/besu/pull/8629)
 
 ### Bug fixes
 - Fix `besu -X` unstable options help [#8662](https://github.com/hyperledger/besu/pull/8662)

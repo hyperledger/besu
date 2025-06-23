@@ -85,10 +85,13 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiArchiveWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchiver;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -812,6 +815,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       }
     }
 
+    if (DataStorageFormat.X_BONSAI_ARCHIVE.equals(
+        dataStorageConfiguration.getDataStorageFormat())) {
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+          worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
+      final BonsaiArchiver archiver =
+          createBonsaiArchiver(
+              worldStateKeyValueStorage,
+              blockchain,
+              scheduler,
+              ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager());
+      blockchain.observeBlockAdded(archiver);
+    }
+
     final List<Closeable> closeables = new ArrayList<>();
     closeables.add(protocolContext.getWorldStateArchive());
     closeables.add(storageProvider);
@@ -875,6 +891,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     trieLogPruner.initialize();
 
     return trieLogPruner;
+  }
+
+  private BonsaiArchiver createBonsaiArchiver(
+      final WorldStateKeyValueStorage worldStateStorage,
+      final Blockchain blockchain,
+      final EthScheduler scheduler,
+      final TrieLogManager trieLogManager) {
+    final BonsaiArchiver archiver =
+        new BonsaiArchiver(
+            (PathBasedWorldStateKeyValueStorage) worldStateStorage,
+            blockchain,
+            scheduler::executeServiceTask,
+            trieLogManager,
+            metricsSystem);
+
+    archiver.initialize();
+    LOG.info("Bonsai archiver initialised");
+    return archiver;
   }
 
   /**
@@ -1166,6 +1200,22 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             evmConfiguration,
             worldStateHealerSupplier,
             codeCache);
+      }
+      case X_BONSAI_ARCHIVE -> {
+        final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+            worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
+
+        yield new BonsaiArchiveWorldStateProvider(
+            worldStateKeyValueStorage,
+            blockchain,
+            Optional.of(
+                dataStorageConfiguration
+                    .getPathBasedExtraStorageConfiguration()
+                    .getMaxLayersToLoad()),
+            bonsaiCachedMerkleTrieLoader,
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            evmConfiguration,
+            worldStateHealerSupplier);
       }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =

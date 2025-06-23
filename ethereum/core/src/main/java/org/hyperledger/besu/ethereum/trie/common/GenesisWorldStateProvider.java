@@ -46,9 +46,13 @@ public class GenesisWorldStateProvider {
    */
   public static MutableWorldState createGenesisWorldState(
       final DataStorageConfiguration dataStorageConfiguration, final CodeCache codeCache) {
+
     if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.BONSAI) {
-      return createGenesisBonsaiWorldState(codeCache);
+      return createGenesisBonsaiWorldState(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG, codeCache);
+    } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
+        == DataStorageFormat.X_BONSAI_ARCHIVE) {
+      return createGenesisBonsaiWorldState(DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG, codeCache);
     } else {
       return createGenesisForestWorldState();
     }
@@ -59,7 +63,8 @@ public class GenesisWorldStateProvider {
    *
    * @return a mutable world state for the Genesis block
    */
-  private static MutableWorldState createGenesisBonsaiWorldState(final CodeCache codeCache) {
+  private static MutableWorldState createGenesisBonsaiWorldState(
+      final DataStorageConfiguration storageConfiguration, final CodeCache codeCache) {
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
@@ -69,7 +74,7 @@ public class GenesisWorldStateProvider {
                 new InMemoryKeyValueStorage(),
                 new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+            storageConfiguration);
     return new BonsaiWorldState(
         bonsaiWorldStateKeyValueStorage,
         bonsaiCachedMerkleTrieLoader,
