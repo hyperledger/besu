@@ -86,13 +86,17 @@ public class ExtCodeCopyOperation extends AbstractOperation {
 
     final boolean accountIsWarm =
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-    final long cost = cost(frame, memOffset, numBytes, accountIsWarm);
+    long cost = cost(frame, memOffset, numBytes, accountIsWarm);
 
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     final Account account = frame.getWorldUpdater().get(address);
+    cost = clampedAdd(cost, gasCalculator().calculateCodeDelegationResolutionGas(frame, account));
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
     final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
     if (enableEIP3540
