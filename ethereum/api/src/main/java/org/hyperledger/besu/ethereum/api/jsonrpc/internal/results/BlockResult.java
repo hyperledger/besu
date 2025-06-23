@@ -101,7 +101,15 @@ public class BlockResult implements JsonRpcResult {
       final List<JsonNode> ommers,
       final Difficulty totalDifficulty,
       final int size) {
-    this(header, transactions, ommers, totalDifficulty, size, false, Optional.empty(), Optional.empty());
+    this(
+        header,
+        transactions,
+        ommers,
+        totalDifficulty,
+        size,
+        false,
+        Optional.empty(),
+        Optional.empty());
   }
 
   public BlockResult(

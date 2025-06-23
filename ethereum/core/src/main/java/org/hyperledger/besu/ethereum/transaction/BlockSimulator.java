@@ -27,6 +27,7 @@ import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -277,8 +278,10 @@ public class BlockSimulator {
             .<MiningBeneficiaryCalculator>map(feeRecipient -> header -> feeRecipient)
             .orElseGet(protocolSpec::getMiningBeneficiaryCalculator);
 
-    for (CallParameter callParameter : blockStateCall.getCalls()) {
+    final BlockAccessList.Builder balBuilder = BlockAccessList.builder();
 
+    for (int i = 0; i < blockStateCall.getCalls().size(); i++) {
+      final CallParameter callParameter = blockStateCall.getCalls().get(i);
       OperationTracer operationTracer =
           isTraceTransfers ? new EthTransferLogOperationTracer() : OperationTracer.NO_TRACING;
 
@@ -317,8 +320,13 @@ public class BlockSimulator {
             "Transaction simulator result is invalid", transactionSimulationResult);
       }
       transactionUpdater.commit();
+
+      balBuilder.updateFromTransactionAccumulator(
+          transactionUpdater, i, callParameter.getTo().isEmpty());
+
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
     }
+    blockStateCallSimulationResult.set(balBuilder.build());
     return blockStateCallSimulationResult;
   }
 
@@ -348,7 +356,13 @@ public class BlockSimulator {
             .buildBlockHeader();
 
     Block block =
-        new Block(finalBlockHeader, new BlockBody(transactions, List.of(), Optional.of(List.of())));
+        new Block(
+            finalBlockHeader,
+            new BlockBody(
+                transactions,
+                List.of(),
+                Optional.of(List.of()),
+                blockStateCallSimulationResult.getBlockAccessList()));
 
     return new BlockSimulationResult(block, blockStateCallSimulationResult);
   }

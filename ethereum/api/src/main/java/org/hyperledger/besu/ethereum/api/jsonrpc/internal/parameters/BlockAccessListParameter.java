@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountAccess;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountBalanceDiff;
@@ -28,6 +25,10 @@ import org.hyperledger.besu.ethereum.core.BlockAccessList.PerTxAccess;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.SlotAccess;
 
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 public class BlockAccessListParameter {
 
