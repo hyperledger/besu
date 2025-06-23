@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import static org.hyperledger.besu.datatypes.Address.P256_VERIFY;
+import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
@@ -44,7 +44,7 @@ public class OsakaGasCalculator extends PragueGasCalculator {
 
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
-    this(P256_VERIFY.getInt(16));
+    this(BLS12_MAP_FP2_TO_G2.getInt(16));
   }
 
   /**
@@ -72,7 +72,7 @@ public class OsakaGasCalculator extends PragueGasCalculator {
         (Byte.toUnsignedInt(addressBytes[18]) << 8) | Byte.toUnsignedInt(addressBytes[19]);
 
     // values in range [1, 0x01FF] inclusive to include L1 and L2 precompiles:
-    return precompileValue > 0 && precompileValue <= 0x01FF;
+    return (precompileValue > 0 && precompileValue <= 0x11) || precompileValue == 0x0100;
   }
 
   @Override
