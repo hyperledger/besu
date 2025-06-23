@@ -46,6 +46,9 @@ public class CodeV0 implements Code {
   /** Code section info for the legacy code */
   private final CodeSection codeSectionZero;
 
+  /** Bit mask for jump destinations, used to optimize JUMP/JUMPI operations */
+  private long[] jumpDestBitMask = null;
+
   /**
    * Public constructor.
    *
@@ -164,11 +167,16 @@ public class CodeV0 implements Code {
     return Bytes.EMPTY;
   }
 
-  /**
-   * Calculate jump destination.
-   *
-   * @return the long [ ]
-   */
+  @Override
+  public long[] getJumpDestBitMask() {
+    return jumpDestBitMask;
+  }
+
+  @Override
+  public void setJumpDestBitMask(final long[] jumpDestBitMask) {
+    this.jumpDestBitMask = jumpDestBitMask;
+  }
+
   @Override
   public int readBigEndianI16(final int index) {
     return Words.readBigEndianI16(index, bytes.toArrayUnsafe());

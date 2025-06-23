@@ -61,14 +61,23 @@ public class JumpService {
   }
 
   private long[] getOrCreateValidJumpDestinationsBitMask(final Code code) {
-    long[] validJumpDestinationsBitMask = jumpDestBitmaskCache.getIfPresent(code.getCodeHash());
+    long[] validJumpDestinationsBitMask = code.getJumpDestBitMask();
 
-    if (validJumpDestinationsBitMask == null) {
-      validJumpDestinationsBitMask = calculateJumpDestBitMask(code);
-      jumpDestBitmaskCache.put(code.getCodeHash(), validJumpDestinationsBitMask);
+    if (validJumpDestinationsBitMask != null) {
+      return validJumpDestinationsBitMask;
     }
 
-    return validJumpDestinationsBitMask;
+    long[] cachedValidJumpDestinationsBitMask =
+        jumpDestBitmaskCache.getIfPresent(code.getCodeHash());
+
+    if (cachedValidJumpDestinationsBitMask == null) {
+      cachedValidJumpDestinationsBitMask = calculateJumpDestBitMask(code);
+      jumpDestBitmaskCache.put(code.getCodeHash(), cachedValidJumpDestinationsBitMask);
+    }
+
+    code.setJumpDestBitMask(cachedValidJumpDestinationsBitMask);
+
+    return cachedValidJumpDestinationsBitMask;
   }
 
   private boolean isJumpDestInvalid(
