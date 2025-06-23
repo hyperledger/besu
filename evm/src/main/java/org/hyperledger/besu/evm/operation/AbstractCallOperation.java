@@ -338,7 +338,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return CodeV0.EMPTY_CODE;
     }
 
-    Code code = account.getAnalyzedCode();
+    Code code = account.getOrCreateCachedCode();
     if (!hasCodeDelegation(code.getBytes())) {
       return code;
     }

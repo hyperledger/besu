@@ -108,6 +108,6 @@ public class CodeDelegationHelper {
       return EMPTY_CODE;
     }
 
-    return targetAccount.getAnalyzedCode();
+    return targetAccount.getOrCreateCachedCode();
   }
 }

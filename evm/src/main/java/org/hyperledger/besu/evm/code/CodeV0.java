@@ -18,12 +18,12 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Suppliers;
@@ -38,10 +38,10 @@ public class CodeV0 implements Code {
   /** The bytes representing the code. */
   private final Bytes bytes;
 
-  private final Supplier<Integer> sizeSupplier;
-
   /** The hash of the code, needed for accessing metadata about the bytecode */
-  private final Supplier<Hash> codeHashSupplier;
+  private Hash codeHash;
+
+  private Integer size;
 
   /** Code section info for the legacy code */
   private final CodeSection codeSectionZero;
@@ -55,22 +55,20 @@ public class CodeV0 implements Code {
    * @param byteCode The byte representation of the code.
    */
   public CodeV0(final Bytes byteCode) {
-    this(
-        byteCode,
-        byteCode.isEmpty() ? () -> Hash.EMPTY : Suppliers.memoize(() -> Hash.hash(byteCode)));
+    this(byteCode, byteCode.isEmpty() ? Hash.EMPTY : null);
   }
 
   /**
    * Public constructor.
    *
    * @param byteCode The byte representation of the code.
-   * @param codeHashSupplier the hash of the bytecode
+   * @param codeHash the hash of the bytecode
    */
-  public CodeV0(final Bytes byteCode, final Supplier<Hash> codeHashSupplier) {
+  public CodeV0(final Bytes byteCode, final Hash codeHash) {
     this.bytes = byteCode;
-    this.sizeSupplier = Suppliers.memoize(byteCode::size);
-    this.codeHashSupplier = codeHashSupplier;
-    this.codeSectionZero = new CodeSection(this.sizeSupplier, 0, -1, -1, 0);
+    this.codeHash = codeHash;
+
+    this.codeSectionZero = new CodeSection(Suppliers.memoize(this::getSize), 0, -1, -1, 0);
   }
 
   /**
@@ -85,7 +83,7 @@ public class CodeV0 implements Code {
     if (other == this) return true;
     if (!(other instanceof CodeV0 that)) return false;
 
-    return this.codeHashSupplier.get().equals(that.codeHashSupplier.get());
+    return this.getCodeHash().equals(that.getCodeHash());
   }
 
   @Override
@@ -100,7 +98,11 @@ public class CodeV0 implements Code {
    */
   @Override
   public int getSize() {
-    return sizeSupplier.get();
+    if (size == null) {
+      size = bytes.size();
+    }
+
+    return size;
   }
 
   @Override
@@ -125,7 +127,35 @@ public class CodeV0 implements Code {
 
   @Override
   public Hash getCodeHash() {
-    return codeHashSupplier.get();
+    if (codeHash != null) {
+      return codeHash;
+    }
+
+    codeHash = Hash.hash(bytes);
+    return codeHash;
+  }
+
+  @Override
+  public boolean isJumpDestInvalid(final int jumpDestination) {
+    if (jumpDestination < 0 || jumpDestination >= getSize()) {
+      return true;
+    }
+
+    if (jumpDestBitMask == null) {
+      jumpDestBitMask = calculateJumpDestBitMask();
+    }
+
+    // This selects which long in the array holds the bit for the given offset:
+    //	1)	>>> 6 is equivalent to jumpDestination / 64
+    //	2)	Each long holds 64 bits, so this finds the correct chunk
+    final long targetLong = jumpDestBitMask[jumpDestination >>> 6];
+
+    // 1) & 0x3F is jumpDestination % 64
+    // 2)	1L << ... gives a mask for the specific bit in that long
+    final long targetBit = 1L << (jumpDestination & 0x3F);
+
+    // If the bit is not set, then it is an invalid jump destination
+    return (targetLong & targetBit) == 0L;
   }
 
   @Override
@@ -168,16 +198,6 @@ public class CodeV0 implements Code {
   }
 
   @Override
-  public long[] getJumpDestBitMask() {
-    return jumpDestBitMask;
-  }
-
-  @Override
-  public void setJumpDestBitMask(final long[] jumpDestBitMask) {
-    this.jumpDestBitMask = jumpDestBitMask;
-  }
-
-  @Override
   public int readBigEndianI16(final int index) {
     return Words.readBigEndianI16(index, bytes.toArrayUnsafe());
   }
@@ -203,6 +223,160 @@ public class CodeV0 implements Code {
       i += printInstruction(i, ps);
     }
     return out.toString(StandardCharsets.UTF_8);
+  }
+
+  long[] calculateJumpDestBitMask() {
+    final int size = getSize();
+    final long[] bitmap = new long[(size >> 6) + 1];
+    final byte[] rawCode = getBytes().toArrayUnsafe();
+    final int length = rawCode.length;
+    for (int i = 0; i < length; ) {
+      long thisEntry = 0L;
+      final int entryPos = i >> 6;
+      final int max = Math.min(64, length - (entryPos << 6));
+      int j = i & 0x3F;
+      for (; j < max; i++, j++) {
+        final byte operationNum = rawCode[i];
+        if (operationNum >= JumpDestOperation.OPCODE) {
+          switch (operationNum) {
+            case JumpDestOperation.OPCODE:
+              thisEntry |= 1L << j;
+              break;
+            case 0x60:
+              i += 1;
+              j += 1;
+              break;
+            case 0x61:
+              i += 2;
+              j += 2;
+              break;
+            case 0x62:
+              i += 3;
+              j += 3;
+              break;
+            case 0x63:
+              i += 4;
+              j += 4;
+              break;
+            case 0x64:
+              i += 5;
+              j += 5;
+              break;
+            case 0x65:
+              i += 6;
+              j += 6;
+              break;
+            case 0x66:
+              i += 7;
+              j += 7;
+              break;
+            case 0x67:
+              i += 8;
+              j += 8;
+              break;
+            case 0x68:
+              i += 9;
+              j += 9;
+              break;
+            case 0x69:
+              i += 10;
+              j += 10;
+              break;
+            case 0x6a:
+              i += 11;
+              j += 11;
+              break;
+            case 0x6b:
+              i += 12;
+              j += 12;
+              break;
+            case 0x6c:
+              i += 13;
+              j += 13;
+              break;
+            case 0x6d:
+              i += 14;
+              j += 14;
+              break;
+            case 0x6e:
+              i += 15;
+              j += 15;
+              break;
+            case 0x6f:
+              i += 16;
+              j += 16;
+              break;
+            case 0x70:
+              i += 17;
+              j += 17;
+              break;
+            case 0x71:
+              i += 18;
+              j += 18;
+              break;
+            case 0x72:
+              i += 19;
+              j += 19;
+              break;
+            case 0x73:
+              i += 20;
+              j += 20;
+              break;
+            case 0x74:
+              i += 21;
+              j += 21;
+              break;
+            case 0x75:
+              i += 22;
+              j += 22;
+              break;
+            case 0x76:
+              i += 23;
+              j += 23;
+              break;
+            case 0x77:
+              i += 24;
+              j += 24;
+              break;
+            case 0x78:
+              i += 25;
+              j += 25;
+              break;
+            case 0x79:
+              i += 26;
+              j += 26;
+              break;
+            case 0x7a:
+              i += 27;
+              j += 27;
+              break;
+            case 0x7b:
+              i += 28;
+              j += 28;
+              break;
+            case 0x7c:
+              i += 29;
+              j += 29;
+              break;
+            case 0x7d:
+              i += 30;
+              j += 30;
+              break;
+            case 0x7e:
+              i += 31;
+              j += 31;
+              break;
+            case 0x7f:
+              i += 32;
+              j += 32;
+              break;
+            default:
+          }
+        }
+      }
+      bitmap[entryPos] = thisEntry;
+    }
+    return bitmap;
   }
 
   /**

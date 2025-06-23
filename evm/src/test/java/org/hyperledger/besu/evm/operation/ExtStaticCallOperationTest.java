@@ -132,7 +132,7 @@ public class ExtStaticCallOperationTest {
     }
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF).getCodeHash());
-    when(account.getAnalyzedCode()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF));
+    when(account.getOrCreateCachedCode()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF));
     when(account.getCode()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF).getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);
@@ -166,7 +166,7 @@ public class ExtStaticCallOperationTest {
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn(SIMPLE_EOF.getCodeHash());
-    when(account.getAnalyzedCode()).thenReturn(SIMPLE_EOF);
+    when(account.getOrCreateCachedCode()).thenReturn(SIMPLE_EOF);
     when(account.getCode()).thenReturn(SIMPLE_EOF.getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);
@@ -206,7 +206,7 @@ public class ExtStaticCallOperationTest {
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn(SIMPLE_EOF.getCodeHash());
-    when(account.getAnalyzedCode()).thenReturn(SIMPLE_EOF);
+    when(account.getOrCreateCachedCode()).thenReturn(SIMPLE_EOF);
     when(account.getCode()).thenReturn(SIMPLE_EOF.getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);

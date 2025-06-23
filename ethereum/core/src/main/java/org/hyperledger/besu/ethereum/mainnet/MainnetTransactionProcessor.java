@@ -551,7 +551,7 @@ public class MainnetTransactionProcessor {
       return delegationTargetCode(worldUpdater, warmAddressList, contract);
     }
 
-    return contract.getAnalyzedCode();
+    return contract.getOrCreateCachedCode();
   }
 
   private Code delegationTargetCode(

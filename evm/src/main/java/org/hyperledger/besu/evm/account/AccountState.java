@@ -84,7 +84,7 @@ public interface AccountState {
    *
    * @return the account code wrapped in a {@link Code} object.
    */
-  default Code getAnalyzedCode() {
+  default Code getOrCreateCachedCode() {
     return new CodeV0(this.getCode());
   }
 

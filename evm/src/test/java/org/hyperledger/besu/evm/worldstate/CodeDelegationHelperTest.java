@@ -127,7 +127,7 @@ class CodeDelegationHelperTest {
     Bytes targetCode = Bytes.fromHexString("60006000");
 
     when(worldUpdater.get(targetAddress)).thenReturn(targetAccount);
-    when(targetAccount.getAnalyzedCode()).thenReturn(new CodeV0(targetCode));
+    when(targetAccount.getOrCreateCachedCode()).thenReturn(new CodeV0(targetCode));
     when(gasCalculator.isPrecompile(targetAddress)).thenReturn(false);
 
     CodeDelegationHelper.Target target =

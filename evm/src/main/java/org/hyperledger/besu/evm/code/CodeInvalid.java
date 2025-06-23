@@ -88,6 +88,11 @@ public class CodeInvalid implements Code {
   }
 
   @Override
+  public boolean isJumpDestInvalid(final int jumpDestination) {
+    return false;
+  }
+
+  @Override
   public CodeSection getCodeSection(final int section) {
     return null;
   }

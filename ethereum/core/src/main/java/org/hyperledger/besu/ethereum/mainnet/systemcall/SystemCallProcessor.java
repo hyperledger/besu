@@ -137,7 +137,7 @@ public class SystemCallProcessor {
         .inputData(inputData)
         .sender(SYSTEM_ADDRESS)
         .blockHashLookup(blockHashLookup)
-        .code(maybeContract.map(AccountState::getAnalyzedCode).orElse(CodeV0.EMPTY_CODE))
+        .code(maybeContract.map(AccountState::getOrCreateCachedCode).orElse(CodeV0.EMPTY_CODE))
         .build();
   }
 }

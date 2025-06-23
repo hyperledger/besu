@@ -169,28 +169,27 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
 
   @Override
   public Bytes getCode() {
-    return getAnalyzedCode().getBytes();
+    if (code != null) {
+      return code.getBytes();
+    }
+
+    return getOrCreateCachedCode().getBytes();
   }
 
   @Override
-  public Code getAnalyzedCode() {
-    if (code != null) {
-      return code;
-    }
-
+  public Code getOrCreateCachedCode() {
     final Code cachedCode =
         Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
 
-    // cache hit, but code was not set before, set it
+    // cache hit, overwrite code and return it
     if (cachedCode != null) {
       code = cachedCode;
       return code;
     }
 
-    // cache miss, code not set: get the code from the disk, set it and put it in the cache
-    // code cannot be empty here, as it would have been set to EMPTY_CODE in the constructor
+    // cache miss get the code from the disk, set it and put it in the cache
     final Bytes byteCode = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
-    code = new CodeV0(byteCode, () -> codeHash);
+    code = new CodeV0(byteCode, codeHash);
     Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
 
     return code;
@@ -212,7 +211,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     this.code = Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
 
     if (this.code == null) {
-      this.code = new CodeV0(byteCode, () -> codeHash);
+      this.code = new CodeV0(byteCode, codeHash);
       Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, this.code));
     }
   }
