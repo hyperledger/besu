@@ -23,7 +23,7 @@
 - Introduce the `TransactionValidatorService` to allow plugins to add custom validation rules [#8793](https://github.com/hyperledger/besu/pull/8793)
 - Enable parallel tx processing by default if Bonsai is used [#8668](https://github.com/hyperledger/besu/pull/8668)
 - Increase mainnet gas limit to 45M [#8824](https://github.com/hyperledger/besu/pull/8824)
-
+- Expose a method to get blob gas price from plugins [#8843](https://github.com/hyperledger/besu/pull/8843)
 
 #### Fusaka Devnet
 - EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
