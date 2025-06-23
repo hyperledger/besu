@@ -62,14 +62,6 @@ public interface Code {
   Hash getCodeHash();
 
   /**
-   * For V0 and V1, is the target jump location valid?
-   *
-   * @param jumpDestination index from PC=0. Code section for v1, whole container in V0
-   * @return true if the operation is both a valid opcode and a JUMPDEST
-   */
-  boolean isJumpDestInvalid(final int jumpDestination);
-
-  /**
    * Code is considered valid by the EVM.
    *
    * @return isValid

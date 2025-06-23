@@ -75,11 +75,6 @@ public class CodeV1 implements Code {
   }
 
   @Override
-  public boolean isJumpDestInvalid(final int jumpDestination) {
-    return true; // code validation ensures this
-  }
-
-  @Override
   public boolean isValid() {
     return true;
   }
