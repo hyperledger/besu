@@ -1215,7 +1215,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
-            worldStateHealerSupplier);
+            worldStateHealerSupplier,
+            codeCache);
       }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =
