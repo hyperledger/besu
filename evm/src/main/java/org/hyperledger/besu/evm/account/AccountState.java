@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.NavigableMap;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -145,7 +146,7 @@ public interface AccountState {
    *
    * @return the size of the code in bytes.
    */
-  default int getCodeSize() {
-    return getCode().size();
+  default Optional<Integer> getCodeSize() {
+    return Optional.of(getCode().size());
   }
 }

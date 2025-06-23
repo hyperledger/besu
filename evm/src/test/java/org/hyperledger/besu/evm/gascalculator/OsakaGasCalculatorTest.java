@@ -25,6 +25,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -137,7 +139,7 @@ class OsakaGasCalculatorTest {
   private void mockAccount(final int codeSize, final boolean isWarm) {
     when(account.getCodeHash()).thenReturn(Hash.hash(Bytes.of(1)));
     when(account.getAddress()).thenReturn(address);
-    when(account.getCodeSize()).thenReturn(codeSize);
+    when(account.getCodeSize()).thenReturn(Optional.of(codeSize));
     when(frame.warmUpCode(any())).thenReturn(isWarm);
   }
 }

@@ -142,7 +142,15 @@ public class OsakaGasCalculator extends PragueGasCalculator {
     if (isCodeWarm) {
       return 0L;
     }
-    return calculateLargeCodeSizeCost(account.getCodeSize());
+
+    /*
+     * TODO: Once the codehash-to-codesize index is available,
+     * we can safely assume that if getCodeSize() returns empty,
+     * the contract is smaller than MAX_CODE_SIZE_WITH_NO_ACCESS_COST.
+     * Until then, we fall back to measuring the full code size directly.
+     */
+    int codeSize = account.getCodeSize().orElseGet(() -> account.getCode().size());
+    return calculateLargeCodeSizeCost(codeSize);
   }
 
   /**
