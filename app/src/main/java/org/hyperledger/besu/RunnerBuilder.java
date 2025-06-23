@@ -46,6 +46,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
+import org.hyperledger.besu.plugins.health.LivenessCheckPluginService;
+import org.hyperledger.besu.plugins.health.ReadinessCheckPluginService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -813,12 +815,19 @@ public class RunnerBuilder {
                   metricsSystem,
                   natService,
                   nonEngineMethods,
-                  new HealthService(new LivenessCheck()),
-                  new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
-    }
+                  new HealthService(
+                      besuPluginContext != null && besuPluginContext.getService(LivenessCheckPluginService.class).isPresent()
+                          ? besuPluginContext.getService(LivenessCheckPluginService.class).get()
+                          : new LivenessCheck()),
+                  new HealthService(
+                      besuPluginContext != null && besuPluginContext.getService(ReadinessCheckPluginService.class).isPresent()
+                          ? besuPluginContext.getService(ReadinessCheckPluginService.class).get()
+                          : new ReadinessCheck(peerNetwork, synchronizer))));
 
     final SubscriptionManager subscriptionManager =
         createSubscriptionManager(vertx, transactionPool, blockchainQueries);
+
+{{ ... }}
 
     Optional<EngineJsonRpcService> engineJsonRpcService = Optional.empty();
     if (engineJsonRpcConfiguration.isPresent() && engineJsonRpcConfiguration.get().isEnabled()) {
@@ -864,29 +873,6 @@ public class RunnerBuilder {
           webSocketConfiguration.isEnabled()
               ? webSocketConfiguration
               : WebSocketConfiguration.createEngineDefault();
-
-      final WebSocketMethodsFactory websocketMethodsFactory =
-          new WebSocketMethodsFactory(subscriptionManager, engineMethods);
-
-      engineJsonRpcService =
-          Optional.of(
-              new EngineJsonRpcService(
-                  vertx,
-                  dataDir,
-                  engineJsonRpcConfiguration.orElse(JsonRpcConfiguration.createEngineDefault()),
-                  metricsSystem,
-                  natService,
-                  websocketMethodsFactory.methods(),
-                  Optional.ofNullable(engineSocketConfig),
-                  besuController.getProtocolManager().ethContext().getScheduler(),
-                  authToUse,
-                  new HealthService(new LivenessCheck()),
-                  new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
-    }
-
-    Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
-    if (graphQLConfiguration.isEnabled()) {
-      final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
       final Map<GraphQLContextType, Object> graphQlContextMap = new ConcurrentHashMap<>();
       graphQlContextMap.putIfAbsent(GraphQLContextType.BLOCKCHAIN_QUERIES, blockchainQueries);
       graphQlContextMap.putIfAbsent(GraphQLContextType.PROTOCOL_SCHEDULE, protocolSchedule);
