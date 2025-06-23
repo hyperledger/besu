@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Request;
@@ -194,6 +195,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             blockHashLookup,
             blobGasPrice);
 
+    final BlockAccessList.Builder balBuilder = BlockAccessList.builder();
     boolean parallelizedTxFound = false;
     int nbParallelTx = 0;
     for (int i = 0; i < transactions.size(); i++) {
@@ -228,6 +230,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
 
       blockUpdater.commit();
+      balBuilder.updateFromTransactionAccumulator(blockUpdater, i, transaction.isContractCreation());
       blockUpdater.markTransactionBoundary();
 
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
@@ -339,7 +342,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     return new BlockProcessingResult(
-        Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)),
+        Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests, balBuilder.build())),
         parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
   }
 
