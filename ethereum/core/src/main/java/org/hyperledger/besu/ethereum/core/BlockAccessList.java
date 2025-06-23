@@ -343,19 +343,16 @@ public class BlockAccessList {
                 (address, slotMap) -> {
                   slotMap.forEach(
                       (slotKey, value) -> {
-                        final UInt256 prior = value.getPrior();
-                        final UInt256 updated = value.getUpdated();
-                        final boolean isEvmRead = value.isEvmRead();
-                        final boolean areEqual =
-                            ((prior == null && updated == null)
-                                || (prior != null && prior.equals(updated)));
-                        if (areEqual && isEvmRead) {
+                        if (value.isEvmRead()) {
                           this.accessSlot(address, slotKey).read();
                         } else {
-                          this.accessSlot(address, slotKey)
-                              .write(
-                                  txIndex,
-                                  Optional.ofNullable(updated).orElse(UInt256.ZERO).toBytes());
+                          UInt256 prior =
+                              Optional.ofNullable(value.getPrior()).orElse(UInt256.ZERO);
+                          UInt256 updated =
+                              Optional.ofNullable(value.getUpdated()).orElse(UInt256.ZERO);
+                          if (!prior.equals(updated)) {
+                            this.accessSlot(address, slotKey).write(txIndex, updated.toBytes());
+                          }
                         }
                       });
                 });
@@ -418,14 +415,14 @@ public class BlockAccessList {
 
   private static class AccountAccessBuilder {
     private final Address address;
-    private final Map<Address, SlotAccessBuilder> slots = new LinkedHashMap<>();
+    private final Map<StorageSlotKey, SlotAccessBuilder> slots = new LinkedHashMap<>();
 
     AccountAccessBuilder(final Address address) {
       this.address = address;
     }
 
-    public SlotAccessBuilder slot(final StorageSlotKey slot) {
-      return slots.computeIfAbsent(address, s -> new SlotAccessBuilder(slot));
+    public SlotAccessBuilder slot(final StorageSlotKey slotKey) {
+      return slots.computeIfAbsent(slotKey, k -> new SlotAccessBuilder(slotKey));
     }
 
     public AccountAccess build() {
@@ -447,6 +444,10 @@ public class BlockAccessList {
     }
 
     public SlotAccessBuilder write(final int txIndex, final Bytes valueAfter) {
+      // TODO: Can we get rid of this workaround?
+      if (!accesses.isEmpty() && accesses.getLast().getValueAfter().get().equals(valueAfter)) {
+        return this;
+      }
       accesses.removeIf(access -> access.getTxIndex().equals(txIndex));
       accesses.add(new PerTxAccess(txIndex, Optional.of(valueAfter)));
       return this;

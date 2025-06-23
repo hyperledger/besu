@@ -99,7 +99,7 @@ public class BlockAccessListParameter {
 
     public PerTxAccessParameter(final PerTxAccess access) {
       this.txIndex = access.getTxIndex();
-      this.valueAfter = access.getValueAfter().map(Bytes::toBase64String).orElse(null);
+      this.valueAfter = access.getValueAfter().map(Bytes::toHexString).orElse(null);
     }
   }
 
