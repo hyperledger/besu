@@ -93,7 +93,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     }
 
     final Account account = frame.getWorldUpdater().get(address);
-    cost = clampedAdd(cost, gasCalculator().calculateCodeDelegationResolutionGas(frame, account));
+    cost = clampedAdd(cost, gasCalculator().calculateLargeCodeAccessCost(frame, account));
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
