@@ -19,10 +19,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.internal.CodeCache;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -49,6 +52,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   private final Hash addressHash;
 
   @Nullable private A account; // null if this is a new account.
+  @Nullable private CodeCache codeCache;
 
   private boolean immutable;
 
@@ -108,6 +112,11 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     this.oldCodeHash = account.getCodeHash();
 
     this.updatedStorage = new TreeMap<>();
+
+    final CodeCache codeCache = account.getCodeCache();
+    if (codeCache != null) {
+      this.codeCache = codeCache;
+    }
   }
 
   /**
@@ -224,6 +233,23 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     }
     this.updatedCode = code;
     this.updatedCodeHash = null;
+  }
+
+  @Override
+  public Code getOrCreateCachedCode() {
+    if (codeCache == null) {
+      return new CodeV0(getCode(), getCodeHash());
+    }
+
+    final Code cachedCode = codeCache.getIfPresent(getCodeHash());
+    if (cachedCode != null) {
+      return cachedCode;
+    }
+
+    final Code newCode = new CodeV0(getCode(), getCodeHash());
+    codeCache.put(getCodeHash(), newCode);
+
+    return newCode;
   }
 
   /** Mark transaction boundary. */

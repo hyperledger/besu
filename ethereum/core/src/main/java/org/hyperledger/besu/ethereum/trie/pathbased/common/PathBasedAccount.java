@@ -19,12 +19,12 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.internal.CodeCache;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -132,6 +132,11 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
   }
 
   @Override
+  public org.hyperledger.besu.evm.internal.CodeCache getCodeCache() {
+    return codeCache;
+  }
+
+  @Override
   public Address getAddress() {
     return address;
   }
@@ -178,6 +183,10 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
 
   @Override
   public Code getOrCreateCachedCode() {
+    if (code != null) {
+      return code;
+    }
+
     final Code cachedCode =
         Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
 
@@ -208,12 +217,17 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     }
 
     this.codeHash = Hash.hash(byteCode);
-    this.code = Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
 
-    if (this.code == null) {
-      this.code = new CodeV0(byteCode, codeHash);
-      Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, this.code));
+    final Code cachedCode =
+        Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
+
+    if (cachedCode != null) {
+      this.code = cachedCode;
+      return;
     }
+
+    this.code = new CodeV0(byteCode, codeHash);
+    Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, this.code));
   }
 
   @Override
@@ -272,14 +286,5 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
         + ", codeHash="
         + codeHash
         + '}';
-  }
-
-  /**
-   * Returns the code cache associated with this account.
-   *
-   * @return the code cache.
-   */
-  public CodeCache getCodeCache() {
-    return codeCache;
   }
 }

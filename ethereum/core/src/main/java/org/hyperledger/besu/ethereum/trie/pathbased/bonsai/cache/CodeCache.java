@@ -21,11 +21,13 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
+import java.util.function.Supplier;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 /** The Code cache. */
-public class CodeCache {
+public class CodeCache implements org.hyperledger.besu.evm.internal.CodeCache {
 
   // private final MemoryBoundCache<Hash, Code> cache;
   private final Cache<Hash, Code> cache;
@@ -37,6 +39,11 @@ public class CodeCache {
     this.cache = Caffeine.newBuilder().maximumSize(16_000L).recordStats().build();
   }
 
+  /**
+   * Sets up the metrics system for the code cache.
+   *
+   * @param metricsSystem the metrics system to use
+   */
   public void setupMetricsSystem(final ObservableMetricsSystem metricsSystem) {
     this.lookupTimer =
         metricsSystem.createTimer(
@@ -67,6 +74,7 @@ public class CodeCache {
    * @param codeHash the code hash
    * @return the code if present
    */
+  @Override
   public Code getIfPresent(final Hash codeHash) {
     if (lookupTimer == null) {
       return cache.getIfPresent(codeHash);
@@ -83,6 +91,7 @@ public class CodeCache {
    * @param codeHash the code hash
    * @param code the code
    */
+  @Override
   public void put(final Hash codeHash, final Code code) {
     cache.put(codeHash, code);
   }
