@@ -32,7 +32,7 @@ public enum BlobType {
    *
    * @param versionId the version ID associated with this BlobType
    */
-  BlobType(final int versionId) {
+  BlobType(int versionId) {
     this.versionId = versionId;
   }
 
