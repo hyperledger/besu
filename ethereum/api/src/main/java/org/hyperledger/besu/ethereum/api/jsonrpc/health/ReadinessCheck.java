@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.health;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.services.health.HealthService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

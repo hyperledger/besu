@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,19 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.health;
+package org.hyperledger.besu.plugin.services.health;
 
-import org.hyperledger.besu.plugin.services.health.HealthService;
+/** Minimal HealthService API for plugin interface usage. */
+public interface HealthService {
+  @FunctionalInterface
+  interface HealthCheck {
+    boolean isHealthy(ParamSource paramSource);
+  }
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class LivenessCheck implements HealthService.HealthCheck {
-  private static final Logger LOG = LoggerFactory.getLogger(LivenessCheck.class);
-
-  @Override
-  public boolean isHealthy(final HealthService.ParamSource params) {
-    LOG.debug("Invoking liveness check.");
-    return true;
+  @FunctionalInterface
+  interface ParamSource {
+    String getParam(String name);
   }
 }

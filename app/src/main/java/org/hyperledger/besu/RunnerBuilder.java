@@ -46,8 +46,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
-import org.hyperledger.besu.plugins.health.LivenessCheckPluginService;
-import org.hyperledger.besu.plugins.health.ReadinessCheckPluginService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -114,6 +112,8 @@ import org.hyperledger.besu.nat.docker.DockerNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.health.LivenessCheckService;
+import org.hyperledger.besu.plugin.services.health.ReadinessCheckService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
@@ -816,18 +816,23 @@ public class RunnerBuilder {
                   natService,
                   nonEngineMethods,
                   new HealthService(
-                      besuPluginContext != null && besuPluginContext.getService(LivenessCheckPluginService.class).isPresent()
-                          ? besuPluginContext.getService(LivenessCheckPluginService.class).get()
+                      besuPluginContext != null
+                              && besuPluginContext
+                                  .getService(LivenessCheckService.class)
+                                  .isPresent()
+                          ? besuPluginContext.getService(LivenessCheckService.class).get()
                           : new LivenessCheck()),
                   new HealthService(
-                      besuPluginContext != null && besuPluginContext.getService(ReadinessCheckPluginService.class).isPresent()
-                          ? besuPluginContext.getService(ReadinessCheckPluginService.class).get()
+                      besuPluginContext != null
+                              && besuPluginContext
+                                  .getService(ReadinessCheckService.class)
+                                  .isPresent()
+                          ? besuPluginContext.getService(ReadinessCheckService.class).get()
                           : new ReadinessCheck(peerNetwork, synchronizer))));
+    }
 
     final SubscriptionManager subscriptionManager =
         createSubscriptionManager(vertx, transactionPool, blockchainQueries);
-
-{{ ... }}
 
     Optional<EngineJsonRpcService> engineJsonRpcService = Optional.empty();
     if (engineJsonRpcConfiguration.isPresent() && engineJsonRpcConfiguration.get().isEnabled()) {
@@ -873,6 +878,41 @@ public class RunnerBuilder {
           webSocketConfiguration.isEnabled()
               ? webSocketConfiguration
               : WebSocketConfiguration.createEngineDefault();
+
+      final WebSocketMethodsFactory websocketMethodsFactory =
+          new WebSocketMethodsFactory(subscriptionManager, engineMethods);
+
+      engineJsonRpcService =
+          Optional.of(
+              new EngineJsonRpcService(
+                  vertx,
+                  dataDir,
+                  engineJsonRpcConfiguration.orElse(JsonRpcConfiguration.createEngineDefault()),
+                  metricsSystem,
+                  natService,
+                  websocketMethodsFactory.methods(),
+                  Optional.ofNullable(engineSocketConfig),
+                  besuController.getProtocolManager().ethContext().getScheduler(),
+                  authToUse,
+                  new HealthService(
+                      besuPluginContext != null
+                              && besuPluginContext
+                                  .getService(LivenessCheckService.class)
+                                  .isPresent()
+                          ? besuPluginContext.getService(LivenessCheckService.class).get()
+                          : new LivenessCheck()),
+                  new HealthService(
+                      besuPluginContext != null
+                              && besuPluginContext
+                                  .getService(ReadinessCheckService.class)
+                                  .isPresent()
+                          ? besuPluginContext.getService(ReadinessCheckService.class).get()
+                          : new ReadinessCheck(peerNetwork, synchronizer))));
+    }
+
+    Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
+    if (graphQLConfiguration.isEnabled()) {
+      final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
       final Map<GraphQLContextType, Object> graphQlContextMap = new ConcurrentHashMap<>();
       graphQlContextMap.putIfAbsent(GraphQLContextType.BLOCKCHAIN_QUERIES, blockchainQueries);
       graphQlContextMap.putIfAbsent(GraphQLContextType.PROTOCOL_SCHEDULE, protocolSchedule);

@@ -4,12 +4,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.plugin.services.p2p.P2PService;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.services.BesuService;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ReadinessCheckPluginService implements HealthService.HealthCheck {
-    private static final Logger LOG = LoggerFactory.getLogger(ReadinessCheckPluginService.class);
+public class ReadinessCheckPluginService implements ReadinessCheckService {
+    private static final Logger LOG = LoggerFactory.getLogger(ReadinessCheck.class);
     private static final int DEFAULT_MINIMUM_PEERS = 1;
     private static final int DEFAULT_MAX_BLOCKS_BEHIND = 2;
 
