@@ -32,7 +32,7 @@ jobs:
       matrix:
         platform:
           - ubuntu-22.04
-          - besu-arm64
+          - ubuntu-24.04-arm
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Prepare
