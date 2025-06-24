@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.services;
 
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
+
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -118,6 +121,18 @@ public class BlockchainServiceImpl implements BlockchainService {
                     chainHeadHeader.getBaseFee().orElse(Wei.ZERO),
                     chainHeadHeader.getGasUsed(),
                     feeMarket.targetGasUsed(chainHeadHeader)));
+  }
+
+  @Override
+  public Wei getBlobGasPrice(final BlockHeader blockHeader) {
+    final var protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
+    final var maybeParentHeader = blockchain.getBlockHeader(blockHeader.getParentHash());
+    return protocolSpec
+        .getFeeMarket()
+        .blobGasPricePerGas(
+            maybeParentHeader
+                .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                .orElse(BlobGas.ZERO));
   }
 
   @Override

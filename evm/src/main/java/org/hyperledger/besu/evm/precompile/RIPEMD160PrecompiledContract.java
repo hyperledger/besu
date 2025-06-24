@@ -30,7 +30,7 @@ public class RIPEMD160PrecompiledContract extends AbstractPrecompiledContract {
    *
    * @param gasCalculator the gas calculator
    */
-  public RIPEMD160PrecompiledContract(final GasCalculator gasCalculator) {
+  RIPEMD160PrecompiledContract(final GasCalculator gasCalculator) {
     super("RIPEMD160", gasCalculator);
   }
 

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -21,6 +23,9 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
 
   /** The mainnet default maximum number of blobs per block for Cancun */
   private static final int DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN = 6;
+
+  /** The default target number of blobs per transaction for Cancun */
+  private static final int DEFAULT_MAX_BLOBS_PER_TRANSACTION_CANCUN = 6;
 
   /** The default mainnet target blobs per block for Cancun */
   private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_CANCUN = 3;
@@ -32,6 +37,7 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
   private final long blobGasPerBlob;
   protected final int maxBlobsPerBlock;
   protected final int targetBlobsPerBlock;
+  private final long transactionBlobGasLimitCap;
 
   public CancunTargetingGasLimitCalculator(
       final long londonForkBlock,
@@ -42,7 +48,8 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
         feeMarket,
         gasCalculator,
         DEFAULT_MAX_BLOBS_PER_BLOCK_CANCUN,
-        DEFAULT_TARGET_BLOBS_PER_BLOCK_CANCUN);
+        DEFAULT_TARGET_BLOBS_PER_BLOCK_CANCUN,
+        DEFAULT_MAX_BLOBS_PER_TRANSACTION_CANCUN);
   }
 
   /**
@@ -54,13 +61,20 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
       final BaseFeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final int maxBlobsPerBlock,
-      final int targetBlobsPerBlock) {
+      final int targetBlobsPerBlock,
+      final int maxBlobsPerTransaction) {
     super(londonForkBlock, feeMarket);
     this.blobGasPerBlob = gasCalculator.getBlobGasPerBlob();
     this.targetBlobGasPerBlock = blobGasPerBlob * targetBlobsPerBlock;
     this.maxBlobGasPerBlock = blobGasPerBlob * maxBlobsPerBlock;
     this.maxBlobsPerBlock = maxBlobsPerBlock;
     this.targetBlobsPerBlock = targetBlobsPerBlock;
+    this.transactionBlobGasLimitCap = gasCalculator.getBlobGasPerBlob() * maxBlobsPerTransaction;
+    checkArgument(
+        maxBlobsPerBlock >= maxBlobsPerTransaction,
+        "maxBlobsPerTransaction (%s) must not be greater than maxBlobsPerBlock (%s)",
+        maxBlobsPerTransaction,
+        maxBlobsPerBlock);
   }
 
   @Override
@@ -95,5 +109,10 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
 
   public long getMaxBlobGasPerBlock() {
     return maxBlobGasPerBlock;
+  }
+
+  @Override
+  public long transactionBlobGasLimitCap() {
+    return transactionBlobGasLimitCap;
   }
 }

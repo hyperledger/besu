@@ -3,14 +3,15 @@
 ### Breaking Changes
 - Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins. See [Appendix A](#appendix-a) for a mapping. [#8589](https://github.com/hyperledger/besu/pull/8589) [#8746](https://github.com/hyperledger/besu/pull/8746)
 - `BesuContext` is removed, since deprecated in favor of `ServiceManager` since `24.12.0`
+- Remove the deprecated `--Xbonsai-trie-logs-pruning-window-size`, use `--bonsai-trie-logs-pruning-window-size` instead. [#8823](https://github.com/hyperledger/besu/pull/8823)
 - Remove the deprecated `--Xbonsai-limit-trie-logs-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
 - Remove the deprecated `--Xbonsai-trie-log-pruning-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
+- Remove methods from gas calculator deprecated since 24.4 `create2OperationGasCost`, `callOperationGasCost`, `createOperationGasCost`, and `cost` [#8817](https://github.com/hyperledger/besu/pull/8817)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Stratum mining has been removed (part of PoW) [#8802](https://github.com/hyperledger/besu/pull/8802)
   - PoW RPCs removed: `eth_getWork`, `eth_submitWork`, `eth_getHashrate`, `eth_submitHashrate`, `eth_hashrate`
 
 ### Upcoming Breaking Changes
-- `--Xbonsai-trie-logs-pruning-window-size` is deprecated, use `--bonsai-trie-logs-pruning-window-size` instead.
 - `--Xbonsai-parallel-tx-processing-enabled` is deprecated, use `--bonsai-parallel-tx-processing-enabled` instead.
 - `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
@@ -23,10 +24,13 @@
 - Implement rewardPercentile cap in eth_feeHistory [#8748](https://github.com/hyperledger/besu/pull/8748)
 - Enable parallel tx processing by default if Bonsai is used [#8668](https://github.com/hyperledger/besu/pull/8668)
 - Increase mainnet gas limit to 45M [#8824](https://github.com/hyperledger/besu/pull/8824)
+- Expose a method to get blob gas price from plugins [#8843](https://github.com/hyperledger/besu/pull/8843)
+- Experimental Bonsai Archive support [#7475](https://github.com/hyperledger/besu/pull/7475)
 
 #### Fusaka
 - EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
 - EIP-7823 - Modexp upper bounds [#8632](https://github.com/hyperledger/besu/pull/8632)
+- EIP-7892 - Max number of blobs per transaction [#8761](https://github.com/hyperledger/besu/pull/8761)
 
 ### Bug fixes
 
@@ -105,6 +109,7 @@
 #### Dependencies
 - Update discovery library to 25.4.0 [#8635](https://github.com/hyperledger/besu/pull/8635)
 - Upgrade Gradle to 8.14 and related plugins [#8638](https://github.com/hyperledger/besu/pull/8638)
+- Make gas estimation strict by default [#8629](https://github.com/hyperledger/besu/pull/8629)
 
 ### Bug fixes
 - Fix `besu -X` unstable options help [#8662](https://github.com/hyperledger/besu/pull/8662)
