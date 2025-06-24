@@ -319,6 +319,7 @@ public class BlockSimulator {
         throw new BlockStateCallException(
             "Transaction simulator result is invalid", transactionSimulationResult);
       }
+
       transactionUpdater.commit();
 
       balBuilder.updateFromTransactionAccumulator(

@@ -41,17 +41,6 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
     this.clearedAtLeastOnce = lastStepCleared;
   }
 
-  public PathBasedValue(
-      final T prior,
-      final T updated,
-      final boolean lastStepCleared,
-      final boolean clearedAtLeastOnce) {
-    this.prior = prior;
-    this.updated = updated;
-    this.lastStepCleared = lastStepCleared;
-    this.clearedAtLeastOnce = clearedAtLeastOnce;
-  }
-
   // TODO: Unclear & dangerous, maybe use a builder
   public PathBasedValue(
       final T prior,
@@ -136,6 +125,7 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
         .append(lastStepCleared, that.lastStepCleared)
         .append(prior, that.prior)
         .append(updated, that.updated)
+        .append(isEvmRead, that.isEvmRead)
         .isEquals();
   }
 
@@ -149,6 +139,6 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
   }
 
   public PathBasedValue<T> copy() {
-    return new PathBasedValue<T>(prior, updated, lastStepCleared, clearedAtLeastOnce);
+    return new PathBasedValue<T>(prior, updated, lastStepCleared, clearedAtLeastOnce, isEvmRead);
   }
 }

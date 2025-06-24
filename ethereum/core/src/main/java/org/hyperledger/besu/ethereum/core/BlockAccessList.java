@@ -41,8 +41,12 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BlockAccessList {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BlockAccessList.class);
 
   private final List<AccountAccess> accountAccesses;
   private final List<AccountBalanceDiff> balanceDiffs;
@@ -344,6 +348,8 @@ public class BlockAccessList {
                   slotMap.forEach(
                       (slotKey, value) -> {
                         if (value.isEvmRead()) {
+                          // TODO: We never get here. Figure out why and how to propagate the flag
+                          LOG.info("Pure EVM read for address {}, slot {}", address, slotKey);
                           this.accessSlot(address, slotKey).read();
                         } else {
                           UInt256 prior =
@@ -351,6 +357,8 @@ public class BlockAccessList {
                           UInt256 updated =
                               Optional.ofNullable(value.getUpdated()).orElse(UInt256.ZERO);
                           if (!prior.equals(updated)) {
+                            LOG.trace("Address {}, slot {}, prior {}, updated {}", address,
+                              slotKey, value.getPrior(), value.getUpdated());
                             this.accessSlot(address, slotKey).write(txIndex, updated.toBytes());
                           }
                         }

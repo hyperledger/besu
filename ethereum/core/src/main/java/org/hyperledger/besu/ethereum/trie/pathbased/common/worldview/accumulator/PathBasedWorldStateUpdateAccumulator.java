@@ -126,7 +126,12 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                       : null;
               accountsToUpdate.put(
                   address,
-                  new PathBasedValue<>(copyPrior, copyUpdated, pathBasedValue.isLastStepCleared()));
+                  new PathBasedValue<>(
+                      copyPrior,
+                      copyUpdated,
+                      pathBasedValue.isLastStepCleared(),
+                      pathBasedValue.isClearedAtLeastOnce(),
+                      pathBasedValue.isEvmRead()));
             });
     source
         .getCodeToUpdate()
@@ -137,7 +142,9 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                   new PathBasedValue<>(
                       pathBasedValue.getPrior(),
                       pathBasedValue.getUpdated(),
-                      pathBasedValue.isLastStepCleared()));
+                      pathBasedValue.isLastStepCleared(),
+                      pathBasedValue.isClearedAtLeastOnce(),
+                      pathBasedValue.isEvmRead()));
             });
     source
         .getStorageToUpdate()
@@ -156,7 +163,9 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                         new PathBasedValue<>(
                             uInt256PathBasedValue.getPrior(),
                             uInt256PathBasedValue.getUpdated(),
-                            uInt256PathBasedValue.isLastStepCleared()));
+                            uInt256PathBasedValue.isLastStepCleared(),
+                            uInt256PathBasedValue.isClearedAtLeastOnce(),
+                            uInt256PathBasedValue.isEvmRead()));
                   });
             });
     storageToClear.addAll(source.storageToClear);
@@ -191,7 +200,14 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                   pathBasedValue.getPrior() != null
                       ? copyAccount(pathBasedValue.getPrior(), this, true)
                       : null;
-              accountsToUpdate.putIfAbsent(address, new PathBasedValue<>(copyPrior, copyUpdated));
+              accountsToUpdate.putIfAbsent(
+                  address,
+                  new PathBasedValue<>(
+                      copyPrior,
+                      copyUpdated,
+                      pathBasedValue.isLastStepCleared(),
+                      pathBasedValue.isClearedAtLeastOnce(),
+                      pathBasedValue.isEvmRead()));
             });
     source
         .getCodeToUpdate()
@@ -199,7 +215,12 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
             (address, pathBasedValue) -> {
               codeToUpdate.putIfAbsent(
                   address,
-                  new PathBasedValue<>(pathBasedValue.getPrior(), pathBasedValue.getPrior()));
+                  new PathBasedValue<>(
+                      pathBasedValue.getPrior(),
+                      pathBasedValue.getPrior(),
+                      pathBasedValue.isLastStepCleared(),
+                      pathBasedValue.isClearedAtLeastOnce(),
+                      pathBasedValue.isEvmRead()));
             });
     source
         .getStorageToUpdate()
@@ -216,7 +237,11 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                     storageConsumingMap.putIfAbsent(
                         storageSlotKey,
                         new PathBasedValue<>(
-                            uInt256PathBasedValue.getPrior(), uInt256PathBasedValue.getPrior()));
+                            uInt256PathBasedValue.getPrior(),
+                            uInt256PathBasedValue.getPrior(),
+                            uInt256PathBasedValue.isLastStepCleared(),
+                            uInt256PathBasedValue.isClearedAtLeastOnce(),
+                            uInt256PathBasedValue.isEvmRead()));
                   });
             });
     storageKeyHashLookup.putAll(source.storageKeyHashLookup);
@@ -557,8 +582,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
               address,
               key ->
                   new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader))
-          .put(
-              storageSlotKey, new PathBasedValue<>(valueUInt.orElse(null), valueUInt.orElse(null)));
+          .put(storageSlotKey, new PathBasedValue<>(valueUInt.orElse(null), valueUInt.orElse(null)));
       return valueUInt;
     } catch (MerkleTrieException e) {
       // need to throw to trigger the heal

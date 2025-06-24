@@ -29,6 +29,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockAccessListParameter {
 
@@ -88,7 +89,7 @@ public class BlockAccessListParameter {
     public final List<PerTxAccessParameter> accesses;
 
     public SlotAccessParameter(final SlotAccess access) {
-      this.slot = access.getSlot().toString();
+      this.slot = access.getSlot().getSlotKey().map(UInt256::toHexString).orElse("null");
       this.accesses = access.getPerTxAccesses().stream().map(PerTxAccessParameter::new).toList();
     }
   }
