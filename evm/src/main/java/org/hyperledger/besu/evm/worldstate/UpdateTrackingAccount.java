@@ -152,6 +152,11 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     return updatedCode != null;
   }
 
+  @Override
+  public CodeCache getCodeCache() {
+    return codeCache;
+  }
+
   /**
    * A map of the storage entries that were modified.
    *

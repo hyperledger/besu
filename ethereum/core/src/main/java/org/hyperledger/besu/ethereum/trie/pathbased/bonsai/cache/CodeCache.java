@@ -21,8 +21,6 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-import java.util.function.Supplier;
-
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
