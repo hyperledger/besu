@@ -17,9 +17,10 @@ package org.hyperledger.besu.evm.precompile;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -31,10 +32,10 @@ import org.mockito.Mock;
 class MODEXPPrecompiledContractTest {
   @Mock private MessageFrame messageFrame;
 
-  private final BigIntegerModularExponentiationPrecompiledContract byzantiumContract =
-      BigIntegerModularExponentiationPrecompiledContract.byzantium(new ByzantiumGasCalculator());
-  private final BigIntegerModularExponentiationPrecompiledContract berlinContract =
-      BigIntegerModularExponentiationPrecompiledContract.byzantium(new BerlinGasCalculator());
+  private final PrecompiledContract byzantiumContract =
+      EvmSpec.evmSpec(EvmSpecVersion.BYZANTIUM).getPrecompileContractRegistry().get(Address.MODEXP);
+  private final PrecompiledContract berlinContract =
+      EvmSpec.evmSpec(EvmSpecVersion.BERLIN).getPrecompileContractRegistry().get(Address.MODEXP);
 
   MODEXPPrecompiledContractTest() {}
 

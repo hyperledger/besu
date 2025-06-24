@@ -44,20 +44,6 @@ public class DataStorageOptionsTest
   }
 
   @Test
-  public void bonsaiTrieLogPruningLimitLegacyOption() {
-    internalTestSuccess(
-        dataStorageConfiguration ->
-            assertThat(
-                    dataStorageConfiguration
-                        .getPathBasedExtraStorageConfiguration()
-                        .getTrieLogPruningWindowSize())
-                .isEqualTo(600),
-        "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-pruning-window-size",
-        "600");
-  }
-
-  @Test
   public void bonsaiTrieLogsEnabled_explicitlySetToFalse() {
     internalTestSuccess(
         dataStorageConfiguration ->

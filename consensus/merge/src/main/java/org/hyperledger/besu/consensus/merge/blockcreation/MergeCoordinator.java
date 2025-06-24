@@ -80,7 +80,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    */
   private static final double TRY_FILL_BLOCK = 1.0;
 
-  private static final long DEFAULT_TARGET_GAS_LIMIT = 36_000_000L;
+  // if you change these gas limits, also update the tests in MergeCoordinatorTest
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
   // testnets might have higher gas limits than mainnet and are incrementally updated
   private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
   // next target gas limit TBD

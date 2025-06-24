@@ -165,7 +165,7 @@ class TransactionRLPDecoderTest {
     Bytes transactionBytes =
         TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.POOLED_TRANSACTION);
     // Bytes size should be equal to transaction size
-    assertThat(transaction.getSize()).isEqualTo(transactionBytes.size());
+    assertThat(transaction.getSizeForAnnouncement()).isEqualTo(transactionBytes.size());
   }
 
   @ParameterizedTest(name = "[{index}] {1}")

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.transaction.eth;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.debug;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,26 +20,17 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
+import java.util.List;
 
-import org.web3j.protocol.core.methods.response.EthGetWork;
-
-public class EthGetWorkTransaction implements Transaction<String[]> {
-
-  EthGetWorkTransaction() {}
+public class DebugGetBadBlocks implements Transaction<List<DebugRequestFactory.BadBlock>> {
 
   @Override
-  public String[] execute(final NodeRequests node) {
+  public List<DebugRequestFactory.BadBlock> execute(final NodeRequests node) {
     try {
-      final EthGetWork result = node.eth().ethGetWork().send();
-      assertThat(result).isNotNull();
-      if (result.hasError()) {
-        throw new RuntimeException(result.getError().getMessage());
-      }
-      return new String[] {
-        result.getCurrentBlockHeaderPowHash(),
-        result.getSeedHashForDag(),
-        result.getBoundaryCondition()
-      };
+      final var resp = node.debug().getBadBlocks().send();
+      assertThat(resp).isNotNull();
+      assertThat(resp.hasError()).isFalse();
+      return resp.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

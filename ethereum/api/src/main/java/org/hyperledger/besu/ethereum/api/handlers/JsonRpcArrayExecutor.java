@@ -77,6 +77,7 @@ public class JsonRpcArrayExecutor extends AbstractJsonRpcExecutor {
         if (response.getType() != RpcResponseType.NONE) {
           generator.writeObject(response);
         }
+        lazyTraceLogger(() -> getJsonObjectMapper().writeValueAsString(response));
       }
       generator.writeEndArray();
     }
