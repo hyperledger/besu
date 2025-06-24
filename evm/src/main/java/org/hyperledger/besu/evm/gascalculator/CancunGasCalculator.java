@@ -14,16 +14,17 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.apache.tuweni.bytes.Bytes;
+import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
+
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
 import java.math.BigInteger;
 
-import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
-import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
-import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Gas Calculator for Cancun
@@ -58,17 +59,16 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
    */
   private static final long BLOB_GAS_PER_BLOB = 1 << 17;
 
-
   // Only for performance testing purposes, this code should not be merged into main
   @Override
   public long modExpGasCost(final Bytes input) {
     final long baseLength = BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
     final long exponentLength =
-            BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
+        BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
     final long modulusLength =
-            BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
+        BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
     final long exponentOffset =
-            clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
+        clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
 
     final long maxLength = Math.max(modulusLength, baseLength);
     if (maxLength <= 0) {
@@ -87,21 +87,20 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
     }
 
     final long firstExponentBytesCap =
-            Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
+        Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
     final BigInteger firstExpBytes =
-            BigIntegerModularExponentiationPrecompiledContract.extractParameter(
-                    input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
+        BigIntegerModularExponentiationPrecompiledContract.extractParameter(
+            input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
     final long adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
 
     long gasRequirement =
-            clampedMultiply(multiplicationComplexity, Math.max(adjustedExponentLength, 1L));
+        clampedMultiply(multiplicationComplexity, Math.max(adjustedExponentLength, 1L));
     if (gasRequirement != Long.MAX_VALUE) {
       gasRequirement /= 3;
     }
 
     return Math.max(gasRequirement, 500L);
   }
-
 
   // EIP-1153
   @Override
