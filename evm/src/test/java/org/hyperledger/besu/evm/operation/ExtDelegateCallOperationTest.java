@@ -136,6 +136,7 @@ public class ExtDelegateCallOperationTest {
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF).getCodeHash());
     when(account.getCode()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF).getBytes());
+    when(account.getAddress()).thenReturn(CONTRACT_ADDRESS);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
@@ -209,6 +210,7 @@ public class ExtDelegateCallOperationTest {
     when(worldUpdater.getAccount(CONTRACT_ADDRESS))
         .thenReturn("Empty".equals(name) ? null : account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
+    when(account.getAddress()).thenReturn(CONTRACT_ADDRESS);
 
     var result = operation.execute(messageFrame, EOF_EVM);
 
@@ -239,6 +241,7 @@ public class ExtDelegateCallOperationTest {
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn(SIMPLE_EOF.getCodeHash());
     when(account.getCode()).thenReturn(SIMPLE_EOF.getBytes());
+    when(account.getAddress()).thenReturn(CONTRACT_ADDRESS);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
