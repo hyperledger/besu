@@ -357,6 +357,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
           return null;
         }
       } else {
+        pathBasedValue.setIsEvmRead(isEvmRead);
         return accountFunction.apply(pathBasedValue);
       }
     } catch (MerkleTrieException e) {

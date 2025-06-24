@@ -84,6 +84,10 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
     this.clearedAtLeastOnce = true;
   }
 
+  public void setIsEvmRead(final boolean isEvmRead) {
+    this.isEvmRead = isEvmRead;
+  }
+
   @Override
   public boolean isLastStepCleared() {
     return lastStepCleared;
