@@ -14,7 +14,16 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
+
+import java.math.BigInteger;
+
 import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 
 /**
  * Gas Calculator for Cancun
@@ -48,6 +57,51 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
    * block. 1 << 17 = 131072 = 0x20000
    */
   private static final long BLOB_GAS_PER_BLOB = 1 << 17;
+
+
+  // Only for performance testing purposes, this code should not be merged into main
+  @Override
+  public long modExpGasCost(final Bytes input) {
+    final long baseLength = BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
+    final long exponentLength =
+            BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
+    final long modulusLength =
+            BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
+    final long exponentOffset =
+            clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
+
+    final long maxLength = Math.max(modulusLength, baseLength);
+    if (maxLength <= 0) {
+      return 500L;
+    }
+    long multiplicationComplexity = 16;
+    long words = (maxLength + 7L) / 8L;
+    words = Words.clampedMultiply(words, words);
+    if (maxLength > 32) {
+      multiplicationComplexity = words * 2;
+    }
+
+    long maxExponentLength = Long.MAX_VALUE / words * 3 / 8;
+    if (exponentLength > maxExponentLength) {
+      return Long.MAX_VALUE;
+    }
+
+    final long firstExponentBytesCap =
+            Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
+    final BigInteger firstExpBytes =
+            BigIntegerModularExponentiationPrecompiledContract.extractParameter(
+                    input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
+    final long adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
+
+    long gasRequirement =
+            clampedMultiply(multiplicationComplexity, Math.max(adjustedExponentLength, 1L));
+    if (gasRequirement != Long.MAX_VALUE) {
+      gasRequirement /= 3;
+    }
+
+    return Math.max(gasRequirement, 500L);
+  }
+
 
   // EIP-1153
   @Override
