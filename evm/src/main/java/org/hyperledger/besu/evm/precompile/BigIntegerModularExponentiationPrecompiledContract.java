@@ -27,6 +27,8 @@ import org.hyperledger.besu.nativelib.arithmetic.LibArithmetic;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.sun.jna.ptr.IntByReference;
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
@@ -38,6 +40,7 @@ import org.slf4j.LoggerFactory;
 public class BigIntegerModularExponentiationPrecompiledContract
     extends AbstractPrecompiledContract {
 
+  private static final String PRECOMPILE_NAME = "BigIntModExp";
   private static final Logger LOG =
       LoggerFactory.getLogger(BigIntegerModularExponentiationPrecompiledContract.class);
 
@@ -54,6 +57,9 @@ public class BigIntegerModularExponentiationPrecompiledContract
 
   private final long upperBound;
 
+  private static final Cache<Integer, PrecompileInputResultTuple> modexpCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
+
   /**
    * Instantiates a new BigInteger modular exponentiation precompiled contract.
    *
@@ -61,7 +67,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
    */
   BigIntegerModularExponentiationPrecompiledContract(
       final GasCalculator gasCalculator, final long upperBound) {
-    super("BigIntModExp", gasCalculator);
+    super(PRECOMPILE_NAME, gasCalculator);
     this.upperBound = upperBound;
   }
 
@@ -116,11 +122,60 @@ public class BigIntegerModularExponentiationPrecompiledContract
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
-    if (useNative) {
-      return computeNative(input, length_of_MODULUS);
-    } else {
-      return computeDefault(input, length_of_BASE, length_of_EXPONENT, length_of_MODULUS);
+
+    Integer cacheKey = null;
+    if (enableResultCaching) {
+      cacheKey = getCacheKey(input);
+      PrecompileInputResultTuple res = modexpCache.getIfPresent(cacheKey);
+
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          LOG.debug(
+              "false positive modexp {}, cache key {}, cached input: {}, input: {}",
+              input.getClass().getSimpleName(),
+              cacheKey,
+              res.cachedInput().toHexString(),
+              input.toHexString());
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
+      }
     }
+
+    final PrecompileContractResult precompileContractResult;
+
+    // OPTIMIZATION: overwrite native setting for this case
+    if (LibArithmetic.ENABLED) {
+      final int baseOffset = clampedToInt(BASE_OFFSET);
+      final int baseLength = clampedToInt(length_of_BASE);
+      final int modulusOffset = clampedToInt(BASE_OFFSET + length_of_BASE + length_of_EXPONENT);
+      final int modulusLength = clampedToInt(length_of_MODULUS);
+      if ((extractLastByte(input, baseOffset, baseLength) & 1) != 1
+          && (extractLastByte(input, modulusOffset, modulusLength) & 1) != 1) {
+        precompileContractResult = computeNative(input, length_of_MODULUS);
+        if (enableResultCaching) {
+          modexpCache.put(
+              cacheKey, new PrecompileInputResultTuple(input.copy(), precompileContractResult));
+        }
+        return precompileContractResult;
+      }
+    }
+
+    if (useNative) {
+      precompileContractResult = computeNative(input, length_of_MODULUS);
+    } else {
+      precompileContractResult =
+          computeDefault(input, length_of_BASE, length_of_EXPONENT, length_of_MODULUS);
+    }
+    if (enableResultCaching) {
+      modexpCache.put(
+          cacheKey, new PrecompileInputResultTuple(input.copy(), precompileContractResult));
+    }
+    return precompileContractResult;
   }
 
   @NotNull
@@ -224,6 +279,16 @@ public class BigIntegerModularExponentiationPrecompiledContract
       System.arraycopy(partial.toArray(), 0, raw, 0, partial.size());
       return new BigInteger(1, raw);
     }
+  }
+
+  private static byte extractLastByte(final Bytes input, final int offset, final int length) {
+    if (offset >= input.size() || length == 0) {
+      return 0;
+    } else if (offset + length <= input.size()) {
+      return input.get(offset + length - 1);
+    }
+    Bytes partial = input.slice(offset);
+    return partial.get(partial.size() - 1);
   }
 
   /**

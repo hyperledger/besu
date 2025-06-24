@@ -81,7 +81,7 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
     final Optional<PayloadWrapper> maybePayload = mergeContext.get().retrievePayloadById(payloadId);
     if (maybePayload.isPresent()) {
       final BlockWithReceipts proposal = maybePayload.get().blockWithReceipts();
-      LOG.atDebug()
+      LOG.atInfo()
           .setMessage("assembledBlock for payloadId {}: {}")
           .addArgument(() -> payloadId)
           .addArgument(() -> proposal.getBlock().toLogString())
