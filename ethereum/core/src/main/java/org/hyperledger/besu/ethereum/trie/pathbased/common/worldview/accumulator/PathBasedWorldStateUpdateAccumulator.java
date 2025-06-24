@@ -577,12 +577,20 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
           (wrappedWorldView() instanceof PathBasedWorldState worldState)
               ? worldState.getStorageValueByStorageSlotKey(address, storageSlotKey)
               : wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
+      // TODO: Should we reuse remaining fields
+      final boolean isEvmRead =
+          Optional.ofNullable(accountsToUpdate.get(address))
+              .map(PathBasedValue::isEvmRead)
+              .orElse(false);
+      final PathBasedValue<UInt256> newSlotValue =
+          new PathBasedValue<>(
+              valueUInt.orElse(null), valueUInt.orElse(null), false, false, isEvmRead);
       storageToUpdate
           .computeIfAbsent(
               address,
               key ->
                   new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader))
-          .put(storageSlotKey, new PathBasedValue<>(valueUInt.orElse(null), valueUInt.orElse(null)));
+          .put(storageSlotKey, newSlotValue);
       return valueUInt;
     } catch (MerkleTrieException e) {
       // need to throw to trigger the heal
