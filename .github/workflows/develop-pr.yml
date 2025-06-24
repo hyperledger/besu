@@ -1,11 +1,7 @@
-name: docker develop build test and publish
+name: docker develop build and test only
 
 on:
-  push:
-    branches:
-      - main
-env:
-  registry: docker.io
+  pull_request:
 
 jobs:
   hadolint:
@@ -76,12 +72,6 @@ jobs:
         run: |
           mkdir -p docker/reports
           curl -L https://github.com/aelsabbahy/goss/releases/download/v0.4.4/goss-${{ steps.prep.outputs.PLATFORM_PAIR }} -o ./docker/tests/goss-${{ steps.prep.outputs.PLATFORM_PAIR }}
-      - name: login to ${{ env.registry }}
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
-        with:
-          registry: ${{ env.registry }}
-          username: ${{ secrets.DOCKER_USER_RW }}
-          password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: build and test docker
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         env:
@@ -89,10 +79,6 @@ jobs:
         with:
           cache-disabled: true
           arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME}} -Prelease.releaseVersion=develop
-      - name: publish
-        env:
-          architecture: ${{ steps.prep.outputs.ARCH }}
-        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
   multiArch:
     needs: buildDocker
     runs-on: ubuntu-22.04
@@ -111,11 +97,5 @@ jobs:
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
-      - name: login to ${{ env.registry }}
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
-        with:
-          registry: ${{ env.registry }}
-          username: ${{ secrets.DOCKER_USER_RW }}
-          password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: multi-arch docker
         run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
