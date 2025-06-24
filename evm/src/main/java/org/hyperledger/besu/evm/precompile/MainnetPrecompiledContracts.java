@@ -79,11 +79,12 @@ public interface MainnetPrecompiledContracts {
     populateForFrontier(registry, gasCalculator);
     registry.put(
         Address.MODEXP,
-        BigIntegerModularExponentiationPrecompiledContract.byzantium(gasCalculator));
-    registry.put(Address.ALTBN128_ADD, AltBN128AddPrecompiledContract.byzantium(gasCalculator));
-    registry.put(Address.ALTBN128_MUL, AltBN128MulPrecompiledContract.byzantium(gasCalculator));
+        new BigIntegerModularExponentiationPrecompiledContract(gasCalculator, Long.MAX_VALUE));
+    registry.put(Address.ALTBN128_ADD, new AltBN128AddPrecompiledContract(gasCalculator, 500L));
+    registry.put(Address.ALTBN128_MUL, new AltBN128MulPrecompiledContract(gasCalculator, 40_000L));
     registry.put(
-        Address.ALTBN128_PAIRING, AltBN128PairingPrecompiledContract.byzantium(gasCalculator));
+        Address.ALTBN128_PAIRING,
+        new AltBN128PairingPrecompiledContract(gasCalculator, 80_000L, 100_000L));
   }
 
   /**
@@ -107,10 +108,11 @@ public interface MainnetPrecompiledContracts {
   static void populateForIstanbul(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForByzantium(registry, gasCalculator);
-    registry.put(Address.ALTBN128_ADD, AltBN128AddPrecompiledContract.istanbul(gasCalculator));
-    registry.put(Address.ALTBN128_MUL, AltBN128MulPrecompiledContract.istanbul(gasCalculator));
+    registry.put(Address.ALTBN128_ADD, new AltBN128AddPrecompiledContract(gasCalculator, 150L));
+    registry.put(Address.ALTBN128_MUL, new AltBN128MulPrecompiledContract(gasCalculator, 6_000L));
     registry.put(
-        Address.ALTBN128_PAIRING, AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
+        Address.ALTBN128_PAIRING,
+        new AltBN128PairingPrecompiledContract(gasCalculator, 34_000L, 45_000L));
     registry.put(Address.BLAKE2B_F_COMPRESSION, new BLAKE2BFPrecompileContract(gasCalculator));
   }
 
@@ -196,7 +198,8 @@ public interface MainnetPrecompiledContracts {
 
     // EIP-7823 - Set upper bounds for MODEXP
     registry.put(
-        Address.MODEXP, BigIntegerModularExponentiationPrecompiledContract.osaka(gasCalculator));
+        Address.MODEXP,
+        new BigIntegerModularExponentiationPrecompiledContract(gasCalculator, 1024L));
   }
 
   /**

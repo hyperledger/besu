@@ -110,7 +110,7 @@ class BlockImportExceptionHandlingTest {
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
-  private MainnetBlockValidator mainnetBlockValidator;
+  private BlockValidator mainnetBlockValidator;
 
   @BeforeEach
   public void setup() {
@@ -122,7 +122,8 @@ class BlockImportExceptionHandlingTest {
     when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
     mainnetBlockValidator =
-        new MainnetBlockValidator(blockHeaderValidator, blockBodyValidator, blockProcessor);
+        MainnetBlockValidatorBuilder.frontier(
+            blockHeaderValidator, blockBodyValidator, blockProcessor);
   }
 
   @Test
