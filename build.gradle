@@ -838,6 +838,7 @@ task distDocker {
     }
     exec {
       def image = "${dockerImageName}:${dockerBuildVersion}"
+      println "Building docker image name ${image}"
       def dockerPlatform = ""
       if (project.hasProperty('docker-platform')){
         dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
