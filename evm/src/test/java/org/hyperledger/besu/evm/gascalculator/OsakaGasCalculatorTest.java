@@ -31,5 +31,6 @@ class OsakaGasCalculatorTest {
     assertThat(subject.isPrecompile(Address.precompiled(0x0101))).isFalse();
     assertThat(subject.isPrecompile(Address.P256_VERIFY)).isTrue();
     assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
+    assertThat(subject.isPrecompile(Address.precompiled(0x00))).isFalse();
   }
 }

@@ -82,9 +82,10 @@ public class OsakaGasCalculator extends PragueGasCalculator {
 
     // values in range [1, 0x01FF] inclusive to include L1 and L2 precompiles,
     // assert max precompile in each range:
-    return (precompileValue <= MAX_L1_PRECOMPILE)
-        ? precompileValue <= this.maxPrecompile
-        : precompileValue <= maxL2Precompile;
+    return (precompileValue > 0)
+        && ((precompileValue <= MAX_L1_PRECOMPILE)
+            ? precompileValue <= this.maxPrecompile
+            : precompileValue <= maxL2Precompile);
   }
 
   @Override
