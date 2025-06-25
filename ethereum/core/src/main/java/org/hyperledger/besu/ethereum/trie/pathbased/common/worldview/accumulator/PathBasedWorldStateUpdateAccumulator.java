@@ -342,7 +342,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
               (PathBasedWorldStateUpdateAccumulator<ACCOUNT>) wrappedWorldView();
           account = worldStateUpdateAccumulator.loadAccount(address, accountFunction, isEvmRead);
         } else {
-          account = wrappedWorldView().get(address, isEvmRead);
+          account = wrappedWorldView().get(address);
         }
         if (account instanceof PathBasedAccount pathBasedAccount) {
           ACCOUNT mutableAccount = copyAccount((ACCOUNT) pathBasedAccount, this, true);
@@ -556,15 +556,16 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
   }
 
   @Override
-  public UInt256 getStorageValue(final Address address, final UInt256 slotKey) {
+  public UInt256 getStorageValue(
+      final Address address, final UInt256 slotKey, final boolean isEvmRead) {
     StorageSlotKey storageSlotKey =
         new StorageSlotKey(hashAndSaveSlotPreImage(slotKey), Optional.of(slotKey));
-    return getStorageValueByStorageSlotKey(address, storageSlotKey).orElse(UInt256.ZERO);
+    return getStorageValueByStorageSlotKey(address, storageSlotKey, isEvmRead).orElse(UInt256.ZERO);
   }
 
   @Override
   public Optional<UInt256> getStorageValueByStorageSlotKey(
-      final Address address, final StorageSlotKey storageSlotKey) {
+      final Address address, final StorageSlotKey storageSlotKey, final boolean isEvmRead) {
     final Map<StorageSlotKey, PathBasedValue<UInt256>> localAccountStorage =
         storageToUpdate.get(address);
     if (localAccountStorage != null) {
@@ -576,13 +577,9 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     try {
       final Optional<UInt256> valueUInt =
           (wrappedWorldView() instanceof PathBasedWorldState worldState)
-              ? worldState.getStorageValueByStorageSlotKey(address, storageSlotKey)
-              : wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
-      // TODO: Should we reuse remaining fields
-      final boolean isEvmRead =
-          Optional.ofNullable(accountsToUpdate.get(address))
-              .map(PathBasedValue::isEvmRead)
-              .orElse(false);
+              ? worldState.getStorageValueByStorageSlotKey(address, storageSlotKey, isEvmRead)
+              : wrappedWorldView()
+                  .getStorageValueByStorageSlotKey(address, storageSlotKey, isEvmRead);
       final PathBasedValue<UInt256> newSlotValue =
           new PathBasedValue<>(
               valueUInt.orElse(null), valueUInt.orElse(null), false, false, isEvmRead);
@@ -601,7 +598,8 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
   }
 
   @Override
-  public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
+  public UInt256 getPriorStorageValue(
+      final Address address, final UInt256 storageKey, final boolean isEvmRead) {
     // TODO maybe log the read into the trie layer?
     StorageSlotKey storageSlotKey =
         new StorageSlotKey(hashAndSaveSlotPreImage(storageKey), Optional.of(storageKey));
@@ -626,7 +624,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     if (storageToClear.contains(address)) {
       return UInt256.ZERO;
     }
-    return getStorageValue(address, storageKey);
+    return getStorageValue(address, storageKey, isEvmRead);
   }
 
   @Override
@@ -853,7 +851,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     PathBasedValue<UInt256> slotValue = storageMap == null ? null : storageMap.get(storageSlotKey);
     if (slotValue == null) {
       final Optional<UInt256> storageValue =
-          wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
+          wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey, false);
       if (storageValue.isPresent()) {
         slotValue = new PathBasedValue<>(storageValue.get(), storageValue.get());
         storageToUpdate

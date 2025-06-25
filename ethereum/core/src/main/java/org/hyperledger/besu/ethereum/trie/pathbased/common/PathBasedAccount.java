@@ -243,13 +243,13 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
   }
 
   @Override
-  public UInt256 getStorageValue(final UInt256 key) {
-    return context.getStorageValue(address, key);
+  public UInt256 getStorageValue(final UInt256 key, final boolean isEvmRead) {
+    return context.getStorageValue(address, key, isEvmRead);
   }
 
   @Override
   public UInt256 getOriginalStorageValue(final UInt256 key) {
-    return context.getPriorStorageValue(address, key);
+    return context.getPriorStorageValue(address, key, false);
   }
 
   public Bytes serializeAccount() {

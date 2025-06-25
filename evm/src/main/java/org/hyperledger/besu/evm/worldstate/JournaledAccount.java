@@ -260,7 +260,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
   }
 
   @Override
-  public UInt256 getStorageValue(final UInt256 key) {
+  public UInt256 getStorageValue(final UInt256 key, final boolean isEvmRead) {
     final UInt256 value = updatedStorage.get(key);
     if (value != null) {
       return value;
@@ -271,7 +271,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
 
     // We haven't updated the key-value yet, so either it's a new account, and it doesn't have the
     // key, or we should query the underlying storage for its existing value (which might be 0).
-    return account == null ? UInt256.ZERO : account.getStorageValue(key);
+    return account == null ? UInt256.ZERO : account.getStorageValue(key, isEvmRead);
   }
 
   @Override

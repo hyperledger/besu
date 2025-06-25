@@ -420,14 +420,15 @@ public class BonsaiWorldState extends PathBasedWorldState {
   }
 
   @Override
-  public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
-    return getStorageValueByStorageSlotKey(address, new StorageSlotKey(storageKey))
+  public UInt256 getStorageValue(
+      final Address address, final UInt256 storageKey, final boolean isEvmRead) {
+    return getStorageValueByStorageSlotKey(address, new StorageSlotKey(storageKey), isEvmRead)
         .orElse(UInt256.ZERO);
   }
 
   @Override
   public Optional<UInt256> getStorageValueByStorageSlotKey(
-      final Address address, final StorageSlotKey storageSlotKey) {
+      final Address address, final StorageSlotKey storageSlotKey, final boolean isEvmRead) {
     return getWorldStateStorage()
         .getStorageValueByStorageSlotKey(address.addressHash(), storageSlotKey)
         .map(UInt256::fromBytes);
@@ -436,15 +437,17 @@ public class BonsaiWorldState extends PathBasedWorldState {
   public Optional<UInt256> getStorageValueByStorageSlotKey(
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Address address,
-      final StorageSlotKey storageSlotKey) {
+      final StorageSlotKey storageSlotKey,
+      final boolean isEvmRead) {
     return getWorldStateStorage()
         .getStorageValueByStorageSlotKey(storageRootSupplier, address.addressHash(), storageSlotKey)
         .map(UInt256::fromBytes);
   }
 
   @Override
-  public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
-    return getStorageValue(address, storageKey);
+  public UInt256 getPriorStorageValue(
+      final Address address, final UInt256 storageKey, final boolean isEvmRead) {
+    return getStorageValue(address, storageKey, isEvmRead);
   }
 
   @Override

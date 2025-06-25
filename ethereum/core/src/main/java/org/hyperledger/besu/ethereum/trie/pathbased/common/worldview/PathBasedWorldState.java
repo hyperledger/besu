@@ -344,8 +344,9 @@ public abstract class PathBasedWorldState
   }
 
   @Override
-  public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
-    return getStorageValue(address, storageKey);
+  public UInt256 getPriorStorageValue(
+      final Address address, final UInt256 storageKey, final boolean isEvmRead) {
+    return getStorageValue(address, storageKey, isEvmRead);
   }
 
   @Override
@@ -397,11 +398,12 @@ public abstract class PathBasedWorldState
   public abstract Account get(final Address address, final boolean isEvmRead);
 
   @Override
-  public abstract UInt256 getStorageValue(final Address address, final UInt256 storageKey);
+  public abstract UInt256 getStorageValue(
+      final Address address, final UInt256 storageKey, final boolean isEvmRead);
 
   @Override
   public abstract Optional<UInt256> getStorageValueByStorageSlotKey(
-      final Address address, final StorageSlotKey storageSlotKey);
+      final Address address, final StorageSlotKey storageSlotKey, final boolean isEvmRead);
 
   @Override
   public abstract Optional<Bytes> getCode(@NotNull final Address address, final Hash codeHash);

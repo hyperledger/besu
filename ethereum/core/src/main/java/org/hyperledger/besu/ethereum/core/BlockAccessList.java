@@ -343,16 +343,13 @@ public class BlockAccessList {
                 (address, slotMap) -> {
                   slotMap.forEach(
                       (slotKey, value) -> {
-                        if (value.isEvmRead()) {
+                        UInt256 prior = Optional.ofNullable(value.getPrior()).orElse(UInt256.ZERO);
+                        UInt256 updated =
+                            Optional.ofNullable(value.getUpdated()).orElse(UInt256.ZERO);
+                        if (!prior.equals(updated)) {
+                          this.accessSlot(address, slotKey).write(txIndex, updated.toBytes());
+                        } else if (value.isEvmRead()) {
                           this.accessSlot(address, slotKey).read();
-                        } else {
-                          UInt256 prior =
-                              Optional.ofNullable(value.getPrior()).orElse(UInt256.ZERO);
-                          UInt256 updated =
-                              Optional.ofNullable(value.getUpdated()).orElse(UInt256.ZERO);
-                          if (!prior.equals(updated)) {
-                            this.accessSlot(address, slotKey).write(txIndex, updated.toBytes());
-                          }
                         }
                       });
                 });
@@ -467,6 +464,10 @@ public class BlockAccessList {
     }
 
     public void addBalanceChange(final int txIndex, final BigInteger delta) {
+      // TODO: Can we get rid of this workaround?
+      if (!changes.isEmpty() && changes.getLast().delta.equals(delta)) {
+        return;
+      }
       changes.add(new BalanceChange(txIndex, delta));
     }
 

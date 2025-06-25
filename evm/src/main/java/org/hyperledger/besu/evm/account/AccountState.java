@@ -114,7 +114,12 @@ public interface AccountState {
    * @return the value associated to {@code key} in the account storage. Note that this is never
    *     {@code null}, but 0 acts as a default value.
    */
-  UInt256 getStorageValue(UInt256 key);
+  default UInt256 getStorageValue(final UInt256 key) {
+    return getStorageValue(key, false);
+  }
+  ;
+
+  UInt256 getStorageValue(UInt256 key, boolean isEvmRead);
 
   /**
    * Retrieves the original value from before the current transaction in the account storage given

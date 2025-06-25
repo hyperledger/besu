@@ -299,7 +299,7 @@ public class ForestMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public UInt256 getStorageValue(final UInt256 key) {
+    public UInt256 getStorageValue(final UInt256 key, final boolean isEvmRead) {
       return storageTrie()
           .get(Hash.hash(key))
           .map(ForestMutableWorldState::convertToUInt256)
