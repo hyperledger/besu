@@ -54,7 +54,7 @@ public class EthProtocol implements SubProtocol {
   }
 
   // Latest version of the Eth protocol
-  public static final Capability LATEST = ETH68;
+  public static final Capability LATEST = ETH69;
 
   public static boolean requestIdCompatible(final int code) {
     return REQUEST_ID_MESSAGES.get(code);
