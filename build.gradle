@@ -803,7 +803,9 @@ artifactoryPublish {
 def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
 def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
 def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu"
-def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
+def dockerImageName = "hyperledger/besu" // TODO this is a tmp hack to see if something works
+//def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
+
 
 // rename the top level dir from besu-<version> to besu and this makes it really
 // simple for use in docker
