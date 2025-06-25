@@ -41,6 +41,7 @@ public class MemoryBoundCache<K, V> {
         Caffeine.newBuilder()
             .maximumWeight(maxBytes)
             .weigher(memoryFootprintCalculator::applyAsInt)
+            .recordStats()
             .build();
   }
 
@@ -65,16 +66,47 @@ public class MemoryBoundCache<K, V> {
   }
 
   /**
-   * Invalidates a specific key from the cache.
+   * Estimates the number of entries in the cache
    *
-   * @param key the key to be invalidated
+   * @return the estimated number of entries in the cache
    */
-  public void invalidate(final K key) {
-    cache.invalidate(key);
+  public long estimatedSize() {
+    return cache.estimatedSize();
   }
 
-  /** Invalidates all entries in the cache. */
-  public void invalidateAll() {
-    cache.invalidateAll();
+  /**
+   * Gets the hit rate of the cache.
+   *
+   * @return the hit rate as a double value
+   */
+  public double hitRate() {
+    return cache.stats().hitRate();
+  }
+
+  /**
+   * Gets the total number of evictions from the cache.
+   *
+   * @return the total number of evictions
+   */
+  public long evictionCount() {
+    return cache.stats().evictionCount();
+  }
+
+  /**
+   * Gets the total weight of evictions from the cache.
+   *
+   * @return the total weight of evictions
+   */
+  public long evictionWeight() {
+    return cache.stats().evictionWeight();
+  }
+
+  /**
+   * Gets the total number of requests made to the cache.
+   *
+   * @return the total number of requests
+   */
+  public long requestCount() {
+    return cache.stats().requestCount();
   }
 }

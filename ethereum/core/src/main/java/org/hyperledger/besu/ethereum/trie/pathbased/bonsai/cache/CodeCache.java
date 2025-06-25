@@ -19,20 +19,21 @@ import static org.hyperledger.besu.metrics.BesuMetricCategory.BONSAI_CACHE;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import org.hyperledger.besu.util.cache.MemoryBoundCache;
 
 /** The Code cache. */
 public class CodeCache implements org.hyperledger.besu.evm.internal.CodeCache {
 
-  // private final MemoryBoundCache<Hash, Code> cache;
-  private final Cache<Hash, Code> cache;
+  private final MemoryBoundCache<Hash, Code> cache;
+
+  // metrics
+  private long lastRequestCount = 0;
+  private long lastRequestTimestamp = System.nanoTime();
 
   /** Instantiates a new Code cache. */
   public CodeCache() {
-    // this.cache = new MemoryBoundCache<>(256 * 1024 * 1024, CodeMemoryFootprint::estimate);
-    this.cache = Caffeine.newBuilder().maximumSize(16_000L).recordStats().build();
+    // Initialize the cache with a maximum size of 256 MB and a custom memory footprint estimator
+    this.cache = new MemoryBoundCache<>(256 * 1024 * 1024, CodeMemoryFootprint::estimate);
   }
 
   /**
@@ -47,17 +48,40 @@ public class CodeCache implements org.hyperledger.besu.evm.internal.CodeCache {
         "Current number of entries in the code cache",
         cache::estimatedSize);
 
+    metricsSystem.createGauge(
+        BONSAI_CACHE, "code_cache_hit_rate", "Hit rate of the code cache", cache::hitRate);
+
     metricsSystem.createLongGauge(
         BONSAI_CACHE,
         "code_cache_evictions",
         "Total number of evictions from the code cache",
-        () -> cache.stats().evictionCount());
+        cache::evictionCount);
+
+    metricsSystem.createLongGauge(
+        BONSAI_CACHE,
+        "code_cache_eviction_weight",
+        "Total weight of evictions from the code cache",
+        cache::evictionWeight);
 
     metricsSystem.createGauge(
         BONSAI_CACHE,
-        "code_cache_hit_rate",
-        "Hit rate of the code cache",
-        () -> cache.stats().hitRate());
+        "code_cache_lookups_per_second",
+        "Estimated number of code cache lookups per second",
+        () -> {
+          long now = System.nanoTime();
+          long currentCount = cache.requestCount();
+
+          long deltaRequests = currentCount - lastRequestCount;
+          long deltaTimeNanos = now - lastRequestTimestamp;
+
+          lastRequestCount = currentCount;
+          lastRequestTimestamp = now;
+
+          if (deltaTimeNanos == 0) {
+            return 0.0;
+          }
+          return (deltaRequests * 1_000_000_000.0) / deltaTimeNanos;
+        });
   }
 
   /**
