@@ -801,8 +801,8 @@ artifactoryPublish {
 }
 
 def dockerBuildVersion = project.hasProperty('release.releaseVersion') && project.property('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-def dockerOrgName = project.hasProperty('dockerOrgName') && project.property('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
-def dockerArtifactName = project.hasProperty("dockerArtifactName") && project.property("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu"
+def dockerOrgName = project.hasProperty('dockerOrgName') && project.property('dockerOrgName')?.trim() ? project.getProperty("dockerOrgName").trim() : "hyperledger"
+def dockerArtifactName = project.hasProperty("dockerArtifactName") && project.property("dockerArtifactName")?.trim() ? project.getProperty("dockerArtifactName").trim() : "besu"
 def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
 
 // rename the top level dir from besu-<version> to besu and this makes it really
@@ -838,7 +838,13 @@ task distDocker {
     }
     exec {
       def image = "${dockerImageName}:${dockerBuildVersion}"
+
+      println "Docker Build Version: $dockerBuildVersion"
+      println "Docker Organization Name: $dockerOrgName"
+      println "Docker Artifact Name: $dockerArtifactName"
+      println "Docker Image Name: $dockerImageName"
       println "Building docker image name ${image}"
+
       def dockerPlatform = ""
       if (project.hasProperty('docker-platform')){
         dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
