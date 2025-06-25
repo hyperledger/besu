@@ -801,7 +801,7 @@ artifactoryPublish {
 }
 
 def dockerBuildVersion = project.hasProperty('release.releaseVersion') && project.property('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-def dockerOrgName = project.hasProperty('dockerOrgName') && project.property('dockerOrgName')?.trim() ? project.getProperty("dockerOrgName").trim() : "hyperledger"
+def dockerOrgName = project.hasProperty('dockerOrgName') && project.property('dockerOrgName') && project.property('dockerOrgName').trim() != '/' ? project.getProperty("dockerOrgName").trim() : "hyperledger"
 def dockerArtifactName = project.hasProperty("dockerArtifactName") && project.property("dockerArtifactName")?.trim() ? project.getProperty("dockerArtifactName").trim() : "besu"
 def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
 
