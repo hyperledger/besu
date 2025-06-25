@@ -81,7 +81,8 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    * @return the ProtocolSpec to be used by the provided block
    */
   @Override
-  public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
+  public ProtocolSpec getByBlockHeader(
+      final org.hyperledger.besu.plugin.data.ProcessableBlockHeader blockHeader) {
     return this.transitionUtils.dispatchFunctionAccordingToMergeState(
         protocolSchedule -> protocolSchedule.getByBlockHeader(blockHeader));
   }

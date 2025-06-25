@@ -312,7 +312,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
               .orElse(null);
       if (oldAccount == null) {
         // This is when an account is both created and deleted within the scope of the same
-        // block.  A not-uncommon DeFi bot pattern.
+        // block. A not-uncommon DeFi bot pattern.
         continue;
       }
       final Hash addressHash = address.addressHash();
@@ -369,7 +369,10 @@ public class BonsaiWorldState extends PathBasedWorldState {
     return calculateRootHash(
         Optional.of(
             new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
+                noOpSegmentedTx,
+                noOpTx,
+                worldStateKeyValueStorage.getFlatDbStrategy(),
+                worldStateKeyValueStorage.getComposedWorldStateStorage())),
         accumulator.copy());
   }
 
