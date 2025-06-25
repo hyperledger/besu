@@ -36,7 +36,10 @@ import org.apache.tuweni.bytes.Bytes;
  * </UL>
  */
 public class OsakaGasCalculator extends PragueGasCalculator {
+  /** constant indicating the maximum integer value for L1 precompile addresses (0xFF) */
   public static final int MAX_L1_PRECOMPILE = 255;
+
+  /** configured maximum l2 precompile address value for this fork / gas calculator. */
   protected int maxL2Precompile;
 
   /** Instantiates a new Osaka Gas Calculator. */
@@ -47,13 +50,19 @@ public class OsakaGasCalculator extends PragueGasCalculator {
   /**
    * Instantiates a new Osaka Gas Calculator
    *
-   * @param maxPrecompile the max precompile
+   * @param maxPrecompile the max precompile address from the L1 precompile range (0x01 - 0xFF)
+   * @param maxL2Precompile max precompile address from the L2 precompile space (0x0100 - 0x01FF)
    */
   protected OsakaGasCalculator(final int maxPrecompile, final int maxL2Precompile) {
     super(maxPrecompile);
     this.maxL2Precompile = maxL2Precompile;
   }
 
+  /**
+   * Instantiates a new Osaka Gas Calculator, uses default P256_VERIFY as max L2 precompile.
+   *
+   * @param maxPrecompile the max precompile address from the L1 precompile range (0x01 - 0xFF)
+   */
   protected OsakaGasCalculator(final int maxPrecompile) {
     this(maxPrecompile, P256_VERIFY.getInt(16));
   }

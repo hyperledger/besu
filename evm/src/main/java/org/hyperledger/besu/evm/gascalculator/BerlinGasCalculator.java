@@ -68,6 +68,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   // unchanged from Frontier
   private static final long COPY_WORD_GAS_COST = 3L;
 
+  /** configured maximum valid precompile address for this fork/gas calculator */
   protected final int maxPrecompile;
 
   /**

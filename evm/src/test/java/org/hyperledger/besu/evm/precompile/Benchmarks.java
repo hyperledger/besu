@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -98,7 +99,7 @@ public class Benchmarks {
         Bytes.fromHexString(
             "0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca605023555555550000000055555555555555553ef7a8e48d07df81a693439654210c7044a5ad0ad0636d9f12bc9e0a6bdd5e1cbcb012ea7bf091fcec15b0c43202d52ed8adc00023a8edc02576e2b63e3e30621a471e2b2320620187bf067a1ac1ff3233e2b50ec09807accb36131fff95ed12a09a86b4ea9690aa32861576ba2362e1"));
     final P256VerifyPrecompiledContract contract =
-        new P256VerifyPrecompiledContract(new IstanbulGasCalculator());
+        new P256VerifyPrecompiledContract(new OsakaGasCalculator());
 
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
       final long timePerCallInNs = runBenchmark(testCase.getValue(), contract);

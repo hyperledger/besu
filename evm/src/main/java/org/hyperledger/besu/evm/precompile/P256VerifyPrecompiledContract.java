@@ -58,6 +58,12 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
     this(gasCalculator, new SECP256R1());
   }
 
+  /**
+   * Instantiates a new Abstract precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   * @param signatureAlgorithm the signature algorithm to use
+   */
   public P256VerifyPrecompiledContract(
       final GasCalculator gasCalculator, final SignatureAlgorithm signatureAlgorithm) {
     super(PRECOMPILE_NAME, gasCalculator);

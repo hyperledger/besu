@@ -26,7 +26,12 @@ import org.apache.tuweni.bytes.Bytes;
 /** Benchmark P256Verify precompile (ECDSA key extraction + keccak hash) */
 public class P256VerifyBenchmark extends BenchmarkExecutor {
 
-  /** Use default math based warmup and interations */
+  /**
+   * Use default math based warmup and interations
+   *
+   * @param output where to write the stats.
+   * @param benchmarkConfig benchmark configurations.
+   */
   public P256VerifyBenchmark(final PrintStream output, final BenchmarkConfig benchmarkConfig) {
     super(MATH_WARMUP, MATH_ITERATIONS, output, benchmarkConfig);
   }
