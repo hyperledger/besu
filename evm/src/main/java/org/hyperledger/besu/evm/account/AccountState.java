@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.NavigableMap;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -139,4 +140,20 @@ public interface AccountState {
    * @return the requested storage entries as a map of key hash to entry.
    */
   NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(Bytes32 startKeyHash, int limit);
+
+  /**
+   * Should be overridden by account types that can retrieve the code size more efficiently. For
+   * example, {@code PathBasedAccount} may return a stored size directly from the account's RLP data
+   * (introduced in EIP-7907 / Osaka), avoiding the need to inspect the account's code. The return
+   * type is an {@link Optional} because for accounts originating before the Osaka upgrade, the code
+   * size may not have been stored, even if the account supports efficient lookup methods.
+   *
+   * <p>Account types that do not store the code size will fall back to this default implementation,
+   * which determines the size by inspecting the code bytes.
+   *
+   * @return an {@link Optional} containing the code size, or empty if not available.
+   */
+  default Optional<Integer> getCodeSize() {
+    return Optional.of(getCode().size());
+  }
 }
