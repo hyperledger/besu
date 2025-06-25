@@ -30,6 +30,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -338,11 +339,32 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return CodeV0.EMPTY_CODE;
     }
 
-    Code code = account.getOrCreateCachedCode();
+    final boolean accountHasCodeCache = account.getCodeCache() != null;
+
+    final Code code;
+    // Bonsai accounts may have a fully cached code, so we use that one
+    if (accountHasCodeCache) {
+      code = account.getOrCreateCachedCode();
+    }
+    // Any other account can only use the cached jump dest analysis if available
+    else {
+      code = evm.getOrCreateCachedJumpDest(codeHash, account.getCode());
+    }
+
     if (!hasCodeDelegation(code.getBytes())) {
       return code;
     }
 
-    return getTarget(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account).code();
+    final CodeDelegationHelper.Target target =
+        getTarget(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account);
+
+    if (accountHasCodeCache) {
+      // If the account has a code cache, we can return the cached code of the target
+      return target.code();
+    }
+
+    // otherwise we can only use the cached jump destination analysis
+    final Code targetCode = target.code();
+    return evm.getOrCreateCachedJumpDest(targetCode.getCodeHash(), targetCode.getBytes());
   }
 }

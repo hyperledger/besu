@@ -127,6 +127,9 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     if (code == null && codeHash.equals(Hash.EMPTY)) {
       this.code = CodeV0.EMPTY_CODE;
     } else {
+      // as this constructor is only used for copying accounts, we assume the code must have
+      // originated
+      // from the cache, so we don't need to put it in the cache again
       this.code = code;
     }
   }
@@ -174,6 +177,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
 
   @Override
   public Bytes getCode() {
+    // always prefer the local copy to avoid unnecessary cache lookups
     if (code != null) {
       return code.getBytes();
     }
@@ -183,10 +187,12 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
 
   @Override
   public Code getOrCreateCachedCode() {
+    // always prefer the local copy to avoid unnecessary cache lookups
     if (code != null) {
       return code;
     }
 
+    // check if we have a cached version of the code
     final Code cachedCode =
         Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
 
@@ -218,6 +224,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
 
     this.codeHash = Hash.hash(byteCode);
 
+    // check if we have a cached version of the code
     final Code cachedCode =
         Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
 

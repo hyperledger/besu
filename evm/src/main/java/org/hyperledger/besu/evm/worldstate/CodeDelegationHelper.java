@@ -108,6 +108,11 @@ public class CodeDelegationHelper {
       return EMPTY_CODE;
     }
 
+    // Bonsai accounts may have a fully cached code, so we use that one
+    if (targetAccount.getCodeCache() != null) {
+      return targetAccount.getOrCreateCachedCode();
+    }
+
     return targetAccount.getOrCreateCachedCode();
   }
 }

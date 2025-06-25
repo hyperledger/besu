@@ -20,8 +20,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -29,7 +29,6 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -117,7 +116,8 @@ public class SystemCallProcessor {
       final BlockHashLookup blockHashLookup,
       final Bytes inputData) {
 
-    final Optional<Account> maybeContract = Optional.ofNullable(worldUpdater.get(callAddress));
+    final AbstractMessageProcessor processor =
+        mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
 
     return MessageFrame.builder()
         .maxStackSize(DEFAULT_MAX_STACK_SIZE)
@@ -137,7 +137,21 @@ public class SystemCallProcessor {
         .inputData(inputData)
         .sender(SYSTEM_ADDRESS)
         .blockHashLookup(blockHashLookup)
-        .code(maybeContract.map(AccountState::getOrCreateCachedCode).orElse(CodeV0.EMPTY_CODE))
+        .code(getCode(worldUpdater.get(callAddress), processor))
         .build();
+  }
+
+  private Code getCode(final Account contract, final AbstractMessageProcessor processor) {
+    if (contract == null) {
+      return CodeV0.EMPTY_CODE;
+    }
+
+    // Bonsai accounts may have a fully cached code, so we use that one
+    if (contract.getCodeCache() != null) {
+      return contract.getOrCreateCachedCode();
+    }
+
+    // Any other account can only use the cached jump dest analysis if available
+    return processor.getOrCreateCachedJumpDest(contract.getCodeHash(), contract.getCode());
   }
 }

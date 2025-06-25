@@ -19,7 +19,6 @@ import static org.hyperledger.besu.metrics.BesuMetricCategory.BONSAI_CACHE;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -29,7 +28,6 @@ public class CodeCache implements org.hyperledger.besu.evm.internal.CodeCache {
 
   // private final MemoryBoundCache<Hash, Code> cache;
   private final Cache<Hash, Code> cache;
-  private OperationTimer lookupTimer;
 
   /** Instantiates a new Code cache. */
   public CodeCache() {
@@ -43,10 +41,6 @@ public class CodeCache implements org.hyperledger.besu.evm.internal.CodeCache {
    * @param metricsSystem the metrics system to use
    */
   public void setupMetricsSystem(final ObservableMetricsSystem metricsSystem) {
-    this.lookupTimer =
-        metricsSystem.createTimer(
-            BONSAI_CACHE, "code_cache_lookup_time", "Time spent performing CodeCache lookups");
-
     metricsSystem.createLongGauge(
         BONSAI_CACHE,
         "code_cache_size",
@@ -67,24 +61,18 @@ public class CodeCache implements org.hyperledger.besu.evm.internal.CodeCache {
   }
 
   /**
-   * Gets if present.
+   * Gets the code if present in the cache.
    *
    * @param codeHash the code hash
    * @return the code if present
    */
   @Override
   public Code getIfPresent(final Hash codeHash) {
-    if (lookupTimer == null) {
-      return cache.getIfPresent(codeHash);
-    }
-
-    try (var ignored = lookupTimer.startTimer()) {
-      return cache.getIfPresent(codeHash);
-    }
+    return cache.getIfPresent(codeHash);
   }
 
   /**
-   * Put.
+   * Put the code into the cache.
    *
    * @param codeHash the code hash
    * @param code the code

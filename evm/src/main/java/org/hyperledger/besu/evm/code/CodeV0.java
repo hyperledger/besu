@@ -225,23 +225,49 @@ public class CodeV0 implements Code {
     return out.toString(StandardCharsets.UTF_8);
   }
 
+  /**
+   * Computes a bitmask where each bit set to 1 indicates a valid `JUMPDEST` opcode in the EVM
+   * bytecode. The bitmap is organized in 64-byte chunks, each represented as a `long` (64 bits).
+   * This is used for efficiently validating dynamic jumps (`JUMP`, `JUMPI`) at runtime.
+   */
   long[] calculateJumpDestBitMask() {
+    // Total number of bytes in the bytecode
     final int size = getSize();
+
+    // Allocate enough longs to cover all bytes, one long (64 bits) per 64-byte chunk
     final long[] bitmap = new long[(size >> 6) + 1];
+
+    // Get the raw EVM bytecode as a byte array (no copying)
     final byte[] rawCode = getBytes().toArrayUnsafe();
     final int length = rawCode.length;
+
+    // Iterate through the bytecode
     for (int i = 0; i < length; ) {
+      // One 64-bit entry corresponds to 64 bytecode positions
       long thisEntry = 0L;
+
+      // Compute which bitmap entry we are in (i / 64)
       final int entryPos = i >> 6;
+
+      // Compute the number of bytes we can safely examine in this 64-byte window
       final int max = Math.min(64, length - (entryPos << 6));
+
+      // j is the position within this 64-byte window
       int j = i & 0x3F;
+
+      // Scan through this 64-byte chunk of the bytecode
       for (; j < max; i++, j++) {
         final byte operationNum = rawCode[i];
+
+        // Skip all opcodes below 0x5b (JUMPDEST), since only PUSH1–PUSH32 and JUMPDEST matter
         if (operationNum >= JumpDestOperation.OPCODE) {
           switch (operationNum) {
+            // JUMPDEST opcode (0x5b): mark as a valid jump destination
             case JumpDestOperation.OPCODE:
-              thisEntry |= 1L << j;
+              thisEntry |= 1L << j; // Set the bit at position j
               break;
+            // PUSH1–PUSH32 opcodes (0x60–0x7f): these consume 1-32 bytes of data that should be
+            // skipped
             case 0x60:
               i += 1;
               j += 1;
@@ -371,11 +397,17 @@ public class CodeV0 implements Code {
               j += 32;
               break;
             default:
+              // No default case needed: any unhandled opcode >= 0x5b but not PUSH or JUMPDEST is
+              // skipped
           }
         }
       }
+
+      // Store the computed bitmask for this 64-byte chunk
       bitmap[entryPos] = thisEntry;
     }
+
+    // Return the full jump destination bitmask
     return bitmap;
   }
 

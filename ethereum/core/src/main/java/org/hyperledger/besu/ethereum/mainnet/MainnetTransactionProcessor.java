@@ -551,7 +551,14 @@ public class MainnetTransactionProcessor {
       return delegationTargetCode(worldUpdater, warmAddressList, contract);
     }
 
-    return contract.getOrCreateCachedCode();
+    // Bonsai accounts may have a fully cached code, so we use that one
+    if (contract.getCodeCache() != null) {
+      return contract.getOrCreateCachedCode();
+    }
+
+    // Any other account can only use the cached jump dest analysis if available
+    return messageCallProcessor.getOrCreateCachedJumpDest(
+        contract.getCodeHash(), contract.getCode());
   }
 
   private Code delegationTargetCode(

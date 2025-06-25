@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.processor;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
@@ -224,6 +225,17 @@ public abstract class AbstractMessageProcessor {
       }
       completedFailed(frame);
     }
+  }
+
+  /**
+   * Gets or creates code instance with a cached jump destination.
+   *
+   * @param codeHash the code hash
+   * @param codeBytes the code bytes
+   * @return the code instance with the cached jump destination
+   */
+  public Code getOrCreateCachedJumpDest(final Hash codeHash, final Bytes codeBytes) {
+    return evm.getOrCreateCachedJumpDest(codeHash, codeBytes);
   }
 
   /**
