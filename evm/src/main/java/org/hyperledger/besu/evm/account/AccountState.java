@@ -144,9 +144,11 @@ public interface AccountState {
   /**
    * Should be overridden by account types that can retrieve the code size more efficiently. For
    * example, {@code PathBasedAccount} may return a stored size directly from the account's RLP data
-   * (introduced in EIP-7907 / Osaka), avoiding the need to inspect the account's code. The return
-   * type is an {@link Optional} because for accounts originating before the Osaka upgrade, the code
-   * size may not have been stored, even if the account supports efficient lookup methods.
+   * (introduced to support EIP-7907), avoiding the need to inspect the account's code.
+   *
+   * <p>The return type is an {@link Optional} because for accounts created with Besu versions prior
+   * this method, the code size is not stored. In such cases, the code size must be computed
+   * manually by inspecting the account's code bytes.
    *
    * <p>Account types that do not store the code size will fall back to this default implementation,
    * which determines the size by inspecting the code bytes.
