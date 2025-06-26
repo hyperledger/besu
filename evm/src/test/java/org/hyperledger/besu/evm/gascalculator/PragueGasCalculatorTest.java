@@ -42,7 +42,7 @@ class PragueGasCalculatorTest {
   @Test
   void testPrecompileSize() {
     PragueGasCalculator subject = new PragueGasCalculator();
-    assertThat(subject.isPrecompile(Address.precompiled(0x14))).isFalse();
+    assertThat(subject.isPrecompile(Address.precompiled(0x12))).isFalse();
     assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
   }
 
