@@ -26,6 +26,7 @@
 - Increase mainnet gas limit to 45M [#8824](https://github.com/hyperledger/besu/pull/8824)
 - Expose a method to get blob gas price from plugins [#8843](https://github.com/hyperledger/besu/pull/8843)
 - Experimental Bonsai Archive support [#7475](https://github.com/hyperledger/besu/pull/7475)
+- Use eth/69 by default [#8858](https://github.com/hyperledger/besu/pull/8858)
 
 #### Fusaka
 - EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
