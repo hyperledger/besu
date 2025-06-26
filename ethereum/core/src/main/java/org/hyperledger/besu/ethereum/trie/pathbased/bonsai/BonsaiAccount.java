@@ -40,14 +40,14 @@ public class BonsaiAccount extends PathBasedAccount {
   private Hash storageRoot;
 
   public BonsaiAccount(
-    final PathBasedWorldView context,
-    final Address address,
-    final Hash addressHash,
-    final long nonce,
-    final Wei balance,
-    final Hash storageRoot,
-    final Hash codeHash,
-    final boolean mutable) {
+      final PathBasedWorldView context,
+      final Address address,
+      final Hash addressHash,
+      final long nonce,
+      final Wei balance,
+      final Hash storageRoot,
+      final Hash codeHash,
+      final boolean mutable) {
     super(context, address, addressHash, nonce, balance, codeHash, Optional.empty(), mutable);
     this.storageRoot = storageRoot;
   }
