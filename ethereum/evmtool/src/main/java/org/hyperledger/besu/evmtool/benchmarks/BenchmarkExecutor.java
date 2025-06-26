@@ -139,22 +139,23 @@ public abstract class BenchmarkExecutor {
   }
 
   public void precompile(
-    final Map<String, Bytes> testCases,
-    final PrecompiledContract contract,
-    final EvmSpecVersion evmSpecVersion) {
+      final Map<String, Bytes> testCases,
+      final PrecompiledContract contract,
+      final EvmSpecVersion evmSpecVersion) {
 
     if (contract == null) {
-      throw new UnsupportedOperationException("contract is unsupported on " + evmSpecVersion + " fork");
+      throw new UnsupportedOperationException(
+          "contract is unsupported on " + evmSpecVersion + " fork");
     }
 
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
       if (config.testCasePattern().isPresent()
-        && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
+          && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
         continue;
       }
 
       final double execTime =
-        runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
+          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
 
       long gasCost = contract.gasRequirement(testCase.getValue());
       logPrecompilePerformance(testCase.getKey(), gasCost, execTime);

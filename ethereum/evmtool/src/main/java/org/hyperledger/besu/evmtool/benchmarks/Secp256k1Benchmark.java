@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evmtool.benchmarks;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
 
@@ -23,7 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.evm.EvmSpecVersion;
 
 /** Benchmark secp256k1 public key extraction */
 public class Secp256k1Benchmark extends BenchmarkExecutor {
