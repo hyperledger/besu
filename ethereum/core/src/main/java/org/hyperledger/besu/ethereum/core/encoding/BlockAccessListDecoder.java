@@ -1,0 +1,107 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.core.encoding;
+
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.ethereum.core.BlockAccessList;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountChanges;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.BalanceChange;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.CodeChange;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.NonceChange;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.SlotChanges;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.SlotRead;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.StorageChange;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
+
+public final class BlockAccessListDecoder {
+
+  private BlockAccessListDecoder() {}
+
+  public static BlockAccessList decode(final RLPInput in) {
+    final List<AccountChanges> accounts = new ArrayList<>();
+
+    in.enterList();
+    while (!in.isEndOfCurrentList()) {
+      RLPInput acctIn = in.readAsRlp();
+      acctIn.enterList();
+
+      Address address = Address.readFrom(acctIn);
+
+      List<SlotChanges> slotChanges =
+          acctIn.readList(
+              scIn -> {
+                scIn.enterList();
+                StorageSlotKey slot = new StorageSlotKey(scIn.readUInt256Scalar());
+                List<StorageChange> changes =
+                    scIn.readList(
+                        changeIn -> {
+                          changeIn.enterList();
+                          int txIndex = changeIn.readInt();
+                          Bytes newVal = changeIn.readBytes();
+                          changeIn.leaveList();
+                          return new StorageChange(txIndex, newVal);
+                        });
+                scIn.leaveList();
+                return new SlotChanges(slot, changes);
+              });
+
+      List<SlotRead> reads =
+          acctIn.readList(r -> new SlotRead(new StorageSlotKey(r.readUInt256Scalar())));
+
+      List<BalanceChange> balances =
+          acctIn.readList(
+              bcIn -> {
+                bcIn.enterList();
+                int txIndex = bcIn.readInt();
+                Bytes postBalance = bcIn.readBytes();
+                bcIn.leaveList();
+                return new BalanceChange(txIndex, postBalance);
+              });
+
+      List<NonceChange> nonces =
+          acctIn.readList(
+              ncIn -> {
+                ncIn.enterList();
+                int txIndex = ncIn.readInt();
+                long newNonce = ncIn.readLongScalar();
+                ncIn.leaveList();
+                return new NonceChange(txIndex, newNonce);
+              });
+
+      List<CodeChange> codes =
+          acctIn.readList(
+              ccIn -> {
+                ccIn.enterList();
+                int txIndex = ccIn.readInt();
+                Bytes newCode = ccIn.readBytes();
+                ccIn.leaveList();
+                return new CodeChange(txIndex, newCode);
+              });
+
+      acctIn.leaveList();
+
+      accounts.add(new AccountChanges(address, slotChanges, reads, balances, nonces, codes));
+    }
+    in.leaveList();
+
+    return new BlockAccessList(accounts);
+  }
+}

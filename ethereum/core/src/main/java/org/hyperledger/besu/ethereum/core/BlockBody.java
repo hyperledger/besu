@@ -14,10 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountAccess;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountBalanceDiff;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountCodeDiff;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountNonceDiff;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -120,16 +118,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   public void writeTo(final RLPOutput output) {
     output.writeList(getTransactions(), Transaction::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
-    // Must write empty list markers for each empty list
     withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
-    blockAccessList.ifPresent(
-        bal -> output.writeList(bal.getAccountAccesses(), AccountAccess::writeTo));
-    blockAccessList.ifPresent(
-        bal -> output.writeList(bal.getAccountBalanceDiffs(), AccountBalanceDiff::writeTo));
-    blockAccessList.ifPresent(
-        bal -> output.writeList(bal.getAccountCodeDiffs(), AccountCodeDiff::writeTo));
-    blockAccessList.ifPresent(
-        bal -> output.writeList(bal.getAccountNonceDiffs(), AccountNonceDiff::writeTo));
+    blockAccessList.ifPresent(bal -> BlockAccessListEncoder.encode(bal, output));
   }
 
   public static BlockBody readWrappedBodyFrom(
@@ -173,32 +163,18 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    */
   public static BlockBody readFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
-    return new BlockBody(
-        input.readList(Transaction::readFrom),
-        input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
+    final List<Transaction> txs = input.readList(Transaction::readFrom);
+    final List<BlockHeader> ommers =
+        input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions));
+    final Optional<List<Withdrawal>> withdrawals =
         input.isEndOfCurrentList()
             ? Optional.empty()
-            : Optional.of(input.readList(Withdrawal::readFrom)),
+            : Optional.of(input.readList(Withdrawal::readFrom));
+    final Optional<BlockAccessList> blockAccessList =
         input.isEndOfCurrentList()
             ? Optional.empty()
-            : Optional.of(
-                new BlockAccessList(
-                    input.readList(
-                        (valueReader) -> {
-                          return AccountAccess.readFrom(valueReader);
-                        }),
-                    input.readList(
-                        valueReader -> {
-                          return AccountBalanceDiff.readFrom(valueReader);
-                        }),
-                    input.readList(
-                        valueReader -> {
-                          return AccountCodeDiff.readFrom(valueReader);
-                        }),
-                    input.readList(
-                        valueReader -> {
-                          return AccountNonceDiff.readFrom(valueReader);
-                        }))));
+            : Optional.of(BlockAccessListDecoder.decode(input));
+    return new BlockBody(txs, ommers, withdrawals, blockAccessList);
   }
 
   @Override

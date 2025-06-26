@@ -15,122 +15,99 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.core.BlockAccessList;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountAccess;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountBalanceDiff;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountCodeDiff;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountNonceDiff;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountChanges;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.BalanceChange;
 import org.hyperledger.besu.ethereum.core.BlockAccessList.CodeChange;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.PerTxAccess;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.SlotAccess;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.NonceChange;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.SlotChanges;
+import org.hyperledger.besu.ethereum.core.BlockAccessList.StorageChange;
 
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockAccessListParameter {
 
-  private final List<AccountAccessParameter> accountAccesses;
-  private final List<AccountBalanceDiffParameter> balanceDiffs;
-  private final List<AccountCodeDiffParameter> codeDiffs;
-  private final List<AccountNonceDiffParameter> nonceDiffs;
+  private final List<AccountChangesParameter> accountChanges;
 
   @JsonCreator
   public BlockAccessListParameter(
-      @JsonProperty("accountAccesses") final List<AccountAccessParameter> accountAccesses,
-      @JsonProperty("balanceDiffs") final List<AccountBalanceDiffParameter> balanceDiffs,
-      @JsonProperty("codeDiffs") final List<AccountCodeDiffParameter> codeDiffs,
-      @JsonProperty("nonceDiffs") final List<AccountNonceDiffParameter> nonceDiffs) {
-    this.accountAccesses = accountAccesses;
-    this.balanceDiffs = balanceDiffs;
-    this.codeDiffs = codeDiffs;
-    this.nonceDiffs = nonceDiffs;
+      @JsonProperty("accountChanges") final List<AccountChangesParameter> accountChanges) {
+    this.accountChanges = accountChanges;
   }
 
   public static BlockAccessListParameter fromBlockAccessList(final BlockAccessList list) {
     return new BlockAccessListParameter(
-        list.getAccountAccesses().stream().map(AccountAccessParameter::new).toList(),
-        list.getAccountBalanceDiffs().stream().map(AccountBalanceDiffParameter::new).toList(),
-        list.getAccountCodeDiffs().stream().map(AccountCodeDiffParameter::new).toList(),
-        list.getAccountNonceDiffs().stream().map(AccountNonceDiffParameter::new).toList());
+        list.getAccountChanges().stream().map(AccountChangesParameter::new).toList());
   }
 
-  public List<AccountAccessParameter> getAccountAccesses() {
-    return accountAccesses;
+  public List<AccountChangesParameter> getAccountChanges() {
+    return accountChanges;
   }
 
-  public List<AccountBalanceDiffParameter> getBalanceDiffs() {
-    return balanceDiffs;
-  }
-
-  public List<AccountCodeDiffParameter> getCodeDiffs() {
-    return codeDiffs;
-  }
-
-  public List<AccountNonceDiffParameter> getNonceDiffs() {
-    return nonceDiffs;
-  }
-
-  public static class AccountAccessParameter {
+  public static class AccountChangesParameter {
     public final String address;
-    public final List<SlotAccessParameter> slotAccesses;
+    public final List<SlotChangeParameter> storageChanges;
+    public final List<String> storageReads;
+    public final List<BalanceChangeParameter> balanceChanges;
+    public final List<NonceChangeParameter> nonceChanges;
+    public final List<CodeChangeParameter> codeChanges;
 
-    public AccountAccessParameter(final AccountAccess access) {
-      this.address = access.getAddress().toString();
-      this.slotAccesses = access.getSlotAccesses().stream().map(SlotAccessParameter::new).toList();
+    public AccountChangesParameter(final AccountChanges changes) {
+      this.address = changes.getAddress().toString();
+      this.storageChanges =
+          changes.getStorageChanges().stream().map(SlotChangeParameter::new).toList();
+      this.storageReads =
+          changes.getStorageReads().stream()
+              .map(sr -> sr.getSlot().getSlotKey().map(UInt256::toHexString).orElse("null"))
+              .toList();
+      this.balanceChanges =
+          changes.getBalanceChanges().stream().map(BalanceChangeParameter::new).toList();
+      this.nonceChanges =
+          changes.getNonceChanges().stream().map(NonceChangeParameter::new).toList();
+      this.codeChanges = changes.getCodeChanges().stream().map(CodeChangeParameter::new).toList();
     }
   }
 
-  public static class SlotAccessParameter {
+  public static class SlotChangeParameter {
     public final String slot;
-    public final List<PerTxAccessParameter> accesses;
+    public final List<StorageChangeParameter> changes;
 
-    public SlotAccessParameter(final SlotAccess access) {
-      this.slot = access.getSlot().getSlotKey().map(UInt256::toHexString).orElse("null");
-      this.accesses = access.getPerTxAccesses().stream().map(PerTxAccessParameter::new).toList();
+    public SlotChangeParameter(final SlotChanges changes) {
+      this.slot = changes.getSlot().getSlotKey().map(UInt256::toHexString).orElse("null");
+      this.changes = changes.getChanges().stream().map(StorageChangeParameter::new).toList();
     }
   }
 
-  public static class PerTxAccessParameter {
+  public static class StorageChangeParameter {
     public final int txIndex;
-    public final String valueAfter;
+    public final String newValue;
 
-    public PerTxAccessParameter(final PerTxAccess access) {
-      this.txIndex = access.getTxIndex();
-      this.valueAfter = access.getValueAfter().map(Bytes::toHexString).orElse(null);
-    }
-  }
-
-  public static class AccountBalanceDiffParameter {
-    public final String address;
-    public final List<BalanceChangeParameter> changes;
-
-    public AccountBalanceDiffParameter(final AccountBalanceDiff diff) {
-      this.address = diff.getAddress().toString();
-      this.changes = diff.getBalanceChanges().stream().map(BalanceChangeParameter::new).toList();
+    public StorageChangeParameter(final StorageChange change) {
+      this.txIndex = change.getTxIndex();
+      this.newValue = change.getNewValue().toHexString();
     }
   }
 
   public static class BalanceChangeParameter {
     public final int txIndex;
-    public final String delta;
+    public final String postBalance;
 
     public BalanceChangeParameter(final BalanceChange change) {
       this.txIndex = change.getTxIndex();
-      this.delta = change.getDelta().toString();
+      this.postBalance = change.getPostBalance().toHexString();
     }
   }
 
-  public static class AccountCodeDiffParameter {
-    public final String address;
-    public final CodeChangeParameter change;
+  public static class NonceChangeParameter {
+    public final int txIndex;
+    public final long newNonce;
 
-    public AccountCodeDiffParameter(final AccountCodeDiff diff) {
-      this.address = diff.getAddress().toString();
-      this.change = new CodeChangeParameter(diff.getChange());
+    public NonceChangeParameter(final NonceChange change) {
+      this.txIndex = change.getTxIndex();
+      this.newNonce = change.getNewNonce();
     }
   }
 
@@ -141,16 +118,6 @@ public class BlockAccessListParameter {
     public CodeChangeParameter(final CodeChange change) {
       this.txIndex = change.getTxIndex();
       this.newCode = change.getNewCode().toBase64String();
-    }
-  }
-
-  public static class AccountNonceDiffParameter {
-    public final String address;
-    public final long nonceBefore;
-
-    public AccountNonceDiffParameter(final AccountNonceDiff diff) {
-      this.address = diff.getAddress().toString();
-      this.nonceBefore = diff.getNonceBefore();
     }
   }
 }

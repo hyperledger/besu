@@ -15,17 +15,10 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.encoding.AccountAccessDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.AccountAccessEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.AccountBalanceDiffDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.AccountBalanceDiffEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.AccountCodeDiffDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.AccountCodeDiffEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.AccountNonceDiffDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.AccountNonceDiffEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
@@ -34,217 +27,143 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockAccessList {
+  private final List<AccountChanges> accountChanges;
 
-  private final List<AccountAccess> accountAccesses;
-  private final List<AccountBalanceDiff> balanceDiffs;
-  private final List<AccountCodeDiff> codeDiffs;
-  private final List<AccountNonceDiff> nonceDiffs;
-
-  public BlockAccessList(
-      final List<AccountAccess> accountAccesses,
-      final List<AccountBalanceDiff> balanceDiffs,
-      final List<AccountCodeDiff> codeDiffs,
-      final List<AccountNonceDiff> nonceDiffs) {
-    this.accountAccesses = accountAccesses;
-    this.balanceDiffs = balanceDiffs;
-    this.codeDiffs = codeDiffs;
-    this.nonceDiffs = nonceDiffs;
+  public BlockAccessList(final List<AccountChanges> accountChanges) {
+    this.accountChanges = accountChanges;
   }
 
-  public List<AccountAccess> getAccountAccesses() {
-    return accountAccesses;
+  public List<AccountChanges> getAccountChanges() {
+    return accountChanges;
   }
 
-  public List<AccountBalanceDiff> getAccountBalanceDiffs() {
-    return balanceDiffs;
+  public void writeTo(final RLPOutput out) {
+    BlockAccessListEncoder.encode(this, out);
   }
 
-  public List<AccountCodeDiff> getAccountCodeDiffs() {
-    return codeDiffs;
+  public static Builder builder() {
+    return new Builder();
   }
 
-  public List<AccountNonceDiff> getAccountNonceDiffs() {
-    return nonceDiffs;
+  public static BlockAccessList readFrom(final RLPInput in) {
+    return BlockAccessListDecoder.decode(in);
   }
 
-  @Override
-  public String toString() {
-    return "BlockAccessList{"
-        + "accountAccesses="
-        + accountAccesses
-        + ", balanceDiffs="
-        + balanceDiffs
-        + '}';
-  }
+  public static class StorageChange {
+    private final int txIndex;
+    private final Bytes newValue;
 
-  public static class PerTxAccess {
-    private final Integer txIndex;
-    private final Optional<Bytes> valueAfter;
-
-    public PerTxAccess(final Integer txIndex, final Optional<Bytes> valueAfter) {
+    public StorageChange(final int txIndex, final Bytes newValue) {
       this.txIndex = txIndex;
-      this.valueAfter = valueAfter;
+      this.newValue = newValue;
     }
 
-    public Integer getTxIndex() {
+    public int getTxIndex() {
       return txIndex;
     }
 
-    public Optional<Bytes> getValueAfter() {
-      return valueAfter;
+    public Bytes getNewValue() {
+      return newValue;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof final StorageChange that)) return false;
+      return txIndex == that.txIndex && newValue.equals(that.newValue);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * txIndex + newValue.hashCode();
     }
 
     @Override
     public String toString() {
-      return "PerTxAccess{" + "txIndex=" + txIndex + ", valueAfter=" + valueAfter + '}';
-    }
-  }
-
-  public static class SlotAccess {
-    private final StorageSlotKey slot;
-    private final List<PerTxAccess> accesses;
-
-    public SlotAccess(final StorageSlotKey slot, final List<PerTxAccess> accesses) {
-      this.slot = slot;
-      this.accesses = accesses;
-    }
-
-    public StorageSlotKey getSlot() {
-      return slot;
-    }
-
-    public List<PerTxAccess> getPerTxAccesses() {
-      return accesses;
-    }
-
-    @Override
-    public String toString() {
-      return "SlotAccess{" + "slot=" + slot + ", accesses=" + accesses + '}';
-    }
-  }
-
-  public static class AccountAccess {
-    private final Address address;
-    private final List<SlotAccess> accesses;
-
-    public AccountAccess(final Address address, final List<SlotAccess> accesses) {
-      this.address = address;
-      this.accesses = accesses;
-    }
-
-    public Address getAddress() {
-      return address;
-    }
-
-    public List<SlotAccess> getSlotAccesses() {
-      return accesses;
-    }
-
-    public void writeTo(final RLPOutput out) {
-      AccountAccessEncoder.encode(this, out);
-    }
-
-    public static AccountAccess readFrom(final RLPInput rlpInput) {
-      return AccountAccessDecoder.decode(rlpInput);
-    }
-
-    @Override
-    public String toString() {
-      return "AccountAccess{" + "address=" + address + ", accesses=" + accesses + '}';
+      return "StorageChange{txIndex=" + txIndex + ", newValue=" + newValue + '}';
     }
   }
 
   public static class BalanceChange {
-    private final Integer txIndex;
-    private final BigInteger delta;
+    private final int txIndex;
+    private final Bytes postBalance;
 
-    public BalanceChange(final int txIndex, final BigInteger delta) {
+    public BalanceChange(final int txIndex, final Bytes postBalance) {
       this.txIndex = txIndex;
-      this.delta = delta;
+      this.postBalance = postBalance;
     }
 
-    public Integer getTxIndex() {
+    public int getTxIndex() {
       return txIndex;
     }
 
-    public BigInteger getDelta() {
-      return delta;
+    public Bytes getPostBalance() {
+      return postBalance;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof final BalanceChange that)) return false;
+      return txIndex == that.txIndex && postBalance.equals(that.postBalance);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * txIndex + postBalance.hashCode();
     }
 
     @Override
     public String toString() {
-      return "BalanceChange{" + "txIndex=" + txIndex + ", delta=" + delta + '}';
+      return "BalanceChange{txIndex=" + txIndex + ", postBalance=" + postBalance + '}';
     }
   }
 
-  public static class AccountBalanceDiff {
-    private final Address address;
-    private final List<BalanceChange> changes;
+  public static class NonceChange {
+    private final int txIndex;
+    private final long newNonce;
 
-    public AccountBalanceDiff(final Address address, final List<BalanceChange> changes) {
-      this.address = address;
-      this.changes = changes;
+    public NonceChange(final int txIndex, final long newNonce) {
+      this.txIndex = txIndex;
+      this.newNonce = newNonce;
     }
 
-    public Address getAddress() {
-      return address;
+    public int getTxIndex() {
+      return txIndex;
     }
 
-    public List<BalanceChange> getBalanceChanges() {
-      return changes;
+    public long getNewNonce() {
+      return newNonce;
     }
 
-    public void writeTo(final RLPOutput out) {
-      AccountBalanceDiffEncoder.encode(this, out);
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof final NonceChange that)) return false;
+      return txIndex == that.txIndex && newNonce == that.newNonce;
     }
 
-    public static AccountBalanceDiff readFrom(final RLPInput rlpInput) {
-      return AccountBalanceDiffDecoder.decode(rlpInput);
+    @Override
+    public int hashCode() {
+      return 31 * txIndex + Long.hashCode(newNonce);
     }
 
     @Override
     public String toString() {
-      return "AccountBalanceDiff{" + "address=" + address + ", changes=" + changes + '}';
-    }
-  }
-
-  public static class AccountCodeDiff {
-    private final Address address;
-    private final CodeChange change;
-
-    public AccountCodeDiff(final Address address, final CodeChange change) {
-      this.address = address;
-      this.change = change;
-    }
-
-    public Address getAddress() {
-      return address;
-    }
-
-    public CodeChange getChange() {
-      return change;
-    }
-
-    public void writeTo(final RLPOutput out) {
-      AccountCodeDiffEncoder.encode(this, out);
-    }
-
-    public static AccountCodeDiff readFrom(final RLPInput rlpInput) {
-      return AccountCodeDiffDecoder.decode(rlpInput);
-    }
-
-    @Override
-    public String toString() {
-      return "AccountCodeDiff{" + "address=" + address + ", change=" + change + '}';
+      return "NonceChange{txIndex=" + txIndex + ", newNonce=" + newNonce + '}';
     }
   }
 
@@ -266,213 +185,348 @@ public class BlockAccessList {
     }
 
     @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof final CodeChange that)) return false;
+      return txIndex == that.txIndex && newCode.equals(that.newCode);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * txIndex + newCode.hashCode();
+    }
+
+    @Override
     public String toString() {
-      return "CodeChange{" + "txIndex=" + txIndex + ", newCode=" + newCode + '}';
+      return "CodeChange{txIndex=" + txIndex + ", newCode=" + newCode + '}';
     }
   }
 
-  public static class AccountNonceDiff {
-    private final Address address;
-    private final long nonceBefore;
+  public static class SlotChanges {
+    private final StorageSlotKey slot;
+    private final List<StorageChange> changes;
 
-    public AccountNonceDiff(final Address address, final long nonceBefore) {
+    public SlotChanges(final StorageSlotKey slot, final List<StorageChange> changes) {
+      this.slot = slot;
+      this.changes = changes;
+    }
+
+    public StorageSlotKey getSlot() {
+      return slot;
+    }
+
+    public List<StorageChange> getChanges() {
+      return changes;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof final SlotChanges that)) return false;
+      return slot.equals(that.slot) && changes.equals(that.changes);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * slot.hashCode() + changes.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "SlotChanges{slot=" + slot + ", changes=" + changes + '}';
+    }
+  }
+
+  public static class SlotRead {
+    private final StorageSlotKey slot;
+
+    public SlotRead(final StorageSlotKey slot) {
+      this.slot = slot;
+    }
+
+    public StorageSlotKey getSlot() {
+      return slot;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof final SlotRead that)) return false;
+      return slot.equals(that.slot);
+    }
+
+    @Override
+    public int hashCode() {
+      return slot.hashCode();
+    }
+  }
+
+  public static class AccountChanges {
+    private final Address address;
+    private final List<SlotChanges> storageChanges;
+    private final List<SlotRead> storageReads;
+    private final List<BalanceChange> balanceChanges;
+    private final List<NonceChange> nonceChanges;
+    private final List<CodeChange> codeChanges;
+
+    public AccountChanges(
+        final Address address,
+        final List<SlotChanges> storageChanges,
+        final List<SlotRead> storageReads,
+        final List<BalanceChange> balanceChanges,
+        final List<NonceChange> nonceChanges,
+        final List<CodeChange> codeChanges) {
       this.address = address;
-      this.nonceBefore = nonceBefore;
+      this.storageChanges = storageChanges;
+      this.storageReads = storageReads;
+      this.balanceChanges = balanceChanges;
+      this.nonceChanges = nonceChanges;
+      this.codeChanges = codeChanges;
     }
 
     public Address getAddress() {
       return address;
     }
 
-    public long getNonceBefore() {
-      return nonceBefore;
+    public List<SlotChanges> getStorageChanges() {
+      return storageChanges;
+    }
+
+    public List<SlotRead> getStorageReads() {
+      return storageReads;
+    }
+
+    public List<BalanceChange> getBalanceChanges() {
+      return balanceChanges;
+    }
+
+    public List<NonceChange> getNonceChanges() {
+      return nonceChanges;
+    }
+
+    public List<CodeChange> getCodeChanges() {
+      return codeChanges;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof final AccountChanges that)) return false;
+      return address.equals(that.address)
+          && storageChanges.equals(that.storageChanges)
+          && storageReads.equals(that.storageReads)
+          && balanceChanges.equals(that.balanceChanges)
+          && nonceChanges.equals(that.nonceChanges)
+          && codeChanges.equals(that.codeChanges);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = address.hashCode();
+      result = 31 * result + storageChanges.hashCode();
+      result = 31 * result + storageReads.hashCode();
+      result = 31 * result + balanceChanges.hashCode();
+      result = 31 * result + nonceChanges.hashCode();
+      result = 31 * result + codeChanges.hashCode();
+      return result;
     }
 
     @Override
     public String toString() {
-      return "AccountNonceDiff{" + "address=" + address + ", nonceBefore=" + nonceBefore + '}';
+      return "AccountChanges{"
+          + "address="
+          + address
+          + ", storageChanges="
+          + storageChanges
+          + ", storageReads="
+          + storageReads
+          + ", balanceChanges="
+          + balanceChanges
+          + ", nonceChanges="
+          + nonceChanges
+          + ", codeChanges="
+          + codeChanges
+          + '}';
     }
-
-    public void writeTo(final RLPOutput out) {
-      AccountNonceDiffEncoder.encode(this, out);
-    }
-
-    public static AccountNonceDiff readFrom(final RLPInput rlpInput) {
-      return AccountNonceDiffDecoder.decode(rlpInput);
-    }
-  }
-
-  public static Builder builder() {
-    return new Builder();
   }
 
   public static class Builder {
-    private final Map<Hash, AccountAccessBuilder> accounts = new LinkedHashMap<>();
-    private final Map<Hash, AccountBalanceDiffBuilder> changes = new LinkedHashMap<>();
-    private final Map<Hash, AccountCodeDiff> codeChanges = new LinkedHashMap<>();
-    private final Map<Hash, AccountNonceDiff> nonceChanges = new LinkedHashMap<>();
+    private static class AccountBuilder {
+      final Address address;
+      final Map<StorageSlotKey, List<StorageChange>> slotWrites = new TreeMap<>();
+      final Set<StorageSlotKey> slotReads = new TreeSet<>();
+      final List<BalanceChange> balances = new ArrayList<>();
+      final List<NonceChange> nonces = new ArrayList<>();
+      final List<CodeChange> codes = new ArrayList<>();
 
-    public SlotAccessBuilder accessSlot(final Address address, final StorageSlotKey slot) {
-      return accounts
-          .computeIfAbsent(address.addressHash(), k -> new AccountAccessBuilder(address))
-          .slot(slot);
+      AccountBuilder(final Address address) {
+        this.address = address;
+      }
+
+      void addStorageWrite(final StorageSlotKey slot, final int txIndex, final Bytes value) {
+        // TODO: This is a temporary workaround for having to use block-level accumulator instead of
+        // transaction-level
+        final List<StorageChange> changes =
+            slotWrites.computeIfAbsent(slot, __ -> new ArrayList<>());
+        changes.removeIf(c -> c.getTxIndex() == txIndex);
+        if (changes.isEmpty() || !changes.getLast().getNewValue().equals(value)) {
+          changes.add(new StorageChange(txIndex, value));
+        }
+      }
+
+      void addStorageRead(final StorageSlotKey slot) {
+        if (!slotWrites.containsKey(slot)) {
+          slotReads.add(slot);
+        }
+      }
+
+      void addBalanceChange(final int txIndex, final Bytes postBalance) {
+        // TODO: This is a temporary workaround for having to use block-level accumulator instead of
+        // transaction-level
+        balances.removeIf(b -> b.getTxIndex() == txIndex);
+        if (balances.isEmpty() || !balances.getLast().getPostBalance().equals(postBalance)) {
+          balances.add(new BalanceChange(txIndex, postBalance));
+        }
+      }
+
+      void addNonceChange(final int txIndex, final long newNonce) {
+        // TODO: This is a temporary workaround for having to use block-level accumulator instead of
+        // transaction-level
+        nonces.removeIf(n -> n.getTxIndex() == txIndex);
+        if (nonces.isEmpty() || nonces.getLast().getNewNonce() != newNonce) {
+          nonces.add(new NonceChange(txIndex, newNonce));
+        }
+      }
+
+      void addCodeChange(final int txIndex, final Bytes code) {
+        // TODO: This is a temporary workaround for having to use block-level accumulator instead of
+        // transaction-level
+        codes.removeIf(c -> c.getTxIndex() == txIndex);
+        if (codes.isEmpty() || !codes.getLast().getNewCode().equals(code)) {
+          codes.add(new CodeChange(txIndex, code));
+        }
+      }
+
+      // TODO: Do sorting here
+      AccountChanges build() {
+        final List<SlotChanges> slotChanges =
+            slotWrites.entrySet().stream()
+                .map(
+                    e ->
+                        new SlotChanges(
+                            e.getKey(),
+                            e.getValue().stream()
+                                .sorted(Comparator.comparingInt(StorageChange::getTxIndex))
+                                .collect(Collectors.toList())))
+                .collect(Collectors.toList());
+
+        final List<SlotRead> reads =
+            slotReads.stream().map(SlotRead::new).collect(Collectors.toList());
+
+        return new AccountChanges(
+            address,
+            slotChanges,
+            reads,
+            balances.stream().sorted(Comparator.comparingInt(BalanceChange::getTxIndex)).toList(),
+            nonces.stream().sorted(Comparator.comparingInt(NonceChange::getTxIndex)).toList(),
+            codes.stream().sorted(Comparator.comparingInt(CodeChange::getTxIndex)).toList());
+      }
     }
 
-    public void accountBalanceChange(
-        final Address address, final int txIndex, final BigInteger delta) {
-      changes
-          .computeIfAbsent(address.addressHash(), k -> new AccountBalanceDiffBuilder(address))
-          .addBalanceChange(txIndex, delta);
+    private final Map<Address, AccountBuilder> builders = new TreeMap<>();
+
+    private AccountBuilder forAddress(final Address addr) {
+      return builders.computeIfAbsent(addr, AccountBuilder::new);
     }
 
-    public void accountCodeChange(final Address address, final int txIndex, final Bytes code) {
-      codeChanges.put(
-          address.addressHash(), new AccountCodeDiff(address, new CodeChange(txIndex, code)));
+    public void storageWrite(
+        final Address addr, final StorageSlotKey slot, final int txIndex, final Bytes newValue) {
+      forAddress(addr).addStorageWrite(slot, txIndex, newValue);
     }
 
-    public void accountNonceDiff(final Address address, final long nonceBefore) {
-      nonceChanges.putIfAbsent(address.addressHash(), new AccountNonceDiff(address, nonceBefore));
+    public void storageRead(final Address addr, final StorageSlotKey slot) {
+      forAddress(addr).addStorageRead(slot);
+    }
+
+    public void balanceChange(final Address addr, final int txIndex, final Bytes postBalance) {
+      forAddress(addr).addBalanceChange(txIndex, postBalance);
+    }
+
+    public void nonceChange(final Address addr, final int txIndex, final long newNonce) {
+      forAddress(addr).addNonceChange(txIndex, newNonce);
+    }
+
+    public void codeChange(final Address addr, final int txIndex, final Bytes code) {
+      forAddress(addr).addCodeChange(txIndex, code);
+    }
+
+    public BlockAccessList build() {
+      return new BlockAccessList(
+          builders.values().stream()
+              .map(AccountBuilder::build)
+              .sorted(Comparator.comparing(ac -> ac.getAddress().toUnprefixedHexString()))
+              .toList());
     }
 
     public void updateFromTransactionAccumulator(
         final WorldUpdater txnAccumulator, final int txIndex, final boolean isContractCreation) {
-      if (txnAccumulator instanceof PathBasedWorldStateUpdateAccumulator<?> accum) {
-        accum
-            .getStorageToUpdate()
-            .forEach(
-                (address, slotMap) -> {
-                  slotMap.forEach(
-                      (slotKey, value) -> {
-                        UInt256 prior = Optional.ofNullable(value.getPrior()).orElse(UInt256.ZERO);
-                        UInt256 updated =
-                            Optional.ofNullable(value.getUpdated()).orElse(UInt256.ZERO);
-                        if (!prior.equals(updated)) {
-                          this.accessSlot(address, slotKey).write(txIndex, updated.toBytes());
-                        } else if (value.isEvmRead()) {
-                          this.accessSlot(address, slotKey).read();
-                        }
-                      });
-                });
 
-        accum
-            .getAccountsToUpdate()
-            .forEach(
-                (address, value) -> {
-                  final BigInteger priorBalance =
-                      Optional.ofNullable(value.getPrior())
-                          .map(PathBasedAccount::getBalance)
-                          .map(Wei::getAsBigInteger)
-                          .orElse(BigInteger.ZERO);
-                  final BigInteger updatedBalance =
-                      Optional.ofNullable(value.getUpdated())
-                          .map(PathBasedAccount::getBalance)
-                          .map(Wei::getAsBigInteger)
-                          .orElse(BigInteger.ZERO);
-                  final BigInteger delta = updatedBalance.subtract(priorBalance);
-                  if (!value.isEvmRead() && delta.compareTo(BigInteger.ZERO) != 0) {
-                    this.accountBalanceChange(address, txIndex, delta);
-                  }
-
-                  final Bytes priorCode =
-                      Optional.ofNullable(value.getPrior())
-                          .map(PathBasedAccount::getCode)
-                          .orElse(Bytes.EMPTY);
-                  final Bytes updatedCode =
-                      Optional.ofNullable(value.getUpdated())
-                          .map(PathBasedAccount::getCode)
-                          .orElse(Bytes.EMPTY);
-                  if (priorCode != updatedCode) {
-                    this.accountCodeChange(address, txIndex, updatedCode);
-                  }
-
-                  final long priorNonce =
-                      Optional.ofNullable(value.getPrior())
-                          .map(PathBasedAccount::getNonce)
-                          .orElse(0L);
-                  if (isContractCreation) {
-                    this.accountNonceDiff(address, priorNonce);
-                  }
-                });
-      } else {
-        throw new RuntimeException(
-            "Attempted to update update BAL with unexpected accumulator instance");
+      if (!(txnAccumulator instanceof final PathBasedWorldStateUpdateAccumulator<?> accum)) {
+        throw new IllegalArgumentException("Expected PathBasedWorldStateUpdateAccumulator");
       }
-    }
 
-    public BlockAccessList build() {
-      final List<AccountAccess> accesses =
-          accounts.values().stream().map(AccountAccessBuilder::build).toList();
-      final List<AccountBalanceDiff> diffs =
-          changes.values().stream().map(AccountBalanceDiffBuilder::build).toList();
-      final List<AccountCodeDiff> codes = new ArrayList<>(codeChanges.values());
-      final List<AccountNonceDiff> nonces = new ArrayList<>(nonceChanges.values());
-      return new BlockAccessList(accesses, diffs, codes, nonces);
-    }
-  }
+      accum
+          .getStorageToUpdate()
+          .forEach(
+              (address, slotMap) -> {
+                slotMap.forEach(
+                    (slotKey, value) -> {
+                      final Bytes prior =
+                          Optional.ofNullable(value.getPrior())
+                              .map(UInt256::toMinimalBytes)
+                              .orElse(Bytes.EMPTY);
+                      final Bytes updated =
+                          Optional.ofNullable(value.getUpdated())
+                              .map(UInt256::toMinimalBytes)
+                              .orElse(Bytes.EMPTY);
+                      if (!prior.equals(updated)) {
+                        this.storageWrite(address, slotKey, txIndex, updated);
+                      } else if (value.isEvmRead()) {
+                        this.storageRead(address, slotKey);
+                      }
+                    });
+              });
 
-  private static class AccountAccessBuilder {
-    private final Address address;
-    private final Map<StorageSlotKey, SlotAccessBuilder> slots = new LinkedHashMap<>();
+      accum
+          .getAccountsToUpdate()
+          .forEach(
+              (address, value) -> {
+                final PathBasedAccount prior = value.getPrior();
+                final PathBasedAccount updated = value.getUpdated();
 
-    AccountAccessBuilder(final Address address) {
-      this.address = address;
-    }
+                final BigInteger priorBalance =
+                    prior != null ? prior.getBalance().getAsBigInteger() : BigInteger.ZERO;
+                final BigInteger postBalance =
+                    updated != null ? updated.getBalance().getAsBigInteger() : BigInteger.ZERO;
 
-    public SlotAccessBuilder slot(final StorageSlotKey slotKey) {
-      return slots.computeIfAbsent(slotKey, k -> new SlotAccessBuilder(slotKey));
-    }
+                if (priorBalance.compareTo(postBalance) != 0) {
+                  this.balanceChange(address, txIndex, Wei.of(postBalance).toBytes());
+                }
 
-    public AccountAccess build() {
-      return new AccountAccess(
-          address, slots.values().stream().map(SlotAccessBuilder::build).toList());
-    }
-  }
+                final Bytes priorCode = prior != null ? prior.getCode() : Bytes.EMPTY;
+                final Bytes postCode = updated != null ? updated.getCode() : Bytes.EMPTY;
+                if (!priorCode.equals(postCode) && !postCode.isEmpty()) {
+                  this.codeChange(address, txIndex, postCode);
+                }
 
-  public static class SlotAccessBuilder {
-    private final StorageSlotKey slot;
-    private final List<PerTxAccess> accesses = new ArrayList<>();
-
-    SlotAccessBuilder(final StorageSlotKey slot) {
-      this.slot = slot;
-    }
-
-    public SlotAccessBuilder read() {
-      return this;
-    }
-
-    public SlotAccessBuilder write(final int txIndex, final Bytes valueAfter) {
-      // TODO: Can we get rid of this workaround?
-      if (!accesses.isEmpty() && accesses.getLast().getValueAfter().get().equals(valueAfter)) {
-        return this;
-      }
-      accesses.removeIf(access -> access.getTxIndex().equals(txIndex));
-      accesses.add(new PerTxAccess(txIndex, Optional.of(valueAfter)));
-      return this;
-    }
-
-    public SlotAccess build() {
-      return new SlotAccess(slot, List.copyOf(accesses));
-    }
-  }
-
-  public static class AccountBalanceDiffBuilder {
-    private final Address address;
-    private final List<BalanceChange> changes = new ArrayList<>();
-
-    public AccountBalanceDiffBuilder(final Address address) {
-      this.address = address;
-    }
-
-    public void addBalanceChange(final int txIndex, final BigInteger delta) {
-      // TODO: Can we get rid of this workaround?
-      if (!changes.isEmpty() && changes.getLast().delta.equals(delta)) {
-        return;
-      }
-      changes.add(new BalanceChange(txIndex, delta));
-    }
-
-    public AccountBalanceDiff build() {
-      return new AccountBalanceDiff(address, List.copyOf(changes));
+                if (isContractCreation && prior != null && updated != null) {
+                  final long priorNonce = prior.getNonce();
+                  final long postNonce = updated.getNonce();
+                  if (postNonce > priorNonce) {
+                    this.nonceChange(address, txIndex, postNonce);
+                  }
+                }
+              });
     }
   }
 }
