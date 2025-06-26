@@ -36,7 +36,8 @@ public class ReadinessCheckTest {
   private final Synchronizer synchronizer = mock(Synchronizer.class);
 
   private final Map<String, String> params = new HashMap<>();
-  private final HealthService.ParamSource paramSource = params::get;
+  private final org.hyperledger.besu.plugin.services.health.HealthService.ParamSource paramSource =
+      params::get;
 
   private final ReadinessCheck readinessCheck = new ReadinessCheck(p2pNetwork, synchronizer);
 
