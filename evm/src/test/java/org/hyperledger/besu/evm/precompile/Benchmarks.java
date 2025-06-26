@@ -327,19 +327,6 @@ public class Benchmarks {
     return perCallInNs;
   }
 
-  private static void benchKZGPointEval() {
-    final Bytes arg =
-        Bytes.fromHexString(
-            "010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e0000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    KZGPointEvalPrecompiledContract.init();
-    final PrecompiledContract contract =
-        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.KZG_POINT_EVAL);
-
-    final long timePerCallInNs = runBenchmark(arg, contract);
-    long gasRequirement = contract.gasRequirement(arg);
-    logPerformance("KZGPointEval", gasRequirement, timePerCallInNs);
-  }
-
   private static double getMgasPerS(final long timePerCallInNs, final long gasCost) {
     return (double) (gasCost * 1_000) / timePerCallInNs;
   }
@@ -411,7 +398,6 @@ public class Benchmarks {
     benchBLS12Pair();
     benchBLS12MapFPTOG1();
     benchBLS12MapFP2TOG2();
-    benchKZGPointEval();
     benchSecp256r1Verify();
   }
 }

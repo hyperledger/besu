@@ -25,6 +25,7 @@ import org.hyperledger.besu.evmtool.benchmarks.BLS12Benchmark;
 import org.hyperledger.besu.evmtool.benchmarks.BenchmarkConfig;
 import org.hyperledger.besu.evmtool.benchmarks.BenchmarkExecutor;
 import org.hyperledger.besu.evmtool.benchmarks.ECRecoverBenchmark;
+import org.hyperledger.besu.evmtool.benchmarks.KZGPointEvalBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.ModExpBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.P256VerifyBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.RipeMD160Benchmark;
@@ -74,7 +75,8 @@ public class BenchmarkSubCommand implements Runnable {
     Bls12(BLS12Benchmark::new),
     p256Verify(P256VerifyBenchmark::new),
     sha256(SHA256Benchmark::new),
-    RipeMD(RipeMD160Benchmark::new);
+    RipeMD(RipeMD160Benchmark::new),
+    kzgPointEval(KZGPointEvalBenchmark::new);
 
     private final BenchmarkExecutor.Builder executorBuilder;
 
