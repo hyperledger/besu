@@ -98,9 +98,9 @@ public class BonsaiAccountTest {
     Bytes code = decodedAccount.getCode();
     verify(bonsaiWorldState, times(1)).getCode(any(), any());
 
+    // If we have already accessed the code, codeSize should not trigger another fetch
     int codeSize = decodedAccount.getCodeSize();
     assertThat(codeSize).isEqualTo(code.size());
-    // If we have already accessed the code, codeSize should not trigger another fetch
     verifyNoMoreInteractions(bonsaiWorldState);
   }
 
