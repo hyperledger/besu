@@ -185,15 +185,13 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
    * Retrieves the size of the code associated with this account, if it is stored.
    *
    * <p>The code size may be stored directly in the account's RLP data, allowing for more efficient
-   * access without needing to inspect the code. Returns an empty {@link Optional} if the code size
-   * is not stored. In these cases, the code size can be manually calculated by analyzing the code
-   * bytes.
+   * access without needing to inspect the code. Defaults to the size of the code if not stored.
    *
-   * @return an {@link Optional} containing the stored code size, or empty if not available.
+   * @return the stored code size
    */
   @Override
-  public Optional<Integer> getCodeSize() {
-    return maybeCodeSize;
+  public int getCodeSize() {
+    return maybeCodeSize.orElseGet(() -> getCode().size());
   }
 
   @Override

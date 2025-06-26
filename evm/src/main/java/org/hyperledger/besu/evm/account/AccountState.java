@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.NavigableMap;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -146,16 +145,9 @@ public interface AccountState {
    * example, {@code PathBasedAccount} may return a stored size directly from the account's RLP data
    * (introduced to support EIP-7907), avoiding the need to inspect the account's code.
    *
-   * <p>The return type is an {@link Optional} because for accounts created with Besu versions prior
-   * this method, the code size is not stored. In such cases, the code size must be computed
-   * manually by inspecting the account's code bytes.
-   *
-   * <p>Account types that do not store the code size will fall back to this default implementation,
-   * which determines the size by inspecting the code bytes.
-   *
-   * @return an {@link Optional} containing the code size, or empty if not available.
+   * @return the code size
    */
-  default Optional<Integer> getCodeSize() {
-    return Optional.of(getCode().size());
+  default int getCodeSize() {
+    return getCode().size();
   }
 }
