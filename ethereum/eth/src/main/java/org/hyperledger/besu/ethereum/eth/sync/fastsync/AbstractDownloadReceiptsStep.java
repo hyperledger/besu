@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractDownloadReceiptsStep<B, BWR>
     implements Function<List<B>, CompletableFuture<List<BWR>>> {
+  // B is the type of block being processed (Block, SyncBlock), BWR is the type of block with
+  // receipts (BlockWithReceipts, SyncBlockWithReceipts)
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDownloadReceiptsStep.class);
 

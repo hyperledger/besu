@@ -115,10 +115,8 @@ public class SyncBlockBody {
       input.leaveList();
     }
     input.leaveList();
-    final SyncBlockBody body =
-        new SyncBlockBody(
-            bytesCurrentBody, transactionBytes, ommersListBytes, withdrawalBytes, protocolSchedule);
-    return body;
+    return new SyncBlockBody(
+        bytesCurrentBody, transactionBytes, ommersListBytes, withdrawalBytes, protocolSchedule);
   }
 
   public List<Bytes> getEncodedTransactions() {

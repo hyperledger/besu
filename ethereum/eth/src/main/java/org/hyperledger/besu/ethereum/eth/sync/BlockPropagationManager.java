@@ -185,21 +185,20 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
 
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
     // Check to see if any of our pending blocks are now ready for import
-    final Block newBlock = blockAddedEvent.getBlock();
     LOG.atTrace()
         .setMessage("Block added event type {} for block {}. Current status {}")
         .addArgument(blockAddedEvent::getEventType)
-        .addArgument(newBlock::toLogString)
+        .addArgument(blockAddedEvent.getHeader()::toLogString)
         .addArgument(this)
         .log();
 
     // If there is no children to process, maybe try non announced blocks
-    if (!maybeProcessPendingChildrenBlocks(newBlock.getHeader())) {
+    if (!maybeProcessPendingChildrenBlocks(blockAddedEvent.getHeader())) {
       LOG.atTrace()
           .setMessage("There are no pending blocks ready to import for block {}")
-          .addArgument(newBlock::toLogString)
+          .addArgument(blockAddedEvent.getHeader()::toLogString)
           .log();
-      maybeProcessNonAnnouncedBlocks(newBlock);
+      maybeProcessNonAnnouncedBlocks(blockAddedEvent);
     }
 
     if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
@@ -262,7 +261,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     return !readyForImport.isEmpty();
   }
 
-  private void maybeProcessNonAnnouncedBlocks(final Block newBlock) {
+  private void maybeProcessNonAnnouncedBlocks(final BlockAddedEvent newBlock) {
     final long localHeadBlockNumber = protocolContext.getBlockchain().getChainHeadBlockNumber();
 
     if (newBlock.getHeader().getNumber() > localHeadBlockNumber) {
