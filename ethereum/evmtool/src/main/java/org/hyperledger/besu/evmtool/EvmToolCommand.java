@@ -265,6 +265,10 @@ public class EvmToolCommand implements Runnable {
       description = "display version info")
   boolean versionInfoRequested;
 
+  public Integer getRepeatCount() {
+    return repeat;
+  }
+
   static final Joiner STORAGE_JOINER = Joiner.on(",\n");
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
   PrintWriter out;
