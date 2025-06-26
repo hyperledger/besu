@@ -106,7 +106,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               .flatMap(serviceManager -> serviceManager.getService(BlockImportTracerProvider.class))
               // if block import tracer provider is not specified by plugin, default to no tracing
               .orElse(
-                  (__) -> {
+                  ignored -> {
                     LOG.trace("Block Import uses NO_TRACING");
                     return BlockAwareOperationTracer.NO_TRACING;
                   });
@@ -226,10 +226,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       blockUpdater.markTransactionBoundary();
 
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
-      if (transaction.getVersionedHashes().isPresent()) {
-        currentBlobGasUsed +=
-            (transaction.getVersionedHashes().get().size()
-                * protocolSpec.getGasCalculator().getBlobGasPerBlob());
+      final var optionalVersionedHashes = transaction.getVersionedHashes();
+      if (optionalVersionedHashes.isPresent()) {
+        final var versionedHashes = optionalVersionedHashes.get();
+        currentBlobGasUsed += (versionedHashes.size() * protocolSpec.getGasCalculator().getBlobGasPerBlob());
       }
 
       final TransactionReceipt transactionReceipt =
@@ -244,14 +244,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         nbParallelTx++;
       }
     }
-    if (blockHeader.getBlobGasUsed().isPresent()
-        && currentBlobGasUsed != blockHeader.getBlobGasUsed().get()) {
-      String errorMessage =
-          String.format(
-              "block did not consume expected blob gas: header %d, transactions %d",
-              blockHeader.getBlobGasUsed().get(), currentBlobGasUsed);
-      LOG.error(errorMessage);
-      return new BlockProcessingResult(Optional.empty(), errorMessage);
+    final var optionalHeaderBlobGasUsed = blockHeader.getBlobGasUsed();
+    if (optionalHeaderBlobGasUsed.isPresent()) {
+      final long headerBlobGasUsed = optionalHeaderBlobGasUsed.get();
+      if (currentBlobGasUsed != headerBlobGasUsed) {
+        String errorMessage =
+            String.format(
+                "block did not consume expected blob gas: header %d, transactions %d",
+                headerBlobGasUsed, currentBlobGasUsed);
+        LOG.error(errorMessage);
+        return new BlockProcessingResult(Optional.empty(), errorMessage);
+      }
     }
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSpec.getWithdrawalsProcessor();
@@ -281,9 +284,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
-    if (maybeRequests.isPresent() && blockHeader.getRequestsHash().isPresent()) {
-      Hash calculatedRequestHash = BodyValidation.requestsHash(maybeRequests.get());
-      Hash headerRequestsHash = blockHeader.getRequestsHash().get();
+    final var optionalRequestsHash = blockHeader.getRequestsHash();
+    if (maybeRequests.isPresent() && optionalRequestsHash.isPresent()) {
+      final List<Request> requests = maybeRequests.get();
+      final Hash headerRequestsHash = optionalRequestsHash.get();
+      Hash calculatedRequestHash = BodyValidation.requestsHash(requests);
       if (!calculatedRequestHash.equals(headerRequestsHash)) {
         return new BlockProcessingResult(
             Optional.empty(),
@@ -308,11 +313,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     try {
       worldState.persist(blockHeader);
     } catch (MerkleTrieException e) {
-      LOG.trace("Merkle trie exception during Transaction processing ", e);
+      String errorMessage = "Failed to persist block " + blockHeader.getNumber() + " due to Merkle trie exception: " + e.getMessage();
+      LOG.error(errorMessage, e);
       if (worldState instanceof BonsaiWorldState) {
         ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
-      throw e;
+      @SuppressWarnings("java:S2139") // Exception is logged with context and rethrown appropriately
+      MerkleTrieException contextualException = new MerkleTrieException(errorMessage, e);
+      throw contextualException;
     } catch (StateRootMismatchException ex) {
       LOG.error(
           "failed persisting block due to stateroot mismatch; expected {}, actual {}",
@@ -329,6 +337,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
   }
 
+  @SuppressWarnings({"unused", "OptionalUsedAsFieldOrParameterType"}) // preProcessingContext and location are used by subclasses, Optional parameter required by interface
   protected TransactionProcessingResult getTransactionProcessingResult(
       final Optional<PreprocessingContext> preProcessingContext,
       final BlockProcessingContext blockProcessingContext,
@@ -353,13 +362,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader, final Transaction transaction, final long currentGasUsed) {
     final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
     if (Long.compareUnsigned(transaction.getGasLimit(), remainingGasBudget) > 0) {
-      LOG.info(
-          "Block processing error: transaction gas limit {} exceeds available block budget"
-              + " remaining {}. Block {} Transaction {}",
-          transaction.getGasLimit(),
-          remainingGasBudget,
-          blockHeader.getHash().toHexString(),
-          transaction.getHash().toHexString());
+      if (LOG.isInfoEnabled()) {
+        LOG.info(
+            "Block processing error: transaction gas limit {} exceeds available block budget"
+                + " remaining {}. Block {} Transaction {}",
+            transaction.getGasLimit(),
+            remainingGasBudget,
+            blockHeader.getHash().toHexString(),
+            transaction.getHash().toHexString());
+      }
       return false;
     }
 
