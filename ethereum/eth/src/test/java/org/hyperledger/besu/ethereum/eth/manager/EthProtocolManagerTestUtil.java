@@ -118,43 +118,19 @@ public class EthProtocolManagerTestUtil {
   }
 
   public static RespondingEthPeer createPeer(
-      final EthProtocolManager ethProtocolManager, final Difficulty td) {
+      final EthProtocolManager ethProtocolManager, final OptionalLong estimatedHeight) {
     return RespondingEthPeer.builder()
         .ethProtocolManager(ethProtocolManager)
-        .totalDifficulty(td)
-        .build();
-  }
-
-  public static RespondingEthPeer createPeer(
-      final EthProtocolManager ethProtocolManager,
-      final Difficulty td,
-      final long estimatedHeight) {
-    return RespondingEthPeer.builder()
-        .ethProtocolManager(ethProtocolManager)
-        .totalDifficulty(td)
         .estimatedHeight(estimatedHeight)
         .build();
   }
 
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager,
-      final Difficulty td,
-      final OptionalLong estimatedHeight) {
-    return RespondingEthPeer.builder()
-        .ethProtocolManager(ethProtocolManager)
-        .totalDifficulty(td)
-        .estimatedHeight(estimatedHeight)
-        .build();
-  }
-
-  public static RespondingEthPeer createPeer(
-      final EthProtocolManager ethProtocolManager,
-      final Difficulty td,
       final OptionalLong estimatedHeight,
       final PeerValidator... validators) {
     return RespondingEthPeer.builder()
         .ethProtocolManager(ethProtocolManager)
-        .totalDifficulty(td)
         .estimatedHeight(estimatedHeight)
         .peerValidators(validators)
         .build();
@@ -199,7 +175,6 @@ public class EthProtocolManagerTestUtil {
     final ChainHead head = blockchain.getChainHead();
     return RespondingEthPeer.builder()
         .ethProtocolManager(ethProtocolManager)
-        .totalDifficulty(head.getTotalDifficulty())
         .chainHeadHash(head.getHash())
         .estimatedHeight(blockchain.getChainHeadBlockNumber())
         .build();
@@ -213,7 +188,6 @@ public class EthProtocolManagerTestUtil {
       final boolean addToEthPeers) {
     return RespondingEthPeer.builder()
         .ethProtocolManager(ethProtocolManager)
-        .totalDifficulty(td)
         .estimatedHeight(estimatedHeight)
         .isServingSnap(isServingSnap)
         .addToEthPeers(addToEthPeers)
