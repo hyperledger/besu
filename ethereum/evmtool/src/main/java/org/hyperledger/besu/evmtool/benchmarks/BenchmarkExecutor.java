@@ -261,6 +261,7 @@ public abstract class BenchmarkExecutor {
    *     default, false disabled, true enabled)
    * @param fork the fork name to run the benchmark against.
    */
+  // TODO: remove attemptNative since it's already available from BenchmarkConfig here
   public abstract void runBenchmark(final Boolean attemptNative, final String fork);
 
   /**

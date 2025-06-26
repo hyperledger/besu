@@ -87,21 +87,6 @@ public class Benchmarks {
     }
   }
 
-  public static void benchSha256() {
-    final PrecompiledContract contract =
-        EvmSpec.evmSpec().getPrecompileContractRegistry().get(Address.SHA256);
-
-    for (int len = 0; len <= 256; len += 8) {
-      final byte[] data = new byte[len];
-      random.nextBytes(data);
-      final Bytes bytes = Bytes.wrap(data);
-
-      final long timePerCallInNs = runBenchmark(bytes, contract);
-      long gasRequirement = contract.gasRequirement(bytes);
-      logPerformance(String.format("Sha256 %,d bytes", len), gasRequirement, timePerCallInNs);
-    }
-  }
-
   private static void benchKeccak256() {
     fakeFrame.expandMemory(0, 1024);
     var gasCalculator = EvmSpec.evmSpec().getEvm().getGasCalculator();
@@ -432,7 +417,6 @@ public class Benchmarks {
 
   public static void main(final String[] args) {
     logHeader();
-    benchSha256();
     benchKeccak256();
     benchRipeMD();
     benchBLS12G1Add();
