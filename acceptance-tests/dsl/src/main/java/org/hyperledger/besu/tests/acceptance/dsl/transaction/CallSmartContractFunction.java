@@ -33,6 +33,7 @@ public class CallSmartContractFunction implements Transaction<EthSendTransaction
   private static final Credentials BENEFACTOR_ONE =
       Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
 
+  private BigInteger gasPrice = GAS_PRICE;
   private BigInteger gasLimit = BigInteger.valueOf(3000000);
   private final String functionCall;
   private final String contractAddress;
@@ -46,10 +47,14 @@ public class CallSmartContractFunction implements Transaction<EthSendTransaction
   }
 
   public CallSmartContractFunction(
-      final String contractAddress, final String functionCall, final BigInteger gasLimit) {
+      final String contractAddress,
+      final String functionCall,
+      final BigInteger gasLimit,
+      final BigInteger gasPrice) {
     this.contractAddress = contractAddress;
     this.functionCall = functionCall;
     this.gasLimit = gasLimit;
+    this.gasPrice = gasPrice;
   }
 
   @Override
@@ -58,7 +63,7 @@ public class CallSmartContractFunction implements Transaction<EthSendTransaction
         new RawTransactionManager(node.eth(), BENEFACTOR_ONE);
     try {
       return transactionManager.sendTransaction(
-          GAS_PRICE, gasLimit, contractAddress, functionCall, BigInteger.ZERO);
+          gasPrice, gasLimit, contractAddress, functionCall, BigInteger.ZERO);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }

@@ -418,10 +418,9 @@ public class T8nExecutor {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                blockHashLookup,
-                false,
-                TransactionValidationParams.processingBlock(),
                 tracer,
+                blockHashLookup,
+                TransactionValidationParams.processingBlock(),
                 blobGasPrice);
         tracerManager.disposeTracer(tracer);
       } catch (Exception e) {
@@ -449,9 +448,7 @@ public class T8nExecutor {
       long transactionGasUsed = transaction.getGasLimit() - result.getGasRemaining();
 
       gasUsed += transactionGasUsed;
-      long intrinsicGas =
-          gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(), transaction.getTo().isEmpty(), 0);
+      long intrinsicGas = gasCalculator.transactionIntrinsicGasCost(transaction, 0);
       TransactionReceipt receipt =
           protocolSpec
               .getTransactionReceiptFactory()

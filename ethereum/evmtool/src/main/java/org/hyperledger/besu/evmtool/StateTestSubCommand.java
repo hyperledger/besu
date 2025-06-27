@@ -208,7 +208,8 @@ public class StateTestSubCommand implements Runnable {
                 parentCommand.showMemory,
                 !parentCommand.hideStack,
                 parentCommand.showReturnData,
-                parentCommand.showStorage)
+                parentCommand.showStorage,
+                parentCommand.eip3155strict)
             : OperationTracer.NO_TRACING;
 
     final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
@@ -270,11 +271,10 @@ public class StateTestSubCommand implements Runnable {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
+                tracer,
                 (__, blockNumber) ->
                     Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
-                false,
                 TransactionValidationParams.processingBlock(),
-                tracer,
                 blobGasPrice);
         timer.stop();
         if (shouldClearEmptyAccounts(spec.getFork())) {
@@ -296,7 +296,11 @@ public class StateTestSubCommand implements Runnable {
         final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
         final float mGps = gasUsed * 1000.0f / timeNs;
 
-        summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
+        if (parentCommand.eip3155strict) {
+          summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
+        } else {
+          summaryLine.put("gasUsed", gasUsed);
+        }
 
         if (!parentCommand.noTime) {
           summaryLine.put("time", timeNs);
@@ -309,7 +313,7 @@ public class StateTestSubCommand implements Runnable {
         summaryLine.put("d", spec.getDataIndex());
         summaryLine.put("g", spec.getGasIndex());
         summaryLine.put("v", spec.getValueIndex());
-        summaryLine.put("postHash", worldState.rootHash().toHexString());
+        summaryLine.put("stateRoot", worldState.rootHash().toHexString());
         final List<Log> logs = result.getLogs();
         final Hash actualLogsHash = Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo)));
         summaryLine.put("postLogsHash", actualLogsHash.toHexString());

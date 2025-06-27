@@ -119,7 +119,7 @@ public class EofContainerSubCommand implements Runnable {
           .constructParametricType(Map.class, String.class, EOFTestCaseSpec.class);
 
   List<FuzzingClient> fuzzingClients = new ArrayList<>();
-  EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+  EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
   long validContainers;
   long totalContainers;
 

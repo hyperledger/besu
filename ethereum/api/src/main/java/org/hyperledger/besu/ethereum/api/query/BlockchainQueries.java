@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -451,7 +452,7 @@ public class BlockchainQueries {
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
-                                      final int size = new Block(header, body).calculateSize();
+                                      final int size = new Block(header, body).getSize();
                                       return new BlockWithMetadata<>(
                                           header,
                                           formattedTxs,
@@ -511,7 +512,7 @@ public class BlockchainQueries {
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
-                                      final int size = new Block(header, body).calculateSize();
+                                      final int size = new Block(header, body).getSize();
                                       return new BlockWithMetadata<>(
                                           header, txs, ommers, td, size, body.getWithdrawals());
                                     })));
@@ -760,6 +761,17 @@ public class BlockchainQueries {
     return transaction.getType().supportsBlob()
         ? Optional.of(protocolSpec.getGasCalculator().blobGasCost(transaction.getBlobCount()))
         : Optional.empty();
+  }
+
+  public long getMinimumTransactionCost(final ProcessableBlockHeader header) {
+    return protocolSchedule.getByBlockHeader(header).getGasCalculator().getMinimumTransactionCost();
+  }
+
+  public long getTransactionGasLimitCap(final ProcessableBlockHeader header) {
+    return protocolSchedule
+        .getByBlockHeader(header)
+        .getGasLimitCalculator()
+        .transactionGasLimitCap();
   }
 
   /**

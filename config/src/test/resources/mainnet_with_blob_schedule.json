@@ -27,10 +27,40 @@
         "max": 10,
         "baseFeeUpdateFraction": 5007716
       },
-      "osaka": {
-        "target": 10,
-        "max": 13,
+      "bpo1": {
+        "target": 11,
+        "max": 12,
+        "maxBlobsPerTx": 13,
         "baseFeeUpdateFraction": 5007716
+      },
+      "bpo2": {
+        "target": 21,
+        "max": 22,
+        "maxBlobsPerTx": 23,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "bpo3": {
+        "target": 31,
+        "max": 32,
+        "maxBlobsPerTx": 33,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "bpo4": {
+        "target": 41,
+        "max": 42,
+        "maxBlobsPerTx": 43,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "bpo5": {
+        "target": 51,
+        "max": 52,
+        "maxBlobsPerTx": 53,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "future_eips": {
+        "target": 12,
+        "max": 16,
+        "baseFeeUpdateFraction": 5007740
       }
     },
     "depositContractAddress": "0x4242424242424242424242424242424242424242",

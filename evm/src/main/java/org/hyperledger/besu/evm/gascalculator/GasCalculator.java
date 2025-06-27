@@ -77,6 +77,13 @@ public interface GasCalculator {
   long getEcrecPrecompiledContractGasCost();
 
   /**
+   * Returns the gas cost to execute the {@link ECRECPrecompiledContract}.
+   *
+   * @return the gas cost to execute the P256Verify precompiled contract
+   */
+  long getP256VerifyPrecompiledContractGasCost();
+
+  /**
    * Returns the gas cost to execute the {@link SHA256PrecompiledContract}.
    *
    * @param input The input to the SHA256 precompiled contract
@@ -171,45 +178,6 @@ public interface GasCalculator {
    * @param transferValue The wei being transferred
    * @param recipient The CALL recipient (may be null if self destructed or new)
    * @param contract The address of the recipient (never null)
-   * @return The gas cost for the CALL operation
-   * @deprecated use the variant with the `accountIsWarm` parameter.
-   */
-  @Deprecated(since = "24.2.0", forRemoval = true)
-  default long callOperationGasCost(
-      final MessageFrame frame,
-      final long stipend,
-      final long inputDataOffset,
-      final long inputDataLength,
-      final long outputDataOffset,
-      final long outputDataLength,
-      final Wei transferValue,
-      final Account recipient,
-      final Address contract) {
-    return callOperationGasCost(
-        frame,
-        stipend,
-        inputDataOffset,
-        inputDataLength,
-        outputDataOffset,
-        outputDataLength,
-        transferValue,
-        recipient,
-        contract,
-        true);
-  }
-
-  /**
-   * Returns the gas cost for one of the various CALL operations.
-   *
-   * @param frame The current frame
-   * @param stipend The gas stipend being provided by the CALL caller
-   * @param inputDataOffset The offset in memory to retrieve the CALL input data
-   * @param inputDataLength The CALL input data length
-   * @param outputDataOffset The offset in memory to place the CALL output data
-   * @param outputDataLength The CALL output data length
-   * @param transferValue The wei being transferred
-   * @param recipient The CALL recipient (may be null if self destructed or new)
-   * @param contract The address of the recipient (never null)
    * @param accountIsWarm The address of the contract is "warm" as per EIP-2929
    * @return The gas cost for the CALL operation
    */
@@ -255,29 +223,6 @@ public interface GasCalculator {
    * @return MIN_CALLEE_GAS
    */
   long getMinCalleeGas();
-
-  /**
-   * Returns the amount of gas the CREATE operation will consume.
-   *
-   * @param frame The current frame
-   * @return the amount of gas the CREATE operation will consume
-   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
-   *     #memoryExpansionGasCost(MessageFrame, long, long)}, and {@link #initcodeCost(int)}
-   */
-  @Deprecated(since = "24.4.1", forRemoval = true)
-  long createOperationGasCost(MessageFrame frame);
-
-  /**
-   * Returns the amount of gas the CREATE2 operation will consume.
-   *
-   * @param frame The current frame
-   * @return the amount of gas the CREATE2 operation will consume
-   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
-   *     #memoryExpansionGasCost(MessageFrame, long, long)}, {@link #createKeccakCost(int)}, and
-   *     {@link #initcodeCost(int)}
-   */
-  @Deprecated(since = "24.4.1", forRemoval = true)
-  long create2OperationGasCost(MessageFrame frame);
 
   /**
    * Returns the base create cost, or TX_CREATE_COST as defined in the execution specs
@@ -542,22 +487,21 @@ public interface GasCalculator {
    * Returns the intrinsic gas cost of a transaction payload, i.e. the cost deriving from its
    * encoded binary representation when stored on-chain.
    *
-   * @param transactionPayload The encoded transaction, as bytes
-   * @param isContractCreation Is this transaction a contract creation transaction?
+   * @param transaction The encoded transaction
    * @param baselineGas The gas used by access lists and code delegation authorizations
    * @return the transaction's intrinsic gas cost
    */
-  long transactionIntrinsicGasCost(
-      Bytes transactionPayload, boolean isContractCreation, long baselineGas);
+  long transactionIntrinsicGasCost(Transaction transaction, long baselineGas);
 
   /**
    * Returns the floor gas cost of a transaction payload, i.e. the minimum gas cost that a
    * transaction will be charged based on its calldata. Introduced in EIP-7623 in Prague.
    *
    * @param transactionPayload The encoded transaction, as bytes
+   * @param payloadZeroBytes The number of zero bytes in the payload
    * @return the transaction's floor gas cost
    */
-  long transactionFloorCost(final Bytes transactionPayload);
+  long transactionFloorCost(final Bytes transactionPayload, final long payloadZeroBytes);
 
   /**
    * Returns the gas cost of the explicitly declared access list.
@@ -627,32 +571,12 @@ public interface GasCalculator {
   }
 
   /**
-   * Returns the number of blobs that are the "target" for neutral price action
-   *
-   * @return the target blob count
-   */
-  default int getBlobTarget() {
-    return 0;
-  }
-
-  /**
    * Return the gas cost given the number of blobs
    *
    * @param blobCount the number of blobs
    * @return the total gas cost
    */
   default long blobGasCost(final long blobCount) {
-    return 0L;
-  }
-
-  /**
-   * Compute the new value for the excess blob gas, given the parent value and the blob gas used
-   *
-   * @param parentExcessBlobGas excess blob gas from the parent
-   * @param blobGasUsed blob gas used
-   * @return the new excess blob gas value
-   */
-  default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
     return 0L;
   }
 
@@ -687,4 +611,16 @@ public interface GasCalculator {
    */
   long calculateGasRefund(
       Transaction transaction, MessageFrame initialFrame, long codeDelegationRefund);
+
+  /**
+   * Compute the gas cost for delegated code resolution.
+   *
+   * @param frame the message frame
+   * @param targetAccount the account
+   * @return the gas cost
+   */
+  default long calculateCodeDelegationResolutionGas(
+      final MessageFrame frame, final Account targetAccount) {
+    return 0L;
+  }
 }

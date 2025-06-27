@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.gascalculator;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import static org.hyperledger.besu.evm.internal.Words.numWords;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -52,6 +51,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long ECREC_PRECOMPILED_GAS_COST = 3_000L;
 
+  private static final long P256VERIFY_PRECOMPILED_GAS_COST = 3_450L;
+
   private static final long SHA256_PRECOMPILED_BASE_GAS_COST = 60L;
 
   private static final long SHA256_PRECOMPILED_WORD_GAS_COST = 12L;
@@ -74,7 +75,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long CALL_VALUE_TRANSFER_GAS_COST = 9_000L;
 
-  private static final long ADDITIONAL_CALL_STIPEND = 2_300L;
+  /** additional call stipend to be used for gas estimate calculations */
+  public static final long ADDITIONAL_CALL_STIPEND = 2_300L;
 
   private static final long NEW_ACCOUNT_GAS_COST = 25_000L;
 
@@ -130,10 +132,8 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long transactionIntrinsicGasCost(
-      final Bytes payload, final boolean isContractCreation, final long baselineGas) {
-    final long dynamicIntrinsicGasCost =
-        dynamicIntrinsicGasCost(payload, isContractCreation, baselineGas);
+  public long transactionIntrinsicGasCost(final Transaction transaction, final long baselineGas) {
+    final long dynamicIntrinsicGasCost = dynamicIntrinsicGasCost(transaction, baselineGas);
 
     if (dynamicIntrinsicGasCost == Long.MIN_VALUE || dynamicIntrinsicGasCost == Long.MAX_VALUE) {
       return dynamicIntrinsicGasCost;
@@ -144,22 +144,21 @@ public class FrontierGasCalculator implements GasCalculator {
   /**
    * Calculates the dynamic part of the intrinsic gas cost
    *
-   * @param payload the call data payload
-   * @param isContractCreation whether the transaction is a contract creation
+   * @param transaction the transaction
    * @param baselineGas how much gas is used by access lists and code delegations
    * @return the dynamic part of the intrinsic gas cost
    */
-  protected long dynamicIntrinsicGasCost(
-      final Bytes payload, final boolean isContractCreation, final long baselineGas) {
-    final int payloadSize = payload.size();
-    final long zeroBytes = zeroBytes(payload);
-    long cost = clampedAdd(callDataCost(payloadSize, zeroBytes), baselineGas);
+  protected long dynamicIntrinsicGasCost(final Transaction transaction, final long baselineGas) {
+    final int payloadSize = transaction.getPayload().size();
+
+    long cost =
+        clampedAdd(callDataCost(payloadSize, transaction.getPayloadZeroBytes()), baselineGas);
 
     if (cost == Long.MIN_VALUE || cost == Long.MAX_VALUE) {
       return cost;
     }
 
-    if (isContractCreation) {
+    if (transaction.isContractCreation()) {
       cost = clampedAdd(cost, contractCreationCost(payloadSize));
 
       if (cost == Long.MIN_VALUE || cost == Long.MAX_VALUE) {
@@ -183,22 +182,6 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   /**
-   * Counts the zero bytes in the payload
-   *
-   * @param payload the payload
-   * @return the number of zero bytes in the payload
-   */
-  protected static long zeroBytes(final Bytes payload) {
-    int zeros = 0;
-    for (int i = 0; i < payload.size(); i++) {
-      if (payload.get(i) == 0) {
-        zeros += 1;
-      }
-    }
-    return zeros;
-  }
-
-  /**
    * Returns the gas cost for contract creation transactions
    *
    * @param ignored the size of the contract creation code (ignored in Frontier)
@@ -218,7 +201,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long transactionFloorCost(final Bytes payload) {
+  public long transactionFloorCost(final Bytes payload, final long payloadZeroBytes) {
     return 0L;
   }
 
@@ -235,6 +218,11 @@ public class FrontierGasCalculator implements GasCalculator {
   @Override
   public long getEcrecPrecompiledContractGasCost() {
     return ECREC_PRECOMPILED_GAS_COST;
+  }
+
+  @Override
+  public long getP256VerifyPrecompiledContractGasCost() {
+    return P256VERIFY_PRECOMPILED_GAS_COST;
   }
 
   @Override
@@ -298,31 +286,6 @@ public class FrontierGasCalculator implements GasCalculator {
     return NEW_ACCOUNT_GAS_COST;
   }
 
-  @SuppressWarnings("removal")
-  @Override
-  public long callOperationGasCost(
-      final MessageFrame frame,
-      final long stipend,
-      final long inputDataOffset,
-      final long inputDataLength,
-      final long outputDataOffset,
-      final long outputDataLength,
-      final Wei transferValue,
-      final Account recipient,
-      final Address to) {
-    return callOperationGasCost(
-        frame,
-        stipend,
-        inputDataOffset,
-        inputDataLength,
-        outputDataOffset,
-        outputDataLength,
-        transferValue,
-        recipient,
-        to,
-        true);
-  }
-
   @Override
   public long callOperationGasCost(
       final MessageFrame frame,
@@ -383,44 +346,6 @@ public class FrontierGasCalculator implements GasCalculator {
   @Override
   public long getMinCalleeGas() {
     return 0;
-  }
-
-  /**
-   * Returns the amount of gas the CREATE operation will consume.
-   *
-   * @param frame The current frame
-   * @return the amount of gas the CREATE operation will consume
-   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
-   *     #memoryExpansionGasCost(MessageFrame, long, long)}, and {@link #initcodeCost(int)} As done
-   *     in {@link org.hyperledger.besu.evm.operation.CreateOperation#cost(MessageFrame, Supplier)}
-   */
-  @SuppressWarnings("removal")
-  @Override
-  @Deprecated(since = "24.4.1", forRemoval = true)
-  public long createOperationGasCost(final MessageFrame frame) {
-    final long initCodeOffset = clampedToLong(frame.getStackItem(1));
-    final int initCodeLength = clampedToInt(frame.getStackItem(2));
-
-    return clampedAdd(
-        clampedAdd(txCreateCost(), memoryExpansionGasCost(frame, initCodeOffset, initCodeLength)),
-        initcodeCost(initCodeLength));
-  }
-
-  /**
-   * Returns the amount of gas the CREATE2 operation will consume.
-   *
-   * @param frame The current frame
-   * @return the amount of gas the CREATE2 operation will consume
-   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
-   *     #memoryExpansionGasCost(MessageFrame, long, long)}, {@link #createKeccakCost(int)}, and
-   *     {@link #initcodeCost(int)}
-   */
-  @SuppressWarnings("removal")
-  @Override
-  @Deprecated(since = "24.4.1", forRemoval = true)
-  public long create2OperationGasCost(final MessageFrame frame) {
-    throw new UnsupportedOperationException(
-        "CREATE2 operation not supported by " + getClass().getSimpleName());
   }
 
   @Override

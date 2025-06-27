@@ -97,7 +97,9 @@ public class EthConfig implements JsonRpcMethod {
     blobs.put(
         "baseFeeUpdateFraction", spec.getFeeMarket().getBaseFeeUpdateFraction().longValueExact());
     blobs.put("max", spec.getGasLimitCalculator().currentBlobGasLimit() / (128 * 1024));
-    blobs.put("target", spec.getGasCalculator().getBlobTarget());
+    blobs.put("target", spec.getGasLimitCalculator().getTargetBlobGasPerBlock() / (128 * 1024));
+    blobs.put(
+        "maxBlobsPerTx", spec.getGasLimitCalculator().transactionBlobGasLimitCap() / (128 * 1024));
 
     result.put(
         "chainId", protocolSchedule.getChainId().map(c -> "0x" + c.toString(16)).orElse(null));

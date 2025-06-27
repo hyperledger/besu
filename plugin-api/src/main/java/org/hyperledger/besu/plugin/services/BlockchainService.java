@@ -46,11 +46,27 @@ public interface BlockchainService extends BesuService {
   Optional<BlockContext> getBlockByHash(final Hash hash);
 
   /**
+   * Gets block header by hash
+   *
+   * @param hash the block hash
+   * @return the block header if block exists otherwise empty
+   */
+  Optional<BlockHeader> getBlockHeaderByHash(final Hash hash);
+
+  /**
    * Get the hash of the chain head
    *
    * @return chain head hash
    */
   Hash getChainHeadHash();
+
+  /**
+   * Return the blob gas price for the specified block
+   *
+   * @param blockHeader the block header
+   * @return the block gas price or Wei.ZERO if blobs are not yet supported for that block header
+   */
+  Wei getBlobGasPrice(BlockHeader blockHeader);
 
   /**
    * Get the receipts for a block by block hash

@@ -67,10 +67,6 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
     executor.setCoinbase(coinbase);
   }
 
-  public void setStratumMiningEnabled(final boolean stratumMiningEnabled) {
-    executor.setStratumMiningEnabled(stratumMiningEnabled);
-  }
-
   @Override
   public void onResumeMining() {
     LOG.info("Resuming mining operations");

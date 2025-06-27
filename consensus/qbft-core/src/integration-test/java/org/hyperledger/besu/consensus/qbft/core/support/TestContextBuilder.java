@@ -478,11 +478,12 @@ public class TestContextBuilder {
         new QbftValidatorProviderAdaptor(validatorProvider);
 
     final ProtocolContext bftProtocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            new BftContext(validatorProvider, epochManager, bftBlockInterface),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withWorldStateArchive(worldStateArchive)
+            .withConsensusContext(
+                new BftContext(validatorProvider, epochManager, bftBlockInterface))
+            .build();
 
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();

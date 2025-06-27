@@ -34,7 +34,7 @@ public class BLS12PairingPrecompiledContract extends AbstractBLS12PrecompiledCon
           .build();
 
   /** Instantiates a new BLS12Pairing precompiled contract. */
-  public BLS12PairingPrecompiledContract() {
+  BLS12PairingPrecompiledContract() {
     super(
         "BLS12_PAIRING_CHECK",
         LibGnarkEIP2537.BLS12_PAIR_OPERATION_SHIM_VALUE,

@@ -14,10 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
-import static org.hyperledger.besu.ethereum.p2p.discovery.dns.KVReader.readKV;
-
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,63 +27,47 @@ import org.apache.tuweni.crypto.SECP256K1;
 import org.apache.tuweni.io.Base32;
 import org.apache.tuweni.io.Base64URLSafe;
 import org.bouncycastle.math.ec.ECPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
 /** Intermediate format to write DNS entries */
 public interface DNSEntry {
 
-  /**
-   * Read a DNS entry from a String.
-   *
-   * @param serialized the serialized form of a DNS entry
-   * @return DNS entry if found
-   * @throws IllegalArgumentException if the record cannot be read
-   */
-  static DNSEntry readDNSEntry(final String serialized) {
-    final String record = trimQuotes(serialized);
-    final String prefix = getPrefix(record);
-    return switch (prefix) {
-      case "enrtree-root" -> new ENRTreeRoot(readKV(record));
-      case "enrtree-branch" -> new ENRTree(record.substring(prefix.length() + 1));
-      case "enr" -> new ENRNode(readKV(record));
-      case "enrtree" -> new ENRTreeLink(record);
-      default ->
-          throw new IllegalArgumentException(
-              serialized + " should contain enrtree-branch, enr, enrtree-root or enrtree");
-    };
-  }
-
-  private static String trimQuotes(final String str) {
-    if (str.startsWith("\"") && str.endsWith("\"")) {
-      return str.substring(1, str.length() - 1);
-    }
-    return str;
-  }
-
-  private static String getPrefix(final String input) {
-    final String[] parts = input.split(":", 2);
-    return parts.length > 0 ? parts[0] : "";
-  }
-
   /** Represents a node in the ENR record. */
   class ENRNode implements DNSEntry {
+    private static final Logger LOG = LoggerFactory.getLogger(ENRNode.class);
 
     private final EthereumNodeRecord nodeRecord;
 
+    private ENRNode(final EthereumNodeRecord nodeRecord) {
+      this.nodeRecord = nodeRecord;
+    }
+
     /**
-     * Constructs ENRNode with the given attributes.
+     * Create an ENRNode with the given attributes.
      *
      * @param attrs the attributes of the node
+     * @return created ENRNode
      */
-    public ENRNode(final Map<String, String> attrs) {
+    public static ENRNode fromAttrs(final Map<String, String> attrs) {
       if (attrs == null) {
         throw new IllegalArgumentException("ENRNode attributes cannot be null");
       }
-      nodeRecord =
-          Optional.ofNullable(attrs.get("enr"))
-              .map(Base64URLSafe::decode)
-              .map(EthereumNodeRecord::fromRLP)
-              .orElseThrow(() -> new IllegalArgumentException("Invalid ENR record"));
+      return Optional.ofNullable(attrs.get("enr"))
+          .map(ENRNode::decodeValue)
+          .map(EthereumNodeRecord::fromRLP)
+          .map(ENRNode::new)
+          .orElse(null);
+    }
+
+    private static Bytes decodeValue(final String enrValue) {
+      try {
+        return Bytes.wrap(Base64.getUrlDecoder().decode(enrValue));
+      } catch (IllegalArgumentException iae) {
+        LOG.debug("enr value `{}` is not properly base64url encoded", enrValue);
+        return null;
+      }
     }
 
     /**

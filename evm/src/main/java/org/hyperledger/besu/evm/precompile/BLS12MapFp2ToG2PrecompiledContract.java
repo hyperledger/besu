@@ -28,7 +28,7 @@ public class BLS12MapFp2ToG2PrecompiledContract extends AbstractBLS12Precompiled
       Caffeine.newBuilder().maximumSize(1000).build();
 
   /** Instantiates a new BLS12MapFp2ToG2 precompiled contract. */
-  public BLS12MapFp2ToG2PrecompiledContract() {
+  BLS12MapFp2ToG2PrecompiledContract() {
     super(
         "BLS12_MAP_FP2_TO_G2",
         LibGnarkEIP2537.BLS12_MAP_FP2_TO_G2_OPERATION_SHIM_VALUE,

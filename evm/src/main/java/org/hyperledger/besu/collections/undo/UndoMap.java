@@ -21,7 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import javax.annotation.Nonnull;
+
+import jakarta.validation.constraints.NotNull;
 
 /**
  * A map that supports rolling back the map to a prior state.
@@ -110,7 +111,7 @@ public class UndoMap<K, V> implements Map<K, V>, Undoable {
   }
 
   @Override
-  public V put(final @Nonnull K key, final @Nonnull V value) {
+  public V put(final @NotNull K key, final @NotNull V value) {
     Objects.requireNonNull(value);
     final V oldValue = delegate.put(key, value);
     if (!value.equals(oldValue)) {
@@ -130,7 +131,7 @@ public class UndoMap<K, V> implements Map<K, V>, Undoable {
   }
 
   @Override
-  public void putAll(@Nonnull final Map<? extends K, ? extends V> m) {
+  public void putAll(@NotNull final Map<? extends K, ? extends V> m) {
     m.forEach(this::put);
   }
 
@@ -140,19 +141,19 @@ public class UndoMap<K, V> implements Map<K, V>, Undoable {
     delegate.clear();
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public Set<K> keySet() {
     return Collections.unmodifiableSet(delegate.keySet());
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public Collection<V> values() {
     return Collections.unmodifiableCollection(delegate.values());
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
     return Collections.unmodifiableSet(delegate.entrySet());

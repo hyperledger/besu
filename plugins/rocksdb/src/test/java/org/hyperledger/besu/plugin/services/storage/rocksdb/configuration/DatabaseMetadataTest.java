@@ -38,16 +38,6 @@ class DatabaseMetadataTest {
   }
 
   @Test
-  void readingMetadataV1Privacy() throws Exception {
-    final Path tempDataDir =
-        createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":1,\"privacyVersion\":1}");
-
-    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
-    assertThat(databaseMetadata.getVersionedStorageFormat())
-        .isEqualTo(PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES);
-  }
-
-  @Test
   void readingMetadataV2() throws Exception {
     final Path tempDataDir =
         createAndWrite(
@@ -56,19 +46,6 @@ class DatabaseMetadataTest {
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
     assertThat(databaseMetadata.getVersionedStorageFormat())
         .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_VARIABLES);
-  }
-
-  @Test
-  void readingMetadataV2Privacy() throws Exception {
-    final Path tempDataDir =
-        createAndWrite(
-            "data",
-            "DATABASE_METADATA.json",
-            "{\"v2\":{\"format\":\"FOREST\",\"version\":2,\"privacyVersion\":1}}");
-
-    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
-    assertThat(databaseMetadata.getVersionedStorageFormat())
-        .isEqualTo(PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES);
   }
 
   @Test

@@ -293,7 +293,7 @@ class GenesisConfigTest {
 
     assertThat(ephemeryOptions.getDepositContractAddress()).isPresent();
     assertThat(ephemeryOptions.getDepositContractAddress().get())
-        .isEqualTo(Address.fromHexString("0x4242424242424242424242424242424242424242"));
+        .isEqualTo(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
   }
 
   @Test

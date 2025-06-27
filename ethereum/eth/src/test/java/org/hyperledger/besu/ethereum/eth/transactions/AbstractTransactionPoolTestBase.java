@@ -35,7 +35,6 @@ import static org.mockito.quality.Strictness.LENIENT;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -50,10 +49,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
@@ -70,6 +69,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -98,9 +98,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 
 @SuppressWarnings("unchecked")
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class})
 @MockitoSettings(strictness = LENIENT)
-public abstract class AbstractTransactionPoolTestBase {
+public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassLoaderExtension {
 
   protected static final KeyPair KEY_PAIR1 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
@@ -179,7 +179,6 @@ public abstract class AbstractTransactionPoolTestBase {
                 genesisConfigFile.getConfigOptions(),
                 Optional.of(BigInteger.valueOf(1)),
                 ProtocolSpecAdapters.create(0, Function.identity()),
-                new PrivacyParameters(),
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,
@@ -236,7 +235,8 @@ public abstract class AbstractTransactionPoolTestBase {
     doNothing().when(ethScheduler).scheduleSyncWorkerTask(syncTaskCapture.capture());
     doReturn(ethScheduler).when(ethContext).getScheduler();
 
-    peerTransactionTracker = new PeerTransactionTracker(ethContext.getEthPeers());
+    peerTransactionTracker =
+        new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethContext.getEthPeers());
     transactionBroadcaster =
         spy(
             new TransactionBroadcaster(

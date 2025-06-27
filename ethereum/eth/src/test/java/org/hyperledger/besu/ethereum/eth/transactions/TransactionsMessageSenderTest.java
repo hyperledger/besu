@@ -48,7 +48,8 @@ public class TransactionsMessageSenderTest {
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
 
-  private final PeerTransactionTracker transactionTracker = new PeerTransactionTracker(ethPeers);
+  private final PeerTransactionTracker transactionTracker =
+      new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
   private final TransactionsMessageSender messageSender =
       new TransactionsMessageSender(transactionTracker);
 

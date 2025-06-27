@@ -17,14 +17,17 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
+import org.hyperledger.besu.plugin.services.txvalidator.TransactionValidationRule;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
+public interface ProtocolSchedule {
 
   ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader);
 
@@ -66,4 +69,10 @@ public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
   boolean isOnMilestoneBoundary(final BlockHeader blockHeader);
 
   boolean anyMatch(Predicate<ScheduledProtocolSpec> predicate);
+
+  void setPermissionTransactionFilter(
+      final PermissionTransactionFilter permissionTransactionFilter);
+
+  void setAdditionalValidationRules(
+      final List<TransactionValidationRule> additionalValidationRules);
 }

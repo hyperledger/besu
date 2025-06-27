@@ -17,6 +17,9 @@
     "shanghaiTime": 0,
     "cancunTime": 0,
     "pragueTime": 1742999832,
+    "depositContractAddress": "0x00000000219ab540356cbb839cbe05303d7705fa",
+    "withdrawalRequestContractAddress": "0x00000961ef480eb55e80d19ad83579a64c007002",
+    "consolidationRequestContractAddress": "0x0000bbddc7ce488642fb579f8b00f3a590007251",
     "blobSchedule": {
       "cancun": {
         "target": 3,
@@ -29,7 +32,7 @@
         "baseFeeUpdateFraction": 5007716
       }
     },
-    "depositContractAddress": "0x00000000219ab540356cbb839cbe05303d7705fa",
+
     "discovery": {
       "dns": "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.hoodi.ethdisco.net",
       "bootnodes": [

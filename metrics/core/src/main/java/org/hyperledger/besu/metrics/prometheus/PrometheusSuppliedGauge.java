@@ -17,7 +17,7 @@ package org.hyperledger.besu.metrics.prometheus;
 import static org.hyperledger.besu.metrics.prometheus.PrometheusCollector.getLabelValues;
 
 import org.hyperledger.besu.metrics.Observation;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 import java.util.List;
@@ -34,7 +34,7 @@ import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
  */
 @SuppressWarnings("removal")
 class PrometheusSuppliedGauge extends AbstractPrometheusSuppliedValueCollector
-    implements LabelledGauge {
+    implements LabelledSuppliedMetric {
 
   public PrometheusSuppliedGauge(
       final MetricCategory category,

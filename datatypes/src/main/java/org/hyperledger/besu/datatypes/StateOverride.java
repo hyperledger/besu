@@ -110,6 +110,15 @@ public class StateOverride {
     return movePrecompileToAddress;
   }
 
+  /**
+   * Creates a new builder for State overrides
+   *
+   * @return the builder
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
   /** Builder class for Account overrides */
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Builder {

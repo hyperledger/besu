@@ -14,16 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 /**
  * Associates a {@link ProtocolSpec} with a given block number or timestamp level starting point
  * Knows how to query the timestamp or block number of a given block header
  */
 public interface ScheduledProtocolSpec {
-  boolean isOnOrAfterMilestoneBoundary(ProcessableBlockHeader header);
+  boolean isOnOrAfterMilestoneBoundary(
+      org.hyperledger.besu.plugin.data.ProcessableBlockHeader header);
 
-  boolean isOnMilestoneBoundary(ProcessableBlockHeader header);
+  boolean isOnMilestoneBoundary(org.hyperledger.besu.plugin.data.ProcessableBlockHeader header);
 
   Hardfork fork();
 
@@ -43,7 +44,6 @@ public interface ScheduledProtocolSpec {
       return String.format("%s:%d", name, milestone);
     }
   }
-  ;
 
   class TimestampProtocolSpec implements ScheduledProtocolSpec {
 
@@ -61,12 +61,14 @@ public interface ScheduledProtocolSpec {
     }
 
     @Override
-    public boolean isOnOrAfterMilestoneBoundary(final ProcessableBlockHeader header) {
+    public boolean isOnOrAfterMilestoneBoundary(
+        final org.hyperledger.besu.plugin.data.ProcessableBlockHeader header) {
       return Long.compareUnsigned(header.getTimestamp(), timestamp) >= 0;
     }
 
     @Override
-    public boolean isOnMilestoneBoundary(final ProcessableBlockHeader header) {
+    public boolean isOnMilestoneBoundary(
+        final org.hyperledger.besu.plugin.data.ProcessableBlockHeader header) {
       return header.getTimestamp() == timestamp;
     }
 
@@ -96,7 +98,8 @@ public interface ScheduledProtocolSpec {
     }
 
     @Override
-    public boolean isOnOrAfterMilestoneBoundary(final ProcessableBlockHeader header) {
+    public boolean isOnOrAfterMilestoneBoundary(
+        final org.hyperledger.besu.plugin.data.ProcessableBlockHeader header) {
       return header.getNumber() >= blockNumber;
     }
 

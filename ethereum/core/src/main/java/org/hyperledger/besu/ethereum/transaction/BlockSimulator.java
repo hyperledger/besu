@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalcu
 import static org.hyperledger.besu.ethereum.transaction.BlockStateCalls.fillBlockStateCalls;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -45,18 +47,25 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -74,28 +83,31 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BlockSimulator {
 
   private static final TransactionValidationParams STRICT_VALIDATION_PARAMS =
-      TransactionValidationParams.transactionSimulator();
+      TransactionValidationParams.blockSimulatorStrict();
 
   private static final TransactionValidationParams SIMULATION_PARAMS =
-      TransactionValidationParams.transactionSimulatorAllowExceedingBalance();
+      TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce();
 
   private final TransactionSimulator transactionSimulator;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
   private final MiningConfiguration miningConfiguration;
   private final Blockchain blockchain;
+  private final long rpcGasCap;
 
   public BlockSimulator(
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator,
       final MiningConfiguration miningConfiguration,
-      final Blockchain blockchain) {
+      final Blockchain blockchain,
+      final long rpcGasCap) {
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
     this.miningConfiguration = miningConfiguration;
     this.transactionSimulator = transactionSimulator;
     this.blockchain = blockchain;
+    this.rpcGasCap = rpcGasCap;
   }
 
   /**
@@ -128,19 +140,32 @@ public class BlockSimulator {
       final BlockHeader blockHeader,
       final BlockSimulationParameter simulationParameter,
       final MutableWorldState worldState) {
-    List<BlockSimulationResult> results = new ArrayList<>();
+    int countStateCalls = simulationParameter.getBlockStateCalls().size();
+    List<BlockSimulationResult> results = new ArrayList<>(countStateCalls);
 
     // Fill gaps between blocks and set the correct block number and timestamp
     List<BlockStateCall> blockStateCalls =
         fillBlockStateCalls(simulationParameter.getBlockStateCalls(), blockHeader);
 
     BlockHeader currentBlockHeader = blockHeader;
+    HashMap<Long, Hash> blockHashCache = HashMap.newHashMap(countStateCalls);
+    long simulationCumulativeGasUsed = 0;
     for (BlockStateCall stateCall : blockStateCalls) {
       BlockSimulationResult result =
           processBlockStateCall(
-              currentBlockHeader, stateCall, worldState, simulationParameter.isValidation());
+              currentBlockHeader,
+              stateCall,
+              worldState,
+              simulationParameter.isValidation(),
+              simulationParameter.isTraceTransfers(),
+              simulationParameter::getFakeSignature,
+              blockHashCache,
+              simulationCumulativeGasUsed);
       results.add(result);
-      currentBlockHeader = result.getBlock().getHeader();
+      BlockHeader resultBlockHeader = result.getBlock().getHeader();
+      blockHashCache.put(resultBlockHeader.getNumber(), resultBlockHeader.getHash());
+      currentBlockHeader = resultBlockHeader;
+      simulationCumulativeGasUsed += resultBlockHeader.getGasUsed();
     }
     return results;
   }
@@ -157,7 +182,11 @@ public class BlockSimulator {
       final BlockHeader baseBlockHeader,
       final BlockStateCall blockStateCall,
       final MutableWorldState ws,
-      final boolean shouldValidate) {
+      final boolean shouldValidate,
+      final boolean isTraceTransfers,
+      final Supplier<SECPSignature> signatureSupplier,
+      final Map<Long, Hash> blockHashCache,
+      final long simulationCumulativeGasUsed) {
 
     BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
     ProtocolSpec protocolSpec =
@@ -178,36 +207,68 @@ public class BlockSimulator {
                 overridenBaseBlockHeader, blockStateCall.getStateOverrideMap());
 
     BlockHashLookup blockHashLookup =
-        createBlockHashLookup(blockOverrides, protocolSpec, overridenBaseBlockHeader);
+        createBlockHashLookup(
+            blockOverrides, protocolSpec, overridenBaseBlockHeader, blockHashCache);
 
-    BlockCallSimulationResult blockCallSimulationResult =
+    final BlockProcessingContext blockProcessingContext =
+        new BlockProcessingContext(
+            overridenBaseBlockHeader,
+            ws,
+            protocolSpec,
+            blockHashLookup,
+            OperationTracer.NO_TRACING);
+    protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
+
+    BlockStateCallSimulationResult blockStateCallSimulationResult =
         processTransactions(
             overridenBaseBlockHeader,
             blockStateCall,
             ws,
             protocolSpec,
             shouldValidate,
+            isTraceTransfers,
             transactionProcessor,
-            blockHashLookup);
+            blockHashLookup,
+            signatureSupplier,
+            simulationCumulativeGasUsed);
+
+    // EIP-7685: process EL requests
+    final Optional<RequestProcessorCoordinator> requestProcessor =
+        protocolSpec.getRequestProcessorCoordinator();
+    Optional<List<Request>> maybeRequests = Optional.empty();
+    if (requestProcessor.isPresent()) {
+      RequestProcessingContext requestProcessingContext =
+          new RequestProcessingContext(
+              blockProcessingContext, blockStateCallSimulationResult.getReceipts());
+      maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+    }
 
     return createFinalBlock(
-        overridenBaseBlockHeader, blockCallSimulationResult, blockOverrides, ws);
+        overridenBaseBlockHeader,
+        blockStateCallSimulationResult,
+        blockOverrides,
+        ws,
+        maybeRequests);
   }
 
-  protected BlockCallSimulationResult processTransactions(
+  protected BlockStateCallSimulationResult processTransactions(
       final BlockHeader blockHeader,
       final BlockStateCall blockStateCall,
       final MutableWorldState ws,
       final ProtocolSpec protocolSpec,
       final boolean shouldValidate,
+      final boolean isTraceTransfers,
       final MainnetTransactionProcessor transactionProcessor,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final Supplier<SECPSignature> signatureSupplier,
+      final long simulationCumulativeGasUsed) {
 
     TransactionValidationParams transactionValidationParams =
         shouldValidate ? STRICT_VALIDATION_PARAMS : SIMULATION_PARAMS;
 
-    BlockCallSimulationResult blockCallSimulationResult =
-        new BlockCallSimulationResult(protocolSpec, blockHeader.getGasLimit());
+    BlockStateCallSimulationResult blockStateCallSimulationResult =
+        new BlockStateCallSimulationResult(
+            protocolSpec, calculateSimulationGasCap(blockHeader, simulationCumulativeGasUsed));
 
     MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         blockStateCall
@@ -218,12 +279,15 @@ public class BlockSimulator {
 
     for (CallParameter callParameter : blockStateCall.getCalls()) {
 
-      OperationTracer operationTracer = OperationTracer.NO_TRACING;
+      OperationTracer operationTracer =
+          isTraceTransfers ? new EthTransferLogOperationTracer() : OperationTracer.NO_TRACING;
 
       final WorldUpdater transactionUpdater = ws.updater();
       long gasLimit =
           transactionSimulator.calculateSimulationGasCap(
-              callParameter.getGasLimit(), blockCallSimulationResult.getRemainingGas());
+              blockHeader,
+              callParameter.getGas(),
+              blockStateCallSimulationResult.getRemainingGas());
 
       BiFunction<ProtocolSpec, Optional<BlockHeader>, Wei> blobGasPricePerGasSupplier =
           getBlobGasPricePerGasSupplier(
@@ -241,7 +305,8 @@ public class BlockSimulator {
               gasLimit,
               transactionProcessor,
               blobGasPricePerGasSupplier,
-              blockHashLookup);
+              blockHashLookup,
+              signatureSupplier);
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(
@@ -252,31 +317,32 @@ public class BlockSimulator {
             "Transaction simulator result is invalid", transactionSimulationResult);
       }
       transactionUpdater.commit();
-      blockCallSimulationResult.add(transactionSimulationResult, ws);
+      blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
     }
-    return blockCallSimulationResult;
+    return blockStateCallSimulationResult;
   }
 
   private BlockSimulationResult createFinalBlock(
       final BlockHeader blockHeader,
-      final BlockCallSimulationResult blockCallSimulationResult,
+      final BlockStateCallSimulationResult blockStateCallSimulationResult,
       final BlockOverrides blockOverrides,
-      final MutableWorldState ws) {
+      final MutableWorldState ws,
+      final Optional<List<Request>> maybeRequests) {
 
-    List<Transaction> transactions = blockCallSimulationResult.getTransactions();
-    List<TransactionReceipt> receipts = blockCallSimulationResult.getReceipts();
+    List<Transaction> transactions = blockStateCallSimulationResult.getTransactions();
+    List<TransactionReceipt> receipts = blockStateCallSimulationResult.getReceipts();
 
     BlockHeader finalBlockHeader =
         BlockHeaderBuilder.createDefault()
             .populateFrom(blockHeader)
             .ommersHash(BodyValidation.ommersHash(List.of()))
-            .stateRoot(blockOverrides.getStateRoot().orElseGet(ws::rootHash))
+            .stateRoot(blockOverrides.getStateRoot().orElseGet(ws::frontierRootHash))
             .transactionsRoot(BodyValidation.transactionsRoot(transactions))
             .receiptsRoot(BodyValidation.receiptsRoot(receipts))
             .logsBloom(BodyValidation.logsBloom(receipts))
-            .gasUsed(blockCallSimulationResult.getCumulativeGasUsed())
+            .gasUsed(blockStateCallSimulationResult.getCumulativeGasUsed())
             .withdrawalsRoot(BodyValidation.withdrawalsRoot(List.of()))
-            .requestsHash(null)
+            .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null))
             .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
             .blockHeaderFunctions(new BlockStateCallBlockHeaderFunctions(blockOverrides))
             .buildBlockHeader();
@@ -284,7 +350,7 @@ public class BlockSimulator {
     Block block =
         new Block(finalBlockHeader, new BlockBody(transactions, List.of(), Optional.of(List.of())));
 
-    return new BlockSimulationResult(block, blockCallSimulationResult);
+    return new BlockSimulationResult(block, blockStateCallSimulationResult);
   }
 
   /**
@@ -435,20 +501,38 @@ public class BlockSimulator {
    * @param blockOverrides The BlockOverrides to use.
    * @param newProtocolSpec The ProtocolSpec for the block.
    * @param blockHeader The block header for the simulation.
+   * @param blockHashCache A cache of block hashes.
    * @return The BlockHashLookup for the block simulation.
    */
   private BlockHashLookup createBlockHashLookup(
       final BlockOverrides blockOverrides,
       final ProtocolSpec newProtocolSpec,
-      final BlockHeader blockHeader) {
-    return blockOverrides
-        .getBlockHashLookup()
-        .<BlockHashLookup>map(
-            blockHashLookup -> (frame, blockNumber) -> blockHashLookup.apply(blockNumber))
-        .orElseGet(
-            () ->
-                newProtocolSpec
-                    .getBlockHashProcessor()
-                    .createBlockHashLookup(blockchain, blockHeader));
+      final BlockHeader blockHeader,
+      final Map<Long, Hash> blockHashCache) {
+    var blockCallBlockHashLookup =
+        blockOverrides
+            .getBlockHashLookup()
+            .<BlockHashLookup>map(
+                blockHashLookup -> (___, blockNumber) -> blockHashLookup.apply(blockNumber))
+            .orElseGet(
+                () ->
+                    newProtocolSpec
+                        .getBlockHashProcessor()
+                        .createBlockHashLookup(blockchain, blockHeader));
+    return (frame, blockNumber) -> {
+      if (blockHashCache.containsKey(blockNumber)) {
+        return blockHashCache.get(blockNumber);
+      }
+      return blockCallBlockHashLookup.apply(frame, blockNumber);
+    };
+  }
+
+  public long calculateSimulationGasCap(
+      final BlockHeader blockHeader, final long simulationCumulativeGasUsed) {
+    if (rpcGasCap > 0) {
+      long remainingGas = Math.max(rpcGasCap - simulationCumulativeGasUsed, 0);
+      return Math.min(remainingGas, blockHeader.getGasLimit());
+    }
+    return blockHeader.getGasLimit();
   }
 }

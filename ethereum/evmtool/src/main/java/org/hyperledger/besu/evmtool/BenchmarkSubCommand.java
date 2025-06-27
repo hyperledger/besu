@@ -16,20 +16,24 @@ package org.hyperledger.besu.evmtool;
 
 import static org.hyperledger.besu.evmtool.BenchmarkSubCommand.COMMAND_NAME;
 import static picocli.CommandLine.ScopeType.INHERIT;
+import static picocli.CommandLine.ScopeType.LOCAL;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evmtool.benchmarks.AltBN128Benchmark;
 import org.hyperledger.besu.evmtool.benchmarks.BLS12Benchmark;
+import org.hyperledger.besu.evmtool.benchmarks.BenchmarkConfig;
 import org.hyperledger.besu.evmtool.benchmarks.BenchmarkExecutor;
 import org.hyperledger.besu.evmtool.benchmarks.ECRecoverBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.ModExpBenchmark;
+import org.hyperledger.besu.evmtool.benchmarks.P256VerifyBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.Secp256k1Benchmark;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.PrintStream;
 import java.util.EnumSet;
+import java.util.Optional;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -52,21 +56,23 @@ public class BenchmarkSubCommand implements Runnable {
    */
   public static final String COMMAND_NAME = "benchmark";
 
+  /** Stream for where to write the output to. */
   private final PrintStream output;
 
   enum Benchmark {
-    altBn128(new AltBN128Benchmark()),
+    altBn128(AltBN128Benchmark::new),
     // blake2f
-    EcRecover(new ECRecoverBenchmark()),
-    ModExp(new ModExpBenchmark()),
-    Secp256k1(new Secp256k1Benchmark()),
+    EcRecover(ECRecoverBenchmark::new),
+    ModExp(ModExpBenchmark::new),
+    Secp256k1(Secp256k1Benchmark::new),
     // bls12
-    Bls12(new BLS12Benchmark());
+    Bls12(BLS12Benchmark::new),
+    p256Verify(P256VerifyBenchmark::new);
 
-    final BenchmarkExecutor benchmarkExecutor;
+    private final BenchmarkExecutor.Builder executorBuilder;
 
-    Benchmark(final BenchmarkExecutor benchmarkExecutor) {
-      this.benchmarkExecutor = benchmarkExecutor;
+    Benchmark(final BenchmarkExecutor.Builder executorBuilder) {
+      this.executorBuilder = executorBuilder;
     }
   }
 
@@ -75,7 +81,7 @@ public class BenchmarkSubCommand implements Runnable {
       description = "Use the native libraries.",
       scope = INHERIT,
       negatable = true)
-  Boolean nativeCode;
+  Boolean nativeCode = false;
 
   @Option(
       names = {"--use-precompile-cache"},
@@ -83,6 +89,50 @@ public class BenchmarkSubCommand implements Runnable {
       scope = INHERIT,
       negatable = true)
   Boolean enablePrecompileCache = false;
+
+  @Option(
+      names = {"--async-profiler"},
+      description =
+          "Benchmark using async profiler. No profiler command means profiling disabled. '%%%%test-case' in the"
+              + " file name expands to the test for which the profiler ran,"
+              + "e.g. \"start,jfr,event=cpu,file=/tmp/%%%%test-case-%%p.jfr\".",
+      scope = LOCAL)
+  Optional<String> asyncProfilerOptions = Optional.empty();
+
+  @Option(
+      names = {"--pattern"},
+      description =
+          "Only tests cases with this pattern will be run, e.g. --pattern \"guido-3.*\". Default runs all test cases.",
+      scope = LOCAL)
+  Optional<String> testCasePattern = Optional.empty();
+
+  @Option(
+      names = {"--exec-iterations"},
+      description =
+          "Number of iterations that the benchmark should run (measurement) for, regardless of how long it takes.",
+      scope = LOCAL)
+  Optional<Integer> execIterations = Optional.empty();
+
+  @Option(
+      names = {"--exec-time"},
+      description =
+          "Run the maximum number of iterations during execution (measurement) within the given period. Time is in seconds.",
+      scope = LOCAL)
+  Optional<Integer> execTime = Optional.empty();
+
+  @Option(
+      names = {"--warm-iterations"},
+      description =
+          "Number of iterations that the benchmark should warm up for, regardless of how long it takes.",
+      scope = LOCAL)
+  Optional<Integer> warmIterations = Optional.empty();
+
+  @Option(
+      names = {"--warm-time"},
+      description =
+          "Run the maximum number of iterations during warmup within the given period. Time is in seconds.",
+      scope = LOCAL)
+  Optional<Integer> warmTime = Optional.empty();
 
   @Parameters(description = "One or more of ${COMPLETION-CANDIDATES}.")
   EnumSet<Benchmark> benchmarks = EnumSet.noneOf(Benchmark.class);
@@ -107,13 +157,27 @@ public class BenchmarkSubCommand implements Runnable {
   @Override
   public void run() {
     LogConfigurator.setLevel("", "DEBUG");
-    System.out.println(BesuInfo.version());
+    output.println(BesuVersionUtils.version());
     AbstractPrecompiledContract.setPrecompileCaching(enablePrecompileCache);
     AbstractBLS12PrecompiledContract.setPrecompileCaching(enablePrecompileCache);
     var benchmarksToRun = benchmarks.isEmpty() ? EnumSet.allOf(Benchmark.class) : benchmarks;
+    final BenchmarkConfig benchmarkConfig =
+        new BenchmarkConfig(
+            nativeCode,
+            enablePrecompileCache,
+            asyncProfilerOptions,
+            testCasePattern,
+            execIterations,
+            execTime,
+            warmIterations,
+            warmTime);
     for (var benchmark : benchmarksToRun) {
-      System.out.println("Benchmarks for " + benchmark);
-      benchmark.benchmarkExecutor.runBenchmark(output, nativeCode, parentCommand.getFork());
+      output.println("Benchmarks for " + benchmark + " on fork " + parentCommand.getFork());
+      BenchmarkExecutor executor = benchmark.executorBuilder.create(output, benchmarkConfig);
+      if (executor.isPrecompile()) {
+        BenchmarkExecutor.logPrecompileDerivedGasNotice(output);
+      }
+      executor.runBenchmark(nativeCode, parentCommand.getFork());
     }
   }
 }

@@ -14,7 +14,8 @@
         "blobSchedule": {
           "baseFeeUpdateFraction": 3338477,
           "max": 6,
-          "target": 3
+          "target": 3,
+          "maxBlobsPerTx" : 6
         },
         "chainId": "0x1",
         "precompiles": {
@@ -33,7 +34,7 @@
           "BEACON_ROOTS_ADDRESS": "0x000f3df6d732807ef1319fb7b8bb8522d0beac02"
         }
       },
-      "currentHash": "3025d871",
+      "currentHash": "f503e444",
       "next": null,
       "nextHash": null
     }

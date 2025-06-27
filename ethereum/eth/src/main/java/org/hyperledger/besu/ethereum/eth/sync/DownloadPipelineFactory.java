@@ -30,7 +30,7 @@ public interface DownloadPipelineFactory {
    * @param target the target the chain download is working to catch up to.
    * @return the created but not yet started pipeline.
    */
-  Pipeline<?> createDownloadPipelineForSyncTarget(SyncTarget target);
+  Pipeline<?> createDownloadPipelineForSyncTarget(SyncState syncState, SyncTarget target);
 
   CompletionStage<Void> startPipeline(
       EthScheduler scheduler, SyncState syncState, SyncTarget syncTarget, Pipeline<?> pipeline);

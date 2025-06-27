@@ -19,14 +19,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.TimestampProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
+import org.hyperledger.besu.plugin.services.txvalidator.TransactionValidationRule;
 
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
@@ -163,14 +164,12 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
-      final WorldStateArchive publicWorldStateArchive) {
+  public void setAdditionalValidationRules(
+      final List<TransactionValidationRule> additionalValidationRules) {
     protocolSpecs.forEach(
-        spec -> {
-          final BlockProcessor blockProcessor = spec.spec().getBlockProcessor();
-          if (PrivacyBlockProcessor.class.isAssignableFrom(blockProcessor.getClass()))
-            ((PrivacyBlockProcessor) blockProcessor)
-                .setPublicWorldStateArchive(publicWorldStateArchive);
-        });
+        spec ->
+            spec.spec()
+                .getTransactionValidatorFactory()
+                .setAdditionalValidationRules(additionalValidationRules));
   }
 }
