@@ -19,12 +19,14 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -38,6 +40,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
   protected long nonce;
   protected Wei balance;
   protected Bytes code;
+  protected Optional<Integer> maybeCodeSize;
 
   protected final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
@@ -64,6 +67,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
       final long nonce,
       final Wei balance,
       final Hash codeHash,
+      final Optional<Integer> maybeCodeSize,
       final boolean mutable) {
     this.context = context;
     this.address = address;
@@ -71,7 +75,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     this.nonce = nonce;
     this.balance = balance;
     this.codeHash = codeHash;
-
+    this.maybeCodeSize = maybeCodeSize;
     this.immutable = !mutable;
   }
 
@@ -109,8 +113,11 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     this.balance = balance;
     this.codeHash = codeHash;
     this.code = code;
+    this.maybeCodeSize = Optional.ofNullable(code).map(Bytes::size);
     this.immutable = !mutable;
   }
+
+  protected abstract void writeToWithCodeSize(final RLPOutput out);
 
   @Override
   public Address getAddress() {
@@ -153,6 +160,9 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     if (code == null) {
       code = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
     }
+    if (maybeCodeSize.isEmpty()) {
+      maybeCodeSize = Optional.of(code.size());
+    }
     return code;
   }
 
@@ -164,9 +174,24 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     this.code = code;
     if (code == null || code.isEmpty()) {
       this.codeHash = Hash.EMPTY;
+      this.maybeCodeSize = Optional.of(0);
     } else {
       this.codeHash = Hash.hash(code);
+      this.maybeCodeSize = Optional.of(code.size());
     }
+  }
+
+  /**
+   * Retrieves the size of the code associated with this account, if it is stored.
+   *
+   * <p>The code size may be stored directly in the account's RLP data, allowing for more efficient
+   * access without needing to inspect the code. Defaults to the size of the code if not stored.
+   *
+   * @return the stored code size
+   */
+  @Override
+  public int getCodeSize() {
+    return maybeCodeSize.orElseGet(() -> getCode().size());
   }
 
   @Override
@@ -187,6 +212,12 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
   public Bytes serializeAccount() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     writeTo(out);
+    return out.encoded();
+  }
+
+  public Bytes serializeAccountWithCodeSize() {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    writeToWithCodeSize(out);
     return out.encoded();
   }
 
