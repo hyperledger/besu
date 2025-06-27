@@ -314,18 +314,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     try {
       worldState.persist(blockHeader);
     } catch (MerkleTrieException e) {
-      String errorMessage =
-          "Failed to persist block "
-              + blockHeader.getNumber()
-              + " due to Merkle trie exception: "
-              + e.getMessage();
-      LOG.error(errorMessage, e);
+      LOG.trace("Merkle trie exception during Transaction processing ", e);
       if (worldState instanceof BonsaiWorldState) {
         ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
-      @SuppressWarnings("java:S2139") // Exception is logged with context and rethrown appropriately
-      MerkleTrieException contextualException = new MerkleTrieException(errorMessage, e);
-      throw contextualException;
+      @SuppressWarnings(
+          "java:S2139") // Exception is logged and rethrown to preserve original behavior
+      RuntimeException rethrown = e;
+      throw rethrown;
     } catch (StateRootMismatchException ex) {
       LOG.error(
           "failed persisting block due to stateroot mismatch; expected {}, actual {}",
@@ -367,19 +363,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         blobGasPrice);
   }
 
+  @SuppressWarnings(
+      "java:S2629") // INFO level logging rarely disabled in this project per maintainer feedback
   protected boolean hasAvailableBlockBudget(
       final BlockHeader blockHeader, final Transaction transaction, final long currentGasUsed) {
     final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
     if (Long.compareUnsigned(transaction.getGasLimit(), remainingGasBudget) > 0) {
-      if (LOG.isInfoEnabled()) {
-        LOG.info(
-            "Block processing error: transaction gas limit {} exceeds available block budget"
-                + " remaining {}. Block {} Transaction {}",
-            transaction.getGasLimit(),
-            remainingGasBudget,
-            blockHeader.getHash().toHexString(),
-            transaction.getHash().toHexString());
-      }
+      LOG.info(
+          "Block processing error: transaction gas limit {} exceeds available block budget"
+              + " remaining {}. Block {} Transaction {}",
+          transaction.getGasLimit(),
+          remainingGasBudget,
+          blockHeader.getHash().toHexString(),
+          transaction.getHash().toHexString());
       return false;
     }
 
