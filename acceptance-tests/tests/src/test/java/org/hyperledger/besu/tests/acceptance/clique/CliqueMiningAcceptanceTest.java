@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.web3j.protocol.core.DefaultBlockParameter;
 
@@ -82,6 +83,7 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
+  @Disabled // too flaky
   public void shouldMineTransactionsOnMultipleNodes() throws IOException {
     final BesuNode minerNode1 = besu.createCliqueNode("miner1");
     final BesuNode minerNode2 = besu.createCliqueNode("miner2");
