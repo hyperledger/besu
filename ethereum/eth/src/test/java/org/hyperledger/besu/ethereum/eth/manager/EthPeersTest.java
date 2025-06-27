@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -67,53 +66,6 @@ public class EthPeersTest {
     when(mock.getBestHeaderFromPeer(any()))
         .thenReturn(CompletableFuture.completedFuture(blockHeader));
     ethPeers.setChainHeadTracker(mock);
-  }
-
-  @Test
-  public void comparesPeersWithHeightAndTd() {
-    // Set peerA with better height, lower td
-    final EthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 20).getEthPeer();
-    final EthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10).getEthPeer();
-
-    assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isGreaterThan(0);
-    assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerA, peerB)).isLessThan(0);
-
-    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerA, peerB)).isLessThan(0);
-    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerB, peerA)).isGreaterThan(0);
-    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerA, peerA)).isEqualTo(0);
-    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerB, peerB)).isEqualTo(0);
-
-    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerB);
-    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
-        .contains(peerB);
-  }
-
-  @Test
-  public void comparesPeersWithTdAndNoHeight() {
-    final EthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, OptionalLong.empty())
-            .getEthPeer();
-    final EthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, OptionalLong.empty())
-            .getEthPeer();
-
-    // Sanity check
-    assertThat(peerA.chainState().getEstimatedHeight()).isEqualTo(0);
-    assertThat(peerB.chainState().getEstimatedHeight()).isEqualTo(0);
-
-    assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isEqualTo(0);
-    assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerA, peerB)).isGreaterThan(0);
-
-    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerA, peerB)).isGreaterThan(0);
-    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerB, peerA)).isLessThan(0);
-    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerA, peerA)).isEqualTo(0);
-    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerB, peerB)).isEqualTo(0);
-
-    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerA);
-    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
-        .isEmpty();
   }
 
   @Test
