@@ -410,6 +410,7 @@ public class BlockAccessList {
       AccountChanges build() {
         final List<SlotChanges> slotChanges =
             slotWrites.entrySet().stream()
+                .sorted(Comparator.comparing(e -> e.getKey().getSlotKey().orElseThrow().toBytes()))
                 .map(
                     e ->
                         new SlotChanges(
@@ -420,7 +421,10 @@ public class BlockAccessList {
                 .collect(Collectors.toList());
 
         final List<SlotRead> reads =
-            slotReads.stream().map(SlotRead::new).collect(Collectors.toList());
+            slotReads.stream()
+                .sorted(Comparator.comparing(e -> e.getSlotKey().orElseThrow().toBytes()))
+                .map(SlotRead::new)
+                .collect(Collectors.toList());
 
         return new AccountChanges(
             address,
@@ -481,11 +485,9 @@ public class BlockAccessList {
                 slotMap.forEach(
                     (slotKey, value) -> {
                       final UInt256 prior =
-                          Optional.ofNullable(value.getPrior())
-                              .orElse(UInt256.ZERO);
+                          Optional.ofNullable(value.getPrior()).orElse(UInt256.ZERO);
                       final UInt256 updated =
-                          Optional.ofNullable(value.getUpdated())
-                              .orElse(UInt256.ZERO);
+                          Optional.ofNullable(value.getUpdated()).orElse(UInt256.ZERO);
                       if (!prior.equals(updated)) {
                         this.storageWrite(address, slotKey, txIndex, updated);
                       } else if (value.isEvmRead()) {
