@@ -74,6 +74,7 @@ public class BonsaiAccountTest {
 
   @Test
   void shouldFetchCodeFromWorldStateWhenCodeSizeIsNotPresent() {
+    // Encoding the account with code size not present
     Bytes encodedAccount = encodeRlpAccount(code, false);
     BonsaiAccount decodedAccount = decodeRlpAccount(encodedAccount);
     verifyNoInteractions(bonsaiWorldState);
@@ -91,6 +92,7 @@ public class BonsaiAccountTest {
 
   @Test
   void shouldNotFetchCodeFromWorldStateIfCodeAlreadyLoaded() {
+    // Encoding the account with code size not present
     Bytes encodedAccount = encodeRlpAccount(code, false);
     BonsaiAccount decodedAccount = decodeRlpAccount(encodedAccount);
     verifyNoInteractions(bonsaiWorldState);
@@ -106,6 +108,7 @@ public class BonsaiAccountTest {
 
   @Test
   void shouldGetCodeFromRlpWhenCodeSizeIsPresent() {
+    // Encoding the account with code size present
     Bytes encodedAccount = encodeRlpAccount(code, true);
     BonsaiAccount decodedAccount = decodeRlpAccount(encodedAccount);
 
@@ -118,6 +121,7 @@ public class BonsaiAccountTest {
 
   @Test
   void shouldNotEncodeCodeSizeWhenNotPresent() {
+    // Encoding the account with code size not present
     Bytes encodedAccount = encodeRlpAccount(code, false);
     RLPInput in = RLP.input(encodedAccount);
 
@@ -126,6 +130,7 @@ public class BonsaiAccountTest {
 
   @Test
   void shouldEncodeCodeSizeWhenPresent() {
+    // Encoding the account with code size present
     Bytes encodedAccount = encodeRlpAccount(code, true);
     RLPInput in = RLP.input(encodedAccount);
     List<RLPInput> items = in.readList(RLPInput::readAsRlp);
