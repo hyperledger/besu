@@ -338,11 +338,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
   }
 
-  @SuppressWarnings({
-    "unused",
-    "OptionalUsedAsFieldOrParameterType"
-  }) // preProcessingContext and location are used by subclasses, Optional parameter required by
-  // interface
+  @SuppressWarnings("unused") // preProcessingContext and location are used by subclasses
   protected TransactionProcessingResult getTransactionProcessingResult(
       final Optional<PreprocessingContext> preProcessingContext,
       final BlockProcessingContext blockProcessingContext,
