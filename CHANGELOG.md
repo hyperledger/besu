@@ -6,6 +6,7 @@
 - Remove the deprecated `--Xbonsai-trie-logs-pruning-window-size`, use `--bonsai-trie-logs-pruning-window-size` instead. [#8823](https://github.com/hyperledger/besu/pull/8823)
 - Remove the deprecated `--Xbonsai-limit-trie-logs-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
 - Remove the deprecated `--Xbonsai-trie-log-pruning-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
+- Remove the deprecated `--Xsnapsync-bft-enabled`. SNAP sync is now supported for BFT networks. [#8861](https://github.com/hyperledger/besu/pull/8861)
 - Remove methods from gas calculator deprecated since 24.4 `create2OperationGasCost`, `callOperationGasCost`, `createOperationGasCost`, and `cost` [#8817](https://github.com/hyperledger/besu/pull/8817)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Stratum mining has been removed (part of PoW) [#8802](https://github.com/hyperledger/besu/pull/8802)
@@ -13,7 +14,6 @@
 
 ### Upcoming Breaking Changes
 - `--Xbonsai-parallel-tx-processing-enabled` is deprecated, use `--bonsai-parallel-tx-processing-enabled` instead.
-- `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Proof of Work consensus (PoW)
   - Fast Sync

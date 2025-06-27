@@ -87,8 +87,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
-  private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
-
   private static final String SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG =
       "--Xsnapsync-synchronizer-pre-merge-headers-only-enabled";
 
@@ -311,17 +309,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean checkpointPostMergeSyncEnabled =
       SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
-  // TODO --Xsnapsync-bft-enabled is deprecated,
-  // remove in a future release
-  @CommandLine.Option(
-      names = SNAP_SYNC_BFT_ENABLED_FLAG, // deprecated
-      hidden = true,
-      paramLabel = "<Boolean>",
-      arity = "0..1",
-      description =
-          "This option is now deprecated and ignored, and will be removed in future release. Snap sync for BFT is supported by default.")
-  private Boolean snapsyncBftEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED;
-
   @CommandLine.Option(
       names = {"--Xpeertask-system-enabled"},
       hidden = true,
@@ -357,15 +344,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public boolean isSnapsyncServerEnabled() {
     return snapsyncServerEnabled;
-  }
-
-  /**
-   * Flag to know whether the Snap sync should be enabled for a BFT chain
-   *
-   * @return true if snap sync for BFT is enabled
-   */
-  public boolean isSnapSyncBftEnabled() {
-    return snapsyncBftEnabled;
   }
 
   /**
