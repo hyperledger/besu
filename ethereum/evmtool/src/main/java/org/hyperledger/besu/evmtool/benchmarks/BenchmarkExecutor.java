@@ -138,6 +138,14 @@ public abstract class BenchmarkExecutor {
     assert execIterations <= 0;
   }
 
+  /**
+   * Benchmarks the given precompile with all the test cases provided. This method selectively runs
+   * the benchmark and/or particular test cases accordingly with the CLI options that were provided.
+   *
+   * @param testCases all test cases to run against the precompile.
+   * @param contract precompile contract to execute.
+   * @param evmSpecVersion EVM specification version to run the precompile for.
+   */
   public void precompile(
       final Map<String, Bytes> testCases,
       final PrecompiledContract contract,
@@ -216,6 +224,14 @@ public abstract class BenchmarkExecutor {
     return elapsed / 1.0e9D / executions;
   }
 
+  /**
+   * Logs performance numbers of precompiles. Should not be called outside of this class unless a
+   * custom precompile run is preferred.
+   *
+   * @param testCase name of the test case
+   * @param gasCost cost it takes for the given test case to run with the given precompile
+   * @param execTime elapsed time of a single iteration
+   */
   protected void logPrecompilePerformance(
       final String testCase, final long gasCost, final double execTime) {
     double derivedGas = execTime * GAS_PER_SECOND_STANDARD;
