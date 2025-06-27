@@ -17,6 +17,8 @@ package org.hyperledger.besu.evm.internal;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 
+import java.util.Map;
+
 /**
  * CodeCache is an interface for caching bytecode, its size and jump dest analysis. It allows
  * retrieval and storage of code based on its hash.
@@ -37,4 +39,18 @@ public interface CodeCache {
    * @param code the code to store
    */
   void put(final Hash codeHash, final Code code);
+
+  /**
+   * Gets all the key-value pairs in the cache as a map.
+   *
+   * @return the map containing all key-value pairs in the cache
+   */
+  Map<Hash, Code> asMap();
+
+  /**
+   * Puts all key-value pairs from the specified map into the cache.
+   *
+   * @param map the map containing key-value pairs to be added to the cache
+   */
+  void putAll(final Map<Hash, Code> map);
 }

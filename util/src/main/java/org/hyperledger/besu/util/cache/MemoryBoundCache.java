@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.util.cache;
 
+import java.util.Map;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -108,5 +110,23 @@ public class MemoryBoundCache<K, V> {
    */
   public long requestCount() {
     return cache.stats().requestCount();
+  }
+
+  /**
+   * Gets all the key-value pairs in the cache as a map.
+   *
+   * @return the map containing all key-value pairs in the cache
+   */
+  public Map<K, V> asMap() {
+    return cache.asMap();
+  }
+
+  /**
+   * Puts all key-value pairs from the specified map into the cache.
+   *
+   * @param map the map containing key-value pairs to be added to the cache
+   */
+  public void putAll(final Map<K, V> map) {
+    cache.putAll(map);
   }
 }
