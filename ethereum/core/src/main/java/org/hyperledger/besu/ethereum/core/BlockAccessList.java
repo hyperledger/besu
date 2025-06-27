@@ -369,6 +369,7 @@ public class BlockAccessList {
         final List<StorageChange> changes =
             slotWrites.computeIfAbsent(slot, __ -> new ArrayList<>());
         changes.removeIf(c -> c.getTxIndex() == txIndex);
+        slotReads.removeIf(r -> r.equals(slot));
         if (changes.isEmpty() || !changes.getLast().getNewValue().equals(value)) {
           changes.add(new StorageChange(txIndex, value));
         }
@@ -508,7 +509,9 @@ public class BlockAccessList {
                 final BigInteger postBalance =
                     updated != null ? updated.getBalance().getAsBigInteger() : BigInteger.ZERO;
 
-                if (priorBalance.compareTo(postBalance) != 0) {
+                if (!priorBalance.equals(postBalance)
+                    || (prior == null && updated != null)
+                    || (prior != null && updated == null)) {
                   this.balanceChange(address, txIndex, Wei.of(postBalance).toBytes());
                 }
 
@@ -518,7 +521,11 @@ public class BlockAccessList {
                   this.codeChange(address, txIndex, postCode);
                 }
 
-                if (isContractCreation && prior != null && updated != null) {
+                if (isContractCreation
+                    && prior != null
+                    && updated != null
+                    && prior.getCode().isEmpty()
+                    && !updated.getCode().isEmpty()) {
                   final long priorNonce = prior.getNonce();
                   final long postNonce = updated.getNonce();
                   if (postNonce > priorNonce) {
