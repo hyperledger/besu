@@ -175,6 +175,7 @@ public interface FeeMarket {
 
   /**
    * Returns the base fee update fraction. Only for blobs.
+   *
    * @return the base fee update fraction.
    */
   default BigInteger getBaseFeeUpdateFraction() {
