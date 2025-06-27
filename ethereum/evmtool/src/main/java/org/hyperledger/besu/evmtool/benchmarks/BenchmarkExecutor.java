@@ -216,7 +216,7 @@ public abstract class BenchmarkExecutor {
     return elapsed / 1.0e9D / executions;
   }
 
-  private void logPrecompilePerformance(
+  protected void logPrecompilePerformance(
       final String testCase, final long gasCost, final double execTime) {
     double derivedGas = execTime * GAS_PER_SECOND_STANDARD;
 
