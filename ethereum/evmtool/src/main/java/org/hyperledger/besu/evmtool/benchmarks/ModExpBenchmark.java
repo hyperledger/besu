@@ -416,7 +416,7 @@ public class ModExpBenchmark extends BenchmarkExecutor {
     output.println(
         BigIntegerModularExponentiationPrecompiledContract.isNative()
             ? "Native ModExp"
-            : "Java modExp");
+            : "Java ModExp");
 
     precompile(testcases, contract, EvmSpecVersion.fromName(fork));
   }

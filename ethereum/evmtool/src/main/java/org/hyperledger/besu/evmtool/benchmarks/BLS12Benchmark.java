@@ -157,6 +157,11 @@ public class BLS12Benchmark extends BenchmarkExecutor {
       return;
     }
 
+    if (attemptNative != null && !attemptNative) {
+      output.println("Java is unsupported, falling back to Native");
+    }
+    output.println("Native BLS12");
+
     benchmarkG1Add(forkVersion);
     benchmarkG1MultiExp32Pairs(forkVersion);
     benchmarkMapFpToG1(forkVersion);
