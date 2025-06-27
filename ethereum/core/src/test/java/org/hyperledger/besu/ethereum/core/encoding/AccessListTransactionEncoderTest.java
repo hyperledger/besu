@@ -42,7 +42,7 @@ public class AccessListTransactionEncoderTest {
     final Address address = Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
     final StorageSlotKey slotKey = new StorageSlotKey(Wei.ONE.toUInt256());
 
-    final StorageChange write = new StorageChange(0, Wei.ONE.toBytes());
+    final StorageChange write = new StorageChange(0, Wei.ONE.toUInt256());
     final SlotChanges slotChanges = new SlotChanges(slotKey, List.of(write));
     final SlotRead slotRead = new SlotRead(slotKey);
 

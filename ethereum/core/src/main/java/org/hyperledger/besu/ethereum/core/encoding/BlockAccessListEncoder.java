@@ -38,7 +38,7 @@ public final class BlockAccessListEncoder {
                     (chg, chgOut) -> {
                       chgOut.startList();
                       chgOut.writeInt(chg.getTxIndex());
-                      chgOut.writeBytes(chg.getNewValue());
+                      chgOut.writeUInt256Scalar(chg.getNewValue());
                       chgOut.endList();
                     });
                 scOut.endList();

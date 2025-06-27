@@ -64,9 +64,9 @@ public class BlockAccessList {
 
   public static class StorageChange {
     private final int txIndex;
-    private final Bytes newValue;
+    private final UInt256 newValue;
 
-    public StorageChange(final int txIndex, final Bytes newValue) {
+    public StorageChange(final int txIndex, final UInt256 newValue) {
       this.txIndex = txIndex;
       this.newValue = newValue;
     }
@@ -75,7 +75,7 @@ public class BlockAccessList {
       return txIndex;
     }
 
-    public Bytes getNewValue() {
+    public UInt256 getNewValue() {
       return newValue;
     }
 
@@ -363,7 +363,7 @@ public class BlockAccessList {
         this.address = address;
       }
 
-      void addStorageWrite(final StorageSlotKey slot, final int txIndex, final Bytes value) {
+      void addStorageWrite(final StorageSlotKey slot, final int txIndex, final UInt256 value) {
         // TODO: This is a temporary workaround for having to use block-level accumulator instead of
         // transaction-level
         final List<StorageChange> changes =
@@ -407,7 +407,6 @@ public class BlockAccessList {
         }
       }
 
-      // TODO: Do sorting here
       AccountChanges build() {
         final List<SlotChanges> slotChanges =
             slotWrites.entrySet().stream()
@@ -440,7 +439,7 @@ public class BlockAccessList {
     }
 
     public void storageWrite(
-        final Address addr, final StorageSlotKey slot, final int txIndex, final Bytes newValue) {
+        final Address addr, final StorageSlotKey slot, final int txIndex, final UInt256 newValue) {
       forAddress(addr).addStorageWrite(slot, txIndex, newValue);
     }
 
@@ -481,14 +480,12 @@ public class BlockAccessList {
               (address, slotMap) -> {
                 slotMap.forEach(
                     (slotKey, value) -> {
-                      final Bytes prior =
+                      final UInt256 prior =
                           Optional.ofNullable(value.getPrior())
-                              .map(UInt256::toMinimalBytes)
-                              .orElse(Bytes.EMPTY);
-                      final Bytes updated =
+                              .orElse(UInt256.ZERO);
+                      final UInt256 updated =
                           Optional.ofNullable(value.getUpdated())
-                              .map(UInt256::toMinimalBytes)
-                              .orElse(Bytes.EMPTY);
+                              .orElse(UInt256.ZERO);
                       if (!prior.equals(updated)) {
                         this.storageWrite(address, slotKey, txIndex, updated);
                       } else if (value.isEvmRead()) {

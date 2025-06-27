@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public final class BlockAccessListDecoder {
 
@@ -55,7 +56,7 @@ public final class BlockAccessListDecoder {
                         changeIn -> {
                           changeIn.enterList();
                           int txIndex = changeIn.readInt();
-                          Bytes newVal = changeIn.readBytes();
+                          UInt256 newVal = changeIn.readUInt256Scalar();
                           changeIn.leaveList();
                           return new StorageChange(txIndex, newVal);
                         });
