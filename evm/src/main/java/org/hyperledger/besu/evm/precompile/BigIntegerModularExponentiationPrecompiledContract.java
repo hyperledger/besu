@@ -125,26 +125,24 @@ public class BigIntegerModularExponentiationPrecompiledContract
       final int modulusLength = clampedToInt(length_of_MODULUS);
       if ((extractLastByte(input, baseOffset, baseLength) & 1) != 1
           && (extractLastByte(input, modulusOffset, modulusLength) & 1) != 1) {
-        return computeNative(input, length_of_MODULUS);
+        return computeNative(input, modulusLength);
       }
     }
 
     if (useNative) {
-      return computeNative(input, length_of_MODULUS);
+      final int modulusLength = clampedToInt(length_of_MODULUS);
+      return computeNative(input, modulusLength);
     } else {
-      return computeDefault(input, length_of_BASE, length_of_EXPONENT, length_of_MODULUS);
+      final int baseLength = clampedToInt(length_of_BASE);
+      final int exponentLength = clampedToInt(length_of_EXPONENT);
+      final int modulusLength = clampedToInt(length_of_MODULUS);
+      return computeDefault(input, baseLength, exponentLength, modulusLength);
     }
   }
 
   @NotNull
   private PrecompileContractResult computeDefault(
-      final Bytes input,
-      final long length_of_BASE,
-      final long length_of_EXPONENT,
-      final long length_of_MODULUS) {
-    final int baseLength = clampedToInt(length_of_BASE);
-    final int exponentLength = clampedToInt(length_of_EXPONENT);
-    final int modulusLength = clampedToInt(length_of_MODULUS);
+      final Bytes input, final int baseLength, final int exponentLength, final int modulusLength) {
     // If baseLength and modulusLength are zero
     // we could have a massively overflowing exp because it wouldn't have been filtered out at the
     // gas cost phase
@@ -280,8 +278,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   private PrecompileContractResult computeNative(
-      final @NotNull Bytes input, final long length_of_MODULUS) {
-    final int modulusLength = clampedToInt(length_of_MODULUS);
+      final @NotNull Bytes input, final int modulusLength) {
     final IntByReference o_len = new IntByReference(modulusLength);
 
     final byte[] result = new byte[modulusLength];
