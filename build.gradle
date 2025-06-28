@@ -41,6 +41,10 @@ sonarqube {
     property "sonar.host.url", "https://sonarcloud.io"
     property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml"
     property "sonar.coverage.exclusions", "acceptance-tests/**/*"
+    // Exclude OptionalUsedAsFieldOrParameterType rule - common pattern in Besu codebase
+    property "sonar.issue.ignore.multicriteria", "e1"
+    property "sonar.issue.ignore.multicriteria.e1.ruleKey", "java:S3553"
+    property "sonar.issue.ignore.multicriteria.e1.resourceKey", "**/*.java"
   }
 }
 

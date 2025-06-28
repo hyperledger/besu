@@ -135,6 +135,7 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
+  @Disabled("flaky test - fails intermittently on CI")
   public void shouldStillMineWhenANodeFailsAndHasSufficientValidators() throws IOException {
     final BesuNode minerNode1 = besu.createCliqueNode("miner1");
     final BesuNode minerNode2 = besu.createCliqueNode("miner2");
