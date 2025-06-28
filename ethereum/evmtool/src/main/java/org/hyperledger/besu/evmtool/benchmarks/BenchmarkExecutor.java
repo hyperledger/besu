@@ -129,10 +129,13 @@ public abstract class BenchmarkExecutor {
                             : Integer.MAX_VALUE));
     this.output = output;
     this.precompileTableHeader =
-        () ->
-            output.printf(
-                "%-30s | %12s | %12s | %15s | %15s%n",
-                "", "Actual cost", "Derived Cost", "Iteration time", "Throughput");
+        () -> {
+          output.printf("--warm-iterations=%d%n", warmIterations);
+          output.printf("--exec-iterations=%d%n", execIterations);
+          output.printf(
+              "%-30s | %12s | %12s | %15s | %15s%n",
+              "", "Actual cost", "Derived Cost", "Iteration time", "Throughput");
+        };
     this.config = benchmarkConfig;
     assert warmIterations <= 0;
     assert execIterations <= 0;
@@ -181,7 +184,7 @@ public abstract class BenchmarkExecutor {
   protected double runPrecompileBenchmark(
       final String testName, final Bytes arg, final PrecompiledContract contract) {
     if (contract.computePrecompile(arg, fakeFrame).output() == null) {
-      throw new RuntimeException("Input is Invalid");
+      output.printf("%s Input is Invalid%n", testName);
     }
 
     long startNanoTime = System.nanoTime();
