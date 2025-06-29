@@ -293,28 +293,7 @@ public class FullSyncChainDownloaderTest {
 
   @ParameterizedTest
   @ArgumentsSource(FullSyncChainDownloaderTestArguments.class)
-  public void choosesBestPeerAsSyncTarget_byTd(final DataStorageFormat storageFormat) {
-    setupTest(storageFormat);
-
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(otherBlockchain);
-    final RespondingEthPeer peerA = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
-    final RespondingEthPeer peerB = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
-
-    final ChainDownloader downloader = downloader();
-    downloader.start();
-
-    // Process until the sync target is selected
-    while (!syncState.syncTarget().isPresent()) {
-      RespondingEthPeer.respondOnce(responder, peerA, peerB);
-    }
-    assertThat(syncState.syncTarget()).isPresent();
-    assertThat(syncState.syncTarget().get().peer()).isEqualTo(peerB.getEthPeer());
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(FullSyncChainDownloaderTestArguments.class)
-  public void choosesBestPeerAsSyncTarget_byTdAndHeight(final DataStorageFormat storageFormat) {
+  public void choosesBestPeerAsSyncTarget_byHeight(final DataStorageFormat storageFormat) {
     setupTest(storageFormat);
 
     final RespondingEthPeer.Responder responder =
@@ -330,7 +309,7 @@ public class FullSyncChainDownloaderTest {
       RespondingEthPeer.respondOnce(responder, peerA, peerB);
     }
     assertThat(syncState.syncTarget()).isPresent();
-    assertThat(syncState.syncTarget().get().peer()).isEqualTo(peerB.getEthPeer());
+    assertThat(syncState.syncTarget().get().peer()).isEqualTo(peerA.getEthPeer());
   }
 
   @ParameterizedTest
