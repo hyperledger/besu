@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.NavigableMap;
@@ -46,8 +48,9 @@ public class BonsaiAccount extends PathBasedAccount {
       final Wei balance,
       final Hash storageRoot,
       final Hash codeHash,
-      final boolean mutable) {
-    super(context, address, addressHash, nonce, balance, codeHash, mutable);
+      final boolean mutable,
+      final CodeCache codeCache) {
+    super(context, address, addressHash, nonce, balance, codeHash, mutable, codeCache);
     this.storageRoot = storageRoot;
   }
 
@@ -55,7 +58,8 @@ public class BonsaiAccount extends PathBasedAccount {
       final PathBasedWorldView context,
       final Address address,
       final AccountValue stateTrieAccount,
-      final boolean mutable) {
+      final boolean mutable,
+      final CodeCache codeCache) {
     super(
         context,
         address,
@@ -63,7 +67,8 @@ public class BonsaiAccount extends PathBasedAccount {
         stateTrieAccount.getNonce(),
         stateTrieAccount.getBalance(),
         stateTrieAccount.getCodeHash(),
-        mutable);
+        mutable,
+        codeCache);
     this.storageRoot = stateTrieAccount.getStorageRoot();
   }
 
@@ -81,13 +86,16 @@ public class BonsaiAccount extends PathBasedAccount {
         toCopy.balance,
         toCopy.codeHash,
         toCopy.code,
-        mutable);
+        mutable,
+        toCopy.codeCache);
     this.storageRoot = toCopy.storageRoot;
     updatedStorage.putAll(toCopy.updatedStorage);
   }
 
   public BonsaiAccount(
-      final PathBasedWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
+      final PathBasedWorldView context,
+      final UpdateTrackingAccount<BonsaiAccount> tracked,
+      final CodeCache codeCache) {
     super(
         context,
         tracked.getAddress(),
@@ -95,8 +103,9 @@ public class BonsaiAccount extends PathBasedAccount {
         tracked.getNonce(),
         tracked.getBalance(),
         tracked.getCodeHash(),
-        tracked.getCode(),
-        true);
+        new CodeV0(tracked.getCode()),
+        true,
+        codeCache);
     this.storageRoot = Hash.EMPTY_TRIE_HASH;
     updatedStorage.putAll(tracked.getUpdatedStorage());
   }
@@ -105,7 +114,8 @@ public class BonsaiAccount extends PathBasedAccount {
       final PathBasedWorldView context,
       final Address address,
       final Bytes encoded,
-      final boolean mutable)
+      final boolean mutable,
+      final CodeCache codeCache)
       throws RLPException {
     final RLPInput in = RLP.input(encoded);
     in.enterList();
@@ -118,7 +128,15 @@ public class BonsaiAccount extends PathBasedAccount {
     in.leaveList();
 
     return new BonsaiAccount(
-        context, address, address.addressHash(), nonce, balance, storageRoot, codeHash, mutable);
+        context,
+        address,
+        address.addressHash(),
+        nonce,
+        balance,
+        storageRoot,
+        codeHash,
+        mutable,
+        codeCache);
   }
 
   @Override

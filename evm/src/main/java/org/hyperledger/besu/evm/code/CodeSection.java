@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.code;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
 //// java17 convert to record
 
@@ -22,7 +23,7 @@ import java.util.Objects;
 public final class CodeSection {
 
   /** The length. */
-  final int length;
+  final Supplier<Integer> lengthSupplier;
 
   /** The Inputs. */
   final int inputs;
@@ -42,19 +43,19 @@ public final class CodeSection {
   /**
    * Instantiates a new Code section.
    *
-   * @param length the length
+   * @param lengthSupplier the length supplier
    * @param inputs the inputs
    * @param outputs the outputs
    * @param maxStackHeight the max stack height
    * @param entryPoint the entry point
    */
   public CodeSection(
-      final int length,
+      final Supplier<Integer> lengthSupplier,
       final int inputs,
       final int outputs,
       final int maxStackHeight,
       final int entryPoint) {
-    this.length = length;
+    this.lengthSupplier = lengthSupplier;
     this.inputs = inputs;
     if (outputs == 0x80) {
       this.outputs = 0;
@@ -73,7 +74,7 @@ public final class CodeSection {
    * @return the length
    */
   public int getLength() {
-    return length;
+    return lengthSupplier.get();
   }
 
   /**
@@ -126,7 +127,7 @@ public final class CodeSection {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     CodeSection that = (CodeSection) o;
-    return length == that.length
+    return lengthSupplier == that.lengthSupplier
         && inputs == that.inputs
         && outputs == that.outputs
         && maxStackHeight == that.maxStackHeight;
@@ -134,6 +135,6 @@ public final class CodeSection {
 
   @Override
   public int hashCode() {
-    return Objects.hash(length, inputs, outputs, maxStackHeight);
+    return Objects.hash(lengthSupplier, inputs, outputs, maxStackHeight);
   }
 }

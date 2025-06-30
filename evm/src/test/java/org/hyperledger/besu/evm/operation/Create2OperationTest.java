@@ -147,7 +147,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(sender))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(evm.getCodeUncached(codeBytes))
+            .code(evm.wrapCode(codeBytes))
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
             .blockHashLookup((__, ___) -> Hash.ZERO)
@@ -181,7 +181,7 @@ public class Create2OperationTest {
     setUp(sender, salt, code);
     final Address targetContractAddress =
         operation.generateTargetContractAddress(
-            messageFrame, evm.getCodeUncached(Bytes.fromHexString(code)));
+            messageFrame, evm.wrapCode(Bytes.fromHexString(code)));
     assertThat(targetContractAddress).isEqualTo(Address.fromHexString(expectedAddress));
   }
 
@@ -259,7 +259,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(evm.getCodeUncached(SIMPLE_CREATE))
+            .code(evm.wrapCode(SIMPLE_CREATE))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup((__, ___) -> Hash.ZERO)
@@ -289,7 +289,7 @@ public class Create2OperationTest {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
 
-    Code eofCode = evm.getCodeUncached(SIMPLE_EOF);
+    Code eofCode = evm.wrapCode(SIMPLE_EOF);
     assertThat(eofCode.isValid()).isTrue();
 
     final MessageFrame messageFrame =
