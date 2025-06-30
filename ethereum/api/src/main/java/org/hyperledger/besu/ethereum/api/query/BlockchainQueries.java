@@ -294,7 +294,7 @@ public class BlockchainQueries {
     if (outsideBlockchainRange(blockNumber)) {
       return Optional.empty();
     }
-    return blockchain.getBlockHashByNumber(blockNumber).map(this::getTransactionCount);
+    return blockchain.getBlockHashByNumber(blockNumber).flatMap(this::getTransactionCount);
   }
 
   /**
@@ -303,11 +303,8 @@ public class BlockchainQueries {
    * @param blockHeaderHash The hash of the block being queried.
    * @return The number of transactions contained in the referenced block.
    */
-  public Integer getTransactionCount(final Hash blockHeaderHash) {
-    return blockchain
-        .getBlockBody(blockHeaderHash)
-        .map(body -> body.getTransactions().size())
-        .orElse(-1);
+  public Optional<Integer> getTransactionCount(final Hash blockHeaderHash) {
+    return blockchain.getBlockBody(blockHeaderHash).map(body -> body.getTransactions().size());
   }
 
   /**
