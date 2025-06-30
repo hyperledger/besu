@@ -42,6 +42,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String QBFT_CONFIG_KEY = "qbft";
+  private static final String QBFT_PLUGIN_CONFIG_KEY = "qbftPlugin";
   private static final String CLIQUE_CONFIG_KEY = "clique";
   private static final String EC_CURVE_CONFIG_KEY = "eccurve";
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
@@ -152,6 +153,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isQbft() {
     return configRoot.has(QBFT_CONFIG_KEY);
+  }
+
+  @Override
+  public boolean isQbftPlugin() {
+    return configRoot.has(QBFT_PLUGIN_CONFIG_KEY);
   }
 
   @Override

@@ -26,9 +26,9 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 
 /** A P2P connection to another node. */
-public interface PeerConnection {
+public interface PeerConnection extends org.hyperledger.besu.plugin.data.PeerConnection {
 
-  /**
+  /**s
    * Send given data to the connected node.
    *
    * @param message Data to send

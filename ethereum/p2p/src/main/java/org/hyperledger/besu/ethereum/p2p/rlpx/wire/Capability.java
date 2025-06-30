@@ -30,7 +30,7 @@ import org.owasp.encoder.Encode;
  * @see <a href= "https://github.com/ethereum/devp2p/blob/master/devp2p.md">Capability wire
  *     format</a>
  */
-public class Capability {
+public class Capability implements org.hyperledger.besu.plugin.data.Capability {
   private final String name;
   private final int version;
 

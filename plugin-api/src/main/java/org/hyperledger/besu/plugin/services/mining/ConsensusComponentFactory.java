@@ -14,18 +14,23 @@
  */
 package org.hyperledger.besu.plugin.services.mining;
 
-import org.hyperledger.besu.plugin.services.BesuService;
+import org.hyperledger.besu.plugin.data.PluginConsensusContext;
+import org.hyperledger.besu.plugin.data.PluginProtocolManager;
+import org.hyperledger.besu.plugin.data.PluginProtocolSchedule;
+import org.hyperledger.besu.plugin.data.PluginSubProtocol;
 
-/** The MiningService interface provides methods to start and stop the mining process. */
-public interface MiningService extends BesuService {
+public interface ConsensusComponentFactory {
 
-  /** Starts the mining process. */
-  void start();
 
-  /** Stops the mining process. */
-  void stop();
+  void prepForBuild();
 
-  void setConsensusComponentFactory(ConsensusComponentFactory consensusComponentFactory);
+  void createAdditionalJsonRpcMethods();
 
-  ConsensusComponentFactory getConsensusComponentFactory();
+  PluginProtocolManager createProtocolManager();
+
+  PluginSubProtocol createSubProtocol();
+
+  PluginProtocolSchedule createProtocolSchedule();
+
+  PluginConsensusContext createConsensusContext();
 }

@@ -1694,6 +1694,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     BesuControllerBuilder besuControllerBuilder =
         controllerBuilder
             .fromEthNetworkConfig(updateNetworkConfig(network), getDefaultSyncModeIfNotSet())
+            .consensusComponentFactory(besuPluginContext.getService(MiningService.class).get().getConsensusComponentFactory())
             .synchronizerConfiguration(buildSyncConfig())
             .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
             .networkConfiguration(unstableNetworkingOptions.toDomainObject())

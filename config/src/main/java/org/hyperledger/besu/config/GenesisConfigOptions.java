@@ -59,6 +59,13 @@ public interface GenesisConfigOptions {
   boolean isQbft();
 
   /**
+   * Is qbftPlugin boolean.
+   *
+   * @return the boolean
+   */
+  boolean isQbftPlugin();
+
+  /**
    * Is clique boolean.
    *
    * @return the boolean

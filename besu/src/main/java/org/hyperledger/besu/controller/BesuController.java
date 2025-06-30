@@ -45,6 +45,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.mining.ConsensusComponentFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -349,6 +351,8 @@ public class BesuController implements java.io.Closeable {
             "IBFT1 (legacy) is no longer supported. Consider using IBFT2 or QBFT.");
       } else if (configOptions.isQbft()) {
         builder = new QbftBesuControllerBuilder();
+      } else if (configOptions.isQbftPlugin()) {
+        builder = new PluggableConsensusBesuControllerBuilder();
       } else if (configOptions.isClique()) {
         builder = new CliqueBesuControllerBuilder();
       } else {

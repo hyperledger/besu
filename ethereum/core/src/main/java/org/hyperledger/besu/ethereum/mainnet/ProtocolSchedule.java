@@ -19,13 +19,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.plugin.data.PluginProtocolSchedule;
 
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public interface ProtocolSchedule {
+public interface ProtocolSchedule  {
 
   ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader);
 

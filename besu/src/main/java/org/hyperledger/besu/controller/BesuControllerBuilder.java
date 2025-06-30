@@ -101,6 +101,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.mining.ConsensusComponentFactory;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -217,6 +218,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** When enabled, round changes on f+1 RC messages from higher rounds */
   protected boolean isEarlyRoundChangeEnabled = false;
 
+  protected ConsensusComponentFactory consensusComponentFactory;
+
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
 
@@ -251,6 +254,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   public BesuControllerBuilder genesisConfig(final GenesisConfig genesisConfig) {
     this.genesisConfig = genesisConfig;
     this.genesisConfigOptions = genesisConfig.getConfigOptions();
+    return this;
+  }
+
+  public BesuControllerBuilder consensusComponentFactory(final ConsensusComponentFactory consensusComponentFactory) {
+    this.consensusComponentFactory = consensusComponentFactory;
     return this;
   }
 

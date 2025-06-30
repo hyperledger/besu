@@ -15,6 +15,7 @@
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.plugin.services.mining.ConsensusComponentFactory;
 import org.hyperledger.besu.plugin.services.mining.MiningService;
 
 /**
@@ -24,6 +25,7 @@ import org.hyperledger.besu.plugin.services.mining.MiningService;
 public class MiningServiceImpl implements MiningService {
 
   private final MiningCoordinator miningCoordinator;
+  private ConsensusComponentFactory consensusComponentFactory;
 
   /**
    * Constructs a new {@code MiningServiceImpl} with the specified {@link MiningCoordinator}.
@@ -45,5 +47,14 @@ public class MiningServiceImpl implements MiningService {
   @Override
   public void start() {
     miningCoordinator.start();
+  }
+
+  public ConsensusComponentFactory getConsensusComponentFactory() {
+    return consensusComponentFactory;
+  }
+
+  @Override
+  public void setConsensusComponentFactory(ConsensusComponentFactory consensusComponentFactory) {
+    this.consensusComponentFactory = consensusComponentFactory;
   }
 }
