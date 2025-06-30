@@ -136,12 +136,12 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
                 try {
                   storageTrie.getPath(location);
                 } catch (Exception eA) {
-                  LOG.warn("Invalid slot found for account {} at location {}", address, location);
+                  LOG.warn("Invalid slot found for account {} at location {}", address, location, eA);
                   // ignore
                 }
               });
     } catch (Exception eA) {
-      LOG.warn("Invalid node for account {} at location {}", address, location);
+      LOG.warn("Invalid node for account {} at location {}", address, location, eA);
       // ignore
     }
     keysToDelete.forEach(updater::removeAccountStateTrieNode);
