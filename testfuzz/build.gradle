@@ -18,7 +18,7 @@ apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
 jar {
-  archiveBaseName = 'besu-test-fuzz'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -31,7 +31,7 @@ jar {
 }
 
 dependencies {
-  implementation project(':besu')
+  implementation project(':app')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:referencetests')

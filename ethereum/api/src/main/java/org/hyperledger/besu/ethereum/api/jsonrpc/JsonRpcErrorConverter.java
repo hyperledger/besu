@@ -34,6 +34,8 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
       case EXCEEDS_BLOCK_GAS_LIMIT:
         return RpcErrorType.EXCEEDS_BLOCK_GAS_LIMIT;
+      case EXCEEDS_TRANSACTION_GAS_LIMIT:
+        return RpcErrorType.EXCEEDS_TRANSACTION_GAS_LIMIT;
       case WRONG_CHAIN_ID:
         return RpcErrorType.WRONG_CHAIN_ID;
       case REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED:
@@ -64,8 +66,10 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.TOTAL_BLOB_GAS_TOO_HIGH;
       case TX_POOL_DISABLED:
         return RpcErrorType.TX_POOL_DISABLED;
-      case PLUGIN_TX_POOL_VALIDATOR:
+      case PLUGIN_TX_VALIDATOR:
         return RpcErrorType.PLUGIN_TX_VALIDATOR;
+      case PLUGIN_TX_POOL_VALIDATOR:
+        return RpcErrorType.PLUGIN_TX_POOL_VALIDATOR;
       case INVALID_BLOBS:
         return RpcErrorType.INVALID_BLOBS;
       case BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE:

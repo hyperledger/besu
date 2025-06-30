@@ -101,8 +101,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith({MockitoExtension.class, TrustedSetupClassLoaderExtension.class})
-abstract class AbstractBlockCreatorTest {
+@ExtendWith({MockitoExtension.class})
+class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final SECPPrivateKey PRIVATE_KEY1 =

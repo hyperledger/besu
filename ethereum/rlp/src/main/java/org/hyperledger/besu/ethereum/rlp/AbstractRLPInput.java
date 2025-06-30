@@ -43,6 +43,7 @@ abstract class AbstractRLPInput implements RLPInput {
   private RLPDecodingHelpers.Kind currentKind; // Kind of the item.
   private long currentPayloadOffset; // Offset to the beginning of the current item payload.
   private int currentPayloadSize; // Size of the current item payload.
+  private int currentRlpSize; // Size of the current item.
 
   // Information regarding opened list. The depth is how many list deep we are, and endOfListOffset
   // holds the offset in value at which each list ends (indexed by depth). Allows to know if we're
@@ -139,6 +140,7 @@ abstract class AbstractRLPInput implements RLPInput {
       currentKind = elementMetadata.kind;
       currentPayloadOffset = elementMetadata.payloadStart;
       currentPayloadSize = elementMetadata.payloadSize;
+      currentRlpSize = Math.toIntExact(currentPayloadOffset - currentItem) + currentPayloadSize;
     } catch (final RLPException exception) {
       final String message =
           String.format(exception.getMessage() + errorMessageSuffix, getErrorMessageSuffixParams());
@@ -560,6 +562,11 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   @Override
+  public int currentSize() {
+    return currentRlpSize;
+  }
+
+  @Override
   public int nextOffset() {
     return Math.toIntExact(currentPayloadOffset);
   }
@@ -594,6 +601,33 @@ abstract class AbstractRLPInput implements RLPInput {
     final Bytes res = scratch.slice(0, currentPayloadSize + headerSize);
 
     setTo(nextItem());
+    return res;
+  }
+
+  @Override
+  public Bytes currentListAsBytesNoCopy(final boolean moveToNextItem) {
+    if (currentItem >= size) {
+      throw error("Cannot read list, input is fully consumed");
+    }
+    if (currentKind != RLPDecodingHelpers.Kind.SHORT_LIST
+        && currentKind != RLPDecodingHelpers.Kind.LONG_LIST) {
+      throw error("Cannot read list, current item is not a list, it is: " + currentKind);
+    }
+
+    int takeNumPrevBytes;
+    if (currentPayloadSize <= 55) {
+      // list header is a single byte
+      takeNumPrevBytes = 1;
+    } else {
+      takeNumPrevBytes = RLPEncodingHelpers.sizeLength(currentPayloadSize) + 1;
+    }
+    Bytes res =
+        inputSlice(
+            (int) currentPayloadOffset - takeNumPrevBytes, currentPayloadSize + takeNumPrevBytes);
+
+    if (moveToNextItem) {
+      setTo(nextItem());
+    }
     return res;
   }
 }

@@ -23,10 +23,11 @@ import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.MainnetBlockValidator;
+import org.hyperledger.besu.ethereum.MainnetBlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
+import org.hyperledger.besu.ethereum.mainnet.transactionpool.OsakaTransactionPoolPreProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -167,7 +168,7 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
                 : MainnetBlockProcessor::new)
-        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
+        .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
@@ -181,10 +182,6 @@ public abstract class MainnetProtocolSpecs {
       return PoWHasher.UNSUPPORTED;
     }
     return powAlgorithm == PowAlgorithm.ETHASH ? PoWHasher.ETHASH_LIGHT : PoWHasher.UNSUPPORTED;
-  }
-
-  public static BlockValidatorBuilder blockValidatorBuilder() {
-    return MainnetBlockValidator::new;
   }
 
   public static ProtocolSpecBuilder homesteadDefinition(
@@ -695,7 +692,8 @@ public abstract class MainnetProtocolSpecs {
                     (BaseFeeMarket) feeMarket,
                     gasCalculator,
                     blobSchedule.getMax(),
-                    blobSchedule.getTarget()))
+                    blobSchedule.getTarget(),
+                    blobSchedule.getMaxPerTransaction()))
         // EVM changes to support EIP-1153: TSTORE and EIP-5656: MCOPY
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -733,6 +731,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559,
                         TransactionType.BLOB),
+                    Set.of(BlobType.KZG_PROOF),
                     evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::blobAwareBlockHeaderValidator)
@@ -811,6 +810,7 @@ public abstract class MainnetProtocolSpecs {
                             TransactionType.EIP1559,
                             TransactionType.BLOB,
                             TransactionType.DELEGATE_CODE),
+                        Set.of(BlobType.KZG_PROOF),
                         evm.getMaxInitcodeSize()))
             // CodeDelegationProcessor
             .transactionProcessorBuilder(
@@ -860,6 +860,8 @@ public abstract class MainnetProtocolSpecs {
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
+    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+
     return pragueDefinition(
             chainId,
             enableRevertReason,
@@ -869,9 +871,38 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled,
             metricsSystem)
         .gasCalculator(OsakaGasCalculator::new)
+        // tx gas limit cap EIP-7825
+        .gasLimitCalculatorBuilder(
+            (feeMarket, gasCalculator, blobSchedule) ->
+                new OsakaTargetingGasLimitCalculator(
+                    londonForkBlockNumber,
+                    (BaseFeeMarket) feeMarket,
+                    gasCalculator,
+                    blobSchedule.getMax(),
+                    blobSchedule.getTarget(),
+                    blobSchedule.getMaxPerTransaction()))
         .evmBuilder(
             (gasCalculator, __) ->
                 MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .transactionValidatorFactoryBuilder(
+            (evm, gasLimitCalculator, feeMarket) ->
+                new TransactionValidatorFactory(
+                    evm.getGasCalculator(),
+                    gasLimitCalculator,
+                    feeMarket,
+                    true,
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559,
+                        TransactionType.BLOB,
+                        TransactionType.DELEGATE_CODE),
+                    Set.of(BlobType.KZG_CELL_PROOFS),
+                    evm.getMaxInitcodeSize()))
+        .transactionPoolPreProcessor(new OsakaTransactionPoolPreProcessor())
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
+        .blockValidatorBuilder(MainnetBlockValidatorBuilder::osaka)
         .name("Osaka");
   }
 
