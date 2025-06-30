@@ -368,9 +368,9 @@ public class BlockAccessList {
         // transaction-level
         final List<StorageChange> changes =
             slotWrites.computeIfAbsent(slot, __ -> new ArrayList<>());
-        changes.removeIf(c -> c.getTxIndex() == txIndex);
-        slotReads.removeIf(r -> r.equals(slot));
         if (changes.isEmpty() || !changes.getLast().getNewValue().equals(value)) {
+          changes.removeIf(c -> c.getTxIndex() == txIndex);
+          slotReads.removeIf(r -> r.equals(slot));
           changes.add(new StorageChange(txIndex, value));
         }
       }
@@ -384,8 +384,8 @@ public class BlockAccessList {
       void addBalanceChange(final int txIndex, final Bytes postBalance) {
         // TODO: This is a temporary workaround for having to use block-level accumulator instead of
         // transaction-level
-        balances.removeIf(b -> b.getTxIndex() == txIndex);
         if (balances.isEmpty() || !balances.getLast().getPostBalance().equals(postBalance)) {
+          balances.removeIf(b -> b.getTxIndex() == txIndex);
           balances.add(new BalanceChange(txIndex, postBalance));
         }
       }
@@ -393,8 +393,8 @@ public class BlockAccessList {
       void addNonceChange(final int txIndex, final long newNonce) {
         // TODO: This is a temporary workaround for having to use block-level accumulator instead of
         // transaction-level
-        nonces.removeIf(n -> n.getTxIndex() == txIndex);
         if (nonces.isEmpty() || nonces.getLast().getNewNonce() != newNonce) {
+          nonces.removeIf(n -> n.getTxIndex() == txIndex);
           nonces.add(new NonceChange(txIndex, newNonce));
         }
       }
@@ -402,8 +402,8 @@ public class BlockAccessList {
       void addCodeChange(final int txIndex, final Bytes code) {
         // TODO: This is a temporary workaround for having to use block-level accumulator instead of
         // transaction-level
-        codes.removeIf(c -> c.getTxIndex() == txIndex);
         if (codes.isEmpty() || !codes.getLast().getNewCode().equals(code)) {
+          codes.removeIf(c -> c.getTxIndex() == txIndex);
           codes.add(new CodeChange(txIndex, code));
         }
       }
@@ -521,13 +521,9 @@ public class BlockAccessList {
                   this.codeChange(address, txIndex, postCode);
                 }
 
-                if (isContractCreation
-                    && prior != null
-                    && updated != null
-                    && prior.getCode().isEmpty()
-                    && !updated.getCode().isEmpty()) {
+                if (prior != null && !prior.getCode().isEmpty()) {
                   final long priorNonce = prior.getNonce();
-                  final long postNonce = updated.getNonce();
+                  final long postNonce = updated != null ? updated.getNonce() : 0L;
                   if (postNonce > priorNonce) {
                     this.nonceChange(address, txIndex, postNonce);
                   }
