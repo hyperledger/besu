@@ -185,8 +185,9 @@ public class BonsaiAccount extends PathBasedAccount {
       out.writeIntScalar(maybeCodeSize.get());
     } else {
       if (code != null) {
-        maybeCodeSize = Optional.of(code.size());
-        out.writeIntScalar(maybeCodeSize.get());
+        int codeSize = code.size();
+        out.writeIntScalar(codeSize);
+        maybeCodeSize = Optional.of(codeSize);
       }
     }
     out.endList();
