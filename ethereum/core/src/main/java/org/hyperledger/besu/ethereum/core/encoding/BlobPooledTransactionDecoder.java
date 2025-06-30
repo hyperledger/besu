@@ -14,13 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.kzg.Blob;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Class responsible for decoding blob transactions from the transaction pool. Blob transactions
@@ -40,14 +44,25 @@ public class BlobPooledTransactionDecoder {
    * @param input the RLP input to decode
    * @return the decoded transaction
    */
-  public static Transaction decode(final RLPInput input) {
-    input.enterList();
+  public static Transaction decode(final Bytes input) {
+    final RLPInput txRlp = RLP.input(input.slice(1)); // Skip the transaction type byte
+    txRlp.enterList();
+    int versionId = 0;
     final Transaction.Builder builder = Transaction.builder();
-    BlobTransactionDecoder.readTransactionPayloadInner(builder, input);
-    List<Blob> blobs = input.readList(Blob::readFrom);
-    List<KZGCommitment> commitments = input.readList(KZGCommitment::readFrom);
-    List<KZGProof> proofs = input.readList(KZGProof::readFrom);
-    input.leaveList();
-    return builder.kzgBlobs(commitments, blobs, proofs).build();
+    BlobTransactionDecoder.readTransactionPayloadInner(builder, txRlp);
+
+    boolean hasVersionId = !txRlp.nextIsList();
+    if (hasVersionId) {
+      versionId = txRlp.readIntScalar();
+    }
+    List<Blob> blobs = txRlp.readList(Blob::readFrom);
+    List<KZGCommitment> commitments = txRlp.readList(KZGCommitment::readFrom);
+    List<KZGProof> proofs = txRlp.readList(KZGProof::readFrom);
+    txRlp.leaveList();
+
+    return builder
+        .kzgBlobs(BlobType.of(versionId), commitments, blobs, proofs)
+        .sizeForAnnouncement(input.size())
+        .build();
   }
 }

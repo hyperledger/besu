@@ -26,9 +26,9 @@ import org.hyperledger.besu.nativelib.arithmetic.LibArithmetic;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.slf4j.Logger;
@@ -42,7 +42,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
       LoggerFactory.getLogger(BigIntegerModularExponentiationPrecompiledContract.class);
 
   /** Use native Arithmetic libraries. */
-  static boolean useNative;
+  private static boolean useNative;
 
   /** The constant BASE_OFFSET. */
   public static final int BASE_OFFSET = 96;
@@ -52,13 +52,17 @@ public class BigIntegerModularExponentiationPrecompiledContract
   private static final int EXPONENT_LENGTH_OFFSET = 32;
   private static final int MODULUS_LENGTH_OFFSET = 64;
 
+  private final long upperBound;
+
   /**
    * Instantiates a new BigInteger modular exponentiation precompiled contract.
    *
    * @param gasCalculator the gas calculator
    */
-  public BigIntegerModularExponentiationPrecompiledContract(final GasCalculator gasCalculator) {
+  BigIntegerModularExponentiationPrecompiledContract(
+      final GasCalculator gasCalculator, final long upperBound) {
     super("BigIntModExp", gasCalculator);
+    this.upperBound = upperBound;
   }
 
   /** Disable native Arithmetic libraries. */
@@ -95,28 +99,50 @@ public class BigIntegerModularExponentiationPrecompiledContract
     return gasCalculator().modExpGasCost(input);
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
+    // https://eips.ethereum.org/EIPS/eip-7823
+    // We introduce an upper bound to the inputs of the precompile,
+    // each of the length inputs (length_of_BASE, length_of_EXPONENT and length_of_MODULUS)
+    // MUST be less than or equal to 1024 bytes
+    final long length_of_BASE = baseLength(input);
+    final long length_of_EXPONENT = exponentLength(input);
+    final long length_of_MODULUS = modulusLength(input);
+    if (length_of_BASE > upperBound
+        || length_of_EXPONENT > upperBound
+        || length_of_MODULUS > upperBound) {
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+    }
+
+    // OPTIMIZATION: overwrite native setting for this case
+    if (LibArithmetic.ENABLED) {
+      final int baseOffset = clampedToInt(BASE_OFFSET);
+      final int baseLength = clampedToInt(length_of_BASE);
+      final int modulusOffset = clampedToInt(BASE_OFFSET + length_of_BASE + length_of_EXPONENT);
+      final int modulusLength = clampedToInt(length_of_MODULUS);
+      if ((extractLastByte(input, baseOffset, baseLength) & 1) != 1
+          && (extractLastByte(input, modulusOffset, modulusLength) & 1) != 1) {
+        return computeNative(input, modulusLength);
+      }
+    }
+
     if (useNative) {
-      return computeNative(input);
+      final int modulusLength = clampedToInt(length_of_MODULUS);
+      return computeNative(input, modulusLength);
     } else {
-      return computeDefault(input);
+      final int baseLength = clampedToInt(length_of_BASE);
+      final int exponentLength = clampedToInt(length_of_EXPONENT);
+      final int modulusLength = clampedToInt(length_of_MODULUS);
+      return computeDefault(input, baseLength, exponentLength, modulusLength);
     }
   }
 
-  /**
-   * Compute default precompile contract.
-   *
-   * @param input the input
-   * @return the precompile contract result
-   */
-  @Nonnull
-  public PrecompileContractResult computeDefault(final Bytes input) {
-    final int baseLength = clampedToInt(baseLength(input));
-    final int exponentLength = clampedToInt(exponentLength(input));
-    final int modulusLength = clampedToInt(modulusLength(input));
+  @NotNull
+  private PrecompileContractResult computeDefault(
+      final Bytes input, final int baseLength, final int exponentLength, final int modulusLength) {
     // If baseLength and modulusLength are zero
     // we could have a massively overflowing exp because it wouldn't have been filtered out at the
     // gas cost phase
@@ -211,6 +237,16 @@ public class BigIntegerModularExponentiationPrecompiledContract
     }
   }
 
+  private static byte extractLastByte(final Bytes input, final int offset, final int length) {
+    if (offset >= input.size() || length == 0) {
+      return 0;
+    } else if (offset + length <= input.size()) {
+      return input.get(offset + length - 1);
+    }
+    Bytes partial = input.slice(offset);
+    return partial.get(partial.size() - 1);
+  }
+
   /**
    * Extract parameter.
    *
@@ -241,14 +277,8 @@ public class BigIntegerModularExponentiationPrecompiledContract
     return clampedMultiply(n, n);
   }
 
-  /**
-   * Compute native precompile contract.
-   *
-   * @param input the input
-   * @return the precompile contract result
-   */
-  public PrecompileContractResult computeNative(final @Nonnull Bytes input) {
-    final int modulusLength = clampedToInt(modulusLength(input));
+  private PrecompileContractResult computeNative(
+      final @NotNull Bytes input, final int modulusLength) {
     final IntByReference o_len = new IntByReference(modulusLength);
 
     final byte[] result = new byte[modulusLength];

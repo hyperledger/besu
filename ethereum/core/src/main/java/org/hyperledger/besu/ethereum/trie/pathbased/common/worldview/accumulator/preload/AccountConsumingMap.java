@@ -18,9 +18,9 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
+import jakarta.validation.constraints.NotNull;
 
 public class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
 
@@ -33,7 +33,7 @@ public class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
   }
 
   @Override
-  public T put(@Nonnull final Address address, @Nonnull final T value) {
+  public T put(@NotNull final Address address, @NotNull final T value) {
     consumer.process(address, value);
     return accounts.put(address, value);
   }

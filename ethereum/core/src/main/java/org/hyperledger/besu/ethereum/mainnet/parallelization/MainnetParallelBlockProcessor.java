@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -89,7 +88,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final Optional<PreprocessingContext> preProcessingContext,
       final BlockProcessingContext blockProcessingContext,
       final WorldUpdater blockUpdater,
-      final Optional<PrivateMetadataUpdater> privateMetadataUpdater,
       final Wei blobGasPrice,
       final Address miningBeneficiary,
       final Transaction transaction,
@@ -119,7 +117,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           preProcessingContext,
           blockProcessingContext,
           blockUpdater,
-          privateMetadataUpdater,
           blobGasPrice,
           miningBeneficiary,
           transaction,
@@ -142,7 +139,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             blockchain,
             worldState,
             block,
-            Optional.empty(),
             new ParallelTransactionPreprocessing(transactionProcessor, executor));
 
     if (blockProcessingResult.isFailed()) {
