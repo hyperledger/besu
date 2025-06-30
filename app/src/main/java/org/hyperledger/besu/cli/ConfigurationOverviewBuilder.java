@@ -417,7 +417,7 @@ public class ConfigurationOverviewBuilder {
     }
 
     if (isSnapServerEnabled) {
-      lines.add("Experimental Snap Sync server enabled");
+      lines.add("Snap Sync server enabled");
     }
 
     if (isHighSpec) {
