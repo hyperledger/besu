@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,21 +16,28 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.Collections.emptyList;
 
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
 
-public class DownloadReceiptsStep extends AbstractDownloadReceiptsStep<Block, BlockWithReceipts> {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-  public DownloadReceiptsStep(
+public class DownloadSyncReceiptsStep
+    extends AbstractDownloadReceiptsStep<SyncBlock, SyncBlockWithReceipts> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DownloadSyncReceiptsStep.class);
+
+  public DownloadSyncReceiptsStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final SynchronizerConfiguration synchronizerConfiguration,
@@ -39,28 +46,36 @@ public class DownloadReceiptsStep extends AbstractDownloadReceiptsStep<Block, Bl
   }
 
   @Override
-  protected BlockHeader getBlockHeader(final Block block) {
-    return block.getHeader();
+  BlockHeader getBlockHeader(final SyncBlock syncBlock) {
+    return syncBlock.getHeader();
   }
 
   @Override
-  List<BlockWithReceipts> combineBlocksAndReceipts(
-      final List<Block> blocks, final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader) {
+  List<SyncBlockWithReceipts> combineBlocksAndReceipts(
+      final List<SyncBlock> blocks,
+      final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader) {
     return blocks.stream()
         .map(
             block -> {
               final List<TransactionReceipt> receipts =
                   receiptsByHeader.getOrDefault(block.getHeader(), emptyList());
-              if (block.getBody().getTransactions().size() != receipts.size()) {
+              if (block.getBody().getTransactionCount() != receipts.size()) {
+                final BytesValueRLPOutput headerRlpOutput = new BytesValueRLPOutput();
+                block.getHeader().writeTo(headerRlpOutput);
+                LOG.atTrace()
+                    .setMessage("Header RLP: {}")
+                    .addArgument(headerRlpOutput.encoded())
+                    .log();
+                LOG.atTrace().setMessage("Body: {}").addArgument(block.getBody().getRlp()).log();
                 throw new IllegalStateException(
                     "PeerTask response code was success, but incorrect number of receipts returned. Block hash: "
                         + block.getHeader().getHash()
                         + ", transactions: "
-                        + block.getBody().getTransactions().size()
+                        + block.getBody().getTransactionCount()
                         + ", receipts: "
                         + receipts.size());
               }
-              return new BlockWithReceipts(block, receipts);
+              return new SyncBlockWithReceipts(block, receipts);
             })
         .toList();
   }

@@ -11,6 +11,10 @@
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Stratum mining has been removed (part of PoW) [#8802](https://github.com/hyperledger/besu/pull/8802)
   - PoW RPCs removed: `eth_getWork`, `eth_submitWork`, `eth_getHashrate`, `eth_submitHashrate`, `eth_hashrate`
+- Introduce history expiry behaviour for mainnet [8875](https://github.com/hyperledger/besu/pull/8875)
+  - SNAP sync will now download only headers for pre-checkpoint (pre-merge) blocks
+  - `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` can be set to false to force SNAP sync to download pre-checkpoint (pre-merge) blocks
+  - `--history-expiry-prune` can be used to enable online pruning of pre-checkpoint (pre-merge) blocks as well as modifying database garbage collection parameters to free up disk space from the pruned blocks
 
 ### Upcoming Breaking Changes
 - `--Xbonsai-parallel-tx-processing-enabled` is deprecated, use `--bonsai-parallel-tx-processing-enabled` instead.
@@ -19,6 +23,8 @@
   - Proof of Work consensus (PoW)
   - Fast Sync
 - Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
+- `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated and will be removed in a future release. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+- `--Xhistory-expiry-prune` is deprecated and will be removed in a future release. Use `--history-expiry-prune` instead.
 
 ### Additions and Improvements
 - Introduce the `TransactionValidatorService` to allow plugins to add custom validation rules [#8793](https://github.com/hyperledger/besu/pull/8793)
@@ -28,7 +34,12 @@
 - Expose a method to get blob gas price from plugins [#8843](https://github.com/hyperledger/besu/pull/8843)
 - Experimental Bonsai Archive support [#7475](https://github.com/hyperledger/besu/pull/7475)
 - Use eth/69 by default [#8858](https://github.com/hyperledger/besu/pull/8858)
+- Performance: Remove redundant serialization of json params [#8847](https://github.com/hyperledger/besu/pull/8847)
 - `--snapsync-server-enabled` New option to enable serving snap sync data [#8512](https://github.com/hyperledger/besu/pull/8512)
+- Introduce history expiry behaviour [#8875](https://github.com/hyperledger/besu/pull/8875)
+  - SNAP sync will now download only headers for pre-checkpoint (pre-merge) blocks
+  - `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` can be set to false to force SNAP sync to download pre-checkpoint (pre-merge) blocks
+  - `--history-expiry-prune` can be used to enable online pruning of pre-checkpoint (pre-merge) blocks as well as modifying database garbage collection parameters to free up disk space from the pruned blocks
 
 #### Fusaka
 - EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
