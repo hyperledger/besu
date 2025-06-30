@@ -24,7 +24,6 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.CodeDelegation;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -53,7 +52,9 @@ import java.util.stream.IntStream;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.Bytes48;
+import org.web3j.crypto.BlobUtils;
 
 public class BaseTransactionPoolTest {
 
@@ -255,27 +256,46 @@ public class BaseTransactionPoolTest {
           .maxPriorityFeePerGas(Optional.of(maxPriorityFeePerGas));
       if (type.supportsBlob() && blobCount > 0) {
         tx.maxFeePerBlobGas(Optional.of(maxGasPrice));
-        final var versionHashes =
-            IntStream.range(0, blobCount)
-                .mapToObj(i -> new VersionedHash((byte) 1, Hash.ZERO))
-                .toList();
-        final var kgzCommitments =
-            IntStream.range(0, blobCount)
-                .mapToObj(i -> new KZGCommitment(Bytes48.random()))
-                .toList();
-        int totalKzgProofs =
-            blobType == BlobType.KZG_PROOF
-                ? blobCount
-                : blobCount * CKZG4844Helper.CELL_PROOFS_PER_BLOB;
-        final List<KZGProof> kzgProofs =
-            IntStream.range(0, totalKzgProofs)
-                .mapToObj(i -> new KZGProof(Bytes48.random()))
-                .toList();
         final var blobs =
-            IntStream.range(0, blobCount).mapToObj(i -> new Blob(Bytes.random(32 * 4096))).toList();
-        tx.versionedHashes(Optional.of(versionHashes));
+            IntStream.range(0, blobCount)
+                .mapToObj(i -> new org.web3j.crypto.Blob(Bytes.repeat((byte) i, 32 * 4096)))
+                .toList();
+
+        final var commitments =
+            IntStream.range(0, blobCount)
+                .mapToObj(i -> BlobUtils.getCommitment(blobs.get(i)))
+                .map(Bytes48::wrap)
+                .map(KZGCommitment::new)
+                .toList();
+
+        final var versionedHashes =
+            IntStream.range(0, blobCount)
+                .mapToObj(i -> BlobUtils.kzgToVersionedHash(commitments.get(i).getData()))
+                .map(Bytes32::wrap)
+                .map(VersionedHash::new)
+                .toList();
+
+        final var proofs =
+            IntStream.range(0, blobCount)
+                .mapToObj(i -> BlobUtils.getProof(blobs.get(i), commitments.get(i).getData()))
+                .map(Bytes48::wrap)
+                .map(KZGProof::new)
+                .toList();
+
+        final var blobsWithCommitmentsV0 =
+            new BlobsWithCommitments(
+                BlobType.KZG_PROOF,
+                commitments,
+                blobs.stream().map(org.web3j.crypto.Blob::getData).map(Blob::new).toList(),
+                proofs,
+                versionedHashes);
+
         final var blobsWithCommitments =
-            new BlobsWithCommitments(blobType, kgzCommitments, blobs, kzgProofs, versionHashes);
+            blobType == BlobType.KZG_PROOF
+                ? blobsWithCommitmentsV0
+                : CKZG4844Helper.convertToVersion1(blobsWithCommitmentsV0);
+
+        tx.versionedHashes(Optional.of(versionedHashes));
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
       } else if (type.supportsDelegateCode()) {
         tx.codeDelegations(codeDelegations);
