@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
@@ -46,7 +47,8 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final ServiceManager pluginContext,
       final EvmConfiguration evmConfiguration,
-      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
+      final Supplier<WorldStateHealer> worldStateHealerSupplier,
+      final CodeCache codeCache) {
     super(
         worldStateKeyValueStorage,
         blockchain,
@@ -54,7 +56,8 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
         bonsaiCachedMerkleTrieLoader,
         pluginContext,
         evmConfiguration,
-        worldStateHealerSupplier);
+        worldStateHealerSupplier,
+        codeCache);
   }
 
   @VisibleForTesting
@@ -65,7 +68,8 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       final Blockchain blockchain,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final EvmConfiguration evmConfiguration,
-      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
+      final Supplier<WorldStateHealer> worldStateHealerSupplier,
+      final CodeCache codeCache) {
     super(
         bonsaiCachedWorldStorageManager,
         trieLogManager,
@@ -73,7 +77,8 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
         blockchain,
         bonsaiCachedMerkleTrieLoader,
         evmConfiguration,
-        worldStateHealerSupplier);
+        worldStateHealerSupplier,
+        codeCache);
   }
 
   @Override

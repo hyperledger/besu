@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
@@ -29,12 +30,17 @@ import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 public class BonsaiWorldStateUpdateAccumulator
     extends PathBasedWorldStateUpdateAccumulator<BonsaiAccount> {
+  private final CodeCache codeCache;
+
   public BonsaiWorldStateUpdateAccumulator(
       final PathBasedWorldView world,
       final Consumer<PathBasedValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final CodeCache codeCache) {
     super(world, accountPreloader, storagePreloader, evmConfiguration);
+
+    this.codeCache = codeCache;
   }
 
   @Override
@@ -44,7 +50,8 @@ public class BonsaiWorldStateUpdateAccumulator
             wrappedWorldView(),
             getAccountPreloader(),
             getStoragePreloader(),
-            getEvmConfiguration());
+            getEvmConfiguration(),
+            codeCache);
     copy.cloneFromUpdater(this);
     return copy;
   }
@@ -66,7 +73,7 @@ public class BonsaiWorldStateUpdateAccumulator
       final Address address,
       final AccountValue stateTrieAccount,
       final boolean mutable) {
-    return new BonsaiAccount(context, address, stateTrieAccount, mutable);
+    return new BonsaiAccount(context, address, stateTrieAccount, mutable, codeCache);
   }
 
   @Override
@@ -80,18 +87,23 @@ public class BonsaiWorldStateUpdateAccumulator
       final Hash codeHash,
       final boolean mutable) {
     return new BonsaiAccount(
-        context, address, addressHash, nonce, balance, storageRoot, codeHash, mutable);
+        context, address, addressHash, nonce, balance, storageRoot, codeHash, mutable, codeCache);
   }
 
   @Override
   protected BonsaiAccount createAccount(
       final PathBasedWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
-    return new BonsaiAccount(context, tracked);
+    return new BonsaiAccount(context, tracked, codeCache);
   }
 
   @Override
   protected void assertCloseEnoughForDiffing(
       final BonsaiAccount source, final AccountValue account, final String context) {
     BonsaiAccount.assertCloseEnoughForDiffing(source, account, context);
+  }
+
+  @Override
+  public CodeCache codeCache() {
+    return codeCache;
   }
 }

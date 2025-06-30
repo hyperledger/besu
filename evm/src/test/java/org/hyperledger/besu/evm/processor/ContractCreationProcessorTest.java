@@ -141,7 +141,7 @@ class ContractCreationProcessorTest
             1,
             Collections.emptyList());
     final MessageFrame messageFrame =
-        new TestMessageFrameBuilder().code(evm.getCodeUncached(EOF_CREATE_CONTRACT)).build();
+        new TestMessageFrameBuilder().code(evm.wrapCode(EOF_CREATE_CONTRACT)).build();
     messageFrame.setOutputData(INNER_CONTRACT);
     messageFrame.setGasRemaining(10600L);
 
@@ -174,7 +174,7 @@ class ContractCreationProcessorTest
     final Bytes contractCode = Bytes.fromHexString("6030602001");
     final Bytes initCode = EOF_CREATE_CONTRACT;
     final MessageFrame messageFrame =
-        new TestMessageFrameBuilder().code(evm.getCodeForCreation(initCode)).build();
+        new TestMessageFrameBuilder().code(evm.wrapCodeForCreation(initCode)).build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(10600L);
 
