@@ -79,7 +79,7 @@ public class SynchronizerOptionsTest
                 .isSnapServerEnabled(Boolean.TRUE)
                 .isSnapSyncTransactionIndexingEnabled(Boolean.TRUE)
                 .build())
-        .snapSyncSavePreMergeHeadersOnlyEnabled(
+        .snapSyncSavePreCheckpointHeadersOnlyEnabled(
             SnapSyncConfiguration.DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED);
   }
 
