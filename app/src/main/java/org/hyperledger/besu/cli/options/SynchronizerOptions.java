@@ -332,11 +332,16 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SnapSyncConfiguration.DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
 
   @CommandLine.Option(
-      names = {"--Xsnapsync-synchronizer-pre-merge-headers-only-enabled", SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG},
+      names = {
+        "--Xsnapsync-synchronizer-pre-merge-headers-only-enabled",
+        SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG
+      },
       paramLabel = "<Boolean>",
       arity = "0..1",
       description =
-          "Enable snap sync downloader to save only headers (not block bodies) for blocks before the checkpoint. (default: ${DEFAULT-VALUE}) \"--Xsnapsync-synchronizer-pre-merge-headers-only-enabled\" is deprecated and will be removed in a future release. Use \"" + SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG + "\" instead.")
+          "Enable snap sync downloader to save only headers (not block bodies) for blocks before the checkpoint. (default: ${DEFAULT-VALUE}) \"--Xsnapsync-synchronizer-pre-merge-headers-only-enabled\" is deprecated and will be removed in a future release. Use \""
+              + SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG
+              + "\" instead.")
   private Boolean snapSyncSavePreCheckpointHeadersOnlyEnabled =
       DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
 
