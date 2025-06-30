@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
@@ -121,7 +120,6 @@ public class RespondingEthPeer {
       final EthProtocolManager ethProtocolManager,
       final Optional<SnapProtocolManager> snapProtocolManager,
       final Hash chainHeadHash,
-      final Difficulty totalDifficulty,
       final OptionalLong estimatedHeight,
       final List<PeerValidator> peerValidators,
       final boolean isServingSnap,
@@ -142,8 +140,8 @@ public class RespondingEthPeer {
             .networkId(BigInteger.ONE)
             .genesisHash(gen.hash())
             .bestHash(chainHeadHash)
-            .totalDifficulty(totalDifficulty)
             .forkId(new ForkId(Hash.ZERO, 0))
+            .blockRange(new StatusMessage.BlockRange(0, estimatedHeight.getAsLong()))
             .build();
     peer.registerStatusReceived(statusMessage, peerConnection);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
@@ -435,7 +433,6 @@ public class RespondingEthPeer {
     private EthProtocolManager ethProtocolManager;
     private Optional<SnapProtocolManager> snapProtocolManager = Optional.empty();
     private Hash chainHeadHash = gen.hash();
-    private Difficulty totalDifficulty = Difficulty.of(1000L);
     private OptionalLong estimatedHeight = OptionalLong.of(1000L);
     private final List<PeerValidator> peerValidators = new ArrayList<>();
     private boolean isServingSnap = false;
@@ -448,7 +445,6 @@ public class RespondingEthPeer {
           ethProtocolManager,
           snapProtocolManager,
           chainHeadHash,
-          totalDifficulty,
           estimatedHeight,
           peerValidators,
           isServingSnap,
@@ -470,12 +466,6 @@ public class RespondingEthPeer {
     public Builder chainHeadHash(final Hash chainHeadHash) {
       checkNotNull(chainHeadHash);
       this.chainHeadHash = chainHeadHash;
-      return this;
-    }
-
-    public Builder totalDifficulty(final Difficulty totalDifficulty) {
-      checkNotNull(totalDifficulty);
-      this.totalDifficulty = totalDifficulty;
       return this;
     }
 
