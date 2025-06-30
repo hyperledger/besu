@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 
-import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.collect.Range;
@@ -96,7 +95,7 @@ public class SynchronizerOptionsTest
 
   @Override
   protected List<String> getFieldsToIgnore() {
-    return Arrays.asList("syncMinimumPeerCount");
+    return List.of("syncMinimumPeerCount");
   }
 
   @Override
