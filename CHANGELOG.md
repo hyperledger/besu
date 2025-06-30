@@ -23,7 +23,7 @@
   - Proof of Work consensus (PoW)
   - Fast Sync
 - Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
-- `--Xsnapsync-synchronizer-pre-checkpoint-headers-only-enabled` is deprecated and will be removed in a future release. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+- `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated and will be removed in a future release. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
 - `--Xhistory-expiry-prune` is deprecated and will be removed in a future release. Use `--history-expiry-prune` instead.
 
 ### Additions and Improvements
