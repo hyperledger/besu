@@ -64,6 +64,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String WORLD_STATE_TASK_CACHE_SIZE_FLAG =
       "--Xsynchronizer-world-state-task-cache-size";
 
+  // Regular (stable) flag
+  private static final String SNAP_SERVER_ENABLED_FLAG = "--snapsync-server-enabled";
+  // Deprecated experimental flag
+  private static final String SNAP_SERVER_ENABLED_EXPERIMENTAL_FLAG = "--Xsnapsync-server-enabled";
+
   private static final String SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG =
       "--Xsnapsync-synchronizer-pivot-block-window-validity";
   private static final String SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG =
@@ -83,11 +88,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request";
 
-  private static final String SNAP_SERVER_ENABLED_FLAG = "--Xsnapsync-server-enabled";
-
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
-
-  private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
 
   private static final String SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG =
       "--Xsnapsync-synchronizer-pre-merge-headers-only-enabled";
@@ -296,12 +297,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private int snapsyncFlatStorageHealedCountPerRequest =
       SnapSyncConfiguration.DEFAULT_LOCAL_FLAT_STORAGE_COUNT_TO_HEAL_PER_REQUEST;
 
+  // TODO --Xsnapsync-server-enabled is deprecated, remove in a future release
+  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
-      names = SNAP_SERVER_ENABLED_FLAG,
-      hidden = true,
+      names = {SNAP_SERVER_ENABLED_FLAG, SNAP_SERVER_ENABLED_EXPERIMENTAL_FLAG},
       paramLabel = "<Boolean>",
       arity = "0..1",
-      description = "Snap sync server enabled (default: ${DEFAULT-VALUE})")
+      fallbackValue = "true",
+      description =
+          "Enable snap sync server capability. Note: --Xsnapsync-server-enabled is deprecated and will be removed in a future release. --snapsync-server-enabled is used instead. (default: ${DEFAULT-VALUE})")
   private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
 
   @CommandLine.Option(
@@ -310,17 +314,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       description = "Enable the sync to start from a post-merge block.")
   private Boolean checkpointPostMergeSyncEnabled =
       SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
-
-  // TODO --Xsnapsync-bft-enabled is deprecated,
-  // remove in a future release
-  @CommandLine.Option(
-      names = SNAP_SYNC_BFT_ENABLED_FLAG, // deprecated
-      hidden = true,
-      paramLabel = "<Boolean>",
-      arity = "0..1",
-      description =
-          "This option is now deprecated and ignored, and will be removed in future release. Snap sync for BFT is supported by default.")
-  private Boolean snapsyncBftEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED;
 
   @CommandLine.Option(
       names = {"--Xpeertask-system-enabled"},
@@ -357,15 +350,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public boolean isSnapsyncServerEnabled() {
     return snapsyncServerEnabled;
-  }
-
-  /**
-   * Flag to know whether the Snap sync should be enabled for a BFT chain
-   *
-   * @return true if snap sync for BFT is enabled
-   */
-  public boolean isSnapSyncBftEnabled() {
-    return snapsyncBftEnabled;
   }
 
   /**

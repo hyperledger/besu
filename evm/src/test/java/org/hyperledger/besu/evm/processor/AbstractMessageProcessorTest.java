@@ -28,6 +28,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.fluent.EVMExecutor;
+import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.toy.ToyWorld;
@@ -77,7 +78,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
 
   @Test
   void shouldTraceContextEnterExitForEip3155Test() {
-    final EVMExecutor executor = EVMExecutor.evm(EvmSpecVersion.SHANGHAI);
+    final EVMExecutor executor = new EVMExecutor(EvmSpec.evmSpec(EvmSpecVersion.SHANGHAI));
     final ContextTracer contextTracer = new ContextTracer();
 
     executor.tracer(contextTracer);

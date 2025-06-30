@@ -90,6 +90,9 @@ public class Address extends DelegatingBytes {
   /** The constant BLS12_MAP_FP2_TO_G2. */
   public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x11);
 
+  /** Precompile address for P256_VERIFY. */
+  public static final Address P256_VERIFY = Address.precompiled(0x0100);
+
   /** The constant ZERO. */
   public static final Address ZERO = Address.fromHexString("0x0");
 
@@ -214,10 +217,11 @@ public class Address extends DelegatingBytes {
    * @return the address
    */
   public static Address precompiled(final int value) {
-    // Keep it simple while we don't need precompiled above 127.
-    checkArgument(value < Byte.MAX_VALUE);
+    // Allow values up to 0x01FF (511) to encompass layer2 precompile address space
+    checkArgument(value < 0x01FF, "Precompiled value must be <= 0x01FF");
     final byte[] address = new byte[SIZE];
-    address[SIZE - 1] = (byte) value;
+    address[SIZE - 2] = (byte) (value >>> 8); // High byte
+    address[SIZE - 1] = (byte) (value & 0xFF); // Low byte
     return new Address(Bytes.wrap(address));
   }
 
