@@ -295,7 +295,7 @@ public class SynchronizerConfiguration {
     private long worldStateMinMillisBeforeStalling = DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING;
     private int worldStateTaskCacheSize = DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
     private boolean isPeerTaskSystemEnabled = false;
-    private boolean snapSyncSavePreCheckpointHeadersOnlyEnabled = false;
+    private boolean snapSyncSavePreCheckpointHeadersOnlyEnabled = true;
 
     private long propagationManagerGetBlockTimeoutMillis =
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
