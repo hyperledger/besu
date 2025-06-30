@@ -29,7 +29,7 @@
 - Experimental Bonsai Archive support [#7475](https://github.com/hyperledger/besu/pull/7475)
 - Use eth/69 by default [#8858](https://github.com/hyperledger/besu/pull/8858)
 - `--snapsync-server-enabled` New option to enable serving snap sync data [#8512](https://github.com/hyperledger/besu/pull/8512)
-- Introduce history expiry behaviour [8875](https://github.com/hyperledger/besu/pull/8875)
+- Introduce history expiry behaviour [#8875](https://github.com/hyperledger/besu/pull/8875)
   - SNAP sync will now download only headers for pre-checkpoint (pre-merge) blocks
   - `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` can be set to false to force SNAP sync to download pre-checkpoint (pre-merge) blocks
   - `--history-expiry-prune` can be used to enable online pruning of pre-checkpoint (pre-merge) blocks as well as modifying database garbage collection parameters to free up disk space from the pruned blocks
