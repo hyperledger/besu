@@ -7,6 +7,7 @@
 ### Upcoming Breaking Changes
 
 ### Additions and Improvements
+- Add option to trace reference tests during execution [#8878](https://github.com/hyperledger/besu/pull/8878)
 
 #### Fusaka
 

@@ -107,6 +107,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               // if block import tracer provider is not specified by plugin, default to no tracing
               .orElse(
                   (__) -> {
+                    if (Boolean.getBoolean("besu.debug.traceBlocks")
+                        || "true".equalsIgnoreCase(System.getenv("BESU_TRACE_BLOCKS"))) {
+                      return new BlockAwareJsonTracer();
+                    }
                     LOG.trace("Block Import uses NO_TRACING");
                     return BlockAwareOperationTracer.NO_TRACING;
                   });
