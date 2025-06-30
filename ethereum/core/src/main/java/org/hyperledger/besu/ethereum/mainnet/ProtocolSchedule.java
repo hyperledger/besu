@@ -43,6 +43,8 @@ public interface ProtocolSchedule {
     return getByBlockHeader(nextBlockHeader);
   }
 
+  Optional<ScheduledProtocolSpec> getNextProtocolSpec(final long currentTime);
+
   Optional<BigInteger> getChainId();
 
   String listMilestones();

@@ -36,7 +36,7 @@ public class BLS12PairingPrecompiledContract extends AbstractBLS12PrecompiledCon
   /** Instantiates a new BLS12Pairing precompiled contract. */
   BLS12PairingPrecompiledContract() {
     super(
-        "BLS12_PAIRING",
+        "BLS12_PAIRING_CHECK",
         LibGnarkEIP2537.BLS12_PAIR_OPERATION_SHIM_VALUE,
         Integer.MAX_VALUE / PARAMETER_LENGTH * PARAMETER_LENGTH);
   }

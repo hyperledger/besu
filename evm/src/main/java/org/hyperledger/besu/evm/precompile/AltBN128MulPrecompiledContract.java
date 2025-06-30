@@ -38,7 +38,7 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   private static final Logger LOG = LoggerFactory.getLogger(AltBN128MulPrecompiledContract.class);
 
   private static final int PARAMETER_LENGTH = 96;
-  private static final String PRECOMPILE_NAME = "AltBN128Mul";
+  private static final String PRECOMPILE_NAME = "BN256_MUL";
 
   private static final BigInteger MAX_N =
       new BigInteger(
