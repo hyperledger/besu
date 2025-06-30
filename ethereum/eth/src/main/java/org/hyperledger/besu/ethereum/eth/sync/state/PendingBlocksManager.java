@@ -83,15 +83,15 @@ public class PendingBlocksManager {
   /**
    * Stop tracking the given block.
    *
-   * @param block the block that is no longer pending
+   * @param header the header of the block that is no longer pending
    * @return true if this block was removed
    */
-  public boolean deregisterPendingBlock(final Block block) {
-    final Hash parentHash = block.getHeader().getParentHash();
-    final ImmutablePendingBlock removed = pendingBlocks.remove(block.getHash());
+  public boolean deregisterPendingBlock(final BlockHeader header) {
+    final Hash parentHash = header.getParentHash();
+    final ImmutablePendingBlock removed = pendingBlocks.remove(header.getHash());
     final Set<Hash> blocksForParent = pendingBlocksByParentHash.get(parentHash);
     if (blocksForParent != null) {
-      blocksForParent.remove(block.getHash());
+      blocksForParent.remove(header.getHash());
       pendingBlocksByParentHash.remove(parentHash, Collections.emptySet());
     }
     return removed != null;
@@ -101,7 +101,7 @@ public class PendingBlocksManager {
     pendingBlocks.values().stream()
         .filter(b -> b.block().getHeader().getNumber() < blockNumber)
         .map(ImmutablePendingBlock::block)
-        .forEach(this::deregisterPendingBlock);
+        .forEach(block -> deregisterPendingBlock(block.getHeader()));
   }
 
   public boolean contains(final Hash blockHash) {

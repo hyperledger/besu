@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -25,39 +27,41 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.List;
 
 /** Requests bodies from a peer by header, matches up headers to bodies, and returns blocks. */
-public class GetBodiesFromPeerTask extends AbstractGetBodiesFromPeerTask<Block, BlockBody> {
+public class GetSyncBlocksFromPeerTask
+    extends AbstractGetBodiesFromPeerTask<SyncBlock, SyncBlockBody> {
 
-  private GetBodiesFromPeerTask(
-      final ProtocolSchedule protocolSchedule,
+  private GetSyncBlocksFromPeerTask(
       final EthContext ethContext,
       final List<BlockHeader> headers,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final ProtocolSchedule protocolSchedule) {
     super(protocolSchedule, ethContext, headers, metricsSystem);
+    checkArgument(!headers.isEmpty());
   }
 
-  public static GetBodiesFromPeerTask forHeaders(
-      final ProtocolSchedule protocolSchedule,
+  public static GetSyncBlocksFromPeerTask forHeaders(
       final EthContext ethContext,
       final List<BlockHeader> headers,
-      final MetricsSystem metricsSystem) {
-    return new GetBodiesFromPeerTask(protocolSchedule, ethContext, headers, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final ProtocolSchedule protocolSchedule) {
+    return new GetSyncBlocksFromPeerTask(ethContext, headers, metricsSystem, protocolSchedule);
   }
 
   @Override
-  Block getBlock(final BlockHeader header, final BlockBody body) {
-    return new Block(header, body);
+  SyncBlock getBlock(final BlockHeader header, final SyncBlockBody body) {
+    return new SyncBlock(header, body);
   }
 
   @Override
-  List<BlockBody> getBodies(
+  List<SyncBlockBody> getBodies(
       final BlockBodiesMessage message, final ProtocolSchedule protocolSchedule) {
-    return message.bodies(protocolSchedule);
+    return message.syncBodies(protocolSchedule);
   }
 
   @Override
-  boolean bodyMatchesHeader(final BlockBody body, final BlockHeader header) {
-    final BodyIdentifier headerBlockId = new BodyIdentifier(header);
-    final BodyIdentifier bodyBlockId = new BodyIdentifier(body);
-    return headerBlockId.equals(bodyBlockId);
+  boolean bodyMatchesHeader(final SyncBlockBody body, final BlockHeader header) {
+    final BodyIdentifier headerId = new BodyIdentifier(header);
+    final BodyIdentifier bodyId = new BodyIdentifier(body);
+    return headerId.equals(bodyId);
   }
 }

@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.task.BodyIdentifier;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
@@ -33,20 +33,20 @@ import org.slf4j.LoggerFactory;
  * Implements PeerTask for getting block bodies from peers, and matches headers to bodies to supply
  * full blocks
  */
-public class GetBodiesFromPeerTask extends AbstractGetBodiesFromPeerTask<Block> {
+public class GetSyncBlockBodiesFromPeerTask extends AbstractGetBodiesFromPeerTask<SyncBlock> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(GetBodiesFromPeerTask.class);
+  private static final Logger LOG = LoggerFactory.getLogger(GetSyncBlockBodiesFromPeerTask.class);
 
   private static final int DEFAULT_RETRIES_AGAINST_OTHER_PEERS = 5;
 
-  private final List<Block> blocks = new ArrayList<>();
+  private final List<SyncBlock> blocks = new ArrayList<>();
 
-  public GetBodiesFromPeerTask(
+  public GetSyncBlockBodiesFromPeerTask(
       final List<BlockHeader> blockHeaders, final ProtocolSchedule protocolSchedule) {
     this(blockHeaders, protocolSchedule, DEFAULT_RETRIES_AGAINST_OTHER_PEERS);
   }
 
-  public GetBodiesFromPeerTask(
+  public GetSyncBlockBodiesFromPeerTask(
       final List<BlockHeader> blockHeaders,
       final ProtocolSchedule protocolSchedule,
       final int allowedRetriesAgainstOtherPeers) {
@@ -54,7 +54,7 @@ public class GetBodiesFromPeerTask extends AbstractGetBodiesFromPeerTask<Block> 
   }
 
   @Override
-  public List<Block> processResponse(final MessageData messageData)
+  public List<SyncBlock> processResponse(final MessageData messageData)
       throws InvalidPeerTaskResponseException {
     // Blocks returned by this method are in the same order as the headers, but might not be
     // complete
@@ -62,13 +62,13 @@ public class GetBodiesFromPeerTask extends AbstractGetBodiesFromPeerTask<Block> 
       throw new InvalidPeerTaskResponseException();
     }
     final BlockBodiesMessage blocksMessage = BlockBodiesMessage.readFrom(messageData);
-    final List<BlockBody> blockBodies = blocksMessage.bodies(protocolSchedule);
+    final List<SyncBlockBody> blockBodies = blocksMessage.syncBodies(protocolSchedule);
     if (blockBodies.isEmpty() || blockBodies.size() > blockHeaders.size()) {
       throw new InvalidPeerTaskResponseException();
     }
 
     for (int i = 0; i < blockBodies.size(); i++) {
-      final BlockBody blockBody = blockBodies.get(i);
+      final SyncBlockBody blockBody = blockBodies.get(i);
       final BlockHeader blockHeader = blockHeaders.get(i);
       if (!blockBodyMatchesBlockHeader(blockBody, blockHeader)) {
         LOG.atDebug()
@@ -78,13 +78,13 @@ public class GetBodiesFromPeerTask extends AbstractGetBodiesFromPeerTask<Block> 
         throw new InvalidPeerTaskResponseException();
       }
 
-      blocks.add(new Block(blockHeader, blockBody));
+      blocks.add(new SyncBlock(blockHeader, blockBody));
     }
     return blocks;
   }
 
   private boolean blockBodyMatchesBlockHeader(
-      final BlockBody blockBody, final BlockHeader blockHeader) {
+      final SyncBlockBody blockBody, final BlockHeader blockHeader) {
     final BodyIdentifier headerBlockId = new BodyIdentifier(blockHeader);
     final BodyIdentifier bodyBlockId = new BodyIdentifier(blockBody);
     return headerBlockId.equals(bodyBlockId);
