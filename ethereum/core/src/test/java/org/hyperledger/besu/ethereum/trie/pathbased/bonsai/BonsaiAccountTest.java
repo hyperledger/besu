@@ -30,6 +30,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
@@ -139,6 +140,34 @@ public class BonsaiAccountTest {
     assertThat(items.get(4).readLongScalar()).isEqualTo(code.size());
   }
 
+  @Test
+  void shouldConvertToPmtStateTrieAccountValueFromRlpWhenCodeSizeIsEmpty() {
+    // Encoding the account with code size present
+    Bytes encodedBonsaiAccount = encodeRlpAccount(code, false);
+
+    final PmtStateTrieAccountValue pmtStateTrieAccountValue =
+        PmtStateTrieAccountValue.readFrom(RLP.input(encodedBonsaiAccount));
+
+    assertThat(pmtStateTrieAccountValue.getNonce()).isEqualTo(1);
+    assertThat(pmtStateTrieAccountValue.getBalance()).isEqualTo(Wei.ONE);
+    assertThat(pmtStateTrieAccountValue.getStorageRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
+    assertThat(pmtStateTrieAccountValue.getCodeHash()).isEqualTo(Hash.hash(code));
+  }
+
+  @Test
+  void shouldConvertToPmtStateTrieAccountValueFromRlpWhenCodeSizeIsPresent() {
+    // Encoding the account with code size present
+    Bytes encodedBonsaiAccount = encodeRlpAccount(code, true);
+
+    final PmtStateTrieAccountValue pmtStateTrieAccountValue =
+        PmtStateTrieAccountValue.readFrom(RLP.input(encodedBonsaiAccount));
+
+    assertThat(pmtStateTrieAccountValue.getNonce()).isEqualTo(1);
+    assertThat(pmtStateTrieAccountValue.getBalance()).isEqualTo(Wei.ONE);
+    assertThat(pmtStateTrieAccountValue.getStorageRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
+    assertThat(pmtStateTrieAccountValue.getCodeHash()).isEqualTo(Hash.hash(code));
+  }
+
   private BonsaiAccount createAccount(final Bytes code) {
     when(bonsaiWorldState.getCode(any(), any())).thenReturn(Optional.of(code));
     BonsaiAccount bonsaiAccount =
@@ -146,7 +175,7 @@ public class BonsaiAccountTest {
             bonsaiWorldState,
             Address.ZERO,
             Hash.hash(Address.ZERO),
-            0,
+            1,
             Wei.ONE,
             Hash.EMPTY_TRIE_HASH,
             Hash.hash(code),

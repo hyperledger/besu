@@ -20,10 +20,9 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -122,70 +121,37 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
 
   @VisibleForTesting
   public static Bytes toFullAccount(final RLPInput rlpInput) {
-    BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    final PmtStateTrieAccountValue accountValue = PmtStateTrieAccountValue.readFrom(rlpInput);
+
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     rlpOutput.startList();
-
-    List<RLPInput> rlpInputs = readAllElementsFromList(rlpInput);
-    // Write Nonce and Balance as-is
-    rlpOutput.writeRaw(rlpInputs.getFirst().raw());
-    rlpOutput.writeRaw(rlpInputs.get(1).raw());
-    // Write Storage Root and Code Hash, defaulting to empty hashes if null
-    writeBytesOrEmptyHash(rlpOutput, rlpInputs.get(2), Hash.EMPTY_TRIE_HASH);
-    writeBytesOrEmptyHash(rlpOutput, rlpInputs.get(3), Hash.EMPTY);
-
+    rlpOutput.writeLongScalar(accountValue.getNonce()); // nonce
+    rlpOutput.writeUInt256Scalar(accountValue.getBalance()); // balance
+    rlpOutput.writeBytes(accountValue.getStorageRoot());
+    rlpOutput.writeBytes(accountValue.getCodeHash());
     rlpOutput.endList();
-    return rlpOutput.encoded();
-  }
 
-  private static void writeBytesOrEmptyHash(
-      final RLPOutput rlpOutput, final RLPInput rlpInput, final Hash emptyHash) {
-    if (rlpInput.nextIsNull()) {
-      rlpOutput.writeBytes(emptyHash);
-      rlpInput.skipNext();
-    } else {
-      rlpOutput.writeBytes(rlpInput.readBytes32());
-    }
+    return rlpOutput.encoded();
   }
 
   public static Bytes toSlimAccount(final RLPInput rlpInput) {
-    BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    PmtStateTrieAccountValue accountValue = PmtStateTrieAccountValue.readFrom(rlpInput);
+    var rlpOutput = new BytesValueRLPOutput();
     rlpOutput.startList();
-
-    List<RLPInput> rlpInputs = readAllElementsFromList(rlpInput);
-    // Write Nonce and Balance as-is
-    rlpOutput.writeRaw(rlpInputs.getFirst().raw());
-    rlpOutput.writeRaw(rlpInputs.get(1).raw());
-    // Write Storage Root and Code Hash, writing null for empty hashes
-    writeBytesOrNull(rlpOutput, rlpInputs.get(2), Hash.EMPTY_TRIE_HASH);
-    writeBytesOrNull(rlpOutput, rlpInputs.get(3), Hash.EMPTY);
-
+    rlpOutput.writeLongScalar(accountValue.getNonce());
+    rlpOutput.writeUInt256Scalar(accountValue.getBalance());
+    if (accountValue.getStorageRoot().equals(Hash.EMPTY_TRIE_HASH)) {
+      rlpOutput.writeNull();
+    } else {
+      rlpOutput.writeBytes(accountValue.getStorageRoot());
+    }
+    if (accountValue.getCodeHash().equals(Hash.EMPTY)) {
+      rlpOutput.writeNull();
+    } else {
+      rlpOutput.writeBytes(accountValue.getCodeHash());
+    }
     rlpOutput.endList();
     return rlpOutput.encoded();
-  }
-
-  private static void writeBytesOrNull(
-      final RLPOutput rlpOutput, final RLPInput rlpInput, final Hash hash) {
-    if (rlpInput.nextIsNull()) {
-      rlpOutput.writeNull();
-      rlpInput.skipNext();
-    } else {
-      Bytes32 bytes = rlpInput.readBytes32();
-      if (hash.equals(bytes)) {
-        rlpOutput.writeNull();
-      } else {
-        rlpOutput.writeBytes(bytes);
-      }
-    }
-  }
-
-  private static List<RLPInput> readAllElementsFromList(final RLPInput rlpInput) {
-    ArrayList<RLPInput> inputs = new ArrayList<>();
-    rlpInput.enterList();
-    while (!rlpInput.isEndOfCurrentList()) {
-      inputs.add(rlpInput.readAsRlp());
-    }
-    rlpInput.leaveList();
-    return inputs;
   }
 
   @Value.Immutable

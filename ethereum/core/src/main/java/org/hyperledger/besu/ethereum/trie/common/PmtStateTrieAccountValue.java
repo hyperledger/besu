@@ -95,6 +95,11 @@ public class PmtStateTrieAccountValue extends AbstractStateTrieAccountValue
     } else {
       codeHash = in.readBytes32();
     }
+    // FlatAccountValue may include the code size field in its RLP encoding.
+    // Skip it if present, since PmtStateTrieAccountValue does not include code or code size.
+    if (!in.isEndOfCurrentList()) {
+      in.skipNext();
+    }
     in.leaveList();
 
     return new PmtStateTrieAccountValue(
