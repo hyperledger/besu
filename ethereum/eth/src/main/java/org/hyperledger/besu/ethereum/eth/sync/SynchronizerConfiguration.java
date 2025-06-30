@@ -42,7 +42,7 @@ public class SynchronizerConfiguration {
   public static final int DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE = 200;
   public static final int DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED = 5;
   public static final int DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE = 200;
-  public static final int DEFAULT_DOWNLOADER_PARALLELISM = 4;
+  public static final int DEFAULT_DOWNLOADER_PARALLELISM = 8;
   public static final int DEFAULT_TRANSACTIONS_PARALLELISM = 4;
   public static final int DEFAULT_COMPUTATION_PARALLELISM = 2;
   public static final int DEFAULT_WORLD_STATE_TASK_CACHE_SIZE =
@@ -86,7 +86,7 @@ public class SynchronizerConfiguration {
   private final long worldStateMinMillisBeforeStalling;
   private final long propagationManagerGetBlockTimeoutMillis;
   private final boolean isPeerTaskSystemEnabled;
-  private final boolean snapSyncSavePreMergeHeadersOnlyEnabled;
+  private final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled;
 
   private SynchronizerConfiguration(
       final int syncPivotDistance,
@@ -112,7 +112,7 @@ public class SynchronizerConfiguration {
       final long propagationManagerGetBlockTimeoutMillis,
       final boolean checkpointPostMergeEnabled,
       final boolean isPeerTaskSystemEnabled,
-      final boolean snapSyncSavePreMergeHeadersOnlyEnabled) {
+      final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled) {
     this.syncPivotDistance = syncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.syncMinimumPeerCount = syncMinimumPeerCount;
@@ -136,7 +136,7 @@ public class SynchronizerConfiguration {
     this.propagationManagerGetBlockTimeoutMillis = propagationManagerGetBlockTimeoutMillis;
     this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
     this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
-    this.snapSyncSavePreMergeHeadersOnlyEnabled = snapSyncSavePreMergeHeadersOnlyEnabled;
+    this.snapSyncSavePreCheckpointHeadersOnlyEnabled = snapSyncSavePreCheckpointHeadersOnlyEnabled;
   }
 
   public static Builder builder() {
@@ -266,8 +266,8 @@ public class SynchronizerConfiguration {
     return isPeerTaskSystemEnabled;
   }
 
-  public boolean isSnapSyncSavePreMergeHeadersOnlyEnabled() {
-    return snapSyncSavePreMergeHeadersOnlyEnabled;
+  public boolean isSnapSyncSavePreCheckpointHeadersOnlyEnabled() {
+    return snapSyncSavePreCheckpointHeadersOnlyEnabled;
   }
 
   public static class Builder {
@@ -295,7 +295,7 @@ public class SynchronizerConfiguration {
     private long worldStateMinMillisBeforeStalling = DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING;
     private int worldStateTaskCacheSize = DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
     private boolean isPeerTaskSystemEnabled = false;
-    private boolean snapSyncSavePreMergeHeadersOnlyEnabled = false;
+    private boolean snapSyncSavePreCheckpointHeadersOnlyEnabled = true;
 
     private long propagationManagerGetBlockTimeoutMillis =
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
@@ -427,9 +427,10 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder snapSyncSavePreMergeHeadersOnlyEnabled(
-        final boolean snapSyncSavePreMergeHeadersOnlyEnabled) {
-      this.snapSyncSavePreMergeHeadersOnlyEnabled = snapSyncSavePreMergeHeadersOnlyEnabled;
+    public Builder snapSyncSavePreCheckpointHeadersOnlyEnabled(
+        final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled) {
+      this.snapSyncSavePreCheckpointHeadersOnlyEnabled =
+          snapSyncSavePreCheckpointHeadersOnlyEnabled;
       return this;
     }
 
@@ -458,7 +459,7 @@ public class SynchronizerConfiguration {
           propagationManagerGetBlockTimeoutMillis,
           checkpointPostMergeEnabled,
           isPeerTaskSystemEnabled,
-          snapSyncSavePreMergeHeadersOnlyEnabled);
+          snapSyncSavePreCheckpointHeadersOnlyEnabled);
     }
   }
 }
