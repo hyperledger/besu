@@ -60,6 +60,7 @@ import com.google.common.collect.Streams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 public class DefaultBlockchain implements MutableBlockchain {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultBlockchain.class);
 
@@ -87,6 +88,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private Counter gasUsedCounter = NoOpMetricsSystem.NO_OP_COUNTER;
   private Counter numberOfTransactionsCounter = NoOpMetricsSystem.NO_OP_COUNTER;
+  // difficultyForSyncing is thread safe, as it is only used in the one thread of the import step
   private Difficulty difficultyForSyncing = Difficulty.ZERO;
 
   private DefaultBlockchain(
