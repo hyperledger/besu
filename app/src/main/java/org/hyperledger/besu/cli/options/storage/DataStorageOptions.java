@@ -53,7 +53,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       names = {"--history-expiry-prune"},
       description =
           "Convenience option to configure BlobDB garbage collection settings and enable online history pruning")
-  private boolean historyExpiryPrune = false;
+  private Boolean historyExpiryPrune = false;
 
   /**
    * Options specific to path-based storage modes. Holds the necessary parameters to configure
