@@ -654,6 +654,11 @@ public class DefaultBlockchain implements MutableBlockchain {
       if (newBlock.getHeader().getParentHash().equals(chainHead) || chainHead == null) {
         return handleNewHead(updater, newBlock, receipts, transactionIndexing);
       } else {
+        LOG.info(
+            "New block {} with parent {} is not a child of the current chain head {}, ignoring.",
+            newBlock.getHeader().getNumber(),
+            newBlock.getHeader().getParentHash(),
+            chainHeader.getNumber());
         throw new RuntimeException("Blocks during sync should always be in order");
       }
     } catch (final NoSuchElementException e) {
