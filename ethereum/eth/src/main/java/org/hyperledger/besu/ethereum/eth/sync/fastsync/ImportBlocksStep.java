@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,10 +19,12 @@ import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
@@ -35,36 +37,47 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts>> {
-  private static final Logger LOG = LoggerFactory.getLogger(ImportSyncBlocksStep.class);
+public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
+  private static final Logger LOG = LoggerFactory.getLogger(ImportBlocksStep.class);
   private static final int PRINT_DELAY_SECONDS = 30;
 
   private final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
+  private final ValidationPolicy headerValidationPolicy;
+  private final ValidationPolicy ommerValidationPolicy;
   private final EthContext ethContext;
   private long accumulatedTime = 0L;
   private OptionalLong logStartBlock = OptionalLong.empty();
   private final BlockHeader pivotHeader;
+  private final BodyValidationMode bodyValidationMode;
   private final boolean transactionIndexingEnabled;
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
 
-  public ImportSyncBlocksStep(
+  public ImportBlocksStep(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
+      final ValidationPolicy headerValidationPolicy,
+      final ValidationPolicy ommerValidationPolicy,
       final EthContext ethContext,
       final BlockHeader pivotHeader,
       final boolean transactionIndexingEnabled) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
+    this.headerValidationPolicy = headerValidationPolicy;
+    this.ommerValidationPolicy = ommerValidationPolicy;
     this.ethContext = ethContext;
     this.pivotHeader = pivotHeader;
+    this.bodyValidationMode =
+        protocolSchedule.anyMatch(scheduledProtocolSpec -> scheduledProtocolSpec.spec().isPoS())
+            ? BodyValidationMode.NONE
+            : BodyValidationMode.LIGHT;
     this.transactionIndexingEnabled = transactionIndexingEnabled;
   }
 
   @Override
-  public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
+  public void accept(final List<BlockWithReceipts> blocksWithReceipts) {
     final long startTime = System.nanoTime();
-    for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
+    for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       if (!importBlock(blockWithReceipts)) {
         throw InvalidBlockException.fromInvalidBlock(blockWithReceipts.getHeader());
       }
@@ -112,14 +125,17 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
     return (100 * lastBlock / totalBlocks);
   }
 
-  protected boolean importBlock(final SyncBlockWithReceipts blockWithReceipts) {
+  protected boolean importBlock(final BlockWithReceipts blockWithReceipts) {
     final BlockImporter importer =
         protocolSchedule.getByBlockHeader(blockWithReceipts.getHeader()).getBlockImporter();
     final BlockImportResult blockImportResult =
-        importer.importSyncBlockForSyncing(
+        importer.importBlockForSyncing(
             protocolContext,
             blockWithReceipts.getBlock(),
             blockWithReceipts.getReceipts(),
+            headerValidationPolicy.getValidationModeForNextBlock(),
+            ommerValidationPolicy.getValidationModeForNextBlock(),
+            bodyValidationMode,
             transactionIndexingEnabled);
     return blockImportResult.isImported();
   }

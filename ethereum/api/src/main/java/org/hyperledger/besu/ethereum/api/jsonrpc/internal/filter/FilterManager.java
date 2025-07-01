@@ -127,7 +127,7 @@ public class FilterManager extends AbstractVerticle {
   }
 
   public void recordBlockEvent(final BlockAddedEvent event) {
-    final Hash blockHash = event.getHeader().getHash();
+    final Hash blockHash = event.getBlock().getHash();
     final Collection<BlockFilter> blockFilters =
         filterRepository.getFiltersOfType(BlockFilter.class);
     blockFilters.forEach(
@@ -144,7 +144,7 @@ public class FilterManager extends AbstractVerticle {
             filter -> {
               final Optional<Long> maybeToBlockNumber = filter.getToBlock().getNumber();
               return maybeToBlockNumber.isEmpty()
-                  || maybeToBlockNumber.get() >= event.getHeader().getNumber();
+                  || maybeToBlockNumber.get() >= event.getBlock().getHeader().getNumber();
             })
         .forEach(
             filter -> {
