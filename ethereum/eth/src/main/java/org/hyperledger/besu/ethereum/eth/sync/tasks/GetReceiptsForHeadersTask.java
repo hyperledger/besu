@@ -91,9 +91,9 @@ public class GetReceiptsForHeadersTask
       return CompletableFuture.completedFuture(emptyMap());
     }
     LOG.debug(
-        "Requesting bodies to complete {} blocks, starting with {}.",
+        "Requesting receipts to complete for {} blocks , starting with {}.",
         incompleteHeaders.size(),
-        incompleteHeaders.get(0).getNumber());
+        incompleteHeaders.getFirst().getNumber());
     return executeSubTask(
         () -> {
           final GetReceiptsFromPeerTask task =

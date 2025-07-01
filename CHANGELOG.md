@@ -51,6 +51,7 @@
   - SNAP sync will now download only headers for pre-checkpoint (pre-merge) blocks
   - `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` can be set to false to force SNAP sync to download pre-checkpoint (pre-merge) blocks
   - `--history-expiry-prune` can be used to enable online pruning of pre-checkpoint (pre-merge) blocks as well as modifying database garbage collection parameters to free up disk space from the pruned blocks
+  - SNAP and CHECKPOINT sync will now not RLP decode bodies, reducing memory usage (and CPU usage) per body, allowing for an increase in the number of blocks that can be processed in parallel
 
 ### Performance
 - Increase mainnet gas limit to 45M [#8824](https://github.com/hyperledger/besu/pull/8824)
