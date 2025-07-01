@@ -18,8 +18,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -56,21 +59,28 @@ public class EngineJsonRpcParserHandler {
         try {
           // Parse the JSON using our custom ObjectMapper
           String bodyString = ctx.getBodyAsString();
-          JsonNode jsonNode = engineMapper.readTree(bodyString);
+          JsonNode jacksonJsonNode = engineMapper.readTree(bodyString);
 
-          if (jsonNode.isObject()) {
-            // Convert Jackson JsonNode to Vert.x JsonObject
-            JsonObject jsonObject = new JsonObject(engineMapper.writeValueAsString(jsonNode));
-            ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), jsonObject);
-          } else if (jsonNode.isArray()) {
-            ArrayNode arrayNode = (ArrayNode) jsonNode;
-            if (arrayNode.isEmpty()) {
+          if (jacksonJsonNode.isObject()) {
+            // Convert Jackson JsonNode to Map, then to Vert.x JsonObject
+            Map<String, Object> jsonMap =
+                engineMapper.convertValue(jacksonJsonNode, new TypeReference<>() {});
+            JsonObject vertxJsonObject = new JsonObject(jsonMap);
+            ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), vertxJsonObject);
+          } else if (jacksonJsonNode.isArray()) {
+            ArrayNode jacksonArrayNode = (ArrayNode) jacksonJsonNode;
+            if (jacksonArrayNode.isEmpty()) {
               errorResponse(response, RpcErrorType.INVALID_REQUEST);
               return;
             }
-            // Convert Jackson JsonNode to Vert.x JsonArray
-            JsonArray jsonArray = new JsonArray(engineMapper.writeValueAsString(jsonNode));
-            ctx.put(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name(), jsonArray);
+            // Convert Jackson JsonNode to List, then to Vert.x JsonArray
+            JsonArray vertxJsonArray = new JsonArray();
+            for (JsonNode node : jacksonArrayNode) {
+              Map<String, Object> nodeMap =
+                  engineMapper.convertValue(node, new TypeReference<>() {});
+              vertxJsonArray.add(new JsonObject(nodeMap));
+            }
+            ctx.put(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name(), vertxJsonArray);
           } else {
             errorResponse(response, RpcErrorType.PARSE_ERROR);
             return;
