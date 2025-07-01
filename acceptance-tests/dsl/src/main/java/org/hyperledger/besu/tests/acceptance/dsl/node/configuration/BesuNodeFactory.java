@@ -561,9 +561,11 @@ public class BesuNodeFactory {
             .dataStorageConfiguration(
                 storageFormat == DataStorageFormat.FOREST
                     ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
-                    : storageFormat == DataStorageFormat.BONSAI
-                        ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
-                        : DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG)
+                    : storageFormat == DataStorageFormat.X_BONSAI_ARCHIVE
+                        ? DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG
+                        : storageFormat == DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS
+                            ? DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_PROOFS_CONFIG
+                            : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
     if (fixedPort) {
       builder.p2pPort(

@@ -82,17 +82,16 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       return getFullWorldState(queryParams);
     } else {
       // If we are creating a world state for a historic/archive block, we have 2 options:
-      // 1. Roll back and create a layered world state. We can do this as far back as 512 blocks by
-      // default, and we end up with a full state trie & flat DB at the desired block
+      // 1. Roll back and create a layered world state. We can do this as far back as 512 blocks (by
+      // default), and we end up with a full state trie & flat DB at the desired block
       // 2. Rely entirely on the flat DB, which is less safe because we can't check the world state
       // root is correct but at least gives us the ability to serve historic state. The rollback
       // step in this case is minimal - take the chain head state and reset the block hash and
-      // number for
-      // archive flat DB queries
+      // number for archive flat DB queries
       final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
       if (chainHeadBlockHeader.getNumber() - queryParams.getBlockHeader().getNumber()
           >= trieLogManager.getMaxLayersToLoad()) {
-        LOG.debug(
+        LOG.info(
             "Returning archive state without verifying state root",
             trieLogManager.getMaxLayersToLoad());
         Optional<MutableWorldState> cachedWorldState =

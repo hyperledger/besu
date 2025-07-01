@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.eth.manager.snap.SnapServer.HASH_LAST;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.ARCHIVE_PROOF_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -49,6 +50,7 @@ import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -75,8 +77,12 @@ public class SnapServerTest {
   static Random rand = new Random();
 
   // Paramaterized test to exercise BONSAI and BONSAI_ARCHIVE
-  public static Collection<Object[]> flatDbMode() {
-    return Arrays.asList(new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.ARCHIVE}});
+  public static Collection<Object[]> flatDbAndStorageMode() {
+    return Arrays.asList(
+        new Object[][] {
+          {FlatDbMode.FULL, DataStorageFormat.BONSAI},
+          {FlatDbMode.FULL, DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS}
+        });
   }
 
   record SnapTestAccount(
@@ -116,7 +122,7 @@ public class SnapServerTest {
   SnapTestAccount acct3;
   SnapTestAccount acct4;
 
-  public void setup(final FlatDbMode dbMode) {
+  public void setup(final FlatDbMode dbMode, final DataStorageFormat storageFormat) {
     storage = new SegmentedInMemoryKeyValueStorage();
 
     // force a full flat db with code stored by code hash:
@@ -124,9 +130,9 @@ public class SnapServerTest {
         new BonsaiWorldStateKeyValueStorage(
             new BonsaiFlatDbStrategyProvider(
                 noopMetrics,
-                dbMode == FlatDbMode.FULL
-                    ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
-                    : DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG) {
+                storageFormat == DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS
+                    ? DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_PROOFS_CONFIG
+                    : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG) {
               @Override
               public FlatDbMode getFlatDbMode() {
                 return dbMode;
@@ -167,9 +173,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertNoStartNoOp(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertNoStartNoOp(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     // account found at startHash
     insertTestAccounts(acct4, acct3, acct1, acct2);
 
@@ -205,9 +212,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertEmptyRangeLeftProofOfExclusionAndNextAccount(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertEmptyRangeLeftProofOfExclusionAndNextAccount(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     // for a range request that returns empty, we should return just a proof of exclusion on the
     // left and the next account after the limit hash
     insertTestAccounts(acct1, acct4);
@@ -225,9 +233,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertAccountLimitRangeResponse(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertAccountLimitRangeResponse_atLeastOneAccount(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     // assert we limit the range response according to size
     final int acctCount = 2000;
     final long acctRLPSize = 37;
@@ -263,42 +272,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertAccountLimitRangeResponse_atLeastOneAccount(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
-    List<Integer> randomLoad = IntStream.range(1, 4096).boxed().collect(Collectors.toList());
-    Collections.shuffle(randomLoad);
-    randomLoad.stream()
-        .forEach(
-            i ->
-                insertTestAccounts(
-                    createTestAccount(
-                        Bytes.concatenate(
-                                Bytes.fromHexString("0x40"),
-                                Bytes.fromHexStringLenient(Integer.toHexString(i * 256)))
-                            .toHexString())));
-
-    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    tmp.startList();
-    tmp.writeBytes(storageTrie.getRootHash());
-    tmp.writeBytes(Hash.ZERO);
-    tmp.writeBytes(HASH_LAST);
-    tmp.writeBigIntegerScalar(BigInteger.ZERO);
-    tmp.endList();
-    var tinyRangeLimit = new GetAccountRangeMessage(tmp.encoded()).wrapMessageData(BigInteger.ZERO);
-
-    var rangeData =
-        getAndVerifyAccountRangeData(
-            (AccountRangeMessage) snapServer.constructGetAccountRangeResponse(tinyRangeLimit), 1);
-
-    // assert proofs are valid for the requested range
-    assertThat(assertIsValidAccountRangeProof(Hash.ZERO, rangeData)).isTrue();
-  }
-
-  @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertLastEmptyRange(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertLastEmptyRange(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     // When our final range request is empty, no next account is possible,
     //      and we should return just a proof of exclusion of the right
     insertTestAccounts(acct1, acct2);
@@ -310,9 +287,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertAccountFoundAtStartHashProof(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertAccountFoundAtStartHashProof(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     // account found at startHash
     insertTestAccounts(acct4, acct3, acct1, acct2);
     var rangeData =
@@ -323,9 +301,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertCompleteStorageForSingleAccount(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertCompleteStorageForSingleAccount(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
     var rangeData = requestStorageRange(List.of(acct3.addressHash), Hash.ZERO, HASH_LAST);
     assertThat(rangeData).isNotNull();
@@ -344,9 +323,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertPartialStorageForSingleAccountEmptyRange(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertPartialStorageForSingleAccountEmptyRange(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct3);
     var rangeData =
         requestStorageRange(
@@ -367,9 +347,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertPartialStorageLimitHashBetweenSlots(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertPartialStorageLimitHashBetweenSlots(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     Bytes accountShortHash = Bytes.fromHexStringLenient("0x40");
     Hash accountFullHash = Hash.wrap(Bytes32.leftPad(accountShortHash));
     SnapTestAccount testAccount = createTestContractAccount(accountFullHash, 2, inMemoryStorage);
@@ -394,9 +375,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertLastEmptyPartialStorageForSingleAccount(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertLastEmptyPartialStorageForSingleAccount(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     // When our final range request is empty, no next account is possible,
     //      and we should return just a proof of exclusion of the right
 
@@ -421,9 +403,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertStorageLimitRangeResponse(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertStorageLimitRangeResponse(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     // assert we limit the range response according to bytessize
     final int storageSlotSize = 69;
     final int storageSlotCount = 16;
@@ -466,9 +449,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertStorageLimitRangeResponse_atLeastOneSlot(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertStorageLimitRangeResponse_atLeastOneSlot(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
 
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
@@ -504,9 +488,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertAccountTriePathRequest(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertAccountTriePathRequest(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
     var partialPathToAcct2 = CompactEncoding.bytesToPath(acct2.addressHash).slice(0, 1);
     var partialPathToAcct1 = Bytes.fromHexString("0x01"); // first nibble is 1
@@ -521,9 +506,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertAccountTrieRequest_invalidEmptyPath(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertAccountTrieRequest_invalidEmptyPath(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1);
     var partialPathToAcct1 = Bytes.fromHexString("0x01"); // first nibble is 1
     var trieNodeRequest =
@@ -535,9 +521,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertAccountTrieLimitRequest(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertAccountTrieLimitRequest(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
     final int accountNodeSize = 147;
     final int accountNodeLimit = 3;
@@ -573,9 +560,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertAccountTrieLimitRequest_atLeastOneTrieNode(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertAccountTrieLimitRequest_atLeastOneTrieNode(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
 
     var partialPathToAcct1 = Bytes.fromHexString("0x01"); // first nibble is 1
@@ -608,10 +596,13 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertStorageTriePathRequest(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertStorageTriePathRequest(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
+    updateStorageArchiveBlock(inMemoryStorage.getComposedWorldStateStorage(), 2);
+
     var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
     var pathToSlot12 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0102"));
     var pathToSlot1a = CompactEncoding.encode(Bytes.fromHexStringLenient("0x010A")); // not present
@@ -630,9 +621,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertStorageTriePathRequest_accountNotPresent(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertStorageTriePathRequest_accountNotPresent(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct4);
     var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
     var trieNodeRequest =
@@ -648,13 +640,18 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertStorageTrieShortAccountHashPathRequest(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertStorageTrieShortAccountHashPathRequest(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     Bytes accountShortHash = Bytes.fromHexStringLenient("0x40");
     Hash accountFullHash = Hash.wrap(Bytes32.leftPad(accountShortHash));
     SnapTestAccount testAccount = createTestContractAccount(accountFullHash, 1, inMemoryStorage);
     insertTestAccounts(testAccount);
+
+    // MRW TODO
+    updateStorageArchiveBlock(inMemoryStorage.getComposedWorldStateStorage(), 2);
+
     var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
     var pathToSlot12 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0102"));
     var trieNodeRequest =
@@ -668,10 +665,15 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertStorageTrieLimitRequest(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertStorageTrieLimitRequest(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
+
+    // MRW TODO
+    updateStorageArchiveBlock(inMemoryStorage.getComposedWorldStateStorage(), 2);
+
     final int trieNodeSize = 69;
     final int trieNodeLimit = 3;
 
@@ -703,10 +705,14 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertStorageTrieLimitRequest_atLeastOneTrieNode(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertStorageTrieLimitRequest_atLeastOneTrieNode(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
+
+    // MRW TODO
+    updateStorageArchiveBlock(inMemoryStorage.getComposedWorldStateStorage(), 2);
 
     var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
     var pathToSlot12 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0102"));
@@ -736,9 +742,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertCodePresent(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertCodePresent(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
     var codeRequest =
         requestByteCodes(
@@ -750,9 +757,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertCodeLimitRequest(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertCodeLimitRequest(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
     final int codeSize = 32;
     final int codeLimit = 2;
@@ -778,9 +786,10 @@ public class SnapServerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("flatDbMode")
-  public void assertCodeLimitRequest_atLeastOneByteCode(final FlatDbMode flatDbMode) {
-    setup(flatDbMode);
+  @MethodSource("flatDbAndStorageMode")
+  public void assertCodeLimitRequest_atLeastOneByteCode(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
 
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
@@ -823,6 +832,10 @@ public class SnapServerTest {
     tx.put(
         TRIE_BRANCH_STORAGE,
         WORLD_BLOCK_NUMBER_KEY,
+        Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
+    tx.put(
+        TRIE_BRANCH_STORAGE,
+        ARCHIVE_PROOF_BLOCK_NUMBER_KEY,
         Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
     tx.commit();
   }

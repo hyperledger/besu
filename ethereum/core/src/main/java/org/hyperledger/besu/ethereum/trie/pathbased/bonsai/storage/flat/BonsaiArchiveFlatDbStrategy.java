@@ -73,7 +73,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   public static final byte[] DELETED_ACCOUNT_VALUE = new byte[0];
   public static final byte[] DELETED_STORAGE_VALUE = new byte[0];
 
-  private Optional<BonsaiContext> getStateArchiveContextForWrite(
+  protected Optional<BonsaiContext> getStateArchiveContextForWrite(
       final SegmentedKeyValueStorage storage) {
     // For Bonsai archive get the flat DB context to use for writing archive entries. We add one
     // because we're working with the latest world state so putting new flat DB keys requires us to
@@ -96,7 +96,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     }
   }
 
-  private Optional<BonsaiContext> getStateArchiveContextForRead(
+  protected Optional<BonsaiContext> getStateArchiveContextForRead(
       final SegmentedKeyValueStorage storage) {
     // For Bonsai archive get the flat DB context to use for reading archive entries
     Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
@@ -138,15 +138,19 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
 
     // If there isn't a match look in the archive DB segment
     if (nearestAccount.isEmpty()) {
-      accountFound =
+      nearestAccount =
           storage
               .getNearestBefore(ACCOUNT_INFO_STATE_ARCHIVE, keyNearest)
               .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size());
 
-      if (accountFound.isPresent()) {
+      if (nearestAccount.isPresent()) {
+        // accountFound =
+        // nearestAccount.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes); // MRW MERGE
+        // TODO
+        accountFound = null; // MRW MERGE TODO
         getAccountFromArchiveCounter.inc();
       } else {
-        getAccountNotFoundInFlatDatabaseCounter.inc();
+        accountFound = Optional.empty();
       }
     } else {
 

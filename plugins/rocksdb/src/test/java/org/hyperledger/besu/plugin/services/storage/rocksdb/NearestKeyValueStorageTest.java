@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
@@ -299,6 +300,134 @@ public class NearestKeyValueStorageTest {
                           rockdDBKeyValueStorage.getNearestAfter(TRIE_BRANCH_STORAGE, reversedKey)))
                   .isTrue();
             });
+  }
+
+  @Test
+  public void testNearestRocksdbWithInMemoryKeyValueStorage2() {
+    final SegmentedKeyValueStorage rockdDBKeyValueStorage =
+        getRocksDBKeyValueStorage(TRIE_BRANCH_STORAGE);
+    final SegmentedKeyValueStorageTransaction rocksDbTransaction =
+        rockdDBKeyValueStorage.startTransaction();
+
+    final SegmentedKeyValueStorage inMemoryDBKeyValueStorage = getInMemoryDBKeyValueStorage();
+    final SegmentedKeyValueStorageTransaction inMemoryDBTransaction =
+        inMemoryDBKeyValueStorage.startTransaction();
+    final byte[] previousKeyWeDoNotWant =
+        Bytes.fromHexString("0x0000000000000000CA").toArrayUnsafe();
+    final byte[] realKeyThatWeWant = Bytes.fromHexString("0x0000000000000000FA").toArrayUnsafe();
+    final byte[] shorterKeyThatIsGettingInTheWay =
+        Bytes.fromHexString("0x0000000000000001").toArrayUnsafe();
+    final byte[] previousValidValue = Bytes.fromHexString("0xBB0000000000000000CA").toArrayUnsafe();
+    final byte[] realKeyValue = Bytes.fromHexString("0xBB0000000000000000FA").toArrayUnsafe();
+    final byte[] shorterKeyValue = Bytes.fromHexString("0xBB0000000000000001").toArrayUnsafe();
+
+    rocksDbTransaction.put(TRIE_BRANCH_STORAGE, previousKeyWeDoNotWant, previousValidValue);
+    inMemoryDBTransaction.put(TRIE_BRANCH_STORAGE, previousKeyWeDoNotWant, previousValidValue);
+
+    rocksDbTransaction.put(TRIE_BRANCH_STORAGE, realKeyThatWeWant, realKeyValue);
+    inMemoryDBTransaction.put(TRIE_BRANCH_STORAGE, realKeyThatWeWant, realKeyValue);
+
+    rocksDbTransaction.put(TRIE_BRANCH_STORAGE, shorterKeyThatIsGettingInTheWay, shorterKeyValue);
+    inMemoryDBTransaction.put(
+        TRIE_BRANCH_STORAGE, shorterKeyThatIsGettingInTheWay, shorterKeyValue);
+
+    // 0x0000000000000000CA
+    // 0x0000000000000000FA  <-- want to find this
+    // 0x0000000000000001
+    // 0x000000000000000100  <-- search for this
+
+    // 0x0000000000000001    <-- want to find this
+    // 0x0000000000000006    <-- search for this
+
+    rocksDbTransaction.commit();
+    inMemoryDBTransaction.commit();
+
+    assertThat(
+            Bytes.wrap(
+                    rockdDBKeyValueStorage
+                        .getNearestBeforeMatchLength(
+                            TRIE_BRANCH_STORAGE, Bytes.fromHexString("0x000000000000000100"))
+                        .get()
+                        .value()
+                        .get())
+                .toHexString()
+                .toUpperCase(Locale.ROOT))
+        .isEqualTo("0XBB0000000000000000FA");
+    assertThat(
+            Bytes.wrap(
+                    inMemoryDBKeyValueStorage
+                        .getNearestBeforeMatchLength(
+                            TRIE_BRANCH_STORAGE, Bytes.fromHexString("0x000000000000000100"))
+                        .get()
+                        .value()
+                        .get())
+                .toHexString()
+                .toUpperCase(Locale.ROOT))
+        .isEqualTo("0XBB0000000000000000FA");
+  }
+
+  // MRW TODO - rename this and previous test function
+  @Test
+  public void testNearestRocksdbWithInMemoryKeyValueStorage3() {
+    final SegmentedKeyValueStorage rockdDBKeyValueStorage =
+        getRocksDBKeyValueStorage(TRIE_BRANCH_STORAGE);
+    final SegmentedKeyValueStorageTransaction rocksDbTransaction =
+        rockdDBKeyValueStorage.startTransaction();
+
+    final SegmentedKeyValueStorage inMemoryDBKeyValueStorage = getInMemoryDBKeyValueStorage();
+    final SegmentedKeyValueStorageTransaction inMemoryDBTransaction =
+        inMemoryDBKeyValueStorage.startTransaction();
+    final byte[] previousKeyWeDoNotWant =
+        Bytes.fromHexString("0x000000000000000001").toArrayUnsafe();
+    final byte[] realKeyThatWeWant = Bytes.fromHexString("0x0000000000000001").toArrayUnsafe();
+    final byte[] otherKeyThatMightBeInTheWay =
+        Bytes.fromHexString("0x040000000000000001").toArrayUnsafe();
+    final byte[] previousValidValue = Bytes.fromHexString("0xBB0000000000000000CA").toArrayUnsafe();
+    final byte[] realKeyValue = Bytes.fromHexString("0xBB0000000000000000AA").toArrayUnsafe();
+    final byte[] otherValue = Bytes.fromHexString("0xBB0000000000000000CA").toArrayUnsafe();
+
+    rocksDbTransaction.put(TRIE_BRANCH_STORAGE, previousKeyWeDoNotWant, previousValidValue);
+    inMemoryDBTransaction.put(TRIE_BRANCH_STORAGE, previousKeyWeDoNotWant, previousValidValue);
+
+    rocksDbTransaction.put(TRIE_BRANCH_STORAGE, realKeyThatWeWant, realKeyValue);
+    inMemoryDBTransaction.put(TRIE_BRANCH_STORAGE, realKeyThatWeWant, realKeyValue);
+
+    rocksDbTransaction.put(TRIE_BRANCH_STORAGE, otherKeyThatMightBeInTheWay, otherValue);
+    inMemoryDBTransaction.put(TRIE_BRANCH_STORAGE, otherKeyThatMightBeInTheWay, otherValue);
+
+    // 0x0000000000000000CA
+    // 0x0000000000000000FA  <-- want to find this
+    // 0x0000000000000001
+    // 0x000000000000000100  <-- search for this
+
+    // 0x0000000000000001    <-- want to find this
+    // 0x0000000000000006    <-- search for this
+
+    rocksDbTransaction.commit();
+    inMemoryDBTransaction.commit();
+
+    assertThat(
+            Bytes.wrap(
+                    rockdDBKeyValueStorage
+                        .getNearestBeforeMatchLength(
+                            TRIE_BRANCH_STORAGE, Bytes.fromHexString("0x0000000000000005"))
+                        .get()
+                        .value()
+                        .get())
+                .toHexString()
+                .toUpperCase(Locale.ROOT))
+        .isEqualTo("0XBB0000000000000000AA");
+    assertThat(
+            Bytes.wrap(
+                    inMemoryDBKeyValueStorage
+                        .getNearestBeforeMatchLength(
+                            TRIE_BRANCH_STORAGE, Bytes.fromHexString("0x0000000000000005"))
+                        .get()
+                        .value()
+                        .get())
+                .toHexString()
+                .toUpperCase(Locale.ROOT))
+        .isEqualTo("0XBB0000000000000000AA");
   }
 
   private SegmentedKeyValueStorage getRocksDBKeyValueStorage(final SegmentIdentifier segment) {

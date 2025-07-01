@@ -191,8 +191,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         // If the flat database healing process is not in progress and the flat database mode is
         // FULL
         if (!snapSyncState.isHealFlatDatabaseInProgress()
-            && (worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)
-                || worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.ARCHIVE))) {
+            && (worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL))) {
           startFlatDatabaseHeal(header);
         }
         // If the flat database healing process is in progress or the flat database mode is not FULL
@@ -260,7 +259,10 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   public synchronized void reloadTrieHeal() {
     // Clear the flat database and trie log from the world state storage if needed
     worldStateStorageCoordinator.applyOnMatchingStrategies(
-        List.of(DataStorageFormat.BONSAI, DataStorageFormat.X_BONSAI_ARCHIVE),
+        List.of(
+            DataStorageFormat.BONSAI,
+            DataStorageFormat.X_BONSAI_ARCHIVE,
+            DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS),
         worldStateKeyValueStorage -> {
           final BonsaiWorldStateKeyValueStorage strategy =
               worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);

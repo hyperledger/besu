@@ -143,6 +143,35 @@ public abstract class FlatDbStrategy {
       final Bytes storageValue);
 
   /*
+   * Puts the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  public abstract void putFlatAccountTrieNode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Bytes location,
+      final Bytes32 nodeHash,
+      final Bytes node);
+
+  /*
+   * Puts the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  public abstract void putFlatStorageTrieNode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Bytes location,
+      final Bytes32 nodeHash,
+      final Bytes node);
+
+  /*
+   * Removes the specified state trie node
+   */
+  public abstract void removeFlatAccountStateTrieNode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Bytes location);
+
+  /*
    * Removes the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
    */
   public abstract void removeFlatAccountStorageValueByStorageSlotHash(

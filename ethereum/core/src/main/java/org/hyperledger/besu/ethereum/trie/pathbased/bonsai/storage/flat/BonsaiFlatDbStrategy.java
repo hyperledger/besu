@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -58,6 +59,50 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       SegmentedKeyValueStorage storage);
 
   /*
+   * Retrieves the account data for the given account hash, using the world state root hash supplier and node loader.
+   */
+  public Optional<Bytes> getFlatAccountTrieNode(
+      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      final NodeLoader nodeLoader,
+      final Bytes location,
+      final Bytes32 nodeHash,
+      final SegmentedKeyValueStorage storage) {
+    // TODO - metrics?
+    return storage
+        .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
+        .map(Bytes::wrap)
+        .filter(b -> Hash.hash(b).equals(nodeHash));
+  }
+
+  /*
+   * Retrieves the account data for the given account hash, using the world state root hash supplier and node loader.
+   */
+  public Optional<Bytes> getFlatTrieNodeUnsafe(
+      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      final NodeLoader nodeLoader,
+      final Bytes key,
+      final SegmentedKeyValueStorage storage) {
+    return storage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
+  }
+
+  /*
+   * Retrieves the value for the given storage key, using the world state root hash supplier and node loader.
+   */
+  public Optional<Bytes> getFlatStorageTrieNode(
+      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      final NodeLoader nodeLoader,
+      final Hash accountHash,
+      final Bytes location,
+      final Bytes32 nodeHash,
+      final SegmentedKeyValueStorage storage) {
+    // TODO - metrics?
+    return storage
+        .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(accountHash, location).toArrayUnsafe())
+        .map(Bytes::wrap)
+        .filter(b -> Hash.hash(b).equals(nodeHash));
+  }
+
+  /*
    * Retrieves the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
    */
 
@@ -97,6 +142,38 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
         ACCOUNT_STORAGE_STORAGE,
         Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(),
         storageValue.toArrayUnsafe());
+  }
+
+  @Override
+  public void putFlatAccountTrieNode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Bytes location,
+      final Bytes32 nodeHash,
+      final Bytes node) {
+    transaction.put(TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
+  }
+
+  @Override
+  public void putFlatStorageTrieNode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Bytes location,
+      final Bytes32 nodeHash,
+      final Bytes node) {
+    transaction.put(
+        TRIE_BRANCH_STORAGE,
+        Bytes.concatenate(accountHash, location).toArrayUnsafe(),
+        node.toArrayUnsafe());
+  }
+
+  @Override
+  public void removeFlatAccountStateTrieNode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Bytes location) {
+    transaction.remove(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
   }
 
   @Override
