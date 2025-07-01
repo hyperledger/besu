@@ -132,7 +132,7 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
-    final long currentBlock = event.getHeader().getNumber();
+    final long currentBlock = event.getBlock().getHeader().getNumber();
     final MiningCoordinator nextMiningCoordinator =
         miningCoordinatorSchedule.getFork(currentBlock + 1).getValue();
 

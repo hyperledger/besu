@@ -99,7 +99,7 @@ class RLPEncodingHelpers {
     return destOffset + 1 + sizeLength;
   }
 
-  static int sizeLength(final int size) {
+  private static int sizeLength(final int size) {
     final int zeros = Integer.numberOfLeadingZeros(size);
     return 4 - (zeros / 8);
   }

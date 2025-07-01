@@ -603,31 +603,4 @@ abstract class AbstractRLPInput implements RLPInput {
     setTo(nextItem());
     return res;
   }
-
-  @Override
-  public Bytes currentListAsBytesNoCopy(final boolean moveToNextItem) {
-    if (currentItem >= size) {
-      throw error("Cannot read list, input is fully consumed");
-    }
-    if (currentKind != RLPDecodingHelpers.Kind.SHORT_LIST
-        && currentKind != RLPDecodingHelpers.Kind.LONG_LIST) {
-      throw error("Cannot read list, current item is not a list, it is: " + currentKind);
-    }
-
-    int takeNumPrevBytes;
-    if (currentPayloadSize <= 55) {
-      // list header is a single byte
-      takeNumPrevBytes = 1;
-    } else {
-      takeNumPrevBytes = RLPEncodingHelpers.sizeLength(currentPayloadSize) + 1;
-    }
-    Bytes res =
-        inputSlice(
-            (int) currentPayloadOffset - takeNumPrevBytes, currentPayloadSize + takeNumPrevBytes);
-
-    if (moveToNextItem) {
-      setTo(nextItem());
-    }
-    return res;
-  }
 }

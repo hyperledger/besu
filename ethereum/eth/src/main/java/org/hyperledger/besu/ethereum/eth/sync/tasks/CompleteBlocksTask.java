@@ -14,29 +14,50 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.tasks;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.toMap;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CompleteBlocksTask extends AbstractCompleteBlocksTask<Block> {
-
+/**
+ * Given a set of headers, "completes" them by repeatedly requesting additional data (bodies) needed
+ * to create the blocks that correspond to the supplied headers.
+ */
+public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
   private static final Logger LOG = LoggerFactory.getLogger(CompleteBlocksTask.class);
+
+  private static final int MIN_SIZE_INCOMPLETE_LIST = 1;
+  private static final int DEFAULT_RETRIES = 5;
+
+  private final EthContext ethContext;
+  private final ProtocolSchedule protocolSchedule;
+
+  private final List<BlockHeader> headers;
+  private final Map<Long, Block> blocks;
+  private final MetricsSystem metricsSystem;
 
   private CompleteBlocksTask(
       final ProtocolSchedule protocolSchedule,
@@ -44,7 +65,39 @@ public class CompleteBlocksTask extends AbstractCompleteBlocksTask<Block> {
       final List<BlockHeader> headers,
       final int maxRetries,
       final MetricsSystem metricsSystem) {
-    super(protocolSchedule, ethContext, headers, maxRetries, metricsSystem);
+    super(ethContext, maxRetries, Collection::isEmpty, metricsSystem);
+    checkArgument(headers.size() > 0, "Must supply a non-empty headers list");
+    this.protocolSchedule = protocolSchedule;
+    this.ethContext = ethContext;
+    this.metricsSystem = metricsSystem;
+
+    this.headers = headers;
+    this.blocks =
+        headers.stream()
+            .filter(BlockHeader::hasEmptyBlock)
+            .collect(
+                toMap(
+                    BlockHeader::getNumber,
+                    header ->
+                        new Block(
+                            header,
+                            createEmptyBodyBasedOnProtocolSchedule(protocolSchedule, header))));
+  }
+
+  @NotNull
+  private BlockBody createEmptyBodyBasedOnProtocolSchedule(
+      final ProtocolSchedule protocolSchedule, final BlockHeader header) {
+    return new BlockBody(
+        Collections.emptyList(),
+        Collections.emptyList(),
+        isWithdrawalsEnabled(protocolSchedule, header)
+            ? Optional.of(Collections.emptyList())
+            : Optional.empty());
+  }
+
+  private boolean isWithdrawalsEnabled(
+      final ProtocolSchedule protocolSchedule, final BlockHeader header) {
+    return protocolSchedule.getByBlockHeader(header).getWithdrawalsProcessor().isPresent();
   }
 
   public static CompleteBlocksTask forHeaders(
@@ -66,39 +119,54 @@ public class CompleteBlocksTask extends AbstractCompleteBlocksTask<Block> {
   }
 
   @Override
-  Block createEmptyBlock(final BlockHeader header) {
-    return new Block(
-        header,
-        new BlockBody(
-            Collections.emptyList(),
-            Collections.emptyList(),
-            isWithdrawalsEnabled(header)
-                ? Optional.of(Collections.emptyList())
-                : Optional.empty()));
+  protected CompletableFuture<List<Block>> executePeerTask(final Optional<EthPeer> assignedPeer) {
+    return requestBodies(assignedPeer).thenCompose(this::processBodiesResult);
   }
 
-  @Override
-  CompletableFuture<List<Block>> requestBodies(final Optional<EthPeer> assignedPeer) {
+  private CompletableFuture<List<Block>> requestBodies(final Optional<EthPeer> assignedPeer) {
     final List<BlockHeader> incompleteHeaders = incompleteHeaders();
     if (incompleteHeaders.isEmpty()) {
-      return completedFuture(Collections.emptyList());
+      return completedFuture(emptyList());
     }
     LOG.debug(
         "Requesting bodies to complete {} blocks, starting with {}.",
         incompleteHeaders.size(),
-        incompleteHeaders.getFirst().getNumber());
+        incompleteHeaders.get(0).getNumber());
     return executeSubTask(
         () -> {
           final GetBodiesFromPeerTask task =
               GetBodiesFromPeerTask.forHeaders(
                   protocolSchedule, ethContext, incompleteHeaders, metricsSystem);
           assignedPeer.ifPresent(task::assignPeer);
-          return task.run().thenApply(AbstractPeerTask.PeerTaskResult::getResult);
+          return task.run().thenApply(PeerTaskResult::getResult);
         });
   }
 
-  @Override
-  long getBlockNumber(final Block block) {
-    return block.getHeader().getNumber();
+  private CompletableFuture<List<Block>> processBodiesResult(final List<Block> blocksResult) {
+    blocksResult.forEach((block) -> blocks.put(block.getHeader().getNumber(), block));
+
+    if (incompleteHeaders().isEmpty()) {
+      result.complete(
+          headers.stream().map(h -> blocks.get(h.getNumber())).collect(Collectors.toList()));
+    }
+
+    return completedFuture(blocksResult);
+  }
+
+  private List<BlockHeader> incompleteHeaders() {
+    final List<BlockHeader> collectedHeaders =
+        headers.stream()
+            .filter(h -> blocks.get(h.getNumber()) == null)
+            .collect(Collectors.toList());
+    if (!collectedHeaders.isEmpty() && getRetryCount() > 1) {
+      final int subSize = (int) Math.ceil((double) collectedHeaders.size() / getRetryCount());
+      if (getRetryCount() > getMaxRetries()) {
+        return collectedHeaders.subList(0, MIN_SIZE_INCOMPLETE_LIST);
+      } else {
+        return collectedHeaders.subList(0, subSize);
+      }
+    }
+
+    return collectedHeaders;
   }
 }
