@@ -198,13 +198,18 @@ public class StateTestSubCommand implements Runnable {
           generalStateTestEntry
               .getValue()
               .finalStateSpecs()
-              .forEach((__, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs, isLastIteration));
+              .forEach(
+                  (__, specs) ->
+                      traceTestSpecs(generalStateTestEntry.getKey(), specs, isLastIteration));
         }
       }
     }
   }
 
-  private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs, final boolean isLastIteration) {
+  private void traceTestSpecs(
+      final String test,
+      final List<GeneralStateTestCaseEipSpec> specs,
+      final boolean isLastIteration) {
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults
             ? new StandardJsonTracer(
