@@ -85,7 +85,7 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
   }
 
   public void setIsEvmRead(final boolean isEvmRead) {
-    this.isEvmRead = isEvmRead;
+    this.isEvmRead = this.isEvmRead || isEvmRead;
   }
 
   @Override

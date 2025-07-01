@@ -571,6 +571,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     if (localAccountStorage != null) {
       final PathBasedValue<UInt256> value = localAccountStorage.get(storageSlotKey);
       if (value != null) {
+        value.setIsEvmRead(isEvmRead);
         return Optional.ofNullable(value.getUpdated());
       }
     }
@@ -608,6 +609,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     if (localAccountStorage != null) {
       final PathBasedValue<UInt256> value = localAccountStorage.get(storageSlotKey);
       if (value != null) {
+        value.setIsEvmRead(isEvmRead);
         if (value.isLastStepCleared()) {
           return UInt256.ZERO;
         }
