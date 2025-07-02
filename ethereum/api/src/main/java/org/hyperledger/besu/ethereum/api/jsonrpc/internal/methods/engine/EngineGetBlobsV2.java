@@ -28,13 +28,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
-import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -83,31 +80,19 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
     }
   }
 
-  private @Nonnull List<BlobAndProofV2> getBlobV2Result(final VersionedHash[] versionedHashes) {
-    return Arrays.stream(versionedHashes)
-        .map(transactionPool::getBlobProofBundle)
-        .map(this::getBlobAndProofV2)
-        .toList();
-  }
-
-  private @Nullable BlobAndProofV2 getBlobAndProofV2(final BlobProofBundle blobProofBundle) {
-    if (blobProofBundle == null) {
-      return null;
+  private List<BlobAndProofV2> getBlobV2Result(final VersionedHash[] versionedHashes) {
+    List<BlobAndProofV2> blobProofBundles = new ArrayList<>(versionedHashes.length);
+    for (VersionedHash versionedHash : versionedHashes) {
+      BlobProofBundle blobProofBundle = transactionPool.getBlobProofBundle(versionedHash);
+      if (blobProofBundle == null) {
+        return null;
+      }
+      if (blobProofBundle.getBlobType() == BlobType.KZG_PROOF) {
+        return null; // KZG_PROOF type is not supported in this method
+      }
+      blobProofBundles.add(createBlobAndProofV2(blobProofBundle));
     }
-    BlobProofBundle proofBundle = processBundle(blobProofBundle);
-    return createBlobAndProofV2(proofBundle);
-  }
-
-  private BlobProofBundle processBundle(final BlobProofBundle blobProofBundle) {
-    // This may occur during fork transitions when the pool contains outdated blob types.
-    // It should not happen once the pool is refreshed with new transactions.
-    if (blobProofBundle.getBlobType() == BlobType.KZG_PROOF) {
-      LOG.warn(
-          "BlobProofBundle {} with KZG_PROOF type found, converting to KZG_CELL_PROOFS type.",
-          blobProofBundle.getVersionedHash());
-      return CKZG4844Helper.unsafeConvertToVersion1(blobProofBundle);
-    }
-    return blobProofBundle;
+    return blobProofBundles;
   }
 
   private BlobAndProofV2 createBlobAndProofV2(final BlobProofBundle blobProofBundle) {
