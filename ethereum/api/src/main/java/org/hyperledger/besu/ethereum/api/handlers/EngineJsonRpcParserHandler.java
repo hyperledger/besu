@@ -36,6 +36,10 @@ import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Engine-API specific JsonRpcParserHandler that allows large payloads. This is needed for
+ * engine_newPayload which can contain very large transactions.
+ */
 public class EngineJsonRpcParserHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineJsonRpcParserHandler.class);
