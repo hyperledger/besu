@@ -3,11 +3,12 @@
 ## Unreleased
 
 ### Breaking Changes
+- Change in behavior for `eth_estimateGas`, to improve accuracy, when used on a network with a base fee market, the internal transaction simulation does not anymore underprice transactions, so if there are no gas pricing related fields specified in the request, then gas price for the transaction is set to the base fee value [#8888](https://github.com/hyperledger/besu/pull/8888)  
 
 ### Upcoming Breaking Changes
 
 ### Additions and Improvements
-
+- Improve transaction simulation and gas estimation when no gas pricing is present [#8888](https://github.com/hyperledger/besu/pull/8888)
 #### Fusaka
 
 ### Bug fixes
