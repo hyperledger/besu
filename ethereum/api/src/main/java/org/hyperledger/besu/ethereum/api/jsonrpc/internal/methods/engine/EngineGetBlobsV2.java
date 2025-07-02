@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
-  private static final Logger LOG = LoggerFactory.getLogger(EngineGetBlobsV2.class);
+
   public static final int REQUEST_MAX_VERSIONED_HASHES = 128;
 
   private final TransactionPool transactionPool;
