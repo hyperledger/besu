@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class is a BFT-specific implementatino of the pivot-block selection used for snap-sync. It
+ * This class is a BFT-specific implementation of the pivot-block selection used for snap-sync. It
  * makes some pragmatic decisions about cases specific to permissioned chains, e.g. when there is a
  * single validator node at the start of a chain, or a brand new chain has all nodes at block 0. For
  * other cases the behaviour is the same as public-chain pivot selection, namely that the best peer
