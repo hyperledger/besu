@@ -36,17 +36,12 @@ import org.apache.tuweni.bytes.Bytes32;
 public class ForkIdManager {
 
   private final Hash genesisHash;
-  private final List<ForkId> blockNumbersForkIds;
-  private final List<ForkId> timestampsForkIds;
-  private final List<ForkId> allForkIds;
-
-  private final List<Long> blockNumberForks;
-  private final List<Long> timestampForks;
-
+  private final List<Fork> allForks;
   private final Supplier<BlockHeader> chainHeadSupplier;
   private final long forkNext;
   private final boolean noForksAvailable;
   private final long highestKnownFork;
+  private List<ForkId> allForkIds;
   private Bytes genesisHashCrc;
 
   public ForkIdManager(
@@ -61,43 +56,54 @@ public class ForkIdManager {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    this.blockNumbersForkIds = new ArrayList<>();
-    this.timestampsForkIds = new ArrayList<>();
-    this.blockNumberForks =
-        blockNumberForks.stream()
-            .filter(fork -> fork > 0L)
-            .distinct()
-            .sorted()
-            .collect(Collectors.toUnmodifiableList());
-    this.timestampForks =
-        timestampForks.stream()
-            .filter(fork -> fork > blockchain.getGenesisBlock().getHeader().getTimestamp())
-            .distinct()
-            .sorted()
-            .collect(Collectors.toUnmodifiableList());
-    final List<Long> allForkNumbers =
-        Stream.concat(blockNumberForks.stream(), timestampForks.stream()).toList();
+    
+    // Create unified fork list from block numbers and timestamps
+    final long genesisTimestamp = blockchain.getGenesisBlock().getHeader().getTimestamp();
+    final List<Fork> blockForks = blockNumberForks.stream()
+        .filter(fork -> fork > 0L)
+        .distinct()
+        .map(Fork::ofBlockNumber)
+        .collect(Collectors.toList());
+    final List<Fork> timestampForksFiltered = timestampForks.stream()
+        .filter(fork -> fork > genesisTimestamp)
+        .distinct()
+        .map(Fork::ofTimestamp)
+        .collect(Collectors.toList());
+    
+    this.allForks = Stream.concat(blockForks.stream(), timestampForksFiltered.stream())
+        .sorted()
+        .collect(Collectors.toUnmodifiableList());
+    
     this.forkNext = createForkIds();
-    this.allForkIds =
-        Stream.concat(blockNumbersForkIds.stream(), timestampsForkIds.stream())
-            .collect(Collectors.toList());
     this.noForksAvailable = allForkIds.isEmpty();
-    this.highestKnownFork =
-        !allForkNumbers.isEmpty() ? allForkNumbers.get(allForkNumbers.size() - 1) : 0L;
+    this.highestKnownFork = allForks.isEmpty() ? 0L : allForks.get(allForks.size() - 1).getValue();
   }
 
   public ForkId getForkIdForChainHead() {
     final BlockHeader header = chainHeadSupplier.get();
-    for (final ForkId forkId : blockNumbersForkIds) {
-      if (header.getNumber() < forkId.getNext()) {
+    
+    // Find the appropriate ForkId by checking each fork against current chain head
+    for (final ForkId forkId : allForkIds) {
+      if (forkId.getNext() == 0) {
+        // This is the final ForkId (no next fork)
         return forkId;
       }
-    }
-    for (final ForkId forkId : timestampsForkIds) {
-      if (header.getTimestamp() < forkId.getNext()) {
-        return forkId;
+      
+      // Find the corresponding fork to determine comparison type
+      final Fork correspondingFork = allForks.stream()
+          .filter(fork -> fork.getValue() == forkId.getNext())
+          .findFirst()
+          .orElse(null);
+      
+      if (correspondingFork != null) {
+        final long currentValue = correspondingFork.isBlockNumber() 
+            ? header.getNumber() : header.getTimestamp();
+        if (currentValue < correspondingFork.getValue()) {
+          return forkId;
+        }
       }
     }
+    
     return allForkIds.isEmpty()
         ? new ForkId(genesisHashCrc, 0)
         : allForkIds.get(allForkIds.size() - 1);
@@ -119,11 +125,11 @@ public class ForkIdManager {
   /**
    * EIP-2124 behaviour
    *
-   * @param forkId to be validated.
+   * @param remoteForkId to be validated.
    * @return boolean (peer valid (true) or invalid (false))
    */
-  public boolean peerCheck(final ForkId forkId) {
-    if (forkId == null || noForksAvailable) {
+  public boolean peerCheck(final ForkId remoteForkId) {
+    if (remoteForkId == null || noForksAvailable) {
       return true; // Another method must be used to validate (i.e. genesis hash)
     }
     // Run the fork checksum validation rule set:
@@ -142,17 +148,19 @@ public class ForkIdManager {
     //        the remote, but at this current point in time we don't have enough
     //        information.
     //   4. Reject in all other cases.
-    if (!isHashKnown(forkId.getHash())) {
+    if (!isHashKnown(remoteForkId.getHash())) {
       return false;
     }
 
     final BlockHeader header = chainHeadSupplier.get();
-    final long forkValue =
-        blockNumberForks.contains(forkNext) ? header.getNumber() : header.getTimestamp();
+    // Determine if we should compare against block number or timestamp based on forkNext
+    final boolean isBlockNumberFork = allForks.stream()
+        .anyMatch(fork -> fork.getValue() == forkNext && fork.isBlockNumber());
+    final long chainHeadForkValue = isBlockNumberFork ? header.getNumber() : header.getTimestamp();
 
-    return forkValue < forkNext
-        || (isForkKnown(forkId.getNext())
-            && isRemoteAwareOfPresent(forkId.getHash(), forkId.getNext()));
+    return chainHeadForkValue < forkNext
+        || (isForkKnown(remoteForkId.getNext())
+            && isRemoteAwareOfPresent(remoteForkId.getHash(), remoteForkId.getNext()));
   }
 
   /**
@@ -194,39 +202,33 @@ public class ForkIdManager {
     crc.update(genesisHash.toArray());
     genesisHashCrc = getCurrentCrcHash(crc);
     final List<Bytes> forkHashes = new ArrayList<>(List.of(genesisHashCrc));
-    blockNumberForks.forEach(
-        fork -> {
-          updateCrc(crc, fork);
-          forkHashes.add(getCurrentCrcHash(crc));
-        });
+    
+    // Process all forks in chronological order to build CRC hashes
+    for (final Fork fork : allForks) {
+      updateCrc(crc, fork.getValue());
+      forkHashes.add(getCurrentCrcHash(crc));
+    }
 
-    timestampForks.forEach(
-        fork -> {
-          updateCrc(crc, fork);
-          forkHashes.add(getCurrentCrcHash(crc));
-        });
-
-    // This loop is for all the fork hashes that have an associated "next fork"
-    for (int i = 0; i < blockNumberForks.size(); i++) {
-      blockNumbersForkIds.add(new ForkId(forkHashes.get(i), blockNumberForks.get(i)));
+    // Create ForkId instances - each hash corresponds to state BEFORE that fork
+    // and points to the fork value as "next"
+    final List<ForkId> forkIdsList = new ArrayList<>();
+    
+    for (int i = 0; i < allForks.size(); i++) {
+      forkIdsList.add(new ForkId(forkHashes.get(i), allForks.get(i).getValue()));
     }
-    for (int i = 0; i < timestampForks.size(); i++) {
-      timestampsForkIds.add(
-          new ForkId(forkHashes.get(blockNumberForks.size() + i), timestampForks.get(i)));
+    
+    // Add final ForkId with latest hash and next = 0 (no more forks)
+    if (!allForks.isEmpty()) {
+      forkIdsList.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
     }
-    long forkNext = 0;
-    if (!timestampForks.isEmpty()) {
-      forkNext = timestampForks.get(timestampForks.size() - 1);
-      timestampsForkIds.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
-    } else if (!blockNumberForks.isEmpty()) {
-      forkNext = blockNumbersForkIds.get(blockNumbersForkIds.size() - 1).getNext();
-      blockNumbersForkIds.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
-    }
-    return forkNext;
+    
+    this.allForkIds = forkIdsList;
+    
+    return allForks.isEmpty() ? 0L : allForks.get(allForks.size() - 1).getValue();
   }
 
-  private static void updateCrc(final CRC32 crc, final Long block) {
-    final byte[] byteRepresentationFork = EndianUtils.longToBigEndian(block);
+  private static void updateCrc(final CRC32 crc, final long forkValue) {
+    final byte[] byteRepresentationFork = EndianUtils.longToBigEndian(forkValue);
     crc.update(byteRepresentationFork, 0, byteRepresentationFork.length);
   }
 
