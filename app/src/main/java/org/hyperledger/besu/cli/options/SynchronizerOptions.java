@@ -90,8 +90,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
-  private static final String SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG =
-      "--Xsnapsync-synchronizer-pre-merge-headers-only-enabled";
+  private static final String SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG =
+      "--snapsync-synchronizer-pre-checkpoint-headers-only-enabled";
 
   /**
    * Parse block propagation range.
@@ -331,14 +331,19 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean snapTransactionIndexingEnabled =
       SnapSyncConfiguration.DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
 
+  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
-      names = SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG,
+      names = {
+        "--Xsnapsync-synchronizer-pre-merge-headers-only-enabled",
+        SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG
+      },
       paramLabel = "<Boolean>",
-      hidden = true,
       arity = "0..1",
       description =
-          "Enable snap sync downloader to save only headers for blocks before the merge. (default: ${DEFAULT-VALUE})")
-  private Boolean snapSyncSavePreMergeHeadersOnlyEnabled =
+          "Enable snap sync downloader to save only headers (not block bodies) for blocks before the checkpoint. (default: ${DEFAULT-VALUE}) \"--Xsnapsync-synchronizer-pre-merge-headers-only-enabled\" is deprecated and will be removed in a future release. Use \""
+              + SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG
+              + "\" instead.")
+  private Boolean snapSyncSavePreCheckpointHeadersOnlyEnabled =
       DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
 
   private SynchronizerOptions() {}
@@ -413,8 +418,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
     options.snapTransactionIndexingEnabled =
         config.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled();
-    options.snapSyncSavePreMergeHeadersOnlyEnabled =
-        config.isSnapSyncSavePreMergeHeadersOnlyEnabled();
+    options.snapSyncSavePreCheckpointHeadersOnlyEnabled =
+        config.isSnapSyncSavePreCheckpointHeadersOnlyEnabled();
     return options;
   }
 
@@ -451,7 +456,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
-    builder.snapSyncSavePreMergeHeadersOnlyEnabled(snapSyncSavePreMergeHeadersOnlyEnabled);
+    builder.snapSyncSavePreCheckpointHeadersOnlyEnabled(
+        snapSyncSavePreCheckpointHeadersOnlyEnabled);
     return builder;
   }
 
@@ -509,8 +515,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(snapsyncServerEnabled),
             SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
             OptionParser.format(snapTransactionIndexingEnabled),
-            SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG,
-            OptionParser.format(snapSyncSavePreMergeHeadersOnlyEnabled));
+            SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG,
+            OptionParser.format(snapSyncSavePreCheckpointHeadersOnlyEnabled));
     return value;
   }
 }
