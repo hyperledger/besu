@@ -72,7 +72,6 @@ tasks.register('checkAPIChanges', FileStateChecker) {
   description = "Checks that the API for the Plugin-API project does not change without deliberate thought"
   files = sourceSets.main.allJava.files
   knownHash = 'A25C44Io5KHgf3etYpe2i8cOKJ4i39Zhlsc649mhGF4='
-
 }
 check.dependsOn('checkAPIChanges')
 
