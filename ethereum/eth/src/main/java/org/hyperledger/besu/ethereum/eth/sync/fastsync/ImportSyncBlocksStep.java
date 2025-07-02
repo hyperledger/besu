@@ -47,6 +47,7 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   private final BlockHeader pivotHeader;
   private final boolean transactionIndexingEnabled;
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
+  private long expectedNextBlockNumber = -1L;
 
   public ImportSyncBlocksStep(
       final ProtocolSchedule protocolSchedule,
@@ -64,6 +65,22 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   @Override
   public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
     final long startTime = System.nanoTime();
+    if (!blocksWithReceipts.isEmpty()
+        && (blocksWithReceipts.getLast().getNumber() - blocksWithReceipts.getFirst().getNumber() + 1
+            != blocksWithReceipts.size())) {
+      LOG.info(
+          "Stefan: first block number: {}, last block number: {}, size: {}",
+          blocksWithReceipts.getFirst().getNumber(),
+          blocksWithReceipts.getLast().getNumber(),
+          blocksWithReceipts.size());
+      return;
+    } else if (!blocksWithReceipts.isEmpty()
+        && (blocksWithReceipts.getFirst().getNumber() != expectedNextBlockNumber)) {
+      LOG.info(
+          "Stefan: first block number: {}, expected next block number: {}",
+          blocksWithReceipts.getFirst().getNumber(),
+          expectedNextBlockNumber);
+    }
     for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       if (!importBlock(blockWithReceipts)) {
         throw InvalidBlockException.fromInvalidBlock(blockWithReceipts.getHeader());
@@ -73,8 +90,9 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
           .addArgument(blockWithReceipts.getBlock()::toLogString)
           .log();
     }
+    expectedNextBlockNumber = blocksWithReceipts.getLast().getNumber() + 1;
     if (logStartBlock.isEmpty()) {
-      logStartBlock = OptionalLong.of(blocksWithReceipts.get(0).getNumber());
+      logStartBlock = OptionalLong.of(blocksWithReceipts.getFirst().getNumber());
     }
     final long lastBlock = blocksWithReceipts.get(blocksWithReceipts.size() - 1).getNumber();
     int peerCount = -1; // ethContext is not available in tests
