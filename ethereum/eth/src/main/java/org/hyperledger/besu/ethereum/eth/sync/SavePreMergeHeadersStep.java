@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -43,6 +44,9 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
   private static final int LOG_REPEAT_DELAY_SECONDS = 30;
   private static final int LOG_PROGRESS_INTERVAL = 1000;
 
+  private long lastBlockNumber = -1;
+  private Hash lastBlockHash = Hash.ZERO;
+
   public SavePreMergeHeadersStep(
       final MutableBlockchain blockchain,
       final boolean isPoS,
@@ -58,7 +62,25 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
   @Override
   public Stream<BlockHeader> apply(final BlockHeader blockHeader) {
     long blockNumber = blockHeader.getNumber();
+    Hash blockHash = blockHeader.getBlockHash();
     if (isPostMergeBlock(blockNumber)) {
+      if (lastBlockNumber == -1) {
+        lastBlockNumber = blockNumber;
+        lastBlockHash = blockHash;
+      } else {
+        if (lastBlockNumber + 1 != blockNumber
+            || !lastBlockHash.equals(blockHeader.getParentHash())) {
+          LOG.info(
+              "Stefan: Block header {} with hash {} does not follow expected last block header {} with hash {}, expected parent hash {}",
+              blockNumber,
+              blockHash,
+              lastBlockNumber,
+              lastBlockHash,
+              blockHeader.getParentHash());
+        }
+        lastBlockNumber = blockNumber;
+        lastBlockHash = blockHash;
+      }
       return Stream.of(blockHeader);
     }
     storeBlockHeader(blockHeader);
