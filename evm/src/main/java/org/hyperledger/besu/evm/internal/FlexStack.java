@@ -181,19 +181,19 @@ public class FlexStack<T> {
       throw new OverflowException();
     }
     if (nextTop >= currentCapacity) {
-      final int newCapacity = newLength(currentCapacity, currentCapacity + 1, currentCapacity >> 1);
-      expandEntries(Math.min(newCapacity, maxSize));
+      final int newCapacity = newLength(currentCapacity, currentCapacity >> 1);
+      expandEntries(newCapacity);
     }
     entries[nextTop] = operand;
     top = nextTop;
   }
 
-  private int newLength(final int oldCapacity, final int minGrowth, final int prefGrowth) {
-    final int growth = Math.max(minGrowth, prefGrowth);
+  private int newLength(final int oldCapacity, final int prefGrowth) {
+    final int growth = Math.max(1, prefGrowth);
     if (SOFT_MAX_ARRAY_LENGTH - growth < oldCapacity) {
       return maxSize;
     }
-    return oldCapacity + growth;
+    return Math.min(oldCapacity + growth, maxSize);
   }
 
   /**
