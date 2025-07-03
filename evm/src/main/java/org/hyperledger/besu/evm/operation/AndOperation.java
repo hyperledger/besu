@@ -17,14 +17,15 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.word256.Word256;
 
-import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
-/** The And operation. */
+/** The And operation performs a bitwise AND operation on two 256-bit words. */
 public class AndOperation extends AbstractFixedCostOperation {
 
   /** The And operation success result. */
-  static final OperationResult andSuccess = new OperationResult(3, null);
+  public static final OperationResult AND_SUCCESS = new OperationResult(3, null);
 
   /**
    * Instantiates a new And operation.
@@ -48,12 +49,10 @@ public class AndOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackItem();
-    final Bytes value1 = frame.popStackItem();
+    final Word256 a = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
+    final Word256 b = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
 
-    final Bytes result = value0.and(value1);
-    frame.pushStackItem(result);
-
-    return andSuccess;
+    frame.pushStackItem(Bytes32.wrap(a.and(b).toBytes()));
+    return AND_SUCCESS;
   }
 }

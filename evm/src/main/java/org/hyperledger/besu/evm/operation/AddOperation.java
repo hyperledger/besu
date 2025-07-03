@@ -17,12 +17,14 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.word256.Word256;
 
-import java.math.BigInteger;
+import org.apache.tuweni.bytes.Bytes32;
 
-import org.apache.tuweni.bytes.Bytes;
-
-/** The Add operation. */
+/**
+ * The Add operation performs a simple addition of two 256-bit words, returning the result in theç
+ * stack. If the result exceeds 32 bytes, it truncates the result to the last 32 bytes.
+ */
 public class AddOperation extends AbstractFixedCostOperation {
 
   /** The Add operation success result. */
@@ -50,19 +52,10 @@ public class AddOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final BigInteger value0 = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
-    final BigInteger value1 = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
+    final Word256 a = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
+    final Word256 b = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
 
-    final BigInteger result = value0.add(value1);
-
-    byte[] resultArray = result.toByteArray();
-    int length = resultArray.length;
-    if (length > 32) {
-      frame.pushStackItem(Bytes.wrap(resultArray, length - 32, 32));
-    } else {
-      frame.pushStackItem(Bytes.wrap(resultArray));
-    }
-
+    frame.pushStackItem(Bytes32.wrap(a.add(b).toBytes()));
     return addSuccess;
   }
 }
