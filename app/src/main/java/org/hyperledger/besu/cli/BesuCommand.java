@@ -1318,6 +1318,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         || genesisConfigOptionsSupplier.get().getCancunEOFTime().isPresent()
         || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()
         || genesisConfigOptionsSupplier.get().getOsakaTime().isPresent()
+        || genesisConfigOptionsSupplier.get().getBpo1Time().isPresent()
+        || genesisConfigOptionsSupplier.get().getBpo2Time().isPresent()
+        || genesisConfigOptionsSupplier.get().getBpo3Time().isPresent()
+        || genesisConfigOptionsSupplier.get().getBpo4Time().isPresent()
+        || genesisConfigOptionsSupplier.get().getBpo5Time().isPresent()
         || genesisConfigOptionsSupplier.get().getFutureEipsTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
