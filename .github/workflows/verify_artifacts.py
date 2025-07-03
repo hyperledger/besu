@@ -18,7 +18,7 @@ def create_artifact_paths(version):
         f"{artifacts_base_path}/internal/besu-metrics-core/{version}/besu-metrics-core-{version}.module",
         f"{artifacts_base_path}/internal/besu-metrics-core/{version}/besu-metrics-core-{version}.pom",
         f"{artifacts_base_path}/internal/besu-metrics-core/{version}/besu-metrics-core-{version}.jar",
-        # internal/esu-ethereum-core
+        # internal/besu-ethereum-core
         f"{artifacts_base_path}/internal/besu-ethereum-core/{version}/besu-ethereum-core-{version}.module",
         f"{artifacts_base_path}/internal/besu-ethereum-core/{version}/besu-ethereum-core-{version}.pom",
         f"{artifacts_base_path}/internal/besu-ethereum-core/{version}/besu-ethereum-core-{version}.jar",
