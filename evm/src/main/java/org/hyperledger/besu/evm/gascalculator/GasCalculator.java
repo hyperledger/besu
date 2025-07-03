@@ -77,6 +77,13 @@ public interface GasCalculator {
   long getEcrecPrecompiledContractGasCost();
 
   /**
+   * Returns the gas cost to execute the {@link ECRECPrecompiledContract}.
+   *
+   * @return the gas cost to execute the P256Verify precompiled contract
+   */
+  long getP256VerifyPrecompiledContractGasCost();
+
+  /**
    * Returns the gas cost to execute the {@link SHA256PrecompiledContract}.
    *
    * @param input The input to the SHA256 precompiled contract
@@ -171,45 +178,6 @@ public interface GasCalculator {
    * @param transferValue The wei being transferred
    * @param recipient The CALL recipient (may be null if self destructed or new)
    * @param contract The address of the recipient (never null)
-   * @return The gas cost for the CALL operation
-   * @deprecated use the variant with the `accountIsWarm` parameter.
-   */
-  @Deprecated(since = "24.2.0", forRemoval = true)
-  default long callOperationGasCost(
-      final MessageFrame frame,
-      final long stipend,
-      final long inputDataOffset,
-      final long inputDataLength,
-      final long outputDataOffset,
-      final long outputDataLength,
-      final Wei transferValue,
-      final Account recipient,
-      final Address contract) {
-    return callOperationGasCost(
-        frame,
-        stipend,
-        inputDataOffset,
-        inputDataLength,
-        outputDataOffset,
-        outputDataLength,
-        transferValue,
-        recipient,
-        contract,
-        true);
-  }
-
-  /**
-   * Returns the gas cost for one of the various CALL operations.
-   *
-   * @param frame The current frame
-   * @param stipend The gas stipend being provided by the CALL caller
-   * @param inputDataOffset The offset in memory to retrieve the CALL input data
-   * @param inputDataLength The CALL input data length
-   * @param outputDataOffset The offset in memory to place the CALL output data
-   * @param outputDataLength The CALL output data length
-   * @param transferValue The wei being transferred
-   * @param recipient The CALL recipient (may be null if self destructed or new)
-   * @param contract The address of the recipient (never null)
    * @param accountIsWarm The address of the contract is "warm" as per EIP-2929
    * @return The gas cost for the CALL operation
    */
@@ -255,29 +223,6 @@ public interface GasCalculator {
    * @return MIN_CALLEE_GAS
    */
   long getMinCalleeGas();
-
-  /**
-   * Returns the amount of gas the CREATE operation will consume.
-   *
-   * @param frame The current frame
-   * @return the amount of gas the CREATE operation will consume
-   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
-   *     #memoryExpansionGasCost(MessageFrame, long, long)}, and {@link #initcodeCost(int)}
-   */
-  @Deprecated(since = "24.4.1", forRemoval = true)
-  long createOperationGasCost(MessageFrame frame);
-
-  /**
-   * Returns the amount of gas the CREATE2 operation will consume.
-   *
-   * @param frame The current frame
-   * @return the amount of gas the CREATE2 operation will consume
-   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
-   *     #memoryExpansionGasCost(MessageFrame, long, long)}, {@link #createKeccakCost(int)}, and
-   *     {@link #initcodeCost(int)}
-   */
-  @Deprecated(since = "24.4.1", forRemoval = true)
-  long create2OperationGasCost(MessageFrame frame);
 
   /**
    * Returns the base create cost, or TX_CREATE_COST as defined in the execution specs

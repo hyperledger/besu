@@ -43,33 +43,13 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
   private static final Cache<Integer, PrecompileInputResultTuple> bnAddCache =
       Caffeine.newBuilder().maximumSize(1000).build();
 
-  private AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
+  AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
         PRECOMPILE_NAME,
         gasCalculator,
         LibGnarkEIP196.EIP196_ADD_OPERATION_RAW_VALUE,
         PARAMETER_LENGTH);
     this.gasCost = gasCost;
-  }
-
-  /**
-   * Create Byzantium AltBN128Add precompiled contract.
-   *
-   * @param gasCalculator the gas calculator
-   * @return the AltBN128Add precompiled contract
-   */
-  public static AltBN128AddPrecompiledContract byzantium(final GasCalculator gasCalculator) {
-    return new AltBN128AddPrecompiledContract(gasCalculator, 500L);
-  }
-
-  /**
-   * Create Istanbul AltBN128Add precompiled contract.
-   *
-   * @param gasCalculator the gas calculator
-   * @return the AltBN128Add precompiled contract
-   */
-  public static AltBN128AddPrecompiledContract istanbul(final GasCalculator gasCalculator) {
-    return new AltBN128AddPrecompiledContract(gasCalculator, 150L);
   }
 
   @Override

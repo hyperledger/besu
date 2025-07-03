@@ -23,6 +23,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.CallParameter;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StateOverride;
 import org.hyperledger.besu.datatypes.StateOverrideMap;
@@ -361,7 +362,8 @@ public class TransactionSimulator {
       final Address miningBeneficiary) {
 
     final long simulationGasCap =
-        calculateSimulationGasCap(callParams.getGas(), processableHeader.getGasLimit());
+        calculateSimulationGasCap(
+            processableHeader, callParams.getGas(), processableHeader.getGasLimit());
 
     MainnetTransactionProcessor transactionProcessor =
         simulationTransactionProcessorFactory.getTransactionProcessor(
@@ -504,7 +506,9 @@ public class TransactionSimulator {
   }
 
   public long calculateSimulationGasCap(
-      final OptionalLong maybeUserProvidedGasLimit, final long blockGasLimit) {
+      final ProcessableBlockHeader blockHeader,
+      final OptionalLong maybeUserProvidedGasLimit,
+      final long blockGasLimit) {
     final long simulationGasCap;
 
     if (maybeUserProvidedGasLimit.isPresent()) {
@@ -520,23 +524,26 @@ public class TransactionSimulator {
         simulationGasCap = userProvidedGasLimit;
       }
     } else {
+      final long txGasLimitCap =
+          protocolSchedule
+              .getByBlockHeader(blockHeader)
+              .getGasLimitCalculator()
+              .transactionGasLimitCap();
       if (rpcGasCap > 0) {
-        if (blockGasLimit > 0) {
-          LOG.trace(
-              "No user provided gas limit, setting simulation gas cap to the value of min(rpc-gas-cap,blockGasLimit) {}",
-              rpcGasCap);
-          simulationGasCap = Math.min(rpcGasCap, blockGasLimit);
-        } else {
-          LOG.trace(
-              "No user provided gas limit, setting simulation gas cap to the value of rpc-gas-cap {}",
-              rpcGasCap);
-          simulationGasCap = rpcGasCap;
-        }
-      } else {
-        simulationGasCap = blockGasLimit;
+        simulationGasCap = Math.min(rpcGasCap, Math.min(txGasLimitCap, blockGasLimit));
         LOG.trace(
-            "No user provided gas limit and rpc-gas-cap options is not set, setting simulation gas cap to block gas limit {}",
-            blockGasLimit);
+            "No user provided gas limit, setting simulation gas cap to the value of min(rpc-gas-cap={},txGasLimitCap={},blockGasLimit={})={}",
+            rpcGasCap,
+            txGasLimitCap,
+            blockGasLimit,
+            simulationGasCap);
+      } else {
+        simulationGasCap = Math.min(txGasLimitCap, blockGasLimit);
+        LOG.trace(
+            "No user provided gas limit and rpc-gas-cap options is not set, setting simulation gas cap to min(txGasLimitCap={},blockGasLimit={})={}",
+            txGasLimitCap,
+            blockGasLimit,
+            simulationGasCap);
       }
     }
     return simulationGasCap;
@@ -571,6 +578,8 @@ public class TransactionSimulator {
     // Set versioned hashes if present
     callParams.getBlobVersionedHashes().ifPresent(transactionBuilder::versionedHashes);
 
+    final boolean noPricingParametersPresent = noGasPriceParametersPresent(callParams);
+
     final Wei gasPrice;
     final Wei maxFeePerGas;
     final Wei maxPriorityFeePerGas;
@@ -581,7 +590,13 @@ public class TransactionSimulator {
       maxPriorityFeePerGas = Wei.ZERO;
       maxFeePerBlobGas = Wei.ZERO;
     } else {
-      gasPrice = callParams.getGasPrice().orElse(Wei.ZERO);
+      if (noPricingParametersPresent && !transactionValidationParams.allowUnderpriced()) {
+        // in case there are gas price parameters and underpriced txs are not allowed,
+        // then set the gas price to the min necessary to process the tx.
+        gasPrice = processableHeader.getBaseFee().orElse(Wei.ZERO);
+      } else {
+        gasPrice = callParams.getGasPrice().orElse(Wei.ZERO);
+      }
       maxFeePerGas = callParams.getMaxFeePerGas().orElse(gasPrice);
       maxPriorityFeePerGas = callParams.getMaxPriorityFeePerGas().orElse(gasPrice);
       maxFeePerBlobGas = callParams.getMaxFeePerBlobGas().orElse(blobGasPrice);
@@ -591,7 +606,7 @@ public class TransactionSimulator {
       transactionBuilder.gasPrice(gasPrice);
     }
 
-    if (shouldSetMaxFeePerGas(callParams, processableHeader)) {
+    if (shouldSetMaxFeePerGas(callParams, processableHeader, noPricingParametersPresent)) {
       transactionBuilder.maxFeePerGas(maxFeePerGas).maxPriorityFeePerGas(maxPriorityFeePerGas);
     }
 
@@ -652,7 +667,9 @@ public class TransactionSimulator {
   }
 
   private boolean shouldSetMaxFeePerGas(
-      final CallParameter callParams, final ProcessableBlockHeader header) {
+      final CallParameter callParams,
+      final ProcessableBlockHeader header,
+      final boolean noGasPriceParametersPresent) {
 
     // Return false if chain ID is not present
     if (protocolSchedule.getChainId().isEmpty()) {
@@ -670,16 +687,21 @@ public class TransactionSimulator {
     }
 
     // Return true if all gas price parameters are empty
-    if (callParams.getMaxPriorityFeePerGas().isEmpty()
-        && callParams.getMaxFeePerGas().isEmpty()
-        && callParams.getGasPrice().isEmpty()) {
+    if (noGasPriceParametersPresent) {
       return true;
     }
 
-    // Return true if either maxPriorityFeePerGas or maxFeePerGas is present
+    // Return true if either maxPriorityFeePerGas or maxFeePerGas is present.
     // This ensures the transaction is considered EIP-1559 only if these parameters are present
     return callParams.getMaxPriorityFeePerGas().isPresent()
         || callParams.getMaxFeePerGas().isPresent();
+  }
+
+  private boolean noGasPriceParametersPresent(final CallParameter callParams) {
+    // Return true if all gas price parameters are empty
+    return callParams.getMaxPriorityFeePerGas().isEmpty()
+        && callParams.getMaxFeePerGas().isEmpty()
+        && callParams.getGasPrice().isEmpty();
   }
 
   private boolean shouldSetBlobGasPrice(final CallParameter callParams) {

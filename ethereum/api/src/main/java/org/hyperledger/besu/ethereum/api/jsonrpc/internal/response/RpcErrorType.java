@@ -149,6 +149,7 @@ public enum RpcErrorType implements RpcMethodError {
   INTRINSIC_GAS_EXCEEDS_LIMIT(-32003, "Intrinsic gas exceeds gas limit"),
   TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE(-32004, "Upfront cost exceeds account balance"),
   EXCEEDS_BLOCK_GAS_LIMIT(-32005, "Transaction gas limit exceeds block gas limit"),
+  EXCEEDS_TRANSACTION_GAS_LIMIT(-32005, "Transaction gas limit cap exceeded"),
   EXCEEDS_RPC_MAX_BLOCK_RANGE(-32005, "Requested range exceeds maximum RPC range limit"),
   EXCEEDS_RPC_MAX_BATCH_SIZE(-32005, "Number of requests exceeds max batch size"),
   NONCE_TOO_HIGH(-32006, "Nonce too high"),
@@ -175,6 +176,8 @@ public enum RpcErrorType implements RpcMethodError {
       -32000, "An invalid transaction with a lower nonce exists"),
   TOTAL_BLOB_GAS_TOO_HIGH(-32000, "Total blob gas too high"),
   PLUGIN_TX_VALIDATOR(-32000, "Plugin has marked the transaction as invalid"),
+  PLUGIN_TX_POOL_VALIDATOR(
+      -32000, "Plugin has marked the transaction as not acceptable by the transaction pool"),
   EXECUTION_HALTED(-32000, "Transaction processing could not be completed due to an exception"),
 
   // Execution engine failures

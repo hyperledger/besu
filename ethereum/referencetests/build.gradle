@@ -13,6 +13,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+apply plugin: 'java-library'
+
+jar {
+  archiveBaseName = calculateArtifactId(project)
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
+      )
+  }
+}
 
 def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
   final referenceTestsPath = 'src/reference-test/external-resources/BlockchainTests'
@@ -27,39 +41,8 @@ def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/blockchain",
     "BlockchainReferenceTest",
     "org.hyperledger.besu.ethereum.vm.blockchain",
-    ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
-    )
-}
-
-def eipBlockchainReferenceTests = tasks.register("eipBlockchainReferenceTests")  {
-  final referenceTestsPath = 'src/reference-test/external-resources/EIPTests/BlockchainTests'
-  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
-  inputs.files fileTree(referenceTestsPath),
-    fileTree(generatedTestsPath)
-  outputs.files generatedTestsPath
-  generateTestFiles(
-    fileTree(referenceTestsPath),
-    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
-    "EIPTests${File.separatorChar}BlockchainTests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eip",
-    "EIPBlockchainReferenceTest",
-    "org.hyperledger.besu.ethereum.vm.eip",
-    )
-}
-
-def eipStateReferenceTests = tasks.register("eipStateReferenceTests")  {
-  final referenceTestsPath = 'src/reference-test/external-resources/EIPTests/StateTests'
-  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
-  inputs.files fileTree(referenceTestsPath),
-    fileTree(generatedTestsPath)
-  outputs.files generatedTestsPath
-  generateTestFiles(
-    fileTree(referenceTestsPath),
-    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
-    "EIPTests${File.separatorChar}StateTests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eip",
-    "EIPStateReferenceTest",
-    "org.hyperledger.besu.ethereum.vm.eip",
+    "BlockchainTests/InvalidBlocks/bcExpectSection", // exclude test for test filling tool
+    "BlockchainTests/.meta"
     )
 }
 
@@ -128,22 +111,6 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     )
 }
 
-def eofReferenceTests = tasks.register("eofReferenceTests") {
-  final referenceTestsPath = "src/reference-test/external-resources/EOFTests"
-  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
-  inputs.files fileTree(referenceTestsPath),
-    fileTree(generatedTestsPath)
-  outputs.files generatedTestsPath
-  generateTestFiles(
-    fileTree(referenceTestsPath),
-    file("src/reference-test/templates/EOFReferenceTest.java.template"),
-    "EOFTests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eof",
-    "EOFReferenceTest",
-    "org.hyperledger.besu.ethereum.vm.eof"
-    )
-}
-
 sourceSets {
   referenceTest {
     java {
@@ -151,12 +118,9 @@ sourceSets {
       runtimeClasspath += main.output
       srcDirs "src/reference-test/java",
         blockchainReferenceTests,
-        eipBlockchainReferenceTests,
-        eipStateReferenceTests,
         executionSpecTests,
         generalstateReferenceTests,
-        generalstateRegressionReferenceTests,
-        eofReferenceTests
+        generalstateRegressionReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',
@@ -226,7 +190,7 @@ tasks.register('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
-    def expectedHash = '9201075490807f58811078e9bb5ec895b4ac01a5'
+    def expectedHash = 'c67e485ff8b5be9abc8ad15345ec21aa22e290d9'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
       exec {
