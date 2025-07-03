@@ -663,7 +663,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            blockchain,
+            blockchain.getGenesisBlock(),
             genesisConfigOptions.getForkBlockNumbers(),
             genesisConfigOptions.getForkBlockTimestamps());
     final EthPeers ethPeers =

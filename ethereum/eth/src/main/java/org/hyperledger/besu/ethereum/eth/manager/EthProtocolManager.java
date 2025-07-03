@@ -156,7 +156,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         mergePeerFilter,
         synchronizerConfiguration,
         scheduler,
-        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList()));
+        new ForkIdManager(blockchain.getGenesisBlock(), Collections.emptyList(), Collections.emptyList()));
   }
 
   public EthContext ethContext() {
@@ -354,7 +354,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             .networkId(networkId)
             .bestHash(blockchain.getChainHeadHash())
             .genesisHash(genesisHash)
-            .forkId(forkIdManager.getForkIdForChainHead())
+            .forkId(forkIdManager.getForkIdForChainHead(blockchain.getChainHeadHeader()))
             .apply(
                 builder -> {
                   if (EthProtocol.isEth69Compatible(cap)) {
@@ -408,7 +408,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             .addArgument(() -> getPeerOrPeerId(peer))
             .log();
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_MISMATCHED_NETWORK);
-      } else if (!forkIdManager.peerCheck(forkId)) {
+      } else if (!forkIdManager.peerCheck(forkId, blockchain.getChainHeadHeader())) {
         LOG.atDebug()
             .setMessage("{} has matching network id ({}), but non-matching fork id: {}")
             .addArgument(() -> getPeerOrPeerId(peer))

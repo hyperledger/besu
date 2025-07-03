@@ -563,11 +563,12 @@ public class ForkIdTest {
       final Optional<List<ForkId>> wantForkIds,
       final Optional<PeerCheckCase> wantPeerCheckCase) {
     LOG.info("Running test case {}", name);
+    final var blockchain = mockBlockchain(network.hash, head, time);
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            mockBlockchain(network.hash, head, time), network.blockForks, network.timestampForks);
+            blockchain.getGenesisBlock(), network.blockForks, network.timestampForks);
     wantForkId.ifPresent(
-        forkId -> assertThat(forkIdManager.getForkIdForChainHead()).isEqualTo(forkId));
+        forkId -> assertThat(forkIdManager.getForkIdForChainHead(blockchain.getChainHeadHeader())).isEqualTo(forkId));
     wantForkIds.ifPresent(
         forkIds -> assertThat(forkIdManager.getAllForkIds()).containsExactlyElementsOf(forkIds));
     wantPeerCheckCase.ifPresent(
@@ -576,15 +577,17 @@ public class ForkIdTest {
                     forkIdManager.peerCheck(
                         new ForkId(
                             Bytes.fromHexString(peerCheckCase.forkIdHash),
-                            peerCheckCase.forkIdNext)))
+                            peerCheckCase.forkIdNext),
+                        blockchain.getChainHeadHeader()))
                 .isEqualTo(peerCheckCase.want));
   }
 
   @Test
   public void testGenesisTimestampEqualToShanghaiTimestamp() {
+    final var blockchain = mockBlockchain(Hash.ZERO.toHexString(), 10L, 0L);
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            mockBlockchain(Hash.ZERO.toHexString(), 10L, 0L),
+            blockchain.getGenesisBlock(),
             Collections.emptyList(),
             List.of(1L, 2L));
     assertThat(forkIdManager.getAllForkIds().size()).isEqualTo(2);
@@ -594,12 +597,13 @@ public class ForkIdTest {
 
   @Test
   public void testNoBlockNoForksAndNoTimestampForksGreaterThanGenesisTimestamp() {
+    final var blockchain = mockBlockchain(Hash.ZERO.toHexString(), 10L, 1L);
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            mockBlockchain(Hash.ZERO.toHexString(), 10L, 1L), Collections.emptyList(), List.of(1L));
+            blockchain.getGenesisBlock(), Collections.emptyList(), List.of(1L));
     assertThat(forkIdManager.getAllForkIds().size()).isEqualTo(0);
     // There is no ForkId, so peerCheck always has to return true
-    assertThat(forkIdManager.peerCheck(new ForkId(Bytes.fromHexString("0xdeadbeef"), 100L)))
+    assertThat(forkIdManager.peerCheck(new ForkId(Bytes.fromHexString("0xdeadbeef"), 100L), blockchain.getChainHeadHeader()))
         .isEqualTo(true);
   }
 }

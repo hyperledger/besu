@@ -26,6 +26,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -318,10 +319,6 @@ public class P2PPlainNetworkTest {
   }
 
   private DefaultP2PNetwork.Builder builder() {
-    final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
-    final Block blockMock = mock(Block.class);
-    when(blockMock.getHash()).thenReturn(Hash.ZERO);
-    when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
     return DefaultP2PNetwork.builder()
         .vertx(vertx)
         .config(config)
@@ -331,7 +328,8 @@ public class P2PPlainNetworkTest {
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .blockNumberForks(Collections.emptyList())
         .timestampForks(Collections.emptyList())
-        .blockchain(blockchainMock)
+        .genesisHash(Hash.ZERO)
+        .genesisTimestamp(0L)
         .allConnectionsSupplier(Stream::empty)
         .allActiveConnectionsSupplier(Stream::empty);
   }

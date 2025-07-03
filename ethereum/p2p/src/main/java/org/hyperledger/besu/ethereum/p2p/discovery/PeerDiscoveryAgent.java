@@ -133,7 +133,7 @@ public abstract class PeerDiscoveryAgent {
 
     this.variablesStorage = storageProvider.createVariablesStorage();
     this.forkIdManager = forkIdManager;
-    this.forkIdSupplier = () -> forkIdManager.getForkIdForChainHead().getForkIdAsBytesList();
+    this.forkIdSupplier = () -> forkIdManager.getLatestForkId().getForkIdAsBytesList();
     this.rlpxAgent = rlpxAgent;
     this.peerTable = peerTable;
   }

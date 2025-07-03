@@ -17,14 +17,13 @@ package org.hyperledger.besu.ethereum.forkid;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.util.EndianUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
@@ -37,7 +36,6 @@ public class ForkIdManager {
 
   private final Hash genesisHash;
   private final List<Fork> allForks;
-  private final Supplier<BlockHeader> chainHeadSupplier;
   private final long forkNext;
   private final boolean noForksAvailable;
   private final long highestKnownFork;
@@ -45,20 +43,24 @@ public class ForkIdManager {
   private Bytes genesisHashCrc;
 
   public ForkIdManager(
-      final Blockchain blockchain,
+      final Block genesisBlock,
       final List<Long> blockNumberForks,
       final List<Long> timestampForks) {
-    checkNotNull(blockchain);
-    checkNotNull(blockNumberForks);
-    this.chainHeadSupplier = blockchain::getChainHeadHeader;
-    try {
-      this.genesisHash = blockchain.getGenesisBlock().getHash();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    this(genesisBlock.getHash(), genesisBlock.getHeader().getTimestamp(), blockNumberForks, timestampForks);
+  }
 
+  public ForkIdManager(
+      final Hash genesisHash,
+      final long genesisTimestamp,
+      final List<Long> blockNumberForks,
+      final List<Long> timestampForks) {
+    checkNotNull(genesisHash);
+    checkNotNull(blockNumberForks);
+    checkNotNull(timestampForks);
+
+    this.genesisHash = genesisHash;
+    
     // Create unified fork list from block numbers and timestamps
-    final long genesisTimestamp = blockchain.getGenesisBlock().getHeader().getTimestamp();
     final List<Fork> blockForks = blockNumberForks.stream()
         .filter(fork -> fork > 0L)
         .distinct()
@@ -80,8 +82,27 @@ public class ForkIdManager {
   }
 
   public ForkId getForkIdForChainHead() {
-    final BlockHeader header = chainHeadSupplier.get();
+    throw new UnsupportedOperationException(
+        "getForkIdForChainHead() requires chain head parameter. Use getForkIdForChainHead(BlockHeader) instead.");
+  }
 
+  /**
+   * Gets the latest fork ID for discovery purposes.
+   * This returns the most recent fork ID that can be used for peer discovery
+   * when we don't have access to the current chain head.
+   *
+   * @return the latest fork ID suitable for discovery
+   */
+  public ForkId getLatestForkId() {
+    if (allForkIds.isEmpty()) {
+      return new ForkId(genesisHashCrc, 0);
+    }
+    return allForkIds.get(allForkIds.size() - 1);
+  }
+
+  public ForkId getForkIdForChainHead(final BlockHeader chainHead) {
+    checkNotNull(chainHead);
+    
     // Find the appropriate ForkId by checking each fork against current chain head
     for (final ForkId forkId : allForkIds) {
       if (forkId.getNext() == 0) {
@@ -96,8 +117,8 @@ public class ForkIdManager {
           .orElse(null);
 
       if (correspondingFork != null) {
-        final long currentValue = correspondingFork.isBlockNumber()
-            ? header.getNumber() : header.getTimestamp();
+        final long currentValue = correspondingFork.isBlockNumber() 
+            ? chainHead.getNumber() : chainHead.getTimestamp();
         if (currentValue < correspondingFork.getValue()) {
           return forkId;
         }
@@ -120,12 +141,31 @@ public class ForkIdManager {
   }
 
   /**
-   * EIP-2124 behaviour
+   * EIP-2124 behaviour - compatibility method for peer discovery.
+   * This method is used when we don't have access to current chain head (e.g., during peer discovery).
    *
    * @param remoteForkId to be validated.
    * @return boolean (peer valid (true) or invalid (false))
    */
   public boolean peerCheck(final ForkId remoteForkId) {
+    if (remoteForkId == null || noForksAvailable) {
+      return true; // Another method must be used to validate (i.e. genesis hash)
+    }
+
+    // For discovery purposes, we only check if the hash is known
+    // More detailed validation happens during the actual protocol handshake
+    return isHashKnown(remoteForkId.getHash());
+  }
+
+  /**
+   * EIP-2124 behaviour
+   *
+   * @param remoteForkId to be validated.
+   * @param chainHead current chain head
+   * @return boolean (peer valid (true) or invalid (false))
+   */
+  public boolean peerCheck(final ForkId remoteForkId, final BlockHeader chainHead) {
+    checkNotNull(chainHead);
     if (remoteForkId == null || noForksAvailable) {
       return true; // Another method must be used to validate (i.e. genesis hash)
     }
@@ -149,11 +189,10 @@ public class ForkIdManager {
       return false;
     }
 
-    final BlockHeader header = chainHeadSupplier.get();
     // Determine if we should compare against block number or timestamp based on forkNext
     final boolean isBlockNumberFork = allForks.stream()
         .anyMatch(fork -> fork.getValue() == forkNext && fork.isBlockNumber());
-    final long chainHeadForkValue = isBlockNumberFork ? header.getNumber() : header.getTimestamp();
+    final long chainHeadForkValue = isBlockNumberFork ? chainHead.getNumber() : chainHead.getTimestamp();
 
     return chainHeadForkValue < forkNext
         || (isForkKnown(remoteForkId.getNext())
