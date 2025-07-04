@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.FOREST;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.X_BONSAI_ARCHIVE;
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
@@ -80,7 +81,9 @@ public class RocksDBKeyValueStorageFactoryTest {
               ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
               : (dataStorageFormat == X_BONSAI_ARCHIVE
                   ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION
-                  : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
+                  : (dataStorageFormat == X_BONSAI_ARCHIVE_PROOFS
+                      ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_PROOFS_WITH_RECEIPT_COMPACTION
+                      : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION));
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
     }
@@ -105,7 +108,9 @@ public class RocksDBKeyValueStorageFactoryTest {
               ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
               : (dataStorageFormat == X_BONSAI_ARCHIVE
                   ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION
-                  : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
+                  : (dataStorageFormat == X_BONSAI_ARCHIVE_PROOFS
+                      ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_PROOFS_WITH_RECEIPT_COMPACTION
+                      : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION));
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
     }
