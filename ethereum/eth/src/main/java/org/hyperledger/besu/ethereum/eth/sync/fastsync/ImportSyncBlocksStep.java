@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -48,6 +49,7 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   private final boolean transactionIndexingEnabled;
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
   private long expectedNextBlockNumber = -1L;
+  private Hash lastHash;
 
   public ImportSyncBlocksStep(
       final ProtocolSchedule protocolSchedule,
@@ -65,21 +67,30 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   @Override
   public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
     final long startTime = System.nanoTime();
-    if (!blocksWithReceipts.isEmpty()
-        && (blocksWithReceipts.getLast().getNumber() - blocksWithReceipts.getFirst().getNumber() + 1
-            != blocksWithReceipts.size())) {
-      LOG.info(
-          "Stefan: first block number: {}, last block number: {}, size: {}",
-          blocksWithReceipts.getFirst().getNumber(),
-          blocksWithReceipts.getLast().getNumber(),
-          blocksWithReceipts.size());
-      return;
-    } else if (!blocksWithReceipts.isEmpty()
-        && (blocksWithReceipts.getFirst().getNumber() != expectedNextBlockNumber)) {
-      LOG.info(
-          "Stefan: first block number: {}, expected next block number: {}",
-          blocksWithReceipts.getFirst().getNumber(),
-          expectedNextBlockNumber);
+    if (expectedNextBlockNumber == -1L) {
+      expectedNextBlockNumber = blocksWithReceipts.getFirst().getNumber();
+      lastHash = blocksWithReceipts.getFirst().getHeader().getParentHash();
+    }
+    if (!blocksWithReceipts.isEmpty()) {
+      if (blocksWithReceipts.getLast().getNumber() - blocksWithReceipts.getFirst().getNumber() + 1
+          != blocksWithReceipts.size()) {
+        LOG.info(
+            "Stefan: first block number: {}, last block number: {}, size: {}",
+            blocksWithReceipts.getFirst().getNumber(),
+            blocksWithReceipts.getLast().getNumber(),
+            blocksWithReceipts.size());
+      }
+      for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
+        if (blockWithReceipts.getNumber() != expectedNextBlockNumber
+            || !blockWithReceipts.getHeader().getParentHash().equals(lastHash)) {
+          LOG.info(
+              "Stefan: Block mismatch: expected {}, got {}",
+              expectedNextBlockNumber,
+              blockWithReceipts.getNumber());
+        }
+        expectedNextBlockNumber++;
+        lastHash = blockWithReceipts.getHeader().getHash();
+      }
     }
     for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       if (!importBlock(blockWithReceipts)) {

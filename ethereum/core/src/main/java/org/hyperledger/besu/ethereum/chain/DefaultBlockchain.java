@@ -652,10 +652,14 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     try {
       if (newBlock.getHeader().getParentHash().equals(chainHead) || chainHead == null) {
+        LOG.info(
+            "S: Importing block {} {}",
+            newBlock.getHeader().getNumber(),
+            newBlock.getHeader().getParentHash());
         return handleNewHead(updater, newBlock, receipts, transactionIndexing);
       } else {
         LOG.info(
-            "New block {} with parent {} is not a child of the current chain head {}, ignoring.",
+            "S: New block {} with parent {} is not a child of the current chain head {}, FAILING.",
             newBlock.getHeader().getNumber(),
             newBlock.getHeader().getParentHash(),
             chainHeader.getNumber());
