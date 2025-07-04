@@ -19,15 +19,8 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
-
-import java.util.List;
-import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class Util {
 
@@ -64,34 +57,5 @@ public class Util {
    */
   public static int fastDivCeiling(final int numerator, final int denominator) {
     return ((numerator - 1) / denominator) + 1;
-  }
-
-  /**
-   * RLP encoded index for an MPT based on the index.
-   *
-   * @param i index of the index key
-   * @return the RLP encoded index key
-   */
-  public static Bytes indexKey(final int i) {
-    return RLP.encodeOne(UInt256.valueOf(i).trimLeadingZeros());
-  }
-
-  /**
-   * Calculates the root of an MPT based on it's entries.
-   *
-   * @param bytes list of the entries strictly ordered by index, starting at 0
-   * @return the root hash of the MPT
-   */
-  public static Hash getRootFromListOfBytes(final List<Bytes> bytes) {
-    if (bytes.isEmpty()) {
-      return Hash.EMPTY_TRIE_HASH;
-    }
-    final MerkleTrie<Bytes, Bytes> trie = new SimpleMerklePatriciaTrie<>(b -> b);
-    IntStream.range(0, bytes.size())
-        .forEach(
-            i -> {
-              trie.put(indexKey(i), bytes.get(i));
-            });
-    return Hash.wrap(trie.getRootHash());
   }
 }

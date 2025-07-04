@@ -108,7 +108,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     blockchain.observeBlockAdded(
         blockAddedEvent ->
             blockchain
-                .getTotalDifficultyByHash(blockAddedEvent.getHeader().getHash())
+                .getTotalDifficultyByHash(blockAddedEvent.getBlock().getHeader().getHash())
                 .ifPresent(mergeContext::setIsPostMerge));
   }
 

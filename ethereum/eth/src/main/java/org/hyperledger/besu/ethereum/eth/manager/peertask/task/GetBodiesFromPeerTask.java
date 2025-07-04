@@ -17,14 +17,21 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
-import org.hyperledger.besu.ethereum.eth.manager.task.BodyIdentifier;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
+import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,13 +40,19 @@ import org.slf4j.LoggerFactory;
  * Implements PeerTask for getting block bodies from peers, and matches headers to bodies to supply
  * full blocks
  */
-public class GetBodiesFromPeerTask extends AbstractGetBodiesFromPeerTask<Block> {
+public class GetBodiesFromPeerTask implements PeerTask<List<Block>> {
 
   private static final Logger LOG = LoggerFactory.getLogger(GetBodiesFromPeerTask.class);
 
   private static final int DEFAULT_RETRIES_AGAINST_OTHER_PEERS = 5;
 
+  private final List<BlockHeader> blockHeaders;
+  private final ProtocolSchedule protocolSchedule;
+  private final int allowedRetriesAgainstOtherPeers;
+
+  private final long requiredBlockchainHeight;
   private final List<Block> blocks = new ArrayList<>();
+  private final boolean isPoS;
 
   public GetBodiesFromPeerTask(
       final List<BlockHeader> blockHeaders, final ProtocolSchedule protocolSchedule) {
@@ -50,7 +63,31 @@ public class GetBodiesFromPeerTask extends AbstractGetBodiesFromPeerTask<Block> 
       final List<BlockHeader> blockHeaders,
       final ProtocolSchedule protocolSchedule,
       final int allowedRetriesAgainstOtherPeers) {
-    super(blockHeaders, protocolSchedule, allowedRetriesAgainstOtherPeers);
+    if (blockHeaders == null || blockHeaders.isEmpty()) {
+      throw new IllegalArgumentException("Block headers must not be empty");
+    }
+
+    this.blockHeaders = blockHeaders;
+    this.protocolSchedule = protocolSchedule;
+    this.allowedRetriesAgainstOtherPeers = allowedRetriesAgainstOtherPeers;
+
+    this.requiredBlockchainHeight =
+        blockHeaders.stream()
+            .mapToLong(BlockHeader::getNumber)
+            .max()
+            .orElse(BlockHeader.GENESIS_BLOCK_NUMBER);
+    this.isPoS = protocolSchedule.getByBlockHeader(blockHeaders.getLast()).isPoS();
+  }
+
+  @Override
+  public SubProtocol getSubProtocol() {
+    return EthProtocol.get();
+  }
+
+  @Override
+  public MessageData getRequestMessage() {
+    return GetBlockBodiesMessage.create(
+        blockHeaders.stream().map(BlockHeader::getBlockHash).toList());
   }
 
   @Override
@@ -71,10 +108,7 @@ public class GetBodiesFromPeerTask extends AbstractGetBodiesFromPeerTask<Block> 
       final BlockBody blockBody = blockBodies.get(i);
       final BlockHeader blockHeader = blockHeaders.get(i);
       if (!blockBodyMatchesBlockHeader(blockBody, blockHeader)) {
-        LOG.atDebug()
-            .setMessage("Received block body does not match block header: {}")
-            .addArgument(blockHeader.getBlockHash())
-            .log();
+        LOG.atDebug().setMessage("Received block body does not match block header").log();
         throw new InvalidPeerTaskResponseException();
       }
 
@@ -83,10 +117,47 @@ public class GetBodiesFromPeerTask extends AbstractGetBodiesFromPeerTask<Block> 
     return blocks;
   }
 
+  @Override
+  public int getRetriesWithOtherPeer() {
+    return allowedRetriesAgainstOtherPeers;
+  }
+
   private boolean blockBodyMatchesBlockHeader(
       final BlockBody blockBody, final BlockHeader blockHeader) {
-    final BodyIdentifier headerBlockId = new BodyIdentifier(blockHeader);
-    final BodyIdentifier bodyBlockId = new BodyIdentifier(blockBody);
-    return headerBlockId.equals(bodyBlockId);
+    // this method validates that the block body matches the block header by calculating the roots
+    // of the block body and comparing them to the roots in the block header
+    if (!BodyValidation.transactionsRoot(blockBody.getTransactions())
+        .equals(blockHeader.getTransactionsRoot())) {
+      return false;
+    }
+    if (!BodyValidation.ommersHash(blockBody.getOmmers()).equals(blockHeader.getOmmersHash())) {
+      return false;
+    }
+    if (!blockBody
+        .getWithdrawals()
+        .map(BodyValidation::withdrawalsRoot)
+        .equals(blockHeader.getWithdrawalsRoot())) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public Predicate<EthPeer> getPeerRequirementFilter() {
+    return (ethPeer) ->
+        isPoS || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight;
+  }
+
+  @Override
+  public PeerTaskValidationResponse validateResult(final List<Block> result) {
+    if (result.isEmpty()) {
+      return PeerTaskValidationResponse.NO_RESULTS_RETURNED;
+    }
+    return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
+  }
+
+  public List<BlockHeader> getBlockHeaders() {
+    return blockHeaders;
   }
 }
