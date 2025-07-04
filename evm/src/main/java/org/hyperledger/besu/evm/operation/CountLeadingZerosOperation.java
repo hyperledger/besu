@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** The CLZ operation. */
 public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
@@ -49,8 +49,13 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value = frame.popStackItem();
-    final int numberOfLeadingZeros = UInt256.fromBytes(value).numberOfLeadingZeros();
+    Bytes value = frame.popStackItem();
+    final int numberOfLeadingZeros;
+    if (value.size() > Bytes32.SIZE) {
+      // should not happen but trim just in case
+      value = value.slice(0, 32);
+    }
+    numberOfLeadingZeros = value.numberOfLeadingZeros() + (Bytes32.SIZE - value.size()) * 8;
     frame.pushStackItem(Words.intBytes(numberOfLeadingZeros));
     return clzSuccess;
   }
