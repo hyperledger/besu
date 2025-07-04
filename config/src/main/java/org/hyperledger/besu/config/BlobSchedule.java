@@ -20,6 +20,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /** The Blob schedule for a particular fork. */
 public class BlobSchedule {
+  /** The constant max number of blobs per transaction defined for Osaka */
+  public static final int OSAKA_MAX_BLOBS_PER_TRANSACTION = 6;
+
   /** The constant CANCUN_DEFAULT. */
   public static final BlobSchedule CANCUN_DEFAULT = BlobSchedule.create(3, 6, 6, 3338477);
 
@@ -51,10 +54,9 @@ public class BlobSchedule {
   public static BlobSchedule create(final ObjectNode blobScheduleConfigRoot) {
     int target = JsonUtil.getInt(blobScheduleConfigRoot, "target").orElseThrow();
     int max = JsonUtil.getInt(blobScheduleConfigRoot, "max").orElseThrow();
-    int maxPerTransaction = JsonUtil.getInt(blobScheduleConfigRoot, "maxblobspertx").orElse(max);
     int baseFeeUpdateFraction =
         JsonUtil.getInt(blobScheduleConfigRoot, "basefeeupdatefraction").orElseThrow();
-    return create(target, max, maxPerTransaction, baseFeeUpdateFraction);
+    return create(target, max, OSAKA_MAX_BLOBS_PER_TRANSACTION, baseFeeUpdateFraction);
   }
 
   private static BlobSchedule create(
@@ -117,6 +119,8 @@ public class BlobSchedule {
         + target
         + ", max="
         + max
+        + ", maxPerTransaction="
+        + maxPerTransaction
         + ", baseFeeUpdateFraction="
         + baseFeeUpdateFraction
         + '}';
