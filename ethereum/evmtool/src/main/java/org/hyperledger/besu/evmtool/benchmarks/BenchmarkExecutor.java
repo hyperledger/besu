@@ -60,7 +60,7 @@ public abstract class BenchmarkExecutor {
   /** Where to write the output of the benchmarks. */
   protected final PrintStream output;
 
-  private final BenchmarkConfig config;
+  protected final BenchmarkConfig config;
 
   private Runnable precompileTableHeader;
   int warmIterations;
@@ -130,6 +130,7 @@ public abstract class BenchmarkExecutor {
     this.output = output;
     this.precompileTableHeader =
         () -> {
+          if (benchmarkConfig.warmInvert()) output.println("--warmInvert enabled");
           output.printf("--warm-iterations=%d%n", warmIterations);
           output.printf("--exec-iterations=%d%n", execIterations);
           output.printf(
@@ -159,17 +160,64 @@ public abstract class BenchmarkExecutor {
           "contract is unsupported on " + evmSpecVersion + " fork");
     }
 
+    if (config.warmInvert()) {
+      runPrecompileInvertedWarmup(testCases, contract);
+    } else {
+      runPrecompile(testCases, contract);
+    }
+  }
+
+  private void runPrecompile(
+      final Map<String, Bytes> testCases, final PrecompiledContract contract) {
+
+    // Fully warmup and execute, test case by test case
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
       if (config.testCasePattern().isPresent()
           && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
         continue;
       }
 
-      final double execTime =
-          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
+      try {
+        final double execTime =
+            runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
+        long gasCost = contract.gasRequirement(testCase.getValue());
+        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+      } catch (final IllegalArgumentException e) {
+        output.printf("%s Input is Invalid%n", testCase.getKey());
+      }
+    }
+  }
 
-      long gasCost = contract.gasRequirement(testCase.getValue());
-      logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+  private void runPrecompileInvertedWarmup(
+      final Map<String, Bytes> testCases, final PrecompiledContract contract) {
+
+    // Warmup all test cases in serial inside one warmup iteration
+    // avoid using warmTime as it is now dependent on the number of test cases
+    for (int i = 0; i < warmIterations; i++) {
+      for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+        if (config.testCasePattern().isPresent()
+            && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
+          continue;
+        }
+
+        contract.computePrecompile(testCase.getValue(), fakeFrame);
+      }
+    }
+
+    // Iterations still per test case
+    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+      if (config.testCasePattern().isPresent()
+          && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
+        continue;
+      }
+
+      try {
+        final double execTime = executeIterations(testCase.getKey(), testCase.getValue(), contract);
+        long gasCost = contract.gasRequirement(testCase.getValue());
+        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+      } catch (final IllegalArgumentException e) {
+        output.printf("%s Input is Invalid%n", testCase.getKey());
+      }
     }
   }
 
@@ -184,14 +232,23 @@ public abstract class BenchmarkExecutor {
   protected double runPrecompileBenchmark(
       final String testName, final Bytes arg, final PrecompiledContract contract) {
     if (contract.computePrecompile(arg, fakeFrame).output() == null) {
-      output.printf("%s Input is Invalid%n", testName);
+      throw new IllegalArgumentException("Input is Invalid");
     }
 
-    long startNanoTime = System.nanoTime();
-    for (int i = 0; i < warmIterations && System.nanoTime() - startNanoTime < warmTimeInNano; i++) {
+    // Warmup individual test case fully
+    long startWarmNanoTime = System.nanoTime();
+    for (int i = 0;
+        i < warmIterations && System.nanoTime() - startWarmNanoTime < warmTimeInNano;
+        i++) {
       contract.computePrecompile(arg, fakeFrame);
     }
 
+    // Iterations
+    return executeIterations(testName, arg, contract);
+  }
+
+  private double executeIterations(
+      final String testName, final Bytes arg, final PrecompiledContract contract) {
     final AtomicReference<AsyncProfiler> asyncProfiler = new AtomicReference<>();
     config
         .asyncProfilerOptions()
@@ -209,14 +266,18 @@ public abstract class BenchmarkExecutor {
 
     int executions = 0;
     long totalElapsed = 0;
-
+    boolean isInvalidCase = false;
     while (executions < execIterations && totalElapsed < execTimeInNano) {
       long iterationStart = System.nanoTime();
-      contract.computePrecompile(arg, fakeFrame);
+      final var result = contract.computePrecompile(arg, fakeFrame);
       long iterationElapsed = System.nanoTime() - iterationStart;
 
       totalElapsed += iterationElapsed;
       executions++;
+      if (result.output() == null) {
+        isInvalidCase = true;
+        break;
+      }
     }
 
     if (asyncProfiler.get() != null) {
@@ -227,7 +288,11 @@ public abstract class BenchmarkExecutor {
       }
     }
 
-    return (totalElapsed / 1.0e9D) / executions;
+    if (isInvalidCase) {
+      throw new IllegalArgumentException("Input is Invalid");
+    }
+
+    return totalElapsed / 1.0e9D / executions;
   }
 
   /**

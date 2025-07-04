@@ -141,6 +141,13 @@ public class BenchmarkSubCommand implements Runnable {
       scope = LOCAL)
   Optional<Integer> warmTime = Optional.empty();
 
+  @Option(
+      names = {"--warm-invert"},
+      description =
+          "Run each test case within each warmup iteration, if the benchmark supports it. This attempts to warm the code without warming the data, i.e. avoids warming CPU caches. This does not affect exec-iterations so they should be set to 1 for this to work. Warm time should be increased as required as the warmup is frontloaded now and dependent on the number of test cases.",
+      scope = LOCAL)
+  Boolean warmInvert = false;
+
   @Parameters(description = "One or more of ${COMPLETION-CANDIDATES}.")
   EnumSet<Benchmark> benchmarks = EnumSet.noneOf(Benchmark.class);
 
@@ -177,7 +184,8 @@ public class BenchmarkSubCommand implements Runnable {
             execIterations,
             execTime,
             warmIterations,
-            warmTime);
+            warmTime,
+            warmInvert);
     for (var benchmark : benchmarksToRun) {
       output.println("\nBenchmarks for " + benchmark + " on fork " + parentCommand.getFork());
       BenchmarkExecutor executor = benchmark.executorBuilder.create(output, benchmarkConfig);
