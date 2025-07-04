@@ -14,6 +14,7 @@
  */
 
 apply plugin: 'java-library'
+apply plugin: 'me.champeau.jmh'
 
 jar {
   archiveBaseName = calculateArtifactId(project)

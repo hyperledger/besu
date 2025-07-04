@@ -626,25 +626,29 @@ subprojects {
     apply plugin: 'me.champeau.jmh'
 
     jmh {
+      jmhVersion = '1.37'
       // Allows to control JMH execution directly from the command line. I typical execution may look
       // like:
       //    gradle jmh -Pf=2 -Pwi=3 -Pi=5 -Pinclude=MyBench
       // which will run 2 forks with 3 warmup iterations and 5 normal ones for each, and will only
       // run the benchmark matching 'MyBench' (a regexp).
-      warmupForks = _intCmdArg('wf')
-      warmupIterations = _intCmdArg('wi')
-      fork = _intCmdArg('f')
-      iterations = _intCmdArg('i')
-      benchmarkMode = _strListCmdArg('bm')
+      warmupForks = _intCmdArg('wf', 0)
+      warmupIterations = _intCmdArg('wi', 1)
+      fork = _intCmdArg('f', 2)
+      iterations = _intCmdArg('i', 10)
+      benchmarkMode = _strListCmdArg('bm', ['thrpt', 'ss'])
       includes = _strListCmdArg('include', [''])
-      humanOutputFile = project.file("${project.buildDir}/reports/jmh/results.txt")
-      resultFormat = 'JSON'
+      //      humanOutputFile = project.file("${project.buildDir}/reports/jmh/results.txt")
+      //      resultFormat = 'JSON'
       duplicateClassesStrategy = DuplicatesStrategy.WARN
+
+      jvmArgs = [
+        '-XX:+EnableDynamicAgentLoading'
+      ]
     }
 
     dependencies {
       jmhAnnotationProcessor(platform(project(':platform')))
-      jmh 'org.slf4j:slf4j-api'
     }
   }
 
