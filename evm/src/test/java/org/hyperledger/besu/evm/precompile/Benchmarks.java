@@ -87,30 +87,6 @@ public class Benchmarks {
     }
   }
 
-  private static void benchKeccak256() {
-    fakeFrame.expandMemory(0, 1024);
-    var gasCalculator = EvmSpec.evmSpec().getEvm().getGasCalculator();
-
-    for (int len = 0; len <= 512; len += 8) {
-      final byte[] data = new byte[len];
-      random.nextBytes(data);
-      final Bytes bytes = Bytes.wrap(data);
-      for (int i = 0; i < MATH_WARMUP; i++) {
-        Hash.keccak256(bytes);
-      }
-      final Stopwatch timer = Stopwatch.createStarted();
-      for (int i = 0; i < MATH_ITERATIONS; i++) {
-        Hash.keccak256(bytes);
-      }
-      timer.stop();
-
-      final long elapsed = timer.elapsed(TimeUnit.NANOSECONDS);
-      final long timePerCallInNs = elapsed / MATH_ITERATIONS;
-      long gasRequirement = gasCalculator.keccak256OperationGasCost(fakeFrame, 0, len);
-      logPerformance(String.format("Keccak256 %,d bytes", len), gasRequirement, timePerCallInNs);
-    }
-  }
-
   private static long runBenchmark(final Bytes arg, final PrecompiledContract contract) {
     if (contract.computePrecompile(arg, fakeFrame).output() == null) {
       throw new RuntimeException("Input is Invalid");
@@ -185,7 +161,6 @@ public class Benchmarks {
 
   public static void main(final String[] args) {
     logHeader();
-    benchKeccak256();
     benchSecp256r1Verify();
   }
 }
