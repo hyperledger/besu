@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.evm.word256.Word256;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** Utility for generating random 256-bit (32-byte) values for benchmarking or testing. */
 public final class RandomInputGenerator {
@@ -30,15 +30,15 @@ public final class RandomInputGenerator {
    * @param aPool the destination array for first operands
    * @param bPool the destination array for second operands
    */
-  public static void fillPools(final Word256[] aPool, final Word256[] bPool) {
+  public static void fillPools(final Bytes[] aPool, final Bytes[] bPool) {
     final ThreadLocalRandom random = ThreadLocalRandom.current();
     for (int i = 0; i < aPool.length; i++) {
       final byte[] a = new byte[32];
       final byte[] b = new byte[32];
       random.nextBytes(a);
       random.nextBytes(b);
-      aPool[i] = Word256.fromBytes(a);
-      bPool[i] = Word256.fromBytes(b);
+      aPool[i] = Bytes32.wrap(a);
+      bPool[i] = Bytes32.wrap(b);
     }
   }
 }

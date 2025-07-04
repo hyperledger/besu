@@ -19,13 +19,12 @@ import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.evm.word256.Word256;
 
 /** Benchmark for the Add operation in the Ethereum Virtual Machine (EVM). */
 public class AddOperationBenchmark extends BinaryOperationBenchmark {
   @Override
   protected Operation.OperationResult invoke(
-    final MessageFrame frame, final Word256 a, final Word256 b) {
+      final MessageFrame frame, final Bytes a, final Bytes b) {
     frame.pushStackItem(b);
     frame.pushStackItem(a);
 

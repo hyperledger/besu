@@ -14,38 +14,35 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import java.util.concurrent.TimeUnit;
-
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 
-import org.hyperledger.besu.evm.word256.Word256;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Level;
-import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
-@BenchmarkMode(Mode.Throughput)
 @State(Scope.Thread)
 @OutputTimeUnit(value = TimeUnit.MICROSECONDS)
 public abstract class BinaryOperationBenchmark {
 
   protected static final int SAMPLE_SIZE = 30_000;
 
-  protected Word256[] aPool;
-  protected Word256[] bPool;
+  protected Bytes[] aPool;
+  protected Bytes[] bPool;
   protected int index;
   protected MessageFrame frame;
 
   @Setup(Level.Trial)
   public void setUp() {
     frame = BenchmarkMessageFrameFactory.create();
-    aPool = new Word256[SAMPLE_SIZE];
-    bPool = new Word256[SAMPLE_SIZE];
+    aPool = new Bytes[SAMPLE_SIZE];
+    bPool = new Bytes[SAMPLE_SIZE];
     RandomInputGenerator.fillPools(aPool, bPool);
     index = 0;
   }
@@ -57,5 +54,5 @@ public abstract class BinaryOperationBenchmark {
     return invoke(frame, aPool[i], bPool[i]);
   }
 
-  protected abstract Operation.OperationResult invoke(MessageFrame frame, Word256 a, Word256 b);
+  protected abstract Operation.OperationResult invoke(MessageFrame frame, Bytes a, Bytes b);
 }
