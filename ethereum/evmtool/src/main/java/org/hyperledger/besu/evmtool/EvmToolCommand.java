@@ -265,7 +265,7 @@ public class EvmToolCommand implements Runnable {
       description = "display version info")
   boolean versionInfoRequested;
 
-  public Integer getRepeatCount() {
+  Integer getRepeatCount() {
     return repeat;
   }
 

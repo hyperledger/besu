@@ -211,7 +211,7 @@ public class StateTestSubCommand implements Runnable {
       final List<GeneralStateTestCaseEipSpec> specs,
       final boolean isLastIteration) {
     final OperationTracer tracer = // You should have picked Mercy.
-        parentCommand.showJsonResults
+        parentCommand.showJsonResults && isLastIteration
             ? new StandardJsonTracer(
                 parentCommand.out,
                 parentCommand.showMemory,
@@ -240,7 +240,7 @@ public class StateTestSubCommand implements Runnable {
       final Transaction transaction = spec.getTransaction(0);
       final ObjectNode summaryLine = objectMapper.createObjectNode();
       if (transaction == null) {
-        if (parentCommand.showJsonAlloc || parentCommand.showJsonResults) {
+        if ((parentCommand.showJsonAlloc || parentCommand.showJsonResults) && isLastIteration) {
           parentCommand.out.println(
               "{\"error\":\"Transaction was invalid, trace and alloc unavailable.\"}");
         }
