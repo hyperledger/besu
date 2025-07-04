@@ -21,7 +21,11 @@ import org.hyperledger.besu.evm.word256.Word256;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-/** The Sub (Subtract) operation. */
+/**
+ * The Sub operation performs a simple subtraction of two 256-bit words, returning the result in the
+ * stack. If the result is negative, it wraps around to a large positive number due to the nature of
+ * unsigned integers in EVM.
+ */
 public class SubOperation extends AbstractFixedCostOperation {
 
   /** The Sub operation success result. */
