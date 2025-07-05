@@ -223,7 +223,7 @@ class CreateOperationTest {
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder()
-            .code(pragueEvm.getCodeUncached(SIMPLE_EOF))
+            .code(pragueEvm.wrapCode(SIMPLE_EOF))
             .pushStackItem(memoryLength)
             .pushStackItem(memoryOffset)
             .pushStackItem(Bytes.EMPTY)
@@ -256,7 +256,7 @@ class CreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(evm.getCodeUncached(SIMPLE_CREATE))
+            .code(evm.wrapCode(SIMPLE_CREATE))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup((__, ___) -> Hash.ZERO)

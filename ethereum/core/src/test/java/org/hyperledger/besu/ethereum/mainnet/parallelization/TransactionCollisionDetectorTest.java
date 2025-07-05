@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
@@ -53,10 +54,18 @@ class TransactionCollisionDetectorTest {
     collisionDetector = new TransactionCollisionDetector();
     bonsaiUpdater =
         new BonsaiWorldStateUpdateAccumulator(
-            worldState, (__, ___) -> {}, (__, ___) -> {}, EvmConfiguration.DEFAULT);
+            worldState,
+            (__, ___) -> {},
+            (__, ___) -> {},
+            EvmConfiguration.DEFAULT,
+            new CodeCache());
     trxUpdater =
         new BonsaiWorldStateUpdateAccumulator(
-            worldState, (__, ___) -> {}, (__, ___) -> {}, EvmConfiguration.DEFAULT);
+            worldState,
+            (__, ___) -> {},
+            (__, ___) -> {},
+            EvmConfiguration.DEFAULT,
+            new CodeCache());
   }
 
   private Transaction createTransaction(final Address sender, final Address to) {
@@ -81,7 +90,8 @@ class TransactionCollisionDetectorTest {
         Wei.ONE,
         Hash.EMPTY_TRIE_HASH,
         Hash.EMPTY,
-        false);
+        false,
+        new CodeCache());
   }
 
   @Test

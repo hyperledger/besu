@@ -217,7 +217,7 @@ public class EofContainerSubCommand implements Runnable {
                     initialCorpus,
                     f.toPath().getFileName() + "_" + (index++) + "_" + vector.getKey()))) {
           Bytes codeBytes = Bytes.fromHexString(vector.getValue().code());
-          evm.getCodeUncached(codeBytes);
+          evm.wrapCode(codeBytes);
           fos.write(codeBytes.toArrayUnsafe());
         } catch (IOException e) {
           parentCommand.out.println("Invalid file " + f + ": " + e.getMessage());
