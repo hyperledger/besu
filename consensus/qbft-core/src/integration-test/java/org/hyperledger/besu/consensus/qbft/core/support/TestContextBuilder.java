@@ -383,7 +383,7 @@ public class TestContextBuilder {
   private GenesisState createGenesisBlock(final String genesisFile) throws IOException {
     return GenesisState.fromConfig(
         GenesisConfig.fromSource(Path.of(genesisFile).toUri().toURL()),
-        ProtocolScheduleFixture.MAINNET);
+        ProtocolScheduleFixture.SEPOLIA);
   }
 
   private static ControllerAndState createControllerAndFinalState(
