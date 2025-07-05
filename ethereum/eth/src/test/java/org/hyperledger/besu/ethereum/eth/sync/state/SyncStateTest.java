@@ -93,8 +93,8 @@ public class SyncStateTest {
   public void setUp() {
     ethProtocolManager = EthProtocolManagerTestBuilder.builder().setBlockchain(blockchain).build();
     ethPeers = spy(ethProtocolManager.ethContext().getEthPeers());
-    syncTargetPeer = createPeer(TARGET_DIFFICULTY, TARGET_CHAIN_HEIGHT);
-    otherPeer = createPeer(Difficulty.ZERO, 0);
+    syncTargetPeer = createPeer(TARGET_CHAIN_HEIGHT);
+    otherPeer = createPeer(0);
 
     advanceLocalChain(OUR_CHAIN_HEAD_NUMBER);
 
@@ -560,8 +560,8 @@ public class SyncStateTest {
     assertThat(clearedEvent).isEmpty();
   }
 
-  private RespondingEthPeer createPeer(final Difficulty totalDifficulty, final long blockHeight) {
-    return EthProtocolManagerTestUtil.createPeer(ethProtocolManager, totalDifficulty, blockHeight);
+  private RespondingEthPeer createPeer(final long blockHeight) {
+    return EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockHeight);
   }
 
   private EthPeer mockWorseChain(final EthPeer peer) {
