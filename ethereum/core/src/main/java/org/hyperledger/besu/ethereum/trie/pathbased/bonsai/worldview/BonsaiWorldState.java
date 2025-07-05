@@ -184,11 +184,19 @@ public class BonsaiWorldState extends PathBasedWorldState {
               bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
         } else {
           final Hash addressHash = updatedAccount.getAddressHash();
-          final Bytes accountValue = updatedAccount.serializeAccount();
+          // Serialize the account and store it in the trie
+          final Bytes accountValueTrie = updatedAccount.serializeAccount();
+          accountTrie.put(addressHash, accountValueTrie);
+
+          // Store the account in the flat database with metadata
           maybeStateUpdater.ifPresent(
-              bonsaiUpdater ->
-                  bonsaiUpdater.putAccountInfoState(hashAndSavePreImage(accountKey), accountValue));
-          accountTrie.put(addressHash, accountValue);
+              bonsaiUpdater -> {
+                // Serialize the account with code size for flat database storage
+                final Bytes accountValueFlat = updatedAccount.serializeAccountWithCodeSize();
+                // Save the account information in the flat database, including code size
+                bonsaiUpdater.putAccountInfoState(
+                    hashAndSavePreImage(accountKey), accountValueFlat);
+              });
         }
       } catch (MerkleTrieException e) {
         // need to throw to trigger the heal
