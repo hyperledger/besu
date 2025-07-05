@@ -135,7 +135,7 @@ class DataCopyOperationTest {
     String eofCode =
         "0xef0001010004020001001d04%04x000080000367%016x67%016x67%016xd300%s"
             .formatted(data.size(), dst, src, len, data.toUnprefixedHexString());
-    Code code = evm.getCodeUncached(Bytes.fromHexString(eofCode));
+    Code code = evm.wrapCode(Bytes.fromHexString(eofCode));
     assumeTrue(code.isValid());
 
     MessageFrame frame =
@@ -157,7 +157,7 @@ class DataCopyOperationTest {
   @Test
   void legacyCallFails() {
     DataCopyOperation subject = new DataCopyOperation(new PragueGasCalculator());
-    Code code = evm.getCodeUncached(Bytes.fromHexString("0x600460046004d3"));
+    Code code = evm.wrapCode(Bytes.fromHexString("0x600460046004d3"));
     assumeTrue(code.isValid());
 
     MessageFrame frame =

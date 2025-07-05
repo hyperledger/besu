@@ -124,10 +124,8 @@ public class PragueGasCalculator extends CancunGasCalculator {
       return 0;
     }
 
-    final Address targetAddress =
-        CodeDelegationHelper.getTargetAccount(
-                frame.getWorldUpdater(), this::isPrecompile, targetAccount)
-            .getTargetAddress();
+    final Address targetAddress = CodeDelegationHelper.getTargetAddress(targetAccount.getCode());
+
     final boolean isWarm = isPrecompile(targetAddress) || frame.warmUpAddress(targetAddress);
     return isWarm ? getWarmStorageReadCost() : getColdAccountAccessCost();
   }

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.io.File;
@@ -88,8 +89,10 @@ public class GenesisFileModule {
   @Singleton
   @Provides
   GenesisState provideGenesisState(
-      final GenesisConfig genesisConfig, final ProtocolSchedule protocolSchedule) {
-    return GenesisState.fromConfig(genesisConfig, protocolSchedule);
+      final GenesisConfig genesisConfig,
+      final ProtocolSchedule protocolSchedule,
+      final CodeCache codeCache) {
+    return GenesisState.fromConfig(genesisConfig, protocolSchedule, codeCache);
   }
 
   @Singleton

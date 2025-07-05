@@ -47,13 +47,13 @@ public class ExtDelegateCallOperationTest {
   //  private final MutableAccount targetAccount = mock(MutableAccount.class);
   private static final EVM EOF_EVM = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
   public static final Code LEGACY_CODE =
-      EOF_EVM.getCodeUncached(Bytes.of(ExtDelegateCallOperation.OPCODE, 1));
+      EOF_EVM.wrapCode(Bytes.of(ExtDelegateCallOperation.OPCODE, 1));
   public static final Code SIMPLE_EOF =
-      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
-  public static final Code SIMPLE_LEGACY = EOF_EVM.getCodeUncached(Bytes.fromHexString("0x00"));
-  public static final Code EMPTY_CODE = EOF_EVM.getCodeUncached(Bytes.fromHexString(""));
+      EOF_EVM.wrapCode(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
+  public static final Code SIMPLE_LEGACY = EOF_EVM.wrapCode(Bytes.fromHexString("0x00"));
+  public static final Code EMPTY_CODE = EOF_EVM.wrapCode(Bytes.fromHexString(""));
   public static final Code INVALID_EOF =
-      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000023"));
+      EOF_EVM.wrapCode(Bytes.fromHexString("0xEF00010100040200010001040000000080000023"));
   private static final Address CONTRACT_ADDRESS = Address.fromHexString("0xc0de");
 
   static Iterable<Arguments> data() {
@@ -135,6 +135,7 @@ public class ExtDelegateCallOperationTest {
     }
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF).getCodeHash());
+    when(account.getOrCreateCachedCode()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF));
     when(account.getCode()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF).getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);
@@ -204,6 +205,7 @@ public class ExtDelegateCallOperationTest {
 
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn(code.getCodeHash());
+    when(account.getOrCreateCachedCode()).thenReturn(code);
     when(account.getCode()).thenReturn(code.getBytes());
     when(worldUpdater.get(CONTRACT_ADDRESS)).thenReturn("Empty".equals(name) ? null : account);
     when(worldUpdater.getAccount(CONTRACT_ADDRESS))
@@ -238,6 +240,7 @@ public class ExtDelegateCallOperationTest {
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn(SIMPLE_EOF.getCodeHash());
+    when(account.getOrCreateCachedCode()).thenReturn(SIMPLE_EOF);
     when(account.getCode()).thenReturn(SIMPLE_EOF.getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);
@@ -277,6 +280,7 @@ public class ExtDelegateCallOperationTest {
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn(SIMPLE_EOF.getCodeHash());
+    when(account.getOrCreateCachedCode()).thenReturn(SIMPLE_EOF);
     when(account.getCode()).thenReturn(SIMPLE_EOF.getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);

@@ -158,4 +158,14 @@ public interface Code {
    * @return The pretty printed code
    */
   String prettyPrint();
+
+  /**
+   * Returns a bitmask of valid jump destinations for this code. The bitmask is an array of longs,
+   * where each bit represents a potential jump destination in the code.
+   *
+   * @return an array of long values representing the jump destinations, or null if not set
+   */
+  default long[] getJumpDestBitMask() {
+    return null;
+  }
 }

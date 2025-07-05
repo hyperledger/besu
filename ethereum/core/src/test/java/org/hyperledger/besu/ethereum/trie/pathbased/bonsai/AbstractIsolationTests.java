@@ -67,6 +67,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
@@ -110,7 +111,8 @@ public abstract class AbstractIsolationTests {
           false,
           new NoOpMetricsSystem());
   protected final GenesisState genesisState =
-      GenesisState.fromConfig(GenesisConfig.fromResource("/dev.json"), protocolSchedule);
+      GenesisState.fromConfig(
+          GenesisConfig.fromResource("/dev.json"), protocolSchedule, new CodeCache());
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
   protected final TransactionPoolConfiguration poolConfiguration =
@@ -169,7 +171,8 @@ public abstract class AbstractIsolationTests {
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
             EvmConfiguration.DEFAULT,
-            throwingWorldStateHealerSupplier());
+            throwingWorldStateHealerSupplier(),
+            new CodeCache());
     var ws = archive.getWorldState();
     genesisState.writeStateTo(ws);
     protocolContext =

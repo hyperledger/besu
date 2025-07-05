@@ -119,6 +119,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -383,7 +384,8 @@ public class TestContextBuilder {
   private GenesisState createGenesisBlock(final String genesisFile) throws IOException {
     return GenesisState.fromConfig(
         GenesisConfig.fromSource(Path.of(genesisFile).toUri().toURL()),
-        ProtocolScheduleFixture.MAINNET);
+        ProtocolScheduleFixture.MAINNET,
+        new CodeCache());
   }
 
   private static ControllerAndState createControllerAndFinalState(
