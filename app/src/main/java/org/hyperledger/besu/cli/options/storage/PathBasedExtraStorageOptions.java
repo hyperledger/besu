@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.storage;
 
+import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_ARCHIVE_CHECKPOINT_INTERVAL;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_LIMIT_TRIE_LOGS_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_PARALLEL_TX_PROCESSING;
@@ -111,6 +112,14 @@ public class PathBasedExtraStorageOptions
             "Enables code storage using code hash instead of by account hash. (default: ${DEFAULT-VALUE})")
     private boolean codeUsingCodeHashEnabled = DEFAULT_CODE_USING_CODE_HASH_ENABLED;
 
+    @Option(
+        hidden = true,
+        names = {"--Xbonsai-archive-trie-node-checkpoint-interval"},
+        arity = "1",
+        description =
+            "The frequency of recording state trie nodes for Bonsai archive mode. Intermediate nodes are generated from trie logs. Larger intervals require less storage space but historic proof generation may take longer. (default: ${DEFAULT-VALUE})")
+    private Long archiveTrieNodeCheckpointInterval = DEFAULT_ARCHIVE_CHECKPOINT_INTERVAL;
+
     /** Default Constructor. */
     Unstable() {}
   }
@@ -160,6 +169,15 @@ public class PathBasedExtraStorageOptions
         }
       }
     }
+
+    if (DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS != dataStorageFormat) {
+      if (unstableOptions.archiveTrieNodeCheckpointInterval
+          != DEFAULT_ARCHIVE_CHECKPOINT_INTERVAL) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "Checkpoint interval is only supported by the X_BONSAI_ARCHIVE_PROOFS storage format.");
+      }
+    }
   }
 
   /**
@@ -180,6 +198,8 @@ public class PathBasedExtraStorageOptions
         domainObject.getUnstable().getCodeStoredByCodeHashEnabled();
     dataStorageOptions.isParallelTxProcessingEnabled =
         domainObject.getParallelTxProcessingEnabled();
+    dataStorageOptions.unstableOptions.archiveTrieNodeCheckpointInterval =
+        domainObject.getUnstable().getArchiveTrieNodeCheckpointInterval();
 
     return dataStorageOptions;
   }
@@ -195,6 +215,8 @@ public class PathBasedExtraStorageOptions
             ImmutablePathBasedExtraStorageConfiguration.PathBasedUnstable.builder()
                 .fullFlatDbEnabled(unstableOptions.fullFlatDbEnabled)
                 .codeStoredByCodeHashEnabled(unstableOptions.codeUsingCodeHashEnabled)
+                .archiveTrieNodeCheckpointInterval(
+                    unstableOptions.archiveTrieNodeCheckpointInterval)
                 .build())
         .build();
   }

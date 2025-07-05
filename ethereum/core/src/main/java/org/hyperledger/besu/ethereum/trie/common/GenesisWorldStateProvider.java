@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldSta
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchiveWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -52,6 +53,10 @@ public class GenesisWorldStateProvider {
     } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.X_BONSAI_ARCHIVE) {
       return createGenesisBonsaiWorldState(DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG);
+    } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
+        == DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS) {
+      return createGenesisBonsaiArchiveWorldState(
+          DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_PROOFS_CONFIG);
     } else {
       return createGenesisForestWorldState();
     }
@@ -75,6 +80,32 @@ public class GenesisWorldStateProvider {
             new NoOpMetricsSystem(),
             storageConfiguration);
     return new BonsaiWorldState(
+        bonsaiWorldStateKeyValueStorage,
+        bonsaiCachedMerkleTrieLoader,
+        new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
+        new NoOpTrieLogManager(),
+        EvmConfiguration.DEFAULT,
+        createStatefulConfigWithTrie());
+  }
+
+  /**
+   * Creates a Genesis world state using the Bonsai data storage format.
+   *
+   * @return a mutable world state for the Genesis block
+   */
+  private static MutableWorldState createGenesisBonsaiArchiveWorldState(
+      final DataStorageConfiguration storageConfiguration) {
+    final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
+        new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
+    final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            new KeyValueStorageProvider(
+                segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
+                new InMemoryKeyValueStorage(),
+                new NoOpMetricsSystem()),
+            new NoOpMetricsSystem(),
+            storageConfiguration);
+    return new BonsaiArchiveWorldState(
         bonsaiWorldStateKeyValueStorage,
         bonsaiCachedMerkleTrieLoader,
         new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),

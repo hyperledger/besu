@@ -37,4 +37,8 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
     // no op
     throw new UnsupportedOperationException("cannot disable trie");
   }
+
+  default boolean isTrieDisabled() {
+    return false;
+  }
 }

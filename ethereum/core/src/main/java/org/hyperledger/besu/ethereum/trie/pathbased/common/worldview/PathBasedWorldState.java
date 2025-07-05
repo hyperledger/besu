@@ -175,6 +175,11 @@ public abstract class PathBasedWorldState
   }
 
   @Override
+  public boolean isTrieDisabled() {
+    return this.worldStateConfig.isTrieDisabled();
+  }
+
+  @Override
   public void persist(final BlockHeader blockHeader) {
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
     LOG.atDebug()
@@ -204,8 +209,8 @@ public abstract class PathBasedWorldState
         // if the trie is disabled, we cannot calculate the state root, so we directly use the root
         // of the block. It's important to understand that in all networks,
         // the state root must be validated independently and the block should not be trusted
-        // implicitly. This mode
-        // can be used in cases where Besu would just be a follower of another trusted client.
+        // implicitly. This mode can be used in cases where Besu would just be a follower of another
+        // trusted client.
         LOG.atDebug()
             .setMessage("Unsafe state root verification for block header {}")
             .addArgument(maybeBlockHeader)

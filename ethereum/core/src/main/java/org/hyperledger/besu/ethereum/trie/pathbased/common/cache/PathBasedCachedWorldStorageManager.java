@@ -148,6 +148,10 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
 
   public Optional<PathBasedWorldState> getWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
+      LOG.atDebug()
+          .setMessage("found cached worldstate in cache for {}")
+          .addArgument(blockHash.toShortHexString())
+          .log();
       // return a new worldstate using worldstate storage and an isolated copy of the updater
       return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
           .map(
