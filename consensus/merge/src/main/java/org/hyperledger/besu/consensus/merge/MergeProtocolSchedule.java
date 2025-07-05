@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PARIS;
+
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -103,7 +105,7 @@ public class MergeProtocolSchedule {
         .difficultyCalculator((a, b) -> BigInteger.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
-        .name("Paris");
+        .hardforkId(PARIS);
   }
 
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(

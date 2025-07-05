@@ -23,6 +23,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -56,6 +57,7 @@ import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -64,6 +66,21 @@ import org.apache.tuweni.units.bigints.UInt256s;
 import org.junit.jupiter.api.Test;
 
 public class EthGetTransactionReceiptTest {
+  private enum TestHardforkId implements HardforkId {
+    ROOT,
+    STATUS;
+
+    @Override
+    public boolean finalized() {
+      return true;
+    }
+
+    @Override
+    public String description() {
+      return name().toLowerCase(Locale.ROOT);
+    }
+  }
+
   private final TransactionReceipt statusReceipt =
       new TransactionReceipt(1, 12, Collections.emptyList(), Optional.empty());
   private final Hash stateRoot =
@@ -122,7 +139,7 @@ public class EthGetTransactionReceiptTest {
 
   private final ProtocolSpec rootTransactionTypeSpec =
       new ProtocolSpec(
-          "root",
+          TestHardforkId.ROOT,
           null,
           null,
           null,
@@ -153,7 +170,7 @@ public class EthGetTransactionReceiptTest {
           Optional.empty());
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
-          "status",
+          TestHardforkId.STATUS,
           null,
           null,
           null,

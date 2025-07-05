@@ -32,12 +32,13 @@ public interface ProtocolSchedule {
   ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader);
 
   default ProtocolSpec getForNextBlockHeader(
-      final BlockHeader parentBlockHeader, final long timestampForNextBlock) {
+      final org.hyperledger.besu.plugin.data.BlockHeader parentBlockHeader,
+      final long timestampForNextBlock) {
     final BlockHeader nextBlockHeader =
         BlockHeaderBuilder.fromHeader(parentBlockHeader)
             .number(parentBlockHeader.getNumber() + 1)
             .timestamp(timestampForNextBlock)
-            .parentHash(parentBlockHeader.getHash())
+            .parentHash(parentBlockHeader.getBlockHash())
             .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
             .buildBlockHeader();
     return getByBlockHeader(nextBlockHeader);

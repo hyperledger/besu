@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.BlobSchedule;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -67,7 +68,7 @@ public class ProtocolSpecBuilder {
   private BlockValidatorBuilder blockValidatorBuilder;
   private BlockImporterBuilder blockImporterBuilder;
 
-  private String name;
+  private HardforkId hardforkId;
   private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private WithdrawalsValidator withdrawalsValidator =
       new WithdrawalsValidator.ProhibitedWithdrawals();
@@ -204,8 +205,8 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder name(final String name) {
-    this.name = name;
+  public ProtocolSpecBuilder hardforkId(final HardforkId hardforkId) {
+    this.hardforkId = hardforkId;
     return this;
   }
 
@@ -297,7 +298,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(blockReward, "Missing block reward");
     checkNotNull(difficultyCalculator, "Missing difficulty calculator");
     checkNotNull(transactionReceiptFactory, "Missing transaction receipt factory");
-    checkNotNull(name, "Missing name");
+    checkNotNull(hardforkId, "Missing hardfork id");
     checkNotNull(miningBeneficiaryCalculator, "Missing Mining Beneficiary Calculator");
     checkNotNull(protocolSchedule, "Missing protocol schedule");
     checkNotNull(feeMarketBuilder, "Missing fee market");
@@ -343,7 +344,7 @@ public class ProtocolSpecBuilder {
         blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
     return new ProtocolSpec(
-        name,
+        hardforkId,
         evm,
         transactionValidatorFactory,
         transactionProcessor,
