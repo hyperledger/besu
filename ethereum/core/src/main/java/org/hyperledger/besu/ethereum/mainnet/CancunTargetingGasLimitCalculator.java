@@ -103,6 +103,7 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
    *
    * @return The target blob gas per block.
    */
+  @Override
   public long getTargetBlobGasPerBlock() {
     return targetBlobGasPerBlock;
   }

@@ -20,16 +20,21 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockContextProcessor;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** Processes system call requests. */
 public class SystemCallRequestProcessor
     implements RequestProcessor, BlockContextProcessor<Request, RequestProcessingContext> {
 
+  private final String callName;
   private final Address callAddress;
   private final RequestType requestType;
 
-  public SystemCallRequestProcessor(final Address callAddress, final RequestType requestType) {
+  public SystemCallRequestProcessor(
+      final String callName, final Address callAddress, final RequestType requestType) {
+    this.callName = callName;
     this.callAddress = callAddress;
     this.requestType = requestType;
   }
@@ -49,5 +54,15 @@ public class SystemCallRequestProcessor
     Bytes systemCallOutput = systemCallProcessor.process(callAddress, context, Bytes.EMPTY);
 
     return new Request(requestType, systemCallOutput);
+  }
+
+  @Override
+  public Optional<String> getContractName() {
+    return Optional.of(callName);
+  }
+
+  @Override
+  public Optional<Address> getContractAddress() {
+    return Optional.of(callAddress);
   }
 }
