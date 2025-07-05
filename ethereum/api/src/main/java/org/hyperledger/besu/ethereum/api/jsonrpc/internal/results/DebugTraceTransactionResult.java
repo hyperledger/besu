@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -26,17 +26,19 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class DebugTraceTransactionResult {
 
   private final String txHash;
+  private final Object result;
 
-  private final DebugTraceTransactionDetails result;
-
-  public DebugTraceTransactionResult(final TransactionTrace transactionTrace) {
+  public DebugTraceTransactionResult(final TransactionTrace transactionTrace, final Object result) {
     this.txHash = transactionTrace.getTransaction().getHash().toHexString();
-    this.result = new DebugTraceTransactionDetails(transactionTrace);
+    this.result = result;
   }
 
   public static Collection<DebugTraceTransactionResult> of(
-      final Collection<TransactionTrace> traces) {
-    return traces.stream().map(DebugTraceTransactionResult::new).collect(Collectors.toList());
+      final Collection<TransactionTrace> traces,
+      final Function<TransactionTrace, Object> constructor) {
+    return traces.stream()
+        .map(trace -> new DebugTraceTransactionResult(trace, constructor.apply(trace)))
+        .toList();
   }
 
   @JsonGetter(value = "txHash")
@@ -45,7 +47,7 @@ public class DebugTraceTransactionResult {
   }
 
   @JsonGetter(value = "result")
-  public DebugTraceTransactionDetails getResult() {
+  public Object getResult() {
     return result;
   }
 }
