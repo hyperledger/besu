@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.health;
 
 import static java.util.Collections.singletonMap;
 
+import org.hyperledger.besu.plugin.services.health.HealthService.HealthCheck;
+
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
@@ -55,15 +57,5 @@ public final class HealthService {
           .setStatusCode(statusCode)
           .end(new JsonObject(singletonMap("status", statusText)).encodePrettily());
     }
-  }
-
-  @FunctionalInterface
-  public interface HealthCheck {
-    boolean isHealthy(ParamSource paramSource);
-  }
-
-  @FunctionalInterface
-  public interface ParamSource {
-    String getParam(String name);
   }
 }

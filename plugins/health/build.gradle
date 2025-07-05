@@ -1,0 +1,10 @@
+plugins {
+  id 'java-library'
+}
+
+dependencies {
+  api project(':plugin-api')
+  implementation 'org.slf4j:slf4j-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+  testImplementation 'org.mockito:mockito-core'
+}
