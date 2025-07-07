@@ -205,12 +205,21 @@ public abstract class BenchmarkExecutor {
             });
 
     int executions = 0;
-    long elapsed = 0;
-    startNanoTime = System.nanoTime();
-    while (executions < execIterations && elapsed < execTimeInNano) {
-      contract.computePrecompile(arg, fakeFrame);
+    long totalElapsed = 0;
+    boolean isInvalidCase = false;
+
+    while (executions < execIterations && totalElapsed < execTimeInNano) {
+      long iterationStart = System.nanoTime();
+      final var result = contract.computePrecompile(arg, fakeFrame);
+      long iterationElapsed = System.nanoTime() - iterationStart;
+
+      if (result.output() == null) {
+        isInvalidCase = true;
+        break;
+      }
+
+      totalElapsed += iterationElapsed;
       executions++;
-      elapsed = System.nanoTime() - startNanoTime;
     }
 
     if (asyncProfiler.get() != null) {
@@ -221,7 +230,11 @@ public abstract class BenchmarkExecutor {
       }
     }
 
-    return elapsed / 1.0e9D / executions;
+    if (isInvalidCase || executions == 0) {
+      throw new IllegalArgumentException("Invalid input or zero executions performed");
+    }
+
+    return (totalElapsed / 1.0e9D) / executions;
   }
 
   /**
