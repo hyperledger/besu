@@ -38,35 +38,48 @@ import org.immutables.value.Value;
 @Value.Immutable
 @JsonDeserialize(as = ImmutableCallParameter.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class CallParameter {
+public abstract class CallParameter implements org.hyperledger.besu.datatypes.CallParameter {
+  @Override
   @JsonDeserialize(contentUsing = ChainIdDeserializer.class)
   public abstract Optional<BigInteger> getChainId();
 
+  @Override
   @JsonProperty("from")
   public abstract Optional<Address> getSender();
 
+  @Override
   public abstract Optional<Address> getTo();
 
+  @Override
   @JsonDeserialize(using = OptionalUnsignedLongDeserializer.class)
   public abstract OptionalLong getGas();
 
+  @Override
   public abstract Optional<Wei> getMaxPriorityFeePerGas();
 
+  @Override
   public abstract Optional<Wei> getMaxFeePerGas();
 
+  @Override
   public abstract Optional<Wei> getMaxFeePerBlobGas();
 
+  @Override
   public abstract Optional<Wei> getGasPrice();
 
+  @Override
   public abstract Optional<Wei> getValue();
 
+  @Override
   public abstract Optional<List<AccessListEntry>> getAccessList();
 
+  @Override
   public abstract Optional<List<VersionedHash>> getBlobVersionedHashes();
 
+  @Override
   @JsonDeserialize(using = OptionalUnsignedLongDeserializer.class)
   public abstract OptionalLong getNonce();
 
+  @Override
   public abstract Optional<Boolean> getStrict();
 
   /**
@@ -96,6 +109,7 @@ public abstract class CallParameter {
    *
    * @return the payload, or empty if none is present.
    */
+  @Override
   @Value.Derived
   public Optional<Bytes> getPayload() {
     return getInput().or(this::getData);
