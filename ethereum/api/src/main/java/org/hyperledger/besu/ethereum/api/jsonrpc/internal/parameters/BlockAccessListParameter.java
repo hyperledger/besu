@@ -52,7 +52,7 @@ public class BlockAccessListParameter {
     public final List<SlotChangeParameter> storageChanges;
     public final List<String> storageReads;
     public final List<BalanceChangeParameter> balanceChanges;
-    public final List<NonceChangeParameter> nonceChanges;
+    // public final List<NonceChangeParameter> nonceChanges;
     public final List<CodeChangeParameter> codeChanges;
 
     public AccountChangesParameter(final AccountChanges changes) {
@@ -61,12 +61,12 @@ public class BlockAccessListParameter {
           changes.getStorageChanges().stream().map(SlotChangeParameter::new).toList();
       this.storageReads =
           changes.getStorageReads().stream()
-              .map(sr -> sr.getSlot().getSlotKey().map(UInt256::toHexString).orElse("null"))
+              .map(sr -> sr.getSlot().getSlotKey().map(UInt256::toHexString).orElse(""))
               .toList();
       this.balanceChanges =
           changes.getBalanceChanges().stream().map(BalanceChangeParameter::new).toList();
-      this.nonceChanges =
-          changes.getNonceChanges().stream().map(NonceChangeParameter::new).toList();
+      // this.nonceChanges =
+      //     changes.getNonceChanges().stream().map(NonceChangeParameter::new).toList();
       this.codeChanges = changes.getCodeChanges().stream().map(CodeChangeParameter::new).toList();
     }
   }
