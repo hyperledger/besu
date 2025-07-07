@@ -321,6 +321,7 @@ public class BlockSimulator {
       }
 
       transactionUpdater.commit();
+      transactionUpdater.markTransactionBoundary();
 
       balBuilder.updateFromTransactionAccumulator(
           transactionUpdater, i, callParameter.getTo().isEmpty());

@@ -42,6 +42,10 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class BlockAccessList {
   private final List<AccountChanges> accountChanges;
 
+  private static final Set<Address> excludedAddresses = Set.of(
+      Address.fromHexString("0x0000f90827f1c53a10cb7a02335b175320002935"),
+      Address.fromHexString("0x000f3df6d732807ef1319fb7b8bb8522d0beac02"));
+
   public BlockAccessList(final List<AccountChanges> accountChanges) {
     this.accountChanges = accountChanges;
   }
@@ -485,6 +489,9 @@ public class BlockAccessList {
               (address, slotMap) -> {
                 slotMap.forEach(
                     (slotKey, value) -> {
+                      if (excludedAddresses.contains(address)) {
+                        return;
+                      }
                       final UInt256 prior =
                           Optional.ofNullable(value.getPrior()).orElse(UInt256.ZERO);
                       final UInt256 updated =
@@ -501,6 +508,9 @@ public class BlockAccessList {
           .getAccountsToUpdate()
           .forEach(
               (address, value) -> {
+                if (excludedAddresses.contains(address)) {
+                  return;
+                }
                 final PathBasedAccount prior = value.getPrior();
                 final PathBasedAccount updated = value.getUpdated();
 

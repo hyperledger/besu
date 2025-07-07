@@ -53,7 +53,7 @@ public class SLoadOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
+      final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress(), true);
       final Address address = account.getAddress();
       final Bytes32 key = UInt256.fromBytes(frame.popStackItem());
       final boolean slotIsWarm = frame.warmUpStorage(address, key);

@@ -121,7 +121,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
           ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
     }
     Address to = Words.toAddress(toBytes);
-    final Account contract = frame.getWorldUpdater().get(to);
+    final Account contract = frame.getWorldUpdater().get(to, true);
 
     boolean accountCreation = (contract == null || contract.isEmpty()) && !zeroValue;
     long cost =
@@ -164,7 +164,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     long retainedGas = Math.max(currentGas / 64, gasCalculator.getMinRetainedGas());
     long childGas = currentGas - retainedGas;
 
-    final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
+    final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress(), true);
     final Wei balance = (zeroValue || account == null) ? Wei.ZERO : account.getBalance();
 
     // There myst be a minimum gas for a call to have access to.

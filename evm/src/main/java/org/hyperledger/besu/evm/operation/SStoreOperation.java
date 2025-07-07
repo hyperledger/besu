@@ -85,9 +85,10 @@ public class SStoreOperation extends AbstractOperation {
     final Address address = account.getAddress();
     final boolean slotIsWarm = frame.warmUpStorage(address, key);
     final Supplier<UInt256> currentValueSupplier =
-        Suppliers.memoize(() -> account.getStorageValue(key));
+        Suppliers.memoize(() -> account.getStorageValue(key, true));
     final Supplier<UInt256> originalValueSupplier =
         Suppliers.memoize(() -> account.getOriginalStorageValue(key));
+
 
     final long cost =
         gasCalculator().calculateStorageCost(newValue, currentValueSupplier, originalValueSupplier)
