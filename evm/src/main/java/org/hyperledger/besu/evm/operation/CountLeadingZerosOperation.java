@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** The CLZ operation. */
 public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
