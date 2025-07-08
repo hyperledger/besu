@@ -27,7 +27,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -86,8 +85,6 @@ public class MainnetTransactionProcessor {
 
   private final Optional<CodeDelegationProcessor> maybeCodeDelegationProcessor;
 
-  private final Optional<BlockAccessListManager> maybeBlockAccessListFactory;
-
   private MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
@@ -98,8 +95,7 @@ public class MainnetTransactionProcessor {
       final int maxStackSize,
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
-      final CodeDelegationProcessor maybeCodeDelegationProcessor,
-      final BlockAccessListManager blockAccessListFactory) {
+      final CodeDelegationProcessor maybeCodeDelegationProcessor) {
     this.gasCalculator = gasCalculator;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -110,7 +106,6 @@ public class MainnetTransactionProcessor {
     this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
     this.maybeCodeDelegationProcessor = Optional.ofNullable(maybeCodeDelegationProcessor);
-    this.maybeBlockAccessListFactory = Optional.ofNullable(blockAccessListFactory);
   }
 
   /**
@@ -330,7 +325,7 @@ public class MainnetTransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .eip2930AccessListWarmStorage(eip2930StorageList);
 
-      if(eip7928AccessList.isPresent()) {
+      if (eip7928AccessList.isPresent()) {
         commonMessageFrameBuilder.eip7928AccessList(eip7928AccessList.get());
       }
 
@@ -623,7 +618,6 @@ public class MainnetTransactionProcessor {
     private FeeMarket feeMarket;
     private CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
     private CodeDelegationProcessor codeDelegationProcessor;
-    private BlockAccessListManager blockAccessListFactory;
 
     public Builder gasCalculator(final GasCalculator gasCalculator) {
       this.gasCalculator = gasCalculator;
@@ -679,12 +673,6 @@ public class MainnetTransactionProcessor {
       return this;
     }
 
-    public Builder blockAccessListFactory(
-        final BlockAccessListManager blockAccessListFactory) {
-      this.blockAccessListFactory = blockAccessListFactory;
-      return this;
-    }
-
     public Builder populateFrom(final MainnetTransactionProcessor processor) {
       this.gasCalculator = processor.gasCalculator;
       this.transactionValidatorFactory = processor.transactionValidatorFactory;
@@ -696,7 +684,6 @@ public class MainnetTransactionProcessor {
       this.feeMarket = processor.feeMarket;
       this.coinbaseFeePriceCalculator = processor.coinbaseFeePriceCalculator;
       this.codeDelegationProcessor = processor.maybeCodeDelegationProcessor.orElse(null);
-      this.blockAccessListFactory = processor.maybeBlockAccessListFactory.orElse(null);
       return this;
     }
 
@@ -711,8 +698,7 @@ public class MainnetTransactionProcessor {
           maxStackSize,
           feeMarket,
           coinbaseFeePriceCalculator,
-          codeDelegationProcessor,
-          blockAccessListFactory);
+          codeDelegationProcessor);
     }
   }
 }

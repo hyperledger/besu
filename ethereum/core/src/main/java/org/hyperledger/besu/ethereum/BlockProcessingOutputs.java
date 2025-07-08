@@ -62,11 +62,11 @@ public class BlockProcessingOutputs {
       final MutableWorldState worldState,
       final List<TransactionReceipt> receipts,
       final Optional<List<Request>> maybeRequests,
-      final BlockAccessList blockAccessList) {
+      final Optional<BlockAccessList> blockAccessList) {
     this.worldState = worldState;
     this.receipts = receipts;
     this.maybeRequests = maybeRequests;
-    this.maybeBlockAccessList = Optional.of(blockAccessList);
+    this.maybeBlockAccessList = blockAccessList;
   }
 
   /**

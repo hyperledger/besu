@@ -456,7 +456,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         blockSelectionContext
             .preExecutionProcessor()
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
-    final TransactionAccessList transactionAccessList = new TransactionAccessList(currentTxnLocation);
+    final TransactionAccessList transactionAccessList =
+        new TransactionAccessList(currentTxnLocation);
     return transactionProcessor.processTransaction(
         txWorldStateUpdater,
         blockSelectionContext.pendingBlockHeader(),

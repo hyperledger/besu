@@ -115,7 +115,9 @@ public abstract class AbstractOperation implements Operation {
   protected UInt256 getStorageValue(
       final Account account, final UInt256 slotKey, final MessageFrame frame) {
     final UInt256 slotValue = account.getStorageValue(slotKey);
-    frame.getEip7928AccessList().ifPresent(t -> t.addSlotAccessForAccount(account.getAddress(), slotKey, slotValue));
+    frame
+        .getEip7928AccessList()
+        .ifPresent(t -> t.addSlotAccessForAccount(account.getAddress(), slotKey, slotValue));
     return slotValue;
   }
 }

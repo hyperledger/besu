@@ -857,7 +857,6 @@ public abstract class MainnetProtocolSpecs {
                                 chainId,
                                 SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
                                 new CodeDelegationService()))
-                        .blockAccessListFactory(new BlockAccessListManager())
                         .build())
             // EIP-2935 Blockhash processor
             .preExecutionProcessor(new PraguePreExecutionProcessor())

@@ -227,19 +227,20 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
     }
 
-    MessageFrame.Builder builder = MessageFrame.builder()
-        .parentMessageFrame(frame)
-        .type(MessageFrame.Type.MESSAGE_CALL)
-        .initialGas(gasAvailableForChildCall(frame))
-        .address(address(frame))
-        .contract(to)
-        .inputData(inputData)
-        .sender(sender(frame))
-        .value(value(frame))
-        .apparentValue(apparentValue(frame))
-        .code(code)
-        .isStatic(isStatic(frame))
-        .completer(child -> complete(frame, child));
+    MessageFrame.Builder builder =
+        MessageFrame.builder()
+            .parentMessageFrame(frame)
+            .type(MessageFrame.Type.MESSAGE_CALL)
+            .initialGas(gasAvailableForChildCall(frame))
+            .address(address(frame))
+            .contract(to)
+            .inputData(inputData)
+            .sender(sender(frame))
+            .value(value(frame))
+            .apparentValue(apparentValue(frame))
+            .code(code)
+            .isStatic(isStatic(frame))
+            .completer(child -> complete(frame, child));
 
     if (frame.getEip7928AccessList().isPresent()) {
       builder.eip7928AccessList(frame.getEip7928AccessList().get());
