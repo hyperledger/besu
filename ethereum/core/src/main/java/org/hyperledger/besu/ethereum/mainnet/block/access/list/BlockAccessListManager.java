@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.block.access.list;
 
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 
-public class BlockLevelAccessListManager {
+public class BlockAccessListManager {
 
   public BlockAccessListBuilder newBlockAccessListBuilder() {
-    return BlockLevelAccessList.builder();
+    return BlockAccessList.builder();
   }
 
-  public TransactionLevelAccessList newTransactionAccessList(final long transactionIndex) {
-    return new TransactionLevelAccessList(transactionIndex);
+  public TransactionAccessList newTransactionAccessList(final long transactionIndex) {
+    return new TransactionAccessList(transactionIndex);
   }
 }

@@ -43,7 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
@@ -111,7 +111,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
   private final long blockTxsSelectionMaxTime;
-  private final BlockLevelAccessList.BlockAccessListBuilder balBuilder;
+  private final BlockAccessList.BlockAccessListBuilder balBuilder;
   private PathBasedWorldStateUpdateAccumulator<BonsaiAccount> blockWorldStateUpdater;
   private PathBasedWorldStateUpdateAccumulator<BonsaiAccount> txWorldStateUpdater;
   private volatile TransactionEvaluationContext currTxEvaluationContext;
@@ -159,7 +159,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     txWorldStateUpdater = blockWorldStateUpdater.copy();
     blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
     currentTxnLocation = 0;
-    balBuilder = new BlockLevelAccessList.BlockAccessListBuilder();
+    balBuilder = new BlockAccessList.BlockAccessListBuilder();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(

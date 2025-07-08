@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessListManager;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
@@ -84,7 +84,7 @@ public class ProtocolSpecBuilder {
   private boolean isPoS = false;
   private boolean isReplayProtectionSupported = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
-  private BlockLevelAccessListManager blockLevelAccessListFactory;
+  private BlockAccessListManager blockAccessListFactory;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -282,9 +282,9 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder blockLevelAccessListFactory(
-      final BlockLevelAccessListManager blockLevelAccessListFactory) {
-    this.blockLevelAccessListFactory = blockLevelAccessListFactory;
+  public ProtocolSpecBuilder blockAccessListFactory(
+      final BlockAccessListManager blockAccessListFactory) {
+    this.blockAccessListFactory = blockAccessListFactory;
     return this;
   }
 
@@ -382,7 +382,7 @@ public class ProtocolSpecBuilder {
         isPoS,
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor),
-        Optional.ofNullable(blockLevelAccessListFactory));
+        Optional.ofNullable(blockAccessListFactory));
   }
 
   private BlockProcessor createBlockProcessor(

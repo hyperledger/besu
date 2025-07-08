@@ -66,7 +66,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessListManager;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PraguePreExecutionProcessor;
@@ -857,7 +857,7 @@ public abstract class MainnetProtocolSpecs {
                                 chainId,
                                 SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
                                 new CodeDelegationService()))
-                        .blockLevelAccessListFactory(new BlockLevelAccessListManager())
+                        .blockAccessListFactory(new BlockAccessListManager())
                         .build())
             // EIP-2935 Blockhash processor
             .preExecutionProcessor(new PraguePreExecutionProcessor())

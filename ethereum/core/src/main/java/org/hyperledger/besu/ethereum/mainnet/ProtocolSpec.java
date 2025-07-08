@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessListManager;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -86,7 +86,7 @@ public class ProtocolSpec {
   private final boolean isReplayProtectionSupported;
   private final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor;
 
-  private final Optional<BlockLevelAccessListManager> blockLevelAccessListFactory;
+  private final Optional<BlockAccessListManager> blockAccessListFactory;
 
   /**
    * Creates a new protocol specification instance.
@@ -150,7 +150,7 @@ public class ProtocolSpec {
       final boolean isPoS,
       final boolean isReplayProtectionSupported,
       final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor,
-      final Optional<BlockLevelAccessListManager> blockLevelAccessListFactory) {
+      final Optional<BlockAccessListManager> blockAccessListFactory) {
     this.hardforkId = hardforkId;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
@@ -180,7 +180,7 @@ public class ProtocolSpec {
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
     this.transactionPoolPreProcessor = transactionPoolPreProcessor;
-    this.blockLevelAccessListFactory = blockLevelAccessListFactory;
+    this.blockAccessListFactory = blockAccessListFactory;
   }
 
   /**
@@ -406,7 +406,7 @@ public class ProtocolSpec {
     return transactionPoolPreProcessor;
   }
 
-  public Optional<BlockLevelAccessListManager> getBlockLevelAccessListFactory() {
-    return blockLevelAccessListFactory;
+  public Optional<BlockAccessListManager> getBlockAccessListFactory() {
+    return blockAccessListFactory;
   }
 }

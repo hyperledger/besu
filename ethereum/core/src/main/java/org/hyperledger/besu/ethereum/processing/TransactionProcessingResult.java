@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.processing;
 
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -59,7 +59,7 @@ public class TransactionProcessingResult
 
   public PathBasedWorldStateUpdateAccumulator<?> accumulator;
   private final Optional<ExceptionalHaltReason> exceptionalHaltReason;
-  private final Optional<TransactionLevelAccessList> transactionLevelAccessList;
+  private final Optional<TransactionAccessList> transactionLevelAccessList;
 
   public static TransactionProcessingResult invalid(
       final ValidationResult<TransactionInvalidReason> validationResult) {
@@ -97,7 +97,7 @@ public class TransactionProcessingResult
       final long gasUsedByTransaction,
       final long gasRemaining,
       final Bytes output,
-      final Optional<TransactionLevelAccessList> transactionLevelAccessList,
+      final Optional<TransactionAccessList> transactionLevelAccessList,
       final ValidationResult<TransactionInvalidReason> validationResult) {
     return new TransactionProcessingResult(
         Status.SUCCESSFUL,
@@ -118,7 +118,7 @@ public class TransactionProcessingResult
       final Bytes output,
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
-      final Optional<TransactionLevelAccessList> transactionLevelAccessList) {
+      final Optional<TransactionAccessList> transactionLevelAccessList) {
     this.status = status;
     this.logs = logs;
     this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
@@ -139,7 +139,7 @@ public class TransactionProcessingResult
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
       final Optional<ExceptionalHaltReason> exceptionalHaltReason,
-      final Optional<TransactionLevelAccessList> transactionLevelAccessList) {
+      final Optional<TransactionAccessList> transactionLevelAccessList) {
     this.status = status;
     this.logs = logs;
     this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
@@ -239,7 +239,7 @@ public class TransactionProcessingResult
     return validationResult;
   }
 
-  public Optional<TransactionLevelAccessList> getTransactionLevelAccessList() {
+  public Optional<TransactionAccessList> getTransactionLevelAccessList() {
     return transactionLevelAccessList;
   }
 

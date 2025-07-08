@@ -31,9 +31,9 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.BlockAccessListBuilder;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessListManager;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
@@ -200,10 +200,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     boolean parallelizedTxFound = false;
     int nbParallelTx = 0;
 
-    final BlockLevelAccessListManager blockLevelAccessListFactory =
-        protocolSpec.getBlockLevelAccessListFactory().get();
+    final BlockAccessListManager blockAccessListFactory =
+        protocolSpec.getBlockAccessListFactory().get();
     final BlockAccessListBuilder blockAccessListBuilder =
-        blockLevelAccessListFactory.newBlockAccessListBuilder();
+        blockAccessListFactory.newBlockAccessListBuilder();
 
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
@@ -352,7 +352,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
-    BlockLevelAccessList blockAccessList = blockAccessListBuilder.build();
+    BlockAccessList blockAccessList = blockAccessListBuilder.build();
 
     return new BlockProcessingResult(
         Optional.of(

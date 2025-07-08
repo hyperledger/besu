@@ -27,8 +27,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessListManager;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -86,7 +86,7 @@ public class MainnetTransactionProcessor {
 
   private final Optional<CodeDelegationProcessor> maybeCodeDelegationProcessor;
 
-  private final Optional<BlockLevelAccessListManager> maybeBlockLevelAccessListFactory;
+  private final Optional<BlockAccessListManager> maybeBlockAccessListFactory;
 
   private MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
@@ -99,7 +99,7 @@ public class MainnetTransactionProcessor {
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
       final CodeDelegationProcessor maybeCodeDelegationProcessor,
-      final BlockLevelAccessListManager blockLevelAccessListFactory) {
+      final BlockAccessListManager blockAccessListFactory) {
     this.gasCalculator = gasCalculator;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -110,7 +110,7 @@ public class MainnetTransactionProcessor {
     this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
     this.maybeCodeDelegationProcessor = Optional.ofNullable(maybeCodeDelegationProcessor);
-    this.maybeBlockLevelAccessListFactory = Optional.ofNullable(blockLevelAccessListFactory);
+    this.maybeBlockAccessListFactory = Optional.ofNullable(blockAccessListFactory);
   }
 
   /**
@@ -203,8 +203,8 @@ public class MainnetTransactionProcessor {
       }
 
       // TODO: Pass transaction index or TAL
-      TransactionLevelAccessList eip7928AccessList =
-          maybeBlockLevelAccessListFactory.get().newTransactionAccessList(transaction.getNonce());
+      TransactionAccessList eip7928AccessList =
+          maybeBlockAccessListFactory.get().newTransactionAccessList(transaction.getNonce());
 
       final Address senderAddress = transaction.getSender();
       final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
@@ -602,7 +602,7 @@ public class MainnetTransactionProcessor {
     private FeeMarket feeMarket;
     private CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
     private CodeDelegationProcessor codeDelegationProcessor;
-    private BlockLevelAccessListManager blockLevelAccessListFactory;
+    private BlockAccessListManager blockAccessListFactory;
 
     public Builder gasCalculator(final GasCalculator gasCalculator) {
       this.gasCalculator = gasCalculator;
@@ -658,9 +658,9 @@ public class MainnetTransactionProcessor {
       return this;
     }
 
-    public Builder blockLevelAccessListFactory(
-        final BlockLevelAccessListManager blockLevelAccessListFactory) {
-      this.blockLevelAccessListFactory = blockLevelAccessListFactory;
+    public Builder blockAccessListFactory(
+        final BlockAccessListManager blockAccessListFactory) {
+      this.blockAccessListFactory = blockAccessListFactory;
       return this;
     }
 
@@ -675,7 +675,7 @@ public class MainnetTransactionProcessor {
       this.feeMarket = processor.feeMarket;
       this.coinbaseFeePriceCalculator = processor.coinbaseFeePriceCalculator;
       this.codeDelegationProcessor = processor.maybeCodeDelegationProcessor.orElse(null);
-      this.blockLevelAccessListFactory = processor.maybeBlockLevelAccessListFactory.orElse(null);
+      this.blockAccessListFactory = processor.maybeBlockAccessListFactory.orElse(null);
       return this;
     }
 
@@ -691,7 +691,7 @@ public class MainnetTransactionProcessor {
           feeMarket,
           coinbaseFeePriceCalculator,
           codeDelegationProcessor,
-          blockLevelAccessListFactory);
+          blockAccessListFactory);
     }
   }
 }

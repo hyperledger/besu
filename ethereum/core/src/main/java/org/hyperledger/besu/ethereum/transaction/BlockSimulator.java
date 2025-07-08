@@ -45,8 +45,8 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
@@ -279,7 +279,7 @@ public class BlockSimulator {
             .<MiningBeneficiaryCalculator>map(feeRecipient -> header -> feeRecipient)
             .orElseGet(protocolSpec::getMiningBeneficiaryCalculator);
 
-    final BlockLevelAccessList.BlockAccessListBuilder balBuilder = BlockLevelAccessList.builder();
+    final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
 
     for (int i = 0; i < blockStateCall.getCalls().size(); i++) {
       final CallParameter callParameter = blockStateCall.getCalls().get(i);

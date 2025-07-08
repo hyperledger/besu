@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public class TransactionSelectionResults {
       new EnumMap<>(TransactionType.class);
   private final List<TransactionReceipt> receipts = Lists.newArrayList();
 
-  private BlockLevelAccessList blockAccessList;
+  private BlockAccessList blockAccessList;
 
   /**
    * Access to this field needs to be guarded, since it is possible to read it while another
@@ -73,7 +73,7 @@ public class TransactionSelectionResults {
     notSelectedTransactions.put(transaction, res);
   }
 
-  public void setBlockAccessList(final BlockLevelAccessList blockAccessList) {
+  public void setBlockAccessList(final BlockAccessList blockAccessList) {
     this.blockAccessList = blockAccessList;
   }
 
@@ -97,7 +97,7 @@ public class TransactionSelectionResults {
     return Map.copyOf(notSelectedTransactions);
   }
 
-  public BlockLevelAccessList getBlockAccessList() {
+  public BlockAccessList getBlockAccessList() {
     return blockAccessList;
   }
 

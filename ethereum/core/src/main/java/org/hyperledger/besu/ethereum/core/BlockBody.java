@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -41,7 +41,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
 
-  private final Optional<BlockLevelAccessList> blockAccessList;
+  private final Optional<BlockAccessList> blockAccessList;
 
   public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
     this.transactions = transactions;
@@ -64,7 +64,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<BlockLevelAccessList> blockAccessList) {
+      final Optional<BlockAccessList> blockAccessList) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = withdrawals;
@@ -101,7 +101,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     return withdrawals;
   }
 
-  public Optional<BlockLevelAccessList> getBlockAccessList() {
+  public Optional<BlockAccessList> getBlockAccessList() {
     return blockAccessList;
   }
 
@@ -171,7 +171,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         input.isEndOfCurrentList()
             ? Optional.empty()
             : Optional.of(input.readList(Withdrawal::readFrom));
-    final Optional<BlockLevelAccessList> blockAccessList =
+    final Optional<BlockAccessList> blockAccessList =
         input.isEndOfCurrentList()
             ? Optional.empty()
             : Optional.of(BlockAccessListDecoder.decode(input));

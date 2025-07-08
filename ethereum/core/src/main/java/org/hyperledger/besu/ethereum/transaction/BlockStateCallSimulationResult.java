@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -38,7 +38,7 @@ public class BlockStateCallSimulationResult {
   private final List<TransactionSimulatorResultWithMetadata> transactionSimulatorResults =
       new ArrayList<>();
   private long cumulativeGasUsed = 0;
-  private Optional<BlockLevelAccessList> blockAccessList = Optional.empty();
+  private Optional<BlockAccessList> blockAccessList = Optional.empty();
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final long blockGasLimit;
 
@@ -85,7 +85,7 @@ public class BlockStateCallSimulationResult {
             result, transactionReceipt, cumulativeGasUsed, logs));
   }
 
-  public void set(final BlockLevelAccessList blockAccessList) {
+  public void set(final BlockAccessList blockAccessList) {
     this.blockAccessList = Optional.of(blockAccessList);
   }
 
@@ -111,7 +111,7 @@ public class BlockStateCallSimulationResult {
     return transactionSimulatorResults;
   }
 
-  public Optional<BlockLevelAccessList> getBlockAccessList() {
+  public Optional<BlockAccessList> getBlockAccessList() {
     return blockAccessList;
   }
 

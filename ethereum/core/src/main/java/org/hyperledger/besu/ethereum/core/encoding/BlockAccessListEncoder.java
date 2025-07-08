@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 public final class BlockAccessListEncoder {
 
   private BlockAccessListEncoder() {}
 
-  public static void encode(final BlockLevelAccessList bal, final RLPOutput out) {
+  public static void encode(final BlockAccessList bal, final RLPOutput out) {
     out.writeList(
         bal.getAccountChanges(),
         (acct, acctOut) -> {

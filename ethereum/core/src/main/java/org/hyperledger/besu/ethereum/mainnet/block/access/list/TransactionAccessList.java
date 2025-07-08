@@ -28,12 +28,12 @@ import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class TransactionLevelAccessList implements Eip7928AccessList {
+public class TransactionAccessList implements Eip7928AccessList {
 
   private final long index;
   private final Map<Address, AccountAccessList> accounts = new ConcurrentHashMap<>();
 
-  public TransactionLevelAccessList(final long index) {
+  public TransactionAccessList(final long index) {
     this.index = index;
   }
 

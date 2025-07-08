@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.AccountChanges;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.BalanceChange;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.CodeChange;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.NonceChange;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.SlotChanges;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.StorageChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BalanceChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.CodeChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.NonceChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class BlockAccessListParameter {
     this.accountChanges = accountChanges;
   }
 
-  public static BlockAccessListParameter fromBlockAccessList(final BlockLevelAccessList list) {
+  public static BlockAccessListParameter fromBlockAccessList(final BlockAccessList list) {
     return new BlockAccessListParameter(
         list.getAccountChanges().stream().map(AccountChangesParameter::new).toList());
   }

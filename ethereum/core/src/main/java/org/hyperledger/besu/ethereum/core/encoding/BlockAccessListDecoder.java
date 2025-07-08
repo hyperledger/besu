@@ -16,14 +16,14 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.AccountChanges;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.BalanceChange;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.CodeChange;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.NonceChange;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.SlotChanges;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.SlotRead;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.StorageChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BalanceChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.CodeChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.NonceChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotRead;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ public final class BlockAccessListDecoder {
 
   private BlockAccessListDecoder() {}
 
-  public static BlockLevelAccessList decode(final RLPInput in) {
+  public static BlockAccessList decode(final RLPInput in) {
     final List<AccountChanges> accounts = new ArrayList<>();
 
     in.enterList();
@@ -103,6 +103,6 @@ public final class BlockAccessListDecoder {
     }
     in.leaveList();
 
-    return new BlockLevelAccessList(accounts);
+    return new BlockAccessList(accounts);
   }
 }

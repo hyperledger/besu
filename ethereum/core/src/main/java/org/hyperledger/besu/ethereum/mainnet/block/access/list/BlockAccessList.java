@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionLevelAccessList.AccountAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList.AccountAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.ArrayList;
@@ -35,10 +35,10 @@ import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class BlockLevelAccessList {
+public class BlockAccessList {
   private final List<AccountChanges> accountChanges;
 
-  public BlockLevelAccessList(final List<AccountChanges> accountChanges) {
+  public BlockAccessList(final List<AccountChanges> accountChanges) {
     this.accountChanges = accountChanges;
   }
 
@@ -56,7 +56,7 @@ public class BlockLevelAccessList {
 
   @Override
   public String toString() {
-    return "BlockLevelAccessList{" + "accountChanges=" + accountChanges + '}';
+    return "BlockAccessList{" + "accountChanges=" + accountChanges + '}';
   }
 
   public record StorageChange(long txIndex, UInt256 newValue) {
@@ -130,7 +130,7 @@ public class BlockLevelAccessList {
   public static class BlockAccessListBuilder {
     final Map<Address, AccountBuilder> accountChangesBuilders = new HashMap<>();
 
-    public void addTransactionLevelAccessList(final TransactionLevelAccessList txList) {
+    public void addTransactionLevelAccessList(final TransactionAccessList txList) {
 
       for (Map.Entry<Address, AccountAccessList> account : txList.getAccounts().entrySet()) {
         Address address = account.getKey();
@@ -176,9 +176,9 @@ public class BlockLevelAccessList {
       }
     }
 
-    public BlockLevelAccessList build() {
+    public BlockAccessList build() {
 
-      return new BlockLevelAccessList(
+      return new BlockAccessList(
           accountChangesBuilders.values().stream()
               .map(AccountBuilder::build)
               .sorted(Comparator.comparing(ac -> ac.address().toUnprefixedHexString()))
