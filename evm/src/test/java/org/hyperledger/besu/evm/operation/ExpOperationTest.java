@@ -24,29 +24,26 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
 import org.junit.jupiter.api.Test;
 
-public class ExpOperationTest {
+public class ExpOperationTest extends BaseOperationTest {
 
   @Test
   void exp_anyToPower0_shouldBeOne() {
     final MessageFrame frame = mock(MessageFrame.class);
     final GasCalculator gasCalculator = mock(GasCalculator.class);
 
-    final Bytes base = Bytes32.fromHexString("0x123456");
-    final Bytes exponent = Bytes32.fromHexString("0x00");
+    popStackItemsFromHexString(frame, "0x123456", "0x00");
 
-    when(frame.popStackItem()).thenReturn(base, exponent);
     when(gasCalculator.expOperationGasCost(0)).thenReturn(10L);
     when(frame.getRemainingGas()).thenReturn(100L);
 
     final var result = ExpOperation.staticOperation(frame, gasCalculator);
 
-    verify(frame).pushStackItem(Bytes32.fromHexString("0x01"));
+    verifyPushStackItemFromHexString(frame, "0x01");
     assertThat(result.getHaltReason()).isNull();
   }
 
@@ -55,16 +52,14 @@ public class ExpOperationTest {
     final MessageFrame frame = mock(MessageFrame.class);
     final GasCalculator gasCalculator = mock(GasCalculator.class);
 
-    final Bytes base = Bytes32.fromHexString("0x00");
-    final Bytes exponent = Bytes32.fromHexString("0x1234");
+    popStackItemsFromHexString(frame, "0x00", "0x1234");
 
-    when(frame.popStackItem()).thenReturn(base, exponent);
     when(gasCalculator.expOperationGasCost(anyInt())).thenReturn(10L);
     when(frame.getRemainingGas()).thenReturn(100L);
 
     final var result = ExpOperation.staticOperation(frame, gasCalculator);
 
-    verify(frame).pushStackItem(Bytes32.fromHexString("0x00"));
+    verifyPushStackItemFromHexString(frame, "0x00");
     assertThat(result.getHaltReason()).isNull();
   }
 
@@ -73,15 +68,14 @@ public class ExpOperationTest {
     final MessageFrame frame = mock(MessageFrame.class);
     final GasCalculator gasCalculator = mock(GasCalculator.class);
 
-    final Bytes base = Bytes32.fromHexString("0x01");
-    final Bytes exponent = Bytes32.fromHexString("0xffff");
-    when(frame.popStackItem()).thenReturn(base, exponent);
+    popStackItemsFromHexString(frame, "0x01", "0xffff");
+
     when(gasCalculator.expOperationGasCost(anyInt())).thenReturn(10L);
     when(frame.getRemainingGas()).thenReturn(100L);
 
     final var result = ExpOperation.staticOperation(frame, gasCalculator);
 
-    verify(frame).pushStackItem(Bytes32.fromHexString("0x01"));
+    verifyPushStackItemFromHexString(frame, "0x01");
     assertThat(result.getHaltReason()).isNull();
   }
 
@@ -90,15 +84,14 @@ public class ExpOperationTest {
     final MessageFrame frame = mock(MessageFrame.class);
     final GasCalculator gasCalculator = mock(GasCalculator.class);
 
-    final Bytes base = Bytes32.fromHexString("0x02");
-    final Bytes exponent = Bytes32.fromHexString("0x03");
-    when(frame.popStackItem()).thenReturn(base, exponent);
+    popStackItemsFromHexString(frame, "0x02", "0x03");
+
     when(gasCalculator.expOperationGasCost(anyInt())).thenReturn(10L);
     when(frame.getRemainingGas()).thenReturn(100L);
 
     final var result = ExpOperation.staticOperation(frame, gasCalculator);
 
-    verify(frame).pushStackItem(Bytes32.fromHexString("0x08"));
+    verifyPushStackItemFromHexString(frame, "0x08");
     assertThat(result.getHaltReason()).isNull();
   }
 
@@ -107,19 +100,16 @@ public class ExpOperationTest {
     final MessageFrame frame = mock(MessageFrame.class);
     final GasCalculator gasCalculator = mock(GasCalculator.class);
 
-    final Bytes base = Bytes32.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-    final Bytes exponent = Bytes32.fromHexString("0x02");
+    popStackItemsFromHexString(
+        frame, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "0x02");
 
-    when(frame.popStackItem()).thenReturn(base, exponent);
     when(gasCalculator.expOperationGasCost(anyInt())).thenReturn(10L);
     when(frame.getRemainingGas()).thenReturn(100L);
 
-    final Bytes32 expected =
-      Bytes32.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
-
     final var result = ExpOperation.staticOperation(frame, gasCalculator);
 
-    verify(frame).pushStackItem(expected);
+    verifyPushStackItemFromHexString(
+        frame, "0x0000000000000000000000000000000000000000000000000000000000000001");
     assertThat(result.getHaltReason()).isNull();
   }
 
@@ -128,9 +118,7 @@ public class ExpOperationTest {
     final MessageFrame frame = mock(MessageFrame.class);
     final GasCalculator gasCalculator = mock(GasCalculator.class);
 
-    final Bytes base = Bytes32.fromHexString("0x02");
-    final Bytes exponent = Bytes32.fromHexString("0xffff");
-    when(frame.popStackItem()).thenReturn(base, exponent);
+    popStackItemsFromHexString(frame, "0x02", "0xffff");
 
     when(gasCalculator.expOperationGasCost(anyInt())).thenReturn(1000L);
     when(frame.getRemainingGas()).thenReturn(100L);

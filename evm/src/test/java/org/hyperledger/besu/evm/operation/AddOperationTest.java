@@ -16,99 +16,84 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
-class AddOperationTest {
+class AddOperationTest extends BaseOperationTest {
   @Test
   void add_zeroPlusZero_shouldBeZero() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes a = Bytes32.fromHexString("0x00");
-    final Bytes b = Bytes32.fromHexString("0x00");
-    when(frame.popStackItem()).thenReturn(a, b);
+    popStackItemsFromHexString(frame, "0x00", "0x00");
 
     final Operation.OperationResult result = AddOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(Bytes32.fromHexString("0x00"));
+    verifyPushStackItemFromHexString(frame, "0x00");
     assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void add_onePlusZero_shouldBeOne() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes a = Bytes32.fromHexString("0x01");
-    final Bytes b = Bytes32.fromHexString("0x00");
-    when(frame.popStackItem()).thenReturn(a, b);
+    popStackItemsFromHexString(frame, "0x01", "0x00");
 
     final Operation.OperationResult result = AddOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(Bytes32.fromHexString("0x01"));
+    verifyPushStackItemFromHexString(frame, "0x01");
     assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void add_maxPlusZero_shouldBeMax() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes max =
-        Bytes32.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-    when(frame.popStackItem()).thenReturn(max, Bytes32.fromHexString("0x00"));
+    popStackItemsFromHexString(
+        frame, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "0x00");
 
     final Operation.OperationResult result = AddOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(max);
+    verifyPushStackItemFromHexString(
+        frame, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void add_maxPlusOne_shouldWrapAroundToZero() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes max =
-        Bytes32.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-    final Bytes one = Bytes32.fromHexString("0x01");
-    when(frame.popStackItem()).thenReturn(max, one);
+    popStackItemsFromHexString(
+        frame, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "0x01");
 
     final Operation.OperationResult result = AddOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(Bytes32.fromHexString("0x00"));
+    verifyPushStackItemFromHexString(frame, "0x00");
     assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void add_partialValues_shouldBeCorrect() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes a =
-        Bytes32.fromHexString("0x00000000000000000000000000000000000000000000000000000000000000ff");
-    final Bytes b =
-        Bytes32.fromHexString("0x00000000000000000000000000000000000000000000000000000000000000ff");
-    final Bytes expected =
-        Bytes32.fromHexString("0x00000000000000000000000000000000000000000000000000000000000001fe");
-    when(frame.popStackItem()).thenReturn(a, b);
+    popStackItemsFromHexString(
+        frame,
+        "0x00000000000000000000000000000000000000000000000000000000000000ff",
+        "0x00000000000000000000000000000000000000000000000000000000000000ff");
 
     final Operation.OperationResult result = AddOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(expected);
+    verifyPushStackItemFromHexString(
+        frame, "0x00000000000000000000000000000000000000000000000000000000000001fe");
     assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void add_leadingZerosShouldBePreserved() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes a =
-        Bytes.fromHexString("0x00000000000000000000000000000000000000000000000000000000000000ff");
-    final Bytes b = Bytes.fromHexString("0x01");
-    final Bytes expected =
-        Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000100");
-    when(frame.popStackItem()).thenReturn(a, b);
+    popStackItemsFromHexString(
+        frame, "0x00000000000000000000000000000000000000000000000000000000000000ff", "0x01");
 
     final Operation.OperationResult result = AddOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(expected);
+    verifyPushStackItemFromHexString(
+        frame, "0x0000000000000000000000000000000000000000000000000000000000000100");
     assertThat(result.getHaltReason()).isNull();
   }
 }

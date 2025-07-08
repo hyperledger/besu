@@ -19,101 +19,84 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+
 import org.junit.jupiter.api.Test;
 
-public class MulOperationTest {
+public class MulOperationTest extends BaseOperationTest {
 
   @Test
   void mul_zeroTimesZero_shouldBeZero() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes a = Bytes32.fromHexString("0x00");
-    final Bytes b = Bytes32.fromHexString("0x00");
-    when(frame.popStackItem()).thenReturn(a, b);
+    popStackItemsFromHexString(frame, "0x00", "0x00");
 
     final Operation.OperationResult result = MulOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(Bytes32.fromHexString("0x00"));
+    verifyPushStackItemFromHexString(frame, "0x00");
     assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void mul_oneTimesZero_shouldBeZero() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes a = Bytes32.fromHexString("0x01");
-    final Bytes b = Bytes32.fromHexString("0x00");
-    when(frame.popStackItem()).thenReturn(a, b);
+    popStackItemsFromHexString(frame, "0x01", "0x00");
 
     final Operation.OperationResult result = MulOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(Bytes32.fromHexString("0x00"));
+    verifyPushStackItemFromHexString(frame, "0x00");
     assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void mul_oneTimesOne_shouldBeOne() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes a = Bytes32.fromHexString("0x01");
-    final Bytes b = Bytes32.fromHexString("0x01");
-    when(frame.popStackItem()).thenReturn(a, b);
+    popStackItemsFromHexString(frame, "0x01", "0x01");
 
     final Operation.OperationResult result = MulOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(Bytes32.fromHexString("0x01"));
+    verifyPushStackItemFromHexString(frame, "0x01");
     assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void mul_maxTimesTwo_shouldWrap() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes a =
-      Bytes32.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-    final Bytes b = Bytes32.fromHexString("0x02");
-    when(frame.popStackItem()).thenReturn(a, b);
-
-    final Bytes32 expected = Bytes32.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+    popStackItemsFromHexString(
+        frame, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "0x02");
 
     final Operation.OperationResult result = MulOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(expected);
+    verifyPushStackItemFromHexString(
+        frame, "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
     assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void mul_partial_shouldBeCorrect() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes a = Bytes32.fromHexString("0x00000000000000000000000000000000000000000000000000000000000000ff");
-    final Bytes b = Bytes32.fromHexString("0x000000000000000000000000000000000000000000000000000000000000000f");
-    when(frame.popStackItem()).thenReturn(a, b);
-
-    final Bytes32 expected =
-      Bytes32.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000ef1");
+    popStackItemsFromHexString(
+        frame,
+        "0x00000000000000000000000000000000000000000000000000000000000000ff",
+        "0x000000000000000000000000000000000000000000000000000000000000000f");
 
     final Operation.OperationResult result = MulOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(expected);
+    verifyPushStackItemFromHexString(
+        frame, "0x0000000000000000000000000000000000000000000000000000000000000ef1");
     assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void mul_leadingZeros_shouldBePreserved() {
     final MessageFrame frame = mock(MessageFrame.class);
-    final Bytes a =
-      Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000100");
-    final Bytes b = Bytes.fromHexString("0x01");
-    when(frame.popStackItem()).thenReturn(a, b);
-
-    final Bytes expected =
-      Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000100");
+    popStackItemsFromHexString(
+        frame, "0x0000000000000000000000000000000000000000000000000000000000000100", "0x01");
 
     final Operation.OperationResult result = MulOperation.staticOperation(frame);
 
-    verify(frame).pushStackItem(Bytes32.wrap(expected));
+    verifyPushStackItemFromHexString(
+        frame, "0x0000000000000000000000000000000000000000000000000000000000000100");
     assertThat(result.getHaltReason()).isNull();
   }
 }
