@@ -86,7 +86,7 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.net.HostAndPort;
-import io.vertx.core.net.PfxOptions;
+import io.vertx.core.net.JksOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.Route;
@@ -537,8 +537,8 @@ public class EngineJsonRpcService {
       try {
         httpServerOptions
             .setSsl(true)
-            .setPfxKeyCertOptions(
-                new PfxOptions()
+            .setKeyCertOptions(
+                new JksOptions()
                     .setPath(tlsConfiguration.getKeyStorePath().toString())
                     .setPassword(tlsConfiguration.getKeyStorePassword()))
             .setUseAlpn(true);
