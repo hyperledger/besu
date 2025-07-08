@@ -18,16 +18,15 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.word256.Word256;
 
-import java.math.BigInteger;
+import org.apache.tuweni.bytes.Bytes32;
 
-import org.apache.tuweni.bytes.Bytes;
-
-/** The Exp operation. */
+/**
+ * The Exp operation implements the exponentiation operation in the EVM. The overflow behavior is
+ * defined by the EVM specification, where the result is truncated to fit within 256 bits.
+ */
 public class ExpOperation extends AbstractOperation {
-
-  static final BigInteger MOD_BASE = BigInteger.TWO.pow(256);
-
   /**
    * Instantiates a new Exp operation.
    *
@@ -51,9 +50,12 @@ public class ExpOperation extends AbstractOperation {
    */
   public static OperationResult staticOperation(
       final MessageFrame frame, final GasCalculator gasCalculator) {
-    final Bytes number = frame.popStackItem();
-    final Bytes power = frame.popStackItem();
+    final Word256 number = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
+    final Word256 power = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
 
+    // Compute the number of non-zero bytes needed to represent the exponent.
+    // This is used to scale the gas cost of the EXP opcode linearly with exponent size,
+    // as defined in EIP-160: cost = 10 + (50 * numBytes)
     final int numBytes = (power.bitLength() + 7) / 8;
 
     final long cost = gasCalculator.expOperationGasCost(numBytes);
@@ -61,20 +63,7 @@ public class ExpOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    byte[] numberBytes = number.toArrayUnsafe();
-    BigInteger numBI = numberBytes.length > 0 ? new BigInteger(1, numberBytes) : BigInteger.ZERO;
-    byte[] powBytes = power.toArrayUnsafe();
-    BigInteger powBI = powBytes.length > 0 ? new BigInteger(1, powBytes) : BigInteger.ZERO;
-
-    final BigInteger result = numBI.modPow(powBI, MOD_BASE);
-
-    byte[] resultArray = result.toByteArray();
-    int length = resultArray.length;
-    if (length > 32) {
-      frame.pushStackItem(Bytes.wrap(resultArray, length - 32, 32));
-    } else {
-      frame.pushStackItem(Bytes.wrap(resultArray));
-    }
+    frame.pushStackItem(Bytes32.wrap(number.exp(power).toBytesArray()));
     return new OperationResult(cost, null);
   }
 }

@@ -52,7 +52,7 @@ public class AndOperation extends AbstractFixedCostOperation {
     final Word256 a = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
     final Word256 b = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
 
-    frame.pushStackItem(Bytes32.wrap(a.and(b).toBytes()));
+    frame.pushStackItem(Bytes32.wrap(a.and(b).toBytes32()));
     return AND_SUCCESS;
   }
 }

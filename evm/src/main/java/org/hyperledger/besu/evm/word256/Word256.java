@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.evm.word256;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 /**
  * A fixed-size, immutable 256-bit unsigned integer backed by four {@code long} values.
  *
@@ -107,13 +110,65 @@ public final class Word256 {
     if (bytes.length > 32) {
       throw new IllegalArgumentException("Word256 input must be at most 32 bytes");
     }
+
+    // skip padding
+    if (bytes.length == 32) {
+      return fromBytesUnsafe(bytes);
+    }
+
     final byte[] padded = new byte[32];
     System.arraycopy(bytes, 0, padded, 32 - bytes.length, bytes.length);
-    final long l3 = Word256Helpers.bytesToLong(padded, 0);
-    final long l2 = Word256Helpers.bytesToLong(padded, 8);
-    final long l1 = Word256Helpers.bytesToLong(padded, 16);
-    final long l0 = Word256Helpers.bytesToLong(padded, 24);
-    return new Word256(l0, l1, l2, l3, padded);
+    return setFromByteArray(padded);
+  }
+
+  /**
+   * Creates a Word256 from a Bytes object.
+   *
+   * <p>This method is optimized to reuse the backing array if it is exactly 32 bytes long. If the
+   * Bytes object is shorter, it will be zero-padded to fit the 256-bit representation.
+   *
+   * @param bytes the Bytes object to convert
+   * @return a new Word256 instance representing the Bytes object
+   */
+  public static Word256 fromBytes(final Bytes bytes) {
+    if (bytes.size() == 32) {
+      // Reuse the backing array if we can
+      return fromBytesUnsafe(bytes.toArrayUnsafe());
+    }
+
+    // Fallback: zero-pad if needed
+    return fromBytes(bytes.toArrayUnsafe());
+  }
+
+  /**
+   * Creates a Word256 from a byte array without checking its length.
+   *
+   * <p>This method is intended for internal use where the caller guarantees that the byte array is
+   * exactly 32 bytes long. It does not perform any padding or validation.
+   *
+   * @param bytes the byte array to convert
+   * @return a new Word256 instance representing the byte array
+   */
+  private static Word256 fromBytesUnsafe(final byte[] bytes) {
+    return setFromByteArray(bytes);
+  }
+
+  /**
+   * Creates a Word256 from a byte array, padding it to 32 bytes if necessary.
+   *
+   * <p>This method is used internally to create a Word256 with a cached byte array representation.
+   * It ensures that the byte array is always 32 bytes long, padding with leading zeros if needed.
+   *
+   * @param bytes the byte array to convert
+   * @return a new Word256 instance representing the byte array
+   */
+  private static Word256 setFromByteArray(final byte[] bytes) {
+    final long l3 = Word256Helpers.bytesToLong(bytes, 0);
+    final long l2 = Word256Helpers.bytesToLong(bytes, 8);
+    final long l1 = Word256Helpers.bytesToLong(bytes, 16);
+    final long l0 = Word256Helpers.bytesToLong(bytes, 24);
+
+    return new Word256(l0, l1, l2, l3, bytes);
   }
 
   /**
@@ -123,7 +178,7 @@ public final class Word256 {
    *
    * @return a byte array representation of this Word256
    */
-  public byte[] toBytes() {
+  public byte[] toBytesArray() {
     if (bytesCache != null) {
       return bytesCache;
     }
@@ -135,6 +190,29 @@ public final class Word256 {
     Word256Helpers.writeToByteArray(bytesCache, 24, l0);
 
     return bytesCache;
+  }
+
+  /**
+   * Converts this Word256 to a Bytes32 object.
+   *
+   * <p>This method is optimized to reuse the cached byte array if available. If not, it creates a
+   * new byte array representation of the Word256.
+   *
+   * @return a Bytes32 object representing this Word256
+   */
+  public Bytes32 toBytes32() {
+    if (bytesCache != null) {
+      return Bytes32.wrap(bytesCache);
+    }
+
+    // Create a new byte array and write the long values into it
+    final byte[] tmp = new byte[32];
+    Word256Helpers.writeToByteArray(tmp, 0, l3);
+    Word256Helpers.writeToByteArray(tmp, 8, l2);
+    Word256Helpers.writeToByteArray(tmp, 16, l1);
+    Word256Helpers.writeToByteArray(tmp, 24, l0);
+
+    return Bytes32.wrap(tmp);
   }
 
   /**
@@ -158,6 +236,26 @@ public final class Word256 {
   }
 
   /**
+   * Multiplies this Word256 by another Word256.
+   *
+   * @param other the Word256 to multiply with
+   * @return a new Word256 representing the product of this and other
+   */
+  public Word256 mul(final Word256 other) {
+    return Word256Arithmetic.mul(this, other);
+  }
+
+  /**
+   * Raises this Word256 to the power of another Word256.
+   *
+   * @param exponent the Word256 exponent
+   * @return a new Word256 representing this raised to the power of exponent
+   */
+  public Word256 exp(final Word256 exponent) {
+    return Word256Arithmetic.exp(this, exponent);
+  }
+
+  /**
    * Performs a bitwise AND operation with another Word256.
    *
    * @param other the Word256 to AND with
@@ -166,5 +264,56 @@ public final class Word256 {
    */
   public Word256 and(final Word256 other) {
     return Word256Bitwise.and(this, other);
+  }
+
+  /**
+   * Checks if this Word256 is zero.
+   *
+   * @return true if this Word256 is zero, false otherwise
+   */
+  public boolean isZero() {
+    return Word256Comparison.isZero(this);
+  }
+
+  /**
+   * Return the bit at the specified index in this Word256.
+   *
+   * <p>The index must be in the range [0, 255]. The least significant bit is at index 0, and the
+   * most significant bit is at index 255.
+   *
+   * @param index the bit index (0-255)
+   * @return the bit
+   */
+  public int getBit(final int index) {
+    return Word256Bitwise.getBit(this, index);
+  }
+
+  /**
+   * Returns the number of bits that are non-zero in this Word256.
+   *
+   * <p>This is the total number of bits from the most significant bit down to the least significant
+   * bit that are non-zero. For example, if the most significant bit is zero but the next one is
+   * not, this will return 192, indicating that the Word256 has 192 significant bits.
+   *
+   * @return the number of significant bits (0-256)
+   */
+  public int bitLength() {
+    if (l3 != 0) {
+      return 256 - Long.numberOfLeadingZeros(l3);
+    }
+
+    if (l2 != 0) {
+      return 192 - Long.numberOfLeadingZeros(l2);
+    }
+
+    if (l1 != 0) {
+      return 128 - Long.numberOfLeadingZeros(l1);
+    }
+
+    if (l0 != 0) {
+      return 64 - Long.numberOfLeadingZeros(l0);
+    }
+
+    return 0;
   }
 }

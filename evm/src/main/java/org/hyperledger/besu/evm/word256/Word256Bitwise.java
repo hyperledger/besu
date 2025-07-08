@@ -35,4 +35,29 @@ final class Word256Bitwise {
   static Word256 and(final Word256 a, final Word256 b) {
     return new Word256(a.l0 & b.l0, a.l1 & b.l1, a.l2 & b.l2, a.l3 & b.l3);
   }
+
+  /**
+   * Gets the bit at the specified index from the given Word256 value.
+   *
+   * @param a the Word256 value
+   * @param index the bit index (0-255)
+   * @return 1 if the bit is set, 0 if it is not
+   * @throws IllegalArgumentException if the index is out of range
+   */
+  static int getBit(final Word256 a, final int index) {
+    if (index < 0 || index >= 256) {
+      throw new IllegalArgumentException("bit index out of range: " + index);
+    }
+    final int word = index / 64;
+    final int bit = index % 64;
+    final long mask = 1L << bit;
+
+    return switch (word) {
+      case 0 -> (a.l0 & mask) != 0 ? 1 : 0;
+      case 1 -> (a.l1 & mask) != 0 ? 1 : 0;
+      case 2 -> (a.l2 & mask) != 0 ? 1 : 0;
+      case 3 -> (a.l3 & mask) != 0 ? 1 : 0;
+      default -> throw new AssertionError();
+    };
+  }
 }

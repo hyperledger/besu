@@ -56,7 +56,7 @@ public class SubOperation extends AbstractFixedCostOperation {
     final Word256 a = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
     final Word256 b = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
 
-    frame.pushStackItem(Bytes32.wrap(a.sub(b).toBytes()));
+    frame.pushStackItem(Bytes32.wrap(a.sub(b).toBytesArray()));
     return subSuccess;
   }
 }

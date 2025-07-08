@@ -55,7 +55,7 @@ public class AddOperation extends AbstractFixedCostOperation {
     final Word256 a = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
     final Word256 b = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
 
-    frame.pushStackItem(Bytes32.wrap(a.add(b).toBytes()));
+    frame.pushStackItem(Bytes32.wrap(a.add(b).toBytesArray()));
     return addSuccess;
   }
 }
