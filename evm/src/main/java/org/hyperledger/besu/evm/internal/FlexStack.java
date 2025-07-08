@@ -40,14 +40,14 @@ public class FlexStack<T> {
 
   /**
    * Soft limit imposed for growing arrays. JVMs do not allow to allocate arrays above certain
-   * length and you will get the following exception if trying to do so:
+   * length, and you will get the following exception if trying to do so:
    *
    * <p>java.lang.OutOfMemoryError: Requested array size exceeds VM limit
    *
    * <p>Therefore the maxSize of any stack is capped to this value. This max value is not arbitrary
    * and was taken from OpenJDK.
    */
-  private static final int SOFT_MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
+  private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
 
   private T[] entries;
 
@@ -65,7 +65,7 @@ public class FlexStack<T> {
   @SuppressWarnings("unchecked")
   public FlexStack(final int maxSize, final Class<T> klass) {
     checkArgument(maxSize > 0, "max size must be positive");
-    checkArgument(maxSize <= SOFT_MAX_ARRAY_LENGTH, "max size is too large");
+    checkArgument(maxSize <= MAX_ARRAY_LENGTH, "max size is too large");
 
     int initialSize = (int) Math.round(maxSize * INITIAL_SIZE_COEFICIENT) + 1;
     this.currentCapacity = Math.min(initialSize, maxSize);
@@ -190,7 +190,7 @@ public class FlexStack<T> {
 
   private int newLength(final int oldCapacity, final int prefGrowth) {
     final int growth = Math.max(1, prefGrowth);
-    if (SOFT_MAX_ARRAY_LENGTH - growth < oldCapacity) {
+    if (MAX_ARRAY_LENGTH - growth < oldCapacity) {
       return maxSize;
     }
     return Math.min(oldCapacity + growth, maxSize);
