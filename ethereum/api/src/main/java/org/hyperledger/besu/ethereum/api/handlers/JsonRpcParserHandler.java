@@ -33,14 +33,14 @@ public class JsonRpcParserHandler {
   public static Handler<RoutingContext> handler() {
     return ctx -> {
       final HttpServerResponse response = ctx.response();
-      if (ctx.getBody() == null) {
+      if (ctx.body().isEmpty()) {
         errorResponse(response, RpcErrorType.PARSE_ERROR);
       } else {
         try {
-          ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), ctx.getBodyAsJson());
+          ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), ctx.body().asJsonObject());
         } catch (DecodeException | ClassCastException jsonObjectDecodeException) {
           try {
-            final JsonArray batchRequest = ctx.getBodyAsJsonArray();
+            final JsonArray batchRequest = ctx.body().asJsonArray();
             if (batchRequest.isEmpty()) {
               errorResponse(response, RpcErrorType.INVALID_REQUEST);
               return;
