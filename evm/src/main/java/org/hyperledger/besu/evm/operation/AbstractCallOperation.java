@@ -239,6 +239,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         .apparentValue(apparentValue(frame))
         .code(code)
         .isStatic(isStatic(frame))
+        .eip7928AccessList(frame.getEip7928AccessList())
         .completer(child -> complete(frame, child))
         .build();
     // see note in stack depth check about incrementing cost

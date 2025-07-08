@@ -47,7 +47,10 @@ public class TransactionLevelAccessList implements Eip7928AccessList {
 
   @Override
   public void addAccount(final Address address, final Account account) {
-    accounts.putIfAbsent(address, new AccountAccessList(account));
+    // TODO: Why is null being passed here
+    if (account != null) {
+      accounts.putIfAbsent(address, new AccountAccessList(account));
+    }
   }
 
   @Override
@@ -105,6 +108,10 @@ public class TransactionLevelAccessList implements Eip7928AccessList {
 
     public Account getAccount() {
       return account;
+    }
+
+    public List<UInt256> getSlotsRead() {
+      return slotsRead;
     }
 
     public Map<UInt256, Pair<UInt256, Boolean>> getSlots() {

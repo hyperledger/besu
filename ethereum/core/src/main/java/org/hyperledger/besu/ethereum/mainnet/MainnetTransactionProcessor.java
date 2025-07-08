@@ -202,6 +202,7 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
+      // TODO: Pass transaction index or TAL
       TransactionLevelAccessList eip7928AccessList =
           maybeBlockLevelAccessListFactory.get().newTransactionAccessList(transaction.getNonce());
 

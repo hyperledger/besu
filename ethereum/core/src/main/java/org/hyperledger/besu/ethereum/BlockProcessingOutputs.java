@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum;
 
-import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +28,7 @@ public class BlockProcessingOutputs {
   private final MutableWorldState worldState;
   private final List<TransactionReceipt> receipts;
   private final Optional<List<Request>> maybeRequests;
-  private final Optional<BlockAccessList> maybeBlockAccessList;
+  private final Optional<BlockLevelAccessList> maybeBlockAccessList;
 
   /**
    * Creates a new instance.
@@ -62,7 +62,7 @@ public class BlockProcessingOutputs {
       final MutableWorldState worldState,
       final List<TransactionReceipt> receipts,
       final Optional<List<Request>> maybeRequests,
-      final BlockAccessList blockAccessList) {
+      final BlockLevelAccessList blockAccessList) {
     this.worldState = worldState;
     this.receipts = receipts;
     this.maybeRequests = maybeRequests;
@@ -96,7 +96,7 @@ public class BlockProcessingOutputs {
     return maybeRequests;
   }
 
-  public Optional<BlockAccessList> getBlockAccessList() {
+  public Optional<BlockLevelAccessList> getBlockAccessList() {
     return maybeBlockAccessList;
   }
 }

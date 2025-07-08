@@ -243,7 +243,7 @@ public class MessageFrame {
 
   private final TxValues txValues;
 
-  private Eip7928AccessList eip7928AccessList;
+  private final Eip7928AccessList eip7928AccessList;
 
   /** The mark of the undoable collections at the creation of this message frame */
   private final long undoMark;

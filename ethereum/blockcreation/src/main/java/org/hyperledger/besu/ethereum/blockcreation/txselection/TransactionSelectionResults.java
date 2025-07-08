@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
 import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayList;
@@ -41,9 +41,7 @@ public class TransactionSelectionResults {
       new EnumMap<>(TransactionType.class);
   private final List<TransactionReceipt> receipts = Lists.newArrayList();
 
-  // TODO: Do we want to make BAL perpetually mutable to fit in with the pattern? Or workaround by
-  // building on retrieval or something
-  private BlockAccessList blockAccessList;
+  private BlockLevelAccessList blockAccessList;
 
   /**
    * Access to this field needs to be guarded, since it is possible to read it while another
@@ -75,7 +73,7 @@ public class TransactionSelectionResults {
     notSelectedTransactions.put(transaction, res);
   }
 
-  public void setBlockAccessList(final BlockAccessList blockAccessList) {
+  public void setBlockAccessList(final BlockLevelAccessList blockAccessList) {
     this.blockAccessList = blockAccessList;
   }
 
@@ -99,7 +97,7 @@ public class TransactionSelectionResults {
     return Map.copyOf(notSelectedTransactions);
   }
 
-  public BlockAccessList getBlockAccessList() {
+  public BlockLevelAccessList getBlockAccessList() {
     return blockAccessList;
   }
 

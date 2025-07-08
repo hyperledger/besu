@@ -16,14 +16,14 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.core.BlockAccessList;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountChanges;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.BalanceChange;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.CodeChange;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.NonceChange;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.SlotChanges;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.SlotRead;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.StorageChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.AccountChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.BalanceChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.CodeChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.NonceChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.SlotChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.SlotRead;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.StorageChange;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ public final class BlockAccessListDecoder {
 
   private BlockAccessListDecoder() {}
 
-  public static BlockAccessList decode(final RLPInput in) {
+  public static BlockLevelAccessList decode(final RLPInput in) {
     final List<AccountChanges> accounts = new ArrayList<>();
 
     in.enterList();
@@ -55,7 +55,7 @@ public final class BlockAccessListDecoder {
                     scIn.readList(
                         changeIn -> {
                           changeIn.enterList();
-                          int txIndex = changeIn.readInt();
+                          long txIndex = changeIn.readLong();
                           UInt256 newVal = changeIn.readUInt256Scalar();
                           changeIn.leaveList();
                           return new StorageChange(txIndex, newVal);
@@ -71,7 +71,7 @@ public final class BlockAccessListDecoder {
           acctIn.readList(
               bcIn -> {
                 bcIn.enterList();
-                int txIndex = bcIn.readInt();
+                long txIndex = bcIn.readLong();
                 Bytes postBalance = bcIn.readBytes();
                 bcIn.leaveList();
                 return new BalanceChange(txIndex, postBalance);
@@ -81,7 +81,7 @@ public final class BlockAccessListDecoder {
           acctIn.readList(
               ncIn -> {
                 ncIn.enterList();
-                int txIndex = ncIn.readInt();
+                long txIndex = ncIn.readLong();
                 long newNonce = ncIn.readLongScalar();
                 ncIn.leaveList();
                 return new NonceChange(txIndex, newNonce);
@@ -91,7 +91,7 @@ public final class BlockAccessListDecoder {
           acctIn.readList(
               ccIn -> {
                 ccIn.enterList();
-                int txIndex = ccIn.readInt();
+                long txIndex = ccIn.readLong();
                 Bytes newCode = ccIn.readBytes();
                 ccIn.leaveList();
                 return new CodeChange(txIndex, newCode);
@@ -103,6 +103,6 @@ public final class BlockAccessListDecoder {
     }
     in.leaveList();
 
-    return new BlockAccessList(accounts);
+    return new BlockLevelAccessList(accounts);
   }
 }

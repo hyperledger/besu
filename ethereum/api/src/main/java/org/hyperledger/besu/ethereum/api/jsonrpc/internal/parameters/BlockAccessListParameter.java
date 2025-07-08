@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.ethereum.core.BlockAccessList;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountChanges;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.BalanceChange;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.CodeChange;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.NonceChange;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.SlotChanges;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.StorageChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.AccountChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.BalanceChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.CodeChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.NonceChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.SlotChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.StorageChange;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class BlockAccessListParameter {
     this.accountChanges = accountChanges;
   }
 
-  public static BlockAccessListParameter fromBlockAccessList(final BlockAccessList list) {
+  public static BlockAccessListParameter fromBlockAccessList(final BlockLevelAccessList list) {
     return new BlockAccessListParameter(
         list.getAccountChanges().stream().map(AccountChangesParameter::new).toList());
   }
@@ -56,18 +56,18 @@ public class BlockAccessListParameter {
     public final List<CodeChangeParameter> codeChanges;
 
     public AccountChangesParameter(final AccountChanges changes) {
-      this.address = changes.getAddress().toString();
+      this.address = changes.address().toString();
       this.storageChanges =
-          changes.getStorageChanges().stream().map(SlotChangeParameter::new).toList();
+          changes.storageChanges().stream().map(SlotChangeParameter::new).toList();
       this.storageReads =
-          changes.getStorageReads().stream()
-              .map(sr -> sr.getSlot().getSlotKey().map(UInt256::toHexString).orElse(""))
+          changes.storageReads().stream()
+              .map(sr -> sr.slot().getSlotKey().map(UInt256::toHexString).orElse(""))
               .toList();
       this.balanceChanges =
-          changes.getBalanceChanges().stream().map(BalanceChangeParameter::new).toList();
+          changes.balanceChanges().stream().map(BalanceChangeParameter::new).toList();
       // this.nonceChanges =
       //     changes.getNonceChanges().stream().map(NonceChangeParameter::new).toList();
-      this.codeChanges = changes.getCodeChanges().stream().map(CodeChangeParameter::new).toList();
+      this.codeChanges = changes.codeChanges().stream().map(CodeChangeParameter::new).toList();
     }
   }
 
@@ -76,48 +76,48 @@ public class BlockAccessListParameter {
     public final List<StorageChangeParameter> changes;
 
     public SlotChangeParameter(final SlotChanges changes) {
-      this.slot = changes.getSlot().getSlotKey().map(UInt256::toHexString).orElse("null");
-      this.changes = changes.getChanges().stream().map(StorageChangeParameter::new).toList();
+      this.slot = changes.slot().getSlotKey().map(UInt256::toHexString).orElse("null");
+      this.changes = changes.changes().stream().map(StorageChangeParameter::new).toList();
     }
   }
 
   public static class StorageChangeParameter {
-    public final int txIndex;
+    public final long txIndex;
     public final String newValue;
 
     public StorageChangeParameter(final StorageChange change) {
-      this.txIndex = change.getTxIndex();
-      this.newValue = change.getNewValue().toHexString();
+      this.txIndex = change.txIndex();
+      this.newValue = change.newValue().toHexString();
     }
   }
 
   public static class BalanceChangeParameter {
-    public final int txIndex;
+    public final long txIndex;
     public final String postBalance;
 
     public BalanceChangeParameter(final BalanceChange change) {
-      this.txIndex = change.getTxIndex();
-      this.postBalance = change.getPostBalance().toHexString();
+      this.txIndex = change.txIndex();
+      this.postBalance = change.postBalance().toHexString();
     }
   }
 
   public static class NonceChangeParameter {
-    public final int txIndex;
+    public final long txIndex;
     public final long newNonce;
 
     public NonceChangeParameter(final NonceChange change) {
-      this.txIndex = change.getTxIndex();
-      this.newNonce = change.getNewNonce();
+      this.txIndex = change.txIndex();
+      this.newNonce = change.newNonce();
     }
   }
 
   public static class CodeChangeParameter {
-    public final int txIndex;
+    public final long txIndex;
     public final String newCode;
 
     public CodeChangeParameter(final CodeChange change) {
-      this.txIndex = change.getTxIndex();
-      this.newCode = change.getNewCode().toBase64String();
+      this.txIndex = change.txIndex();
+      this.newCode = change.newCode().toBase64String();
     }
   }
 }

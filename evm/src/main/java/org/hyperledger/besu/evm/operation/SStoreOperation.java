@@ -89,7 +89,6 @@ public class SStoreOperation extends AbstractOperation {
     final Supplier<UInt256> originalValueSupplier =
         Suppliers.memoize(() -> account.getOriginalStorageValue(key));
 
-
     final long cost =
         gasCalculator().calculateStorageCost(newValue, currentValueSupplier, originalValueSupplier)
             + (slotIsWarm ? 0L : gasCalculator().getColdSloadCost());

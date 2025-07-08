@@ -14,64 +14,64 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.hyperledger.besu.ethereum.core.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 public final class BlockAccessListEncoder {
 
   private BlockAccessListEncoder() {}
 
-  public static void encode(final BlockAccessList bal, final RLPOutput out) {
+  public static void encode(final BlockLevelAccessList bal, final RLPOutput out) {
     out.writeList(
         bal.getAccountChanges(),
         (acct, acctOut) -> {
           acctOut.startList();
-          acctOut.writeBytes(acct.getAddress());
+          acctOut.writeBytes(acct.address());
 
           acctOut.writeList(
-              acct.getStorageChanges(),
+              acct.storageChanges(),
               (sc, scOut) -> {
                 scOut.startList();
-                scOut.writeUInt256Scalar(sc.getSlot().getSlotKey().get());
+                scOut.writeUInt256Scalar(sc.slot().getSlotKey().get());
                 scOut.writeList(
-                    sc.getChanges(),
+                    sc.changes(),
                     (chg, chgOut) -> {
                       chgOut.startList();
-                      chgOut.writeInt(chg.getTxIndex());
-                      chgOut.writeUInt256Scalar(chg.getNewValue());
+                      chgOut.writeLong(chg.txIndex());
+                      chgOut.writeUInt256Scalar(chg.newValue());
                       chgOut.endList();
                     });
                 scOut.endList();
               });
 
           acctOut.writeList(
-              acct.getStorageReads(),
-              (sr, srOut) -> srOut.writeUInt256Scalar(sr.getSlot().getSlotKey().get()));
+              acct.storageReads(),
+              (sr, srOut) -> srOut.writeUInt256Scalar(sr.slot().getSlotKey().get()));
 
           acctOut.writeList(
-              acct.getBalanceChanges(),
+              acct.balanceChanges(),
               (bc, bcOut) -> {
                 bcOut.startList();
-                bcOut.writeInt(bc.getTxIndex());
-                bcOut.writeBytes(bc.getPostBalance());
+                bcOut.writeLong(bc.txIndex());
+                bcOut.writeBytes(bc.postBalance());
                 bcOut.endList();
               });
 
           acctOut.writeList(
-              acct.getNonceChanges(),
+              acct.nonceChanges(),
               (nc, ncOut) -> {
                 ncOut.startList();
-                ncOut.writeInt(nc.getTxIndex());
-                ncOut.writeLongScalar(nc.getNewNonce());
+                ncOut.writeLong(nc.txIndex());
+                ncOut.writeLongScalar(nc.newNonce());
                 ncOut.endList();
               });
 
           acctOut.writeList(
-              acct.getCodeChanges(),
+              acct.codeChanges(),
               (cc, ccOut) -> {
                 ccOut.startList();
-                ccOut.writeInt(cc.getTxIndex());
-                ccOut.writeBytes(cc.getNewCode());
+                ccOut.writeLong(cc.txIndex());
+                ccOut.writeBytes(cc.newCode());
                 ccOut.endList();
               });
 

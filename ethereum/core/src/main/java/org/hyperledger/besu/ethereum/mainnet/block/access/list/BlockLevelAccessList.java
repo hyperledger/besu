@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.jetbrains.annotations.NotNull;
 
 public class BlockLevelAccessList {
   private final List<AccountChanges> accountChanges;
@@ -55,8 +54,12 @@ public class BlockLevelAccessList {
     return new BlockAccessListBuilder();
   }
 
+  @Override
+  public String toString() {
+    return "BlockLevelAccessList{" + "accountChanges=" + accountChanges + '}';
+  }
+
   public record StorageChange(long txIndex, UInt256 newValue) {
-    @NotNull
     @Override
     public String toString() {
       return "StorageChange{txIndex=" + txIndex + ", newValue=" + newValue + '}';
@@ -64,7 +67,6 @@ public class BlockLevelAccessList {
   }
 
   public record BalanceChange(long txIndex, Bytes postBalance) {
-    @NotNull
     @Override
     public String toString() {
       return "BalanceChange{txIndex=" + txIndex + ", postBalance=" + postBalance + '}';
@@ -72,7 +74,6 @@ public class BlockLevelAccessList {
   }
 
   public record NonceChange(long txIndex, long newNonce) {
-    @NotNull
     @Override
     public String toString() {
       return "NonceChange{txIndex=" + txIndex + ", newNonce=" + newNonce + '}';
@@ -80,7 +81,6 @@ public class BlockLevelAccessList {
   }
 
   public record CodeChange(long txIndex, Bytes newCode) {
-    @NotNull
     @Override
     public String toString() {
       return "CodeChange{txIndex=" + txIndex + ", newCode=" + newCode + '}';
@@ -88,7 +88,6 @@ public class BlockLevelAccessList {
   }
 
   public record SlotChanges(StorageSlotKey slot, List<StorageChange> changes) {
-    @NotNull
     @Override
     public String toString() {
       return "SlotChanges{slot=" + slot + ", changes=" + changes + '}';
@@ -96,7 +95,6 @@ public class BlockLevelAccessList {
   }
 
   public record SlotRead(StorageSlotKey slot) {
-    @NotNull
     @Override
     public String toString() {
       return "SlotRead{slot=" + slot + '}';
@@ -110,7 +108,6 @@ public class BlockLevelAccessList {
       List<BalanceChange> balanceChanges,
       List<NonceChange> nonceChanges,
       List<CodeChange> codeChanges) {
-    @NotNull
     @Override
     public String toString() {
       return "AccountChanges{"

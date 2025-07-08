@@ -27,7 +27,6 @@ import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -46,6 +45,8 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionLevelAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
@@ -278,7 +279,7 @@ public class BlockSimulator {
             .<MiningBeneficiaryCalculator>map(feeRecipient -> header -> feeRecipient)
             .orElseGet(protocolSpec::getMiningBeneficiaryCalculator);
 
-    final BlockAccessList.Builder balBuilder = BlockAccessList.builder();
+    final BlockLevelAccessList.BlockAccessListBuilder balBuilder = BlockLevelAccessList.builder();
 
     for (int i = 0; i < blockStateCall.getCalls().size(); i++) {
       final CallParameter callParameter = blockStateCall.getCalls().get(i);
@@ -323,8 +324,9 @@ public class BlockSimulator {
       transactionUpdater.commit();
       transactionUpdater.markTransactionBoundary();
 
-      balBuilder.updateFromTransactionAccumulator(
-          transactionUpdater, i, callParameter.getTo().isEmpty());
+      transactionSimulationResult.result()
+          .getTransactionLevelAccessList()
+          .ifPresent(balBuilder::addTransactionLevelAccessList);
 
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
     }

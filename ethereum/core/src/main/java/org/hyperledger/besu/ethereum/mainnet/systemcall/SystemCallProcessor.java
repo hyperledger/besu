@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionLevelAccessList;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
@@ -120,6 +121,9 @@ public class SystemCallProcessor {
     final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
 
+    // TODO: Pass transaction index or TAL
+    TransactionLevelAccessList eip7928AccessList = new TransactionLevelAccessList(0L);
+
     return MessageFrame.builder()
         .maxStackSize(DEFAULT_MAX_STACK_SIZE)
         .worldUpdater(worldUpdater)
@@ -139,6 +143,7 @@ public class SystemCallProcessor {
         .sender(SYSTEM_ADDRESS)
         .blockHashLookup(blockHashLookup)
         .code(getCode(worldUpdater.get(callAddress), processor))
+        .eip7928AccessList(eip7928AccessList)
         .build();
   }
 

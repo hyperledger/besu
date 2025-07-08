@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTr
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.ProcessingResultTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.SkipSenderTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -44,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
@@ -111,7 +111,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
   private final long blockTxsSelectionMaxTime;
-  private final BlockAccessList.Builder balBuilder;
+  private final BlockLevelAccessList.BlockAccessListBuilder balBuilder;
   private PathBasedWorldStateUpdateAccumulator<BonsaiAccount> blockWorldStateUpdater;
   private PathBasedWorldStateUpdateAccumulator<BonsaiAccount> txWorldStateUpdater;
   private volatile TransactionEvaluationContext currTxEvaluationContext;
@@ -159,7 +159,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     txWorldStateUpdater = blockWorldStateUpdater.copy();
     blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
     currentTxnLocation = 0;
-    balBuilder = new BlockAccessList.Builder();
+    balBuilder = new BlockLevelAccessList.BlockAccessListBuilder();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -495,8 +495,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
           transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
 
-          balBuilder.updateFromTransactionAccumulator(
-              txWorldStateUpdater, currentTxnLocation, transaction.isContractCreation());
           notifySelected(evaluationContext, processingResult);
           LOG.atTrace()
               .setMessage("Selected and commited {} with location {} for block creation")
