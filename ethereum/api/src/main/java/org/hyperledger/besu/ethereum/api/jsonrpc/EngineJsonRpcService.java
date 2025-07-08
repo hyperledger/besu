@@ -539,7 +539,7 @@ public class EngineJsonRpcService {
       try {
         httpServerOptions
             .setSsl(true)
-            .setPfxKeyCertOptions(
+            .setKeyCertOptions(
                 new PfxOptions()
                     .setPath(tlsConfiguration.getKeyStorePath().toString())
                     .setPassword(tlsConfiguration.getKeyStorePassword()))
