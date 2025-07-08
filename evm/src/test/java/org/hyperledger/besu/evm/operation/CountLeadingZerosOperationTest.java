@@ -49,7 +49,8 @@ class CountLeadingZerosOperationTest {
         Arguments.of("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 0),
         Arguments.of("0x4000000000000000000000000000000000000000000000000000000000000000", 1),
         Arguments.of("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 1),
-        Arguments.of("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f", 0),
+        Arguments.of(
+            "0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f", 0),
         Arguments.of("0x01", 255),
         Arguments.of("0xff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff", 8));
   }
