@@ -58,37 +58,29 @@ public class TomlAuth implements AuthenticationProvider {
     }
 
     vertx.executeBlocking(
-        f -> {
+        () -> {
           TomlParseResult parseResult;
           try {
             parseResult = Toml.parse(options.getTomlPath());
           } catch (IOException e) {
-            f.fail(e);
-            return;
+            throw new RuntimeException(e);
           }
 
           final TomlTable userData = parseResult.getTableOrEmpty("Users." + username);
           if (userData.isEmpty()) {
-            f.fail("User not found");
-            return;
+            throw new IllegalArgumentException("User not found");
           }
 
           final TomlUser tomlUser = readTomlUserFromTable(username, userData);
           if ("".equals(tomlUser.getPassword())) {
-            f.fail("No password set for user");
-            return;
+            throw new IllegalArgumentException("No password set for user");
           }
 
-          checkPasswordHash(
-              password,
-              tomlUser.getPassword(),
-              rs -> {
-                if (rs.succeeded()) {
-                  f.complete(tomlUser);
-                } else {
-                  f.fail(rs.cause());
-                }
-              });
+          if (checkPasswordHash(password, tomlUser.getPassword())) {
+            return tomlUser;
+          } else {
+            throw new IllegalArgumentException("Invalid password");
+          }
         },
         false,
         res -> {
@@ -121,15 +113,7 @@ public class TomlAuth implements AuthenticationProvider {
         username, saltedAndHashedPassword, groups, permissions, roles, privacyPublicKey);
   }
 
-  private void checkPasswordHash(
-      final String password,
-      final String passwordHash,
-      final Handler<AsyncResult<Void>> resultHandler) {
-    boolean passwordMatches = BCrypt.checkpw(password, passwordHash);
-    if (passwordMatches) {
-      resultHandler.handle(Future.succeededFuture());
-    } else {
-      resultHandler.handle(Future.failedFuture("Invalid password"));
-    }
+  private boolean checkPasswordHash(final String password, final String passwordHash) {
+    return BCrypt.checkpw(password, passwordHash);
   }
 }

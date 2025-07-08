@@ -84,26 +84,19 @@ public class WebSocketMessageHandler {
         final JsonObject jsonRpcRequest = buffer.toJsonObject();
         vertx
             .<JsonRpcResponse>executeBlocking(
-                promise -> {
-                  try {
-                    final JsonRpcResponse jsonRpcResponse =
-                        jsonRpcExecutor.execute(
-                            user,
-                            null,
-                            null,
-                            new IsAliveHandler(ethScheduler, timeoutSec),
-                            jsonRpcRequest,
-                            req -> {
-                              final WebSocketRpcRequest websocketRequest =
-                                  req.mapTo(WebSocketRpcRequest.class);
-                              websocketRequest.setConnectionId(websocket.textHandlerID());
-                              return websocketRequest;
-                            });
-                    promise.complete(jsonRpcResponse);
-                  } catch (RuntimeException e) {
-                    promise.fail(e);
-                  }
-                })
+                () ->
+                    jsonRpcExecutor.execute(
+                        user,
+                        null,
+                        null,
+                        new IsAliveHandler(ethScheduler, timeoutSec),
+                        jsonRpcRequest,
+                        req -> {
+                          final WebSocketRpcRequest websocketRequest =
+                              req.mapTo(WebSocketRpcRequest.class);
+                          websocketRequest.setConnectionId(websocket.textHandlerID());
+                          return websocketRequest;
+                        }))
             .onSuccess(jsonRpcResponse -> replyToClient(websocket, jsonRpcResponse))
             .onFailure(
                 throwable -> {
@@ -119,7 +112,7 @@ public class WebSocketMessageHandler {
           final JsonArray batchJsonRpcRequest = buffer.toJsonArray();
           vertx
               .<List<JsonRpcResponse>>executeBlocking(
-                  promise -> {
+                  () -> {
                     List<JsonRpcResponse> responses = new ArrayList<>();
                     for (int i = 0; i < batchJsonRpcRequest.size(); i++) {
                       final JsonObject jsonRequest;
@@ -143,7 +136,7 @@ public class WebSocketMessageHandler {
                                 return websocketRequest;
                               }));
                     }
-                    promise.complete(responses);
+                    return responses;
                   })
               .onSuccess(
                   jsonRpcBatchResponse -> {

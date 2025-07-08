@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import graphql.ExecutionInput;
 import graphql.GraphQL;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Vertx;
@@ -80,8 +81,6 @@ public class GraphQLHttpServiceTest {
   public static void initServerAndClient() throws Exception {
     blockchainQueries = Mockito.mock(BlockchainQueries.class);
     final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
-    graphQL = Mockito.mock(GraphQL.class);
-
     miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
     graphQlContextMap =
         Map.of(
@@ -394,6 +393,38 @@ public class GraphQLHttpServiceTest {
       final String result =
           json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
       Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
+    }
+  }
+
+  @Test
+  public void processExceptionHandling() throws Exception {
+    final GraphQL throwingGraphQL = Mockito.mock(GraphQL.class);
+    Mockito.when(throwingGraphQL.execute(ArgumentMatchers.any(ExecutionInput.class)))
+        .thenThrow(new RuntimeException("forced exception"));
+
+    final GraphQLHttpService throwingService =
+        new GraphQLHttpService(
+            vertx,
+            folder,
+            createGraphQLConfig(),
+            throwingGraphQL,
+            graphQlContextMap,
+            Mockito.mock(EthScheduler.class));
+
+    throwingService.start().join();
+
+    final String localBaseUrl = throwingService.url() + "/graphql/";
+    final RequestBody body = RequestBody.create("{gasPrice}", GRAPHQL);
+    try (final Response resp =
+        client.newCall(new Request.Builder().post(body).url(localBaseUrl).build()).execute()) {
+      Assertions.assertThat(resp.code()).isEqualTo(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+      final JsonObject json = new JsonObject(resp.body().string());
+      Assertions.assertThat(json.containsKey("errors")).isTrue();
+      Assertions.assertThat(json.getJsonArray("errors").size()).isGreaterThanOrEqualTo(1);
+      final JsonObject errorResponse = json.getJsonArray("errors").getJsonObject(0);
+      Assertions.assertThat(errorResponse.getString("message")).isEqualTo("forced exception");
+    } finally {
+      throwingService.stop().join();
     }
   }
 

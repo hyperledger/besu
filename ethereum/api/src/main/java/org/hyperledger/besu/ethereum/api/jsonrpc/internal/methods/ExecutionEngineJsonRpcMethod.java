@@ -82,14 +82,13 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     final CompletableFuture<JsonRpcResponse> cf = new CompletableFuture<>();
 
     syncVertx.<JsonRpcResponse>executeBlocking(
-        z -> {
+        () -> {
           LOG.trace(
               "execution engine JSON-RPC request {} {}",
               this.getName(),
               request.getRequest().getParams());
-          z.tryComplete(syncResponse(request));
+          return syncResponse(request);
         },
-        true,
         resp ->
             cf.complete(
                 resp.otherwise(
