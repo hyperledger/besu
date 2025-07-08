@@ -21,7 +21,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCalculator {
   /** The blob base cost constant for Osaka */
-  private static final long BLOB_BASE_COST = 1 << 14; // 2^14
+  private static final long BLOB_BASE_COST = 1 << 13; // 2^13
 
   /** The mainnet transaction gas limit cap for Osaka */
   private static final long DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA = 30_000_000L;

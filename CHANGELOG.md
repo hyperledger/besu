@@ -1,37 +1,73 @@
 # Changelog
+
 ## Unreleased
+
+### Breaking Changes
+- Change in behavior for `eth_estimateGas`, to improve accuracy, when used on a network with a base fee market, the internal transaction simulation does not anymore underprice transactions, so if there are no gas pricing related fields specified in the request, then gas price for the transaction is set to the base fee value [#8888](https://github.com/hyperledger/besu/pull/8888)  
+
+### Upcoming Breaking Changes
+
+### Additions and Improvements
+- Improve transaction simulation and gas estimation when no gas pricing is present [#8888](https://github.com/hyperledger/besu/pull/8888)
+
+#### Fusaka devnets
+- EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417)
+
+### Bug fixes
+
+
+## 25.7.0
 ### Breaking Changes
 - Changes in Maven coordinates of Besu artifacts to avoid possible collisions with other libraries when packaging plugins. See [Appendix A](#appendix-a) for a mapping. [#8589](https://github.com/hyperledger/besu/pull/8589) [#8746](https://github.com/hyperledger/besu/pull/8746)
 - `BesuContext` is removed, since deprecated in favor of `ServiceManager` since `24.12.0`
 - Remove the deprecated `--Xbonsai-trie-logs-pruning-window-size`, use `--bonsai-trie-logs-pruning-window-size` instead. [#8823](https://github.com/hyperledger/besu/pull/8823)
 - Remove the deprecated `--Xbonsai-limit-trie-logs-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
 - Remove the deprecated `--Xbonsai-trie-log-pruning-enabled`, use `--bonsai-limit-trie-logs-enabled` instead. [#8704](https://github.com/hyperledger/besu/issues/8704)
+- Remove the deprecated `--Xsnapsync-bft-enabled`. SNAP sync is now supported for BFT networks. [#8861](https://github.com/hyperledger/besu/pull/8861)
 - Remove methods from gas calculator deprecated since 24.4 `create2OperationGasCost`, `callOperationGasCost`, `createOperationGasCost`, and `cost` [#8817](https://github.com/hyperledger/besu/pull/8817)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Stratum mining has been removed (part of PoW) [#8802](https://github.com/hyperledger/besu/pull/8802)
   - PoW RPCs removed: `eth_getWork`, `eth_submitWork`, `eth_getHashrate`, `eth_submitHashrate`, `eth_hashrate`
+- Introduce history expiry behaviour for mainnet [8875](https://github.com/hyperledger/besu/pull/8875)
+  - SNAP sync will now download only headers for pre-checkpoint (pre-merge) blocks
+  - `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` can be set to false to force SNAP sync to download pre-checkpoint (pre-merge) blocks
+  - `--history-expiry-prune` can be used to enable online pruning of pre-checkpoint (pre-merge) blocks as well as modifying database garbage collection parameters to free up disk space from the pruned blocks
 
 ### Upcoming Breaking Changes
 - `--Xbonsai-parallel-tx-processing-enabled` is deprecated, use `--bonsai-parallel-tx-processing-enabled` instead.
-- `--Xsnapsync-bft-enabled` is deprecated and will be removed in a future release. SNAP sync is supported for BFT networks.
+- `--Xsnapsync-server-enabled` is deprecated, use `--snapsync-server-enabled` instead [#8512](https://github.com/hyperledger/besu/pull/8512)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Proof of Work consensus (PoW)
   - Fast Sync
 - Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
+- `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated and will be removed in a future release. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+- `--Xhistory-expiry-prune` is deprecated and will be removed in a future release. Use `--history-expiry-prune` instead.
 
 ### Additions and Improvements
 - Introduce the `TransactionValidatorService` to allow plugins to add custom validation rules [#8793](https://github.com/hyperledger/besu/pull/8793)
 - Implement rewardPercentile cap in eth_feeHistory [#8748](https://github.com/hyperledger/besu/pull/8748)
-- Enable parallel tx processing by default if Bonsai is used [#8668](https://github.com/hyperledger/besu/pull/8668)
-- Increase mainnet gas limit to 45M [#8824](https://github.com/hyperledger/besu/pull/8824)
 - Expose a method to get blob gas price from plugins [#8843](https://github.com/hyperledger/besu/pull/8843)
 - Experimental Bonsai Archive support [#7475](https://github.com/hyperledger/besu/pull/7475)
 - Use eth/69 by default [#8858](https://github.com/hyperledger/besu/pull/8858)
+- `--snapsync-server-enabled` New option to enable serving snap sync data [#8512](https://github.com/hyperledger/besu/pull/8512)
+- Introduce history expiry behaviour [#8875](https://github.com/hyperledger/besu/pull/8875)
+  - SNAP sync will now download only headers for pre-checkpoint (pre-merge) blocks
+  - `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` can be set to false to force SNAP sync to download pre-checkpoint (pre-merge) blocks
+  - `--history-expiry-prune` can be used to enable online pruning of pre-checkpoint (pre-merge) blocks as well as modifying database garbage collection parameters to free up disk space from the pruned blocks
 
-#### Fusaka
+### Performance
+- Increase mainnet gas limit to 45M [#8824](https://github.com/hyperledger/besu/pull/8824)
+- Enable parallel tx processing by default if Bonsai is used [#8668](https://github.com/hyperledger/besu/pull/8668)
+- Remove redundant serialization of json params [#8847](https://github.com/hyperledger/besu/pull/8847)
+- Improve ExtCodeHash performance [#8811](https://github.com/hyperledger/besu/pull/8811)
+- Improve ModExp precompile performance [#8868](https://github.com/hyperledger/besu/pull/8868)
+
+#### Fusaka (SFI'd and CFI'd)
 - EIP-7825 - Transaction gas limit cap [#8700](https://github.com/hyperledger/besu/pull/8700)
 - EIP-7823 - Modexp upper bounds [#8632](https://github.com/hyperledger/besu/pull/8632)
 - EIP-7892 - Max number of blobs per transaction [#8761](https://github.com/hyperledger/besu/pull/8761)
+- EIP-7934 - RLP Execution Block Size Limit [#8765](https://github.com/hyperledger/besu/pull/8765)
+- EIP-7951 - Precompile for secp256r1 Curve Support [#8750](https://github.com/hyperledger/besu/pull/8750)
 
 ### Bug fixes
 
