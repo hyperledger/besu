@@ -125,7 +125,6 @@ public class QbftBlockHeightManagerFactory {
             messageFactory,
             validatorProvider);
 
-
     return qbftBlockHeightManager;
   }
 }
