@@ -2493,6 +2493,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .setDataStorage(dataStorageOptions.normalizeDataStorageFormat())
         .setSyncMode(syncMode.normalize())
         .setSyncMinPeers(syncMinPeerCount);
+    
+    builder.setParallelTxProcessingEnabled(
+      getDataStorageConfiguration()
+        .getPathBasedExtraStorageConfiguration()
+        .getParallelTxProcessingEnabled()
+    );
 
     if (jsonRpcConfiguration != null && jsonRpcConfiguration.isEnabled()) {
       builder
