@@ -28,6 +28,12 @@ public class BlobScheduleOptions {
   private static final String CANCUN_KEY = "cancun";
   private static final String PRAGUE_KEY = "prague";
   private static final String OSAKA_KEY = "osaka";
+  private static final String BPO1_KEY = "bpo1";
+  private static final String BPO2_KEY = "bpo2";
+  private static final String BPO3_KEY = "bpo3";
+  private static final String BPO4_KEY = "bpo4";
+  private static final String BPO5_KEY = "bpo5";
+
   private static final String FUTURE_EIPS_KEY = "future_eips";
 
   /**
@@ -45,7 +51,7 @@ public class BlobScheduleOptions {
    * @return the cancun blob schedule
    */
   public Optional<BlobSchedule> getCancun() {
-    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, CANCUN_KEY).map(BlobSchedule::new);
+    return getBlobSchedule(CANCUN_KEY);
   }
 
   /**
@@ -54,7 +60,7 @@ public class BlobScheduleOptions {
    * @return the prague blob schedule
    */
   public Optional<BlobSchedule> getPrague() {
-    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, PRAGUE_KEY).map(BlobSchedule::new);
+    return getBlobSchedule(PRAGUE_KEY);
   }
 
   /**
@@ -63,7 +69,52 @@ public class BlobScheduleOptions {
    * @return the osaka blob schedule
    */
   public Optional<BlobSchedule> getOsaka() {
-    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, OSAKA_KEY).map(BlobSchedule::new);
+    return getBlobSchedule(OSAKA_KEY);
+  }
+
+  /**
+   * Gets bpo1 blob schedule.
+   *
+   * @return the bpo1 blob schedule
+   */
+  public Optional<BlobSchedule> getBpo1() {
+    return getBlobSchedule(BPO1_KEY);
+  }
+
+  /**
+   * Gets bpo2 blob schedule.
+   *
+   * @return the bpo2 blob schedule
+   */
+  public Optional<BlobSchedule> getBpo2() {
+    return getBlobSchedule(BPO2_KEY);
+  }
+
+  /**
+   * Gets bpo3 blob schedule.
+   *
+   * @return the bpo3 blob schedule
+   */
+  public Optional<BlobSchedule> getBpo3() {
+    return getBlobSchedule(BPO3_KEY);
+  }
+
+  /**
+   * Gets bpo4 blob schedule.
+   *
+   * @return the bpo4 blob schedule
+   */
+  public Optional<BlobSchedule> getBpo4() {
+    return getBlobSchedule(BPO4_KEY);
+  }
+
+  /**
+   * Gets bpo5 blob schedule.
+   *
+   * @return the bpo5 blob schedule
+   */
+  public Optional<BlobSchedule> getBpo5() {
+    return getBlobSchedule(BPO5_KEY);
   }
 
   /**
@@ -72,8 +123,17 @@ public class BlobScheduleOptions {
    * @return the future eips blob schedule
    */
   public Optional<BlobSchedule> getFutureEips() {
-    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, FUTURE_EIPS_KEY)
-        .map(BlobSchedule::new);
+    return getBlobSchedule(FUTURE_EIPS_KEY);
+  }
+
+  /**
+   * Gets blob schedule by key.
+   *
+   * @param key the key for the blob schedule
+   * @return the blob schedule
+   */
+  public Optional<BlobSchedule> getBlobSchedule(final String key) {
+    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, key).map(BlobSchedule::create);
   }
 
   /**

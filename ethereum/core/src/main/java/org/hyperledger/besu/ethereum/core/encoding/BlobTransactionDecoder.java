@@ -18,15 +18,18 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 
 public class BlobTransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -42,15 +45,18 @@ public class BlobTransactionDecoder {
    * @param input the RLP input to decode
    * @return the decoded transaction
    */
-  public static Transaction decode(final RLPInput input) {
+  public static Transaction decode(final Bytes input) {
     Transaction transaction;
     transaction = readTransactionPayload(input);
     return transaction;
   }
 
-  private static Transaction readTransactionPayload(final RLPInput input) {
+  private static Transaction readTransactionPayload(final Bytes input) {
     final Transaction.Builder builder = Transaction.builder();
-    readTransactionPayloadInner(builder, input);
+    final RLPInput txRlp = RLP.input(input.slice(1)); // Skip the transaction type byte
+    builder.sizeForBlockInclusion(input.size()).hash(Hash.hash(input));
+    // blob tx without blobs cannot be announced, so sizeForAnnouncement is not set
+    readTransactionPayloadInner(builder, txRlp);
     return builder.build();
   }
 

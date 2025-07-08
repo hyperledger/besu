@@ -94,19 +94,20 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
             maybeStateOverrides,
             buildTransactionValidationParams(header, callParams),
             OperationTracer.NO_TRACING,
-            (mutableWorldState, transactionSimulatorResult) ->
-                transactionSimulatorResult.map(
-                    result ->
-                        result
-                            .getValidationResult()
-                            .either(
-                                (() ->
-                                    result.isSuccessful()
-                                        ? new JsonRpcSuccessResponse(
-                                            request.getRequest().getId(),
-                                            result.getOutput().toString())
-                                        : errorResponse(request, result)),
-                                reason -> errorResponse(request, result))),
+            (mutableWorldState, transactionSimulatorResult) -> {
+              return transactionSimulatorResult.map(
+                  result ->
+                      result
+                          .getValidationResult()
+                          .either(
+                              (() ->
+                                  result.isSuccessful()
+                                      ? new JsonRpcSuccessResponse(
+                                          request.getRequest().getId(),
+                                          result.getOutput().toString())
+                                      : errorResponse(request, result)),
+                              reason -> errorResponse(request, result)));
+            },
             header)
         .orElse(errorResponse(request, INTERNAL_ERROR));
   }

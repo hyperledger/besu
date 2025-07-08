@@ -174,8 +174,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                 });
       } else if (!snapContext.getAccountsHealingList().isEmpty()) { // restart only the heal step
         snapSyncState.setHealTrieStatus(true);
-        worldStateStorageCoordinator.applyOnMatchingStrategy(
-            DataStorageFormat.BONSAI,
+        worldStateStorageCoordinator.applyOnMatchingStrategies(
+            List.of(DataStorageFormat.BONSAI, DataStorageFormat.X_BONSAI_ARCHIVE),
             strategy -> {
               BonsaiWorldStateKeyValueStorage onBonsai = (BonsaiWorldStateKeyValueStorage) strategy;
               onBonsai.clearFlatDatabase();

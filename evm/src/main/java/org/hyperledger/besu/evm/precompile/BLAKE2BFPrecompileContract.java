@@ -24,10 +24,10 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(BLAKE2BFPrecompileContract.class);
-  private static final String PRECOMPILE_NAME = "BLAKE2f";
+  private static final String PRECOMPILE_NAME = "BLAKE2F";
 
   private static final Cache<Integer, PrecompileInputResultTuple> blakeCache =
       Caffeine.newBuilder().maximumSize(1000).build();
@@ -47,7 +47,7 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
    *
    * @param gasCalculator the gas calculator
    */
-  public BLAKE2BFPrecompileContract(final GasCalculator gasCalculator) {
+  BLAKE2BFPrecompileContract(final GasCalculator gasCalculator) {
     super(PRECOMPILE_NAME, gasCalculator);
   }
 
@@ -68,10 +68,10 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
     return rounds.longValueExact();
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
     if (input.size() != MESSAGE_LENGTH_BYTES) {
       LOG.trace(
           "Incorrect input length.  Expected {} and got {}", MESSAGE_LENGTH_BYTES, input.size());

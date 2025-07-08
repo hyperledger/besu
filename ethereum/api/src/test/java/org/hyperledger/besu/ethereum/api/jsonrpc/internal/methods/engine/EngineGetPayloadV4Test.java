@@ -61,8 +61,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(
-    MockitoExtension.class) // mocks in parent class may not be used, throwing unnecessary stubbing
+@ExtendWith({MockitoExtension.class})
 public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
 
   public EngineGetPayloadV4Test() {

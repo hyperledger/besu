@@ -24,10 +24,10 @@ import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.slf4j.Logger;
@@ -37,13 +37,13 @@ import org.slf4j.LoggerFactory;
 public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledContract {
   private static final Logger LOG = LoggerFactory.getLogger(AltBN128AddPrecompiledContract.class);
   private static final int PARAMETER_LENGTH = 128;
-  private static final String PRECOMPILE_NAME = "AltBN128Add";
+  private static final String PRECOMPILE_NAME = "BN256_ADD";
 
   private final long gasCost;
   private static final Cache<Integer, PrecompileInputResultTuple> bnAddCache =
       Caffeine.newBuilder().maximumSize(1000).build();
 
-  private AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
+  AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
         PRECOMPILE_NAME,
         gasCalculator,
@@ -52,35 +52,15 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
     this.gasCost = gasCost;
   }
 
-  /**
-   * Create Byzantium AltBN128Add precompiled contract.
-   *
-   * @param gasCalculator the gas calculator
-   * @return the AltBN128Add precompiled contract
-   */
-  public static AltBN128AddPrecompiledContract byzantium(final GasCalculator gasCalculator) {
-    return new AltBN128AddPrecompiledContract(gasCalculator, 500L);
-  }
-
-  /**
-   * Create Istanbul AltBN128Add precompiled contract.
-   *
-   * @param gasCalculator the gas calculator
-   * @return the AltBN128Add precompiled contract
-   */
-  public static AltBN128AddPrecompiledContract istanbul(final GasCalculator gasCalculator) {
-    return new AltBN128AddPrecompiledContract(gasCalculator, 150L);
-  }
-
   @Override
   public long gasRequirement(final Bytes input) {
     return gasCost;
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
 
     PrecompileInputResultTuple res;
     Integer cacheKey = null;

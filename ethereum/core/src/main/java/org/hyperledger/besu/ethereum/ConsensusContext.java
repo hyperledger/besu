@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
+
 /**
  * The ConsensusContext interface defines a method for casting the consensus context to a specific
  * class.
@@ -29,4 +31,13 @@ public interface ConsensusContext {
    * @return the consensus context cast to the specified class
    */
   <C extends ConsensusContext> C as(final Class<C> klass);
+
+  /**
+   * Sets the post merge state.
+   *
+   * @param totalDifficulty the total difficulty
+   */
+  default void setIsPostMerge(final Difficulty totalDifficulty) {
+    throw new UnsupportedOperationException("Should only be called on MergeContext");
+  }
 }
