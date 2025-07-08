@@ -42,6 +42,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.http.ServerWebSocketHandshake;
 import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.JksOptions;
 import io.vertx.core.net.PemKeyCertOptions;
@@ -181,12 +182,24 @@ public class WebSocketService {
     httpServer =
         vertx
             .createHttpServer(serverOptions)
+            .webSocketHandshakeHandler(websocketHandshakeHandler())
             .webSocketHandler(websocketHandler())
             .connectionHandler(connectionHandler())
             .requestHandler(httpHandler())
             .listen(startHandler(resultFuture));
 
     return resultFuture;
+  }
+
+  private Handler<ServerWebSocketHandshake> websocketHandshakeHandler() {
+    return handshake -> {
+      if (!checkHostInAllowlist(
+          Optional.ofNullable(handshake.authority()).map(HostAndPort::host))) {
+        handshake.reject(403);
+      } else {
+        handshake.accept();
+      }
+    };
   }
 
   private Handler<ServerWebSocket> websocketHandler() {
@@ -199,11 +212,6 @@ public class WebSocketService {
             .setMessage("Websocket authentication token {}")
             .addArgument(() -> truncToken(token))
             .log();
-      }
-
-      if (!checkHostInAllowlist(
-          Optional.ofNullable(websocket.authority()).map(HostAndPort::host))) {
-        websocket.reject(403);
       }
 
       LOG.debug("Websocket Connected ({})", socketAddressAsString(socketAddress));
