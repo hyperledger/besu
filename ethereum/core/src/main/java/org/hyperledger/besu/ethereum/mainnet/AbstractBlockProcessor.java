@@ -32,6 +32,9 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessListManager;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
@@ -198,6 +201,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final BlockAccessList.Builder balBuilder = BlockAccessList.builder();
     boolean parallelizedTxFound = false;
     int nbParallelTx = 0;
+
+    final BlockLevelAccessListManager blockLevelAccessListFactory =
+        protocolSpec.getBlockLevelAccessListFactory().get();
+    final BlockAccessListBuilder blockAccessListBuilder =
+        blockLevelAccessListFactory.newBlockAccessListBuilder();
+
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
@@ -215,6 +224,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               transaction,
               i,
               blockHashLookup);
+
+      transactionProcessingResult
+          .getTransactionLevelAccessList()
+          .ifPresent(blockAccessListBuilder::addTransactionLevelAccessList);
+
       if (transactionProcessingResult.isInvalid()) {
         String errorMessage =
             MessageFormat.format(
@@ -341,6 +355,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       LOG.error("failed persisting block", e);
       return new BlockProcessingResult(Optional.empty(), e);
     }
+
+    BlockLevelAccessList build = blockAccessListBuilder.build();
+    System.out.println("BLOCK ACCESS LIST");
 
     return new BlockProcessingResult(
         Optional.of(

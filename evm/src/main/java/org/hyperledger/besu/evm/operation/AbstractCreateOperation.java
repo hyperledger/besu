@@ -92,7 +92,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final Wei value = Wei.wrap(frame.getStackItem(0));
 
     final Address address = frame.getRecipientAddress();
-    final MutableAccount account = frame.getWorldUpdater().getAccount(address);
+    final MutableAccount account = getMutableAccount(address, frame);
 
     frame.clearReturnData();
 

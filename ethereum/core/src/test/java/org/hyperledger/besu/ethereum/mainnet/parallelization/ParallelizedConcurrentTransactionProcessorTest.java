@@ -121,7 +121,12 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
-                Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+                Collections.emptyList(),
+                0,
+                0,
+                Bytes.EMPTY,
+                eip7928AccessList,
+                ValidationResult.valid()));
 
     processor.runTransaction(
         protocolContext,
@@ -193,7 +198,12 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
-                Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+                Collections.emptyList(),
+                0,
+                0,
+                Bytes.EMPTY,
+                eip7928AccessList,
+                ValidationResult.valid()));
 
     processor.runTransaction(
         protocolContext,

@@ -1443,6 +1443,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
                   gasUsedByTransaction,
                   gasRemaining,
                   Bytes.EMPTY,
+                  eip7928AccessList,
                   ValidationResult.valid());
             });
   }

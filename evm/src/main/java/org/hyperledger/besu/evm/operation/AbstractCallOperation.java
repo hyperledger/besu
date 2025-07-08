@@ -190,8 +190,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    final Account contract = frame.getWorldUpdater().get(to, true);
+    final Account contract = getAccount(to, frame);
     cost = clampedAdd(cost, gasCalculator().calculateCodeDelegationResolutionGas(frame, contract));
+
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
@@ -199,7 +200,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     frame.clearReturnData();
 
-    final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress(), true);
+    final Account account = getAccount(frame.getRecipientAddress(), frame);
+    frame.getEip7928AccessList().addAccount(frame.getRecipientAddress(), account);
+
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
 
     // If the call is sending more value than the account has or the message frame is too deep
@@ -258,7 +261,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final long inputDataLength = inputDataLength(frame);
     final long outputDataOffset = outputDataOffset(frame);
     final long outputDataLength = outputDataLength(frame);
-    final Account recipient = frame.getWorldUpdater().get(address(frame));
+    final Account recipient = getAccount(address(frame), frame);
     final Address to = to(frame);
     GasCalculator gasCalculator = gasCalculator();
 

@@ -27,6 +27,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockLevelAccessListManager;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionLevelAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -84,6 +86,8 @@ public class MainnetTransactionProcessor {
 
   private final Optional<CodeDelegationProcessor> maybeCodeDelegationProcessor;
 
+  private final Optional<BlockLevelAccessListManager> maybeBlockLevelAccessListFactory;
+
   private MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
@@ -94,7 +98,8 @@ public class MainnetTransactionProcessor {
       final int maxStackSize,
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
-      final CodeDelegationProcessor maybeCodeDelegationProcessor) {
+      final CodeDelegationProcessor maybeCodeDelegationProcessor,
+      final BlockLevelAccessListManager blockLevelAccessListFactory) {
     this.gasCalculator = gasCalculator;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -105,6 +110,7 @@ public class MainnetTransactionProcessor {
     this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
     this.maybeCodeDelegationProcessor = Optional.ofNullable(maybeCodeDelegationProcessor);
+    this.maybeBlockLevelAccessListFactory = Optional.ofNullable(blockLevelAccessListFactory);
   }
 
   /**
@@ -196,8 +202,12 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
+      TransactionLevelAccessList eip7928AccessList =
+          maybeBlockLevelAccessListFactory.get().newTransactionAccessList(transaction.getNonce());
+
       final Address senderAddress = transaction.getSender();
       final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
+      eip7928AccessList.addAccount(senderAddress, sender);
 
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -208,7 +218,7 @@ public class MainnetTransactionProcessor {
 
       operationTracer.tracePrepareTransaction(worldState, transaction);
 
-      final Set<Address> warmAddressList = new BytesTrieSet<>(Address.SIZE);
+      final Set<Address> eip2930WarmAddressList = new BytesTrieSet<>(Address.SIZE);
 
       final long previousNonce = sender.incrementNonce();
       LOG.trace(
@@ -240,7 +250,7 @@ public class MainnetTransactionProcessor {
 
         final CodeDelegationResult codeDelegationResult =
             maybeCodeDelegationProcessor.get().process(worldState, transaction);
-        warmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
+        eip2930WarmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
@@ -248,24 +258,25 @@ public class MainnetTransactionProcessor {
         worldState.commit();
       }
 
-      final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
+      final List<AccessListEntry> eip2930AccessListEntries =
+          transaction.getAccessList().orElse(List.of());
       // we need to keep a separate hash set of addresses in case they specify no storage.
       // No-storage is a common pattern, especially for Externally Owned Accounts
-      final Multimap<Address, Bytes32> storageList = HashMultimap.create();
+      final Multimap<Address, Bytes32> eip2930StorageList = HashMultimap.create();
       int accessListStorageCount = 0;
-      for (final var entry : accessListEntries) {
+      for (final var entry : eip2930AccessListEntries) {
         final Address address = entry.address();
-        warmAddressList.add(address);
+        eip2930WarmAddressList.add(address);
         final List<Bytes32> storageKeys = entry.storageKeys();
-        storageList.putAll(address, storageKeys);
+        eip2930StorageList.putAll(address, storageKeys);
         accessListStorageCount += storageKeys.size();
       }
       if (warmCoinbase) {
-        warmAddressList.add(miningBeneficiary);
+        eip2930WarmAddressList.add(miningBeneficiary);
       }
 
       final long accessListGas =
-          gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
+          gasCalculator.accessListGasCost(eip2930AccessListEntries.size(), accessListStorageCount);
       final long codeDelegationGas =
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
       final long intrinsicGas =
@@ -297,8 +308,9 @@ public class MainnetTransactionProcessor {
               .blockValues(blockHeader)
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
+              .eip7928AccessList(eip7928AccessList)
               .blockHashLookup(blockHashLookup)
-              .accessListWarmStorage(storageList);
+              .eip2930AccessListWarmStorage(eip2930StorageList);
 
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(
@@ -321,12 +333,13 @@ public class MainnetTransactionProcessor {
                 .contract(contractAddress)
                 .inputData(initCodeBytes.slice(code.getSize()))
                 .code(code)
-                .accessListWarmAddresses(warmAddressList)
+                .eip2930AccessListWarmAddresses(eip2930WarmAddressList)
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
-        final Code code = processCodeFromAccount(worldState, warmAddressList, worldState.get(to));
+        final Code code =
+            processCodeFromAccount(worldState, eip2930WarmAddressList, worldState.get(to));
 
         initialFrame =
             commonMessageFrameBuilder
@@ -335,7 +348,7 @@ public class MainnetTransactionProcessor {
                 .contract(to)
                 .inputData(transaction.getPayload())
                 .code(code)
-                .accessListWarmAddresses(warmAddressList)
+                .eip2930AccessListWarmAddresses(eip2930WarmAddressList)
                 .build();
       }
       Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
@@ -422,6 +435,7 @@ public class MainnetTransactionProcessor {
       if (!coinbaseWeiDelta.isZero() || !clearEmptyAccounts) {
         final var coinbase = worldState.getOrCreate(miningBeneficiary);
         coinbase.incrementBalance(coinbaseWeiDelta);
+        eip7928AccessList.addAccount(miningBeneficiary, coinbase);
       }
 
       operationTracer.traceEndTransaction(
@@ -446,6 +460,7 @@ public class MainnetTransactionProcessor {
             gasUsedByTransaction,
             refundedGas,
             initialFrame.getOutputData(),
+            Optional.of(eip7928AccessList),
             validationResult);
       } else {
         if (initialFrame.getExceptionalHaltReason().isPresent()) {
@@ -586,6 +601,7 @@ public class MainnetTransactionProcessor {
     private FeeMarket feeMarket;
     private CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
     private CodeDelegationProcessor codeDelegationProcessor;
+    private BlockLevelAccessListManager blockLevelAccessListFactory;
 
     public Builder gasCalculator(final GasCalculator gasCalculator) {
       this.gasCalculator = gasCalculator;
@@ -641,6 +657,12 @@ public class MainnetTransactionProcessor {
       return this;
     }
 
+    public Builder blockLevelAccessListFactory(
+        final BlockLevelAccessListManager blockLevelAccessListFactory) {
+      this.blockLevelAccessListFactory = blockLevelAccessListFactory;
+      return this;
+    }
+
     public Builder populateFrom(final MainnetTransactionProcessor processor) {
       this.gasCalculator = processor.gasCalculator;
       this.transactionValidatorFactory = processor.transactionValidatorFactory;
@@ -652,6 +674,7 @@ public class MainnetTransactionProcessor {
       this.feeMarket = processor.feeMarket;
       this.coinbaseFeePriceCalculator = processor.coinbaseFeePriceCalculator;
       this.codeDelegationProcessor = processor.maybeCodeDelegationProcessor.orElse(null);
+      this.blockLevelAccessListFactory = processor.maybeBlockLevelAccessListFactory.orElse(null);
       return this;
     }
 
@@ -666,7 +689,8 @@ public class MainnetTransactionProcessor {
           maxStackSize,
           feeMarket,
           coinbaseFeePriceCalculator,
-          codeDelegationProcessor);
+          codeDelegationProcessor,
+          blockLevelAccessListFactory);
     }
   }
 }

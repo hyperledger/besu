@@ -14,9 +14,14 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * All {@link Operation} implementations should inherit from this class to get the setting of some
@@ -81,5 +86,36 @@ public abstract class AbstractOperation implements Operation {
   @Override
   public int getStackItemsProduced() {
     return stackItemsProduced;
+  }
+
+  protected Account getAccount(final Address address, final MessageFrame frame) {
+    final Account account = frame.getWorldUpdater().get(address);
+    frame.getEip7928AccessList().addAccount(address, account);
+    return account;
+  }
+
+  protected MutableAccount getMutableAccount(final Address address, final MessageFrame frame) {
+    final MutableAccount account = frame.getWorldUpdater().getAccount(address);
+    frame.getEip7928AccessList().addAccount(address, account);
+    return account;
+  }
+
+  protected MutableAccount getOrCreateAccount(final Address address, final MessageFrame frame) {
+    final MutableAccount account = frame.getWorldUpdater().getOrCreate(address);
+    frame.getEip7928AccessList().addAccount(address, account);
+    return account;
+  }
+
+  protected MutableAccount getSenderAccount(final MessageFrame frame) {
+    final MutableAccount account = frame.getWorldUpdater().getSenderAccount(frame);
+    frame.getEip7928AccessList().addAccount(account.getAddress(), account);
+    return account;
+  }
+
+  protected UInt256 getStorageValue(
+      final Account account, final UInt256 slotKey, final MessageFrame frame) {
+    final UInt256 slotValue = account.getStorageValue(slotKey);
+    frame.getEip7928AccessList().addSlotAccessForAccount(account.getAddress(), slotKey, slotValue);
+    return slotValue;
   }
 }
