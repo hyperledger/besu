@@ -373,7 +373,7 @@ public class GraphQLHttpService {
         case "POST":
           final String contentType = request.getHeader(HttpHeaders.CONTENT_TYPE);
           if (contentType != null && MediaType.parse(contentType).is(MEDIA_TYPE_JUST_JSON)) {
-            final String requestBody = routingContext.getBodyAsString().trim();
+            final String requestBody = routingContext.body().asString().trim();
             final GraphQLJsonRequest jsonRequest =
                 Json.decodeValue(requestBody, GraphQLJsonRequest.class);
             final String jsonQuery = jsonRequest.getQuery();
@@ -383,7 +383,7 @@ public class GraphQLHttpService {
             variables = Objects.requireNonNullElse(jsonVariables, Collections.emptyMap());
           } else {
             // treat all else as application/graphql
-            final String requestQuery = routingContext.getBodyAsString().trim();
+            final String requestQuery = routingContext.body().asString().trim();
             query = Objects.requireNonNullElse(requestQuery, "");
             operationName = null;
             variables = Collections.emptyMap();
