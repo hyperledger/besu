@@ -106,17 +106,6 @@ public class QbftBlockHeightManagerFactory {
                   parentHeader.getNumber() + 1L, parentHeader),
               finalState.getLocalAddress());
 
-      qbftBlockHeightManager =
-          new QbftBlockHeightManager(
-              parentHeader,
-              finalState,
-              roundChangeManager,
-              roundFactory,
-              finalState.getClock(),
-              messageValidatorFactory,
-              messageFactory,
-              validatorProvider,
-              true);
     } else {
       roundChangeManager =
           new RoundChangeManager(
@@ -124,17 +113,6 @@ public class QbftBlockHeightManagerFactory {
               messageValidatorFactory.createRoundChangeMessageValidator(
                   parentHeader.getNumber() + 1L, parentHeader),
               finalState.getLocalAddress());
-
-      qbftBlockHeightManager =
-          new QbftBlockHeightManager(
-              parentHeader,
-              finalState,
-              roundChangeManager,
-              roundFactory,
-              finalState.getClock(),
-              messageValidatorFactory,
-              messageFactory,
-              validatorProvider);
     }
     qbftBlockHeightManager =
         new QbftBlockHeightManager(
@@ -144,7 +122,9 @@ public class QbftBlockHeightManagerFactory {
             roundFactory,
             finalState.getClock(),
             messageValidatorFactory,
-            messageFactory);
+            messageFactory,
+            validatorProvider);
+
 
     return qbftBlockHeightManager;
   }

@@ -124,42 +124,6 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader::getTimestamp);
   }
 
-  /**
-   * Instantiates a new Qbft block height manager. Secondary constructor with early round change
-   * option.
-   *
-   * @param parentHeader the parent header
-   * @param finalState the final state
-   * @param roundChangeManager the round change manager
-   * @param qbftRoundFactory the qbft round factory
-   * @param clock the clock
-   * @param messageValidatorFactory the message validator factory
-   * @param messageFactory the message factory
-   * @param validatorProvider the validator provider
-   * @param isEarlyRoundChangeEnabled enable round change when f+1 RC messages are received
-   */
-  public QbftBlockHeightManager(
-      final QbftBlockHeader parentHeader,
-      final QbftFinalState finalState,
-      final RoundChangeManager roundChangeManager,
-      final QbftRoundFactory qbftRoundFactory,
-      final Clock clock,
-      final MessageValidatorFactory messageValidatorFactory,
-      final MessageFactory messageFactory,
-      final QbftValidatorProvider validatorProvider,
-      final boolean isEarlyRoundChangeEnabled) {
-    this(
-        parentHeader,
-        finalState,
-        roundChangeManager,
-        qbftRoundFactory,
-        clock,
-        messageValidatorFactory,
-        messageFactory,
-        validatorProvider);
-    this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
-  }
-
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
     if (currentRound.isPresent()) {
