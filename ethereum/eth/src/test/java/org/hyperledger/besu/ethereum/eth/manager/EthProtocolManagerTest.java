@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
@@ -1266,8 +1267,10 @@ public final class EthProtocolManagerTest {
       final PeerConnection peer = setupPeer(ethManager, (cap, msg, connection) -> {});
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, transactionMessage));
 
-      // Verify the regular message executor and scheduled executor got nothing to execute.
-      verifyNoInteractions(worker, scheduled);
+      // Verify the regular message executor execute.
+      verifyNoInteractions(worker);
+      // Verify that the scheduled executor scheduled the BlockRangeBroadcaster task.
+      verify(scheduled).scheduleWithFixedDelay(any(), anyLong(), anyLong(), any());
       // Verify our transactions executor got something to execute.
       verify(transactions).execute(any());
     }
@@ -1275,9 +1278,9 @@ public final class EthProtocolManagerTest {
 
   @Test
   public void shouldUseRightCapabilityDependingOnSyncMode() {
-    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH68);
-    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68);
-    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH68);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH69);
+    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH69);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH69);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66);
   }
@@ -1341,6 +1344,9 @@ public final class EthProtocolManagerTest {
       final SyncMode syncMode, final EthProtocolConfiguration ethProtocolConfiguration) {
     final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
     when(syncConfig.getSyncMode()).thenReturn(syncMode);
+    EthContext ethContext = mock(EthContext.class);
+    when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
+    when(ethContext.getScheduler()).thenReturn(mock(EthScheduler.class));
     try (final EthProtocolManager ethManager =
         new EthProtocolManager(
             blockchain,
@@ -1350,7 +1356,7 @@ public final class EthProtocolManagerTest {
             ethProtocolConfiguration,
             mock(EthPeers.class),
             mock(EthMessages.class),
-            mock(EthContext.class),
+            ethContext,
             Collections.emptyList(),
             Optional.empty(),
             syncConfig,

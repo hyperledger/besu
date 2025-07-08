@@ -388,10 +388,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             isCancelled::get,
             miningBeneficiary,
             blobGasPrice,
-            protocolSpec.getFeeMarket(),
-            protocolSpec.getGasCalculator(),
-            protocolSpec.getGasLimitCalculator(),
-            protocolSpec.getBlockHashProcessor(),
+            protocolSpec,
             pluginTransactionSelector,
             ethScheduler,
             selectorsStateManager);

@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -148,7 +149,8 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           new FrontierBlockHashProcessor(),
           true,
-          true);
+          true,
+          Optional.empty());
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
           "status",
@@ -178,7 +180,8 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           new FrontierBlockHashProcessor(),
           true,
-          true);
+          true,
+          Optional.empty());
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
@@ -323,6 +326,10 @@ public class EthGetTransactionReceiptTest {
     ProtocolSpec spec = mock(ProtocolSpec.class);
     when(spec.getFeeMarket()).thenReturn(feeMarket);
     when(spec.getGasCalculator()).thenReturn(new CancunGasCalculator());
+    when(spec.getGasLimitCalculator())
+        .thenReturn(
+            new CancunTargetingGasLimitCalculator(
+                0L, FeeMarket.cancunDefault(0L, Optional.empty()), new CancunGasCalculator()));
     when(protocolSchedule.getByBlockHeader(blockHeader)).thenReturn(spec);
   }
 

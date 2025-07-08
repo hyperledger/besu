@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
+import org.hyperledger.besu.ethereum.mainnet.transactionpool.TransactionPoolPreProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -80,6 +81,7 @@ public class ProtocolSpec {
   private final BlockHashProcessor blockHashProcessor;
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
+  private final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor;
 
   /**
    * Creates a new protocol specification instance.
@@ -141,7 +143,8 @@ public class ProtocolSpec {
       final Optional<RequestProcessorCoordinator> requestProcessorCoordinator,
       final BlockHashProcessor blockHashProcessor,
       final boolean isPoS,
-      final boolean isReplayProtectionSupported) {
+      final boolean isReplayProtectionSupported,
+      final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor) {
     this.name = name;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
@@ -170,6 +173,7 @@ public class ProtocolSpec {
     this.blockHashProcessor = blockHashProcessor;
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
+    this.transactionPoolPreProcessor = transactionPoolPreProcessor;
   }
 
   /**
@@ -384,5 +388,14 @@ public class ProtocolSpec {
    */
   public boolean isPoS() {
     return isPoS;
+  }
+
+  /**
+   * A pre-processor for transactions in the transaction pool.
+   *
+   * @return the transaction pool pre-processor
+   */
+  public Optional<TransactionPoolPreProcessor> getTransactionPoolPreProcessor() {
+    return transactionPoolPreProcessor;
   }
 }

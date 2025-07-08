@@ -100,4 +100,11 @@ public interface BlockValidator {
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
       final BodyValidationMode bodyValidationMode);
+
+  /**
+   * Returns the maximum size of an RLP encoded block size in bytes
+   *
+   * @return the maximum rlp block size
+   */
+  int maxRlpBlockSize();
 }
