@@ -53,7 +53,7 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
     final int numberOfLeadingZeros;
     if (value.size() > Bytes32.SIZE) {
       // should not happen but trim just in case
-      value = value.slice(0, 32);
+      value = value.slice(value.size() - Bytes32.SIZE, Bytes32.SIZE);
     }
     numberOfLeadingZeros = value.numberOfLeadingZeros() + (Bytes32.SIZE - value.size()) * 8;
     frame.pushStackItem(Words.intBytes(numberOfLeadingZeros));
