@@ -126,7 +126,7 @@ public class ForestMutableWorldState implements MutableWorldState {
   }
 
   @Override
-  public Account get(final Address address, final boolean isEvmRead) {
+  public Account get(final Address address) {
     final Hash addressHash = address.addressHash();
     return accountStateTrie
         .get(addressHash)
@@ -299,7 +299,7 @@ public class ForestMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public UInt256 getStorageValue(final UInt256 key, final boolean isEvmRead) {
+    public UInt256 getStorageValue(final UInt256 key) {
       return storageTrie()
           .get(Hash.hash(key))
           .map(ForestMutableWorldState::convertToUInt256)
@@ -366,7 +366,7 @@ public class ForestMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    protected WorldStateAccount getForMutation(final Address address, final boolean isEvmRead) {
+    protected WorldStateAccount getForMutation(final Address address) {
       final ForestMutableWorldState wrapped = wrappedWorldView();
       final Hash addressHash = address.addressHash();
       return wrapped

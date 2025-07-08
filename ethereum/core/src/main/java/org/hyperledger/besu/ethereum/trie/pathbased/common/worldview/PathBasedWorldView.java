@@ -34,12 +34,11 @@ public interface PathBasedWorldView extends WorldView {
 
   Optional<Bytes> getCode(Address address, final Hash codeHash);
 
-  UInt256 getStorageValue(Address address, UInt256 key, boolean isEvmRead);
+  UInt256 getStorageValue(Address address, UInt256 key);
 
-  Optional<UInt256> getStorageValueByStorageSlotKey(
-      Address address, StorageSlotKey storageSlotKey, boolean isEvmRead);
+  Optional<UInt256> getStorageValueByStorageSlotKey(Address address, StorageSlotKey storageSlotKey);
 
-  UInt256 getPriorStorageValue(Address address, UInt256 key, boolean isEvmRead);
+  UInt256 getPriorStorageValue(Address address, UInt256 key);
 
   /**
    * Retrieve all the storage values of an account.

@@ -67,7 +67,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
    * @param address the address
    * @return the for mutation
    */
-  protected abstract A getForMutation(Address address, boolean isEvmRead);
+  protected abstract A getForMutation(Address address);
 
   /**
    * Track update tracking account.
@@ -91,7 +91,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
-  public Account get(final Address address, final boolean isEvmRead) {
+  public Account get(final Address address) {
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
     if (existing != null) {
@@ -100,7 +100,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     if (deletedAccounts.contains(address)) {
       return null;
     }
-    return getForMutation(address, isEvmRead);
+    return getForMutation(address);
   }
 
   @Override
@@ -115,7 +115,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     // Otherwise, get it from our wrapped view and create a new update tracker.
-    final A origin = getForMutation(address, false);
+    final A origin = getForMutation(address);
     if (origin == null) {
       return null;
     } else {

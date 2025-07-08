@@ -113,8 +113,8 @@ public interface WorldState extends WorldView, AutoCloseable {
     }
 
     @Override
-    public UInt256 getStorageValue(final UInt256 key, final boolean isEvmRead) {
-      return accountState.getStorageValue(key, isEvmRead);
+    public UInt256 getStorageValue(final UInt256 key) {
+      return accountState.getStorageValue(key);
     }
 
     @Override

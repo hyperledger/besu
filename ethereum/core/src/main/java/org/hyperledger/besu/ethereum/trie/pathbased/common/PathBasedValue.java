@@ -23,15 +23,14 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
   private T prior;
   private T updated;
   private boolean lastStepCleared;
+
   private boolean clearedAtLeastOnce;
-  private boolean isEvmRead;
 
   public PathBasedValue(final T prior, final T updated) {
     this.prior = prior;
     this.updated = updated;
     this.lastStepCleared = false;
     this.clearedAtLeastOnce = false;
-    this.isEvmRead = false;
   }
 
   public PathBasedValue(final T prior, final T updated, final boolean lastStepCleared) {
@@ -41,18 +40,15 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
     this.clearedAtLeastOnce = lastStepCleared;
   }
 
-  // TODO: Unclear & dangerous, maybe use a builder
   public PathBasedValue(
       final T prior,
       final T updated,
       final boolean lastStepCleared,
-      final boolean clearedAtLeastOnce,
-      final boolean isEvmRead) {
+      final boolean clearedAtLeastOnce) {
     this.prior = prior;
     this.updated = updated;
     this.lastStepCleared = lastStepCleared;
     this.clearedAtLeastOnce = clearedAtLeastOnce;
-    this.isEvmRead = isEvmRead;
   }
 
   @Override
@@ -84,10 +80,6 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
     this.clearedAtLeastOnce = true;
   }
 
-  public void setIsEvmRead(final boolean isEvmRead) {
-    this.isEvmRead = this.isEvmRead || isEvmRead;
-  }
-
   @Override
   public boolean isLastStepCleared() {
     return lastStepCleared;
@@ -96,10 +88,6 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
   @Override
   public boolean isClearedAtLeastOnce() {
     return clearedAtLeastOnce;
-  }
-
-  public boolean isEvmRead() {
-    return isEvmRead;
   }
 
   @Override
@@ -111,8 +99,6 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
         + updated
         + ", cleared="
         + lastStepCleared
-        + ", isEvmRead="
-        + isEvmRead
         + '}';
   }
 
@@ -129,7 +115,6 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
         .append(lastStepCleared, that.lastStepCleared)
         .append(prior, that.prior)
         .append(updated, that.updated)
-        .append(isEvmRead, that.isEvmRead)
         .isEquals();
   }
 
@@ -143,6 +128,6 @@ public class PathBasedValue<T> implements TrieLog.LogTuple<T> {
   }
 
   public PathBasedValue<T> copy() {
-    return new PathBasedValue<T>(prior, updated, lastStepCleared, clearedAtLeastOnce, isEvmRead);
+    return new PathBasedValue<T>(prior, updated, lastStepCleared, clearedAtLeastOnce);
   }
 }

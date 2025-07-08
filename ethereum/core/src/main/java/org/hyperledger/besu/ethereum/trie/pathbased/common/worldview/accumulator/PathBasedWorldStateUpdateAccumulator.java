@@ -126,12 +126,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                       : null;
               accountsToUpdate.put(
                   address,
-                  new PathBasedValue<>(
-                      copyPrior,
-                      copyUpdated,
-                      pathBasedValue.isLastStepCleared(),
-                      pathBasedValue.isClearedAtLeastOnce(),
-                      pathBasedValue.isEvmRead()));
+                  new PathBasedValue<>(copyPrior, copyUpdated, pathBasedValue.isLastStepCleared()));
             });
     source
         .getCodeToUpdate()
@@ -142,9 +137,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                   new PathBasedValue<>(
                       pathBasedValue.getPrior(),
                       pathBasedValue.getUpdated(),
-                      pathBasedValue.isLastStepCleared(),
-                      pathBasedValue.isClearedAtLeastOnce(),
-                      pathBasedValue.isEvmRead()));
+                      pathBasedValue.isLastStepCleared()));
             });
     source
         .getStorageToUpdate()
@@ -163,9 +156,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                         new PathBasedValue<>(
                             uInt256PathBasedValue.getPrior(),
                             uInt256PathBasedValue.getUpdated(),
-                            uInt256PathBasedValue.isLastStepCleared(),
-                            uInt256PathBasedValue.isClearedAtLeastOnce(),
-                            uInt256PathBasedValue.isEvmRead()));
+                            uInt256PathBasedValue.isLastStepCleared()));
                   });
             });
     storageToClear.addAll(source.storageToClear);
@@ -200,14 +191,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                   pathBasedValue.getPrior() != null
                       ? copyAccount(pathBasedValue.getPrior(), this, true)
                       : null;
-              accountsToUpdate.putIfAbsent(
-                  address,
-                  new PathBasedValue<>(
-                      copyPrior,
-                      copyUpdated,
-                      pathBasedValue.isLastStepCleared(),
-                      pathBasedValue.isClearedAtLeastOnce(),
-                      pathBasedValue.isEvmRead()));
+              accountsToUpdate.putIfAbsent(address, new PathBasedValue<>(copyPrior, copyUpdated));
             });
     source
         .getCodeToUpdate()
@@ -215,12 +199,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
             (address, pathBasedValue) -> {
               codeToUpdate.putIfAbsent(
                   address,
-                  new PathBasedValue<>(
-                      pathBasedValue.getPrior(),
-                      pathBasedValue.getPrior(),
-                      pathBasedValue.isLastStepCleared(),
-                      pathBasedValue.isClearedAtLeastOnce(),
-                      pathBasedValue.isEvmRead()));
+                  new PathBasedValue<>(pathBasedValue.getPrior(), pathBasedValue.getPrior()));
             });
     source
         .getStorageToUpdate()
@@ -237,11 +216,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                     storageConsumingMap.putIfAbsent(
                         storageSlotKey,
                         new PathBasedValue<>(
-                            uInt256PathBasedValue.getPrior(),
-                            uInt256PathBasedValue.getPrior(),
-                            uInt256PathBasedValue.isLastStepCleared(),
-                            uInt256PathBasedValue.isClearedAtLeastOnce(),
-                            uInt256PathBasedValue.isEvmRead()));
+                            uInt256PathBasedValue.getPrior(), uInt256PathBasedValue.getPrior()));
                   });
             });
     storageKeyHashLookup.putAll(source.storageKeyHashLookup);
@@ -325,14 +300,12 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
   }
 
   @Override
-  protected ACCOUNT getForMutation(final Address address, final boolean isEvmRead) {
-    return loadAccount(address, PathBasedValue::getUpdated, isEvmRead);
+  protected ACCOUNT getForMutation(final Address address) {
+    return loadAccount(address, PathBasedValue::getUpdated);
   }
 
   protected ACCOUNT loadAccount(
-      final Address address,
-      final Function<PathBasedValue<ACCOUNT>, ACCOUNT> accountFunction,
-      final boolean isEvmRead) {
+      final Address address, final Function<PathBasedValue<ACCOUNT>, ACCOUNT> accountFunction) {
     try {
       final PathBasedValue<ACCOUNT> pathBasedValue = accountsToUpdate.get(address);
       if (pathBasedValue == null) {
@@ -340,24 +313,21 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
         if (wrappedWorldView() instanceof PathBasedWorldStateUpdateAccumulator) {
           final PathBasedWorldStateUpdateAccumulator<ACCOUNT> worldStateUpdateAccumulator =
               (PathBasedWorldStateUpdateAccumulator<ACCOUNT>) wrappedWorldView();
-          account = worldStateUpdateAccumulator.loadAccount(address, accountFunction, isEvmRead);
+          account = worldStateUpdateAccumulator.loadAccount(address, accountFunction);
         } else {
           account = wrappedWorldView().get(address);
         }
         if (account instanceof PathBasedAccount pathBasedAccount) {
           ACCOUNT mutableAccount = copyAccount((ACCOUNT) pathBasedAccount, this, true);
           accountsToUpdate.put(
-              address,
-              new PathBasedValue<>(
-                  (ACCOUNT) pathBasedAccount, mutableAccount, false, false, isEvmRead));
+              address, new PathBasedValue<>((ACCOUNT) pathBasedAccount, mutableAccount));
           return mutableAccount;
         } else {
           // add the empty read in accountsToUpdate
-          accountsToUpdate.put(address, new PathBasedValue<>(null, null, false, false, isEvmRead));
+          accountsToUpdate.put(address, new PathBasedValue<>(null, null));
           return null;
         }
       } else {
-        pathBasedValue.setIsEvmRead(isEvmRead);
         return accountFunction.apply(pathBasedValue);
       }
     } catch (MerkleTrieException e) {
@@ -556,40 +526,35 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
   }
 
   @Override
-  public UInt256 getStorageValue(
-      final Address address, final UInt256 slotKey, final boolean isEvmRead) {
+  public UInt256 getStorageValue(final Address address, final UInt256 slotKey) {
     StorageSlotKey storageSlotKey =
         new StorageSlotKey(hashAndSaveSlotPreImage(slotKey), Optional.of(slotKey));
-    return getStorageValueByStorageSlotKey(address, storageSlotKey, isEvmRead).orElse(UInt256.ZERO);
+    return getStorageValueByStorageSlotKey(address, storageSlotKey).orElse(UInt256.ZERO);
   }
 
   @Override
   public Optional<UInt256> getStorageValueByStorageSlotKey(
-      final Address address, final StorageSlotKey storageSlotKey, final boolean isEvmRead) {
+      final Address address, final StorageSlotKey storageSlotKey) {
     final Map<StorageSlotKey, PathBasedValue<UInt256>> localAccountStorage =
         storageToUpdate.get(address);
     if (localAccountStorage != null) {
       final PathBasedValue<UInt256> value = localAccountStorage.get(storageSlotKey);
       if (value != null) {
-        value.setIsEvmRead(isEvmRead);
         return Optional.ofNullable(value.getUpdated());
       }
     }
     try {
       final Optional<UInt256> valueUInt =
           (wrappedWorldView() instanceof PathBasedWorldState worldState)
-              ? worldState.getStorageValueByStorageSlotKey(address, storageSlotKey, isEvmRead)
-              : wrappedWorldView()
-                  .getStorageValueByStorageSlotKey(address, storageSlotKey, isEvmRead);
-      final PathBasedValue<UInt256> newSlotValue =
-          new PathBasedValue<>(
-              valueUInt.orElse(null), valueUInt.orElse(null), false, false, isEvmRead);
+              ? worldState.getStorageValueByStorageSlotKey(address, storageSlotKey)
+              : wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
       storageToUpdate
           .computeIfAbsent(
               address,
               key ->
                   new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader))
-          .put(storageSlotKey, newSlotValue);
+          .put(
+              storageSlotKey, new PathBasedValue<>(valueUInt.orElse(null), valueUInt.orElse(null)));
       return valueUInt;
     } catch (MerkleTrieException e) {
       // need to throw to trigger the heal
@@ -599,8 +564,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
   }
 
   @Override
-  public UInt256 getPriorStorageValue(
-      final Address address, final UInt256 storageKey, final boolean isEvmRead) {
+  public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     StorageSlotKey storageSlotKey =
         new StorageSlotKey(hashAndSaveSlotPreImage(storageKey), Optional.of(storageKey));
@@ -609,7 +573,6 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     if (localAccountStorage != null) {
       final PathBasedValue<UInt256> value = localAccountStorage.get(storageSlotKey);
       if (value != null) {
-        value.setIsEvmRead(isEvmRead);
         if (value.isLastStepCleared()) {
           return UInt256.ZERO;
         }
@@ -626,7 +589,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     if (storageToClear.contains(address)) {
       return UInt256.ZERO;
     }
-    return getStorageValue(address, storageKey, isEvmRead);
+    return getStorageValue(address, storageKey);
   }
 
   @Override
@@ -853,7 +816,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     PathBasedValue<UInt256> slotValue = storageMap == null ? null : storageMap.get(storageSlotKey);
     if (slotValue == null) {
       final Optional<UInt256> storageValue =
-          wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey, false);
+          wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
       if (storageValue.isPresent()) {
         slotValue = new PathBasedValue<>(storageValue.get(), storageValue.get());
         storageToUpdate

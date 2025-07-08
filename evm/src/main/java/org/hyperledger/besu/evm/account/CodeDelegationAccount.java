@@ -95,8 +95,8 @@ public class CodeDelegationAccount implements Account {
   }
 
   @Override
-  public UInt256 getStorageValue(final UInt256 key, final boolean isEvmRead) {
-    return wrappedAccount.getStorageValue(key, isEvmRead);
+  public UInt256 getStorageValue(final UInt256 key) {
+    return wrappedAccount.getStorageValue(key);
   }
 
   @Override

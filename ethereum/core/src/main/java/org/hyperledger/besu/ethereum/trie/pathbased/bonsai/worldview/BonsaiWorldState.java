@@ -386,7 +386,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
   }
 
   @Override
-  public Account get(final Address address, final boolean isEvmRead) {
+  public Account get(final Address address) {
     return getWorldStateStorage()
         .getAccount(address.addressHash())
         .map(bytes -> BonsaiAccount.fromRLP(accumulator, address, bytes, true, codeCache))
@@ -420,15 +420,14 @@ public class BonsaiWorldState extends PathBasedWorldState {
   }
 
   @Override
-  public UInt256 getStorageValue(
-      final Address address, final UInt256 storageKey, final boolean isEvmRead) {
-    return getStorageValueByStorageSlotKey(address, new StorageSlotKey(storageKey), isEvmRead)
+  public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
+    return getStorageValueByStorageSlotKey(address, new StorageSlotKey(storageKey))
         .orElse(UInt256.ZERO);
   }
 
   @Override
   public Optional<UInt256> getStorageValueByStorageSlotKey(
-      final Address address, final StorageSlotKey storageSlotKey, final boolean isEvmRead) {
+      final Address address, final StorageSlotKey storageSlotKey) {
     return getWorldStateStorage()
         .getStorageValueByStorageSlotKey(address.addressHash(), storageSlotKey)
         .map(UInt256::fromBytes);
@@ -437,17 +436,15 @@ public class BonsaiWorldState extends PathBasedWorldState {
   public Optional<UInt256> getStorageValueByStorageSlotKey(
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Address address,
-      final StorageSlotKey storageSlotKey,
-      final boolean isEvmRead) {
+      final StorageSlotKey storageSlotKey) {
     return getWorldStateStorage()
         .getStorageValueByStorageSlotKey(storageRootSupplier, address.addressHash(), storageSlotKey)
         .map(UInt256::fromBytes);
   }
 
   @Override
-  public UInt256 getPriorStorageValue(
-      final Address address, final UInt256 storageKey, final boolean isEvmRead) {
-    return getStorageValue(address, storageKey, isEvmRead);
+  public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
+    return getStorageValue(address, storageKey);
   }
 
   @Override

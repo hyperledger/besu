@@ -113,7 +113,7 @@ public class SimpleAccount implements MutableAccount {
   }
 
   @Override
-  public UInt256 getStorageValue(final UInt256 key, final boolean isEvmRead) {
+  public UInt256 getStorageValue(final UInt256 key) {
     if (storage.containsKey(key)) {
       return storage.get(key);
     } else {
