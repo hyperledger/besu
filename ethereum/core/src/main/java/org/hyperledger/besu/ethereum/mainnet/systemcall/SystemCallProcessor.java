@@ -122,7 +122,7 @@ public class SystemCallProcessor {
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
 
     // TODO: Pass transaction index or TAL
-    TransactionAccessList eip7928AccessList = new TransactionAccessList(0L);
+    TransactionAccessList eip7928AccessList = new TransactionAccessList(0);
 
     return MessageFrame.builder()
         .maxStackSize(DEFAULT_MAX_STACK_SIZE)

@@ -22,7 +22,7 @@ public class BlockAccessListManager {
     return BlockAccessList.builder();
   }
 
-  public TransactionAccessList newTransactionAccessList(final long transactionIndex) {
+  public TransactionAccessList newTransactionAccessList(final int transactionIndex) {
     return new TransactionAccessList(transactionIndex);
   }
 }

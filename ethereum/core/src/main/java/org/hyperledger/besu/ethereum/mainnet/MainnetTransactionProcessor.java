@@ -204,7 +204,7 @@ public class MainnetTransactionProcessor {
 
       // TODO: Pass transaction index or TAL
       TransactionAccessList eip7928AccessList =
-          maybeBlockAccessListFactory.get().newTransactionAccessList(transaction.getNonce());
+          maybeBlockAccessListFactory.get().newTransactionAccessList(0);
 
       final Address senderAddress = transaction.getSender();
       final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);

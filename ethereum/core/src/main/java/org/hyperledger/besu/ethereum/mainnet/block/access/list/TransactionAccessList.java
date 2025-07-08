@@ -30,14 +30,14 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class TransactionAccessList implements Eip7928AccessList {
 
-  private final long index;
+  private final int index;
   private final Map<Address, AccountAccessList> accounts = new ConcurrentHashMap<>();
 
-  public TransactionAccessList(final long index) {
+  public TransactionAccessList(final int index) {
     this.index = index;
   }
 
-  public long getIndex() {
+  public int getIndex() {
     return index;
   }
 

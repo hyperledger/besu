@@ -59,28 +59,28 @@ public class BlockAccessList {
     return "BlockAccessList{" + "accountChanges=" + accountChanges + '}';
   }
 
-  public record StorageChange(long txIndex, UInt256 newValue) {
+  public record StorageChange(int txIndex, UInt256 newValue) {
     @Override
     public String toString() {
       return "StorageChange{txIndex=" + txIndex + ", newValue=" + newValue + '}';
     }
   }
 
-  public record BalanceChange(long txIndex, Bytes postBalance) {
+  public record BalanceChange(int txIndex, Bytes postBalance) {
     @Override
     public String toString() {
       return "BalanceChange{txIndex=" + txIndex + ", postBalance=" + postBalance + '}';
     }
   }
 
-  public record NonceChange(long txIndex, long newNonce) {
+  public record NonceChange(int txIndex, long newNonce) {
     @Override
     public String toString() {
       return "NonceChange{txIndex=" + txIndex + ", newNonce=" + newNonce + '}';
     }
   }
 
-  public record CodeChange(long txIndex, Bytes newCode) {
+  public record CodeChange(int txIndex, Bytes newCode) {
     @Override
     public String toString() {
       return "CodeChange{txIndex=" + txIndex + ", newCode=" + newCode + '}';
@@ -197,7 +197,7 @@ public class BlockAccessList {
         this.address = address;
       }
 
-      void addStorageWrite(final StorageSlotKey slot, final long txIndex, final UInt256 value) {
+      void addStorageWrite(final StorageSlotKey slot, final int txIndex, final UInt256 value) {
         final List<StorageChange> changes =
             slotWrites.computeIfAbsent(slot, __ -> new ArrayList<>());
         changes.add(new StorageChange(txIndex, value));
@@ -209,15 +209,15 @@ public class BlockAccessList {
         }
       }
 
-      void addBalanceChange(final long txIndex, final Bytes postBalance) {
+      void addBalanceChange(final int txIndex, final Bytes postBalance) {
         balances.add(new BalanceChange(txIndex, postBalance));
       }
 
-      void addNonceChange(final long txIndex, final long newNonce) {
+      void addNonceChange(final int txIndex, final long newNonce) {
         nonces.add(new NonceChange(txIndex, newNonce));
       }
 
-      void addCodeChange(final long txIndex, final Bytes code) {
+      void addCodeChange(final int txIndex, final Bytes code) {
         codes.add(new CodeChange(txIndex, code));
       }
 
@@ -230,7 +230,7 @@ public class BlockAccessList {
                         new SlotChanges(
                             e.getKey(),
                             e.getValue().stream()
-                                .sorted(Comparator.comparingLong(StorageChange::txIndex))
+                                .sorted(Comparator.comparingInt(StorageChange::txIndex))
                                 .collect(Collectors.toList())))
                 .collect(Collectors.toList());
 

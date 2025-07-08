@@ -37,7 +37,7 @@ public final class BlockAccessListEncoder {
                     sc.changes(),
                     (chg, chgOut) -> {
                       chgOut.startList();
-                      chgOut.writeLong(chg.txIndex());
+                      chgOut.writeInt(chg.txIndex());
                       chgOut.writeUInt256Scalar(chg.newValue());
                       chgOut.endList();
                     });
@@ -52,7 +52,7 @@ public final class BlockAccessListEncoder {
               acct.balanceChanges(),
               (bc, bcOut) -> {
                 bcOut.startList();
-                bcOut.writeLong(bc.txIndex());
+                bcOut.writeInt(bc.txIndex());
                 bcOut.writeBytes(bc.postBalance());
                 bcOut.endList();
               });
@@ -61,7 +61,7 @@ public final class BlockAccessListEncoder {
               acct.nonceChanges(),
               (nc, ncOut) -> {
                 ncOut.startList();
-                ncOut.writeLong(nc.txIndex());
+                ncOut.writeInt(nc.txIndex());
                 ncOut.writeLongScalar(nc.newNonce());
                 ncOut.endList();
               });
@@ -70,7 +70,7 @@ public final class BlockAccessListEncoder {
               acct.codeChanges(),
               (cc, ccOut) -> {
                 ccOut.startList();
-                ccOut.writeLong(cc.txIndex());
+                ccOut.writeInt(cc.txIndex());
                 ccOut.writeBytes(cc.newCode());
                 ccOut.endList();
               });
