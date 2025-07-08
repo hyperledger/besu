@@ -124,6 +124,8 @@ This can occur in the following situations:
     leave such as parental leave and medical leave.
 - Other unspecified circumstances.
 
+If one of the above reasons applies to an existing maintainer, removal of the maintainer is completed through a PR approved by a majority of the existing maintainers.
+
 As for adding a maintainer, the record and governance process for moving a
 maintainer to emeritus status is recorded using review approval in the PR making that change.
 
