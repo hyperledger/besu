@@ -31,7 +31,7 @@ import org.openjdk.jmh.annotations.State;
 @OutputTimeUnit(value = TimeUnit.MILLISECONDS)
 public class Hashing20kKeccak256Benchmark {
 
-  @Param({"32", "128", "256", "512"})
+  @Param({"32", "64", "128", "256", "512"})
   private String inputSize;
 
   public Bytes bytes;
