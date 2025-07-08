@@ -604,8 +604,7 @@ public class QbftBlockHeightManagerTest {
             clock,
             messageValidatorFactory,
             validatorMessageFactory.get(2),
-            validatorProvider,
-            true); // Enable early round change
+            validatorProvider);
 
     manager.handleRoundChangePayload(roundChange1);
     manager.handleRoundChangePayload(roundChange2);
