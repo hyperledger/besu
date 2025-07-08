@@ -243,7 +243,7 @@ public class MessageFrame {
 
   private final TxValues txValues;
 
-  private final Eip7928AccessList eip7928AccessList;
+  private Optional<Eip7928AccessList> eip7928AccessList = Optional.empty();
 
   /** The mark of the undoable collections at the creation of this message frame */
   private final long undoMark;
@@ -273,7 +273,7 @@ public class MessageFrame {
       final Map<String, Object> contextVariables,
       final Optional<Bytes> revertReason,
       final TxValues txValues,
-      final Eip7928AccessList eip7928AccessList) {
+      final Optional<Eip7928AccessList> eip7928AccessList) {
 
     this.txValues = txValues;
     this.type = type;
@@ -1317,7 +1317,7 @@ public class MessageFrame {
     return txValues.versionedHashes();
   }
 
-  public Eip7928AccessList getEip7928AccessList() {
+  public Optional<Eip7928AccessList> getEip7928AccessList() {
     return eip7928AccessList;
   }
 
@@ -1354,7 +1354,7 @@ public class MessageFrame {
     private Optional<Bytes> reason = Optional.empty();
     private Set<Address> eip2930AccessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> eip2930AccessListWarmStorage = HashMultimap.create();
-    private Eip7928AccessList eip7928AccessList;
+    private Optional<Eip7928AccessList> eip7928AccessList = Optional.empty();
 
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
@@ -1630,7 +1630,7 @@ public class MessageFrame {
     }
 
     public Builder eip7928AccessList(final Eip7928AccessList eip7928AccessList) {
-      this.eip7928AccessList = eip7928AccessList;
+      this.eip7928AccessList = Optional.of(eip7928AccessList);
       return this;
     }
 

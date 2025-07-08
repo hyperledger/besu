@@ -185,6 +185,28 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
+    return processTransaction(
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        operationTracer,
+        blockHashLookup,
+        ImmutableTransactionValidationParams.builder().build(),
+        blobGasPrice,
+        Optional.empty());
+  }
+
+  public TransactionProcessingResult processTransaction(
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final OperationTracer operationTracer,
+      final BlockHashLookup blockHashLookup,
+      final TransactionValidationParams transactionValidationParams,
+      final Wei blobGasPrice,
+      final Optional<TransactionAccessList> eip7928AccessList) {
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
@@ -202,13 +224,9 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
-      // TODO: Pass transaction index or TAL
-      TransactionAccessList eip7928AccessList =
-          maybeBlockAccessListFactory.get().newTransactionAccessList(0);
-
       final Address senderAddress = transaction.getSender();
       final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
-      eip7928AccessList.addAccount(senderAddress, sender);
+      eip7928AccessList.ifPresent(t -> t.addAccount(senderAddress, sender));
 
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -309,9 +327,12 @@ public class MainnetTransactionProcessor {
               .blockValues(blockHeader)
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
-              .eip7928AccessList(eip7928AccessList)
               .blockHashLookup(blockHashLookup)
               .eip2930AccessListWarmStorage(eip2930StorageList);
+
+      if(eip7928AccessList.isPresent()) {
+        commonMessageFrameBuilder.eip7928AccessList(eip7928AccessList.get());
+      }
 
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(
@@ -436,7 +457,7 @@ public class MainnetTransactionProcessor {
       if (!coinbaseWeiDelta.isZero() || !clearEmptyAccounts) {
         final var coinbase = worldState.getOrCreate(miningBeneficiary);
         coinbase.incrementBalance(coinbaseWeiDelta);
-        eip7928AccessList.addAccount(miningBeneficiary, coinbase);
+        eip7928AccessList.ifPresent(t -> t.addAccount(miningBeneficiary, coinbase));
       }
 
       operationTracer.traceEndTransaction(
@@ -461,7 +482,7 @@ public class MainnetTransactionProcessor {
             gasUsedByTransaction,
             refundedGas,
             initialFrame.getOutputData(),
-            Optional.of(eip7928AccessList),
+            eip7928AccessList,
             validationResult);
       } else {
         if (initialFrame.getExceptionalHaltReason().isPresent()) {

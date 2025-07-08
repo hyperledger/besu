@@ -201,7 +201,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.clearReturnData();
 
     final Account account = getAccount(frame.getRecipientAddress(), frame);
-    frame.getEip7928AccessList().addAccount(frame.getRecipientAddress(), account);
+    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(frame.getRecipientAddress(), account));
 
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
 
@@ -227,7 +227,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
     }
 
-    MessageFrame.builder()
+    MessageFrame.Builder builder = MessageFrame.builder()
         .parentMessageFrame(frame)
         .type(MessageFrame.Type.MESSAGE_CALL)
         .initialGas(gasAvailableForChildCall(frame))
@@ -239,9 +239,13 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         .apparentValue(apparentValue(frame))
         .code(code)
         .isStatic(isStatic(frame))
-        .eip7928AccessList(frame.getEip7928AccessList())
-        .completer(child -> complete(frame, child))
-        .build();
+        .completer(child -> complete(frame, child));
+
+    if (frame.getEip7928AccessList().isPresent()) {
+      builder.eip7928AccessList(frame.getEip7928AccessList().get());
+    }
+
+    builder.build();
     // see note in stack depth check about incrementing cost
     frame.incrementRemainingGas(cost);
 

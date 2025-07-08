@@ -90,32 +90,32 @@ public abstract class AbstractOperation implements Operation {
 
   protected Account getAccount(final Address address, final MessageFrame frame) {
     final Account account = frame.getWorldUpdater().get(address);
-    frame.getEip7928AccessList().addAccount(address, account);
+    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(address, account));
     return account;
   }
 
   protected MutableAccount getMutableAccount(final Address address, final MessageFrame frame) {
     final MutableAccount account = frame.getWorldUpdater().getAccount(address);
-    frame.getEip7928AccessList().addAccount(address, account);
+    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(address, account));
     return account;
   }
 
   protected MutableAccount getOrCreateAccount(final Address address, final MessageFrame frame) {
     final MutableAccount account = frame.getWorldUpdater().getOrCreate(address);
-    frame.getEip7928AccessList().addAccount(address, account);
+    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(address, account));
     return account;
   }
 
   protected MutableAccount getSenderAccount(final MessageFrame frame) {
     final MutableAccount account = frame.getWorldUpdater().getSenderAccount(frame);
-    frame.getEip7928AccessList().addAccount(account.getAddress(), account);
+    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(account.getAddress(), account));
     return account;
   }
 
   protected UInt256 getStorageValue(
       final Account account, final UInt256 slotKey, final MessageFrame frame) {
     final UInt256 slotValue = account.getStorageValue(slotKey);
-    frame.getEip7928AccessList().addSlotAccessForAccount(account.getAddress(), slotKey, slotValue);
+    frame.getEip7928AccessList().ifPresent(t -> t.addSlotAccessForAccount(account.getAddress(), slotKey, slotValue));
     return slotValue;
   }
 }

@@ -281,8 +281,8 @@ public class BlockSimulator {
 
     final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
 
-    for (int i = 0; i < blockStateCall.getCalls().size(); i++) {
-      final CallParameter callParameter = blockStateCall.getCalls().get(i);
+    for (int transactionLocation = 0; transactionLocation < blockStateCall.getCalls().size(); transactionLocation++) {
+      final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
       OperationTracer operationTracer =
           isTraceTransfers ? new EthTransferLogOperationTracer() : OperationTracer.NO_TRACING;
 
@@ -297,6 +297,7 @@ public class BlockSimulator {
           getBlobGasPricePerGasSupplier(
               blockStateCall.getBlockOverrides(), transactionValidationParams);
 
+      final TransactionAccessList transactionAccessList = new TransactionAccessList(transactionLocation);
       final Optional<TransactionSimulatorResult> transactionSimulatorResult =
           transactionSimulator.processWithWorldUpdater(
               callParameter,
@@ -310,7 +311,8 @@ public class BlockSimulator {
               transactionProcessor,
               blobGasPricePerGasSupplier,
               blockHashLookup,
-              signatureSupplier);
+              signatureSupplier,
+              Optional.of(transactionAccessList));
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(

@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
@@ -59,6 +60,7 @@ import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -454,6 +456,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         blockSelectionContext
             .preExecutionProcessor()
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
+    final TransactionAccessList transactionAccessList = new TransactionAccessList(currentTxnLocation);
     return transactionProcessor.processTransaction(
         txWorldStateUpdater,
         blockSelectionContext.pendingBlockHeader(),
@@ -462,7 +465,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         operationTracer,
         blockHashLookup,
         TransactionValidationParams.mining(),
-        blockSelectionContext.blobGasPrice());
+        blockSelectionContext.blobGasPrice(),
+        Optional.of(transactionAccessList));
   }
 
   /**
