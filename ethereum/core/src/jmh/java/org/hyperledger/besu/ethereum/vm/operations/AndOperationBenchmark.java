@@ -23,13 +23,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class AndOperationBenchmark extends BinaryOperationBenchmark {
   @Override
   protected Operation.OperationResult invoke(
-      final MessageFrame frame, final Bytes a, final Bytes b) {
-    frame.pushStackItem(b);
-    frame.pushStackItem(a);
-
-    final Operation.OperationResult result = AndOperation.staticOperation(frame);
-
-    frame.popStackItem();
-    return result;
+      final MessageFrame frame) {
+    return AndOperation.staticOperation(frame);
   }
 }

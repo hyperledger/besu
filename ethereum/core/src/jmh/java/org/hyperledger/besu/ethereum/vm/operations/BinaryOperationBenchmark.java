@@ -28,7 +28,7 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
 @State(Scope.Thread)
-@OutputTimeUnit(value = TimeUnit.MICROSECONDS)
+@OutputTimeUnit(value = TimeUnit.NANOSECONDS)
 public abstract class BinaryOperationBenchmark {
 
   protected static final int SAMPLE_SIZE = 30_000;
@@ -51,8 +51,16 @@ public abstract class BinaryOperationBenchmark {
   public Operation.OperationResult benchmark() {
     final int i = index;
     index = (index + 1) % SAMPLE_SIZE;
-    return invoke(frame, aPool[i], bPool[i]);
+
+    frame.pushStackItem(bPool[i]);
+    frame.pushStackItem(aPool[i]);
+
+    final Operation.OperationResult result = invoke(frame);
+
+    frame.popStackItem();
+
+    return result;
   }
 
-  protected abstract Operation.OperationResult invoke(MessageFrame frame, Bytes a, Bytes b);
+  protected abstract Operation.OperationResult invoke(MessageFrame frame);
 }

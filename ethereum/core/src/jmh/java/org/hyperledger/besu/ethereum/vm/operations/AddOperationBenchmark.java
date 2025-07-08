@@ -18,19 +18,12 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 
-import org.apache.tuweni.bytes.Bytes;
 
 /** Benchmark for the Add operation in the Ethereum Virtual Machine (EVM). */
 public class AddOperationBenchmark extends BinaryOperationBenchmark {
   @Override
   protected Operation.OperationResult invoke(
-      final MessageFrame frame, final Bytes a, final Bytes b) {
-    frame.pushStackItem(b);
-    frame.pushStackItem(a);
-
-    final Operation.OperationResult result = AddOperation.staticOperation(frame);
-
-    frame.popStackItem();
-    return result;
+      final MessageFrame frame) {
+    return AddOperation.staticOperation(frame);
   }
 }
