@@ -30,6 +30,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.auth.impl.Codec;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -132,10 +133,9 @@ public class EngineAuthService implements AuthenticationService {
   @Override
   public void authenticate(final String token, final Handler<Optional<User>> handler) {
     try {
-      JsonObject jwt = new JsonObject().put("token", token);
       getJwtAuthProvider()
           .authenticate(
-              jwt,
+              new TokenCredentials(token),
               r -> {
                 if (r.succeeded()) {
                   if (issuedRecently(r.result().attributes().getLong("iat"))) {
