@@ -206,17 +206,11 @@ public abstract class BenchmarkExecutor {
 
     int executions = 0;
     long totalElapsed = 0;
-    boolean isInvalidCase = false;
 
     while (executions < execIterations && totalElapsed < execTimeInNano) {
       long iterationStart = System.nanoTime();
-      final var result = contract.computePrecompile(arg, fakeFrame);
+      contract.computePrecompile(arg, fakeFrame);
       long iterationElapsed = System.nanoTime() - iterationStart;
-
-      if (result.output() == null) {
-        isInvalidCase = true;
-        break;
-      }
 
       totalElapsed += iterationElapsed;
       executions++;
@@ -228,10 +222,6 @@ public abstract class BenchmarkExecutor {
       } catch (Throwable t) {
         output.println("async profiler unavailable: " + t.getMessage());
       }
-    }
-
-    if (isInvalidCase || executions == 0) {
-      throw new IllegalArgumentException("Invalid input or zero executions performed");
     }
 
     return (totalElapsed / 1.0e9D) / executions;
