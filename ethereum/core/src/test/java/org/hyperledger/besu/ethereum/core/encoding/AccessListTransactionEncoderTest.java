@@ -19,14 +19,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.BlockAccessList;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountChanges;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.BalanceChange;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.CodeChange;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.NonceChange;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.SlotChanges;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.SlotRead;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.StorageChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BalanceChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.CodeChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.NonceChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotRead;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -71,20 +71,20 @@ public class AccessListTransactionEncoderTest {
     assertThat(decodedAccessList.getAccountChanges()).hasSize(1);
     final AccountChanges decoded = decodedAccessList.getAccountChanges().get(0);
 
-    assertThat(decoded.getAddress()).isEqualTo(address);
+    assertThat(decoded.address()).isEqualTo(address);
 
-    assertThat(decoded.getStorageChanges()).hasSize(1);
-    assertThat(decoded.getStorageChanges().get(0).getSlot()).isEqualTo(slotKey);
-    assertThat(decoded.getStorageChanges().get(0).getChanges()).hasSize(1);
-    assertThat(decoded.getStorageChanges().get(0).getChanges().get(0).getTxIndex()).isEqualTo(0);
-    assertThat(decoded.getStorageChanges().get(0).getChanges().get(0).getNewValue())
+    assertThat(decoded.storageChanges()).hasSize(1);
+    assertThat(decoded.storageChanges().get(0).slot()).isEqualTo(slotKey);
+    assertThat(decoded.storageChanges().get(0).changes()).hasSize(1);
+    assertThat(decoded.storageChanges().get(0).changes().get(0).txIndex()).isEqualTo(0);
+    assertThat(decoded.storageChanges().get(0).changes().get(0).newValue())
         .isEqualTo(Wei.ONE.toBytes());
 
-    assertThat(decoded.getStorageReads()).containsExactly(slotRead);
+    assertThat(decoded.storageReads()).containsExactly(slotRead);
 
-    assertThat(decoded.getBalanceChanges()).containsExactly(balanceChange);
-    assertThat(decoded.getNonceChanges()).containsExactly(nonceChange);
-    assertThat(decoded.getCodeChanges()).containsExactly(codeChange);
+    assertThat(decoded.balanceChanges()).containsExactly(balanceChange);
+    assertThat(decoded.nonceChanges()).containsExactly(nonceChange);
+    assertThat(decoded.codeChanges()).containsExactly(codeChange);
   }
 
   @Test

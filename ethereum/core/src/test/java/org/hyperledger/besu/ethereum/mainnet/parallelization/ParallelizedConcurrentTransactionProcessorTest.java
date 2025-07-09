@@ -125,7 +125,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 0,
                 0,
                 Bytes.EMPTY,
-                eip7928AccessList,
+                Optional.empty(),
                 ValidationResult.valid()));
 
     processor.runTransaction(
@@ -202,7 +202,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 0,
                 0,
                 Bytes.EMPTY,
-                eip7928AccessList,
+                Optional.empty(),
                 ValidationResult.valid()));
 
     processor.runTransaction(

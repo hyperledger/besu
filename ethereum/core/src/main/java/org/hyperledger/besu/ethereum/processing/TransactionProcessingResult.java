@@ -59,7 +59,7 @@ public class TransactionProcessingResult
 
   public PathBasedWorldStateUpdateAccumulator<?> accumulator;
   private final Optional<ExceptionalHaltReason> exceptionalHaltReason;
-  private final Optional<TransactionAccessList> transactionLevelAccessList;
+  private final Optional<TransactionAccessList> transactionAccessList;
 
   public static TransactionProcessingResult invalid(
       final ValidationResult<TransactionInvalidReason> validationResult) {
@@ -97,7 +97,7 @@ public class TransactionProcessingResult
       final long gasUsedByTransaction,
       final long gasRemaining,
       final Bytes output,
-      final Optional<TransactionAccessList> transactionLevelAccessList,
+      final Optional<TransactionAccessList> transactionAccessList,
       final ValidationResult<TransactionInvalidReason> validationResult) {
     return new TransactionProcessingResult(
         Status.SUCCESSFUL,
@@ -107,7 +107,7 @@ public class TransactionProcessingResult
         output,
         validationResult,
         Optional.empty(),
-        transactionLevelAccessList);
+        transactionAccessList);
   }
 
   public TransactionProcessingResult(
@@ -118,7 +118,7 @@ public class TransactionProcessingResult
       final Bytes output,
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
-      final Optional<TransactionAccessList> transactionLevelAccessList) {
+      final Optional<TransactionAccessList> transactionAccessList) {
     this.status = status;
     this.logs = logs;
     this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
@@ -127,7 +127,7 @@ public class TransactionProcessingResult
     this.validationResult = validationResult;
     this.revertReason = revertReason;
     this.exceptionalHaltReason = Optional.empty();
-    this.transactionLevelAccessList = transactionLevelAccessList;
+    this.transactionAccessList = transactionAccessList;
   }
 
   public TransactionProcessingResult(
@@ -139,7 +139,7 @@ public class TransactionProcessingResult
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
       final Optional<ExceptionalHaltReason> exceptionalHaltReason,
-      final Optional<TransactionAccessList> transactionLevelAccessList) {
+      final Optional<TransactionAccessList> transactionAccessList) {
     this.status = status;
     this.logs = logs;
     this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
@@ -148,7 +148,7 @@ public class TransactionProcessingResult
     this.validationResult = validationResult;
     this.revertReason = revertReason;
     this.exceptionalHaltReason = exceptionalHaltReason;
-    this.transactionLevelAccessList = transactionLevelAccessList;
+    this.transactionAccessList = transactionAccessList;
   }
 
   /**
@@ -239,8 +239,8 @@ public class TransactionProcessingResult
     return validationResult;
   }
 
-  public Optional<TransactionAccessList> getTransactionLevelAccessList() {
-    return transactionLevelAccessList;
+  public Optional<TransactionAccessList> getTransactionAccessList() {
+    return transactionAccessList;
   }
 
   /**

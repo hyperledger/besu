@@ -228,7 +228,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               transactionAccessList);
 
       transactionProcessingResult
-          .getTransactionLevelAccessList()
+          .getTransactionAccessList()
           .ifPresent(
               t -> blockAccessListBuilder.ifPresent(b -> b.addTransactionLevelAccessList(t)));
 

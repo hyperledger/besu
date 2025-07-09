@@ -25,6 +25,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -41,7 +42,7 @@ public class TransactionSelectionResults {
       new EnumMap<>(TransactionType.class);
   private final List<TransactionReceipt> receipts = Lists.newArrayList();
 
-  private BlockAccessList blockAccessList;
+  private Optional<BlockAccessList> blockAccessList = Optional.empty();
 
   /**
    * Access to this field needs to be guarded, since it is possible to read it while another
@@ -74,7 +75,7 @@ public class TransactionSelectionResults {
   }
 
   public void setBlockAccessList(final BlockAccessList blockAccessList) {
-    this.blockAccessList = blockAccessList;
+    this.blockAccessList = Optional.of(blockAccessList);
   }
 
   public List<Transaction> getSelectedTransactions() {
@@ -97,7 +98,7 @@ public class TransactionSelectionResults {
     return Map.copyOf(notSelectedTransactions);
   }
 
-  public BlockAccessList getBlockAccessList() {
+  public Optional<BlockAccessList> getBlockAccessList() {
     return blockAccessList;
   }
 

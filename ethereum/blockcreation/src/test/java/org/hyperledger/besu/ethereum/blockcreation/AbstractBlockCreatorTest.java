@@ -41,8 +41,8 @@ import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationRes
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
-import org.hyperledger.besu.ethereum.core.BlockAccessList;
-import org.hyperledger.besu.ethereum.core.BlockAccessList.AccountBalanceDiff;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -326,23 +326,23 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
         blockCreationResult.getBlock().getBody().getBlockAccessList();
     assertThat(maybeBlockAccessList).isNotEmpty();
     final BlockAccessList blockAccessList = maybeBlockAccessList.get();
-    final List<AccountBalanceDiff> accountBalanceDiffs = blockAccessList.getAccountBalanceDiffs();
-    assertThat(accountBalanceDiffs.size()).isEqualTo(3);
-    final AccountBalanceDiff accountBalanceDiff1 = accountBalanceDiffs.get(0);
-    assertThat(accountBalanceDiff1.getAddress())
+    final List<AccountChanges> accountChanges = blockAccessList.getAccountChanges();
+    assertThat(accountChanges.size()).isEqualTo(3);
+    final AccountChanges accountChange1 = accountChanges.get(0);
+    assertThat(accountChange1.address())
         .isIn(sender.address(), recipient.address(), coinbase);
-    assertThat(accountBalanceDiff1.getBalanceChanges().size()).isEqualTo(1);
-    assertThat(accountBalanceDiff1.getBalanceChanges().get(0).getDelta()).isNotZero();
-    final AccountBalanceDiff accountBalanceDiff2 = accountBalanceDiffs.get(1);
-    assertThat(accountBalanceDiff2.getAddress())
+    assertThat(accountChange1.balanceChanges().size()).isEqualTo(1);
+    assertThat(accountChange1.balanceChanges().get(0).txIndex()).isNotZero();
+    final AccountChanges accountChange2 = accountChanges.get(1);
+    assertThat(accountChange2.address())
         .isIn(sender.address(), recipient.address(), coinbase);
-    assertThat(accountBalanceDiff2.getBalanceChanges().size()).isEqualTo(1);
-    assertThat(accountBalanceDiff2.getBalanceChanges().get(0).getDelta()).isNotZero();
-    final AccountBalanceDiff accountBalanceDiff3 = accountBalanceDiffs.get(2);
-    assertThat(accountBalanceDiff3.getAddress())
+    assertThat(accountChange2.balanceChanges().size()).isEqualTo(1);
+    assertThat(accountChange2.balanceChanges().get(0).postBalance()).isNotEqualTo(Bytes.of(0));
+    final AccountChanges accountChange3 = accountChanges.get(2);
+    assertThat(accountChange3.address())
         .isIn(sender.address(), recipient.address(), coinbase);
-    assertThat(accountBalanceDiff3.getBalanceChanges().size()).isEqualTo(1);
-    assertThat(accountBalanceDiff3.getBalanceChanges().get(0).getDelta()).isNotZero();
+    assertThat(accountChange3.balanceChanges().size()).isEqualTo(1);
+    assertThat(accountChange3.balanceChanges().get(0).postBalance()).isNotEqualTo(Bytes.of(0));
   }
 
   private CreateOn blockCreatorWithWithdrawalsProcessor() {
