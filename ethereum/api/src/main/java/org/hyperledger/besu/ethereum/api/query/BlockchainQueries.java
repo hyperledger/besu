@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -293,7 +294,7 @@ public class BlockchainQueries {
     if (outsideBlockchainRange(blockNumber)) {
       return Optional.empty();
     }
-    return blockchain.getBlockHashByNumber(blockNumber).map(this::getTransactionCount);
+    return blockchain.getBlockHashByNumber(blockNumber).flatMap(this::getTransactionCount);
   }
 
   /**
@@ -302,11 +303,8 @@ public class BlockchainQueries {
    * @param blockHeaderHash The hash of the block being queried.
    * @return The number of transactions contained in the referenced block.
    */
-  public Integer getTransactionCount(final Hash blockHeaderHash) {
-    return blockchain
-        .getBlockBody(blockHeaderHash)
-        .map(body -> body.getTransactions().size())
-        .orElse(-1);
+  public Optional<Integer> getTransactionCount(final Hash blockHeaderHash) {
+    return blockchain.getBlockBody(blockHeaderHash).map(body -> body.getTransactions().size());
   }
 
   /**
@@ -451,7 +449,7 @@ public class BlockchainQueries {
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
-                                      final int size = new Block(header, body).calculateSize();
+                                      final int size = new Block(header, body).getSize();
                                       return new BlockWithMetadata<>(
                                           header,
                                           formattedTxs,
@@ -511,7 +509,7 @@ public class BlockchainQueries {
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
-                                      final int size = new Block(header, body).calculateSize();
+                                      final int size = new Block(header, body).getSize();
                                       return new BlockWithMetadata<>(
                                           header, txs, ommers, td, size, body.getWithdrawals());
                                     })));
@@ -618,14 +616,20 @@ public class BlockchainQueries {
   private TransactionWithMetadata transactionByHeaderAndIndex(
       final BlockHeader header, final int txIndex) {
     final Hash blockHeaderHash = header.getHash();
-    // headers should not exist w/o bodies, so not being present is exceptional
-    final BlockBody blockBody = blockchain.getBlockBody(blockHeaderHash).orElseThrow();
-    final List<Transaction> txs = blockBody.getTransactions();
-    if (txIndex >= txs.size()) {
-      return null;
-    }
-    return new TransactionWithMetadata(
-        txs.get(txIndex), header.getNumber(), header.getBaseFee(), blockHeaderHash, txIndex);
+
+    return blockchain
+        .getBlockBody(blockHeaderHash)
+        .map(BlockBody::getTransactions)
+        .filter((txs) -> txIndex < txs.size())
+        .map(
+            (txs) ->
+                new TransactionWithMetadata(
+                    txs.get(txIndex),
+                    header.getNumber(),
+                    header.getBaseFee(),
+                    blockHeaderHash,
+                    txIndex))
+        .orElse(null);
   }
 
   public Optional<TransactionLocation> transactionLocationByHash(final Hash transactionHash) {
@@ -760,6 +764,17 @@ public class BlockchainQueries {
     return transaction.getType().supportsBlob()
         ? Optional.of(protocolSpec.getGasCalculator().blobGasCost(transaction.getBlobCount()))
         : Optional.empty();
+  }
+
+  public long getMinimumTransactionCost(final ProcessableBlockHeader header) {
+    return protocolSchedule.getByBlockHeader(header).getGasCalculator().getMinimumTransactionCost();
+  }
+
+  public long getTransactionGasLimitCap(final ProcessableBlockHeader header) {
+    return protocolSchedule
+        .getByBlockHeader(header)
+        .getGasLimitCalculator()
+        .transactionGasLimitCap();
   }
 
   /**

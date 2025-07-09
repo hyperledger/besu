@@ -15,7 +15,7 @@ import java.security.MessageDigest
 
 apply plugin: 'java-library'
 jar {
-  archiveBaseName = 'plugin-api'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -71,7 +71,7 @@ Calculated : ${currentHash}
 tasks.register('checkAPIChanges', FileStateChecker) {
   description = "Checks that the API for the Plugin-API project does not change without deliberate thought"
   files = sourceSets.main.allJava.files
-  knownHash = 'oLLEhw3aGJ8Q/yIJh8E2nQrRFprh9rGVYwag0qJY/Kk='
+  knownHash = 'lIxtWb7w8OQAqxaSQIva/H4fC6GxlkCbGVri0ibMYIc='
 }
 check.dependsOn('checkAPIChanges')
 

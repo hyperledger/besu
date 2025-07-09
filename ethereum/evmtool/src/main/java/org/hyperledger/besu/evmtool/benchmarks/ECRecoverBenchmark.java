@@ -14,8 +14,12 @@
  */
 package org.hyperledger.besu.evmtool.benchmarks;
 
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.fluent.EvmSpec;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
@@ -26,14 +30,20 @@ import org.apache.tuweni.bytes.Bytes;
 /** Benchmark ECRecover precompile (ECDSA key extraction + keccak hash) */
 public class ECRecoverBenchmark extends BenchmarkExecutor {
 
-  /** Use default math based warmup and interations */
-  public ECRecoverBenchmark() {
-    super(MATH_WARMUP, MATH_ITERATIONS);
+  /**
+   * The constructor. Use default math based warmup and interations.
+   *
+   * @param output where to write the stats.
+   * @param benchmarkConfig benchmark configurations.
+   */
+  public ECRecoverBenchmark(final PrintStream output, final BenchmarkConfig benchmarkConfig) {
+    super(MATH_WARMUP, MATH_ITERATIONS, output, benchmarkConfig);
   }
 
   @Override
-  public void runBenchmark(
-      final PrintStream output, final Boolean attemptNative, final String fork) {
+  public void runBenchmark(final Boolean attemptNative, final String fork) {
+    EvmSpecVersion evmSpecVersion = EvmSpecVersion.fromName(fork);
+
     final Map<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "0x0c65a9d9ffc02c7c99e36e32ce0f950c7804ceda",
@@ -440,27 +450,31 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
         Bytes.fromHexString(
             "0xda13687f911cf8ede5e0a4317d8b9bf691b56bc2f3f4e463c8c2eb1f61a54469000000000000000000000000000000000000000000000000000000000000001bf6e5df315197d9fe994fae7e05e33be4bd090f9533f36c6285b80478cd21c38533928bb06d48795a86c12f5ccb95758e891d8b1b2d62106e85ae36cb8414d56b"));
 
-    final SECP256K1 signatureAlgorithm = new SECP256K1();
+    SignatureAlgorithmFactory.setDefaultInstance();
+    SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
     if (attemptNative != null && (!attemptNative || !signatureAlgorithm.maybeEnableNative())) {
       signatureAlgorithm.disableNative();
     }
-    output.println(signatureAlgorithm.isNative() ? "Native secp256k1" : "Java secp256k1");
+    output.println(signatureAlgorithm.isNative() ? "Native EcRecover" : "Java EcRecover");
 
-    final ECRECPrecompiledContract contract =
-        new ECRECPrecompiledContract(gasCalculatorForFork(fork), signatureAlgorithm);
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec(evmSpecVersion).getPrecompileContractRegistry().get(Address.ECREC);
 
-    warmup = warmup / testCases.size();
-    iterations = iterations / testCases.size();
+    warmIterations = warmIterations / testCases.size();
+    execIterations = execIterations / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      execTime += runPrecompileBenchmark(testCase.getValue(), contract);
+      execTime += runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
       gasCost += contract.gasRequirement(testCase.getValue());
     }
     execTime /= testCases.size();
     gasCost /= testCases.size();
-    output.printf(
-        "ecrecover %,6d gas @%,7.1f µs /%,8.1f MGps%n",
-        gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
+    logPrecompilePerformance("ecrecover", gasCost, execTime);
+  }
+
+  @Override
+  public boolean isPrecompile() {
+    return true;
   }
 }

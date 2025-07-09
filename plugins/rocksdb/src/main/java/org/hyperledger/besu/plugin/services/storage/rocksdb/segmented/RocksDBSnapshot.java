@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
+import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.OptimisticTransactionDB;
+import org.rocksdb.ReadOptions;
+import org.rocksdb.RocksDBException;
 import org.rocksdb.Snapshot;
 
 /**
@@ -28,22 +29,24 @@ class RocksDBSnapshot {
 
   private final OptimisticTransactionDB db;
   private final Snapshot dbSnapshot;
-  private final AtomicInteger usages = new AtomicInteger(0);
 
   RocksDBSnapshot(final OptimisticTransactionDB db) {
     this.db = db;
     this.dbSnapshot = db.getSnapshot();
   }
 
-  synchronized Snapshot markAndUseSnapshot() {
-    usages.incrementAndGet();
+  synchronized Snapshot getSnapshot() {
     return dbSnapshot;
   }
 
-  synchronized void unMarkSnapshot() {
-    if (usages.decrementAndGet() < 1) {
-      db.releaseSnapshot(dbSnapshot);
-      dbSnapshot.close();
-    }
+  synchronized void close() {
+    db.releaseSnapshot(dbSnapshot);
+    dbSnapshot.close();
+  }
+
+  public byte[] get(
+      final ColumnFamilyHandle columnFamilyHandle, final ReadOptions readOptions, final byte[] key)
+      throws RocksDBException {
+    return db.get(columnFamilyHandle, readOptions, key);
   }
 }

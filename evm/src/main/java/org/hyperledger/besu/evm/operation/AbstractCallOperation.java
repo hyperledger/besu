@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetAccount;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
@@ -30,11 +31,8 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A skeleton class for implementing call operations.
@@ -43,8 +41,6 @@ import org.slf4j.LoggerFactory;
  * execute, and then updates the current message context based on its execution.
  */
 public abstract class AbstractCallOperation extends AbstractOperation {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractCallOperation.class);
 
   /** The constant UNDERFLOW_RESPONSE. */
   protected static final OperationResult UNDERFLOW_RESPONSE =
@@ -189,29 +185,19 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Address to = to(frame);
     final boolean accountIsWarm = frame.warmUpAddress(to) || gasCalculator().isPrecompile(to);
-    final long cost = cost(frame, accountIsWarm);
+    long cost = cost(frame, accountIsWarm);
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    final Account contract = frame.getWorldUpdater().get(to);
+    cost = clampedAdd(cost, gasCalculator().calculateCodeDelegationResolutionGas(frame, contract));
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
     frame.decrementRemainingGas(cost);
 
     frame.clearReturnData();
-
-    final Account contract = frame.getWorldUpdater().get(to);
-
-    // code resolution gas must be deducted before we check for frame depth too deep to be spec
-    // compliant
-    try {
-      deductGasForCodeDelegationResolution(frame, contract);
-    } catch (InsufficientGasException e) {
-      LOG.atDebug()
-          .setMessage(
-              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
-          .addArgument(frame.getRemainingGas())
-          .addArgument(e.getGasCost())
-          .log();
-      return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
 
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
@@ -257,47 +243,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
     return new OperationResult(cost, null, 0);
-  }
-
-  /**
-   * Deducts the gas cost for delegated code resolution.
-   *
-   * @param frame the message frame
-   * @param contract the account
-   * @throws InsufficientGasException if there is insufficient gas to resolve delegated code
-   */
-  protected void deductGasForCodeDelegationResolution(
-      final MessageFrame frame, final Account contract) throws InsufficientGasException {
-    if (contract == null || !hasCodeDelegation(contract.getCode())) {
-      return;
-    }
-
-    final long codeDelegationResolutionGas =
-        CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract);
-
-    if (frame.getRemainingGas() < codeDelegationResolutionGas) {
-      throw new InsufficientGasException(
-          codeDelegationResolutionGas,
-          "Insufficient gas to resolve delegated code. Gas required: "
-              + codeDelegationResolutionGas
-              + ", Gas available: "
-              + frame.getRemainingGas());
-    }
-
-    frame.decrementRemainingGas(codeDelegationResolutionGas);
-  }
-
-  /**
-   * Calculates Cost.
-   *
-   * @param frame the frame
-   * @return the long
-   * @deprecated use the form with the `accountIsWarm` boolean
-   */
-  @Deprecated(since = "24.2.0", forRemoval = true)
-  @SuppressWarnings("InlineMeSuggester") // downstream users override, so @InlineMe is inappropriate
-  public long cost(final MessageFrame frame) {
-    return cost(frame, true);
   }
 
   /**
@@ -399,7 +344,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     final CodeDelegationAccount targetAccount =
-        getTargetAccount(frame.getWorldUpdater(), evm.getGasCalculator(), account);
+        getTargetAccount(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account);
 
     return evm.getCode(targetAccount.getCodeHash(), targetAccount.getCode());
   }

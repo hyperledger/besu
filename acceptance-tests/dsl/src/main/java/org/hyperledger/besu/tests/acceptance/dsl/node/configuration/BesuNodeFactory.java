@@ -84,7 +84,6 @@ public class BesuNodeFactory {
         config.getExtraCLIOptions(),
         config.getStaticNodes(),
         config.isDnsEnabled(),
-        config.getPrivacyParameters(),
         config.getRunCommand(),
         config.getKeyPair(),
         config.isStrictTxReplayProtectionEnabled(),
@@ -428,7 +427,7 @@ public class BesuNodeFactory {
     config.setAccountAllowlist(accountAllowList);
     config.setAccountPermissioningConfigFilePath(configFile.getAbsolutePath());
     final PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.of(config), Optional.empty());
+        new PermissioningConfiguration(Optional.of(config));
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
@@ -515,7 +514,9 @@ public class BesuNodeFactory {
             .dataStorageConfiguration(
                 storageFormat == DataStorageFormat.FOREST
                     ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
-                    : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+                    : storageFormat == DataStorageFormat.BONSAI
+                        ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
+                        : DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG)
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
     if (fixedPort) {
       builder.p2pPort(

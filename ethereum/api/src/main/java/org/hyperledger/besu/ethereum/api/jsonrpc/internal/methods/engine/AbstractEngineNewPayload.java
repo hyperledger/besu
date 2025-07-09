@@ -512,6 +512,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         return ValidationResult.invalid(
             RpcErrorType.INVALID_BLOB_COUNT, "There must be at least one blob");
       }
+      if (protocolSpec.getGasCalculator().blobGasCost(versionedHashes.get().size())
+          > protocolSpec.getGasLimitCalculator().transactionBlobGasLimitCap()) {
+        return ValidationResult.invalid(
+            RpcErrorType.INVALID_BLOB_COUNT,
+            String.format("Blob transaction has too many blobs: %d", versionedHashes.get().size()));
+      }
       transactionVersionedHashes.addAll(versionedHashes.get());
     }
 
@@ -615,18 +621,24 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final Optional<Integer> nbParallelizedTransactions) {
     final StringBuilder message = new StringBuilder();
     final int nbTransactions = block.getBody().getTransactions().size();
-    message.append("Imported #%,d  (%s)|%5d tx");
+    message.append("Imported #%,d  (%s)| %4d tx");
     final List<Object> messageArgs =
         new ArrayList<>(
             List.of(
                 block.getHeader().getNumber(), block.getHash().toShortLogString(), nbTransactions));
+    if (nbParallelizedTransactions.isPresent()) {
+      double parallelizedTxPercentage =
+          (double) (nbParallelizedTransactions.get() * 100) / nbTransactions;
+      message.append(" (%5.1f%% parallel)");
+      messageArgs.add(parallelizedTxPercentage);
+    }
     if (block.getBody().getWithdrawals().isPresent()) {
-      message.append("|%3d ws");
+      message.append("| %2d ws");
       messageArgs.add(block.getBody().getWithdrawals().get().size());
     }
     double mgasPerSec = (timeInS != 0) ? block.getHeader().getGasUsed() / (timeInS * 1_000_000) : 0;
     message.append(
-        "|%2d blobs| base fee %s| gas used %,11d (%5.1f%%)| exec time %01.3fs| mgas/s %6.2f");
+        "| %2d blobs| %s bfee| %,11d (%5.1f%%) gas used| %01.3fs exec| %6.2f Mgas/s| %2d peers");
     messageArgs.addAll(
         List.of(
             blobCount,
@@ -634,15 +646,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
             timeInS,
-            mgasPerSec));
-    if (nbParallelizedTransactions.isPresent()) {
-      double parallelizedTxPercentage =
-          (double) (nbParallelizedTransactions.get() * 100) / nbTransactions;
-      message.append("| parallel txs %5.1f%%");
-      messageArgs.add(parallelizedTxPercentage);
-    }
-    message.append("| peers: %2d");
-    messageArgs.add(ethPeers.peerCount());
+            mgasPerSec,
+            ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
   }
 

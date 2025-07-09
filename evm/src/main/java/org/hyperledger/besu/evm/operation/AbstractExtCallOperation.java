@@ -26,11 +26,8 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-import javax.annotation.Nonnull;
-
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A skeleton class for implementing call operations.
@@ -39,8 +36,6 @@ import org.slf4j.LoggerFactory;
  * execute, and then updates the current message context based on its execution.
  */
 public abstract class AbstractExtCallOperation extends AbstractCallOperation {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractExtCallOperation.class);
 
   static final int STACK_TO = 0;
   static final int STACK_INPUT_OFFSET = 1;
@@ -143,7 +138,12 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     if (currentGas < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
+    cost = clampedAdd(cost, gasCalculator().calculateCodeDelegationResolutionGas(frame, contract));
+    if (currentGas < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
     currentGas -= cost;
+
     frame.expandMemory(inputOffset, inputLength);
 
     final Code code = getCode(evm, frame, contract);
@@ -176,18 +176,6 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
       return softFailure(frame, cost);
     }
 
-    try {
-      deductGasForCodeDelegationResolution(frame, contract);
-    } catch (InsufficientGasException e) {
-      LOG.atDebug()
-          .setMessage(
-              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
-          .addArgument(frame.getRemainingGas())
-          .addArgument(e.getGasCost())
-          .log();
-      return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
-
     // stack too deep, for large gas systems.
     if (frame.getDepth() >= 1024) {
       return softFailure(frame, cost);
@@ -215,7 +203,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     return new OperationResult(clampedAdd(cost, childGas), null, 0);
   }
 
-  private @Nonnull OperationResult softFailure(final MessageFrame frame, final long cost) {
+  private @NotNull OperationResult softFailure(final MessageFrame frame, final long cost) {
     frame.popStackItems(getStackItemsConsumed());
     frame.pushStackItem(EOF1_EXCEPTION_STACK_ITEM);
     return new OperationResult(cost, null);

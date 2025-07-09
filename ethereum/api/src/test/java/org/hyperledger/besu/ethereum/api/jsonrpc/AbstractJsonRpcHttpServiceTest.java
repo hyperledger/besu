@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -153,7 +152,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     // nonce too low tests uses a tx with nonce=16
     when(transactionPoolMock.addTransactionViaApi(argThat(tx -> tx.getNonce() == 16)))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
-    final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
     when(miningConfiguration.getCoinbase()).thenReturn(Optional.of(Address.ZERO));
 
@@ -209,7 +207,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             Optional.empty(),
             Optional.empty(),
             JSON_RPC_APIS,
-            privacyParameters,
             config,
             mock(WebSocketConfiguration.class),
             mock(MetricsConfiguration.class),

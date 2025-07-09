@@ -61,6 +61,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -368,6 +370,48 @@ public class EthFeeHistoryTest {
     assertThat(result.getReward()).isEqualTo(List.of(List.of("0x0")));
   }
 
+  @Test
+  public void assertMaximumPercentilesArraySize() {
+    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
+    final BlockDataGenerator.BlockOptions blockOptions = BlockDataGenerator.BlockOptions.create();
+    blockOptions.hasTransactions(false);
+    blockOptions.setParentHash(blockchain.getChainHeadHash());
+    blockOptions.setBlockNumber(11);
+    final Block emptyBlock = gen.block(blockOptions);
+    blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock));
+    when(protocolSchedule.getForNextBlockHeader(
+            eq(blockchain.getChainHeadHeader()),
+            eq(blockchain.getChainHeadHeader().getTimestamp())))
+        .thenReturn(londonSpec);
+
+    double[] biglist = new double[500];
+    Arrays.fill(biglist, 1d);
+    List<Double> oversizeRewardPercentiles =
+        Arrays.stream(biglist).boxed().collect(Collectors.toList());
+
+    List<Double> maxRewardPercentiles =
+        IntStream.rangeClosed(1, 100)
+            .mapToDouble(i -> i / 100d)
+            .boxed()
+            .collect(Collectors.toList());
+
+    // assert we return no percentiles for array sizes > 100
+    final FeeHistory.FeeHistoryResult result =
+        (FeeHistory.FeeHistoryResult)
+            ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest", oversizeRewardPercentiles))
+                .getResult();
+    assertThat(result.getReward()).isNull();
+
+    // assert we will return percentiles for array sizes <= 100
+    final FeeHistory.FeeHistoryResult resultOk =
+        (FeeHistory.FeeHistoryResult)
+            ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest", maxRewardPercentiles))
+                .getResult();
+    assertThat(resultOk.getReward()).isNotNull();
+    assertThat(resultOk.getReward().get(0).size()).isEqualTo(100);
+  }
+
   private void assertFeeMetadataSize(final Object feeObject, final int blockCount) {
     assertThat(((ImmutableFeeHistoryResult) feeObject).getBaseFeePerGas().size())
         .isEqualTo(blockCount + 1);
@@ -410,7 +454,7 @@ public class EthFeeHistoryTest {
   private void mockPostBlobFork() {
     final ProtocolSpec cancunSpec = mock(ProtocolSpec.class);
     when(cancunSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
-    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancun(5, Optional.empty()));
+    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancunDefault(5, Optional.empty()));
     when(cancunSpec.getGasLimitCalculator())
         .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(cancunSpec);
@@ -420,7 +464,7 @@ public class EthFeeHistoryTest {
   private void mockTransitionBlobFork() {
     final ProtocolSpec cancunSpec = mock(ProtocolSpec.class);
     when(cancunSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
-    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancun(5, Optional.empty()));
+    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancunDefault(5, Optional.empty()));
     when(cancunSpec.getGasLimitCalculator())
         .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(cancunSpec);

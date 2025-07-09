@@ -21,8 +21,6 @@ import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
@@ -37,6 +35,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
@@ -90,11 +89,19 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
   public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
       final Blockchain blockchain) {
-    return createBonsaiInMemoryWorldStateArchive(blockchain, EvmConfiguration.DEFAULT);
+    return createBonsaiInMemoryWorldStateArchive(blockchain, EvmConfiguration.DEFAULT, null);
   }
 
   public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
-      final Blockchain blockchain, final EvmConfiguration evmConfiguration) {
+      final Blockchain blockchain, final ServiceManager serviceManager) {
+    return createBonsaiInMemoryWorldStateArchive(
+        blockchain, EvmConfiguration.DEFAULT, serviceManager);
+  }
+
+  public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
+      final Blockchain blockchain,
+      final EvmConfiguration evmConfiguration,
+      final ServiceManager serviceManager) {
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
@@ -106,7 +113,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         blockchain,
         Optional.empty(),
         bonsaiCachedMerkleTrieLoader,
-        null,
+        serviceManager,
         evmConfiguration,
         throwingWorldStateHealerSupplier());
   }
@@ -117,10 +124,6 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         provider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_FOREST_CONFIG),
         provider.createWorldStatePreimageStorage(),
         EvmConfiguration.DEFAULT);
-  }
-
-  public static PrivateStateStorage createInMemoryPrivateStateStorage() {
-    return new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
   }
 
   public static VariablesStorage createInMemoryVariablesStorage() {

@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -92,7 +91,6 @@ public class BesuNodeConfigurationBuilder {
   private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
   private boolean isDnsEnabled = false;
-  private Optional<PrivacyParameters> privacyParameters = Optional.empty();
   private List<String> runCommand = new ArrayList<>();
   private Optional<KeyPair> keyPair = Optional.empty();
   private Boolean strictTxReplayProtectionEnabled = false;
@@ -177,12 +175,6 @@ public class BesuNodeConfigurationBuilder {
             .hostsAllowlist(singletonList("*"))
             .build();
 
-    return this;
-  }
-
-  public BesuNodeConfigurationBuilder enablePrivateTransactions() {
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.EEA.name());
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.PRIV.name());
     return this;
   }
 
@@ -426,11 +418,6 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder privacyParameters(final PrivacyParameters privacyParameters) {
-    this.privacyParameters = Optional.ofNullable(privacyParameters);
-    return this;
-  }
-
   public BesuNodeConfigurationBuilder keyPair(final KeyPair keyPair) {
     this.keyPair = Optional.of(keyPair);
     return this;
@@ -511,7 +498,6 @@ public class BesuNodeConfigurationBuilder {
         extraCLIOptions,
         staticNodes,
         isDnsEnabled,
-        privacyParameters,
         runCommand,
         keyPair,
         strictTxReplayProtectionEnabled,

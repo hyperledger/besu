@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -28,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -36,7 +39,7 @@ import org.slf4j.LoggerFactory;
 
 public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private static final Logger LOG = LoggerFactory.getLogger(ImportBlocksStep.class);
-  private static final long PRINT_DELAY = TimeUnit.SECONDS.toMillis(30L);
+  private static final int PRINT_DELAY_SECONDS = 30;
 
   private final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
@@ -48,6 +51,7 @@ public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private final BlockHeader pivotHeader;
   private final BodyValidationMode bodyValidationMode;
   private final boolean transactionIndexingEnabled;
+  private final AtomicBoolean shouldLog = new AtomicBoolean(true);
 
   public ImportBlocksStep(
       final ProtocolSchedule protocolSchedule,
@@ -91,13 +95,16 @@ public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
       peerCount = ethContext.getEthPeers().peerCount();
     }
     final long endTime = System.nanoTime();
-
     accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
-    if (accumulatedTime > PRINT_DELAY) {
+    if (shouldLog.get()) {
       final long blocksPercent = getBlocksPercent(lastBlock, pivotHeader.getNumber());
-      LOG.info(
-          "Block import progress: {} of {} ({}%), Peer count: {}",
-          lastBlock, pivotHeader.getNumber(), blocksPercent, peerCount);
+      throttledLog(
+          LOG::info,
+          String.format(
+              "Block import progress: %s of %s (%s%%), Peer count: %s",
+              lastBlock, pivotHeader.getNumber(), blocksPercent, peerCount),
+          shouldLog,
+          PRINT_DELAY_SECONDS);
       LOG.debug(
           "Completed importing chain segment {} to {} ({} blocks in {}ms), Peer count: {}",
           logStartBlock.getAsLong(),

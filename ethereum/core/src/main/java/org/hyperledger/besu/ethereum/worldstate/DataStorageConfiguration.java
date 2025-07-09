@@ -24,6 +24,7 @@ import org.immutables.value.Value;
 public interface DataStorageConfiguration {
 
   boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = true;
+  boolean DEFAULT_HISTORY_EXPIRY_PRUNE_ENABLED = false;
 
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()
@@ -32,6 +33,11 @@ public interface DataStorageConfiguration {
           .build();
 
   DataStorageConfiguration DEFAULT_BONSAI_CONFIG = DEFAULT_CONFIG;
+
+  DataStorageConfiguration DEFAULT_BONSAI_ARCHIVE_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE)
+          .build();
 
   DataStorageConfiguration DEFAULT_BONSAI_PARTIAL_DB_CONFIG =
       ImmutableDataStorageConfiguration.builder()
@@ -58,5 +64,10 @@ public interface DataStorageConfiguration {
   @Value.Default
   default boolean getReceiptCompactionEnabled() {
     return DEFAULT_RECEIPT_COMPACTION_ENABLED;
+  }
+
+  @Value.Default
+  default boolean getHistoryExpiryPruneEnabled() {
+    return DEFAULT_HISTORY_EXPIRY_PRUNE_ENABLED;
   }
 }

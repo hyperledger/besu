@@ -16,29 +16,73 @@ package org.hyperledger.besu.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
+import java.util.function.Supplier;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class BlobScheduleOptionsTest {
 
+  private BlobScheduleOptions options;
+
+  @BeforeEach
+  public void setupConfig() {
+    final GenesisConfig genesisConfig =
+        GenesisConfig.fromResource("/mainnet_with_blob_schedule.json");
+    final GenesisConfigOptions configOptions = genesisConfig.getConfigOptions();
+    assertThat(configOptions.getBlobScheduleOptions()).isNotEmpty();
+    options = configOptions.getBlobScheduleOptions().get();
+  }
+
   @Test
   public void blobScheduleIsParsed() {
-    final GenesisConfig genesisConfigFile =
-        GenesisConfig.fromResource("/mainnet_with_blob_schedule.json");
-    final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
+    assertParsed(options::getCancun, 4, 7, 3338477);
+    assertParsed(options::getPrague, 7, 10, 5007716);
+    assertParsed(options::getBpo1, 11, 12, 5007716);
+    assertParsed(options::getBpo2, 21, 22, 5007716);
+    assertParsed(options::getBpo3, 31, 32, 5007716);
+    assertParsed(options::getBpo4, 41, 42, 5007716);
+    assertParsed(options::getBpo5, 51, 52, 5007716);
+  }
 
-    assertThat(configOptions.getBlobScheduleOptions()).isNotEmpty();
-    final BlobScheduleOptions blobScheduleOptions = configOptions.getBlobScheduleOptions().get();
-    assertThat(blobScheduleOptions.getCancun()).isNotEmpty();
-    assertThat(blobScheduleOptions.getCancun().get().getTarget()).isEqualTo(4);
-    assertThat(blobScheduleOptions.getCancun().get().getMax()).isEqualTo(7);
-    assertThat(blobScheduleOptions.getCancun().get().getBaseFeeUpdateFraction()).isEqualTo(3338477);
-    assertThat(blobScheduleOptions.getPrague()).isNotEmpty();
-    assertThat(blobScheduleOptions.getPrague().get().getTarget()).isEqualTo(7);
-    assertThat(blobScheduleOptions.getPrague().get().getMax()).isEqualTo(10);
-    assertThat(blobScheduleOptions.getPrague().get().getBaseFeeUpdateFraction()).isEqualTo(5007716);
-    assertThat(blobScheduleOptions.getOsaka()).isNotEmpty();
-    assertThat(blobScheduleOptions.getOsaka().get().getTarget()).isEqualTo(10);
-    assertThat(blobScheduleOptions.getOsaka().get().getMax()).isEqualTo(13);
-    assertThat(blobScheduleOptions.getOsaka().get().getBaseFeeUpdateFraction()).isEqualTo(5007716);
+  @Test
+  public void blobScheduleDefaults() {
+    assertThat(BlobSchedule.CANCUN_DEFAULT.getTarget()).isEqualTo(3);
+    assertThat(BlobSchedule.CANCUN_DEFAULT.getMaxPerTransaction()).isEqualTo(6);
+    assertThat(BlobSchedule.CANCUN_DEFAULT.getMax()).isEqualTo(6);
+    assertThat(BlobSchedule.PRAGUE_DEFAULT.getTarget()).isEqualTo(6);
+    assertThat(BlobSchedule.PRAGUE_DEFAULT.getMaxPerTransaction()).isEqualTo(9);
+    assertThat(BlobSchedule.PRAGUE_DEFAULT.getMax()).isEqualTo(9);
+  }
+
+  @Test
+  public void blobScheduleMaxPerTransactionDefaultsToMax() {
+    Optional<BlobSchedule> cancun = options.getCancun();
+    assertThat(cancun).isNotEmpty();
+    BlobSchedule schedule = cancun.get();
+    assertThat(schedule.getMaxPerTransaction()).isEqualTo(schedule.getMax());
+  }
+
+  @Test
+  public void blobScheduleMaxPerTransactionIsSpecified() {
+    Optional<BlobSchedule> bpo1 = options.getBpo1();
+    assertThat(bpo1).isNotEmpty();
+    BlobSchedule schedule = bpo1.get();
+    assertThat(schedule.getMax()).isEqualTo(12);
+    assertThat(schedule.getMaxPerTransaction()).isEqualTo(13);
+  }
+
+  private void assertParsed(
+      final Supplier<Optional<BlobSchedule>> scheduleSupplier,
+      final int expectedTarget,
+      final int expectedMax,
+      final int expectedBaseFeeUpdateFraction) {
+
+    Optional<BlobSchedule> schedule = scheduleSupplier.get();
+    assertThat(schedule).isNotEmpty();
+    assertThat(schedule.get().getTarget()).isEqualTo(expectedTarget);
+    assertThat(schedule.get().getMax()).isEqualTo(expectedMax);
+    assertThat(schedule.get().getBaseFeeUpdateFraction()).isEqualTo(expectedBaseFeeUpdateFraction);
   }
 }

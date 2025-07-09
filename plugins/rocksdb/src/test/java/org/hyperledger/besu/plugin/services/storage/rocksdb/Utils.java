@@ -15,7 +15,6 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivacyVersionedStorageFormat;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -36,44 +35,11 @@ public class Utils {
     Files.write(tempDataDir.resolve(METADATA_FILENAME), content.getBytes(Charset.defaultCharset()));
   }
 
-  public static void createDatabaseMetadataV1Privacy(
-      final Path tempDataDir, final PrivacyVersionedStorageFormat privacyVersionedStorageFormat)
-      throws IOException {
-    createDatabaseMetadataV1Privacy(
-        tempDataDir,
-        dataStorageFormatToV1(privacyVersionedStorageFormat.getFormat()),
-        privacyVersionedStorageFormat.getPrivacyVersion().getAsInt());
-  }
-
-  public static void createDatabaseMetadataV1Privacy(
-      final Path tempDataDir, final int version, final int privacyVersion) throws IOException {
-    final String content =
-        "{\"version\":" + version + ",\"privacyVersion\":" + privacyVersion + "}";
-    Files.write(tempDataDir.resolve(METADATA_FILENAME), content.getBytes(Charset.defaultCharset()));
-  }
-
   public static void createDatabaseMetadataV2(
       final Path tempDataDir, final DataStorageFormat dataStorageFormat, final int version)
       throws IOException {
     final String content =
         "{\"v2\":{\"format\":\"" + dataStorageFormat + "\",\"version\":" + version + "}}";
-    Files.write(tempDataDir.resolve(METADATA_FILENAME), content.getBytes(Charset.defaultCharset()));
-  }
-
-  public static void createDatabaseMetadataV2Privacy(
-      final Path tempDataDir,
-      final DataStorageFormat dataStorageFormat,
-      final int version,
-      final int privacyVersion)
-      throws IOException {
-    final String content =
-        "{\"v2\":{\"format\":\""
-            + dataStorageFormat
-            + "\",\"version\":"
-            + version
-            + ",\"privacyVersion\":"
-            + privacyVersion
-            + "}}";
     Files.write(tempDataDir.resolve(METADATA_FILENAME), content.getBytes(Charset.defaultCharset()));
   }
 
@@ -86,6 +52,7 @@ public class Utils {
     return switch (dataStorageFormat) {
       case FOREST -> 1;
       case BONSAI -> 2;
+      case X_BONSAI_ARCHIVE -> 3;
     };
   }
 }

@@ -365,10 +365,5 @@ public abstract class MiningConfiguration {
     default long getPosBlockCreationRepetitionMinDuration() {
       return DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
     }
-
-    @Value.Default
-    default String getStratumExtranonce() {
-      return "080c";
-    }
   }
 }

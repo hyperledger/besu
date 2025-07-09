@@ -14,19 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForByzantium;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForCancun;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForFrontier;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForFutureEIPs;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForIstanbul;
+import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForOsaka;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForPrague;
 
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 /** Provides the various precompiled contracts used on mainnet hard forks. */
@@ -67,42 +62,17 @@ public interface MainnetPrecompiledContractRegistries {
     return registry;
   }
 
+  static PrecompileContractRegistry osaka(
+      final PrecompiledContractConfiguration precompiledContractConfiguration) {
+    final PrecompileContractRegistry registry = new PrecompileContractRegistry();
+    populateForOsaka(registry, precompiledContractConfiguration.getGasCalculator());
+    return registry;
+  }
+
   static PrecompileContractRegistry futureEips(
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
     populateForFutureEIPs(registry, precompiledContractConfiguration.getGasCalculator());
     return registry;
-  }
-
-  static void appendPrivacy(
-      final PrecompileContractRegistry registry,
-      final PrecompiledContractConfiguration precompiledContractConfiguration) {
-
-    if (!precompiledContractConfiguration.getPrivacyParameters().isEnabled()) {
-      return;
-    }
-
-    if (precompiledContractConfiguration.getPrivacyParameters().isPrivacyPluginEnabled()) {
-      registry.put(
-          PLUGIN_PRIVACY,
-          new PrivacyPluginPrecompiledContract(
-              precompiledContractConfiguration.getGasCalculator(),
-              precompiledContractConfiguration.getPrivacyParameters()));
-    } else if (precompiledContractConfiguration
-        .getPrivacyParameters()
-        .isFlexiblePrivacyGroupsEnabled()) {
-      registry.put(
-          FLEXIBLE_PRIVACY,
-          new FlexiblePrivacyPrecompiledContract(
-              precompiledContractConfiguration.getGasCalculator(),
-              precompiledContractConfiguration.getPrivacyParameters()));
-    } else {
-      registry.put(
-          DEFAULT_PRIVACY,
-          new PrivacyPrecompiledContract(
-              precompiledContractConfiguration.getGasCalculator(),
-              precompiledContractConfiguration.getPrivacyParameters(),
-              "Privacy"));
-    }
   }
 }

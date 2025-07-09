@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
+import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BlobCache {
-  private final Cache<VersionedHash, BlobsWithCommitments.BlobQuad> cache;
+  private final Cache<VersionedHash, BlobProofBundle> cache;
   private static final Logger LOG = LoggerFactory.getLogger(BlobCache.class);
 
   public BlobCache() {
@@ -45,8 +46,10 @@ public class BlobCache {
     if (t.getType().supportsBlob()) {
       var bwc = t.getBlobsWithCommitments();
       if (bwc.isPresent()) {
-        bwc.get().getBlobQuads().stream()
-            .forEach(blobQuad -> this.cache.put(blobQuad.versionedHash(), blobQuad));
+        bwc.get().getBlobProofBundles().stream()
+            .forEach(
+                blobProofBundle ->
+                    this.cache.put(blobProofBundle.getVersionedHash(), blobProofBundle));
       } else {
         LOG.debug("transaction is missing blobs, cannot cache");
       }
@@ -60,11 +63,11 @@ public class BlobCache {
         if (!maybeHashes.get().isEmpty()) {
           Transaction.Builder txBuilder = Transaction.builder();
           txBuilder.copiedFrom(transaction);
-          List<BlobsWithCommitments.BlobQuad> blobQuads =
+          List<BlobProofBundle> blobProofBundles =
               maybeHashes.get().stream().map(cache::getIfPresent).toList();
-          final BlobsWithCommitments bwc = new BlobsWithCommitments(blobQuads);
-          if (blobQuads.stream()
-              .map(BlobsWithCommitments.BlobQuad::versionedHash)
+          final BlobsWithCommitments bwc = new BlobsWithCommitments(blobProofBundles);
+          if (blobProofBundles.stream()
+              .map(BlobProofBundle::getVersionedHash)
               .toList()
               .containsAll(maybeHashes.get())) {
             txBuilder.blobsWithCommitments(bwc);
@@ -89,7 +92,7 @@ public class BlobCache {
     }
   }
 
-  public BlobsWithCommitments.BlobQuad get(final VersionedHash vh) {
+  public BlobProofBundle get(final VersionedHash vh) {
     return cache.getIfPresent(vh);
   }
 
