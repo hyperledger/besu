@@ -873,7 +873,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public Optional<Hash> getLatestValidHashOfBadBlock(Hash blockHash) {
+  public Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash) {
     return protocolContext.getBadBlockManager().getLatestValidHash(blockHash);
   }
 
