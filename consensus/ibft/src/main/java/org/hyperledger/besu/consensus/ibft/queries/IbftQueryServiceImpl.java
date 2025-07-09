@@ -46,14 +46,12 @@ public class IbftQueryServiceImpl extends PoaQueryServiceImpl {
     this.blockInterface = blockInterface;
   }
 
-  @Override
   public int getRoundNumberFrom(final org.hyperledger.besu.plugin.data.BlockHeader header) {
     final BlockHeader headerFromChain = getHeaderFromChain(header);
     final BftExtraData extraData = blockInterface.getExtraData(headerFromChain);
     return extraData.getRound();
   }
 
-  @Override
   public Collection<Address> getSignersFrom(
       final org.hyperledger.besu.plugin.data.BlockHeader header) {
     final BlockHeader headerFromChain = getHeaderFromChain(header);
