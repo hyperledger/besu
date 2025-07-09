@@ -61,7 +61,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
    */
   BigIntegerModularExponentiationPrecompiledContract(
       final GasCalculator gasCalculator, final long upperBound) {
-    super("BigIntModExp", gasCalculator);
+    super("MODEXP", gasCalculator);
     this.upperBound = upperBound;
   }
 

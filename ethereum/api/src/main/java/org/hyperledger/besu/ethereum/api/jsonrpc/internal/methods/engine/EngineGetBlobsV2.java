@@ -28,13 +28,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
-import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
-import java.util.Arrays;
 import java.util.List;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -66,9 +63,10 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
     if (versionedHashes.length > REQUEST_MAX_VERSIONED_HASHES) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
-          RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST);
+          RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
-    final List<BlobAndProofV2> result = getBlobV2Result(versionedHashes);
+    final List<BlobAndProofV2> result =
+        Stream.of(versionedHashes).map(this::getBlobAndProofOrNull).toList();
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
@@ -83,31 +81,17 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
     }
   }
 
-  private @Nonnull List<BlobAndProofV2> getBlobV2Result(final VersionedHash[] versionedHashes) {
-    return Arrays.stream(versionedHashes)
-        .map(transactionPool::getBlobProofBundle)
-        .map(this::getBlobAndProofV2)
-        .toList();
-  }
-
-  private @Nullable BlobAndProofV2 getBlobAndProofV2(final BlobProofBundle blobProofBundle) {
-    if (blobProofBundle == null) {
+  private BlobAndProofV2 getBlobAndProofOrNull(final VersionedHash versionedHash) {
+    final BlobProofBundle bundle = transactionPool.getBlobProofBundle(versionedHash);
+    if (bundle == null) {
+      LOG.trace("No BlobProofBundle found for versioned hash: {}", versionedHash);
       return null;
     }
-    BlobProofBundle proofBundle = processBundle(blobProofBundle);
-    return createBlobAndProofV2(proofBundle);
-  }
-
-  private BlobProofBundle processBundle(final BlobProofBundle blobProofBundle) {
-    // This may occur during fork transitions when the pool contains outdated blob types.
-    // It should not happen once the pool is refreshed with new transactions.
-    if (blobProofBundle.getBlobType() == BlobType.KZG_PROOF) {
-      LOG.warn(
-          "BlobProofBundle {} with KZG_PROOF type found, converting to KZG_CELL_PROOFS type.",
-          blobProofBundle.getVersionedHash());
-      return CKZG4844Helper.unsafeConvertToVersion1(blobProofBundle);
+    if (bundle.getBlobType() == BlobType.KZG_PROOF) {
+      LOG.trace("Unsupported blob type KZG_PROOF for versioned hash: {}", versionedHash);
+      return null;
     }
-    return blobProofBundle;
+    return createBlobAndProofV2(bundle);
   }
 
   private BlobAndProofV2 createBlobAndProofV2(final BlobProofBundle blobProofBundle) {
