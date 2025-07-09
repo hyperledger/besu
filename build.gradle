@@ -635,7 +635,7 @@ subprojects {
     tasks.named("jmh") {
       description = "Usage: gradle jmh -Pf=2 -Pwi=3 -Pi=5 -Pincludes=MyBench -PasyncProfiler=<libPath> -PasyncProfilerOptions=<options>\n" +
         "\nRun JMH benchmarks in each of the projects. Allows for controlling JMH execution directly from the command line.\n" +
-        "\t-Pf=<forks>\tHow many times to forks a single benchmark. Use 0 to disable forking altogether. Defaults to 2 forks.\n" +
+        "\t-Pf=<forks>\tHow many times to fork a single benchmark. Use 0 to disable forking altogether. Defaults to 2 forks.\n" +
         "\t-Pwf=<warmupForks>\tHow many warmup forks to make for a single benchmark. 0 to disable warmup forks. Defaults to 0 forks.\n" +
         "\t-Pwi=<warmupIterations>\tNumber of warmup iterations to do. Defaults to 1 iteration.\n" +
         "\t-Pi=<iterations>\tNumber of measurement iterations to do. Defaults to 10 iterations.\n" +
