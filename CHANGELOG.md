@@ -3,7 +3,8 @@
 ## Unreleased
 
 ### Breaking Changes
-- Change in behavior for `eth_estimateGas`, to improve accuracy, when used on a network with a base fee market, the internal transaction simulation does not anymore underprice transactions, so if there are no gas pricing related fields specified in the request, then gas price for the transaction is set to the base fee value [#8888](https://github.com/hyperledger/besu/pull/8888)  
+- Change in behavior for `eth_estimateGas`, to improve accuracy, when used on a network with a base fee market, the internal transaction simulation does not anymore underprice transactions, so if there are no gas pricing related fields specified in the request, then gas price for the transaction is set to the base fee value [#8888](https://github.com/hyperledger/besu/pull/8888)
+- Remove PoAMetricsService and IbftQueryService which have been deprecated since 2019 and are replaced by PoaQueryService and BftQueryService respectively [#8940](https://github.com/hyperledger/besu/pull/8940)
 
 ### Upcoming Breaking Changes
 
