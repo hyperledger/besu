@@ -451,6 +451,9 @@ public class MainnetTransactionProcessor {
       operationTracer.traceBeforeRewardTransaction(worldUpdater, transaction, coinbaseWeiDelta);
       if (!coinbaseWeiDelta.isZero() || !clearEmptyAccounts) {
         final var coinbase = worldState.getOrCreate(miningBeneficiary);
+        initialFrame
+            .getEip7928AccessList()
+            .ifPresent(t -> t.addAccount(coinbase.getAddress(), coinbase));
         coinbase.incrementBalance(coinbaseWeiDelta);
         eip7928AccessList.ifPresent(t -> t.addAccount(miningBeneficiary, coinbase));
       }

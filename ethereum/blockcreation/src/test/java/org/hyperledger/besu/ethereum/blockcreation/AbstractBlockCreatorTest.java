@@ -41,8 +41,6 @@ import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationRes
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -77,6 +75,8 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
 import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
@@ -297,7 +297,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
   }
 
   @Test
-  public void blockAccessListIncludesBalanceDiff() {
+  public void blockAccessListIncludesAccountChanges() {
     final CreateOn miningOn = blockCreatorWithBlobGasSupport();
     final AbstractBlockCreator blockCreator = miningOn.blockCreator;
     final GenesisAccount sender = accounts.get(1);
@@ -329,20 +329,20 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
     final List<AccountChanges> accountChanges = blockAccessList.getAccountChanges();
     assertThat(accountChanges.size()).isEqualTo(3);
     final AccountChanges accountChange1 = accountChanges.get(0);
-    assertThat(accountChange1.address())
-        .isIn(sender.address(), recipient.address(), coinbase);
+    assertThat(accountChange1.address()).isIn(sender.address(), recipient.address(), coinbase);
     assertThat(accountChange1.balanceChanges().size()).isEqualTo(1);
-    assertThat(accountChange1.balanceChanges().get(0).txIndex()).isNotZero();
+    assertThat(accountChange1.balanceChanges().get(0).postBalance()).isNotEqualTo(Bytes.of(0));
+    assertThat(accountChange1.balanceChanges().get(0).txIndex()).isNotNull();
     final AccountChanges accountChange2 = accountChanges.get(1);
-    assertThat(accountChange2.address())
-        .isIn(sender.address(), recipient.address(), coinbase);
+    assertThat(accountChange2.address()).isIn(sender.address(), recipient.address(), coinbase);
     assertThat(accountChange2.balanceChanges().size()).isEqualTo(1);
     assertThat(accountChange2.balanceChanges().get(0).postBalance()).isNotEqualTo(Bytes.of(0));
+    assertThat(accountChange2.balanceChanges().get(0).txIndex()).isNotNull();
     final AccountChanges accountChange3 = accountChanges.get(2);
-    assertThat(accountChange3.address())
-        .isIn(sender.address(), recipient.address(), coinbase);
+    assertThat(accountChange3.address()).isIn(sender.address(), recipient.address(), coinbase);
     assertThat(accountChange3.balanceChanges().size()).isEqualTo(1);
     assertThat(accountChange3.balanceChanges().get(0).postBalance()).isNotEqualTo(Bytes.of(0));
+    assertThat(accountChange3.balanceChanges().get(0).txIndex()).isNotNull();
   }
 
   private CreateOn blockCreatorWithWithdrawalsProcessor() {
