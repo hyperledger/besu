@@ -123,9 +123,6 @@ public class OsakaGasCalculator extends PragueGasCalculator {
 
     long gasRequirement =
         clampedMultiply(multiplicationComplexity, Math.max(adjustedExponentLength, 1L));
-    if (gasRequirement != Long.MAX_VALUE) {
-      gasRequirement /= 3;
-    }
 
     return Math.max(gasRequirement, 500L);
   }

@@ -185,20 +185,21 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
 
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
     // Check to see if any of our pending blocks are now ready for import
+    final Block newBlock = blockAddedEvent.getBlock();
     LOG.atTrace()
         .setMessage("Block added event type {} for block {}. Current status {}")
         .addArgument(blockAddedEvent::getEventType)
-        .addArgument(blockAddedEvent.getHeader()::toLogString)
+        .addArgument(newBlock::toLogString)
         .addArgument(this)
         .log();
 
     // If there is no children to process, maybe try non announced blocks
-    if (!maybeProcessPendingChildrenBlocks(blockAddedEvent.getHeader())) {
+    if (!maybeProcessPendingChildrenBlocks(newBlock)) {
       LOG.atTrace()
           .setMessage("There are no pending blocks ready to import for block {}")
-          .addArgument(blockAddedEvent.getHeader()::toLogString)
+          .addArgument(newBlock::toLogString)
           .log();
-      maybeProcessNonAnnouncedBlocks(blockAddedEvent);
+      maybeProcessNonAnnouncedBlocks(newBlock);
     }
 
     if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
@@ -211,17 +212,17 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   /**
    * Process pending Children if any
    *
-   * @param header the header of the block to process the children of
+   * @param block the block to process the children
    * @return true if block has any pending child
    */
-  private boolean maybeProcessPendingChildrenBlocks(final BlockHeader header) {
+  private boolean maybeProcessPendingChildrenBlocks(final Block block) {
     final List<Block> readyForImport;
     synchronized (pendingBlocksManager) {
       // Remove block from pendingBlocks list
-      pendingBlocksManager.deregisterPendingBlock(header);
+      pendingBlocksManager.deregisterPendingBlock(block);
 
       // Import any pending blocks that are children of the newly added block
-      readyForImport = pendingBlocksManager.childrenOf(header.getHash());
+      readyForImport = pendingBlocksManager.childrenOf(block.getHash());
     }
 
     if (!readyForImport.isEmpty()) {
@@ -231,7 +232,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
           .addArgument(
               () ->
                   readyForImport.stream().map(Block::toLogString).collect(Collectors.joining(", ")))
-          .addArgument(header::toLogString)
+          .addArgument(block::toLogString)
           .log();
 
       final Supplier<CompletableFuture<List<Block>>> importBlocksTask =
@@ -261,7 +262,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     return !readyForImport.isEmpty();
   }
 
-  private void maybeProcessNonAnnouncedBlocks(final BlockAddedEvent newBlock) {
+  private void maybeProcessNonAnnouncedBlocks(final Block newBlock) {
     final long localHeadBlockNumber = protocolContext.getBlockchain().getChainHeadBlockNumber();
 
     if (newBlock.getHeader().getNumber() > localHeadBlockNumber) {
@@ -658,7 +659,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       } else {
         LOG.trace("Parent block is already in the chain");
         // if the parent is already imported, process its children
-        maybeProcessPendingChildrenBlocks(lowestPendingBlock.getHeader());
+        maybeProcessPendingChildrenBlocks(lowestPendingBlock);
       }
     }
   }

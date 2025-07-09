@@ -82,7 +82,8 @@ public class TrailingPeerLimiter implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     if (event.isNewCanonicalHead()
-        && event.getHeader().getNumber() % RECHECK_PEERS_WHEN_BLOCK_NUMBER_MULTIPLE_OF == 0) {
+        && event.getBlock().getHeader().getNumber() % RECHECK_PEERS_WHEN_BLOCK_NUMBER_MULTIPLE_OF
+            == 0) {
       enforceTrailingPeerLimit();
     }
   }

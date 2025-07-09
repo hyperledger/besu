@@ -88,8 +88,8 @@ public class BesuEventsImpl implements BesuEvents {
         event ->
             listener.onBlockAdded(
                 blockAddedContext(
-                    event::getHeader,
-                    () -> event.getBlock().getBody(),
+                    event.getBlock()::getHeader,
+                    event.getBlock()::getBody,
                     event::getTransactionReceipts)));
   }
 

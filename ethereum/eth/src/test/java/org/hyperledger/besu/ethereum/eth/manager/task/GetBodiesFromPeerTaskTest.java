@@ -77,7 +77,8 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
         new BlockBody(emptyList(), emptyList(), Optional.of(List.of(withdrawal)));
 
     assertThat(
-            new BodyIdentifier(emptyBodyBlock).equals(new BodyIdentifier(bodyBlockWithWithdrawal)))
+            new GetBodiesFromPeerTask.BodyIdentifier(emptyBodyBlock)
+                .equals(new GetBodiesFromPeerTask.BodyIdentifier(bodyBlockWithWithdrawal)))
         .isFalse();
   }
 }

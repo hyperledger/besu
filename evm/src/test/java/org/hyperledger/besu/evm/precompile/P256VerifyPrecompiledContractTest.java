@@ -86,6 +86,6 @@ class P256VerifyPrecompiledContractTest {
 
   @Test
   void sanityCheck() {
-    assertEquals(3450, contract.gasRequirement(Bytes.wrap(new byte[128])));
+    assertEquals(6_900L, contract.gasRequirement(Bytes.wrap(new byte[128])));
   }
 }
