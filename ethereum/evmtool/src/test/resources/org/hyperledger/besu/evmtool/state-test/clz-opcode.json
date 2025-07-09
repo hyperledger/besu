@@ -67,7 +67,7 @@
                 ],
                 "Osaka": [
                     {
-                        "hash": "0x8c0f416ca6cee3f1bf82320928d73ec26d7ffbbdd25f6184ba4de360e1652ff6",
+                        "hash": "0x859df6bc5fd69cd48cdc1d3eada2653c64f7f29d99aeb136a5ba2b88a0d015a8",
                         "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                         "txbytes": "0xf860800a83030d40940000000000000000000000000000000000001000808026a046e476fb983dadf35cef7295c6720df87da3496cb6e0440214fcc3471069ee66a01b3f93462e3d1df98adedfbb6920d99009ea711a5bc55af4fa411c161db966b4",
                         "indexes": {
@@ -128,9 +128,9 @@
         {"output":"","gasUsed":"0x30d40","test":"clz-opcode-test","fork":"Prague","d":0,"g":0,"v":0,"stateRoot":"0xbb80fba01e2ba774bf675ec2d1e559fa37d5b80a6d4cdb19c5d2a753d952b0e4","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":false,"error":"Invalid opcode: 0x1e"},
 
         {"pc":0,"op":127,"gas":"0x2bb38","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH32"},
-        {"pc":33,"op":30,"gas":"0x2bb35","gasCost":"0x3","memSize":0,"stack":["0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"],"depth":1,"refund":0,"opName":"CLZ"},
-        {"pc":34,"op":96,"gas":"0x2bb32","gasCost":"0x3","memSize":0,"stack":["0x3"],"depth":1,"refund":0,"opName":"PUSH1"},
-        {"pc":36,"op":85,"gas":"0x2bb2f","gasCost":"0x1388","memSize":0,"stack":["0x3","0x0"],"depth":1,"refund":0,"opName":"SSTORE"},
-        {"output":"","gasUsed":"0x6599","test":"clz-opcode-test","fork":"Osaka","d":0,"g":0,"v":0,"stateRoot":"0x8c0f416ca6cee3f1bf82320928d73ec26d7ffbbdd25f6184ba4de360e1652ff6","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
+        {"pc":33,"op":30,"gas":"0x2bb35","gasCost":"0x5","memSize":0,"stack":["0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"],"depth":1,"refund":0,"opName":"CLZ"},
+        {"pc":34,"op":96,"gas":"0x2bb30","gasCost":"0x3","memSize":0,"stack":["0x3"],"depth":1,"refund":0,"opName":"PUSH1"},
+        {"pc":36,"op":85,"gas":"0x2bb2d","gasCost":"0x1388","memSize":0,"stack":["0x3","0x0"],"depth":1,"refund":0,"opName":"SSTORE"},
+        {"output":"","gasUsed":"0x659b","test":"clz-opcode-test","fork":"Osaka","d":0,"g":0,"v":0,"stateRoot":"0x859df6bc5fd69cd48cdc1d3eada2653c64f7f29d99aeb136a5ba2b88a0d015a8","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
     ]
 }
