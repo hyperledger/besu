@@ -28,4 +28,6 @@ public interface Eip7928AccessList {
 
   void addSlotUpdateForAccount(
       final Address address, final UInt256 slotKey, final UInt256 slotValue);
+
+  void clear();
 }

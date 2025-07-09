@@ -46,6 +46,11 @@ public class TransactionAccessList implements Eip7928AccessList {
   }
 
   @Override
+  public void clear() {
+    accounts.clear();
+  }
+
+  @Override
   public void addAccount(final Address address, final Account account) {
     // TODO: Why is null being passed here
     if (account != null) {
