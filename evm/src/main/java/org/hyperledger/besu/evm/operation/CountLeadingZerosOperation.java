@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
 
   /** The CLZ operation success result. */
-  static final OperationResult clzSuccess = new OperationResult(3, null);
+  static final OperationResult clzSuccess = new OperationResult(5, null);
 
   /**
    * Instantiates a new Count Leading Zeros Operation
@@ -34,7 +34,7 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public CountLeadingZerosOperation(final GasCalculator gasCalculator) {
-    super(0x1e, "CLZ", 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x1e, "CLZ", 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
