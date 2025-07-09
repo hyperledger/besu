@@ -38,8 +38,11 @@ import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -151,7 +154,7 @@ public abstract class BenchmarkExecutor {
    * @param evmSpecVersion EVM specification version to run the precompile for.
    */
   public void precompile(
-      final Map<String, Bytes> testCases,
+      final Map<String, Bytes> testCases, // TODO SLD enforce LinkedHashMap?
       final PrecompiledContract contract,
       final EvmSpecVersion evmSpecVersion) {
 
@@ -160,10 +163,19 @@ public abstract class BenchmarkExecutor {
           "contract is unsupported on " + evmSpecVersion + " fork");
     }
 
+    Optional<Pattern> maybePattern = config.testCasePattern().map(Pattern::compile);
+    LinkedHashMap<String, Bytes> filteredTestCases = new LinkedHashMap<>();
+    testCases.forEach(
+        (k, v) -> {
+          if (maybePattern.map(p -> p.matcher(k).find()).orElse(true)) {
+            filteredTestCases.put(k, v);
+          }
+        });
+
     if (config.warmInvert()) {
-      runPrecompileInvertedWarmup(testCases, contract);
+      runPrecompileInvertedWarmup(filteredTestCases, contract);
     } else {
-      runPrecompile(testCases, contract);
+      runPrecompile(filteredTestCases, contract);
     }
   }
 
@@ -172,11 +184,6 @@ public abstract class BenchmarkExecutor {
 
     // Fully warmup and execute, test case by test case
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      if (config.testCasePattern().isPresent()
-          && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
-        continue;
-      }
-
       try {
         final double execTime =
             runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
@@ -195,27 +202,35 @@ public abstract class BenchmarkExecutor {
     // avoid using warmTime as it is now dependent on the number of test cases
     for (int i = 0; i < warmIterations; i++) {
       for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-        if (config.testCasePattern().isPresent()
-            && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
-          continue;
-        }
-
         contract.computePrecompile(testCase.getValue(), fakeFrame);
       }
     }
 
-    // Iterations still per test case
-    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      if (config.testCasePattern().isPresent()
-          && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
-        continue;
-      }
+    // Also run all test cases in serial inside one iteration
+    Map<String, Long> totalElapsedByTestName = new HashMap<>();
+    int executions = 0;
+    while (executions < execIterations /* && totalElapsed < execTimeInNano*/) {
 
-      try {
-        final double execTime = executeIterations(testCase.getKey(), testCase.getValue(), contract);
-        long gasCost = contract.gasRequirement(testCase.getValue());
+      for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+        final long iterationStart = System.nanoTime();
+        final var result = contract.computePrecompile(testCase.getValue(), fakeFrame);
+        final long iterationElapsed = System.nanoTime() - iterationStart;
+        if (result.output() != null) {
+          // adds iterationElapsed if absent, or sums with existing value
+          totalElapsedByTestName.merge(testCase.getKey(), iterationElapsed, Long::sum);
+        }
+      }
+      executions++;
+    }
+
+    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+      if (totalElapsedByTestName.containsKey(testCase.getKey())) {
+        final double execTime =
+            totalElapsedByTestName.get(testCase.getKey()) / 1.0e9D / execIterations;
+        // log the performance of the precompile
+        long gasCost = contract.gasRequirement(testCases.get(testCase.getKey()));
         logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
-      } catch (final IllegalArgumentException e) {
+      } else {
         output.printf("%s Input is Invalid%n", testCase.getKey());
       }
     }
