@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.Process
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.SkipSenderTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -46,10 +47,8 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
@@ -100,7 +99,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
-  private final PathBasedWorldState worldState;
+  private final MutableWorldState worldState;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final BlockSelectionContext blockSelectionContext;
   private final TransactionSelectionResults transactionSelectionResults =
@@ -114,8 +113,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
   private final long blockTxsSelectionMaxTime;
   private final BlockAccessList.BlockAccessListBuilder balBuilder;
-  private PathBasedWorldStateUpdateAccumulator<BonsaiAccount> blockWorldStateUpdater;
-  private PathBasedWorldStateUpdateAccumulator<BonsaiAccount> txWorldStateUpdater;
+  private WorldUpdater blockWorldStateUpdater;
+  private WorldUpdater txWorldStateUpdater;
   private volatile TransactionEvaluationContext currTxEvaluationContext;
   private final List<Runnable> selectedTxPendingActions = new ArrayList<>(1);
   private int currentTxnLocation;
@@ -124,7 +123,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       final MiningConfiguration miningConfiguration,
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
-      final PathBasedWorldState worldState,
+      final MutableWorldState worldState,
       final TransactionPool transactionPool,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
@@ -156,9 +155,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     this.pluginTransactionSelector = pluginTransactionSelector;
     this.operationTracer =
         new InterruptibleOperationTracer(pluginTransactionSelector.getOperationTracer());
-    blockWorldStateUpdater =
-        (PathBasedWorldStateUpdateAccumulator<BonsaiAccount>) worldState.updater();
-    txWorldStateUpdater = blockWorldStateUpdater.copy();
+    blockWorldStateUpdater = worldState.updater();
+    txWorldStateUpdater = blockWorldStateUpdater.updater();
     blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
     currentTxnLocation = 0;
     balBuilder = new BlockAccessList.BlockAccessListBuilder();
@@ -340,6 +338,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     final TransactionProcessingResult processingResult =
         processTransaction(evaluationContext.getTransaction());
 
+    txWorldStateUpdater.markTransactionBoundary();
+
     var postProcessingSelectionResult = evaluatePostProcessing(evaluationContext, processingResult);
 
     return postProcessingSelectionResult.selected()
@@ -355,10 +355,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     synchronized (isTimeout) {
       if (!isTimeout.get()) {
         selectorsStateManager.commit();
-        blockWorldStateUpdater.importStateChangesFromSource(txWorldStateUpdater);
-        blockWorldStateUpdater.commit();
-        // TODO: Check - commit tx updater before or after exporting changes to block updater
         txWorldStateUpdater.commit();
+        blockWorldStateUpdater.commit();
         for (final var pendingAction : selectedTxPendingActions) {
           pendingAction.run();
         }
@@ -367,9 +365,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       }
     }
     selectedTxPendingActions.clear();
-    blockWorldStateUpdater =
-        (PathBasedWorldStateUpdateAccumulator<BonsaiAccount>) worldState.updater();
-    txWorldStateUpdater = blockWorldStateUpdater.copy();
+    blockWorldStateUpdater = worldState.updater();
+    txWorldStateUpdater = blockWorldStateUpdater.updater();
     return false;
   }
 
@@ -377,7 +374,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   public void rollback() {
     selectedTxPendingActions.clear();
     selectorsStateManager.rollback();
-    txWorldStateUpdater = blockWorldStateUpdater.copy();
+    txWorldStateUpdater = blockWorldStateUpdater.updater();
   }
 
   private TransactionEvaluationContext createTransactionEvaluationContext(
@@ -458,16 +455,19 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
     final TransactionAccessList transactionAccessList =
         new TransactionAccessList(currentTxnLocation);
-    return transactionProcessor.processTransaction(
-        txWorldStateUpdater,
-        blockSelectionContext.pendingBlockHeader(),
-        transaction,
-        blockSelectionContext.miningBeneficiary(),
-        operationTracer,
-        blockHashLookup,
-        TransactionValidationParams.mining(),
-        blockSelectionContext.blobGasPrice(),
-        Optional.of(transactionAccessList));
+    final TransactionProcessingResult result =
+        transactionProcessor.processTransaction(
+            txWorldStateUpdater,
+            blockSelectionContext.pendingBlockHeader(),
+            transaction,
+            blockSelectionContext.miningBeneficiary(),
+            operationTracer,
+            blockHashLookup,
+            TransactionValidationParams.mining(),
+            blockSelectionContext.blobGasPrice(),
+            Optional.of(transactionAccessList));
+    balBuilder.addTransactionLevelAccessList(transactionAccessList);
+    return result;
   }
 
   /**
