@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.word256;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * A fixed-size, immutable 256-bit unsigned integer backed by four {@code long} values.
@@ -103,7 +102,8 @@ public final class Word256 {
    * leading zeros on the left (i.e. big-endian padding) to fit the 256-bit representation.
    *
    * <p>The byte layout is interpreted as big-endian: {@code bytes[0]} is the most significant byte,
-   * and {@code bytes[31]} is the least significant byte. This is consistent with the EVM word encoding.
+   * and {@code bytes[31]} is the least significant byte. This is consistent with the EVM word
+   * encoding.
    *
    * @param bytes the byte array to convert
    * @return a new Word256 instance representing the byte array
@@ -177,12 +177,11 @@ public final class Word256 {
   /**
    * Converts this Word256 to a 32-byte array.
    *
-   * <p>The byte array is in big-endian order: the most significant byte is at index 0,
-   * and the least significant byte is at index 31. This format matches the EVM's encoding
-   * of 256-bit words.
+   * <p>The byte array is in big-endian order: the most significant byte is at index 0, and the
+   * least significant byte is at index 31. This format matches the EVM's encoding of 256-bit words.
    *
-   * <p>The returned array is cached internally for performance. It is safe to read but should
-   * not be modified.
+   * <p>The returned array is cached internally for performance. It is safe to read but should not
+   * be modified.
    *
    * @return a 32-byte big-endian byte array representation of this Word256
    */
