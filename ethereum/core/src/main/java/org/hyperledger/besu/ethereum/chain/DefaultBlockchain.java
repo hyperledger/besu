@@ -481,7 +481,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     checkArgument(
         block.getBody().getTransactions().size() == receipts.size(),
         "Supplied receipts do not match block transactions.");
-    if (blockIsAlreadyTracked(block)) {
+    if (blockIsAlreadyTracked(block.getHeader())) {
       return false;
     }
     checkArgument(blockIsConnected(block), "Attempt to append non-connected block.");
@@ -527,6 +527,10 @@ public class DefaultBlockchain implements MutableBlockchain {
       final SyncBlock block,
       final List<TransactionReceipt> receipts,
       final boolean transactionIndexing) {
+
+    if (blockIsAlreadyTracked(block.getHeader())) {
+      return;
+    }
 
     final Hash hash = block.getHash();
     final Difficulty td = calculateTotalDifficultyForSyncing(block.getHeader());
@@ -997,14 +1001,14 @@ public class DefaultBlockchain implements MutableBlockchain {
     }
   }
 
-  private boolean blockIsAlreadyTracked(final Block block) {
-    if (block.getHeader().getParentHash().equals(chainHeader.getHash())) {
+  private boolean blockIsAlreadyTracked(final BlockHeader header) {
+    if (header.getParentHash().equals(chainHeader.getHash())) {
       // If this block builds on our chain head it would have a higher TD and be the chain head
       // but since it isn't we mustn't have imported it yet.
       // Saves a db read for the most common case
       return false;
     }
-    return blockchainStorage.getBlockHeader(block.getHash()).isPresent();
+    return blockchainStorage.getBlockHeader(header.getHash()).isPresent();
   }
 
   private boolean blockIsConnected(final Block block) {
