@@ -329,10 +329,12 @@ public class BlockSimulator {
       transactionUpdater.commit();
       transactionUpdater.markTransactionBoundary();
 
-      transactionSimulationResult
-          .result()
-          .getTransactionAccessList()
-          .ifPresent(balBuilder::addTransactionLevelAccessList);
+      if (transactionSimulationResult.isSuccessful()) {
+        transactionSimulationResult
+            .result()
+            .getTransactionAccessList()
+            .ifPresent(balBuilder::addTransactionLevelAccessList);
+      }
 
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
     }
