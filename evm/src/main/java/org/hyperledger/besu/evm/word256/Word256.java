@@ -100,7 +100,10 @@ public final class Word256 {
    * Creates a Word256 from a byte array.
    *
    * <p>The byte array must be at most 32 bytes long. If it is shorter, it will be padded with
-   * leading zeros to fit the 256-bit representation.
+   * leading zeros on the left (i.e. big-endian padding) to fit the 256-bit representation.
+   *
+   * <p>The byte layout is interpreted as big-endian: {@code bytes[0]} is the most significant byte,
+   * and {@code bytes[31]} is the least significant byte. This is consistent with the EVM word encoding.
    *
    * @param bytes the byte array to convert
    * @return a new Word256 instance representing the byte array
@@ -172,11 +175,16 @@ public final class Word256 {
   }
 
   /**
-   * Converts this Word256 to a byte array.
+   * Converts this Word256 to a 32-byte array.
    *
-   * <p>The byte array will always be 32 bytes long, padded with leading zeros if necessary.
+   * <p>The byte array is in big-endian order: the most significant byte is at index 0,
+   * and the least significant byte is at index 31. This format matches the EVM's encoding
+   * of 256-bit words.
    *
-   * @return a byte array representation of this Word256
+   * <p>The returned array is cached internally for performance. It is safe to read but should
+   * not be modified.
+   *
+   * @return a 32-byte big-endian byte array representation of this Word256
    */
   public byte[] toBytesArray() {
     if (bytesCache != null) {
@@ -190,29 +198,6 @@ public final class Word256 {
     Word256Helpers.writeToByteArray(bytesCache, 24, l0);
 
     return bytesCache;
-  }
-
-  /**
-   * Converts this Word256 to a Bytes32 object.
-   *
-   * <p>This method is optimized to reuse the cached byte array if available. If not, it creates a
-   * new byte array representation of the Word256.
-   *
-   * @return a Bytes32 object representing this Word256
-   */
-  public Bytes32 toBytes32() {
-    if (bytesCache != null) {
-      return Bytes32.wrap(bytesCache);
-    }
-
-    // Create a new byte array and write the long values into it
-    final byte[] tmp = new byte[32];
-    Word256Helpers.writeToByteArray(tmp, 0, l3);
-    Word256Helpers.writeToByteArray(tmp, 8, l2);
-    Word256Helpers.writeToByteArray(tmp, 16, l1);
-    Word256Helpers.writeToByteArray(tmp, 24, l0);
-
-    return Bytes32.wrap(tmp);
   }
 
   /**
