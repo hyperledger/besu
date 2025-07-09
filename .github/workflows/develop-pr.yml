@@ -2,6 +2,8 @@ name: docker develop build and test only
 
 on:
   pull_request:
+    branches:
+      - main
 
 jobs:
   hadolint:
