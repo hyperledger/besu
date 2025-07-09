@@ -105,17 +105,11 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
    */
   private void transferValue(final MessageFrame frame) {
     final MutableAccount senderAccount = frame.getWorldUpdater().getSenderAccount(frame);
-    frame
-        .getEip7928AccessList()
-        .ifPresent(t -> t.addAccount(senderAccount.getAddress(), senderAccount));
 
     // The yellow paper explicitly states that if the recipient account doesn't exist at this
     // point, it is created. Even if the value is zero we are still creating an account with 0x!
     final MutableAccount recipientAccount =
         frame.getWorldUpdater().getOrCreate(frame.getRecipientAddress());
-    frame
-        .getEip7928AccessList()
-        .ifPresent(t -> t.addAccount(recipientAccount.getAddress(), recipientAccount));
 
     if (Objects.equals(frame.getValue(), Wei.ZERO)) {
       // This is only here for situations where you are calling a public address from a private
@@ -133,6 +127,13 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
     if (frame.getRecipientAddress().equals(frame.getSenderAddress())) {
       LOG.trace("Message call of {} to itself: no fund transferred", frame.getSenderAddress());
     } else {
+      frame
+          .getEip7928AccessList()
+          .ifPresent(t -> t.addAccount(senderAccount.getAddress(), senderAccount));
+      frame
+          .getEip7928AccessList()
+          .ifPresent(t -> t.addAccount(recipientAccount.getAddress(), recipientAccount));
+
       final Wei prevSenderBalance = senderAccount.decrementBalance(frame.getValue());
       final Wei prevRecipientBalance = recipientAccount.incrementBalance(frame.getValue());
 
