@@ -36,6 +36,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockAccessList {
+  private static final Set<Address> excludedAddresses =
+      Set.of(
+          Address.fromHexString("0x0000f90827f1c53a10cb7a02335b175320002935"),
+          Address.fromHexString("0x000f3df6d732807ef1319fb7b8bb8522d0beac02"));
   private final List<AccountChanges> accountChanges;
 
   public BlockAccessList(final List<AccountChanges> accountChanges) {
@@ -135,6 +139,10 @@ public class BlockAccessList {
       for (Map.Entry<Address, AccountAccessList> account : txList.getAccounts().entrySet()) {
         Address address = account.getKey();
         AccountAccessList accountState = account.getValue();
+
+        if (excludedAddresses.contains(address)) {
+          continue;
+        }
 
         BlockAccessListBuilder.AccountBuilder builder =
             accountChangesBuilders.computeIfAbsent(
