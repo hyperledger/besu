@@ -80,6 +80,7 @@ The requirement to be able to be proposed as a maintainer is:
 
 The following steps must occur for a contributor to be "upgraded" as a maintainer:
 
+PR proposed:
 - The proposed maintainer has the sponsorship of at least one other maintainer.
   - This sponsoring maintainer will create a proposal PR modifying the list of
     maintainers. (see [proposal PR template](#proposal-pr-template).)
@@ -89,19 +90,20 @@ The following steps must occur for a contributor to be "upgraded" as a maintaine
     including at least [besu-contributors channel on Discord](https://discord.com/invite/hyperledger),
     the [mailing list](https://lists.hyperledger.org/g/besu)
     and any maintainer/community call.
+Voting:
 - Approval by at least 3 current maintainers within two weeks of the proposal or
   an absolute majority (half the total + 1) of current maintainers.
-  - Maintainers will vote by approving the proposal PR.
+  - Maintainers vote by approving the proposal PR.
 - No veto raised by another maintainer within the voting timeframe.
-  - All vetoes must be accompanied by a public explanation as a comment in the
+  - All vetoes must be accompanied by a public explanation as a comment on the
     proposal PR.
   - The explanation of the veto must be reasonable and follow the [Besu code of conduct](https://wiki.hyperledger.org/display/BESU/Code+of+Conduct).
-  - A veto can be retracted, in that case the voting timeframe is reset and all approvals are removed.
+  - A veto can be retracted, in that case, the voting timeframe is reset, and all approvals are removed.
   - It is bad form to veto, retract, and veto again.
   
 The proposed maintainer becomes a maintainer either:
 
-  - when two weeks have passed without veto since the third approval of the proposal PR,
+  - when two weeks have passed without a veto since the third approval of the proposal PR,
   - or an absolute majority of maintainers approved the proposal PR.
 
 In either case, no maintainer raised and stood by a veto.
@@ -124,8 +126,11 @@ This can occur in the following situations:
     leave such as parental leave and medical leave.
 - Other unspecified circumstances.
 
-As for adding a maintainer, the record and governance process for moving a
-maintainer to emeritus status is recorded using review approval in the PR making that change.
+PR proposed:
+- A PR listing the justification for moving the maintainer to emeritus (most commonly inactivity) is proposed.
+
+Voting:
+The voting process for moving a maintainer to emeritus status is the same as for adding a new maintainer.
 
 Returning to active status from emeritus status uses the same steps as adding a
 new maintainer.
@@ -146,5 +151,5 @@ Here are [their past contributions on Besu project](https://github.com/hyperledg
 
 Voting ends two weeks from today.
 
-For more information on this process see the Becoming a Maintainer section in the MAINTAINERS.md file.
+For more information on this process, see the MAINTAINERS.md file.
 ```
