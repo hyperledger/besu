@@ -100,7 +100,7 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
    * @return the last defined spec from the genesis file
    */
   @Override
-  public Optional<ScheduledProtocolSpec> getLastProtocolSpec() {
+  public Optional<ScheduledProtocolSpec> getLatestProtocolSpec() {
     checkArgument(
         !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
     checkArgument(

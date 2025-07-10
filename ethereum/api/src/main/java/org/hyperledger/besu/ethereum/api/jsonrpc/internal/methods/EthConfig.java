@@ -67,7 +67,7 @@ public class EthConfig implements JsonRpcMethod {
     long currentTime = System.currentTimeMillis() / 1000;
     ProtocolSpec current = protocolSchedule.getForNextBlockHeader(header, currentTime);
     Optional<ScheduledProtocolSpec> next = protocolSchedule.getNextProtocolSpec(currentTime);
-    Optional<ScheduledProtocolSpec> last = protocolSchedule.getLastProtocolSpec();
+    Optional<ScheduledProtocolSpec> last = protocolSchedule.getLatestProtocolSpec();
 
     ObjectNode result = mapperSupplier.get().createObjectNode();
     ObjectNode currentNode = result.putObject("current");
