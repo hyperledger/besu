@@ -85,7 +85,7 @@ public class EthConfig implements JsonRpcMethod {
           protocolSchedule.getNextProtocolSpec(next.get().fork().milestone());
       if (nextNext.isPresent()) {
         ObjectNode nextNextNode =
-            mapperSupplier.get().createObjectNode(); // don't include in the result
+            mapperSupplier.get().createObjectNode(); // don't include next in the result
         generateConfig(nextNextNode, nextNext.get());
         nextNextHash = configHash(nextNextNode);
       }
@@ -100,7 +100,7 @@ public class EthConfig implements JsonRpcMethod {
       result.putNull("nextForkId");
     }
     if (last.isPresent()) {
-      ObjectNode lastNode = mapperSupplier.get().createObjectNode(); // don't include in the result
+      ObjectNode lastNode = result.putObject("last"); // last is included in the result
       generateConfig(lastNode, last.get());
       String lastHash = configHash(lastNode);
       result.put("lastHash", lastHash);
