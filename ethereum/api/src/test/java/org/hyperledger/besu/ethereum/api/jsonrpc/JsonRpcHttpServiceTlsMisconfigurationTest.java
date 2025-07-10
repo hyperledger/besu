@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.SelfSignedP12Certificate;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -123,7 +123,7 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
                 mock(FilterManager.class),
                 mock(TransactionPool.class),
                 mock(MiningConfiguration.class),
-                mock(NoopMiningCoordinator.class),
+                mock(MiningCoordinator.class),
                 new NoOpMetricsSystem(),
                 supportedCapabilities,
                 Optional.of(mock(AccountLocalConfigPermissioningController.class)),

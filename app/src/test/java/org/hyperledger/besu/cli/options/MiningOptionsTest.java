@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -220,7 +221,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
         "90");
   }
 
-  /*  @Test
+  @Test
   public void extraDataDefaultValueIsBesuVersion() {
     final var expectedRegex = "besu \\d+\\.\\d+(\\.\\d+|\\-develop\\-\\p{XDigit}+)";
     internalTestSuccess(
@@ -229,7 +230,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
           assertThat(new String(miningParams.getExtraData().toArray(), StandardCharsets.UTF_8))
               .matches(expectedRegex);
         });
-  }*/
+  }
 
   @Override
   protected MiningConfiguration createDefaultDomainObject() {

@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -83,7 +82,7 @@ public class GraphQLHttpServiceTest {
     final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
     graphQL = Mockito.mock(GraphQL.class);
 
-    miningCoordinatorMock = Mockito.mock(NoopMiningCoordinator.class);
+    miningCoordinatorMock = Mockito.mock(MiningCoordinator.class);
     graphQlContextMap =
         Map.of(
             GraphQLContextType.BLOCKCHAIN_QUERIES,

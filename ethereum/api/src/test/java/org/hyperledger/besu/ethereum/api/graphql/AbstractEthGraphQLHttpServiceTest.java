@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.graphql;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -88,7 +87,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final SyncStatus status = new DefaultSyncStatus(1, 2, 3, Optional.of(4L), Optional.of(5L));
     when(synchronizerMock.getSyncStatus()).thenReturn(Optional.of(status));
 
-    final MiningCoordinator miningCoordinatorMock = mock(BftMiningCoordinator.class);
+    final MiningCoordinator miningCoordinatorMock = mock(MiningCoordinator.class);
 
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
 
