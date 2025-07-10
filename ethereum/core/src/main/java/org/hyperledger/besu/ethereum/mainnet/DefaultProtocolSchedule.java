@@ -94,6 +94,21 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
     return Optional.ofNullable(chosenSpec);
   }
 
+  /**
+   * spec from the genesis file with the max ie latest timestamp
+   *
+   * @return the last defined spec from the genesis file
+   */
+  @Override
+  public Optional<ScheduledProtocolSpec> getLastProtocolSpec() {
+    checkArgument(
+        !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
+    checkArgument(
+        protocolSpecs.last().fork().milestone() == 0,
+        "There must be a milestone starting from block 0");
+    return protocolSpecs.stream().max(Comparator.comparing(ScheduledProtocolSpec::fork));
+  }
+
   @Override
   public Optional<BigInteger> getChainId() {
     return chainId;

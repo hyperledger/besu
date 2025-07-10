@@ -16,12 +16,14 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper.BEACON_ROOTS_ADDRESS;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
@@ -65,21 +67,58 @@ public class EthConfig implements JsonRpcMethod {
     long currentTime = System.currentTimeMillis() / 1000;
     ProtocolSpec current = protocolSchedule.getForNextBlockHeader(header, currentTime);
     Optional<ScheduledProtocolSpec> next = protocolSchedule.getNextProtocolSpec(currentTime);
+    Optional<ScheduledProtocolSpec> last = protocolSchedule.getLastProtocolSpec();
 
     ObjectNode result = mapperSupplier.get().createObjectNode();
     ObjectNode currentNode = result.putObject("current");
     generateConfig(currentNode, current);
-    result.put("currentHash", configHash(currentNode));
+    String currentHash = configHash(currentNode);
+    String nextHash = "";
+    String nextNextHash = "";
+    result.put("currentHash", currentHash);
     if (next.isPresent()) {
       ObjectNode nextNode = result.putObject("next");
       generateConfig(nextNode, next.get());
-      result.put("nextHash", configHash(nextNode));
+      nextHash = configHash(nextNode);
+      // get next from next
+      Optional<ScheduledProtocolSpec> nextNext =
+          protocolSchedule.getNextProtocolSpec(next.get().fork().milestone());
+      if (nextNext.isPresent()) {
+        ObjectNode nextNextNode =
+            mapperSupplier.get().createObjectNode(); // don't include in the result
+        generateConfig(nextNextNode, nextNext.get());
+        nextNextHash = configHash(nextNextNode);
+      }
+      result.put("currentForkId", getForkIdHashAsString(currentHash, nextHash));
+      result.put("nextHash", nextHash);
+      result.put("nextForkId", getForkIdHashAsString(nextHash, nextNextHash));
     } else {
+      // even if next was empty, still calculate currentForkId
+      result.put("currentForkId", getForkIdHashAsString(currentHash, nextHash));
       result.putNull("next");
       result.putNull("nextHash");
+      result.putNull("nextForkId");
+    }
+    if (last.isPresent()) {
+      ObjectNode lastNode = mapperSupplier.get().createObjectNode(); // don't include in the result
+      generateConfig(lastNode, last.get());
+      String lastHash = configHash(lastNode);
+      result.put("lastHash", lastHash);
+      result.put("lastForkId", getForkIdHashAsString(lastHash, ""));
+    } else {
+      // unexpected - last should always be present even if last == 0
+      result.putNull("last");
+      result.putNull("lastHash");
+      result.putNull("lastForkId");
     }
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
+  }
+
+  private static String getForkIdHashAsString(final String currentHash, final String nextHash) {
+    return new ForkId(Hash.fromHexStringLenient(currentHash), Hash.fromHexStringLenient(nextHash))
+        .getHash()
+        .toShortHexString();
   }
 
   void generateConfig(final ObjectNode result, final ScheduledProtocolSpec scheduledSpec) {
@@ -98,8 +137,6 @@ public class EthConfig implements JsonRpcMethod {
         "baseFeeUpdateFraction", spec.getFeeMarket().getBaseFeeUpdateFraction().longValueExact());
     blobs.put("max", spec.getGasLimitCalculator().currentBlobGasLimit() / (128 * 1024));
     blobs.put("target", spec.getGasLimitCalculator().getTargetBlobGasPerBlock() / (128 * 1024));
-    blobs.put(
-        "maxBlobsPerTx", spec.getGasLimitCalculator().transactionBlobGasLimitCap() / (128 * 1024));
 
     result.put(
         "chainId", protocolSchedule.getChainId().map(c -> "0x" + c.toString(16)).orElse(null));
@@ -133,7 +170,7 @@ public class EthConfig implements JsonRpcMethod {
     } else {
       final CRC32 crc = new CRC32();
       crc.update(node.toString().getBytes(StandardCharsets.UTF_8));
-      return Long.toHexString(crc.getValue());
+      return "0x" + Long.toHexString(crc.getValue());
     }
   }
 }

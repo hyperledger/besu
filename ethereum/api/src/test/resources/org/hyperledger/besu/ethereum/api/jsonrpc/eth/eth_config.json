@@ -14,8 +14,7 @@
         "blobSchedule": {
           "baseFeeUpdateFraction": 3338477,
           "max": 6,
-          "target": 3,
-          "maxBlobsPerTx" : 6
+          "target": 3
         },
         "chainId": "0x1",
         "precompiles": {
@@ -34,9 +33,13 @@
           "BEACON_ROOTS_ADDRESS": "0x000f3df6d732807ef1319fb7b8bb8522d0beac02"
         }
       },
-      "currentHash": "f503e444",
+      "currentHash": "0x3025d871",
+      "currentForkId": "0x3025d871",
       "next": null,
-      "nextHash": null
+      "nextHash": null,
+      "nextForkId": null,
+      "lastHash": "0x3025d871",
+      "lastForkId": "0x3025d871"
     }
   },
   "statusCode": 200
