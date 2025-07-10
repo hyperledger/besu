@@ -64,6 +64,8 @@ import org.apache.tuweni.units.bigints.UInt256s;
 import org.junit.jupiter.api.Test;
 
 public class EthGetTransactionReceiptTest {
+  private static final int MAX_BLOBS_PER_BLOCK = 6;
+  private static final int TARGET_BLOBS_PER_BLOCK = 3;
   private final TransactionReceipt statusReceipt =
       new TransactionReceipt(1, 12, Collections.emptyList(), Optional.empty());
   private final Hash stateRoot =
@@ -329,7 +331,11 @@ public class EthGetTransactionReceiptTest {
     when(spec.getGasLimitCalculator())
         .thenReturn(
             new CancunTargetingGasLimitCalculator(
-                0L, FeeMarket.cancunDefault(0L, Optional.empty()), new CancunGasCalculator()));
+                0L,
+                FeeMarket.cancunDefault(0L, Optional.empty()),
+                new CancunGasCalculator(),
+                MAX_BLOBS_PER_BLOCK,
+                TARGET_BLOBS_PER_BLOCK));
     when(protocolSchedule.getByBlockHeader(blockHeader)).thenReturn(spec);
   }
 

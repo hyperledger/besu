@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -106,9 +106,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               .flatMap(serviceManager -> serviceManager.getService(BlockImportTracerProvider.class))
               // if block import tracer provider is not specified by plugin, default to no tracing
               .orElse(
-                  (__) -> {
+                  ignored -> {
                     if (Boolean.getBoolean("besu.debug.traceBlocks")
-                        || "true".equalsIgnoreCase(System.getenv("BESU_TRACE_BLOCKS"))) {
+                      || "true".equalsIgnoreCase(System.getenv("BESU_TRACE_BLOCKS"))) {
                       return new BlockAwareJsonTracer();
                     }
                     LOG.trace("Block Import uses NO_TRACING");
@@ -230,10 +230,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       blockUpdater.markTransactionBoundary();
 
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
-      if (transaction.getVersionedHashes().isPresent()) {
+      final var optionalVersionedHashes = transaction.getVersionedHashes();
+      if (optionalVersionedHashes.isPresent()) {
+        final var versionedHashes = optionalVersionedHashes.get();
         currentBlobGasUsed +=
-            (transaction.getVersionedHashes().get().size()
-                * protocolSpec.getGasCalculator().getBlobGasPerBlob());
+            (versionedHashes.size() * protocolSpec.getGasCalculator().getBlobGasPerBlob());
       }
 
       final TransactionReceipt transactionReceipt =
@@ -248,14 +249,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         nbParallelTx++;
       }
     }
-    if (blockHeader.getBlobGasUsed().isPresent()
-        && currentBlobGasUsed != blockHeader.getBlobGasUsed().get()) {
-      String errorMessage =
-          String.format(
-              "block did not consume expected blob gas: header %d, transactions %d",
-              blockHeader.getBlobGasUsed().get(), currentBlobGasUsed);
-      LOG.error(errorMessage);
-      return new BlockProcessingResult(Optional.empty(), errorMessage);
+    final var optionalHeaderBlobGasUsed = blockHeader.getBlobGasUsed();
+    if (optionalHeaderBlobGasUsed.isPresent()) {
+      final long headerBlobGasUsed = optionalHeaderBlobGasUsed.get();
+      if (currentBlobGasUsed != headerBlobGasUsed) {
+        String errorMessage =
+            String.format(
+                "block did not consume expected blob gas: header %d, transactions %d",
+                headerBlobGasUsed, currentBlobGasUsed);
+        LOG.error(errorMessage);
+        return new BlockProcessingResult(Optional.empty(), errorMessage);
+      }
     }
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSpec.getWithdrawalsProcessor();
@@ -285,9 +289,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
-    if (maybeRequests.isPresent() && blockHeader.getRequestsHash().isPresent()) {
-      Hash calculatedRequestHash = BodyValidation.requestsHash(maybeRequests.get());
-      Hash headerRequestsHash = blockHeader.getRequestsHash().get();
+    final var optionalRequestsHash = blockHeader.getRequestsHash();
+    if (maybeRequests.isPresent() && optionalRequestsHash.isPresent()) {
+      final List<Request> requests = maybeRequests.get();
+      final Hash headerRequestsHash = optionalRequestsHash.get();
+      Hash calculatedRequestHash = BodyValidation.requestsHash(requests);
       if (!calculatedRequestHash.equals(headerRequestsHash)) {
         return new BlockProcessingResult(
             Optional.empty(),
@@ -316,7 +322,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       if (worldState instanceof BonsaiWorldState) {
         ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
-      throw e;
+      @SuppressWarnings(
+          "java:S2139") // Exception is logged and rethrown to preserve original behavior
+      RuntimeException rethrown = e;
+      throw rethrown;
     } catch (StateRootMismatchException ex) {
       LOG.error(
           "failed persisting block due to stateroot mismatch; expected {}, actual {}",
@@ -333,6 +342,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
   }
 
+  @SuppressWarnings("unused") // preProcessingContext and location are used by subclasses
   protected TransactionProcessingResult getTransactionProcessingResult(
       final Optional<PreprocessingContext> preProcessingContext,
       final BlockProcessingContext blockProcessingContext,
@@ -353,6 +363,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         blobGasPrice);
   }
 
+  @SuppressWarnings(
+      "java:S2629") // INFO level logging rarely disabled in this project per maintainer feedback
   protected boolean hasAvailableBlockBudget(
       final BlockHeader blockHeader, final Transaction transaction, final long currentGasUsed) {
     final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
