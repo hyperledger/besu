@@ -83,10 +83,11 @@ public class CompleteBlocksTask extends AbstractCompleteBlocksTask<Block> {
     if (incompleteHeaders.isEmpty()) {
       return completedFuture(Collections.emptyList());
     }
-    LOG.debug(
-        "Requesting bodies to complete {} blocks, starting with {}.",
-        incompleteHeaders.size(),
-        incompleteHeaders.getFirst().getNumber());
+    LOG.atTrace()
+        .setMessage("Requesting bodies to complete {} blocks, starting with {}.")
+        .addArgument(incompleteHeaders.size())
+        .addArgument(incompleteHeaders.getFirst().getNumber())
+        .log();
     return executeSubTask(
         () -> {
           final GetBodiesFromPeerTask task =

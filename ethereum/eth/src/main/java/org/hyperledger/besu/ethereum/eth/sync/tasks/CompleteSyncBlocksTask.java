@@ -81,10 +81,11 @@ public class CompleteSyncBlocksTask extends AbstractCompleteBlocksTask<SyncBlock
     if (incompleteHeaders.isEmpty()) {
       return completedFuture(emptyList());
     }
-    LOG.info(
-        "Requesting bodies to complete {} blocks, starting with {}.",
-        incompleteHeaders.size(),
-        incompleteHeaders.getFirst().getNumber());
+    LOG.atTrace()
+        .setMessage("Requesting bodies to complete {} blocks, starting with {}.")
+        .addArgument(incompleteHeaders.size())
+        .addArgument(incompleteHeaders.getFirst().getNumber())
+        .log();
     return executeSubTask(
         () -> {
           final GetSyncBlocksFromPeerTask task =

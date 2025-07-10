@@ -84,11 +84,14 @@ public abstract class AbstractGetBodiesFromPeerTask<T, B> extends AbstractPeerRe
     final List<B> bodies = getBodies(bodiesMessage, protocolSchedule);
     if (bodies.isEmpty()) {
       // Message contains no data - nothing to do
-      LOG.debug("Message contains no data. Peer: {}", peer);
+      LOG.atDebug().setMessage("Message contains no data. Peer: {}").addArgument(peer).log();
       return Optional.empty();
     } else if (bodies.size() > headers.size()) {
       // Message doesn't match our request - nothing to do
-      LOG.debug("Message doesn't match our request. Peer: {}", peer);
+      LOG.atDebug()
+          .setMessage("Message doesn't match our request. Peer: {}")
+          .addArgument(peer)
+          .log();
       return Optional.empty();
     }
 
@@ -98,7 +101,10 @@ public abstract class AbstractGetBodiesFromPeerTask<T, B> extends AbstractPeerRe
       final BlockHeader blockHeader = headers.get(i);
       if (!bodyMatchesHeader(body, blockHeader)) {
         // This message contains unrelated bodies - exit
-        LOG.debug("This message contains unrelated bodies. Peer: {}", peer);
+        LOG.atDebug()
+            .setMessage("This message contains unrelated bodies. Peer: {}")
+            .addArgument(peer)
+            .log();
         return Optional.empty();
       }
       blocks.add(getBlock(blockHeader, body));
