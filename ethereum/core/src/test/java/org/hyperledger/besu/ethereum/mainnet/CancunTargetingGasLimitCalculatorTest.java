@@ -35,10 +35,16 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CancunTargetingGasLimitCalculatorTest {
+  private static final int MAX_BLOBS_PER_BLOCK = 6;
+  private static final int TARGET_BLOBS_PER_BLOCK = 3;
   private static final long TARGET_BLOB_GAS_PER_BLOCK_CANCUN = 0x60000;
   private final CancunTargetingGasLimitCalculator cancunTargetingGasLimitCalculator =
       new CancunTargetingGasLimitCalculator(
-          0L, FeeMarket.cancunDefault(0L, Optional.empty()), new CancunGasCalculator());
+          0L,
+          FeeMarket.cancunDefault(0L, Optional.empty()),
+          new CancunGasCalculator(),
+          MAX_BLOBS_PER_BLOCK,
+          TARGET_BLOBS_PER_BLOCK);
 
   @ParameterizedTest(name = "{index} - parent gas {0}, used gas {1}, new excess {2}")
   @MethodSource("cancunBlobGasses")
@@ -62,35 +68,6 @@ class CancunTargetingGasLimitCalculatorTest {
   }
 
   @Test
-  void currentBlobGasLimitIs6Blobs() {
-    var cancunTargetingGasLimitCalculator =
-        new org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator(
-            0L, FeeMarket.cancunDefault(0L, Optional.empty()), new CancunGasCalculator());
-    assertThat(cancunTargetingGasLimitCalculator.currentBlobGasLimit()).isEqualTo(0xC0000);
-  }
-
-  @Test
-  void maxBlobPerTransactionMustNotExceedMaxBlobsPerBlock() {
-    int maxBlobsPerBlock = 10;
-    int targetBlobsPerBlock = 9;
-    int maxBlobsPerTransaction = 11;
-    Assertions.assertThatThrownBy(
-            () ->
-                new CancunTargetingGasLimitCalculator(
-                    0L,
-                    FeeMarket.cancunDefault(0L, Optional.empty()),
-                    pragueGasCalculator,
-                    maxBlobsPerBlock,
-                    targetBlobsPerBlock,
-                    maxBlobsPerTransaction))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining(
-            String.format(
-                "maxBlobsPerTransaction (%d) must not be greater than maxBlobsPerBlock (%d)",
-                maxBlobsPerTransaction, maxBlobsPerBlock));
-  }
-
-  @Test
   void shouldUseCancunCalculatorBlobGasPerBlob() {
     // should use CancunGasCalculator's blob gas per blob to calculate the gas limit
     final long blobGasPerBlob = new CancunGasCalculator().getBlobGasPerBlob();
@@ -103,8 +80,7 @@ class CancunTargetingGasLimitCalculatorTest {
             FeeMarket.cancunDefault(0L, Optional.empty()),
             new CancunGasCalculator(),
             maxBlobs,
-            targetBlobs,
-            maxBlobs);
+            targetBlobs);
     // if maxBlobs = 10, then the gas limit would be 131072 * 10 = 1310720
     assertThat(cancunTargetingGasLimitCalculator.currentBlobGasLimit())
         .isEqualTo(blobGasPerBlob * maxBlobs);
@@ -119,8 +95,7 @@ class CancunTargetingGasLimitCalculatorTest {
           FeeMarket.cancunDefault(0L, Optional.empty()),
           pragueGasCalculator,
           BlobSchedule.PRAGUE_DEFAULT.getMax(),
-          BlobSchedule.PRAGUE_DEFAULT.getTarget(),
-          BlobSchedule.PRAGUE_DEFAULT.getMaxPerTransaction());
+          BlobSchedule.PRAGUE_DEFAULT.getTarget());
 
   private static final long TARGET_BLOB_GAS_PER_BLOCK_PRAGUE = 0xC0000;
 
@@ -164,8 +139,7 @@ class CancunTargetingGasLimitCalculatorTest {
             FeeMarket.cancun(0L, Optional.empty(), BlobSchedule.PRAGUE_DEFAULT),
             new PragueGasCalculator(),
             maxBlobs,
-            targetBlobs,
-            maxBlobs);
+            targetBlobs);
     // if maxBlobs = 10, then the gas limit would be 131072 * 10 = 1310720
     assertThat(pragueTargetingGasLimitCalculator.currentBlobGasLimit())
         .isEqualTo(blobGasPerBlob * maxBlobs);
@@ -182,8 +156,7 @@ class CancunTargetingGasLimitCalculatorTest {
           FeeMarket.cancunDefault(0L, Optional.empty()),
           osakaGasCalculator,
           BlobSchedule.PRAGUE_DEFAULT.getMax(),
-          newTargetCount,
-          BlobSchedule.PRAGUE_DEFAULT.getMaxPerTransaction());
+          newTargetCount);
 
   private static final long TARGET_BLOB_GAS_PER_BLOCK_OSAKA = 0x120000;
 
@@ -220,8 +193,7 @@ class CancunTargetingGasLimitCalculatorTest {
             FeeMarket.cancunDefault(0L, Optional.empty()),
             new CancunGasCalculator(),
             BlobSchedule.CANCUN_DEFAULT.getMax(),
-            BlobSchedule.CANCUN_DEFAULT.getTarget(),
-            BlobSchedule.CANCUN_DEFAULT.getMaxPerTransaction());
+            BlobSchedule.CANCUN_DEFAULT.getTarget());
     assertThat(gasLimitCalculator.currentBlobGasLimit()).isEqualTo(0xC0000); // 6 * 131072
     assertThat(gasLimitCalculator.transactionBlobGasLimitCap()).isEqualTo(0xC0000); // 6 * 131072
   }
@@ -234,8 +206,7 @@ class CancunTargetingGasLimitCalculatorTest {
             FeeMarket.cancunDefault(0L, Optional.empty()),
             new CancunGasCalculator(),
             BlobSchedule.PRAGUE_DEFAULT.getMax(),
-            BlobSchedule.PRAGUE_DEFAULT.getTarget(),
-            BlobSchedule.PRAGUE_DEFAULT.getMaxPerTransaction());
+            BlobSchedule.PRAGUE_DEFAULT.getTarget());
     assertThat(gasLimitCalculator.currentBlobGasLimit()).isEqualTo(0x120000); // 9 * 131072
     assertThat(gasLimitCalculator.transactionBlobGasLimitCap()).isEqualTo(0x120000); // 9 * 131072
   }
