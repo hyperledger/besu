@@ -12,6 +12,9 @@ To run the Ethereum reference tests included in the Besu codebase, use the follo
 
 This will execute the available test suites (such as GeneralStateTests) and validate Besu's EVM behavior.
 
+> **Note:**
+> - Out-of-memory (OOM) errors are common due to the size and number of tests. You may need to increase the heap size using `-Xmx` (e.g., `./gradlew referenceTests -Dorg.gradle.jvmargs="-Xmx8g"`)
+
 ## Enabling JSON Tracing
 
 Besu supports detailed opcode-level JSON tracing. You can enable it using either a JVM system property or an environment variable.
@@ -29,6 +32,8 @@ export BESU_TRACE_BLOCKS=true
 ```
 
 This enables a fallback implementation of `BlockAwareOperationTracer` if no plugin is configured. The default tracer used is `BlockAwareJsonTracer`.
+
+JSON trace output does not appear in the console. To view it, open the associated Gradle test report (usually located in `build/reports/tests/test/index.html`) and find the specific test case output.
 
 ## Trace Contents
 
@@ -97,6 +102,6 @@ if (Boolean.getBoolean("besu.debug.traceBlocks")
 
 ## Resources
 
+- [Ethereum Execution Spec Tests (ethereum/execution-spec-tests)](https://github.com/ethereum/execution-spec-tests)
 - [Ethereum Reference Tests (ethereum/tests)](https://github.com/ethereum/tests)
 - [EVM Opcodes Reference](https://www.evm.codes/)
-- [Besu Documentation](https://besu.hyperledger.org/)

@@ -108,7 +108,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               .orElse(
                   ignored -> {
                     if (Boolean.getBoolean("besu.debug.traceBlocks")
-                      || "true".equalsIgnoreCase(System.getenv("BESU_TRACE_BLOCKS"))) {
+                        || "true".equalsIgnoreCase(System.getenv("BESU_TRACE_BLOCKS"))) {
                       return new BlockAwareJsonTracer();
                     }
                     LOG.trace("Block Import uses NO_TRACING");
