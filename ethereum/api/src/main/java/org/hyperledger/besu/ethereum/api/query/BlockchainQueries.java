@@ -1222,7 +1222,11 @@ public class BlockchainQueries {
       final Hash blockHash, final Supplier<Boolean> isQueryAlive) throws Exception {
     return BackendQuery.runIfAlive(
         "matchingLogs - getBlockBody",
-        () -> blockchain.getBlockBody(blockHash).orElseThrow().getTransactions(),
+        () ->
+            blockchain
+                .getBlockBody(blockHash)
+                .map((bb) -> bb.getTransactions())
+                .orElse(Collections.emptyList()),
         isQueryAlive);
   }
 
@@ -1230,7 +1234,7 @@ public class BlockchainQueries {
       final Hash blockHash, final Supplier<Boolean> isQueryAlive) throws Exception {
     return BackendQuery.runIfAlive(
         "matchingLogs - getTxReceipts",
-        () -> blockchain.getTxReceipts(blockHash).orElseThrow(),
+        () -> blockchain.getTxReceipts(blockHash).orElse(Collections.emptyList()),
         isQueryAlive);
   }
 
