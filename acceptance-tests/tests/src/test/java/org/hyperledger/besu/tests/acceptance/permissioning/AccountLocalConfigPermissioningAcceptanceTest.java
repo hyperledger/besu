@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTransaction;
 
 import java.math.BigInteger;
@@ -40,6 +41,7 @@ public class AccountLocalConfigPermissioningAcceptanceTest extends AcceptanceTes
         permissionedNodeBuilder
             .name("node")
             .accountsPermittedInConfig(Collections.singletonList(senderA.getAddress()))
+            .genesisConfigProvider(GenesisConfigurationFactory::createQbftLondonGenesisConfig)
             .build();
 
     cluster.start(node);

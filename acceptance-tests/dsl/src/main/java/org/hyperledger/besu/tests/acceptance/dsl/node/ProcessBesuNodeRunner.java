@@ -189,23 +189,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.addAll(
         DataStorageOptions.fromConfig(node.getDataStorageConfiguration()).getCLIOptions());
 
-    if (node.getMiningParameters().isMiningEnabled()) {
-      params.add("--miner-enabled");
-      params.add("--miner-extra-data");
-      params.add(node.getMiningParameters().getExtraData().toHexString());
-      params.add("--miner-coinbase");
-      params.add(node.getMiningParameters().getCoinbase().get().toString());
-      params.add("--min-gas-price");
-      params.add(
-          Integer.toString(node.getMiningParameters().getMinTransactionGasPrice().intValue()));
-      params.add("--Xminer-remote-sealers-limit");
-      params.add(
-          Integer.toString(node.getMiningParameters().getUnstable().getRemoteSealersLimit()));
-      params.add("--Xminer-remote-sealers-hashrate-ttl");
-      params.add(
-          Long.toString(node.getMiningParameters().getUnstable().getRemoteSealersTimeToLive()));
-    }
-
     if (!node.getBootnodes().isEmpty()) {
       params.add("--bootnodes");
       params.add(node.getBootnodes().stream().map(URI::toString).collect(Collectors.joining(",")));
