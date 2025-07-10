@@ -692,8 +692,7 @@ public abstract class MainnetProtocolSpecs {
                     (BaseFeeMarket) feeMarket,
                     gasCalculator,
                     blobSchedule.getMax(),
-                    blobSchedule.getTarget(),
-                    blobSchedule.getMaxPerTransaction()))
+                    blobSchedule.getTarget()))
         // EVM changes to support EIP-1153: TSTORE and EIP-5656: MCOPY
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -783,7 +782,6 @@ public abstract class MainnetProtocolSpecs {
                     .flatMap(BlobScheduleOptions::getPrague)
                     .orElse(BlobSchedule.PRAGUE_DEFAULT))
             .gasCalculator(PragueGasCalculator::new)
-            // EIP-3074 AUTH and AUTHCALL
             .evmBuilder(
                 (gasCalculator, jdCacheConfig) ->
                     MainnetEVMs.prague(
@@ -879,8 +877,7 @@ public abstract class MainnetProtocolSpecs {
                     (BaseFeeMarket) feeMarket,
                     gasCalculator,
                     blobSchedule.getMax(),
-                    blobSchedule.getTarget(),
-                    blobSchedule.getMaxPerTransaction()))
+                    blobSchedule.getTarget()))
         .evmBuilder(
             (gasCalculator, __) ->
                 MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
