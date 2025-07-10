@@ -122,7 +122,7 @@ public class EthProtocolManagerTestUtil {
     return RespondingEthPeer.builder()
         .ethProtocolManager(ethProtocolManager)
         .totalDifficulty(td)
-            .capability(EthProtocol.ETH68)
+        .capability(EthProtocol.ETH68)
         .build();
   }
 
@@ -146,7 +146,7 @@ public class EthProtocolManagerTestUtil {
         .ethProtocolManager(ethProtocolManager)
         .totalDifficulty(td)
         .estimatedHeight(estimatedHeight)
-            .capability(EthProtocol.ETH68)
+        .capability(EthProtocol.ETH68)
         .build();
   }
 
@@ -159,7 +159,7 @@ public class EthProtocolManagerTestUtil {
         .ethProtocolManager(ethProtocolManager)
         .totalDifficulty(td)
         .estimatedHeight(estimatedHeight)
-            .capability(EthProtocol.ETH68)
+        .capability(EthProtocol.ETH68)
         .peerValidators(validators)
         .build();
   }

@@ -139,13 +139,14 @@ public class RespondingEthPeer {
     final int before = ethPeers.peerCount();
     final EthPeer peer = ethPeers.peer(peerConnection);
 
-    StatusMessage.Builder statusMessageBuilder = StatusMessage.builder()
+    StatusMessage.Builder statusMessageBuilder =
+        StatusMessage.builder()
             .protocolVersion(capability.getVersion())
             .networkId(BigInteger.ONE)
             .genesisHash(gen.hash())
             .bestHash(chainHeadHash)
             .forkId(new ForkId(Hash.ZERO, 0));
-    if(capability.getVersion() < EthProtocolVersion.V69) {
+    if (capability.getVersion() < EthProtocolVersion.V69) {
       statusMessageBuilder.totalDifficulty(totalDifficulty);
     } else if (EthProtocol.isEth69Compatible(capability)) {
       statusMessageBuilder.blockRange(new StatusMessage.BlockRange(0, estimatedHeight.orElse(0)));
