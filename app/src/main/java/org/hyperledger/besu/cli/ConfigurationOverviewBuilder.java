@@ -344,7 +344,7 @@ public class ConfigurationOverviewBuilder {
 
   /**
    * Sets the parallel transaction processing enabled.
-   * 
+   *
    * @param isParallelTxProcessingEnabled parallel transaction processing enabled
    * @return the builder
    */
