@@ -91,6 +91,17 @@ sudo -u execution /opt/besu/async-profiler-4.0-linux-*/bin/asprof \
 ## 4. Analyze the Results
 
 Once complete, open the generated flamegraph (e.g., `/tmp/besu-profile.html`) in your browser to analyze performance bottlenecks.
+**How to read the flamegraph ? **
+
+- Top boxes: These represent the methods currently running when CPU samples were taken.
+- Boxes underneath: These represent methods called earlier, eventually leading to the methods above them.
+
+The width of each box shows how much total time was spent in this method (including any methods it called).
+
+So:
+
+- Wide boxes = Potential hot spots.
+- Tall stacks = Deep call chains.
 
 It will look something like this:
 
