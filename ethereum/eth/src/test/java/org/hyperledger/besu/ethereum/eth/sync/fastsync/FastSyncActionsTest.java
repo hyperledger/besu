@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -191,8 +192,8 @@ public class FastSyncActionsTest {
         createFastSyncActions(
             syncConfig, new PivotSelectorFromPeers(ethContext, syncConfig, syncState));
 
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5500);
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 4000);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(1000), 5500);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(2000), 4000);
 
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE);
@@ -291,6 +292,7 @@ public class FastSyncActionsTest {
     for (int i = 0; i < peerCount; i++) {
       // Best peer by td is the first peer, td decreases as i increases
       final boolean isBest = i == 0;
+      final Difficulty td = Difficulty.of(peerCount - i);
 
       final OptionalLong height;
       if (isBest && bestMissingHeight) {
@@ -302,7 +304,7 @@ public class FastSyncActionsTest {
       }
 
       final RespondingEthPeer peer =
-          EthProtocolManagerTestUtil.createPeer(ethProtocolManager, height, validator);
+          EthProtocolManagerTestUtil.createPeer(ethProtocolManager, td, height, validator);
       if (!isBest || !bestNotValidated) {
         peer.getEthPeer().markValidated(validator);
       }

@@ -58,7 +58,6 @@ import java.util.concurrent.CompletableFuture;
 
 import jakarta.validation.constraints.NotNull;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
@@ -164,7 +163,6 @@ public class BackwardSyncStepTest {
   }
 
   @Test
-  @Disabled // causes infinite loop due to crappy old peer task code
   public void shouldFindHeaderWhenRequested() throws Exception {
     final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3);
     when(context.getBatchSize()).thenReturn(5);
@@ -218,7 +216,6 @@ public class BackwardSyncStepTest {
   }
 
   @Test
-  @Disabled // causes infinite loop due to crappy old peer task code
   public void shouldRequestHeaderWhenAsked() throws Exception {
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
@@ -283,7 +280,6 @@ public class BackwardSyncStepTest {
   }
 
   @Test
-  @Disabled // causes infinite loop due to crappy old peer task code
   public void shouldRequestHeaderBeforeCurrentHeight() throws Exception {
     extendBlockchain(REMOTE_HEIGHT + 1, context.getProtocolContext().getBlockchain());
 
@@ -322,7 +318,6 @@ public class BackwardSyncStepTest {
   }
 
   @Test
-  @Disabled // causes infinite loop due to crappy old peer task code
   public void shouldThrowWhenResponseIsEmptyWhenRequestingHeader() {
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);

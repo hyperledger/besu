@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -110,10 +111,12 @@ public class FullSyncChainDownloaderForkTest {
   @Test
   public void disconnectsFromPeerOnBadFork() {
     otherBlockchainSetup.importAllBlocks();
+    final Difficulty localTd = localBlockchain.getChainHead().getTotalDifficulty();
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(otherBlockchain);
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 100);
+    final RespondingEthPeer peer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.add(100), 100);
 
     final ChainDownloader downloader = downloader();
     downloader.start();

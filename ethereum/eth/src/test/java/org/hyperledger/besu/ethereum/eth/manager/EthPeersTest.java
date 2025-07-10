@@ -73,9 +73,11 @@ public class EthPeersTest {
   public void comparesPeersWithHeightAndTd() {
     // Set peerA with better height, lower td
     final EthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 20).getEthPeer();
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(50), 20)
+            .getEthPeer();
     final EthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10).getEthPeer();
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(100), 10)
+            .getEthPeer();
 
     assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isGreaterThan(0);
     assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerA, peerB)).isLessThan(0);
@@ -93,10 +95,12 @@ public class EthPeersTest {
   @Test
   public void comparesPeersWithTdAndNoHeight() {
     final EthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, OptionalLong.empty())
+        EthProtocolManagerTestUtil.createPeer(
+                ethProtocolManager, Difficulty.of(100), OptionalLong.empty())
             .getEthPeer();
     final EthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, OptionalLong.empty())
+        EthProtocolManagerTestUtil.createPeer(
+                ethProtocolManager, Difficulty.of(50), OptionalLong.empty())
             .getEthPeer();
 
     // Sanity check
@@ -366,7 +370,8 @@ public class EthPeersTest {
     assertThat(ethPeers.toString()).isEqualTo("0 EthPeers {}");
 
     final EthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 20).getEthPeer();
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(50), 20)
+            .getEthPeer();
     ethPeers.registerNewConnection(peerA.getConnection(), Collections.emptyList());
     assertThat(ethPeers.toString()).contains("1 EthPeers {");
     assertThat(ethPeers.toString()).contains(peerA.getLoggableId());

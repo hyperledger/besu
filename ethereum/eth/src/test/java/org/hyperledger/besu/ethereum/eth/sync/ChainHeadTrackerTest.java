@@ -92,6 +92,7 @@ public class ChainHeadTrackerTest {
         RespondingEthPeer.builder()
             .ethProtocolManager(ethProtocolManager)
             .chainHeadHash(blockchain.getChainHeadHash())
+            .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
             .estimatedHeight(0)
             .build();
     GetHeadersFromPeerTaskExecutorAnswer getHeadersAnswer =
