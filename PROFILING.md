@@ -94,6 +94,6 @@ Once complete, open the generated flamegraph (e.g., `/tmp/besu-profile.html`) in
 
 It will look something like this:
 
-![image](images/flamegraph_01.jpeg)
+![image](images/flamegraph_01.png)
 
 The highlighted area shows the most performance-critical section of the flamegraph, revealing the methods in Besu that consume the most time during block processing.
