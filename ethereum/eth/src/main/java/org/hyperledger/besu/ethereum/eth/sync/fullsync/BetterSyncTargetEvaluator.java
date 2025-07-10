@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -46,6 +47,13 @@ public class BetterSyncTargetEvaluator {
               // Require some threshold to be exceeded before switching targets to keep some
               // stability when multiple peers are in range of each other
               final ChainState bestPeerChainState = bestPeer.chainState();
+              final Difficulty tdDifference =
+                  bestPeerChainState
+                      .getEstimatedTotalDifficulty()
+                      .subtract(currentPeerChainState.getBestBlock().getTotalDifficulty());
+              if (tdDifference.compareTo(config.getDownloaderChangeTargetThresholdByTd()) > 0) {
+                return true;
+              }
               final long heightDifference =
                   bestPeerChainState.getEstimatedHeight()
                       - currentPeerChainState.getEstimatedHeight();

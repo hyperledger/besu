@@ -18,6 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -25,25 +27,29 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 
 import java.util.Optional;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class BetterSyncTargetEvaluatorTest {
 
   private static final int CURRENT_TARGET_HEIGHT = 10;
+  private static final int CURRENT_TARGET_TD = 50;
   private static final int HEIGHT_THRESHOLD = 100;
+  private static final int TD_THRESHOLD = 5;
   private final EthPeers ethPeers = mock(EthPeers.class);
-  private final EthPeer currentTarget = peer(CURRENT_TARGET_HEIGHT);
+  private final EthPeer currentTarget = peer(CURRENT_TARGET_HEIGHT, CURRENT_TARGET_TD);
   private final BetterSyncTargetEvaluator evaluator =
       new BetterSyncTargetEvaluator(
           SynchronizerConfiguration.builder()
               .downloaderChangeTargetThresholdByHeight(HEIGHT_THRESHOLD)
+              .downloaderChangeTargetThresholdByTd(UInt256.valueOf(TD_THRESHOLD))
               .build(),
           ethPeers);
 
   @BeforeEach
   public void setupMocks() {
-    when(ethPeers.getBestPeerComparator()).thenReturn(EthPeers.CHAIN_HEIGHT);
+    when(ethPeers.getBestPeerComparator()).thenReturn(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT);
   }
 
   @Test
@@ -54,32 +60,106 @@ public class BetterSyncTargetEvaluatorTest {
   }
 
   @Test
-  public void shouldNotSwitchTargetWhenBestPeerHasLowerHeight() {
-    bestPeerWithDelta(-1);
+  public void shouldNotSwitchTargetWhenBestPeerHasLowerHeightAndDifficulty() {
+    bestPeerWithDelta(-1, -1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
   }
 
   @Test
-  public void shouldNotSwitchTargetWhenBestPeerHasEqualHeight() {
-    bestPeerWithDelta(0);
+  public void shouldNotSwitchTargetWhenBestPeerHasSameHeightAndLowerDifficulty() {
+    bestPeerWithDelta(0, -1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
   }
 
   @Test
-  public void shouldSwitchWhenHeightExceedsThreshold() {
-    bestPeerWithDelta(HEIGHT_THRESHOLD + 1);
+  public void shouldNotSwitchTargetWhenBestPeerHasLowerHeightAndSameDifficulty() {
+    bestPeerWithDelta(-1, 0);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
+  }
+
+  @Test
+  public void shouldNotSwitchTargetWhenBestPeerHasGreaterHeightAndLowerDifficulty() {
+    bestPeerWithDelta(HEIGHT_THRESHOLD + 1, -1);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
+  }
+
+  @Test
+  public void shouldNotSwitchTargetWhenBestPeerHasEqualHeightAndDifficulty() {
+    bestPeerWithDelta(0, 0);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
+  }
+
+  @Test
+  public void shouldNotSwitchWhenHeightAndTdHigherWithinThreshold() {
+    bestPeerWithDelta(HEIGHT_THRESHOLD - 1, TD_THRESHOLD - 1);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
+  }
+
+  @Test
+  public void shouldNotSwitchWhenHeightAndTdHigherEqualToThreshold() {
+    bestPeerWithDelta(HEIGHT_THRESHOLD, TD_THRESHOLD);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
+  }
+
+  @Test
+  public void shouldSwitchWhenHeightExceedsThresholdAndDifficultyEqual() {
+    bestPeerWithDelta(HEIGHT_THRESHOLD + 1, 0);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
   }
 
-  private void bestPeerWithDelta(final long height) {
-    final EthPeer bestPeer = peer(CURRENT_TARGET_HEIGHT + height);
+  @Test
+  public void shouldSwitchWhenHeightExceedsThresholdAndDifficultyWithinThreshold() {
+    bestPeerWithDelta(HEIGHT_THRESHOLD + 1, TD_THRESHOLD - 1);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
+  }
+
+  @Test
+  public void shouldSwitchWhenHeightAndDifficultyExceedThreshold() {
+    bestPeerWithDelta(HEIGHT_THRESHOLD + 1, TD_THRESHOLD + 1);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
+  }
+
+  @Test
+  public void shouldNotSwitchWhenHeightExceedsThresholdButDifficultyIsLower() {
+    bestPeerWithDelta(HEIGHT_THRESHOLD + 1, -1);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
+  }
+
+  @Test
+  public void shouldSwitchWhenDifficultyExceedsThresholdAndHeightIsEqual() {
+    bestPeerWithDelta(0, TD_THRESHOLD + 1);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
+  }
+
+  @Test
+  public void shouldSwitchWhenDifficultyExceedsThresholdAndHeightIsLower() {
+    bestPeerWithDelta(-1, TD_THRESHOLD + 1);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
+  }
+
+  @Test
+  public void shouldSwitchWhenDifficultyExceedsThresholdAndHeightIsWithinThreshold() {
+    bestPeerWithDelta(HEIGHT_THRESHOLD - 1, TD_THRESHOLD + 1);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
+  }
+
+  @Test
+  public void shouldSwitchWhenHeightAndDifficultyExceedsThreshold() {
+    bestPeerWithDelta(HEIGHT_THRESHOLD + 1, TD_THRESHOLD + 1);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
+  }
+
+  private void bestPeerWithDelta(final long height, final long totalDifficulty) {
+    final EthPeer bestPeer =
+        peer(CURRENT_TARGET_HEIGHT + height, CURRENT_TARGET_TD + totalDifficulty);
     when(ethPeers.bestPeer()).thenReturn(Optional.of(bestPeer));
   }
 
-  private EthPeer peer(final long chainHeight) {
+  private EthPeer peer(final long chainHeight, final long totalDifficulty) {
     final EthPeer peer = mock(EthPeer.class);
     final ChainState chainState = new ChainState();
     chainState.updateHeightEstimate(chainHeight);
+    chainState.statusReceived(Hash.EMPTY, Difficulty.of(totalDifficulty));
     when(peer.chainState()).thenReturn(chainState);
     return peer;
   }

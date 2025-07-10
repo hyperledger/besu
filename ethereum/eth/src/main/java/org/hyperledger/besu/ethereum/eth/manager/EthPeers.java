@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
+import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerClientName;
@@ -69,6 +70,8 @@ import org.slf4j.LoggerFactory;
 
 public class EthPeers implements PeerSelector {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeers.class);
+  public static final Comparator<EthPeer> TOTAL_DIFFICULTY =
+      Comparator.comparing((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty());
 
   public static final Comparator<EthPeer> CHAIN_HEIGHT =
       Comparator.comparing((final EthPeer p) -> p.chainState().getEstimatedHeight());
@@ -76,6 +79,9 @@ public class EthPeers implements PeerSelector {
   public static final Comparator<EthPeer> MOST_USEFUL_PEER =
       Comparator.comparing((final EthPeer p) -> p.getReputation().getScore())
           .thenComparing(CHAIN_HEIGHT);
+
+  public static final Comparator<EthPeer> TOTAL_DIFFICULTY_THEN_HEIGHT =
+      TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> LEAST_TO_MOST_BUSY =
       Comparator.comparing(EthPeer::outstandingRequests)
@@ -134,7 +140,7 @@ public class EthPeers implements PeerSelector {
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.maxMessageSize = maxMessageSize;
-    this.bestPeerComparator = CHAIN_HEIGHT;
+    this.bestPeerComparator = TOTAL_DIFFICULTY_THEN_HEIGHT;
     this.localNodeId = localNodeId;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
