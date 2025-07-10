@@ -1,6 +1,6 @@
 # Profiling Besu with `asprof`
 
-This guide explains how to set up and run [Async Profiler](https://github.com/jvm-profiling-tools/async-profiler) to profile a running Besu instance.
+This guide explains how to set up and run [Async Profiler](https://github.com/async-profiler/async-profiler) to profile a running Besu instance.
 
 ---
 
@@ -8,7 +8,9 @@ This guide explains how to set up and run [Async Profiler](https://github.com/jv
 
 ### a. Download and Extract
 
-Download version 4.0 of Async Profiler appropriate for your architecture:
+Please refer to the release page of [Async Profiler](https://github.com/async-profiler/async-profiler/releases) to check for the latest version.
+
+For example to download version 4.0 appropriate for your architecture:
 
 - For **x86_64**:
   ```bash
