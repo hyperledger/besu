@@ -11,7 +11,7 @@
 - Improve transaction simulation and gas estimation when no gas pricing is present [#8888](https://github.com/hyperledger/besu/pull/8888)
 
 #### Fusaka devnets
-- EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417)
+- EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417), [#8946](https://github.com/hyperledger/besu/pull/8946)
 
 ### Bug fixes
 
