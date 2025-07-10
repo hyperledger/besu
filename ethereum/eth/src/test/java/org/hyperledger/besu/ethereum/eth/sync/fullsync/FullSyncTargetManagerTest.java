@@ -111,13 +111,13 @@ public class FullSyncTargetManagerTest {
 
   @ParameterizedTest
   @ArgumentsSource(FullSyncTargetManagerTest.FullSyncTargetManagerTestArguments.class)
-  public void findSyncTarget_withHeightEstimates(final DataStorageFormat storageFormat) throws InterruptedException {
+  public void findSyncTarget_withHeightEstimates(final DataStorageFormat storageFormat) {
     setup(storageFormat);
     final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
     when(localWorldState.isWorldStateAvailable(
             chainHeadHeader.getStateRoot(), chainHeadHeader.getHash()))
         .thenReturn(true);
-    final RespondingEthPeer bestPeer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 20);
+    final RespondingEthPeer bestPeer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 4);
 
     final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
     bestPeer.respond(responder);
