@@ -17,7 +17,9 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ADMIN;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.CLIQUE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.IBFT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PLUGINS;
 import static org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.ConsensusType.QBFT;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -299,7 +301,7 @@ public class BesuNodeFactory {
       final String name, final UnaryOperator<BesuNodeConfigurationBuilder> configModifier)
       throws IOException {
     final List<String> enableRpcApis = new ArrayList<>(Arrays.asList());
-    enableRpcApis.addAll(List.of(IBFT.name(), ADMIN.name()));
+    enableRpcApis.addAll(List.of(IBFT.name(), ADMIN.name(), CLIQUE.name()));
     BesuNodeConfigurationBuilder builder =
         new BesuNodeConfigurationBuilder()
             .name(name)
@@ -347,7 +349,7 @@ public class BesuNodeFactory {
       throws IOException {
 
     final List<String> enableRpcApis = new ArrayList<>(Arrays.asList(extraRpcApis));
-    enableRpcApis.addAll(List.of(IBFT.name(), ADMIN.name()));
+    enableRpcApis.addAll(List.of(IBFT.name(), ADMIN.name(), PLUGINS.name(), CLIQUE.name()));
 
     return create(
         new BesuNodeConfigurationBuilder()
@@ -536,7 +538,7 @@ public class BesuNodeFactory {
       throws IOException {
 
     final List<String> enableRpcApis = new ArrayList<>(Arrays.asList(extraRpcApis));
-    enableRpcApis.addAll(List.of(QBFT.name(), ADMIN.name()));
+    enableRpcApis.addAll(List.of(QBFT.name(), ADMIN.name(), PLUGINS.name()));
 
     return create(
         new BesuNodeConfigurationBuilder()
@@ -548,7 +550,7 @@ public class BesuNodeFactory {
             .extraCLIOptions(extraCLIOptions)
             .devMode(false)
             .jsonRpcTxPool()
-            .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig)
+            .genesisConfigProvider(GenesisConfigurationFactory::createQbftLondonGenesisConfig)
             .build());
   }
 
@@ -795,14 +797,10 @@ public class BesuNodeFactory {
                 node.createJsonRpcWithRpcApiEnabledConfig(enableRpcApis.toArray(String[]::new)))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .jsonRpcTxPool();
+            .jsonRpcTxPool()
+            .genesisConfigProvider(GenesisConfigurationFactory::createQbft256r1GenesisConfig);
 
-    final String genesisData = GenesisConfigurationFactory.readGenesisFile(genesisPath);
-
-    return builder
-        .devMode(false)
-        .genesisConfigProvider((nodes) -> Optional.of(genesisData))
-        .keyPair(keyPair);
+    return builder.keyPair(keyPair);
   }
 
   public BesuNode runCommand(final String command) throws IOException {

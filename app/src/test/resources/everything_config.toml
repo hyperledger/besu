@@ -161,7 +161,6 @@ miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C
 min-gas-price=1
 min-priority-fee=0
 min-block-occupancy-ratio=0.7
-block-txs-selection-max-time=5000
 poa-block-txs-selection-max-time=75
 Xpos-block-creation-max-time=5
 

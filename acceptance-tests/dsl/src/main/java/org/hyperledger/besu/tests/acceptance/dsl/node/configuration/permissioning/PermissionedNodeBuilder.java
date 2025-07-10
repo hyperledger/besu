@@ -30,7 +30,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
-import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,6 +62,7 @@ public class PermissionedNodeBuilder {
   private List<String> staticNodes = new ArrayList<>();
   private boolean isDnsEnabled = false;
   private boolean mining = true;
+  private GenesisConfigurationProvider genesisConfigProvider;
 
   public PermissionedNodeBuilder name(final String name) {
     this.name = name;
@@ -127,6 +128,12 @@ public class PermissionedNodeBuilder {
     return this;
   }
 
+  public PermissionedNodeBuilder genesisConfigProvider(
+      final GenesisConfigurationProvider genesisConfigProvider) {
+    this.genesisConfigProvider = genesisConfigProvider;
+    return this;
+  }
+
   public BesuNode build() {
     if (name == null) {
       name = "perm_node_" + UUID.randomUUID().toString().substring(0, 8);
@@ -157,7 +164,7 @@ public class PermissionedNodeBuilder {
 
     builder.dnsEnabled(isDnsEnabled);
 
-    builder.genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
+    builder.genesisConfigProvider(genesisConfigProvider);
     builder.devMode(false);
 
     try {
