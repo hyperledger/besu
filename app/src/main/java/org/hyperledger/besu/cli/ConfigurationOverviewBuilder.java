@@ -63,6 +63,7 @@ public class ConfigurationOverviewBuilder {
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
   private boolean isHistoryExpiryPruneEnabled = false;
+  private boolean isParallelTxProcessingEnabled = false;
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
 
   /**
@@ -342,6 +343,18 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets the parallel transaction processing enabled.
+   *
+   * @param isParallelTxProcessingEnabled parallel transaction processing enabled
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setParallelTxProcessingEnabled(
+      final boolean isParallelTxProcessingEnabled) {
+    this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
+    return this;
+  }
+
+  /**
    * Build configuration overview.
    *
    * @return the string representing configuration overview
@@ -404,6 +417,12 @@ public class ConfigurationOverviewBuilder {
     lines.add("Using " + txPoolImplementation + " transaction pool implementation");
 
     lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
+
+    if (isParallelTxProcessingEnabled) {
+      lines.add("Parallel transaction processing enabled");
+    } else {
+      lines.add("Parallel transaction processing disabled");
+    }
 
     if (isLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();
