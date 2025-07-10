@@ -92,7 +92,7 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
     if (versionedHashes.length > 128) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
-          RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST);
+          RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
 
     final List<BlobAndProofV1> result = getBlobV1Result(versionedHashes);

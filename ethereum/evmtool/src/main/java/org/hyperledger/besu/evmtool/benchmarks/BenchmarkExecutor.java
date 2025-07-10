@@ -39,8 +39,10 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 import one.profiler.AsyncProfiler;
 import org.apache.tuweni.bytes.Bytes;
@@ -58,8 +60,7 @@ public abstract class BenchmarkExecutor {
   /** Where to write the output of the benchmarks. */
   protected final PrintStream output;
 
-  /** Config for running benchmarks. * */
-  protected final BenchmarkConfig config;
+  private final BenchmarkConfig config;
 
   private Runnable precompileTableHeader;
   int warmIterations;
@@ -138,6 +139,38 @@ public abstract class BenchmarkExecutor {
   }
 
   /**
+   * Benchmarks the given precompile with all the test cases provided. This method selectively runs
+   * the benchmark and/or particular test cases accordingly with the CLI options that were provided.
+   *
+   * @param testCases all test cases to run against the precompile.
+   * @param contract precompile contract to execute.
+   * @param evmSpecVersion EVM specification version to run the precompile for.
+   */
+  public void precompile(
+      final Map<String, Bytes> testCases,
+      final PrecompiledContract contract,
+      final EvmSpecVersion evmSpecVersion) {
+
+    if (contract == null) {
+      throw new UnsupportedOperationException(
+          "contract is unsupported on " + evmSpecVersion + " fork");
+    }
+
+    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+      if (config.testCasePattern().isPresent()
+          && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
+        continue;
+      }
+
+      final double execTime =
+          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
+
+      long gasCost = contract.gasRequirement(testCase.getValue());
+      logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+    }
+  }
+
+  /**
    * Run the benchmark with the specific args. Execution will be done warmup + iterations times
    *
    * @param testName name of the test execution for the async profiler if configured
@@ -172,12 +205,15 @@ public abstract class BenchmarkExecutor {
             });
 
     int executions = 0;
-    long elapsed = 0;
-    startNanoTime = System.nanoTime();
-    while (executions < execIterations && elapsed < execTimeInNano) {
+    long totalElapsed = 0;
+
+    while (executions < execIterations && totalElapsed < execTimeInNano) {
+      long iterationStart = System.nanoTime();
       contract.computePrecompile(arg, fakeFrame);
+      long iterationElapsed = System.nanoTime() - iterationStart;
+
+      totalElapsed += iterationElapsed;
       executions++;
-      elapsed = System.nanoTime() - startNanoTime;
     }
 
     if (asyncProfiler.get() != null) {
@@ -188,15 +224,16 @@ public abstract class BenchmarkExecutor {
       }
     }
 
-    return elapsed / 1.0e9D / executions;
+    return (totalElapsed / 1.0e9D) / executions;
   }
 
   /**
-   * Logging after a Precompile run with all the normalized and required stats.
+   * Logs performance numbers of precompiles. Should not be called outside of this class unless a
+   * custom precompile run is preferred.
    *
-   * @param testCase name of the running test case.
-   * @param gasCost actual gas cost of the Precompile contract.
-   * @param execTime time that took for an iteration to complete.
+   * @param testCase name of the test case
+   * @param gasCost cost it takes for the given test case to run with the given precompile
+   * @param execTime elapsed time of a single iteration
    */
   protected void logPrecompilePerformance(
       final String testCase, final long gasCost, final double execTime) {
@@ -243,6 +280,7 @@ public abstract class BenchmarkExecutor {
    *     default, false disabled, true enabled)
    * @param fork the fork name to run the benchmark against.
    */
+  // TODO: remove attemptNative since it's already available from BenchmarkConfig here
   public abstract void runBenchmark(final Boolean attemptNative, final String fork);
 
   /**
