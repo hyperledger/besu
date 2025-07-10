@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -66,6 +67,7 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
             .accountsConfigFile(tempFile)
             .accountsPermittedInConfig(Collections.singletonList(senderA.getAddress()))
             .dnsEnabled(true)
+            .genesisConfigProvider(GenesisConfigurationFactory::createQbftLondonGenesisConfig)
             .build();
 
     cluster.start(this.node);
