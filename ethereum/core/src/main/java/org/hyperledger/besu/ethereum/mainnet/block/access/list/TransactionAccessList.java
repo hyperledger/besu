@@ -61,13 +61,16 @@ public class TransactionAccessList implements Eip7928AccessList {
   @Override
   public void addSlotAccessForAccount(
       final Address address, final UInt256 slotKey, final UInt256 slotValue) {
-    accounts.get(address).addSlotAccess(slotKey, slotValue);
+    accounts.get(address).addSlotAccess(slotKey, slotValue, slotValue);
   }
 
   @Override
   public void addSlotUpdateForAccount(
-      final Address address, final UInt256 slotKey, final UInt256 slotValue) {
-    accounts.get(address).addSlotUpdate(slotKey, slotValue);
+      final Address address,
+      final UInt256 slotKey,
+      final UInt256 originalSlotValue,
+      final UInt256 newSlotValue) {
+    accounts.get(address).addSlotAccess(slotKey, originalSlotValue, newSlotValue);
   }
 
   public static class AccountAccessList {
@@ -76,7 +79,7 @@ public class TransactionAccessList implements Eip7928AccessList {
     private final long prevNonce;
     private final Wei prevBalance;
     private final Bytes prevCodeHash;
-    private final Map<UInt256, Pair<UInt256, Boolean>> slots = new ConcurrentHashMap<>();
+    private final Map<UInt256, Pair<UInt256, UInt256>> slots = new ConcurrentHashMap<>();
     private final List<UInt256> slotsRead = new ArrayList<>();
 
     public AccountAccessList(final Account account) {
@@ -87,12 +90,14 @@ public class TransactionAccessList implements Eip7928AccessList {
       this.prevCodeHash = account.getCodeHash();
     }
 
-    public void addSlotUpdate(final UInt256 slotKey, final UInt256 slotValue) {
-      slots.put(slotKey, new Pair<>(slotValue, true));
-    }
-
-    public void addSlotAccess(final UInt256 slotKey, final UInt256 slotValue) {
-      slots.putIfAbsent(slotKey, new Pair<>(slotValue, false));
+    public void addSlotAccess(
+        final UInt256 slotKey, final UInt256 originalSlotValue, final UInt256 newSlotValue) {
+      if (slots.containsKey(slotKey)) {
+        final Pair<UInt256, UInt256> originalSlot = slots.get(slotKey);
+        slots.put(slotKey, new Pair<>(originalSlot.getFirst(), newSlotValue));
+      } else {
+        slots.put(slotKey, new Pair<>(originalSlotValue, newSlotValue));
+      }
     }
 
     public Address getAddress() {
@@ -119,7 +124,7 @@ public class TransactionAccessList implements Eip7928AccessList {
       return slotsRead;
     }
 
-    public Map<UInt256, Pair<UInt256, Boolean>> getSlots() {
+    public Map<UInt256, Pair<UInt256, UInt256>> getSlots() {
       return slots;
     }
   }

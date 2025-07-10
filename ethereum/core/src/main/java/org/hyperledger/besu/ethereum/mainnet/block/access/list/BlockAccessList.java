@@ -167,16 +167,23 @@ public class BlockAccessList {
         }
 
         // Storage slots
-        Map<UInt256, Pair<UInt256, Boolean>> slots = accountState.getSlots();
-        for (Map.Entry<UInt256, Pair<UInt256, Boolean>> slotEntry : slots.entrySet()) {
+        Map<UInt256, Pair<UInt256, UInt256>> slots = accountState.getSlots();
+        for (Map.Entry<UInt256, Pair<UInt256, UInt256>> slotEntry : slots.entrySet()) {
           final UInt256 slotKey = slotEntry.getKey();
-          final UInt256 slotValue = slotEntry.getValue().getFirst();
-          final Boolean isSlotUpdated = slotEntry.getValue().getSecond();
+          final UInt256 originalSlotValue = slotEntry.getValue().getFirst();
+          final UInt256 newSlotValue = slotEntry.getValue().getSecond();
+
+
+          final boolean isSet = originalSlotValue == null;
+          final boolean isReset = newSlotValue == null;
+          final boolean isUpdate =
+              originalSlotValue == null ? false : !originalSlotValue.equals(newSlotValue);
+          final boolean isWrite = isSet || isReset || isUpdate;
 
           StorageSlotKey slotKeyObj = new StorageSlotKey(slotKey);
 
-          if (isSlotUpdated) {
-            builder.addStorageWrite(slotKeyObj, txList.getIndex(), slotValue);
+          if (isWrite) {
+            builder.addStorageWrite(slotKeyObj, txList.getIndex(), newSlotValue);
           } else {
             builder.addStorageRead(slotKeyObj);
           }
