@@ -152,6 +152,17 @@ public class EthProtocolManagerTestUtil {
 
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager,
+      final OptionalLong estimatedHeight,
+      final PeerValidator... validators) {
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .estimatedHeight(estimatedHeight)
+        .peerValidators(validators)
+        .build();
+  }
+
+  public static RespondingEthPeer createPeer(
+      final EthProtocolManager ethProtocolManager,
       final Difficulty td,
       final OptionalLong estimatedHeight,
       final PeerValidator... validators) {
