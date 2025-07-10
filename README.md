@@ -65,6 +65,12 @@ and <a href="https://www.yourkit.com/youmonitor/">YourKit YouMonitor</a>.
 
 ![YourKit Logo](https://www.yourkit.com/images/yklogo.png)
 
+## Reference Tests and JSON Tracing
+
+Besu includes support for running Ethereum reference tests and generating detailed EVM execution traces.
+
+To learn how to run the tests and enable opcode-level JSON tracing for debugging and correctness verification, see the [Reference Test Execution and Tracing Guide](REFERENCE_TESTS.md).
+
 [Besu Issues]: https://github.com/hyperledger/besu/issues
 [Besu User Documentation]: https://besu.hyperledger.org
 [Besu channel on Discord]: https://discord.com/invite/hyperledger
