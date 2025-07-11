@@ -27,8 +27,8 @@ public class ClusterAcceptanceTest extends AcceptanceTestBase {
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode = besu.createMinerNode("node1");
-    fullNode = besu.createArchiveNode("node2");
+    minerNode = besu.createQbftNode("node1");
+    fullNode = besu.createQbftNode("node2");
     cluster.start(minerNode, fullNode);
   }
 
