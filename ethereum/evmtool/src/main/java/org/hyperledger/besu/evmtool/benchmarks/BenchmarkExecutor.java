@@ -48,6 +48,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import one.profiler.AsyncProfiler;
+import org.apache.commons.math3.distribution.TDistribution;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Abstract class to support benchmarking of various client algorithms */
@@ -70,6 +72,7 @@ public abstract class BenchmarkExecutor {
   private final long warmTimeInNano;
   int execIterations;
   private final long execTimeInNano;
+  private DescriptiveStatistics timeStats;
 
   static final MessageFrame fakeFrame =
       MessageFrame.builder()
@@ -185,14 +188,55 @@ public abstract class BenchmarkExecutor {
     // Fully warmup and execute, test case by test case
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
       try {
-        final double execTime =
-            runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
+        /*final double execTime =*/ runPrecompileBenchmark(
+            testCase.getKey(), testCase.getValue(), contract);
         long gasCost = contract.gasRequirement(testCase.getValue());
-        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+        //        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+        logResultsWithError(testCase.getKey(), gasCost, timeStats);
       } catch (final IllegalArgumentException e) {
         output.printf("%s Input is Invalid%n", testCase.getKey());
       }
     }
+  }
+
+  //  compute mean ± error on derived‐gas and MGps (99.9% CI).
+  private void logResultsWithError(
+      final String testCase, final long gasCost, final DescriptiveStatistics timeStats) {
+    precompileTableHeader.run();
+    int n = (int) timeStats.getN();
+    double meanTime = timeStats.getMean();
+    //    double sdTime   = timeStats.getStandardDeviation();
+    //    double seTime   = sdTime / Math.sqrt(n);
+
+    // 2) t* for 99.9% CI (α=0.001 ⇒ 1–α/2 = 0.9995)
+    TDistribution td = new TDistribution(n - 1);
+    double tStar = td.inverseCumulativeProbability(0.9995);
+
+    //    double moeTimeSec       = tStar * seTime;
+    double meanDerivedGas = meanTime * GAS_PER_SECOND_STANDARD;
+    //    double moeDerivedGas    = moeTimeSec * GAS_PER_SECOND_STANDARD;
+
+    // 3) compute throughput per iteration (MGps) and its stats
+    DescriptiveStatistics tpStats = new DescriptiveStatistics(execIterations);
+    for (double tSec : timeStats.getValues()) {
+      double mgps = gasCost / tSec / 1_000_000.0;
+      tpStats.addValue(mgps);
+    }
+    double meanTp = tpStats.getMean();
+    double seTp = tpStats.getStandardDeviation() / Math.sqrt(n);
+    double moeTp = tStar * seTp;
+
+    // 4) print “mean ± error”
+    output.printf(
+        //        "%-30s | %,8d gas | %,8.0f gas | %,12.1f ±%,.1f ns | %,10.2f ±%,.2f MGps%n",
+        "%-30s | %,8d gas | %,8.0f gas | %,12.1f ns | %,10.2f ±%,.2f MGps%n",
+        testCase,
+        gasCost,
+        meanDerivedGas,
+        meanTime * 1_000_000_000, /* moeTimeSec * 1_000_000_000,*/
+        meanTp,
+        moeTp);
+    precompileTableHeader = () -> {};
   }
 
   private void runPrecompileInvertedWarmup(
@@ -274,6 +318,7 @@ public abstract class BenchmarkExecutor {
               }
             });
 
+    timeStats = new DescriptiveStatistics();
     int executions = 0;
     long totalElapsed = 0;
     boolean isInvalidCase = false;
@@ -281,6 +326,7 @@ public abstract class BenchmarkExecutor {
       long iterationStart = System.nanoTime();
       final var result = contract.computePrecompile(arg, fakeFrame);
       long iterationElapsed = System.nanoTime() - iterationStart;
+      timeStats.addValue(iterationElapsed / 1e9);
 
       totalElapsed += iterationElapsed;
       executions++;
