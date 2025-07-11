@@ -35,7 +35,10 @@ public class EthConfigBySpecTest extends AbstractJsonRpcHttpBySpecTest {
   @Override
   protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
     // set up a test version of mainnet genesis
-    return BlockchainSetupUtil.forMainnet();
+    return createBlockchainSetupUtil(
+            "eth/config/mainnet-plus-future.json",
+            "eth/simulateV1/chain-data/blocks.bin",
+            storageFormat);
   }
 
   public static Object[][] specs() {
