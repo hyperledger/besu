@@ -91,22 +91,20 @@ public class EthConfig implements JsonRpcMethod {
       String nextHash = configHash(nextNode);
       result.put("nextHash", nextHash);
       result.put("nextForkId", getForkIdAsHexString(next.get().fork().milestone()));
+
+      if (last.isPresent()) {
+        ObjectNode lastNode = result.putObject("last");
+        generateConfig(lastNode, last.get());
+        String lastHash = configHash(lastNode);
+        result.put("lastHash", lastHash);
+        result.put("lastForkId", getForkIdAsHexString(last.get().fork().milestone()));
+      } else {
+        appendEmptyLast(result);
+      }
     } else {
-      result.putNull("next");
-      result.putNull("nextHash");
-      result.putNull("nextForkId");
-    }
-    if (last.isPresent()) {
-      ObjectNode lastNode = result.putObject("last");
-      generateConfig(lastNode, last.get());
-      String lastHash = configHash(lastNode);
-      result.put("lastHash", lastHash);
-      result.put("lastForkId", getForkIdAsHexString(last.get().fork().milestone()));
-    } else {
-      // unexpected - last should always be present even if last == 0
-      result.putNull("last");
-      result.putNull("lastHash");
-      result.putNull("lastForkId");
+      // if next is empty, last is empty (no future forks)
+      appendEmptyNext(result);
+      appendEmptyLast(result);
     }
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
@@ -167,5 +165,17 @@ public class EthConfig implements JsonRpcMethod {
       crc.update(node.toString().getBytes(StandardCharsets.UTF_8));
       return "0x" + Long.toHexString(crc.getValue());
     }
+  }
+
+  private static void appendEmptyNext(final ObjectNode result) {
+    result.putNull("next");
+    result.putNull("nextHash");
+    result.putNull("nextForkId");
+  }
+
+  private static void appendEmptyLast(final ObjectNode result) {
+    result.putNull("last");
+    result.putNull("lastHash");
+    result.putNull("lastForkId");
   }
 }
