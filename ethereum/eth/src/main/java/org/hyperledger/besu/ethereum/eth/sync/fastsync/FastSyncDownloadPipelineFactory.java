@@ -174,8 +174,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             "fastSync")
         .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
-        .thenFlatMap("savePreMergeHeadersStep", savePreMergeHeadersStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
+        .thenProcessAsyncOrdered("savePreMergeHeadersStep", savePreMergeHeadersStep, 1)
         .thenProcessAsyncOrdered(
             "downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
         .thenProcessAsyncOrdered(

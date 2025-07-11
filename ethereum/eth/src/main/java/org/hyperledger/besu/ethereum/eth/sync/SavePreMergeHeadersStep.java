@@ -22,26 +22,28 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** A step in the synchronization process that saves historical block headers. */
-public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<BlockHeader>> {
+public class SavePreMergeHeadersStep
+    implements Function<List<BlockHeader>, CompletableFuture<List<BlockHeader>>> {
   private static final Logger LOG = LoggerFactory.getLogger(SavePreMergeHeadersStep.class);
   private final MutableBlockchain blockchain;
   private final boolean isPoS;
   private final long lastPoWBlockNumber;
-  private final long checkpointBlockNumber;
   private final Optional<ConsensusContext> consensusContext;
 
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
   private static final int LOG_REPEAT_DELAY_SECONDS = 30;
-  private static final int LOG_PROGRESS_INTERVAL = 1000;
 
   public SavePreMergeHeadersStep(
       final MutableBlockchain blockchain,
@@ -50,51 +52,73 @@ public class SavePreMergeHeadersStep implements Function<BlockHeader, Stream<Blo
       final Optional<ConsensusContext> consensusContext) {
     this.blockchain = blockchain;
     this.isPoS = isPoS;
-    this.checkpointBlockNumber = checkpointBlockNumber;
     this.lastPoWBlockNumber = checkpointBlockNumber - 1;
     this.consensusContext = consensusContext;
   }
 
   @Override
-  public Stream<BlockHeader> apply(final BlockHeader blockHeader) {
-    long blockNumber = blockHeader.getNumber();
-    if (isPostMergeBlock(blockNumber)) {
-      return Stream.of(blockHeader);
+  public CompletableFuture<List<BlockHeader>> apply(final List<BlockHeader> blockHeaders) {
+    if (blockHeaders.getLast().getNumber() > lastPoWBlockNumber) {
+      // we are not pos or all headers are post-merge, so we can just pass them through
+      return CompletableFuture.completedFuture(blockHeaders);
+    } else if (blockHeaders.getFirst().getNumber() < lastPoWBlockNumber) {
+      // all headers are post-merge, so we can just pass them through
+      return storeBlockHeaders(blockHeaders);
+    } else {
+      // the last PoW header is included, so we store all headers up to and including it and we pass
+      // the rest through
+      final List<BlockHeader> allHeaders = blockHeaders.stream().toList();
+      final int preMergeEnd = (int) (lastPoWBlockNumber - allHeaders.getFirst().getNumber() + 1);
+      final List<BlockHeader> preMergeHeaders = allHeaders.subList(0, preMergeEnd);
+      final List<BlockHeader> postMergeHeaders = allHeaders.subList(preMergeEnd, allHeaders.size());
+      return storeBlockHeaders(preMergeHeaders)
+          .thenRun(
+              () -> {
+                if (isPoS) {
+                  consensusContext.ifPresent(
+                      context ->
+                          blockchain
+                              .getTotalDifficultyByHash(preMergeHeaders.getLast().getHash())
+                              .ifPresent(context::setIsPostMerge));
+                }
+              })
+          .thenCompose(ignored -> CompletableFuture.completedFuture(postMergeHeaders));
     }
-    storeBlockHeader(blockHeader);
-    logProgress(blockHeader);
-    return Stream.empty();
   }
 
-  private boolean isPostMergeBlock(final long blockNumber) {
-    return blockNumber >= checkpointBlockNumber;
-  }
-
-  private void storeBlockHeader(final BlockHeader blockHeader) {
-    Difficulty difficulty = blockchain.calculateTotalDifficulty(blockHeader);
-    blockchain.unsafeStoreHeader(blockHeader, difficulty);
-    if (isPoS && blockHeader.getNumber() == lastPoWBlockNumber && consensusContext.isPresent()) {
-      blockchain
-          .getTotalDifficultyByHash(blockHeader.getHash())
-          .ifPresent(consensusContext.get()::setIsPostMerge);
-    }
+  private CompletableFuture<List<BlockHeader>> storeBlockHeaders(
+      final List<BlockHeader> blockHeaders) {
+    return CompletableFuture.runAsync(
+            () -> {
+              final AtomicReference<Difficulty> difficulty =
+                  new AtomicReference<>(
+                      blockchain.calculateTotalDifficulty(blockHeaders.getFirst()));
+              blockHeaders.forEach(
+                  blockHeader -> {
+                    blockchain.unsafeStoreHeader(blockHeader, difficulty.get());
+                    difficulty.set(difficulty.get().add(blockHeader.getDifficulty()));
+                  });
+            })
+        .thenCompose(
+            ignored -> {
+              logProgress(blockHeaders.getLast());
+              return CompletableFuture.completedFuture(Collections.emptyList());
+            });
   }
 
   private void logProgress(final BlockHeader blockHeader) {
-    if (blockHeader.getNumber() == lastPoWBlockNumber) {
-      LOG.info("Pre-merge headers import completed at block {}", blockHeader.toLogString());
-    } else {
-      long blockNumber = blockHeader.getNumber();
-      if (blockNumber % LOG_PROGRESS_INTERVAL == 0) {
-        double importPercent = (double) (100 * blockNumber) / lastPoWBlockNumber;
-        throttledLog(
-            LOG::info,
-            String.format(
-                "Pre-merge headers import progress: %d of %d (%.2f%%)",
-                blockNumber, lastPoWBlockNumber, importPercent),
-            shouldLog,
-            LOG_REPEAT_DELAY_SECONDS);
-      }
+    if (blockHeader.getNumber() >= lastPoWBlockNumber) {
+      LOG.info("Pre-merge headers import completed at block {}", lastPoWBlockNumber);
+    } else if (shouldLog.get()) {
+      throttledLog(
+          LOG::info,
+          String.format(
+              "Pre-merge headers import progress: %d of %d (%.2f%%)",
+              blockHeader.getNumber(),
+              lastPoWBlockNumber,
+              (double) (100 * blockHeader.getNumber()) / lastPoWBlockNumber),
+          shouldLog,
+          LOG_REPEAT_DELAY_SECONDS);
     }
   }
 }

@@ -129,6 +129,8 @@ public class PipelineChainDownloader implements ChainDownloader {
           "Invalid block detected (BREACH_OF_PROTOCOL). Disconnecting from sync target. {}",
           ExceptionUtils.rootCause(error).getMessage());
       syncState.disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL_INVALID_BLOCK);
+    } else {
+      LOG.atDebug().setMessage("Restarting chain download due to error").setCause(error).log();
     }
 
     if (!cancelled.get() && syncTargetManager.shouldContinueDownloading()) {
