@@ -23,7 +23,6 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -417,20 +416,9 @@ public class ModExpBenchmark extends BenchmarkExecutor {
     output.println(
         BigIntegerModularExponentiationPrecompiledContract.isNative()
             ? "Native ModExp"
-            : "Java modExp");
+            : "Java ModExp");
 
-    for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
-      if (config.testCasePattern().isPresent()
-          && !Pattern.compile(config.testCasePattern().get()).matcher(testCase.getKey()).find()) {
-        continue;
-      }
-
-      final double execTime =
-          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
-
-      long gasCost = contract.gasRequirement(testCase.getValue());
-      logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
-    }
+    precompile(testcases, contract, EvmSpecVersion.fromName(fork));
   }
 
   @Override
