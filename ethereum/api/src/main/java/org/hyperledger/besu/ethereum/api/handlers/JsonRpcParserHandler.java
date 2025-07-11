@@ -25,8 +25,12 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JsonRpcParserHandler {
+
+  private static final Logger LOG = LoggerFactory.getLogger(JsonRpcParserHandler.class);
 
   private JsonRpcParserHandler() {}
 
@@ -39,6 +43,10 @@ public class JsonRpcParserHandler {
         try {
           ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), ctx.getBodyAsJson());
         } catch (DecodeException | ClassCastException jsonObjectDecodeException) {
+          LOG.atDebug()
+              .setMessage("Attempted getBodyAsJson, but error parsing JSON object: {}")
+              .addArgument(jsonObjectDecodeException.getMessage())
+              .log();
           try {
             final JsonArray batchRequest = ctx.getBodyAsJsonArray();
             if (batchRequest.isEmpty()) {
@@ -48,6 +56,11 @@ public class JsonRpcParserHandler {
               ctx.put(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name(), batchRequest);
             }
           } catch (DecodeException | ClassCastException jsonArrayDecodeException) {
+            LOG.atDebug()
+                .setMessage(
+                    "Attempted getBodyAsJsonArray, but error parsing JSON object: "
+                        + jsonObjectDecodeException.getMessage())
+                .log();
             errorResponse(response, RpcErrorType.PARSE_ERROR);
             return;
           }
