@@ -58,7 +58,7 @@ public abstract class BenchmarkExecutor {
   private static final long GAS_PER_SECOND_STANDARD = 100_000_000L;
 
   static final int MATH_WARMUP = 100_000;
-  static final int MATH_ITERATIONS = 100_000;
+  static final int MATH_ITERATIONS = 1_000;
 
   /** Where to write the output of the benchmarks. */
   protected final PrintStream output;
