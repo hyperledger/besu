@@ -259,11 +259,6 @@ public abstract class BenchmarkExecutor {
     }
 
     // Iterations
-    return executeIterations(testName, arg, contract);
-  }
-
-  private double executeIterations(
-      final String testName, final Bytes arg, final PrecompiledContract contract) {
     final AtomicReference<AsyncProfiler> asyncProfiler = new AtomicReference<>();
     config
         .asyncProfilerOptions()
