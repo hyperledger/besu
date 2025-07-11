@@ -32,9 +32,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
-public class StatusMessageTest {
+public class Eth68StatusMessageTest {
 
-  private final int version = EthProtocol.LATEST.getVersion();
+  private final int version = EthProtocol.ETH68.getVersion();
   private final BigInteger networkId = BigInteger.ONE;
   private final Difficulty td = Difficulty.of(1000L);
   private final Hash bestHash = randHash(1L);
