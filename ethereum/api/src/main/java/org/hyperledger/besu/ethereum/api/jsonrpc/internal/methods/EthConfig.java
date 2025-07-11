@@ -85,7 +85,7 @@ public class EthConfig implements JsonRpcMethod {
           protocolSchedule.getNextProtocolSpec(next.get().fork().milestone());
       if (nextNext.isPresent()) {
         ObjectNode nextNextNode =
-            mapperSupplier.get().createObjectNode(); // don't include next in the result
+            mapperSupplier.get().createObjectNode(); // don't include in the result
         generateConfig(nextNextNode, nextNext.get());
         nextNextHash = configHash(nextNextNode);
       }

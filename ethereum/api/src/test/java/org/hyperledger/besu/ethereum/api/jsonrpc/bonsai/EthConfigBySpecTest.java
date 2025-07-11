@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.bonsai;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class EthConfigBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
