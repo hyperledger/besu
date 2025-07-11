@@ -220,7 +220,11 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 protocolSchedule));
         executionEngineApisSupported.add(
             new EngineGetBlobsV2(
-                consensusEngineServer, protocolContext, engineQosTimer, transactionPool));
+                consensusEngineServer,
+                protocolContext,
+                engineQosTimer,
+                transactionPool,
+                metricsSystem));
       }
 
       return mapOf(executionEngineApisSupported);
