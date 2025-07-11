@@ -45,7 +45,7 @@ import org.junit.jupiter.api.Test;
 public class MainnetProtocolScheduleTest {
 
   @Test
-  public void shouldReturnDefaultProtocolSpecsWhenCustomNumbersAreNotUsed() {
+  public void shouldReturnMainnetDefaultProtocolSpecsWhenCustomNumbersAreNotUsed() {
     final ProtocolSchedule sched = ProtocolScheduleFixture.MAINNET;
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getHardforkId())
         .isEqualTo(FRONTIER);
