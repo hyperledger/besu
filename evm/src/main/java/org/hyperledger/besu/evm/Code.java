@@ -158,4 +158,24 @@ public interface Code {
    * @return The pretty printed code
    */
   String prettyPrint();
+
+  /**
+   * Returns a bitmask of valid jump destinations for this code. The bitmask is an array of longs,
+   * where each bit represents a potential jump destination in the code.
+   *
+   * @return an array of long values representing the jump destinations, or null if not set
+   */
+  default long[] getJumpDestBitMask() {
+    return null;
+  }
+
+  /**
+   * Sets the jump destination bitmask for this code. This method is intended to be used by the
+   * EVM's JumpService to set the valid jump destinations for the code.
+   *
+   * @param jumpDestBitMask an array of long values representing the jump destinations
+   */
+  default void setJumpDestBitMask(final long[] jumpDestBitMask) {
+    // empty default method to allow setting the jump destination bitmask
+  }
 }

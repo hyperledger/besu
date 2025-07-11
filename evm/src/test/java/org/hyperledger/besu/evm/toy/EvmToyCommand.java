@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.toy;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -157,7 +156,7 @@ public class EvmToyCommand implements Runnable {
 
     int repeat = this.repeat;
     final EVM evm = MainnetEVMs.berlin(EvmConfiguration.DEFAULT);
-    final Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
+    final Code code = evm.wrapCode(codeBytes);
     final PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
     MainnetPrecompiledContracts.populateForIstanbul(
         precompileContractRegistry, evm.getGasCalculator());

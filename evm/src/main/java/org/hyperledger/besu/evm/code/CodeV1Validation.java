@@ -415,7 +415,10 @@ public class CodeV1Validation implements EOFValidator {
     try {
       CodeSection toValidate = eofLayout.getCodeSection(codeSectionToValidate);
       byte[] code =
-          eofLayout.container().slice(toValidate.entryPoint, toValidate.length).toArrayUnsafe();
+          eofLayout
+              .container()
+              .slice(toValidate.entryPoint, toValidate.lengthSupplier.get())
+              .toArrayUnsafe();
       int codeLength = code.length;
       int[] stack_min = new int[codeLength];
       int[] stack_max = new int[codeLength];

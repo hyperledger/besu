@@ -173,7 +173,7 @@ public class CodeValidateSubCommand implements Runnable {
       return "err: layout - " + layout.invalidReason();
     }
 
-    Code code = evm.get().getCodeUncached(codeBytes);
+    Code code = evm.get().wrapCode(codeBytes);
     if (code instanceof CodeInvalid codeInvalid) {
       return "err: " + codeInvalid.getInvalidReason();
     } else if (EOFContainerMode.INITCODE.equals(

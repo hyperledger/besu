@@ -225,7 +225,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       Code outputCode =
           (childFrame.getCreatedCode() != null)
               ? childFrame.getCreatedCode()
-              : evm.getCodeForCreation(childFrame.getOutputData());
+              : evm.wrapCodeForCreation(childFrame.getOutputData());
       if (outputCode.isValid()) {
         Address createdAddress = childFrame.getContractAddress();
         frame.pushStackItem(Words.fromAddress(createdAddress));

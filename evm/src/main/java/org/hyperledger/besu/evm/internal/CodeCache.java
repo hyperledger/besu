@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,80 +17,24 @@ package org.hyperledger.besu.evm.internal;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-
-/** The Code cache. */
-public class CodeCache {
-
-  private final Cache<Hash, Code> cache;
-  private final long weightLimit;
+/**
+ * CodeCache is an interface for caching bytecode, its size and jump dest analysis. It allows
+ * retrieval and storage of code based on its hash.
+ */
+public interface CodeCache {
+  /**
+   * Gets the code if present in the cache.
+   *
+   * @param codeHash the hash of the code to retrieve
+   * @return the code if present, otherwise null
+   */
+  Code getIfPresent(final Hash codeHash);
 
   /**
-   * Instantiates a new Code cache.
+   * Puts the code into the cache.
    *
-   * @param config the config
+   * @param codeHash the hash of the code to store
+   * @param code the code to store
    */
-  public CodeCache(final EvmConfiguration config) {
-    this(config.getJumpDestCacheWeightBytes());
-  }
-
-  private CodeCache(final long maxWeightBytes) {
-    this.weightLimit = maxWeightBytes;
-    this.cache =
-        Caffeine.newBuilder().maximumWeight(maxWeightBytes).weigher(new CodeScale()).build();
-  }
-
-  /**
-   * Invalidate cache for given key.
-   *
-   * @param key the key
-   */
-  public void invalidate(final Hash key) {
-    this.cache.invalidate(key);
-  }
-
-  /** Clean up. */
-  public void cleanUp() {
-    this.cache.cleanUp();
-  }
-
-  /**
-   * Gets if present.
-   *
-   * @param codeHash the code hash
-   * @return the if present
-   */
-  public Code getIfPresent(final Hash codeHash) {
-    return cache.getIfPresent(codeHash);
-  }
-
-  /**
-   * Put.
-   *
-   * @param key the key
-   * @param value the value
-   */
-  public void put(final Hash key, final Code value) {
-    cache.put(key, value);
-  }
-
-  /**
-   * Size of cache.
-   *
-   * @return the long
-   */
-  public long size() {
-    cache.cleanUp();
-    return cache.estimatedSize();
-  }
-
-  /**
-   * Gets weight limit.
-   *
-   * @return the weight limit
-   */
-  public long getWeightLimit() {
-    return weightLimit;
-  }
+  void put(final Hash codeHash, final Code code);
 }

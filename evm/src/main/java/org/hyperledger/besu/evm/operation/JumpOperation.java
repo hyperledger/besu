@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,13 +14,10 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** The Jump operation. */
 public class JumpOperation extends AbstractFixedCostOperation {
@@ -28,6 +25,8 @@ public class JumpOperation extends AbstractFixedCostOperation {
   private static final Operation.OperationResult invalidJumpResponse =
       new Operation.OperationResult(8L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
   private static final OperationResult jumpResponse = new OperationResult(8L, null, 0);
+
+  private static final JumpService jumpService = new JumpService();
 
   /**
    * Instantiates a new Jump operation.
@@ -51,19 +50,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final int jumpDestination;
-    final Bytes bytes = frame.popStackItem().trimLeadingZeros();
-    try {
-      jumpDestination = bytes.toInt();
-    } catch (final RuntimeException iae) {
-      return invalidJumpResponse;
-    }
-    final Code code = frame.getCode();
-    if (code.isJumpDestInvalid(jumpDestination)) {
-      return invalidJumpResponse;
-    } else {
-      frame.setPC(jumpDestination);
-      return jumpResponse;
-    }
+    return jumpService.performJump(
+        frame, frame.popStackItem().trimLeadingZeros(), jumpResponse, invalidJumpResponse);
   }
 }
