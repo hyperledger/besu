@@ -36,7 +36,7 @@ class RetFOperationTest {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final Code mockCode = mockCode("00" + "b1" + "00");
 
-    final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
+    final CodeSection codeSection = new CodeSection(() -> 0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
 
     MessageFrame messageFrame =

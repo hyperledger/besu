@@ -50,7 +50,7 @@ class CodeV1Test {
     Bytes codeBytes = Bytes.fromHexString(code);
     for (int i : codeSectionSizes) {
       CodeSection[] codeSections = new CodeSection[i];
-      Arrays.fill(codeSections, new CodeSection(1, 0, returning ? 0 : 0x80, 1, 1));
+      Arrays.fill(codeSections, new CodeSection(() -> 1, 0, returning ? 0 : 0x80, 1, 1));
       EOFLayout testLayout =
           new EOFLayout(
               codeBytes,

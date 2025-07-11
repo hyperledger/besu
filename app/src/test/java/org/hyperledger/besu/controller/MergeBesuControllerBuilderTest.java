@@ -54,6 +54,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -223,7 +224,8 @@ public class MergeBesuControllerBuilderTest {
   @Test
   public void assertBuiltContextMonitorsTTD() {
     final GenesisState genesisState =
-        GenesisState.fromConfig(genesisConfig, this.besuControllerBuilder.createProtocolSchedule());
+        GenesisState.fromConfig(
+            genesisConfig, this.besuControllerBuilder.createProtocolSchedule(), new CodeCache());
     final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
     final MergeContext mergeContext =
         spy(

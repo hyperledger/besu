@@ -78,7 +78,7 @@ public class SelfDestructOperationTest {
             .sender(beneficiaryAddress)
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(evm.getCodeUncached(SELFDESTRUCT_CODE))
+            .code(evm.wrapCode(SELFDESTRUCT_CODE))
             .completer(__ -> {})
             .address(originatorAddress)
             .blockHashLookup((__, ___) -> Hash.ZERO)
