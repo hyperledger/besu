@@ -96,7 +96,6 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
           requestContext.getRequest().getId(),
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
-    EngineGetBlobsV2Metrics
     final List<BlobAndProofV2> result = getBlobV2Result(versionedHashes);
     long available = result.stream().filter(java.util.Objects::nonNull).count();
     availableCounter.inc(available);
