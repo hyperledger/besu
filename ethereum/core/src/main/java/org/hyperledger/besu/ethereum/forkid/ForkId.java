@@ -45,7 +45,8 @@ public class ForkId {
       try {
         @SuppressWarnings("unchecked")
         final List<List<Bytes>> typedRawForkId = (List<List<Bytes>>) rawForkId;
-        return Optional.of(new ForkId(typedRawForkId.get(0).get(0), typedRawForkId.get(0).get(1)));
+        return Optional.of(
+            new ForkId(typedRawForkId.getFirst().getFirst(), typedRawForkId.getFirst().get(1)));
       } catch (final Exception e) {
         return Optional.empty();
       }

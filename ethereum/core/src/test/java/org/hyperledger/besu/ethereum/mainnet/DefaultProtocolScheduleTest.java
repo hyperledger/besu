@@ -142,6 +142,17 @@ public class DefaultProtocolScheduleTest {
   }
 
   @Test
+  public void getLatestProtocolSpec() {
+    config.grayGlacierBlock(0);
+    config.shanghaiTime(FIRST_TIMESTAMP_FORK);
+    config.cancunTime(FIRST_TIMESTAMP_FORK + 2);
+    final ProtocolSchedule schedule = builder.createProtocolSchedule();
+    assertThat(schedule.getLatestProtocolSpec()).isNotEmpty();
+    assertThat(schedule.getLatestProtocolSpec().get().fork().milestone())
+        .isEqualTo(FIRST_TIMESTAMP_FORK + 2);
+  }
+
+  @Test
   public void getByBlockHeader_getIntermediateTimestampFork() {
     config.grayGlacierBlock(0);
     config.shanghaiTime(FIRST_TIMESTAMP_FORK);

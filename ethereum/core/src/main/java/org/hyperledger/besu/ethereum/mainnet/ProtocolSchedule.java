@@ -46,6 +46,8 @@ public interface ProtocolSchedule {
 
   Optional<ScheduledProtocolSpec> getNextProtocolSpec(final long currentTime);
 
+  Optional<ScheduledProtocolSpec> getLatestProtocolSpec();
+
   Optional<BigInteger> getChainId();
 
   String listMilestones();
