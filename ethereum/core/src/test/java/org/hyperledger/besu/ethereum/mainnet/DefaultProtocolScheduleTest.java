@@ -15,8 +15,17 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.MYSTIQUE;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BYZANTIUM;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.GRAY_GLACIER;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.HOMESTEAD;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -76,6 +85,8 @@ public class DefaultProtocolScheduleTest {
   public void conflictingSchedules() {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+    when(spec1.getHardforkId()).thenReturn(FRONTIER);
+    when(spec2.getHardforkId()).thenReturn(HOMESTEAD);
 
     final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putBlockNumberMilestone(0, spec1);
@@ -89,6 +100,10 @@ public class DefaultProtocolScheduleTest {
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
     final ProtocolSpec spec3 = mock(ProtocolSpec.class);
 
+    when(spec1.getHardforkId()).thenReturn(FRONTIER);
+    when(spec2.getHardforkId()).thenReturn(HOMESTEAD);
+    when(spec3.getHardforkId()).thenReturn(BYZANTIUM);
+
     final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putTimestampMilestone(0, spec1);
     protocolSchedule.putTimestampMilestone(10, spec2);
@@ -101,6 +116,10 @@ public class DefaultProtocolScheduleTest {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
     final ProtocolSpec spec3 = mock(ProtocolSpec.class);
+
+    when(spec1.getHardforkId()).thenReturn(FRONTIER);
+    when(spec2.getHardforkId()).thenReturn(HOMESTEAD);
+    when(spec3.getHardforkId()).thenReturn(BYZANTIUM);
 
     final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putBlockNumberMilestone(0, spec1);
@@ -116,10 +135,10 @@ public class DefaultProtocolScheduleTest {
     config.cancunTime(FIRST_TIMESTAMP_FORK + 2);
     final ProtocolSchedule schedule = builder.createProtocolSchedule();
 
-    assertThat(schedule.getByBlockHeader(header(2, FIRST_TIMESTAMP_FORK + 2)).getName())
-        .isEqualTo("Cancun");
-    assertThat(schedule.getByBlockHeader(header(3, FIRST_TIMESTAMP_FORK + 3)).getName())
-        .isEqualTo("Cancun");
+    assertThat(schedule.getByBlockHeader(header(2, FIRST_TIMESTAMP_FORK + 2)).getHardforkId())
+        .isEqualTo(CANCUN);
+    assertThat(schedule.getByBlockHeader(header(3, FIRST_TIMESTAMP_FORK + 3)).getHardforkId())
+        .isEqualTo(CANCUN);
   }
 
   @Test
@@ -129,10 +148,10 @@ public class DefaultProtocolScheduleTest {
     config.cancunTime(FIRST_TIMESTAMP_FORK + 2);
     final ProtocolSchedule schedule = builder.createProtocolSchedule();
 
-    assertThat(schedule.getByBlockHeader(header(2, FIRST_TIMESTAMP_FORK)).getName())
-        .isEqualTo("Shanghai");
-    assertThat(schedule.getByBlockHeader(header(3, FIRST_TIMESTAMP_FORK + 1)).getName())
-        .isEqualTo("Shanghai");
+    assertThat(schedule.getByBlockHeader(header(2, FIRST_TIMESTAMP_FORK)).getHardforkId())
+        .isEqualTo(SHANGHAI);
+    assertThat(schedule.getByBlockHeader(header(3, FIRST_TIMESTAMP_FORK + 1)).getHardforkId())
+        .isEqualTo(SHANGHAI);
   }
 
   @Test
@@ -142,8 +161,10 @@ public class DefaultProtocolScheduleTest {
     config.shanghaiTime(9992L);
     final ProtocolSchedule schedule = builder.createProtocolSchedule();
 
-    assertThat(schedule.getByBlockHeader(header(100, 8881L)).getName()).isEqualTo("GrayGlacier");
-    assertThat(schedule.getByBlockHeader(header(200, 9991L)).getName()).isEqualTo("GrayGlacier");
+    assertThat(schedule.getByBlockHeader(header(100, 8881L)).getHardforkId())
+        .isEqualTo(GRAY_GLACIER);
+    assertThat(schedule.getByBlockHeader(header(200, 9991L)).getHardforkId())
+        .isEqualTo(GRAY_GLACIER);
   }
 
   @Test
@@ -154,7 +175,7 @@ public class DefaultProtocolScheduleTest {
     config.shanghaiTime(9992L);
     final ProtocolSchedule schedule = builder.createProtocolSchedule();
 
-    assertThat(schedule.getByBlockHeader(header(99, 8881L)).getName()).isEqualTo("London");
+    assertThat(schedule.getByBlockHeader(header(99, 8881L)).getHardforkId()).isEqualTo(LONDON);
   }
 
   @Test
@@ -163,16 +184,19 @@ public class DefaultProtocolScheduleTest {
     config.mystique(100);
     final ProtocolSchedule schedule = builder.createProtocolSchedule();
 
-    assertThat(schedule.getByBlockHeader(header(100, Long.MAX_VALUE)).getName())
-        .isEqualTo("Mystique");
-    assertThat(schedule.getByBlockHeader(header(200, Long.MAX_VALUE)).getName())
-        .isEqualTo("Mystique");
+    assertThat(schedule.getByBlockHeader(header(100, Long.MAX_VALUE)).getHardforkId())
+        .isEqualTo(MYSTIQUE);
+    assertThat(schedule.getByBlockHeader(header(200, Long.MAX_VALUE)).getHardforkId())
+        .isEqualTo(MYSTIQUE);
   }
 
   @Test
   public void getForNextBlockHeader_shouldGetHeaderForNextBlockNumber() {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+
+    when(spec1.getHardforkId()).thenReturn(FRONTIER);
+    when(spec2.getHardforkId()).thenReturn(HOMESTEAD);
 
     final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putBlockNumberMilestone(0, spec1);
@@ -190,6 +214,9 @@ public class DefaultProtocolScheduleTest {
   public void getForNextBlockHeader_shouldGetHeaderForNextTimestamp() {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+
+    when(spec1.getHardforkId()).thenReturn(FRONTIER);
+    when(spec2.getHardforkId()).thenReturn(HOMESTEAD);
 
     final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putBlockNumberMilestone(0, spec1);
