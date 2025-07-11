@@ -79,21 +79,20 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       } else {
         final Account account = frame.getWorldUpdater().get(address);
 
-        Bytes codeSize;
+        Bytes codeSizeWords;
         if (account == null) {
-          codeSize = Bytes.EMPTY;
+          codeSizeWords = Bytes.EMPTY;
         } else {
-          final Bytes code = account.getCode();
-          if (enableEIP3540
-              && code.size() >= 2
-              && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
-              && code.get(1) == 0) {
-            codeSize = EOF_SIZE;
+          int codeSize = account.getCodeSize();
+          if (enableEIP3540 && codeSize >= 2) {
+            final Bytes code = account.getCode();
+            boolean isEOF = code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0;
+            codeSizeWords = isEOF ? EOF_SIZE : Words.intBytes(codeSize);
           } else {
-            codeSize = Words.intBytes(code.size());
+            codeSizeWords = Words.intBytes(codeSize);
           }
         }
-        frame.pushStackItem(codeSize);
+        frame.pushStackItem(codeSizeWords);
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {
