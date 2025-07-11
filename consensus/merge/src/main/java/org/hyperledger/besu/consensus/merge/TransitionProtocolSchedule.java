@@ -240,4 +240,9 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   public void setProtocolContext(final ProtocolContext protocolContext) {
     this.protocolContext = protocolContext;
   }
+
+  @Override
+  public Optional<ScheduledProtocolSpec> getNextProtocolSpec(final long currentTime) {
+    return getPostMergeSchedule().getNextProtocolSpec(currentTime);
+  }
 }
