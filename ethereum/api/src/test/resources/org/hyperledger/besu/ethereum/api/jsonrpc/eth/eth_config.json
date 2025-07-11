@@ -1,6 +1,7 @@
 {
   "request": {
     "id": 8,
+    "comment" : "eth_config for hive genesis",
     "jsonrpc": "2.0",
     "method": "eth_config",
     "params": []

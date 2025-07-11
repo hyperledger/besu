@@ -33,12 +33,17 @@ public class EthConfigBySpecTest extends AbstractJsonRpcHttpBySpecTest {
   }
 
   @Override
+  protected void setupBonsaiBlockchain() {
+    blockchainSetupUtil = getBlockchainSetupUtil(DataStorageFormat.BONSAI);
+    blockchainSetupUtil.importFirstBlocks(1);
+  }
+
+  @Override
   protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
-    // set up a test version of mainnet genesis
     return createBlockchainSetupUtil(
-            "eth/config/mainnet-plus-future.json",
-            "eth/simulateV1/chain-data/blocks.bin",
-            storageFormat);
+        "eth/config/chain-data/mainnet-plus-future.json",
+        "eth/simulateV1/chain-data/blocks.bin",
+        storageFormat);
   }
 
   public static Object[][] specs() {
