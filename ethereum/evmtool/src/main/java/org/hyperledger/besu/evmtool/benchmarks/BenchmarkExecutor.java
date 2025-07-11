@@ -250,8 +250,9 @@ public abstract class BenchmarkExecutor {
       }
     }
 
+    Map<String, DescriptiveStatistics> timeStatsMap = new HashMap<>();
     // Also run all test cases in serial inside one iteration
-    Map<String, Long> totalElapsedByTestName = new HashMap<>();
+    //    Map<String, Long> totalElapsedByTestName = new HashMap<>();
     int executions = 0;
     while (executions < execIterations /* && totalElapsed < execTimeInNano*/) {
 
@@ -261,19 +262,25 @@ public abstract class BenchmarkExecutor {
         final long iterationElapsed = System.nanoTime() - iterationStart;
         if (result.output() != null) {
           // adds iterationElapsed if absent, or sums with existing value
-          totalElapsedByTestName.merge(testCase.getKey(), iterationElapsed, Long::sum);
+          //          totalElapsedByTestName.merge(testCase.getKey(), iterationElapsed, Long::sum);
+
+          // add the time to the stats for this test case
+          timeStatsMap
+              .computeIfAbsent(testCase.getKey(), k -> new DescriptiveStatistics())
+              .addValue(iterationElapsed / 1e9);
         }
       }
       executions++;
     }
 
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      if (totalElapsedByTestName.containsKey(testCase.getKey())) {
-        final double execTime =
-            totalElapsedByTestName.get(testCase.getKey()) / 1.0e9D / execIterations;
+      if (timeStatsMap.containsKey(testCase.getKey())) {
+        //        final double execTime =
+        //            totalElapsedByTestName.get(testCase.getKey()) / 1.0e9D / execIterations;
         // log the performance of the precompile
         long gasCost = contract.gasRequirement(testCases.get(testCase.getKey()));
-        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+        //        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+        logResultsWithError(testCase.getKey(), gasCost, timeStatsMap.get(testCase.getKey()));
       } else {
         output.printf("%s Input is Invalid%n", testCase.getKey());
       }
