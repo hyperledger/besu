@@ -56,7 +56,7 @@ public interface SignatureAlgorithm {
   SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair);
 
   /**
-   * Verify given data.
+   * Verify given message digest data, signature and public key.
    *
    * @param data the data
    * @param signature the signature
@@ -64,6 +64,21 @@ public interface SignatureAlgorithm {
    * @return the boolean
    */
   boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub);
+
+  /**
+   * Verify given message digest data, signature and public key, allowing for malleable signatures.
+   *
+   * @param data the data
+   * @param signature the signature
+   * @param pub the pub
+   * @return the boolean
+   */
+  default boolean verifyMalleable(
+      final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
+    throw new UnsupportedOperationException(
+        "Malleable signatures are not supported for this curve " + getCurveName());
+  }
+  ;
 
   /**
    * Verify given data.

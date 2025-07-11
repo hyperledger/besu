@@ -118,6 +118,9 @@ public class RevertMetadataSubCommand implements Runnable {
             switch (dataStorageFormat) {
               case FOREST -> 1;
               case BONSAI -> 2;
+              case X_BONSAI_ARCHIVE ->
+                  throw new IllegalArgumentException(
+                      "X_BONSAI_ARCHIVE storage format cannot be reverted to v1");
             };
 
         @JsonSerialize

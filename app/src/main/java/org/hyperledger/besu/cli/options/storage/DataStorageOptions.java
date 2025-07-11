@@ -49,12 +49,12 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       fallbackValue = "true")
   private Boolean receiptCompactionEnabled = DEFAULT_RECEIPT_COMPACTION_ENABLED;
 
+  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
-      names = {"--Xhistory-expiry-prune"},
-      hidden = true,
+      names = {"--Xhistory-expiry-prune", "--history-expiry-prune"},
       description =
-          "Convenience option to configure BlobDB garbage collection settings following a history expiry prune")
-  private boolean historyExpiryPrune = false;
+          "Convenience option to enable online history pruning and configure BlobDB garbage collection settings (default: ${DEFAULT-VALUE}). \"--Xhistory-expiry-prune\" is deprecated and will be removed in a future release. Use \"--history-expiry-prune\" instead.")
+  private Boolean historyExpiryPrune = false;
 
   /**
    * Options specific to path-based storage modes. Holds the necessary parameters to configure

@@ -57,6 +57,7 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
     super(worldStateKeyValueStorage, blockchain, maxLayersToLoad, pluginContext);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
+    this.evmConfiguration = evmConfiguration;
     provideCachedWorldStorageManager(
         new BonsaiCachedWorldStorageManager(this, worldStateKeyValueStorage, worldStateConfig));
     loadHeadWorldState(
@@ -75,6 +76,7 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
     super(worldStateKeyValueStorage, blockchain, trieLogManager);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
+    this.evmConfiguration = evmConfiguration;
     provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);
     loadHeadWorldState(
         new BonsaiWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));

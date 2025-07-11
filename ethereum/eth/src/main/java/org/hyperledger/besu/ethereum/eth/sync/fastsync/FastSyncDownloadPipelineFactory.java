@@ -206,7 +206,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   }
 
   private long getCheckpointBlockNumber(final SyncState syncState) {
-    return syncConfig.isSnapSyncSavePreMergeHeadersOnlyEnabled()
+    return syncConfig.isSnapSyncSavePreCheckpointHeadersOnlyEnabled()
         ? syncState.getCheckpoint().map(Checkpoint::blockNumber).orElse(0L)
         : 0L;
   }

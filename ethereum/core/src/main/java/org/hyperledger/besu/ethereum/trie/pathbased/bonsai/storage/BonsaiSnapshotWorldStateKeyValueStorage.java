@@ -71,7 +71,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     return new Updater(
         ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
         trieLogStorage.startTransaction(),
-        getFlatDbStrategy());
+        getFlatDbStrategy(),
+        composedWorldStateStorage);
   }
 
   @Override
@@ -120,6 +121,11 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   @Override
   public Optional<Hash> getWorldStateBlockHash() {
     return isClosedGet() ? Optional.empty() : super.getWorldStateBlockHash();
+  }
+
+  @Override
+  public Optional<Long> getWorldStateBlockNumber() {
+    return isClosedGet() ? Optional.empty() : super.getWorldStateBlockNumber();
   }
 
   @Override

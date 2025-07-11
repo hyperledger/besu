@@ -47,8 +47,10 @@ public interface HardforkId {
     FRONTIER(true, "Frontier"),
     /** Homestead fork. */
     HOMESTEAD(true, "Homestead"),
-    /** DAO Fork fork. */
-    DAO_FORK(true, "DAO Fork"),
+    /** DAO Recovery Init fork. */
+    DAO_RECOVERY_INIT(true, "DAO Recovery Init"),
+    /** DAO Recovery Transition fork. */
+    DAO_RECOVERY_TRANSITION(true, "DAO Recovery Transition"),
     /** Tangerine Whistle fork. */
     TANGERINE_WHISTLE(true, "Tangerine Whistle"),
     /** Spurious Dragon fork. */
@@ -102,9 +104,9 @@ public interface HardforkId {
     /** Bangkok fork. */
     BANGKOK(false, "Bangkok"),
     /** Development fork, for accepted and unscheduled EIPs. */
-    FUTURE_EIPS(false, "Development, for accepted and unscheduled EIPs"),
+    FUTURE_EIPS(false, "FutureEips"),
     /** Developmental fork, for experimental EIPs. */
-    EXPERIMENTAL_EIPS(false, "Developmental, for experimental EIPs");
+    EXPERIMENTAL_EIPS(false, "ExperimentalEips");
 
     final boolean finalized;
     final String description;
@@ -144,6 +146,8 @@ public interface HardforkId {
     FRONTIER(true, "Frontier"),
     /** Homestead fork. */
     HOMESTEAD(true, "Homestead"),
+    /** Classic Recovery Init fork. */
+    CLASSIC_RECOVERY_INIT(true, "Classic Recovery Init"),
     /** Classic Tangerine Whistle fork. */
     CLASSIC_TANGERINE_WHISTLE(true, "Classic Tangerine Whistle"),
     /** Die Hard fork. */

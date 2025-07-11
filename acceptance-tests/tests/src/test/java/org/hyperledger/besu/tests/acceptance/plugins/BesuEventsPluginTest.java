@@ -17,14 +17,8 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,20 +38,5 @@ public class BesuEventsPluginTest extends AcceptanceTestBase {
   @Test
   public void blockIsAnnounced() {
     waitForFile(pluginNode.homeDirectory().resolve("plugins/newBlock.2"));
-  }
-
-  private void waitForFile(final Path path) {
-    final File file = path.toFile();
-    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              if (file.exists()) {
-                try (final Stream<String> s = Files.lines(path)) {
-                  return s.count() > 0;
-                }
-              } else {
-                return false;
-              }
-            });
   }
 }

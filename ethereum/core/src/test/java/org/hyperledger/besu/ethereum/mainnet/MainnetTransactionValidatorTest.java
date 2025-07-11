@@ -661,7 +661,7 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
       final ValidationParamsVariant validationParamsVariant,
       final long txGasLimit,
       final boolean valid) {
-    final long gasLimitCap = 30_000_000L;
+    final long gasLimitCap = 16_777_216L;
     final var feeMarket = FeeMarket.london(0L);
     final TransactionValidator validator =
         createTransactionValidator(
@@ -700,7 +700,7 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
       assertThat(validationResult.getInvalidReason())
           .isEqualTo(TransactionInvalidReason.EXCEEDS_TRANSACTION_GAS_LIMIT);
       assertThat(validationResult.getErrorMessage())
-          .isEqualTo("Transaction gas limit must be at most 30000000");
+          .isEqualTo("Transaction gas limit must be at most 16777216");
     }
   }
 
@@ -711,10 +711,10 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
 
   private static Stream<Arguments> shouldSupportTransactionGasLimitCap_EIP_7825() {
     return Stream.of(
-        Arguments.of(ValidationParamsVariant.PROCESSING, 30_000_000L, true),
-        Arguments.of(ValidationParamsVariant.PROCESSING, 30_000_001L, false),
-        Arguments.of(ValidationParamsVariant.SIMULATING, 30_000_000L, true),
-        Arguments.of(ValidationParamsVariant.SIMULATING, 30_000_001L, true));
+        Arguments.of(ValidationParamsVariant.PROCESSING, 16_777_216L, true),
+        Arguments.of(ValidationParamsVariant.PROCESSING, 16_777_217L, false),
+        Arguments.of(ValidationParamsVariant.SIMULATING, 16_777_216L, true),
+        Arguments.of(ValidationParamsVariant.SIMULATING, 16_777_217L, true));
   }
 
   private Account accountWithNonce(final long nonce) {

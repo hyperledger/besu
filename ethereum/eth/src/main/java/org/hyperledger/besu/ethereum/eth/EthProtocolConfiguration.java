@@ -29,8 +29,7 @@ public class EthProtocolConfiguration {
   public static final int DEFAULT_MAX_GET_RECEIPTS = 256;
   public static final int DEFAULT_MAX_GET_NODE_DATA = 384;
   public static final int DEFAULT_MAX_GET_POOLED_TRANSACTIONS = 256;
-  public static final int DEFAULT_MAX_CAPABILITY =
-      EthProtocolVersion.V68; // Defaulting to eth/68 while eth/69 is being tested
+  public static final int DEFAULT_MAX_CAPABILITY = Integer.MAX_VALUE;
   public static final int DEFAULT_MIN_CAPABILITY = 0;
   // Limit the size of p2p messages (in bytes)
   private final int maxMessageSize;

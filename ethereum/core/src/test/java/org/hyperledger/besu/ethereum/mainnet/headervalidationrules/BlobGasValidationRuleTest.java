@@ -31,7 +31,8 @@ import org.junit.jupiter.api.Test;
 
 /** Tests for the {@link BlobGasValidationRule} class. */
 public class BlobGasValidationRuleTest {
-
+  private static final int MAX_BLOBS_PER_BLOCK = 6;
+  private static final int TARGET_BLOBS_PER_BLOCK = 3;
   private CancunGasCalculator cancunGasCalculator;
   private BlobGasValidationRule cancunBlobGasValidationRule;
   private CancunTargetingGasLimitCalculator cancunTargetingGasLimitCalculator;
@@ -45,14 +46,22 @@ public class BlobGasValidationRuleTest {
     cancunGasCalculator = new CancunGasCalculator();
     cancunTargetingGasLimitCalculator =
         new CancunTargetingGasLimitCalculator(
-            0L, FeeMarket.cancunDefault(0L, Optional.empty()), cancunGasCalculator);
+            0L,
+            FeeMarket.cancunDefault(0L, Optional.empty()),
+            cancunGasCalculator,
+            MAX_BLOBS_PER_BLOCK,
+            TARGET_BLOBS_PER_BLOCK);
     cancunBlobGasValidationRule =
         new BlobGasValidationRule(cancunGasCalculator, cancunTargetingGasLimitCalculator);
 
     pragueGasCalculator = new PragueGasCalculator();
     pragueGasLimitCalculator =
         new CancunTargetingGasLimitCalculator(
-            0L, FeeMarket.cancunDefault(0L, Optional.empty()), pragueGasCalculator);
+            0L,
+            FeeMarket.cancunDefault(0L, Optional.empty()),
+            pragueGasCalculator,
+            MAX_BLOBS_PER_BLOCK,
+            TARGET_BLOBS_PER_BLOCK);
     pragueBlobGasValidationRule =
         new BlobGasValidationRule(pragueGasCalculator, pragueGasLimitCalculator);
   }

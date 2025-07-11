@@ -41,6 +41,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class EthBlobBaseFeeTest {
+  private static final int MAX_BLOBS_PER_BLOCK = 6;
+  private static final int TARGET_BLOBS_PER_BLOCK = 3;
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private MutableBlockchain blockchain;
   private EthBlobBaseFee method;
@@ -62,7 +64,11 @@ public class EthBlobBaseFeeTest {
   public void shouldReturnBlobBaseFee() {
     final CancunTargetingGasLimitCalculator gasLimitCalculator =
         new CancunTargetingGasLimitCalculator(
-            0L, FeeMarket.cancunDefault(0L, Optional.empty()), new CancunGasCalculator());
+            0L,
+            FeeMarket.cancunDefault(0L, Optional.empty()),
+            new CancunGasCalculator(),
+            MAX_BLOBS_PER_BLOCK,
+            TARGET_BLOBS_PER_BLOCK);
     configureProtocolSpec(
         FeeMarket.cancunDefault(5, Optional.empty()),
         new CancunGasCalculator(),
@@ -75,7 +81,11 @@ public class EthBlobBaseFeeTest {
   public void shouldReturnZeroForNonBlobForks() {
     final CancunTargetingGasLimitCalculator gasLimitCalculator =
         new CancunTargetingGasLimitCalculator(
-            0L, FeeMarket.cancunDefault(0L, Optional.empty()), new ShanghaiGasCalculator());
+            0L,
+            FeeMarket.cancunDefault(0L, Optional.empty()),
+            new ShanghaiGasCalculator(),
+            MAX_BLOBS_PER_BLOCK,
+            TARGET_BLOBS_PER_BLOCK);
     configureProtocolSpec(
         FeeMarket.london(5, Optional.empty()), new ShanghaiGasCalculator(), gasLimitCalculator);
     assertThat(requestBlobBaseFee().getResult()).isEqualTo("0x0");

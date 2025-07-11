@@ -21,24 +21,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /** The Blob schedule for a particular fork. */
 public class BlobSchedule {
   /** The constant CANCUN_DEFAULT. */
-  public static final BlobSchedule CANCUN_DEFAULT = BlobSchedule.create(3, 6, 6, 3338477);
+  public static final BlobSchedule CANCUN_DEFAULT = BlobSchedule.create(3, 6, 3338477);
 
   /** The constant PRAGUE_DEFAULT. */
-  public static final BlobSchedule PRAGUE_DEFAULT = BlobSchedule.create(6, 9, 9, 5007716);
+  public static final BlobSchedule PRAGUE_DEFAULT = BlobSchedule.create(6, 9, 5007716);
 
   private final int target;
   private final int max;
-  private final int maxPerTransaction;
   private final int baseFeeUpdateFraction;
 
-  private BlobSchedule(
-      final int target,
-      final int max,
-      final int maxPerTransaction,
-      final int baseFeeUpdateFraction) {
+  private BlobSchedule(final int target, final int max, final int baseFeeUpdateFraction) {
     this.target = target;
     this.max = max;
-    this.maxPerTransaction = maxPerTransaction;
     this.baseFeeUpdateFraction = baseFeeUpdateFraction;
   }
 
@@ -51,18 +45,14 @@ public class BlobSchedule {
   public static BlobSchedule create(final ObjectNode blobScheduleConfigRoot) {
     int target = JsonUtil.getInt(blobScheduleConfigRoot, "target").orElseThrow();
     int max = JsonUtil.getInt(blobScheduleConfigRoot, "max").orElseThrow();
-    int maxPerTransaction = JsonUtil.getInt(blobScheduleConfigRoot, "maxblobspertx").orElse(max);
     int baseFeeUpdateFraction =
         JsonUtil.getInt(blobScheduleConfigRoot, "basefeeupdatefraction").orElseThrow();
-    return create(target, max, maxPerTransaction, baseFeeUpdateFraction);
+    return create(target, max, baseFeeUpdateFraction);
   }
 
   private static BlobSchedule create(
-      final int target,
-      final int max,
-      final int maxPerTransaction,
-      final int baseFeeUpdateFraction) {
-    return new BlobSchedule(target, max, maxPerTransaction, baseFeeUpdateFraction);
+      final int target, final int max, final int baseFeeUpdateFraction) {
+    return new BlobSchedule(target, max, baseFeeUpdateFraction);
   }
 
   /**
@@ -81,15 +71,6 @@ public class BlobSchedule {
    */
   public int getMax() {
     return max;
-  }
-
-  /**
-   * Gets max per transaction.
-   *
-   * @return the max per transaction
-   */
-  public int getMaxPerTransaction() {
-    return maxPerTransaction;
   }
 
   /**
@@ -126,7 +107,7 @@ public class BlobSchedule {
   public static class NoBlobSchedule extends BlobSchedule {
     /** Constructs a NoBlobSchedule */
     public NoBlobSchedule() {
-      super(0, 0, 0, 0);
+      super(0, 0, 0);
     }
 
     @Override
@@ -141,11 +122,6 @@ public class BlobSchedule {
 
     @Override
     public int getBaseFeeUpdateFraction() {
-      throw new UnsupportedOperationException("NoBlobSchedule does not support this operation.");
-    }
-
-    @Override
-    public int getMaxPerTransaction() {
       throw new UnsupportedOperationException("NoBlobSchedule does not support this operation.");
     }
 

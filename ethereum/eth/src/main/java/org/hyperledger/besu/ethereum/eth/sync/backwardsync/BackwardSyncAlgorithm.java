@@ -149,7 +149,6 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
             "Unable to retrieve block {} from any peer, with {} peers available. Could be a reorged block. Waiting for the next block from the consensus client to try again.")
         .addArgument(firstHash)
         .addArgument(context.getEthContext().getEthPeers().peerCount())
-        .addArgument(context.getBackwardChain().getFirstHashToAppend())
         .log();
     LOG.atDebug().setMessage("Removing hash {} from hashesToAppend").addArgument(firstHash).log();
   }

@@ -15,14 +15,13 @@
 package org.hyperledger.besu.services;
 
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionSimulator;
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionSimulatorAllowExceedingBalance;
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce;
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionSimulatorAllowFutureNonce;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -34,6 +33,7 @@ import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 import org.hyperledger.besu.plugin.data.TransactionSimulationResult;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 
+import java.util.EnumSet;
 import java.util.Optional;
 
 /** TransactionSimulationServiceImpl */
@@ -67,7 +67,7 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
       final Optional<StateOverrideMap> maybeStateOverrides,
       final Hash blockHash,
       final OperationTracer operationTracer,
-      final boolean isAllowExceedingBalance) {
+      final EnumSet<SimulationParameters> simulationParameters) {
 
     final CallParameter callParameter = CallParameter.fromTransaction(transaction);
 
@@ -85,9 +85,7 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
     return transactionSimulator
         .process(
             callParameter,
-            isAllowExceedingBalance
-                ? transactionSimulatorAllowExceedingBalance()
-                : transactionSimulator(),
+            simulationParameters2TransactionValidationParams(simulationParameters),
             operationTracer,
             maybeBlockHeader.get())
         .map(res -> new TransactionSimulationResult(transaction, res.result()));
@@ -99,24 +97,60 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
       final Optional<StateOverrideMap> maybeStateOverrides,
       final ProcessableBlockHeader pendingBlockHeader,
       final OperationTracer operationTracer,
-      final boolean isAllowExceedingBalance,
-      final boolean isAllowFutureNonce) {
+      final EnumSet<SimulationParameters> simulationParameters) {
 
     final CallParameter callParameter = CallParameter.fromTransaction(transaction);
+
+    return simulate(
+        callParameter,
+        maybeStateOverrides,
+        pendingBlockHeader,
+        operationTracer,
+        simulationParameters);
+  }
+
+  @Override
+  public Optional<TransactionSimulationResult> simulate(
+      final org.hyperledger.besu.datatypes.CallParameter callParameter,
+      final Optional<StateOverrideMap> maybeStateOverrides,
+      final ProcessableBlockHeader processableBlockHeader,
+      final OperationTracer operationTracer,
+      final EnumSet<SimulationParameters> simulationParameters) {
+
+    return simulate(
+        callParameter,
+        maybeStateOverrides,
+        processableBlockHeader,
+        operationTracer,
+        simulationParameters2TransactionValidationParams(simulationParameters));
+  }
+
+  private Optional<TransactionSimulationResult> simulate(
+      final org.hyperledger.besu.datatypes.CallParameter callParameter,
+      final Optional<StateOverrideMap> maybeStateOverrides,
+      final ProcessableBlockHeader processableBlockHeader,
+      final OperationTracer operationTracer,
+      final TransactionValidationParams txValidationParams) {
 
     return transactionSimulator
         .processOnPending(
             callParameter,
             maybeStateOverrides,
-            isAllowExceedingBalance
-                ? isAllowFutureNonce
-                    ? transactionSimulatorAllowExceedingBalanceAndFutureNonce()
-                    : transactionSimulatorAllowExceedingBalance()
-                : isAllowFutureNonce
-                    ? transactionSimulatorAllowFutureNonce()
-                    : transactionSimulator(),
+            txValidationParams,
             operationTracer,
-            (org.hyperledger.besu.ethereum.core.ProcessableBlockHeader) pendingBlockHeader)
-        .map(res -> new TransactionSimulationResult(transaction, res.result()));
+            (org.hyperledger.besu.ethereum.core.ProcessableBlockHeader) processableBlockHeader)
+        .map(res -> new TransactionSimulationResult(res.transaction(), res.result()));
+  }
+
+  private static TransactionValidationParams simulationParameters2TransactionValidationParams(
+      final EnumSet<SimulationParameters> simulationParameters) {
+    return ImmutableTransactionValidationParams.of(
+        simulationParameters.contains(SimulationParameters.ALLOW_FUTURE_NONCE),
+        simulationParameters.contains(SimulationParameters.ALLOW_EXCEEDING_BALANCE),
+        simulationParameters.contains(SimulationParameters.ALLOW_UNDERPRICED),
+        false,
+        false,
+        true,
+        true);
   }
 }

@@ -158,7 +158,7 @@ public class EthCreateAccessListIntegrationTest {
   public void shouldReturnExpectedValueForTransfer() {
     final CallParameter callParameter =
         ImmutableCallParameter.builder()
-            .sender(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
+            .sender(Address.fromHexString("0x658bdf435d810c91414ec09147daa6db62406379"))
             .to(Address.fromHexString("0x8888f1f195afa192cfee860698584c030f4c9db1"))
             .value(Wei.ZERO)
             .build();
@@ -176,7 +176,7 @@ public class EthCreateAccessListIntegrationTest {
   public void shouldReturnExpectedValueForContractDeploy() {
     final CallParameter callParameter =
         ImmutableCallParameter.builder()
-            .sender(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
+            .sender(Address.fromHexString("0x658bdf435d810c91414ec09147daa6db62406379"))
             .input(
                 Bytes.fromHexString(
                     "0x608060405234801561001057600080fd5b50610157806100206000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633bdab8bf146100515780639ae97baa14610068575b600080fd5b34801561005d57600080fd5b5061006661007f565b005b34801561007457600080fd5b5061007d6100b9565b005b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60016040518082815260200191505060405180910390a1565b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60026040518082815260200191505060405180910390a17fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60036040518082815260200191505060405180910390a15600a165627a7a7230582010ddaa52e73a98c06dbcd22b234b97206c1d7ed64a7c048e10c2043a3d2309cb0029"))

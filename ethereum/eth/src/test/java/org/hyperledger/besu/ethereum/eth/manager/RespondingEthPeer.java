@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -120,6 +121,7 @@ public class RespondingEthPeer {
   private static RespondingEthPeer create(
       final EthProtocolManager ethProtocolManager,
       final Optional<SnapProtocolManager> snapProtocolManager,
+      final Capability capability,
       final Hash chainHeadHash,
       final Difficulty totalDifficulty,
       final OptionalLong estimatedHeight,
@@ -128,7 +130,7 @@ public class RespondingEthPeer {
       final boolean addToEthPeers) {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
 
-    final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.LATEST));
+    final Set<Capability> caps = new HashSet<>(Collections.singletonList(capability));
     final BlockingQueue<OutgoingMessage> outgoingMessages = new ArrayBlockingQueue<>(1000);
     final MockPeerConnection peerConnection =
         new MockPeerConnection(
@@ -136,15 +138,21 @@ public class RespondingEthPeer {
     ethPeers.registerNewConnection(peerConnection, peerValidators);
     final int before = ethPeers.peerCount();
     final EthPeer peer = ethPeers.peer(peerConnection);
-    StatusMessage statusMessage =
+
+    StatusMessage.Builder statusMessageBuilder =
         StatusMessage.builder()
-            .protocolVersion(EthProtocol.LATEST.getVersion())
+            .protocolVersion(capability.getVersion())
             .networkId(BigInteger.ONE)
             .genesisHash(gen.hash())
             .bestHash(chainHeadHash)
-            .totalDifficulty(totalDifficulty)
-            .forkId(new ForkId(Hash.ZERO, 0))
-            .build();
+            .forkId(new ForkId(Hash.ZERO, 0));
+    if (capability.getVersion() < EthProtocolVersion.V69) {
+      statusMessageBuilder.totalDifficulty(totalDifficulty);
+    } else if (EthProtocol.isEth69Compatible(capability)) {
+      statusMessageBuilder.blockRange(new StatusMessage.BlockRange(0, estimatedHeight.orElse(0)));
+    }
+    StatusMessage statusMessage = statusMessageBuilder.build();
+
     peer.registerStatusReceived(statusMessage, peerConnection);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
     if (addToEthPeers) {
@@ -440,13 +448,16 @@ public class RespondingEthPeer {
     private final List<PeerValidator> peerValidators = new ArrayList<>();
     private boolean isServingSnap = false;
     private boolean addToEthPeers = true;
+    private Capability capability = EthProtocol.LATEST;
 
     public RespondingEthPeer build() {
       checkNotNull(ethProtocolManager, "Must configure EthProtocolManager");
+      checkNotNull(capability, "Must configure Capability");
 
       return RespondingEthPeer.create(
           ethProtocolManager,
           snapProtocolManager,
+          capability,
           chainHeadHash,
           totalDifficulty,
           estimatedHeight,
@@ -508,6 +519,11 @@ public class RespondingEthPeer {
 
     public Builder addToEthPeers(final boolean addToEthPeers) {
       this.addToEthPeers = addToEthPeers;
+      return this;
+    }
+
+    public Builder capability(final Capability capability) {
+      this.capability = capability;
       return this;
     }
   }

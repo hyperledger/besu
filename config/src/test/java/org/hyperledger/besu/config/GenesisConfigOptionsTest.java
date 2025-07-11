@@ -213,6 +213,36 @@ class GenesisConfigOptionsTest {
   }
 
   @Test
+  void shouldGetBpo1Time() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("bpo1Time", 1670470144));
+    assertThat(config.getBpo1Time()).hasValue(1670470144);
+  }
+
+  @Test
+  void shouldGetBpo2Time() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("bpo2Time", 1670470144));
+    assertThat(config.getBpo2Time()).hasValue(1670470144);
+  }
+
+  @Test
+  void shouldGetBpo3Time() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("bpo3Time", 1670470144));
+    assertThat(config.getBpo3Time()).hasValue(1670470144);
+  }
+
+  @Test
+  void shouldGetBpo4Time() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("bpo4Time", 1670470144));
+    assertThat(config.getBpo4Time()).hasValue(1670470144);
+  }
+
+  @Test
+  void shouldGetBpo5Time() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("bpo5Time", 1670470144));
+    assertThat(config.getBpo5Time()).hasValue(1670470144);
+  }
+
+  @Test
   void shouldGetFutureEipsTime() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("futureEipsTime", 1337));
     assertThat(config.getFutureEipsTime()).hasValue(1337);
@@ -247,6 +277,11 @@ class GenesisConfigOptionsTest {
     assertThat(config.getCancunEOFTime()).isEmpty();
     assertThat(config.getPragueTime()).isEmpty();
     assertThat(config.getOsakaTime()).isEmpty();
+    assertThat(config.getBpo1Time()).isEmpty();
+    assertThat(config.getBpo2Time()).isEmpty();
+    assertThat(config.getBpo3Time()).isEmpty();
+    assertThat(config.getBpo4Time()).isEmpty();
+    assertThat(config.getBpo5Time()).isEmpty();
     assertThat(config.getFutureEipsTime()).isEmpty();
     assertThat(config.getExperimentalEipsTime()).isEmpty();
   }
