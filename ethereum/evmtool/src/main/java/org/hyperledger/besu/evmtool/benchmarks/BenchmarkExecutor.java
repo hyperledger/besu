@@ -37,8 +37,13 @@ import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
+import java.io.IOException;
 import java.io.PrintStream;
-import java.util.HashMap;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -175,6 +180,11 @@ public abstract class BenchmarkExecutor {
           }
         });
 
+    if (filteredTestCases.isEmpty()) {
+      output.println("No test cases matched the pattern: " + config.testCasePattern().orElse(null));
+      return;
+    }
+
     if (config.warmInvert()) {
       runPrecompileInvertedWarmup(filteredTestCases, contract);
     } else {
@@ -186,6 +196,7 @@ public abstract class BenchmarkExecutor {
       final Map<String, Bytes> testCases, final PrecompiledContract contract) {
 
     // Fully warmup and execute, test case by test case
+    Map<String, DescriptiveStatistics> timeStatsMap = new LinkedHashMap<>();
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
       try {
         /*final double execTime =*/ runPrecompileBenchmark(
@@ -193,9 +204,40 @@ public abstract class BenchmarkExecutor {
         long gasCost = contract.gasRequirement(testCase.getValue());
         //        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
         logResultsWithError(testCase.getKey(), gasCost, timeStats);
+        timeStatsMap.put(testCase.getKey(), timeStats);
       } catch (final IllegalArgumentException e) {
         output.printf("%s Input is Invalid%n", testCase.getKey());
       }
+    }
+
+    // Also log csv output
+    //    output.println("Test,Iteration,Time (ns)");
+    Path out = Paths.get("benchmark_results.csv");
+    try (PrintWriter csv =
+        new PrintWriter(Files.newBufferedWriter(out, StandardCharsets.UTF_8), true)) {
+      csv.println("case,iteration,time (ns)");
+      for (final Map.Entry<String, DescriptiveStatistics> testCaseStats : timeStatsMap.entrySet()) {
+        String testCase = testCaseStats.getKey();
+        double[] values = testCaseStats.getValue().getValues();
+        if (values.length != execIterations) {
+          System.err.printf(
+              "⚠️ %s: expected %d samples but got %d%n", testCase, execIterations, values.length);
+        }
+        for (int i = 0; i < values.length; i++) {
+          long ns = (long) values[i]; // back to raw nanoseconds
+          // build the CSV line “case,iteration,ns”
+          csv.println(testCase + "," + i + "," + ns);
+        }
+      }
+      output.println(
+          "✔️ Wrote "
+              + timeStatsMap.size()
+              + " cases × "
+              + execIterations
+              + " samples → "
+              + out.toAbsolutePath());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -204,7 +246,7 @@ public abstract class BenchmarkExecutor {
       final String testCase, final long gasCost, final DescriptiveStatistics timeStats) {
     precompileTableHeader.run();
     int n = (int) timeStats.getN();
-    double meanTime = timeStats.getMean();
+    double meanTime = timeStats.getMean() / 1e9;
     //    double sdTime   = timeStats.getStandardDeviation();
     //    double seTime   = sdTime / Math.sqrt(n);
 
@@ -218,7 +260,8 @@ public abstract class BenchmarkExecutor {
 
     // 3) compute throughput per iteration (MGps) and its stats
     DescriptiveStatistics tpStats = new DescriptiveStatistics(execIterations);
-    for (double tSec : timeStats.getValues()) {
+    for (double tNs : timeStats.getValues()) {
+      double tSec = tNs / 1e9;
       double mgps = gasCost / tSec / 1_000_000.0;
       tpStats.addValue(mgps);
     }
@@ -250,7 +293,7 @@ public abstract class BenchmarkExecutor {
       }
     }
 
-    Map<String, DescriptiveStatistics> timeStatsMap = new HashMap<>();
+    Map<String, DescriptiveStatistics> timeStatsMap = new LinkedHashMap<>();
     // Also run all test cases in serial inside one iteration
     //    Map<String, Long> totalElapsedByTestName = new HashMap<>();
     int executions = 0;
@@ -267,7 +310,7 @@ public abstract class BenchmarkExecutor {
           // add the time to the stats for this test case
           timeStatsMap
               .computeIfAbsent(testCase.getKey(), k -> new DescriptiveStatistics())
-              .addValue(iterationElapsed / 1e9);
+              .addValue((double) iterationElapsed);
         }
       }
       executions++;
@@ -284,6 +327,36 @@ public abstract class BenchmarkExecutor {
       } else {
         output.printf("%s Input is Invalid%n", testCase.getKey());
       }
+    }
+
+    // Also log csv output
+    //    output.println("Test,Iteration,Time (ns)");
+    Path out = Paths.get("benchmark_results_inverted.csv");
+    try (PrintWriter csv =
+        new PrintWriter(Files.newBufferedWriter(out, StandardCharsets.UTF_8), true)) {
+      csv.println("case,iteration,time (ns)");
+      for (final Map.Entry<String, DescriptiveStatistics> testCaseStats : timeStatsMap.entrySet()) {
+        String testCase = testCaseStats.getKey();
+        double[] values = testCaseStats.getValue().getValues();
+        if (values.length != execIterations) {
+          System.err.printf(
+              "⚠️ %s: expected %d samples but got %d%n", testCase, execIterations, values.length);
+        }
+        for (int i = 0; i < values.length; i++) {
+          long ns = (long) values[i]; // back to raw nanoseconds
+          // build the CSV line “case,iteration,ns”
+          csv.println(testCase + "," + i + "," + ns);
+        }
+      }
+      output.println(
+          "✔️ Wrote "
+              + timeStatsMap.size()
+              + " cases × "
+              + execIterations
+              + " samples → "
+              + out.toAbsolutePath());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -333,7 +406,7 @@ public abstract class BenchmarkExecutor {
       long iterationStart = System.nanoTime();
       final var result = contract.computePrecompile(arg, fakeFrame);
       long iterationElapsed = System.nanoTime() - iterationStart;
-      timeStats.addValue(iterationElapsed / 1e9);
+      timeStats.addValue((double) iterationElapsed);
 
       totalElapsed += iterationElapsed;
       executions++;
