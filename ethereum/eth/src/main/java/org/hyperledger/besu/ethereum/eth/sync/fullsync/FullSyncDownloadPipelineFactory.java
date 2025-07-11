@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -105,7 +106,10 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             headerRequestSize,
             metricsSystem);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
-        new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
+        new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy, protocolContext.getBlockchain(),
+                protocolSchedule.anyMatch(s -> s.spec().isPoS()),
+                0,
+                protocolContext.safeConsensusContext(ConsensusContext.class));
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final ExtractTxSignaturesStep extractTxSignaturesStep = new ExtractTxSignaturesStep();

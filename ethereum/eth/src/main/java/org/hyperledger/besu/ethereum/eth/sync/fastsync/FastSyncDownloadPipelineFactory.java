@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadSyncBodiesStep;
-import org.hyperledger.besu.ethereum.eth.sync.SavePreMergeHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
@@ -141,13 +140,10 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             headerRequestSize,
             metricsSystem);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
-        new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
-    final SavePreMergeHeadersStep savePreMergeHeadersStep =
-        new SavePreMergeHeadersStep(
-            protocolContext.getBlockchain(),
-            protocolSchedule.anyMatch(s -> s.spec().isPoS()),
-            getCheckpointBlockNumber(syncState),
-            protocolContext.safeConsensusContext(ConsensusContext.class));
+        new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy, protocolContext.getBlockchain(),
+                protocolSchedule.anyMatch(s -> s.spec().isPoS()),
+                getCheckpointBlockNumber(syncState),
+                protocolContext.safeConsensusContext(ConsensusContext.class));
     final DownloadSyncBodiesStep downloadSyncBodiesStep =
         new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
     final DownloadSyncReceiptsStep downloadSyncReceiptsStep =
@@ -175,7 +171,6 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
-        .thenProcessAsyncOrdered("savePreMergeHeadersStep", savePreMergeHeadersStep, 1)
         .thenProcessAsyncOrdered(
             "downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
         .thenProcessAsyncOrdered(

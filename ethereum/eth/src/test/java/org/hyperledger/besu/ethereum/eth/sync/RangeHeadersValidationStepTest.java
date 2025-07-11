@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -69,7 +71,10 @@ public class RangeHeadersValidationStepTest {
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(DETACHED_ONLY);
 
     validationStep =
-        new RangeHeadersValidationStep(protocolSchedule, protocolContext, validationPolicy);
+        new RangeHeadersValidationStep(protocolSchedule, protocolContext, validationPolicy, null,
+                false,
+                0,
+                Optional.empty());
   }
 
   @Test
@@ -114,7 +119,10 @@ public class RangeHeadersValidationStepTest {
   public void acceptResponseWithNoHeadersAndNoSetUp() {
     // don't run the setUp
     validationStep =
-        new RangeHeadersValidationStep(protocolSchedule, protocolContext, validationPolicy);
+        new RangeHeadersValidationStep(protocolSchedule, protocolContext, validationPolicy, null,
+                false,
+                0,
+                Optional.empty());
     var emptyRangeHeaders =
         new RangeHeaders(new SyncTargetRange(syncTarget, rangeStart, rangeEnd), List.of());
 
