@@ -65,6 +65,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
   @BeforeAll
   public static void setup() throws Exception {
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     initServerAndClient();
   }
 
