@@ -95,6 +95,11 @@ public class T8nBlockchain implements Blockchain {
   }
 
   @Override
+  public synchronized Optional<Hash> getBlockHashByNumberSafe(final long number) {
+    throw new NonDeterministicOperationException(NUMBER_LOOKUP_ERROR);
+  }
+
+  @Override
   public ChainHead getChainHead() {
     return new ChainHead(chainHeader, chainHeader.getDifficulty(), chainHeader.getNumber());
   }
@@ -131,6 +136,11 @@ public class T8nBlockchain implements Blockchain {
 
   @Override
   public Optional<BlockHeader> getBlockHeader(final long blockNumber) {
+    throw new NonDeterministicOperationException(NUMBER_LOOKUP_ERROR);
+  }
+
+  @Override
+  public synchronized Optional<BlockHeader> getBlockHeaderSafe(final long blockNumber) {
     throw new NonDeterministicOperationException(NUMBER_LOOKUP_ERROR);
   }
 

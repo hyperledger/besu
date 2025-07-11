@@ -15,6 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
@@ -85,6 +86,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiArchiveProofsWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiArchiveWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
@@ -806,8 +808,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       }
     }
 
-    if (DataStorageFormat.X_BONSAI_ARCHIVE.equals(
-        dataStorageConfiguration.getDataStorageFormat())) {
+    if (DataStorageFormat.X_BONSAI_ARCHIVE.equals(dataStorageConfiguration.getDataStorageFormat())
+        || DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS.equals(
+            dataStorageConfiguration.getDataStorageFormat())) {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
           worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
       final BonsaiArchiver archiver =
@@ -1204,6 +1207,25 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
             worldStateHealerSupplier);
+      }
+      case X_BONSAI_ARCHIVE_PROOFS -> {
+        final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+            worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
+        yield new BonsaiArchiveProofsWorldStateProvider(
+            worldStateKeyValueStorage,
+            blockchain,
+            Optional.of(
+                dataStorageConfiguration
+                    .getPathBasedExtraStorageConfiguration()
+                    .getMaxLayersToLoad()),
+            bonsaiCachedMerkleTrieLoader,
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            evmConfiguration,
+            worldStateHealerSupplier,
+            dataStorageConfiguration
+                .getPathBasedExtraStorageConfiguration()
+                .getUnstable()
+                .getArchiveTrieNodeCheckpointInterval());
       }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =
