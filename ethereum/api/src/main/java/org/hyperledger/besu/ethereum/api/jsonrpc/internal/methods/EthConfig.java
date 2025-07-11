@@ -16,14 +16,14 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper.BEACON_ROOTS_ADDRESS;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
@@ -50,10 +50,20 @@ public class EthConfig implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
   private final ProtocolSchedule protocolSchedule;
+  private final ForkIdManager forkIdManager;
 
-  public EthConfig(final BlockchainQueries blockchain, final ProtocolSchedule protocolSchedule) {
+  public EthConfig(
+      final BlockchainQueries blockchain,
+      final ProtocolSchedule protocolSchedule,
+      final GenesisConfigOptions genesisConfigOptions) {
+
     this.blockchain = blockchain;
     this.protocolSchedule = protocolSchedule;
+    forkIdManager =
+        new ForkIdManager(
+            blockchain.getBlockchain(),
+            genesisConfigOptions.getForkBlockNumbers(),
+            genesisConfigOptions.getForkBlockTimestamps());
   }
 
   @Override
@@ -73,38 +83,25 @@ public class EthConfig implements JsonRpcMethod {
     ObjectNode currentNode = result.putObject("current");
     generateConfig(currentNode, current);
     String currentHash = configHash(currentNode);
-    String nextHash = "";
-    String nextNextHash = "";
     result.put("currentHash", currentHash);
+    result.put("currentForkId", getForkIdAsHexString(currentTime));
     if (next.isPresent()) {
       ObjectNode nextNode = result.putObject("next");
       generateConfig(nextNode, next.get());
-      nextHash = configHash(nextNode);
-      // get next from next
-      Optional<ScheduledProtocolSpec> nextNext =
-          protocolSchedule.getNextProtocolSpec(next.get().fork().milestone());
-      if (nextNext.isPresent()) {
-        ObjectNode nextNextNode =
-            mapperSupplier.get().createObjectNode(); // don't include in the result
-        generateConfig(nextNextNode, nextNext.get());
-        nextNextHash = configHash(nextNextNode);
-      }
-      result.put("currentForkId", getForkIdHashAsString(currentHash, nextHash));
+      String nextHash = configHash(nextNode);
       result.put("nextHash", nextHash);
-      result.put("nextForkId", getForkIdHashAsString(nextHash, nextNextHash));
+      result.put("nextForkId", getForkIdAsHexString(next.get().fork().milestone()));
     } else {
-      // even if next was empty, still calculate currentForkId
-      result.put("currentForkId", getForkIdHashAsString(currentHash, nextHash));
       result.putNull("next");
       result.putNull("nextHash");
       result.putNull("nextForkId");
     }
     if (last.isPresent()) {
-      ObjectNode lastNode = result.putObject("last"); // last is included in the result
+      ObjectNode lastNode = result.putObject("last");
       generateConfig(lastNode, last.get());
       String lastHash = configHash(lastNode);
       result.put("lastHash", lastHash);
-      result.put("lastForkId", getForkIdHashAsString(lastHash, ""));
+      result.put("lastForkId", getForkIdAsHexString(last.get().fork().milestone()));
     } else {
       // unexpected - last should always be present even if last == 0
       result.putNull("last");
@@ -115,10 +112,8 @@ public class EthConfig implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
-  private static String getForkIdHashAsString(final String currentHash, final String nextHash) {
-    return new ForkId(Hash.fromHexStringLenient(currentHash), Hash.fromHexStringLenient(nextHash))
-        .getHash()
-        .toShortHexString();
+  private String getForkIdAsHexString(final long currentTime) {
+    return forkIdManager.getForkIdByTimestamp(currentTime).getHash().toHexString();
   }
 
   void generateConfig(final ObjectNode result, final ScheduledProtocolSpec scheduledSpec) {
