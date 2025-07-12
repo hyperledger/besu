@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.range;
 
-import org.hyperledger.besu.collections.undo.UndoList;
+import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
+
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -25,19 +26,15 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockExcep
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(RangeHeadersValidationStep.class);
@@ -59,7 +56,7 @@ public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream
       final MutableBlockchain blockchain,
       final boolean isPoS,
       final long checkpointBlockNumber,
-      final Optional<ConsensusContext> consensusContext){
+      final Optional<ConsensusContext> consensusContext) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.validationPolicy = validationPolicy;
@@ -105,10 +102,10 @@ public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream
 
   public Stream<BlockHeader> storeOrPassOn(final List<BlockHeader> blockHeaders) {
     if (blockHeaders.getFirst().getNumber() > lastPoWBlockNumber) {
-      // we are not pos or all headers are post-merge, so we can just pass them through
+      // all headers are post-merge, so we can just pass them through
       return blockHeaders.stream();
     } else if (blockHeaders.getLast().getNumber() < lastPoWBlockNumber) {
-      // all headers are post-merge, so we can just pass them through
+      // all headers are pre-merge, so we can just store them all
       storeBlockHeaders(blockHeaders);
       logProgress(blockHeaders.getLast());
       return Stream.empty();
@@ -116,24 +113,25 @@ public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream
       // the last PoW header is included, so we store all headers up to and including it and we pass
       // the rest through
       final List<BlockHeader> allHeaders = blockHeaders.stream().toList();
-      final int preMergeEnd = (int) (lastPoWBlockNumber - allHeaders.getFirst().getNumber() + 1);
-      final List<BlockHeader> preMergeHeaders = allHeaders.subList(0, preMergeEnd);
-      final List<BlockHeader> postMergeHeaders = allHeaders.subList(preMergeEnd, allHeaders.size());
+      final int postMergeStart = (int) (lastPoWBlockNumber - allHeaders.getFirst().getNumber() + 1);
+      final List<BlockHeader> preMergeHeaders = allHeaders.subList(0, postMergeStart);
+      final List<BlockHeader> postMergeHeaders =
+          allHeaders.subList(postMergeStart, allHeaders.size());
       storeBlockHeaders(preMergeHeaders);
       final BlockHeader lastPoWBlockHeader = preMergeHeaders.getLast();
       if (isPoS) {
         consensusContext.ifPresent(
-                context ->
-                        blockchain
-                                .getTotalDifficultyByHash(lastPoWBlockHeader.getHash())
-                                .ifPresent(context::setIsPostMerge));
+            context ->
+                blockchain
+                    .getTotalDifficultyByHash(lastPoWBlockHeader.getHash())
+                    .ifPresent(context::setIsPostMerge));
       }
       LOG.info("Pre-merge headers import completed at block {}", lastPoWBlockNumber);
       return postMergeHeaders.stream();
     }
   }
 
-  private void storeBlockHeaders( final List<BlockHeader> blockHeaders) {
+  private void storeBlockHeaders(final List<BlockHeader> blockHeaders) {
     Difficulty difficulty = blockchain.calculateTotalDifficulty(blockHeaders.getFirst());
     for (BlockHeader blockHeader : blockHeaders) {
       blockchain.unsafeStoreHeader(blockHeader, difficulty);
@@ -144,14 +142,14 @@ public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream
   private void logProgress(final BlockHeader blockHeader) {
     if (shouldLog.get()) {
       throttledLog(
-              LOG::info,
-              String.format(
-                      "Pre-merge headers import progress: %d of %d (%.2f%%)",
-                      blockHeader.getNumber(),
-                      lastPoWBlockNumber,
-                      (double) (100 * blockHeader.getNumber()) / lastPoWBlockNumber),
-              shouldLog,
-              LOG_REPEAT_DELAY_SECONDS);
+          LOG::info,
+          String.format(
+              "Pre-merge headers import progress: %d of %d (%.2f%%)",
+              blockHeader.getNumber(),
+              lastPoWBlockNumber,
+              (double) (100 * blockHeader.getNumber()) / lastPoWBlockNumber),
+          shouldLog,
+          LOG_REPEAT_DELAY_SECONDS);
     }
   }
 

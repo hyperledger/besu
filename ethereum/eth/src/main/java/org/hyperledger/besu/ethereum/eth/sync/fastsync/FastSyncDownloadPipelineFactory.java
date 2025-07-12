@@ -140,10 +140,14 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             headerRequestSize,
             metricsSystem);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
-        new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy, protocolContext.getBlockchain(),
-                protocolSchedule.anyMatch(s -> s.spec().isPoS()),
-                getCheckpointBlockNumber(syncState),
-                protocolContext.safeConsensusContext(ConsensusContext.class));
+        new RangeHeadersValidationStep(
+            protocolSchedule,
+            protocolContext,
+            detachedValidationPolicy,
+            protocolContext.getBlockchain(),
+            protocolSchedule.anyMatch(s -> s.spec().isPoS()),
+            getCheckpointBlockNumber(syncState),
+            protocolContext.safeConsensusContext(ConsensusContext.class));
     final DownloadSyncBodiesStep downloadSyncBodiesStep =
         new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
     final DownloadSyncReceiptsStep downloadSyncReceiptsStep =

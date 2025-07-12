@@ -106,10 +106,14 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             headerRequestSize,
             metricsSystem);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
-        new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy, protocolContext.getBlockchain(),
-                protocolSchedule.anyMatch(s -> s.spec().isPoS()),
-                0,
-                protocolContext.safeConsensusContext(ConsensusContext.class));
+        new RangeHeadersValidationStep(
+            protocolSchedule,
+            protocolContext,
+            detachedValidationPolicy,
+            protocolContext.getBlockchain(),
+            protocolSchedule.anyMatch(s -> s.spec().isPoS()),
+            0,
+            protocolContext.safeConsensusContext(ConsensusContext.class));
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final ExtractTxSignaturesStep extractTxSignaturesStep = new ExtractTxSignaturesStep();
