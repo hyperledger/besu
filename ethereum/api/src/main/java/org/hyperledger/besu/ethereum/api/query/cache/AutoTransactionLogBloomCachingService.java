@@ -67,7 +67,7 @@ public class AutoTransactionLogBloomCachingService {
               blockchain.observeBlockAdded(
                   event -> {
                     if (event.isNewCanonicalHead()) {
-                      final BlockHeader eventBlockHeader = event.getBlock().getHeader();
+                      final BlockHeader eventBlockHeader = event.getHeader();
                       final Optional<BlockHeader> commonAncestorBlockHeader =
                           blockchain.getBlockHeader(event.getCommonAncestorHash());
                       transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
