@@ -39,9 +39,9 @@ public class SynchronizerConfiguration {
   public static final long DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT = 200L;
   public static final UInt256 DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD =
       UInt256.valueOf(1_000_000_000_000_000_000L);
-  public static final int DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE = 200;
+  public static final int DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE = 190;
   public static final int DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED = 5;
-  public static final int DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE = 200;
+  public static final int DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE = 190;
   public static final int DEFAULT_DOWNLOADER_PARALLELISM = 8;
   public static final int DEFAULT_TRANSACTIONS_PARALLELISM = 4;
   public static final int DEFAULT_COMPUTATION_PARALLELISM = 2;
