@@ -16,10 +16,12 @@ package org.hyperledger.besu.cli.options;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration.DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
 
+import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
@@ -92,6 +94,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG =
       "--snapsync-synchronizer-pre-checkpoint-headers-only-enabled";
+
+  private static final String ERA1_IMPORT_PREPIPELINE_ENABLED_FLAG =
+      "--era1-import-prepipeline-enabled";
+  private static final String ERA1_DATA_PATH_FLAG = "--era1-data-path";
 
   /**
    * Parse block propagation range.
@@ -346,6 +352,24 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean snapSyncSavePreCheckpointHeadersOnlyEnabled =
       DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
 
+  @CommandLine.Option(
+      names = ERA1_IMPORT_PREPIPELINE_ENABLED_FLAG,
+      paramLabel = "<Boolean>",
+      arity = "0..1",
+      description =
+          "Enable the ERA1 import prepipeline for FULL sync. ERA1 files will be imported from the path specified by "
+              + ERA1_DATA_PATH_FLAG
+              + ". If a sync mode other than FULL is selected, this will have no affect. (default: ${DEFAULT-VALUE})")
+  private Boolean era1ImportPrepipelineEnabled =
+      SynchronizerConfiguration.DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED;
+
+  @CommandLine.Option(
+      names = {ERA1_DATA_PATH_FLAG},
+      paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
+      description =
+          "The path to the directory containing ERA1 files to import. (default: ${DEFAULT-VALUE})")
+  private Path era1DataPath = null;
+
   private SynchronizerOptions() {}
 
   /**
@@ -420,6 +444,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled();
     options.snapSyncSavePreCheckpointHeadersOnlyEnabled =
         config.isSnapSyncSavePreCheckpointHeadersOnlyEnabled();
+    options.era1ImportPrepipelineEnabled = config.era1ImportPrepipelineEnabled();
+    options.era1DataPath = config.era1DataPath();
     return options;
   }
 
@@ -458,6 +484,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
     builder.snapSyncSavePreCheckpointHeadersOnlyEnabled(
         snapSyncSavePreCheckpointHeadersOnlyEnabled);
+    builder.era1ImportPrepipelineEnabled(era1ImportPrepipelineEnabled);
+    builder.era1DataPath(era1DataPath);
     return builder;
   }
 
@@ -516,7 +544,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
             OptionParser.format(snapTransactionIndexingEnabled),
             SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG,
-            OptionParser.format(snapSyncSavePreCheckpointHeadersOnlyEnabled));
+            OptionParser.format(snapSyncSavePreCheckpointHeadersOnlyEnabled),
+            ERA1_IMPORT_PREPIPELINE_ENABLED_FLAG,
+            OptionParser.format(era1ImportPrepipelineEnabled),
+            ERA1_DATA_PATH_FLAG,
+            OptionParser.format(era1DataPath));
     return value;
   }
 }

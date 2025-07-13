@@ -52,6 +52,8 @@ public class FullSyncDownloader {
     this.protocolContext = protocolContext;
     this.syncState = syncState;
 
+    // TODO: utilise syncConfig.era1ImportPrepipelineEnabled() to start the ERA1 import prepipeline
+    // here
     this.chainDownloader =
         FullSyncChainDownloader.create(
             syncConfig,
