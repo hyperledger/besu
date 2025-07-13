@@ -564,7 +564,7 @@ public class EvmToolCommand implements Runnable {
               .put("output", initialMessageFrame.getOutputData().toHexString())
               .put("gasUsed", "0x" + Long.toHexString(evmGas))
               .put("pass", initialMessageFrame.getExceptionalHaltReason().isEmpty())
-              .put("fork", protocolSpec.getName());
+              .put("fork", protocolSpec.getHardforkId().description());
           if (!noTime) {
             resultLine.put("timens", lastTime).put("time", lastTime / 1000);
           }
