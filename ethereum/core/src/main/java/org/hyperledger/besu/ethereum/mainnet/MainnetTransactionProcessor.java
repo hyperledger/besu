@@ -221,7 +221,7 @@ public class MainnetTransactionProcessor {
 
       final Address senderAddress = transaction.getSender();
       final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
-      eip7928AccessList.ifPresent(t -> t.addAccount(senderAddress, sender));
+      eip7928AccessList.ifPresent(t -> t.addAccount(senderAddress));
 
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -269,7 +269,7 @@ public class MainnetTransactionProcessor {
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
 
-        worldState.commit();
+        // worldState.commit();
       }
 
       final List<AccessListEntry> eip2930AccessListEntries =
@@ -453,9 +453,9 @@ public class MainnetTransactionProcessor {
         final var coinbase = worldState.getOrCreate(miningBeneficiary);
         initialFrame
             .getEip7928AccessList()
-            .ifPresent(t -> t.addAccount(coinbase.getAddress(), coinbase));
+            .ifPresent(t -> t.addAccount(coinbase.getAddress()));
         coinbase.incrementBalance(coinbaseWeiDelta);
-        eip7928AccessList.ifPresent(t -> t.addAccount(miningBeneficiary, coinbase));
+        eip7928AccessList.ifPresent(t -> t.addAccount(miningBeneficiary));
       }
 
       operationTracer.traceEndTransaction(

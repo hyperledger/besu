@@ -15,22 +15,14 @@
 package org.hyperledger.besu.evm.frame;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.account.Account;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
 public interface Eip7928AccessList {
 
-  void addAccount(final Address address, final Account account);
+  void addAccount(final Address address);
 
-  void addSlotAccessForAccount(
-      final Address address, final UInt256 slotKey, final UInt256 slotValue);
-
-  void addSlotUpdateForAccount(
-      final Address address,
-      final UInt256 slotKey,
-      final UInt256 originalSlotValue,
-      final UInt256 newSlotValue);
+  void addSlotAccessForAccount(final Address address, final UInt256 slotKey);
 
   void clear();
 }

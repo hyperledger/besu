@@ -58,6 +58,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
@@ -327,15 +328,17 @@ public class BlockSimulator {
             "Transaction simulator result is invalid", transactionSimulationResult);
       }
 
+      if (transactionSimulationResult.isSuccessful()) {
+        if (transactionUpdater instanceof StackedUpdater<?,?> stackedUpdater) {
+          transactionSimulationResult
+              .result()
+              .getTransactionAccessList()
+              .ifPresent(t-> balBuilder.addTransactionLevelAccessList(t, stackedUpdater));
+        }
+      }
+
       transactionUpdater.commit();
       transactionUpdater.markTransactionBoundary();
-
-      if (transactionSimulationResult.isSuccessful()) {
-        transactionSimulationResult
-            .result()
-            .getTransactionAccessList()
-            .ifPresent(balBuilder::addTransactionLevelAccessList);
-      }
 
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
     }

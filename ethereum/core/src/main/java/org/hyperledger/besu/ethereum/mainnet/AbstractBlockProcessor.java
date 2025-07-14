@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
@@ -227,10 +228,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               transactionAccessList);
 
-      transactionProcessingResult
-          .getTransactionAccessList()
-          .ifPresent(
-              t -> blockAccessListBuilder.ifPresent(b -> b.addTransactionLevelAccessList(t)));
+      if (blockUpdater instanceof StackedUpdater<?,?> stackedUpdater) {
+        transactionProcessingResult
+            .getTransactionAccessList()
+            .ifPresent(
+                t -> blockAccessListBuilder.ifPresent(b -> b.addTransactionLevelAccessList(t, stackedUpdater)));
+      }
 
       if (transactionProcessingResult.isInvalid()) {
         String errorMessage =

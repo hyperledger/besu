@@ -105,8 +105,7 @@ public class SStoreOperation extends AbstractOperation {
     frame.storageWasUpdated(key, newValue);
     frame
         .getEip7928AccessList()
-        .ifPresent(
-            t -> t.addSlotUpdateForAccount(address, key, originalValueSupplier.get(), newValue));
+        .ifPresent(t -> t.addSlotAccessForAccount(address, key));
 
     return new OperationResult(cost, null);
   }

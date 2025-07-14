@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
@@ -466,7 +467,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             TransactionValidationParams.mining(),
             blockSelectionContext.blobGasPrice(),
             Optional.of(transactionAccessList));
-    balBuilder.addTransactionLevelAccessList(transactionAccessList);
+    if (txWorldStateUpdater instanceof StackedUpdater<?,?> stackedUpdater) {
+      balBuilder.addTransactionLevelAccessList(transactionAccessList, stackedUpdater);
+    }
     return result;
   }
 

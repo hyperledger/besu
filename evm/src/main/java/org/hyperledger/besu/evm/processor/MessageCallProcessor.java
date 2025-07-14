@@ -129,10 +129,10 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
     } else {
       frame
           .getEip7928AccessList()
-          .ifPresent(t -> t.addAccount(senderAccount.getAddress(), senderAccount));
+          .ifPresent(t -> t.addAccount(senderAccount.getAddress()));
       frame
           .getEip7928AccessList()
-          .ifPresent(t -> t.addAccount(recipientAccount.getAddress(), recipientAccount));
+          .ifPresent(t -> t.addAccount(recipientAccount.getAddress()));
 
       final Wei prevSenderBalance = senderAccount.decrementBalance(frame.getValue());
       final Wei prevRecipientBalance = recipientAccount.incrementBalance(frame.getValue());

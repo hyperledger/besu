@@ -20,6 +20,9 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList.AccountAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
+import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -31,7 +34,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -134,13 +136,10 @@ public class BlockAccessList {
   public static class BlockAccessListBuilder {
     final Map<Address, AccountBuilder> accountChangesBuilders = new HashMap<>();
 
-    public void addTransactionLevelAccessList(final TransactionAccessList txList) {
-
-      for (Map.Entry<Address, AccountAccessList> account : txList.getAccounts().entrySet()) {
-        Address address = account.getKey();
-        AccountAccessList accountState = account.getValue();
-
-        if (excludedAddresses.contains(address)) {
+    public void addTransactionLevelAccessList(final TransactionAccessList txList, final StackedUpdater<?,?> updater) {
+      for (UpdateTrackingAccount<?> account : updater.getUpdatedAccounts()) {
+        final Address address = account.getAddress();
+        if(!txList.getAccounts().containsKey(address) || excludedAddresses.contains(address)) {
           continue;
         }
 
@@ -151,42 +150,82 @@ public class BlockAccessList {
                   return new AccountBuilder(address);
                 });
 
-        Wei newBalance = accountState.getAccount().getBalance();
-        if (!newBalance.equals(accountState.getPrevBalance())) {
+        final Account wrappedAccount = account.getWrappedAccount();
+
+        if (wrappedAccount != null) {
+          Wei newBalance = account.getBalance();
+          Wei originalBalance = wrappedAccount.getBalance();
+          if (!newBalance.equals(originalBalance)) {
+            builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
+          }
+
+          long newNonce = account.getNonce();
+          long originalNonce = wrappedAccount.getNonce();
+          if (newNonce != originalNonce) {
+            builder.addNonceChange(txList.getIndex(), newNonce);
+          }
+
+          Bytes newCode = account.getCode();
+          Bytes originalCode = wrappedAccount.getCode();
+          if (!newCode.isEmpty() && !newCode.isZero() && !newCode.equals(originalCode)) {
+            builder.addCodeChange(txList.getIndex(), newCode);
+          }
+        } else {
+          Wei newBalance = account.getBalance();
           builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
-        }
 
-        long newNonce = accountState.getAccount().getNonce();
-        if (newNonce != accountState.getPrevNonce()) {
+          long newNonce = account.getNonce();
           builder.addNonceChange(txList.getIndex(), newNonce);
+
+          Bytes newCode = account.getCode();
+          if (!newCode.isEmpty() && !newCode.isZero()) {
+            builder.addCodeChange(txList.getIndex(), newCode);
+          }
         }
 
-        Bytes newCode = accountState.getAccount().getCodeHash();
-        if (!newCode.equals(accountState.getPrevCodeHash())) {
-          builder.addCodeChange(txList.getIndex(), newCode);
-        }
+        final Map<UInt256, UInt256> updatedStorage = account.getUpdatedStorage();
+        final Set<UInt256> txListTouchedSlots = txList.getAccounts().get(address).getSlots();
+        for (UInt256 touchedSlot : txListTouchedSlots) {
+          StorageSlotKey slotKeyObj = new StorageSlotKey(touchedSlot);
 
-        // Storage slots
-        Map<UInt256, Pair<UInt256, UInt256>> slots = accountState.getSlots();
-        for (Map.Entry<UInt256, Pair<UInt256, UInt256>> slotEntry : slots.entrySet()) {
-          final UInt256 slotKey = slotEntry.getKey();
-          final UInt256 originalSlotValue = slotEntry.getValue().getFirst();
-          final UInt256 newSlotValue = slotEntry.getValue().getSecond();
+          if (updatedStorage.containsKey(touchedSlot)) {
+            final UInt256 originalValue = account.getOriginalStorageValue(touchedSlot);
+            final UInt256 updatedValue = updatedStorage.get(touchedSlot);
 
+            final boolean isSet = originalValue == null;
+            final boolean isReset = updatedValue == null;
+            final boolean isUpdate =
+                originalValue == null ? false : !originalValue.equals(updatedValue);
+            final boolean isWrite = isSet || isReset || isUpdate;
 
-          final boolean isSet = originalSlotValue == null;
-          final boolean isReset = newSlotValue == null;
-          final boolean isUpdate =
-              originalSlotValue == null ? false : !originalSlotValue.equals(newSlotValue);
-          final boolean isWrite = isSet || isReset || isUpdate;
-
-          StorageSlotKey slotKeyObj = new StorageSlotKey(slotKey);
-
-          if (isWrite) {
-            builder.addStorageWrite(slotKeyObj, txList.getIndex(), newSlotValue);
+            if (isWrite) {
+              builder.addStorageWrite(slotKeyObj, txList.getIndex(), updatedValue);
+            } else {
+              builder.addStorageRead(slotKeyObj);
+            }
           } else {
             builder.addStorageRead(slotKeyObj);
           }
+        }
+      }
+
+      for (Map.Entry<Address, AccountAccessList> account : txList.getAccounts().entrySet()) {
+        Address address = account.getKey();
+
+        if (updater.getUpdatedAccounts().stream().filter(a -> a.getAddress().equals(address)).findAny().isPresent() || excludedAddresses.contains(address)) {
+          continue;
+        }
+
+        BlockAccessListBuilder.AccountBuilder builder =
+            accountChangesBuilders.computeIfAbsent(
+                address,
+                __ -> {
+                  return new AccountBuilder(address);
+                });
+
+        for (UInt256 slot : account.getValue().getSlots()) {
+          final StorageSlotKey slotKeyObj = new StorageSlotKey(slot);
+          builder.addStorageRead(slotKeyObj);
         }
       }
     }

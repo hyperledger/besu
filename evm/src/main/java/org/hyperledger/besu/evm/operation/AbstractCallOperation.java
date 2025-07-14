@@ -201,7 +201,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.clearReturnData();
 
     final Account account = getAccount(frame.getRecipientAddress(), frame);
-    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(frame.getRecipientAddress(), account));
+    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(frame.getRecipientAddress()));
 
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
 
