@@ -33,6 +33,21 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ProtocolScheduleFixture {
+
+  public static final ProtocolSchedule SEPOLIA =
+      MainnetProtocolSchedule.fromConfig(
+          getSepoliaConfigOptions(),
+          Optional.empty(),
+          Optional.empty(),
+          MiningConfiguration.newDefault(),
+          new BadBlockManager(),
+          false,
+          new NoOpMetricsSystem());
+
+  // A pointer to a specific testnet. Used widely in tests.
+  // One spot to change if we permanently or temporarily want to test with a different network.
+  public static final ProtocolSchedule TESTING_NETWORK = ProtocolScheduleFixture.SEPOLIA;
+
   public static final ProtocolSchedule MAINNET =
       MainnetProtocolSchedule.fromConfig(
           getMainnetConfigOptions(),
@@ -45,6 +60,10 @@ public class ProtocolScheduleFixture {
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
     return getGenesisConfigOptions("/mainnet.json");
+  }
+
+  private static GenesisConfigOptions getSepoliaConfigOptions() {
+    return getGenesisConfigOptions("/sepolia.json");
   }
 
   public static GenesisConfigOptions getGenesisConfigOptions(final String genesisConfig) {

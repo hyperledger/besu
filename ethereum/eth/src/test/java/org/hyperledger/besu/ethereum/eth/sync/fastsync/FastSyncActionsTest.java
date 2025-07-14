@@ -109,7 +109,7 @@ public class FastSyncActionsTest {
     blockchain = blockchainSetupUtil.getBlockchain();
     ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
-            .setProtocolSchedule(ProtocolScheduleFixture.MAINNET)
+            .setProtocolSchedule(ProtocolScheduleFixture.TESTING_NETWORK)
             .setBlockchain(blockchain)
             .setEthScheduler(
                 new DeterministicEthScheduler(() -> timeoutCount.getAndDecrement() > 0))
