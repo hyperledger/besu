@@ -10,9 +10,10 @@
 ### Additions and Improvements
 - Improve transaction simulation and gas estimation when no gas pricing is present [#8888](https://github.com/hyperledger/besu/pull/8888)
 - Add option to trace reference tests during execution [#8878](https://github.com/hyperledger/besu/pull/8878)
+- Expose methods to query hardfork by block header or for the next block in the Plugin API [#8909](https://github.com/hyperledger/besu/pull/8909)
 
 #### Fusaka devnets
-- EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417)
+- EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417), [#8946](https://github.com/hyperledger/besu/pull/8946)
 
 ### Bug fixes
 
