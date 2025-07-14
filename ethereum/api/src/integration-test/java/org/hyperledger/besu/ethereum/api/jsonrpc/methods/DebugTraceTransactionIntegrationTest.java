@@ -109,7 +109,8 @@ public class DebugTraceTransactionIntegrationTest {
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
 
-    // TODO: Replace with the correct class when implemented
+    // TODO: Replace with the correct class when implemented. This assertion will start failing when
+    // proper implementation is available.
     assertThat(successResponse.getResult())
         .isInstanceOf(DebugTraceTransactionStepFactory.NotYetImplemented.class);
     // Other assertions can be added here to validate the result structure
