@@ -81,7 +81,7 @@ public class DownloadReceiptsStepTest {
     TransactionPool transactionPool = mock(TransactionPool.class);
     ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
-            .setProtocolSchedule(ProtocolScheduleFixture.SEPOLIA)
+            .setProtocolSchedule(ProtocolScheduleFixture.TESTING_NETWORK)
             .setBlockchain(blockchain)
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())

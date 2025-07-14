@@ -33,6 +33,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ProtocolScheduleFixture {
+
   public static final ProtocolSchedule SEPOLIA =
       MainnetProtocolSchedule.fromConfig(
           getSepoliaConfigOptions(),
@@ -42,6 +43,11 @@ public class ProtocolScheduleFixture {
           new BadBlockManager(),
           false,
           new NoOpMetricsSystem());
+
+  // A pointer to a specific testnet. Used widely in tests.
+  // One spot to change if we permanently or temporarily want to test with a different network.
+  public static final ProtocolSchedule TESTING_NETWORK = ProtocolScheduleFixture.SEPOLIA;
+
   public static final ProtocolSchedule MAINNET =
       MainnetProtocolSchedule.fromConfig(
           getMainnetConfigOptions(),

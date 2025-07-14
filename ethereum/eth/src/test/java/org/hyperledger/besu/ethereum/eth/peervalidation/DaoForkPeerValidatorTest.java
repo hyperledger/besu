@@ -39,7 +39,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
   @Override
   AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
     return new DaoForkPeerValidator(
-        ProtocolScheduleFixture.SEPOLIA,
+        ProtocolScheduleFixture.TESTING_NETWORK,
         null,
         SynchronizerConfiguration.builder().build(),
         new NoOpMetricsSystem(),
@@ -60,7 +60,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
     final PeerValidator validator =
         new DaoForkPeerValidator(
-            ProtocolScheduleFixture.SEPOLIA,
+            ProtocolScheduleFixture.TESTING_NETWORK,
             null,
             SynchronizerConfiguration.builder().build(),
             new NoOpMetricsSystem(),
@@ -93,7 +93,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
     final PeerValidator validator =
         new DaoForkPeerValidator(
-            ProtocolScheduleFixture.SEPOLIA,
+            ProtocolScheduleFixture.TESTING_NETWORK,
             null,
             SynchronizerConfiguration.builder().build(),
             new NoOpMetricsSystem(),
@@ -123,7 +123,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
     final PeerValidator validator =
         new DaoForkPeerValidator(
-            ProtocolScheduleFixture.SEPOLIA,
+            ProtocolScheduleFixture.TESTING_NETWORK,
             null,
             SynchronizerConfiguration.builder().build(),
             new NoOpMetricsSystem(),

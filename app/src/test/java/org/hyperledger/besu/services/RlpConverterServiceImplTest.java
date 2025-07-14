@@ -32,7 +32,7 @@ public class RlpConverterServiceImplTest {
   public void testBuildRlpFromHeader() {
     // Arrange
     RlpConverterServiceImpl rlpConverterServiceImpl =
-        new RlpConverterServiceImpl(ProtocolScheduleFixture.SEPOLIA);
+        new RlpConverterServiceImpl(ProtocolScheduleFixture.TESTING_NETWORK);
     // header with cancun fields
     BlockHeader header =
         new BlockHeaderTestFixture()
