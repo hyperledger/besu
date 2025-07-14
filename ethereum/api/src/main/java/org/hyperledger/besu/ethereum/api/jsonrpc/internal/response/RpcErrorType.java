@@ -260,11 +260,7 @@ public enum RpcErrorType implements RpcMethodError {
 
   UNKNOWN(-32603, "Unknown internal error"),
 
-  INVALID_BLOBS(-32603, "blobs failed kzg validation"),
-
-  // Tracing errors
-  INVALID_TRACER(-32000, "Invalid tracer specified"),
-  TRACER_NOT_IMPLEMENTED(-32000, "Tracer not implemented.");
+  INVALID_BLOBS(-32603, "blobs failed kzg validation");
   private final int code;
   private final String message;
   private final Function<String, Optional<String>> dataDecoder;
