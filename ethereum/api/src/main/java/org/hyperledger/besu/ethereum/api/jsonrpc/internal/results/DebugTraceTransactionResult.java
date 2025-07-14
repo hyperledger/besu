@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 
 import java.util.Collection;
 import java.util.function.Function;
@@ -22,15 +23,23 @@ import java.util.function.Function;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"txHash", "result"})
+@JsonPropertyOrder({"txHash", "result", "error"})
 public class DebugTraceTransactionResult {
 
   private final String txHash;
   private final Object result;
+  private final JsonRpcError error;
 
   public DebugTraceTransactionResult(final TransactionTrace transactionTrace, final Object result) {
     this.txHash = transactionTrace.getTransaction().getHash().toHexString();
     this.result = result;
+    this.error = null;
+  }
+
+  public DebugTraceTransactionResult(final JsonRpcError error) {
+    this.txHash = null;
+    this.result = null;
+    this.error = error;
   }
 
   public static Collection<DebugTraceTransactionResult> of(
@@ -49,5 +58,10 @@ public class DebugTraceTransactionResult {
   @JsonGetter(value = "result")
   public Object getResult() {
     return result;
+  }
+
+  @JsonGetter(value = "error")
+  public JsonRpcError getError() {
+    return error;
   }
 }

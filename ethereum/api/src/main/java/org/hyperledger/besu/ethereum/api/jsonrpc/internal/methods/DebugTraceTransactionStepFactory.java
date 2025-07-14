@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_TRACER;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.TRACER_NOT_IMPLEMENTED;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStructLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 
@@ -56,25 +60,21 @@ public class DebugTraceTransactionStepFactory {
       case "callTracer" ->
           transactionTrace -> {
             // TODO: Implement callTracer logic and wire it here
-            var result = new NotYetImplemented();
-            return new DebugTraceTransactionResult(transactionTrace, result);
+            return new DebugTraceTransactionResult(new JsonRpcError(TRACER_NOT_IMPLEMENTED));
           };
       case "flatCallTracer" ->
           transactionTrace -> {
             // TODO: Implement flatCallTracer logic and wire it here
-            var result = new NotYetImplemented();
-            return new DebugTraceTransactionResult(transactionTrace, result);
+            return new DebugTraceTransactionResult(new JsonRpcError(TRACER_NOT_IMPLEMENTED));
           };
       case "prestateTracer" ->
           transactionTrace -> {
             // TODO: Implement prestateTracer logic and wire it here
-            var result = new NotYetImplemented();
-            return new DebugTraceTransactionResult(transactionTrace, result);
+            return new DebugTraceTransactionResult(new JsonRpcError(TRACER_NOT_IMPLEMENTED));
           };
       // Possible feature: Load via "plugin" system, and then raise an error if not found
       default ->
-          transactionTrace ->
-              new DebugTraceTransactionResult(transactionTrace, new NotYetImplemented());
+          transactionTrace -> new DebugTraceTransactionResult(new JsonRpcError(INVALID_TRACER));
     };
   }
 
