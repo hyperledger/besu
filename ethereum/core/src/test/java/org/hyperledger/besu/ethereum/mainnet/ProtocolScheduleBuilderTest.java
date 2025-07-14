@@ -22,9 +22,15 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO2;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO3;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO4;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO5;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BYZANTIUM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_INIT;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_TRANSITION;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.HOMESTEAD;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PARIS;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
 import static org.mockito.ArgumentMatchers.any;
@@ -100,72 +106,77 @@ class ProtocolScheduleBuilderTest {
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
     assertThat(protocolSchedule.getChainId()).contains(CHAIN_ID);
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(0)).getName()).isEqualTo("Frontier");
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(1)).getName()).isEqualTo("Homestead");
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(2)).getName())
-        .isEqualTo("DaoRecoveryInit");
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(3)).getName())
-        .isEqualTo("DaoRecoveryTransition");
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(12)).getName()).isEqualTo("Homestead");
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(13)).getName()).isEqualTo("Byzantium");
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(14)).getName()).isEqualTo("Byzantium");
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(15)).getName()).isEqualTo("ParisFork");
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(50)).getName()).isEqualTo("ParisFork");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(0)).getHardforkId())
+        .isEqualTo(FRONTIER);
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(1)).getHardforkId())
+        .isEqualTo(HOMESTEAD);
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(2)).getHardforkId())
+        .isEqualTo(DAO_RECOVERY_INIT);
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(3)).getHardforkId())
+        .isEqualTo(DAO_RECOVERY_TRANSITION);
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(12)).getHardforkId())
+        .isEqualTo(HOMESTEAD);
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(13)).getHardforkId())
+        .isEqualTo(BYZANTIUM);
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(14)).getHardforkId())
+        .isEqualTo(BYZANTIUM);
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(15)).getHardforkId()).isEqualTo(PARIS);
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(50)).getHardforkId()).isEqualTo(PARIS);
     assertThat(
             protocolSchedule
                 .getByBlockHeader(blockHeader(51, PRE_SHANGHAI_TIMESTAMP + 1))
-                .getName())
-        .isEqualTo("Shanghai");
+                .getHardforkId())
+        .isEqualTo(SHANGHAI);
     assertThat(
             protocolSchedule
                 .getByBlockHeader(blockHeader(52, PRE_SHANGHAI_TIMESTAMP + 2))
-                .getName())
-        .isEqualTo("Shanghai");
+                .getHardforkId())
+        .isEqualTo(SHANGHAI);
     assertThat(
             protocolSchedule
                 .getByBlockHeader(blockHeader(53, PRE_SHANGHAI_TIMESTAMP + 3))
-                .getName())
-        .isEqualTo("Cancun");
+                .getHardforkId())
+        .isEqualTo(CANCUN);
     assertThat(
             protocolSchedule
                 .getByBlockHeader(blockHeader(54, PRE_SHANGHAI_TIMESTAMP + 4))
-                .getName())
-        .isEqualTo("Cancun");
+                .getHardforkId())
+        .isEqualTo(CANCUN);
     assertThat(
             protocolSchedule
                 .getByBlockHeader(blockHeader(55, PRE_SHANGHAI_TIMESTAMP + 5))
-                .getName())
-        .isEqualTo("Prague");
+                .getHardforkId())
+        .isEqualTo(PRAGUE);
     assertThat(
             protocolSchedule
                 .getByBlockHeader(blockHeader(56, PRE_SHANGHAI_TIMESTAMP + 7))
-                .getName())
-        .isEqualTo("Osaka");
+                .getHardforkId())
+        .isEqualTo(OSAKA);
     assertThat(
             protocolSchedule
                 .getByBlockHeader(blockHeader(57, PRE_SHANGHAI_TIMESTAMP + 9))
-                .getName())
-        .isEqualTo("BPO1");
+                .getHardforkId())
+        .isEqualTo(BPO1);
     assertThat(
             protocolSchedule
                 .getByBlockHeader(blockHeader(58, PRE_SHANGHAI_TIMESTAMP + 11))
-                .getName())
-        .isEqualTo("BPO2");
+                .getHardforkId())
+        .isEqualTo(BPO2);
     assertThat(
             protocolSchedule
                 .getByBlockHeader(blockHeader(59, PRE_SHANGHAI_TIMESTAMP + 13))
-                .getName())
-        .isEqualTo("BPO3");
+                .getHardforkId())
+        .isEqualTo(BPO3);
     assertThat(
             protocolSchedule
                 .getByBlockHeader(blockHeader(60, PRE_SHANGHAI_TIMESTAMP + 15))
-                .getName())
-        .isEqualTo("BPO4");
+                .getHardforkId())
+        .isEqualTo(BPO4);
     assertThat(
             protocolSchedule
                 .getByBlockHeader(blockHeader(61, PRE_SHANGHAI_TIMESTAMP + 17))
-                .getName())
-        .isEqualTo("BPO5");
+                .getHardforkId())
+        .isEqualTo(BPO5);
   }
 
   @Test
@@ -246,8 +257,10 @@ class ProtocolScheduleBuilderTest {
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
     assertThat(protocolSchedule.getChainId()).contains(CHAIN_ID);
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(0)).getName()).isEqualTo("Byzantium");
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(1)).getName()).isEqualTo("Byzantium");
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(0)).getHardforkId())
+        .isEqualTo(BYZANTIUM);
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(1)).getHardforkId())
+        .isEqualTo(BYZANTIUM);
   }
 
   @Test
@@ -283,9 +296,9 @@ class ProtocolScheduleBuilderTest {
     // added at the point at which the modifier is applied.
     assertThat(schedule.streamMilestoneBlocks().collect(Collectors.toList()))
         .containsExactly(0L, 2L, 5L);
-    assertThat(schedule.getByBlockHeader(blockHeader(0)).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockHeader(blockHeader(2)).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockHeader(blockHeader(5)).getName()).isEqualTo("Homestead");
+    assertThat(schedule.getByBlockHeader(blockHeader(0)).getHardforkId()).isEqualTo(FRONTIER);
+    assertThat(schedule.getByBlockHeader(blockHeader(2)).getHardforkId()).isEqualTo(FRONTIER);
+    assertThat(schedule.getByBlockHeader(blockHeader(5)).getHardforkId()).isEqualTo(HOMESTEAD);
 
     verify(modifier, times(2)).apply(any());
   }
@@ -301,8 +314,8 @@ class ProtocolScheduleBuilderTest {
     // added at the point at which the modifier is applied.
     assertThat(schedule.streamMilestoneBlocks().collect(Collectors.toList()))
         .containsExactly(0L, 2L);
-    assertThat(schedule.getByBlockHeader(blockHeader(0)).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockHeader(blockHeader(2)).getName()).isEqualTo("Frontier");
+    assertThat(schedule.getByBlockHeader(blockHeader(0)).getHardforkId()).isEqualTo(FRONTIER);
+    assertThat(schedule.getByBlockHeader(blockHeader(2)).getHardforkId()).isEqualTo(FRONTIER);
 
     verify(modifier, times(1)).apply(any());
   }
@@ -319,8 +332,8 @@ class ProtocolScheduleBuilderTest {
     // added at the point at which the modifier is applied.
     assertThat(schedule.streamMilestoneBlocks().collect(Collectors.toList()))
         .containsExactly(0L, 5L);
-    assertThat(schedule.getByBlockHeader(blockHeader(0)).getName()).isEqualTo("Frontier");
-    assertThat(schedule.getByBlockHeader(blockHeader(5)).getName()).isEqualTo("Homestead");
+    assertThat(schedule.getByBlockHeader(blockHeader(0)).getHardforkId()).isEqualTo(FRONTIER);
+    assertThat(schedule.getByBlockHeader(blockHeader(5)).getHardforkId()).isEqualTo(HOMESTEAD);
     verify(modifier, times(1)).apply(any());
   }
 
