@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugCallTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStructLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 
@@ -50,15 +49,29 @@ public class DebugTraceTransactionStepFactory {
     return switch (normalizedTracerType) {
       case "" ->
           transactionTrace -> {
+            // default - struct/opcode logger tracer
             var result = new DebugStructLoggerTracerResult(transactionTrace);
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
       case "callTracer" ->
           transactionTrace -> {
-            var result = new DebugCallTracerResult(transactionTrace);
+            // TODO: Implement callTracer logic and wire it here
+            var result = new NotYetImplemented();
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
-      // TODO: Load via "plugin" system, and then raise an error if not found
+      case "flatCallTracer" ->
+          transactionTrace -> {
+            // TODO: Implement flatCallTracer logic and wire it here
+            var result = new NotYetImplemented();
+            return new DebugTraceTransactionResult(transactionTrace, result);
+          };
+      case "prestateTracer" ->
+          transactionTrace -> {
+            // TODO: Implement prestateTracer logic and wire it here
+            var result = new NotYetImplemented();
+            return new DebugTraceTransactionResult(transactionTrace, result);
+          };
+      // Possible feature: Load via "plugin" system, and then raise an error if not found
       default ->
           transactionTrace ->
               new DebugTraceTransactionResult(transactionTrace, new NotYetImplemented());
@@ -80,7 +93,7 @@ public class DebugTraceTransactionStepFactory {
         CompletableFuture.supplyAsync(() -> create(tracerType).apply(transactionTrace));
   }
 
-  static class NotYetImplemented {
+  public static class NotYetImplemented {
     @JsonGetter("error")
     public String getError() {
       return "Not Yet Implemented";
