@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"gas", "failed", "returnValue", "structLogs"})
-public class DebugStructLoggerTracerResult implements DebugTracerResult {
+public class DebugStructLoggerTracerResult {
 
   private final List<StructLog> structLogs;
   private final String returnValue;
