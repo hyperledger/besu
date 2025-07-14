@@ -217,7 +217,6 @@ public class DebugOperationTracer implements OperationTracer {
     if (!options.traceStorage()) {
       return Optional.empty();
     }
-
     try {
       Map<UInt256, UInt256> updatedStorage =
           frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getUpdatedStorage();
@@ -234,7 +233,6 @@ public class DebugOperationTracer implements OperationTracer {
     if (!options.traceMemory() || frame.memoryWordSize() == 0) {
       return Optional.empty();
     }
-
     final Bytes[] memoryContents = new Bytes[frame.memoryWordSize()];
     for (int i = 0; i < memoryContents.length; i++) {
       memoryContents[i] = frame.readMemory(i * 32L, 32);
