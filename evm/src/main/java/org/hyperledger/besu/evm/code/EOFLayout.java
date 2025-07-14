@@ -396,7 +396,8 @@ public record EOFLayout(
                 + Integer.toHexString(typeData[i][2]));
       }
       codeSections[i] =
-          new CodeSection(codeSectionSize, typeData[i][0], typeData[i][1], typeData[i][2], pos);
+          new CodeSection(
+              () -> codeSectionSize, typeData[i][0], typeData[i][1], typeData[i][2], pos);
       if (i == 0 && typeData[0][1] != 0x80) {
         return invalidLayout(
             step.container,
@@ -580,7 +581,7 @@ public record EOFLayout(
       out.writeByte(SECTION_CODE);
       out.writeShort(codeSections.length);
       for (CodeSection cs : codeSections) {
-        out.writeShort(cs.length);
+        out.writeShort(cs.lengthSupplier.get());
       }
 
       // Subcontainers header
@@ -621,7 +622,7 @@ public record EOFLayout(
 
       // Code sections
       for (CodeSection cs : codeSections) {
-        out.write(container.slice(cs.entryPoint, cs.length).toArray());
+        out.write(container.slice(cs.entryPoint, cs.lengthSupplier.get()).toArray());
       }
 
       // Subcontainers
