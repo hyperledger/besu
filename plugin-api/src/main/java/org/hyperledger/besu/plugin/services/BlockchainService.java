@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.Unstable;
@@ -59,6 +60,14 @@ public interface BlockchainService extends BesuService {
    * @return chain head hash
    */
   Hash getChainHeadHash();
+
+  /**
+   * Return the blob gas price for the specified block
+   *
+   * @param blockHeader the block header
+   * @return the block gas price or Wei.ZERO if blobs are not yet supported for that block header
+   */
+  Wei getBlobGasPrice(BlockHeader blockHeader);
 
   /**
    * Get the receipts for a block by block hash
@@ -131,4 +140,23 @@ public interface BlockchainService extends BesuService {
    * @return the chain id
    */
   Optional<BigInteger> getChainId();
+
+  /**
+   * Get the hardfork identifier for the given block header
+   *
+   * @param blockHeader the block header to determine the hardfork for
+   * @return the hardfork identifier applicable to the given block
+   */
+  @Unstable
+  HardforkId getHardforkId(BlockHeader blockHeader);
+
+  /**
+   * Get the hardfork identifier for the next block based on the parent block and timestamp
+   *
+   * @param parentBlockHeader the parent block header
+   * @param timestampForNextBlock the timestamp for the next block
+   * @return the hardfork identifier that will be applicable to the next block
+   */
+  @Unstable
+  HardforkId getNextBlockHardforkId(BlockHeader parentBlockHeader, long timestampForNextBlock);
 }

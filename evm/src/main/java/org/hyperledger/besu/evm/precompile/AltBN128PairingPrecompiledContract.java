@@ -45,7 +45,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       LoggerFactory.getLogger(AltBN128PairingPrecompiledContract.class);
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
-  private static final String PRECOMPILE_NAME = "AltBN128Pairing";
+  private static final String PRECOMPILE_NAME = "BN256_PAIRING";
 
   private static final Cache<Integer, PrecompileInputResultTuple> bnPairingCache =
       Caffeine.newBuilder()

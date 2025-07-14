@@ -66,20 +66,28 @@ public class BftAcceptanceTestParameterization {
     this.createorWithValidatorFn = createorWithValidatorFn;
   }
 
-  public BesuNode createNode(BesuNodeFactory factory, String name) throws Exception {
+  public BesuNode createNode(final BesuNodeFactory factory, final String name) throws Exception {
     return creatorFn.create(factory, name, false, DataStorageFormat.FOREST);
   }
 
-  public BesuNode createBonsaiNodeFixedPort(BesuNodeFactory factory, String name) throws Exception {
+  public BesuNode createBonsaiNodeFixedPort(final BesuNodeFactory factory, final String name)
+      throws Exception {
     return creatorFn.create(factory, name, true, DataStorageFormat.BONSAI);
   }
 
-  public BesuNode createForestNodeFixedPort(BesuNodeFactory factory, String name) throws Exception {
+  public BesuNode createBonsaiArchiveNodeFixedPort(final BesuNodeFactory factory, final String name)
+      throws Exception {
+    return creatorFn.create(factory, name, true, DataStorageFormat.X_BONSAI_ARCHIVE);
+  }
+
+  public BesuNode createForestNodeFixedPort(final BesuNodeFactory factory, final String name)
+      throws Exception {
     return creatorFn.create(factory, name, true, DataStorageFormat.FOREST);
   }
 
   public BesuNode createNodeWithValidators(
-      BesuNodeFactory factory, String name, String[] validators) throws Exception {
+      final BesuNodeFactory factory, final String name, final String[] validators)
+      throws Exception {
     return createorWithValidatorFn.create(factory, name, validators);
   }
 }
