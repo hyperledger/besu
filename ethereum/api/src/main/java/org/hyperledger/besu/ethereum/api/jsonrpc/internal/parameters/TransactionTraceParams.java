@@ -74,6 +74,7 @@ public interface TransactionTraceParams {
   default TraceOptions traceOptions() {
     var defaultTracerConfig =
         new DefaultTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
+    // TODO: Validate valid values for "tracer". Future challenge is loading of tracer via plugin.
     return new TraceOptions(tracer(), defaultTracerConfig, tracerConfig());
   }
 }
