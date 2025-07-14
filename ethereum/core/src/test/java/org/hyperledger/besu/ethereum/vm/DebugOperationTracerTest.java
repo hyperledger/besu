@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
+import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.evm.EVM;
@@ -115,7 +115,7 @@ class DebugOperationTracerTest {
     frame.pushStackItem(stackItem2);
     frame.pushStackItem(stackItem3);
     final TraceFrame traceFrame =
-        traceFrame(frame, new DefaultTracerConfig(false, false, true), false);
+        traceFrame(frame, new OpCodeTracerConfig(false, false, true), false);
     assertThat(traceFrame.getStack()).isPresent();
     assertThat(traceFrame.getStack().get()).containsExactly(stackItem1, stackItem2, stackItem3);
   }
@@ -123,7 +123,7 @@ class DebugOperationTracerTest {
   @Test
   void shouldNotRecordStackWhenDisabled() {
     final TraceFrame traceFrame =
-        traceFrame(validMessageFrame(), new DefaultTracerConfig(false, false, false), false);
+        traceFrame(validMessageFrame(), new OpCodeTracerConfig(false, false, false), false);
     assertThat(traceFrame.getStack()).isEmpty();
   }
 
@@ -137,7 +137,7 @@ class DebugOperationTracerTest {
     frame.writeMemory(32, 32, word2);
     frame.writeMemory(64, 32, word3);
     final TraceFrame traceFrame =
-        traceFrame(frame, new DefaultTracerConfig(false, true, false), false);
+        traceFrame(frame, new OpCodeTracerConfig(false, true, false), false);
     assertThat(traceFrame.getMemory()).isPresent();
     assertThat(traceFrame.getMemory().get()).containsExactly(word1, word2, word3);
   }
@@ -145,7 +145,7 @@ class DebugOperationTracerTest {
   @Test
   void shouldNotRecordMemoryWhenDisabled() {
     final TraceFrame traceFrame =
-        traceFrame(validMessageFrame(), new DefaultTracerConfig(false, false, false), false);
+        traceFrame(validMessageFrame(), new OpCodeTracerConfig(false, false, false), false);
     assertThat(traceFrame.getMemory()).isEmpty();
   }
 
@@ -154,7 +154,7 @@ class DebugOperationTracerTest {
     final MessageFrame frame = validMessageFrame();
     final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);
     final TraceFrame traceFrame =
-        traceFrame(frame, new DefaultTracerConfig(true, false, false), false);
+        traceFrame(frame, new OpCodeTracerConfig(true, false, false), false);
     assertThat(traceFrame.getStorage()).isPresent();
     assertThat(traceFrame.getStorage()).contains(updatedStorage);
   }
@@ -162,30 +162,30 @@ class DebugOperationTracerTest {
   @Test
   void shouldNotRecordStorageWhenDisabled() {
     final TraceFrame traceFrame =
-        traceFrame(validMessageFrame(), new DefaultTracerConfig(false, false, false), false);
+        traceFrame(validMessageFrame(), new OpCodeTracerConfig(false, false, false), false);
     assertThat(traceFrame.getStorage()).isEmpty();
   }
 
   @Test
   void shouldNotAddGasWhenDisabled() {
     final TraceFrame traceFrame =
-        traceFrame(validCallFrame(), new DefaultTracerConfig(false, false, false), false);
+        traceFrame(validCallFrame(), new OpCodeTracerConfig(false, false, false), false);
     assertThat(traceFrame.getGasCost()).isEqualTo(OptionalLong.of(20));
   }
 
   @Test
   void shouldAddGasWhenEnabled() {
     final TraceFrame traceFrame =
-        traceFrame(validCallFrame(), new DefaultTracerConfig(false, false, false), true);
+        traceFrame(validCallFrame(), new OpCodeTracerConfig(false, false, false), true);
     assertThat(traceFrame.getGasCost()).isEqualTo(OptionalLong.of(1020L));
   }
 
   @Test
   void childGasFlagDoesNotMatterForNonCallOperations() {
     final TraceFrame flagDisabledTracer =
-        traceFrame(validMessageFrame(), new DefaultTracerConfig(false, false, false), false);
+        traceFrame(validMessageFrame(), new OpCodeTracerConfig(false, false, false), false);
     final TraceFrame flagEnabledTracer =
-        traceFrame(validMessageFrame(), new DefaultTracerConfig(false, false, false), true);
+        traceFrame(validMessageFrame(), new OpCodeTracerConfig(false, false, false), true);
 
     assertThat(flagEnabledTracer.getGasCost()).isEqualTo(flagDisabledTracer.getGasCost());
   }
@@ -196,7 +196,7 @@ class DebugOperationTracerTest {
     final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);
 
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(new DefaultTracerConfig(true, true, true), false);
+        new DebugOperationTracer(new OpCodeTracerConfig(true, true, true), false);
     tracer.tracePostExecution(
         frame, new OperationResult(50L, ExceptionalHaltReason.INSUFFICIENT_GAS));
 
@@ -207,12 +207,12 @@ class DebugOperationTracerTest {
   }
 
   private TraceFrame traceFrame(final MessageFrame frame) {
-    return traceFrame(frame, new DefaultTracerConfig(false, false, false), false);
+    return traceFrame(frame, new OpCodeTracerConfig(false, false, false), false);
   }
 
   private TraceFrame traceFrame(
       final MessageFrame frame,
-      final DefaultTracerConfig traceOptions,
+      final OpCodeTracerConfig traceOptions,
       final boolean additionalCallGas) {
     final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions, additionalCallGas);
     tracer.tracePreExecution(frame);

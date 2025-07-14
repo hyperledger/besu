@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
+import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -39,7 +39,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
 
-  private final DefaultTracerConfig options;
+  private final OpCodeTracerConfig options;
 
   /**
    * A flag to indicate if call operations should trace just the operation cost (false, Geth style,
@@ -64,7 +64,7 @@ public class DebugOperationTracer implements OperationTracer {
    * @param recordChildCallGas A flag on whether to produce geth style (true) or parity style
    *     (false) gas amounts for call operations
    */
-  public DebugOperationTracer(final DefaultTracerConfig options, final boolean recordChildCallGas) {
+  public DebugOperationTracer(final OpCodeTracerConfig options, final boolean recordChildCallGas) {
     this.options = options;
     this.recordChildCallGas = recordChildCallGas;
   }

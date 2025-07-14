@@ -25,32 +25,35 @@ import java.util.Map;
  */
 public record TraceOptions(
     TracerType tracerType,
-    DefaultTracerConfig defaultTracerConfig,
+    OpCodeTracerConfig opCodeTracerConfig,
     Map<String, Object> tracerConfig) {
-  private static final DefaultTracerConfig DEFAULT_TRACER_CONFIG =
-      new DefaultTracerConfig(true, false, true);
+  private static final OpCodeTracerConfig DEFAULT_OPCODE_TRACER_CONFIG =
+      new OpCodeTracerConfig(true, false, true);
 
   /**
    * Default tracer configuration. Used by trace_ and debug_ methods when no tracer type is
    * specified.
    */
   public static final TraceOptions DEFAULT =
-      new TraceOptions(TracerType.OPCODE_TRACER, DEFAULT_TRACER_CONFIG, Map.of());
+      new TraceOptions(TracerType.OPCODE_TRACER, DEFAULT_OPCODE_TRACER_CONFIG, Map.of());
 
   /**
-   * Constructor for TraceOptions.
+   * Constructor for TraceOptions. The default tracer (opcode) options are specified by
+   * OpcodeTracerConfig. All other tracer type options are specified by tracerConfig.
    *
-   * @param tracerType the type of tracer to use
-   * @param defaultTracerConfig the default tracer's configuration
-   * @param tracerConfig the tracer configuration options for non-default tracers
+   * @param tracerType the type of tracer to use. Defaults to OPCODE_TRACER if null.
+   * @param opCodeTracerConfig the default (opcode) tracer's configuration. Defaults to
+   *     OPCODE_TRACER_CONFIG if null.
+   * @param tracerConfig the tracer configuration options for non-default tracers. Empty map if
+   *     null.
    */
   public TraceOptions(
       final TracerType tracerType,
-      final DefaultTracerConfig defaultTracerConfig,
+      final OpCodeTracerConfig opCodeTracerConfig,
       final Map<String, Object> tracerConfig) {
     this.tracerType = tracerType == null ? TracerType.OPCODE_TRACER : tracerType;
+    this.opCodeTracerConfig =
+        opCodeTracerConfig == null ? DEFAULT_OPCODE_TRACER_CONFIG : opCodeTracerConfig;
     this.tracerConfig = tracerConfig == null ? Map.of() : tracerConfig;
-    this.defaultTracerConfig =
-        defaultTracerConfig == null ? DEFAULT_TRACER_CONFIG : defaultTracerConfig;
   }
 }

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
+import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 
@@ -74,7 +74,7 @@ public interface TransactionTraceParams {
    */
   default TraceOptions traceOptions() {
     var defaultTracerConfig =
-        new DefaultTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
+        new OpCodeTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
 
     // Convert string tracer to TracerType enum, handling null case
     TracerType tracerType =

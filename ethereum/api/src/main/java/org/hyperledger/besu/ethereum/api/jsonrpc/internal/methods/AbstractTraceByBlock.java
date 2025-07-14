@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
+import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -125,7 +125,7 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
   protected TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
     return new TraceOptions(
         TracerType.OPCODE_TRACER,
-        new DefaultTracerConfig(
+        new OpCodeTracerConfig(
             traceTypes.contains(TraceType.STATE_DIFF),
             false,
             traceTypes.contains(TraceType.TRACE) || traceTypes.contains(TraceType.VM_TRACE)),
