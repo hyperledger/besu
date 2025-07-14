@@ -281,14 +281,15 @@ public class BlockSimulator {
 
     final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
 
+    final WorldUpdater blockUpdater = ws.updater();
     for (int transactionLocation = 0;
         transactionLocation < blockStateCall.getCalls().size();
         transactionLocation++) {
+      final WorldUpdater transactionUpdater = blockUpdater.updater();
       final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
       OperationTracer operationTracer =
           isTraceTransfers ? new EthTransferLogOperationTracer() : OperationTracer.NO_TRACING;
 
-      final WorldUpdater transactionUpdater = ws.updater();
       long gasLimit =
           transactionSimulator.calculateSimulationGasCap(
               blockHeader,
@@ -338,6 +339,9 @@ public class BlockSimulator {
 
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
     }
+
+    blockUpdater.commit();
+
     blockStateCallSimulationResult.set(balBuilder.build());
     return blockStateCallSimulationResult;
   }
