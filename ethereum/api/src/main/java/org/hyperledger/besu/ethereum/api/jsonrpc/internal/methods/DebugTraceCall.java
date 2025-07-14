@@ -106,7 +106,6 @@ public class DebugTraceCall extends AbstractTraceCall {
                       getTraceOptions(requestContext).tracerType())
                   .apply(transactionTrace)
                   .getResult();
-              // return new DebugStructLoggerTracerResult(transactionTrace);
             });
   }
 
