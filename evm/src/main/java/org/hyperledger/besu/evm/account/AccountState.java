@@ -139,4 +139,15 @@ public interface AccountState {
    * @return the requested storage entries as a map of key hash to entry.
    */
   NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(Bytes32 startKeyHash, int limit);
+
+  /**
+   * Should be overridden by account types that can retrieve the code size more efficiently. For
+   * example, {@code PathBasedAccount} may return a stored size directly from the account's RLP data
+   * (introduced to support EIP-7907), avoiding the need to inspect the account's code.
+   *
+   * @return the code size
+   */
+  default int getCodeSize() {
+    return getCode().size();
+  }
 }
