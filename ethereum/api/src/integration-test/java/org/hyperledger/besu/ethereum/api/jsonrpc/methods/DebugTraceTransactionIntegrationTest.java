@@ -15,12 +15,14 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceTransactionStepFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -90,5 +92,40 @@ public class DebugTraceTransactionIntegrationTest {
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void debugTraceTransactionCallTracerSuccessTest() {
+
+    final Map<String, String> map = Map.of("tracer", "callTracer");
+    final Hash trxHash =
+        Hash.fromHexString("0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310");
+    final Object[] params = new Object[] {trxHash, map};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
+
+    // TODO: Replace with the correct class when implemented
+    assertThat(successResponse.getResult())
+        .isInstanceOf(DebugTraceTransactionStepFactory.NotYetImplemented.class);
+    // Other assertions can be added here to validate the result structure
+  }
+
+  @Test
+  public void invalidTracerTypeErrorTest() {
+    final Map<String, String> map = Map.of("tracer", "invalidTracerType");
+    final Hash trxHash =
+        Hash.fromHexString("0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310");
+    final Object[] params = new Object[] {trxHash, map};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
+
+    assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> method.response(request))
+        .withMessageStartingWith("Invalid tracer type");
   }
 }
