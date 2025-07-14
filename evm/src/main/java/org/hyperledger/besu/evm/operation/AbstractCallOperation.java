@@ -249,19 +249,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * Calculates Cost.
    *
    * @param frame the frame
-   * @return the long
-   * @deprecated use the form with the `accountIsWarm` boolean
-   */
-  @Deprecated(since = "24.2.0", forRemoval = true)
-  @SuppressWarnings("InlineMeSuggester") // downstream users override, so @InlineMe is inappropriate
-  public long cost(final MessageFrame frame) {
-    return cost(frame, true);
-  }
-
-  /**
-   * Calculates Cost.
-   *
-   * @param frame the frame
    * @param accountIsWarm whether the contract being called is "warm" as per EIP-2929.
    * @return the long
    */

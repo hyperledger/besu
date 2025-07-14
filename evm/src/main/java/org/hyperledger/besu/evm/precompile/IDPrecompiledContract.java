@@ -28,7 +28,7 @@ public class IDPrecompiledContract extends AbstractPrecompiledContract {
    *
    * @param gasCalculator the gas calculator
    */
-  public IDPrecompiledContract(final GasCalculator gasCalculator) {
+  IDPrecompiledContract(final GasCalculator gasCalculator) {
     super("ID", gasCalculator);
   }
 

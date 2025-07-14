@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options.storage;
 
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_LIMIT_TRIE_LOGS_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_PARALLEL_TX_PROCESSING;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.MINIMUM_TRIE_LOG_RETENTION_LIMIT;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.PathBasedUnstable.DEFAULT_CODE_USING_CODE_HASH_ENABLED;
@@ -56,22 +57,35 @@ public class PathBasedExtraStorageOptions
   public static final String TRIE_LOG_PRUNING_WINDOW_SIZE =
       "--bonsai-trie-logs-pruning-window-size";
 
+  /** The bonsai parallel tx processing enabled option name. */
+  public static final String PARALLEL_TX_PROCESSING_ENABLED =
+      "--bonsai-parallel-tx-processing-enabled";
+
   @Option(
       names = {LIMIT_TRIE_LOGS_ENABLED},
       fallbackValue = "true",
       description = "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
   private Boolean limitTrieLogsEnabled = DEFAULT_LIMIT_TRIE_LOGS_ENABLED;
 
-  // TODO --Xbonsai-trie-logs-pruning-window-size is deprecated, remove in a future release
-  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @Option(
       names = {
         TRIE_LOG_PRUNING_WINDOW_SIZE,
-        "--Xbonsai-trie-logs-pruning-window-size" // deprecated
       },
       description =
           "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
   private Integer trieLogPruningWindowSize = DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
+
+  // TODO --Xbonsai-parallel-tx-processing-enabled is deprecated, remove in a future release
+  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
+  @Option(
+      names = {
+        PARALLEL_TX_PROCESSING_ENABLED,
+        "--Xbonsai-parallel-tx-processing-enabled" // deprecated
+      },
+      arity = "1",
+      description =
+          "Enables parallelization of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. Will be ignored if --data-storage-format is not bonsai (default: ${DEFAULT-VALUE})")
+  private Boolean isParallelTxProcessingEnabled = DEFAULT_PARALLEL_TX_PROCESSING;
 
   @CommandLine.ArgGroup(validate = false)
   private final PathBasedExtraStorageOptions.Unstable unstableOptions = new Unstable();
@@ -96,14 +110,6 @@ public class PathBasedExtraStorageOptions
         description =
             "Enables code storage using code hash instead of by account hash. (default: ${DEFAULT-VALUE})")
     private boolean codeUsingCodeHashEnabled = DEFAULT_CODE_USING_CODE_HASH_ENABLED;
-
-    @Option(
-        hidden = true,
-        names = {"--Xbonsai-parallel-tx-processing-enabled"},
-        arity = "1",
-        description =
-            "Enables parallelization of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. (default: ${DEFAULT-VALUE})")
-    private Boolean isParallelTxProcessingEnabled = false;
 
     /** Default Constructor. */
     Unstable() {}
@@ -153,12 +159,6 @@ public class PathBasedExtraStorageOptions
                   maxLayersToLoad));
         }
       }
-    } else {
-      if (unstableOptions.isParallelTxProcessingEnabled) {
-        throw new CommandLine.ParameterException(
-            commandLine,
-            "Transaction parallelization is not supported unless operating in a 'pathbased' mode, such as Bonsai.");
-      }
     }
   }
 
@@ -178,8 +178,8 @@ public class PathBasedExtraStorageOptions
         domainObject.getUnstable().getFullFlatDbEnabled();
     dataStorageOptions.unstableOptions.codeUsingCodeHashEnabled =
         domainObject.getUnstable().getCodeStoredByCodeHashEnabled();
-    dataStorageOptions.unstableOptions.isParallelTxProcessingEnabled =
-        domainObject.getUnstable().isParallelTxProcessingEnabled();
+    dataStorageOptions.isParallelTxProcessingEnabled =
+        domainObject.getParallelTxProcessingEnabled();
 
     return dataStorageOptions;
   }
@@ -190,11 +190,11 @@ public class PathBasedExtraStorageOptions
         .maxLayersToLoad(maxLayersToLoad)
         .limitTrieLogsEnabled(limitTrieLogsEnabled)
         .trieLogPruningWindowSize(trieLogPruningWindowSize)
+        .parallelTxProcessingEnabled(isParallelTxProcessingEnabled)
         .unstable(
             ImmutablePathBasedExtraStorageConfiguration.PathBasedUnstable.builder()
                 .fullFlatDbEnabled(unstableOptions.fullFlatDbEnabled)
                 .codeStoredByCodeHashEnabled(unstableOptions.codeUsingCodeHashEnabled)
-                .isParallelTxProcessingEnabled(unstableOptions.isParallelTxProcessingEnabled)
                 .build())
         .build();
   }

@@ -113,12 +113,13 @@ public class Transaction
   private volatile Bytes32 hashNoSignature;
 
   // Caches the transaction sender.
-  protected volatile Address sender;
+  private volatile Address sender;
 
   // Caches the hash used to uniquely identify the transaction.
-  protected volatile Hash hash;
+  private volatile Hash hash;
   // Caches the size in bytes of the encoded transaction.
-  protected volatile int size = -1;
+  private volatile int sizeForAnnouncement = -1;
+  private volatile int sizeForBlockInclusion = -1;
   private final TransactionType transactionType;
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
@@ -182,6 +183,9 @@ public class Transaction
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
    *     it will default to any chain.
+   * @param hash the transaction hash
+   * @param sizeForAnnouncement the size of the transaction, used for announcement
+   * @param sizeForBlockInclusion the size of the transaction, used for block inclusion
    */
   private Transaction(
       final boolean forCopy,
@@ -202,7 +206,10 @@ public class Transaction
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments,
       final Optional<List<CodeDelegation>> maybeCodeDelegationList,
-      final Optional<Bytes> rawRlp) {
+      final Optional<Bytes> rawRlp,
+      final Optional<Hash> hash,
+      final Optional<Integer> sizeForAnnouncement,
+      final Optional<Integer> sizeForBlockInclusion) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -264,6 +271,9 @@ public class Transaction
     this.blobsWithCommitments = blobsWithCommitments;
     this.maybeCodeDelegationList = maybeCodeDelegationList;
     this.rawRlp = rawRlp;
+    hash.ifPresent(h -> this.hash = h);
+    sizeForAnnouncement.ifPresent(i -> this.sizeForAnnouncement = i);
+    sizeForBlockInclusion.ifPresent(i -> this.sizeForBlockInclusion = i);
   }
 
   /**
@@ -469,7 +479,7 @@ public class Transaction
                     new IllegalStateException(
                         "Cannot recover public key from signature for " + this));
     final Address calculatedSender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
-    senderCache.put(this.hash, calculatedSender);
+    senderCache.put(getHash(), calculatedSender);
     return calculatedSender;
   }
 
@@ -574,7 +584,7 @@ public class Transaction
   @Override
   public Hash getHash() {
     if (hash == null) {
-      memoizeHashAndSize();
+      memoizeHashAndSizeForBlockInclusion();
     }
     return hash;
   }
@@ -585,23 +595,48 @@ public class Transaction
    * @return the size in bytes of the encoded transaction.
    */
   @Override
-  public int getSize() {
-    if (size == -1) {
-      memoizeHashAndSize();
+  public int getSizeForAnnouncement() {
+    if (sizeForAnnouncement == -1) {
+      memoizeSizeForAnnouncement();
     }
-    return size;
+    return sizeForAnnouncement;
   }
 
-  private void memoizeHashAndSize() {
+  /**
+   * Returns the size in bytes of the encoded transaction for block inclusion.
+   *
+   * @return the size in bytes of the encoded transaction for block inclusion.
+   */
+  @Override
+  public int getSizeForBlockInclusion() {
+    if (sizeForBlockInclusion == -1) {
+      memoizeHashAndSizeForBlockInclusion();
+    }
+    return sizeForBlockInclusion;
+  }
+
+  private void memoizeHashAndSizeForBlockInclusion() {
     final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
     hash = Hash.hash(bytes);
-    if (transactionType.supportsBlob() && getBlobsWithCommitments().isPresent()) {
-      final Bytes pooledBytes =
-          TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.POOLED_TRANSACTION);
-      size = pooledBytes.size();
-      return;
+    sizeForBlockInclusion = bytes.size();
+    if (!transactionType.supportsBlob() || this.getBlobsWithCommitments().isEmpty()) {
+      // for transactions not containing blobs the encoding is the same, so we can set this as well:
+      sizeForAnnouncement = sizeForBlockInclusion;
     }
-    size = bytes.size();
+  }
+
+  private void memoizeSizeForAnnouncement() {
+    final Bytes pooledBytes =
+        TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.POOLED_TRANSACTION);
+    sizeForAnnouncement = pooledBytes.size();
+    if (!transactionType.supportsBlob() || this.getBlobsWithCommitments().isEmpty()) {
+      // for transactions not containing blobs the encoding is the same, so we can set these as
+      // well:
+      sizeForBlockInclusion = sizeForAnnouncement;
+      if (hash == null) {
+        hash = Hash.hash(pooledBytes);
+      }
+    }
   }
 
   @Override
@@ -1207,13 +1242,14 @@ public class Transaction
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
             detachedCodeDelegationList,
-            Optional.empty());
+            Optional.empty(),
+            Optional.ofNullable(hash),
+            Optional.of(sizeForAnnouncement),
+            Optional.of(sizeForBlockInclusion));
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
-    copiedTx.hash = this.hash;
     copiedTx.hashNoSignature = this.hashNoSignature;
-    copiedTx.size = this.size;
 
     return copiedTx;
   }
@@ -1289,6 +1325,9 @@ public class Transaction
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
     protected Bytes rawRlp = null;
+    private Optional<Hash> hash = Optional.empty();
+    private Optional<Integer> sizeForAnnouncement = Optional.empty();
+    private Optional<Integer> sizeForBlockInclusion = Optional.empty();
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1399,6 +1438,21 @@ public class Transaction
       return this;
     }
 
+    public Builder hash(final Hash hash) {
+      this.hash = Optional.ofNullable(hash);
+      return this;
+    }
+
+    public Builder sizeForAnnouncement(final int sizeForAnnouncement) {
+      this.sizeForAnnouncement = Optional.of(sizeForAnnouncement);
+      return this;
+    }
+
+    public Builder sizeForBlockInclusion(final int sizeForBlockInclusion) {
+      this.sizeForBlockInclusion = Optional.of(sizeForBlockInclusion);
+      return this;
+    }
+
     public Builder guessType() {
       if (codeDelegationAuthorizations.isPresent()) {
         transactionType = TransactionType.DELEGATE_CODE;
@@ -1439,7 +1493,10 @@ public class Transaction
           Optional.ofNullable(versionedHashes),
           Optional.ofNullable(blobsWithCommitments),
           codeDelegationAuthorizations,
-          Optional.ofNullable(rawRlp));
+          Optional.ofNullable(rawRlp),
+          hash,
+          sizeForAnnouncement,
+          sizeForBlockInclusion);
     }
 
     public Transaction signAndBuild(final KeyPair keys) {
