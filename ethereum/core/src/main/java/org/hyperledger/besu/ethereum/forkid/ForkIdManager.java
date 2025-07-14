@@ -56,7 +56,7 @@ public class ForkIdManager {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    
+
     // Create unified fork list from block numbers and timestamps
     final long genesisTimestamp = blockchain.getGenesisBlock().getHeader().getTimestamp();
     final List<Fork> blockForks = blockNumberForks.stream()
@@ -69,11 +69,11 @@ public class ForkIdManager {
         .distinct()
         .map(Fork::ofTimestamp)
         .collect(Collectors.toList());
-    
+
     this.allForks = Stream.concat(blockForks.stream(), timestampForksFiltered.stream())
         .sorted()
         .collect(Collectors.toUnmodifiableList());
-    
+
     this.forkNext = createForkIds();
     this.noForksAvailable = allForkIds.isEmpty();
     this.highestKnownFork = allForks.isEmpty() ? 0L : allForks.get(allForks.size() - 1).getValue();
@@ -81,32 +81,29 @@ public class ForkIdManager {
 
   public ForkId getForkIdForChainHead() {
     final BlockHeader header = chainHeadSupplier.get();
-    
+
     // Find the appropriate ForkId by checking each fork against current chain head
     for (final ForkId forkId : allForkIds) {
       if (forkId.getNext() == 0) {
         // This is the final ForkId (no next fork)
         return forkId;
       }
-      
+
       // Find the corresponding fork to determine comparison type
       final Fork correspondingFork = allForks.stream()
           .filter(fork -> fork.getValue() == forkId.getNext())
           .findFirst()
           .orElse(null);
-      
+
       if (correspondingFork != null) {
-        final long currentValue = correspondingFork.isBlockNumber() 
+        final long currentValue = correspondingFork.isBlockNumber()
             ? header.getNumber() : header.getTimestamp();
         if (currentValue < correspondingFork.getValue()) {
           return forkId;
         }
       }
     }
-    
-    return allForkIds.isEmpty()
-        ? new ForkId(genesisHashCrc, 0)
-        : allForkIds.get(allForkIds.size() - 1);
+    return allForkIds.isEmpty() ? new ForkId(genesisHashCrc, 0) : allForkIds.getLast();
   }
 
   @VisibleForTesting
@@ -202,7 +199,7 @@ public class ForkIdManager {
     crc.update(genesisHash.toArray());
     genesisHashCrc = getCurrentCrcHash(crc);
     final List<Bytes> forkHashes = new ArrayList<>(List.of(genesisHashCrc));
-    
+
     // Process all forks in chronological order to build CRC hashes
     for (final Fork fork : allForks) {
       updateCrc(crc, fork.getValue());
@@ -212,18 +209,18 @@ public class ForkIdManager {
     // Create ForkId instances - each hash corresponds to state BEFORE that fork
     // and points to the fork value as "next"
     final List<ForkId> forkIdsList = new ArrayList<>();
-    
+
     for (int i = 0; i < allForks.size(); i++) {
       forkIdsList.add(new ForkId(forkHashes.get(i), allForks.get(i).getValue()));
     }
-    
+
     // Add final ForkId with latest hash and next = 0 (no more forks)
     if (!allForks.isEmpty()) {
       forkIdsList.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
     }
-    
+
     this.allForkIds = forkIdsList;
-    
+
     return allForks.isEmpty() ? 0L : allForks.get(allForks.size() - 1).getValue();
   }
 
@@ -234,5 +231,14 @@ public class ForkIdManager {
 
   private static Bytes getCurrentCrcHash(final CRC32 crc) {
     return Bytes.ofUnsignedInt(crc.getValue());
+  }
+
+  public ForkId getForkIdByTimestamp(final long timestamp) {
+    for (final ForkId forkId : timestampsForkIds) {
+      if (timestamp < forkId.getNext()) {
+        return forkId;
+      }
+    }
+    return allForkIds.isEmpty() ? new ForkId(genesisHashCrc, 0) : allForkIds.getLast();
   }
 }
