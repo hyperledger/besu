@@ -62,13 +62,13 @@ import org.hyperledger.besu.cli.options.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
 import org.hyperledger.besu.cli.options.PermissionsOptions;
 import org.hyperledger.besu.cli.options.PluginsConfigurationOptions;
+import org.hyperledger.besu.cli.options.QBFTOptions;
 import org.hyperledger.besu.cli.options.RPCOptions;
 import org.hyperledger.besu.cli.options.RpcWebsocketOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
 import org.hyperledger.besu.cli.options.storage.PathBasedExtraStorageOptions;
-import org.hyperledger.besu.cli.options.unstable.QBFTOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
@@ -1722,6 +1722,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .isRevertReasonEnabled(isRevertReasonEnabled)
             .storageProvider(storageProvider)
             .isEarlyRoundChangeEnabled(unstableQbftOptions.isEarlyRoundChangeEnabled())
+            .isFastRecoveryEnabled(unstableQbftOptions.isFastRecoveryEnabled())
             .requiredBlocks(requiredBlocks)
             .reorgLoggingThreshold(reorgLoggingThreshold)
             .evmConfiguration(unstableEvmOptions.toDomainObject())

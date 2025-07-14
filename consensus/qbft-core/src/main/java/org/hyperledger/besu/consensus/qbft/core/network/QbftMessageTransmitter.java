@@ -134,6 +134,7 @@ public class QbftMessageTransmitter {
   public void multicastRoundChange(
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<PreparedCertificate> preparedRoundCertificate) {
+
     try {
       final RoundChange data =
           messageFactory.createRoundChange(roundIdentifier, preparedRoundCertificate);
@@ -141,6 +142,7 @@ public class QbftMessageTransmitter {
       final RoundChangeMessageData message = RoundChangeMessageData.create(data);
 
       multicaster.send(message);
+
     } catch (final SecurityModuleException e) {
       LOG.warn("Failed to generate signature for RoundChange (not sent): {} ", e.getMessage());
     }

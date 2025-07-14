@@ -32,12 +32,14 @@ import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
+import org.hyperledger.besu.consensus.common.bft.FrequentMessageMulticaster;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.UniqueMessageMulticaster;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorPeers;
 import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
@@ -236,6 +238,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     // "only send once" filter applied by the UniqueMessageMulticaster.
     peers = new ValidatorPeers(validatorProvider, Istanbul100SubProtocol.NAME);
 
+    final ValidatorMulticaster frequentRCMulticaster = new FrequentMessageMulticaster(peers, 5000);
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, qbftConfig.getGossipedHistoryLimit());
 
@@ -254,7 +257,10 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                 bftExecutors),
             new BlockTimer(bftEventQueue, qbftForksSchedule, bftExecutors, clock),
             new QbftBlockCreatorFactoryAdaptor(blockCreatorFactory, qbftExtraDataCodec),
-            clock);
+            clock,
+            isEarlyRoundChangeEnabled,
+            isFastRecoveryEnabled,
+            frequentRCMulticaster);
 
     final MessageValidatorFactory messageValidatorFactory =
         new MessageValidatorFactory(
@@ -298,8 +304,6 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             qbftValidatorProvider,
             new QbftValidatorModeTransitionLoggerAdaptor(
                 new ValidatorModeTransitionLogger(qbftForksSchedule)));
-
-    qbftBlockHeightManagerFactory.isEarlyRoundChangeEnabled(isEarlyRoundChangeEnabled);
 
     final QbftEventHandler qbftController =
         new QbftController(
