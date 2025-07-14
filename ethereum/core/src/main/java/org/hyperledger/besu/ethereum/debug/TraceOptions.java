@@ -24,7 +24,9 @@ import java.util.Map;
  * typically use tracer Config object.
  */
 public record TraceOptions(
-    String tracerType, DefaultTracerConfig defaultTracerConfig, Map<String, Object> tracerConfig) {
+    TracerType tracerType,
+    DefaultTracerConfig defaultTracerConfig,
+    Map<String, Object> tracerConfig) {
   private static final DefaultTracerConfig DEFAULT_TRACER_CONFIG =
       new DefaultTracerConfig(true, false, true);
 
@@ -32,7 +34,8 @@ public record TraceOptions(
    * Default tracer configuration. Used by trace_ and debug_ methods when no tracer type is
    * specified.
    */
-  public static final TraceOptions DEFAULT = new TraceOptions("", DEFAULT_TRACER_CONFIG, Map.of());
+  public static final TraceOptions DEFAULT =
+      new TraceOptions(TracerType.OPCODE_TRACER, DEFAULT_TRACER_CONFIG, Map.of());
 
   /**
    * Constructor for TraceOptions.
@@ -42,10 +45,10 @@ public record TraceOptions(
    * @param tracerConfig the tracer configuration options for non-default tracers
    */
   public TraceOptions(
-      final String tracerType,
+      final TracerType tracerType,
       final DefaultTracerConfig defaultTracerConfig,
       final Map<String, Object> tracerConfig) {
-    this.tracerType = tracerType == null ? "" : tracerType.trim();
+    this.tracerType = tracerType == null ? TracerType.OPCODE_TRACER : tracerType;
     this.tracerConfig = tracerConfig == null ? Map.of() : tracerConfig;
     this.defaultTracerConfig =
         defaultTracerConfig == null ? DEFAULT_TRACER_CONFIG : defaultTracerConfig;

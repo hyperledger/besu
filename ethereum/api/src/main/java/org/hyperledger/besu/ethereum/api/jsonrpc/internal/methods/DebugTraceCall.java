@@ -70,6 +70,12 @@ public class DebugTraceCall extends AbstractTraceCall {
           "Invalid transaction trace parameter (index 2)",
           RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
           e);
+    } catch (IllegalArgumentException e) {
+      // Handle invalid tracer type from TracerType.fromString()
+      throw new InvalidJsonRpcParameters(
+          "Invalid tracer type: " + e.getMessage(),
+          RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
+          e);
     }
   }
 

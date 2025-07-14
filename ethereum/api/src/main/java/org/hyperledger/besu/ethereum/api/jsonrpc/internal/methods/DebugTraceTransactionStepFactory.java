@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStructLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.debug.TracerType;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -43,38 +44,33 @@ public class DebugTraceTransactionStepFactory {
    *     DebugTraceTransactionResult} with the appropriate tracer result
    */
   public static Function<TransactionTrace, DebugTraceTransactionResult> create(
-      final String tracerType) {
+      final TracerType tracerType) {
     // Normalize null values to empty string
-    final String normalizedTracerType = tracerType == null ? "" : tracerType;
-    return switch (normalizedTracerType) {
-      case "" ->
+    return switch (tracerType) {
+      case OPCODE_TRACER ->
           transactionTrace -> {
             // default - struct/opcode logger tracer
             var result = new DebugStructLoggerTracerResult(transactionTrace);
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
-      case "callTracer" ->
+      case CALL_TRACER ->
           transactionTrace -> {
             // TODO: Implement callTracer logic and wire it here
             var result = new NotYetImplemented();
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
-      case "flatCallTracer" ->
+      case FLAT_CALL_TRACER ->
           transactionTrace -> {
             // TODO: Implement flatCallTracer logic and wire it here
             var result = new NotYetImplemented();
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
-      case "prestateTracer" ->
+      case PRESTATE_TRACER ->
           transactionTrace -> {
             // TODO: Implement prestateTracer logic and wire it here
             var result = new NotYetImplemented();
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
-      // Possible feature: Load via "plugin" system, and then raise an error if not found
-      default ->
-          transactionTrace ->
-              new DebugTraceTransactionResult(transactionTrace, new NotYetImplemented());
     };
   }
 
@@ -88,7 +84,7 @@ public class DebugTraceTransactionStepFactory {
    *     DebugTraceTransactionResult} with the appropriate tracer result
    */
   public static Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>>
-      createAsync(final String tracerType) {
+      createAsync(final TracerType tracerType) {
     return transactionTrace ->
         CompletableFuture.supplyAsync(() -> create(tracerType).apply(transactionTrace));
   }

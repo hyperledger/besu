@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -123,7 +124,7 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
 
   protected TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
     return new TraceOptions(
-        "",
+        TracerType.OPCODE_TRACER,
         new DefaultTracerConfig(
             traceTypes.contains(TraceType.STATE_DIFF),
             false,

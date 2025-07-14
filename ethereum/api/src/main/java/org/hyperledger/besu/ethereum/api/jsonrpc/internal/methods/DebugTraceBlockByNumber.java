@@ -100,6 +100,12 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
           "Invalid transaction trace parameter (index 1)",
           RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
           e);
+    } catch (IllegalArgumentException e) {
+      // Handle invalid tracer type from TracerType.fromString()
+      throw new InvalidJsonRpcParameters(
+          "Invalid tracer type: " + e.getMessage(),
+          RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
+          e);
     }
     Optional<Block> maybeBlock =
         getBlockchainQueries().getBlockchain().getBlockByNumber(blockNumber);

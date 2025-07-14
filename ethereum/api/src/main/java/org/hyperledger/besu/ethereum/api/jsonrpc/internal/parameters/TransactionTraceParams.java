@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.debug.DefaultTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerType;
 
 import java.util.LinkedHashMap;
 import javax.annotation.Nullable;
@@ -74,7 +75,13 @@ public interface TransactionTraceParams {
   default TraceOptions traceOptions() {
     var defaultTracerConfig =
         new DefaultTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
-    // TODO: Validate valid values for "tracer". Future challenge is loading of tracer via plugin.
-    return new TraceOptions(tracer(), defaultTracerConfig, tracerConfig());
+
+    // Convert string tracer to TracerType enum, handling null case
+    TracerType tracerType =
+        tracer() != null
+            ? TracerType.fromString(tracer())
+            : TracerType.OPCODE_TRACER; // Default to opcode tracer when null
+
+    return new TraceOptions(tracerType, defaultTracerConfig, tracerConfig());
   }
 }

@@ -75,6 +75,12 @@ public class DebugTraceTransaction implements JsonRpcMethod {
             "Invalid transaction trace parameter (index 1)",
             RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
             e);
+      } catch (IllegalArgumentException e) {
+        // Handle invalid tracer type from TracerType.fromString()
+        throw new InvalidJsonRpcParameters(
+            "Invalid tracer type: " + e.getMessage(),
+            RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
+            e);
       }
       final DebugTraceTransactionResult debugResult =
           debugTraceTransactionResult(hash, transactionWithMetadata.get(), traceOptions);
