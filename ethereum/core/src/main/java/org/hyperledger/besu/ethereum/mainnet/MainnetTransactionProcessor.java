@@ -360,7 +360,7 @@ public class MainnetTransactionProcessor {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
         final Code code =
-            processCodeFromAccount(worldState, eip2930WarmAddressList, worldState.get(to));
+            processCodeFromAccount(worldState, eip2930WarmAddressList, worldState.get(to), eip7928AccessList);
 
         initialFrame =
             commonMessageFrameBuilder
@@ -576,10 +576,13 @@ public class MainnetTransactionProcessor {
   }
 
   private Code processCodeFromAccount(
-      final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract) {
+      final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract,
+      final Optional<TransactionAccessList> eip7928AccessList) {
     if (contract == null) {
       return CodeV0.EMPTY_CODE;
     }
+
+    eip7928AccessList.ifPresent(t -> t.addAccount(contract.getAddress()));
 
     final Hash codeHash = contract.getCodeHash();
     if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
@@ -587,7 +590,7 @@ public class MainnetTransactionProcessor {
     }
 
     if (hasCodeDelegation(contract.getCode())) {
-      return delegationTargetCode(worldUpdater, warmAddressList, contract);
+      return delegationTargetCode(worldUpdater, warmAddressList, contract, eip7928AccessList);
     }
 
     // Bonsai accounts may have a fully cached code, so we use that one
@@ -601,11 +604,14 @@ public class MainnetTransactionProcessor {
   }
 
   private Code delegationTargetCode(
-      final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract) {
+      final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract,
+      final Optional<TransactionAccessList> eip7928AccessList) {
     // we need to look up the target account and its code, but do NOT charge gas for it
     final CodeDelegationHelper.Target target =
         getTarget(worldUpdater, gasCalculator::isPrecompile, contract);
     warmAddressList.add(target.address());
+
+    eip7928AccessList.ifPresent(t -> t.addAccount(target.address()));
 
     return target.code();
   }
