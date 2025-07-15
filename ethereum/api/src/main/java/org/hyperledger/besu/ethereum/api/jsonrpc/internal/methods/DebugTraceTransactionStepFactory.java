@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStructLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 
 import java.util.concurrent.CompletableFuture;
@@ -50,7 +50,7 @@ public class DebugTraceTransactionStepFactory {
       case OPCODE_TRACER ->
           transactionTrace -> {
             // default - struct/opcode logger tracer
-            var result = new DebugStructLoggerTracerResult(transactionTrace);
+            var result = new OpCodeLoggerTracerResult(transactionTrace);
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
       case CALL_TRACER ->

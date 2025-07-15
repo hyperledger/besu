@@ -20,8 +20,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStructLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -88,7 +88,7 @@ class DebugTraceTransactionStepFactoryTest {
       // Then
       assertThat(result).isNotNull();
       assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
-      assertThat(result.getResult()).isInstanceOf(DebugStructLoggerTracerResult.class);
+      assertThat(result.getResult()).isInstanceOf(OpCodeLoggerTracerResult.class);
     }
 
     @ParameterizedTest
@@ -163,7 +163,7 @@ class DebugTraceTransactionStepFactoryTest {
       assertThat(future.isDone()).isTrue();
       assertThat(result).isNotNull();
       assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
-      assertThat(result.getResult()).isInstanceOf(DebugStructLoggerTracerResult.class);
+      assertThat(result.getResult()).isInstanceOf(OpCodeLoggerTracerResult.class);
     }
 
     @ParameterizedTest
