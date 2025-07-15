@@ -138,10 +138,11 @@ public class BlockAccessList {
 
     public void addTransactionLevelAccessList(
         final TransactionAccessList txList, final StackedUpdater<?, ?> updater) {
-      for (UpdateTrackingAccount<?> account : updater.getUpdatedAccounts()) {
-        final Address address = account.getAddress();
+      for (Map.Entry<Address, AccountAccessList> accountAccessListEntry :
+          txList.getAccounts().entrySet()) {
+        final Address address = accountAccessListEntry.getKey();
 
-        if (!txList.getAccounts().containsKey(address) || excludedAddresses.contains(address)) {
+        if (excludedAddresses.contains(address)) {
           continue;
         }
 
@@ -152,86 +153,84 @@ public class BlockAccessList {
                   return new AccountBuilder(address);
                 });
 
-        final Account wrappedAccount = account.getWrappedAccount();
-
-        if (wrappedAccount != null) {
-          Wei newBalance = account.getBalance();
-          Wei originalBalance = wrappedAccount.getBalance();
-          if (!newBalance.equals(originalBalance)) {
-            builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
+        if (updater.getDeletedAccountAddresses().contains(address)
+            || updater.getUpdatedAccounts().stream()
+                .map(s -> s.getAddress())
+                .filter(a -> a.equals(address))
+                .findAny()
+                .isEmpty()) {
+          for (UInt256 slot : accountAccessListEntry.getValue().getSlots()) {
+            final StorageSlotKey slotKeyObj = new StorageSlotKey(slot);
+            builder.addStorageRead(slotKeyObj);
           }
-
-          long newNonce = account.getNonce();
-          long originalNonce = wrappedAccount.getNonce();
-          if (newNonce != originalNonce) {
-            builder.addNonceChange(txList.getIndex(), newNonce);
-          }
-
-          Bytes newCode = account.getCode();
-          Bytes originalCode = wrappedAccount.getCode();
-          if (!newCode.isEmpty() && !newCode.isZero() && !newCode.equals(originalCode)) {
-            builder.addCodeChange(txList.getIndex(), newCode);
-          }
-        } else {
-          Wei newBalance = account.getBalance();
-          builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
-
-          long newNonce = account.getNonce();
-          builder.addNonceChange(txList.getIndex(), newNonce);
-
-          Bytes newCode = account.getCode();
-          if (!newCode.isEmpty() && !newCode.isZero()) {
-            builder.addCodeChange(txList.getIndex(), newCode);
-          }
+          continue;
         }
 
-        final Map<UInt256, UInt256> updatedStorage = account.getUpdatedStorage();
-        final Set<UInt256> txListTouchedSlots = txList.getAccounts().get(address).getSlots();
-        for (UInt256 touchedSlot : txListTouchedSlots) {
-          StorageSlotKey slotKeyObj = new StorageSlotKey(touchedSlot);
+        final UpdateTrackingAccount<?> account = (UpdateTrackingAccount<?>) updater.get(address);
 
-          if (updatedStorage.containsKey(touchedSlot)) {
-            final UInt256 originalValue = account.getOriginalStorageValue(touchedSlot);
-            final UInt256 updatedValue = updatedStorage.get(touchedSlot);
+        if (account != null) {
+          final Account wrappedAccount = account.getWrappedAccount();
 
-            final boolean isSet = originalValue == null;
-            final boolean isReset = updatedValue == null;
-            final boolean isUpdate =
-                originalValue == null ? false : !originalValue.equals(updatedValue);
-            final boolean isWrite = isSet || isReset || isUpdate;
+          if (wrappedAccount != null) {
+            Wei newBalance = account.getBalance();
+            Wei originalBalance = wrappedAccount.getBalance();
+            if (!newBalance.equals(originalBalance)) {
+              builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
+            }
 
-            if (isWrite) {
-              builder.addStorageWrite(slotKeyObj, txList.getIndex(), updatedValue);
+            long newNonce = account.getNonce();
+            long originalNonce = wrappedAccount.getNonce();
+            if (newNonce != originalNonce) {
+              builder.addNonceChange(txList.getIndex(), newNonce);
+            }
+
+            Bytes newCode = account.getCode();
+            Bytes originalCode = wrappedAccount.getCode();
+            if (!newCode.isEmpty() && !newCode.isZero() && !newCode.equals(originalCode)) {
+              builder.addCodeChange(txList.getIndex(), newCode);
+            }
+          } else {
+            Wei newBalance = account.getBalance();
+            builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
+
+            long newNonce = account.getNonce();
+            builder.addNonceChange(txList.getIndex(), newNonce);
+
+            Bytes newCode = account.getCode();
+            if (!newCode.isEmpty() && !newCode.isZero()) {
+              builder.addCodeChange(txList.getIndex(), newCode);
+            }
+          }
+
+          final Map<UInt256, UInt256> updatedStorage = account.getUpdatedStorage();
+          final Set<UInt256> txListTouchedSlots = accountAccessListEntry.getValue().getSlots();
+          for (UInt256 touchedSlot : txListTouchedSlots) {
+            StorageSlotKey slotKeyObj = new StorageSlotKey(touchedSlot);
+
+            if (updatedStorage.containsKey(touchedSlot)) {
+              final UInt256 originalValue = account.getOriginalStorageValue(touchedSlot);
+              final UInt256 updatedValue = updatedStorage.get(touchedSlot);
+
+              final boolean isSet = originalValue == null;
+              final boolean isReset = updatedValue == null;
+              final boolean isUpdate =
+                  originalValue == null ? false : !originalValue.equals(updatedValue);
+              final boolean isWrite = isSet || isReset || isUpdate;
+
+              if (isWrite) {
+                builder.addStorageWrite(slotKeyObj, txList.getIndex(), updatedValue);
+              } else {
+                builder.addStorageRead(slotKeyObj);
+              }
             } else {
               builder.addStorageRead(slotKeyObj);
             }
-          } else {
+          }
+        } else {
+          for (UInt256 slot : accountAccessListEntry.getValue().getSlots()) {
+            final StorageSlotKey slotKeyObj = new StorageSlotKey(slot);
             builder.addStorageRead(slotKeyObj);
           }
-        }
-      }
-
-      for (Map.Entry<Address, AccountAccessList> account : txList.getAccounts().entrySet()) {
-        Address address = account.getKey();
-
-        if (updater.getUpdatedAccounts().stream()
-                .filter(a -> a.getAddress().equals(address))
-                .findAny()
-                .isPresent()
-            || excludedAddresses.contains(address)) {
-          continue;
-        }
-
-        BlockAccessListBuilder.AccountBuilder builder =
-            accountChangesBuilders.computeIfAbsent(
-                address,
-                __ -> {
-                  return new AccountBuilder(address);
-                });
-
-        for (UInt256 slot : account.getValue().getSlots()) {
-          final StorageSlotKey slotKeyObj = new StorageSlotKey(slot);
-          builder.addStorageRead(slotKeyObj);
         }
       }
     }
