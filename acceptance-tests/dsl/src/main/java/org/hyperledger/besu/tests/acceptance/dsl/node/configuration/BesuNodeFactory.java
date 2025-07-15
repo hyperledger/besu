@@ -310,6 +310,21 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createPluginsNode(
+      final String name,
+      final List<String> plugins,
+      final UnaryOperator<BesuNodeConfigurationBuilder> configBuilder)
+      throws IOException {
+
+    BesuNodeConfigurationBuilder builder =
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .plugins(plugins);
+
+    return create(configBuilder.apply(builder).build());
+  }
+
   public BesuNode createArchiveNodeWithRpcApis(final String name, final String... enabledRpcApis)
       throws IOException {
     final JsonRpcConfiguration jsonRpcConfig = node.createJsonRpcEnabledConfig();
