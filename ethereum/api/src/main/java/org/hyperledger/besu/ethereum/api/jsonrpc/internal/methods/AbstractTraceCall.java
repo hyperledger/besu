@@ -74,7 +74,7 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
     }
 
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(traceOptions.defaultTracerConfig(), recordChildCallGas);
+        new DebugOperationTracer(traceOptions.opCodeTracerConfig(), recordChildCallGas);
     return transactionSimulator
         .process(
             callParams,

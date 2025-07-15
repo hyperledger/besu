@@ -97,7 +97,7 @@ public class TransactionTracer {
     final boolean showMemory =
         transactionTraceParams
             .map(TransactionTraceParams::traceOptions)
-            .map(options -> options.defaultTracerConfig().traceMemory())
+            .map(options -> options.opCodeTracerConfig().traceMemory())
             .orElse(true);
 
     if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {

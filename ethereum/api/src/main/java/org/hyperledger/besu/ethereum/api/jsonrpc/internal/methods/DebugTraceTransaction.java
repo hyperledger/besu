@@ -99,7 +99,7 @@ public class DebugTraceTransaction implements JsonRpcMethod {
     final Hash blockHash = transactionWithMetadata.getBlockHash().get();
 
     final DebugOperationTracer execTracer =
-        new DebugOperationTracer(traceOptions.defaultTracerConfig(), true);
+        new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
 
     return Tracer.processTracing(
             blockchain,

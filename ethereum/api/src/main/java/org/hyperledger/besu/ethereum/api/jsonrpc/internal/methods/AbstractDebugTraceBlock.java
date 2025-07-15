@@ -121,7 +121,7 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
 
                       TransactionSource transactionSource = new TransactionSource(block);
                       DebugOperationTracer debugOperationTracer =
-                          new DebugOperationTracer(traceOptions.defaultTracerConfig(), true);
+                          new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
                       ExecuteTransactionStep executeTransactionStep =
                           new ExecuteTransactionStep(
                               chainUpdater,

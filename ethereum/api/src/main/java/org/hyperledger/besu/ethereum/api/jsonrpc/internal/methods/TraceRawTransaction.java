@@ -103,7 +103,7 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
 
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(buildTraceOptions(traceTypes).defaultTracerConfig(), false);
+        new DebugOperationTracer(buildTraceOptions(traceTypes).opCodeTracerConfig(), false);
     final BlockHeader headBlock = blockchainQueriesSupplier.get().headBlockHeader();
     return transactionSimulator
         .process(
