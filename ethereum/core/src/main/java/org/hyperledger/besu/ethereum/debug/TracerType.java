@@ -85,32 +85,12 @@ public enum TracerType {
     }
 
     for (TracerType type : TracerType.values()) {
+      // case-sensitive comparison
       if (type.value.equals(value)) {
         return type;
       }
     }
 
-    throw new IllegalArgumentException(
-        "Invalid TracerType: " + value + ". Valid values are: " + getValidValues());
-  }
-
-  /**
-   * Returns a comma-separated string of all valid tracer type values.
-   *
-   * <p>This is primarily used for error messages to help users understand what values are
-   * acceptable.
-   *
-   * @return a string containing all valid tracer type values
-   */
-  private static String getValidValues() {
-    StringBuilder sb = new StringBuilder();
-    TracerType[] values = TracerType.values();
-    for (int i = 0; i < values.length; i++) {
-      if (i > 0) {
-        sb.append(", ");
-      }
-      sb.append("'").append(values[i].getValue()).append("'");
-    }
-    return sb.toString();
+    throw new IllegalArgumentException("Invalid Tracer Type: " + value + ".");
   }
 }

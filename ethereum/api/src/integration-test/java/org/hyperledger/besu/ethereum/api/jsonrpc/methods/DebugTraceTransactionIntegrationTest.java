@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceTransactionStepFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -125,8 +126,8 @@ public class DebugTraceTransactionIntegrationTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
 
-    assertThatExceptionOfType(IllegalArgumentException.class)
+    assertThatExceptionOfType(InvalidJsonRpcParameters.class)
         .isThrownBy(() -> method.response(request))
-        .withMessageStartingWith("Invalid tracer type");
+        .withMessage("Invalid Tracer Type: invalidTracerType.");
   }
 }
