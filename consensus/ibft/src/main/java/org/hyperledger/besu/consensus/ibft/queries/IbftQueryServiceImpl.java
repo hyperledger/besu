@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.services.query.BftQueryService;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -29,7 +30,7 @@ import java.util.Collections;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** The Ibft query service. */
-public class IbftQueryServiceImpl extends PoaQueryServiceImpl {
+public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements BftQueryService {
 
   private final BftBlockInterface blockInterface;
 
@@ -46,12 +47,14 @@ public class IbftQueryServiceImpl extends PoaQueryServiceImpl {
     this.blockInterface = blockInterface;
   }
 
+  @Override
   public int getRoundNumberFrom(final org.hyperledger.besu.plugin.data.BlockHeader header) {
     final BlockHeader headerFromChain = getHeaderFromChain(header);
     final BftExtraData extraData = blockInterface.getExtraData(headerFromChain);
     return extraData.getRound();
   }
 
+  @Override
   public Collection<Address> getSignersFrom(
       final org.hyperledger.besu.plugin.data.BlockHeader header) {
     final BlockHeader headerFromChain = getHeaderFromChain(header);
@@ -66,5 +69,10 @@ public class IbftQueryServiceImpl extends PoaQueryServiceImpl {
 
     final Hash blockHash = Hash.wrap(Bytes32.wrap(header.getBlockHash().toArray()));
     return getBlockchain().getBlockHeader(blockHash).orElseThrow();
+  }
+
+  @Override
+  public String getConsensusMechanismName() {
+    return "ibft";
   }
 }
