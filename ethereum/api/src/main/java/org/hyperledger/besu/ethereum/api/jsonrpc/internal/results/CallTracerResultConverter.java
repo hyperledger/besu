@@ -71,6 +71,7 @@ public class CallTracerResultConverter {
    */
   private static CallTracerResult createRootCallFromTransaction(
       final TransactionTrace transactionTrace) {
+    LOG.info("*** Creating root call from transaction trace: {}", transactionTrace);
     Transaction transaction = transactionTrace.getTransaction();
     TransactionProcessingResult result = transactionTrace.getResult();
 
@@ -352,7 +353,7 @@ public class CallTracerResultConverter {
     if (result.isSuccessful()) {
       // For successful transactions, use transactionTrace.getGas()
       // which is calculated as: gasLimit - gasRemaining
-      LOG.warn("*** Using gas from transaction trace: {}", transactionTrace.getGas());
+      LOG.info("*** Using gas from transaction trace: {}", transactionTrace.getGas());
       return transactionTrace.getGas();
     } else {
       // For failed transactions, we need to investigate what Geth reports
