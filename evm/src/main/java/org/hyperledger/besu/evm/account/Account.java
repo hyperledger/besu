@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.account;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.internal.CodeCache;
 
 /**
  * A world state account.
@@ -49,4 +50,13 @@ public interface Account extends AccountState {
    *     is set.
    */
   boolean isStorageEmpty();
+
+  /**
+   * Gets the code cache.
+   *
+   * @return the code cache, or null if not supported
+   */
+  default CodeCache getCodeCache() {
+    return null;
+  }
 }

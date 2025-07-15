@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -33,7 +34,8 @@ import java.util.Optional;
 /** A protocol specification. */
 public class ProtocolSpec {
 
-  private final String name;
+  private final HardforkId hardforkId;
+
   private final EVM evm;
 
   private final GasCalculator gasCalculator;
@@ -86,7 +88,7 @@ public class ProtocolSpec {
   /**
    * Creates a new protocol specification instance.
    *
-   * @param name the protocol specification name
+   * @param hardforkId the protocol specification hardforkId
    * @param evm the EVM supporting the appropriate operations for this specification
    * @param transactionValidatorFactory the transaction validator factory to use
    * @param transactionProcessor the transaction processor to use
@@ -116,7 +118,7 @@ public class ProtocolSpec {
    *     protection
    */
   public ProtocolSpec(
-      final String name,
+      final HardforkId hardforkId,
       final EVM evm,
       final TransactionValidatorFactory transactionValidatorFactory,
       final MainnetTransactionProcessor transactionProcessor,
@@ -145,7 +147,7 @@ public class ProtocolSpec {
       final boolean isPoS,
       final boolean isReplayProtectionSupported,
       final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor) {
-    this.name = name;
+    this.hardforkId = hardforkId;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.transactionProcessor = transactionProcessor;
@@ -177,12 +179,12 @@ public class ProtocolSpec {
   }
 
   /**
-   * Returns the protocol specification name.
+   * Returns the protocol hardfork ID.
    *
-   * @return the protocol specification name
+   * @return the protocol hardfork ID
    */
-  public String getName() {
-    return name;
+  public HardforkId getHardforkId() {
+    return hardforkId;
   }
 
   /**
