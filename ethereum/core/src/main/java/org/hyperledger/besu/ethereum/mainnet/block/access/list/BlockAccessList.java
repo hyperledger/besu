@@ -191,7 +191,9 @@ public class BlockAccessList {
             }
           } else {
             Wei newBalance = account.getBalance();
-            builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
+            if (!newBalance.isZero()) {
+              builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
+            }
 
             long newNonce = account.getNonce();
             builder.addNonceChange(txList.getIndex(), newNonce);
