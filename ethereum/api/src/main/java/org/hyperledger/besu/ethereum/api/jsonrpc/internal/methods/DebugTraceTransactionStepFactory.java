@@ -45,7 +45,6 @@ public class DebugTraceTransactionStepFactory {
    */
   public static Function<TransactionTrace, DebugTraceTransactionResult> create(
       final TracerType tracerType) {
-    // Normalize null values to empty string
     return switch (tracerType) {
       case OPCODE_TRACER ->
           transactionTrace -> {
