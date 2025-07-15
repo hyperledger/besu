@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.cli.options;
 
-import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration.DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
 
 import org.hyperledger.besu.cli.DefaultCommandValues;

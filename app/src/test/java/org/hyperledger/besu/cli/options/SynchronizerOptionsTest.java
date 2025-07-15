@@ -82,8 +82,8 @@ public class SynchronizerOptionsTest
                 .build())
         .snapSyncSavePreCheckpointHeadersOnlyEnabled(
             SnapSyncConfiguration.DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED)
-            .era1ImportPrepipelineEnabled(true)
-            .era1DataPath(Path.of("/"));
+        .era1ImportPrepipelineEnabled(true)
+        .era1DataPath(Path.of("/"));
   }
 
   @Override
