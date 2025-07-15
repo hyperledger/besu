@@ -79,7 +79,7 @@ public class Era1ImportPrepipelineFactory implements FileImportPipelineFactory {
     final Function<Path, CompletableFuture<List<Block>>> era1FileReader =
         new Era1FileReader(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
     final Function<List<Block>, Stream<Block>> flatMapBlockListsFunction =
-        (blockList) -> blockList.stream();
+        (blockList) -> blockList.stream().filter((b) -> b.getHeader().getNumber() != 0);
     final Consumer<Block> importBlockFunction =
         new FullImportBlockStep(
             protocolSchedule, protocolContext, ethContext, fullSyncTerminationCondition);
