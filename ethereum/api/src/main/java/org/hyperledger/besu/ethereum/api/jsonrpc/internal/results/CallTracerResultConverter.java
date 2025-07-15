@@ -60,10 +60,8 @@ public class CallTracerResultConverter {
     }
 
     if (transactionTrace.getTraceFrames() == null || transactionTrace.getTraceFrames().isEmpty()) {
-      LOG.info("*** Creating root call from transaction trace: {}", transactionTrace);
       return createRootCallFromTransaction(transactionTrace);
     }
-    LOG.info("*** Creating Hierarchy From Frames: {}", transactionTrace);
     return buildCallHierarchyFromFrames(transactionTrace);
   }
 
@@ -136,6 +134,12 @@ public class CallTracerResultConverter {
       rootToAddress = transaction.getTo().map(Address::toHexString).orElse(null);
     }
 
+    LOG.info(
+        "*** Call Tracer: Type: {}, Number of Frames: {}, Root To Address: {}",
+        rootCallType,
+        frames.size(),
+        rootToAddress);
+
     CallTracerResult.Builder rootBuilder =
         CallTracerResult.builder()
             .type(rootCallType)
@@ -143,9 +147,24 @@ public class CallTracerResultConverter {
             .to(rootToAddress)
             .value(transaction.getValue().toShortHexString())
             .gas(transaction.getGasLimit())
-            .input(transaction.getPayload().toHexString());
+            .gasUsed(calculateCorrectGasUsed(transactionTrace, result)) // Set gas early
+            .input(transaction.getPayload().toHexString())
+            .output(result.getOutput().toHexString()) // Set output early
+            .error(result.isSuccessful() ? null : determineErrorMessage(result)) // Set error early
+            .revertReason(
+                result
+                    .getRevertReason()
+                    .map(Bytes::toHexString)
+                    .orElse(null)); // Set revert reason early
 
-    // Use a stack to track nested calls
+    // For simple transactions (like ETH transfers with just STOP frame),
+    // we can return early since all data is already set
+    if (frames.size() == 1 && "STOP".equals(frames.get(0).getOpcode())) {
+      LOG.info("*** Call Tracer: Simple transaction with STOP frame, returning early");
+      return rootBuilder.build();
+    }
+
+    // Use a stack to track nested calls for complex transactions
     Deque<CallTracerResult.Builder> callStack = new ArrayDeque<>();
     callStack.push(rootBuilder);
 
@@ -157,6 +176,13 @@ public class CallTracerResultConverter {
       TraceFrame frame = frames.get(i);
       String opcode = frame.getOpcode();
 
+      LOG.debug(
+          "*** Call Tracer: Processing frame {}: opcode={}, depth={}, gas={}",
+          i,
+          opcode,
+          frame.getDepth(),
+          frame.getGasRemaining());
+
       // Handle call-starting opcodes
       if (isCallStartOpcode(opcode)) {
         // Create new call context
@@ -167,6 +193,7 @@ public class CallTracerResultConverter {
       } else if (isCallEndOpcode(opcode) || frame.getDepth() < currentDepth) {
         // Handle call completion
         if (callStack.size() > 1) {
+          // This is a nested call completion
           CallTracerResult.Builder completedCall = callStack.pop();
 
           // Set output and gas used for completed call
@@ -191,12 +218,19 @@ public class CallTracerResultConverter {
 
           currentDepth = frame.getDepth();
         } else {
-          // This is the root call ending - handle its error/revert state
-          rootBuilder
-              .output(frame.getOutputData().toHexString())
-              .gasUsed(calculateGasUsedFromFrame(frame));
+          // This is the root call ending - only update specific fields from frame data
+          LOG.debug("*** Call Tracer: Root call ending with opcode: {}", opcode);
 
-          // Handle errors for root call from frame data
+          // Update output if frame has more specific data
+          if (!frame.getOutputData().isEmpty()) {
+            rootBuilder.output(frame.getOutputData().toHexString());
+          }
+
+          // Don't override gas calculation for root call - we already set it correctly
+          // from transaction level data
+
+          // Handle errors for root call from frame data (override transaction-level if more
+          // specific)
           if (frame.getExceptionalHaltReason().isPresent()) {
             rootBuilder.error(frame.getExceptionalHaltReason().get().getDescription());
           }
@@ -207,7 +241,6 @@ public class CallTracerResultConverter {
         }
       } else {
         // Handle other opcodes that might affect the current call context
-        // Check if current frame has error information that should be applied to current call
         CallTracerResult.Builder currentCall = callStack.peek();
         if (currentCall != null && frame.getExceptionalHaltReason().isPresent()) {
           currentCall.error(frame.getExceptionalHaltReason().get().getDescription());
@@ -226,26 +259,6 @@ public class CallTracerResultConverter {
       if (parentCall != null) {
         parentCall.addCall(completedCall.build());
       }
-    }
-
-    // Set final root call properties from transaction result
-    // Only override if not already set from frame processing
-    if (rootBuilder.build().getOutput() == null) {
-      rootBuilder.output(result.getOutput().toHexString());
-    }
-
-    if (rootBuilder.build().getGasUsed() == null) {
-      rootBuilder.gasUsed(transactionTrace.getGas());
-    }
-
-    // Set error from transaction result if not already set from frames
-    if (rootBuilder.build().getError() == null && !result.isSuccessful()) {
-      rootBuilder.error(determineErrorMessage(result));
-    }
-
-    // Set revert reason from transaction result if not already set from frames
-    if (rootBuilder.build().getRevertReason() == null && result.getRevertReason().isPresent()) {
-      rootBuilder.revertReason(result.getRevertReason().get().toHexString());
     }
 
     return rootBuilder.build();
