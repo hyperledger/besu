@@ -64,7 +64,10 @@ public interface TransactionTraceParams {
   @JsonProperty("tracerConfig")
   @Nullable
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  @SuppressWarnings("NonApiType") // to allow for LinkedHashMap instead of default Guava Map
+  // The Immutable annotation generates a Guava map for which Jackson deserialization fails. We are
+  // explicitly using LinkedHashMap to overcome this issue. The suppression is to avoid warnings
+  // about using a non-API type.
+  @SuppressWarnings("NonApiType")
   LinkedHashMap<String, Object> tracerConfig();
 
   /**
