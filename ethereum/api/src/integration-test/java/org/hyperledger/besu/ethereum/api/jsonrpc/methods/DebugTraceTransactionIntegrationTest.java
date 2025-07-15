@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceTransactionStepFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
@@ -110,11 +110,8 @@ public class DebugTraceTransactionIntegrationTest {
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
 
-    // TODO: Replace with the correct class when implemented. This assertion will start failing when
-    // proper implementation is available.
-    assertThat(successResponse.getResult())
-        .isInstanceOf(DebugTraceTransactionStepFactory.UnImplementedTracerResult.class);
-    // Other assertions can be added here to validate the result structure
+    assertThat(successResponse.getResult()).isInstanceOf(CallTracerResult.class);
+    // TODO: Other assertions can be added here to validate the result structure
   }
 
   @Test
