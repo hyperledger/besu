@@ -41,7 +41,8 @@ import org.slf4j.LoggerFactory;
  * </ul>
  */
 public class CallTracerResultConverter {
-  private static final Logger LOG = LoggerFactory.getLogger(CallTracerResultConverter.class);
+  private static final Logger LOG = LoggerFactory.getLogger("CallTracerConverter");
+
   /**
    * Converts a TransactionTrace to CallTracerResult.
    *
@@ -59,9 +60,10 @@ public class CallTracerResultConverter {
     }
 
     if (transactionTrace.getTraceFrames() == null || transactionTrace.getTraceFrames().isEmpty()) {
+      LOG.info("*** Creating root call from transaction trace: {}", transactionTrace);
       return createRootCallFromTransaction(transactionTrace);
     }
-
+    LOG.info("*** Creating Hierarchy From Frames: {}", transactionTrace);
     return buildCallHierarchyFromFrames(transactionTrace);
   }
 
@@ -71,7 +73,6 @@ public class CallTracerResultConverter {
    */
   private static CallTracerResult createRootCallFromTransaction(
       final TransactionTrace transactionTrace) {
-    LOG.info("*** Creating root call from transaction trace: {}", transactionTrace);
     Transaction transaction = transactionTrace.getTransaction();
     TransactionProcessingResult result = transactionTrace.getResult();
 
