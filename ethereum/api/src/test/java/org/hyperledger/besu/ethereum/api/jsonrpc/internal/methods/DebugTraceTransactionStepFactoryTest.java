@@ -33,7 +33,6 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -70,152 +69,142 @@ class DebugTraceTransactionStepFactoryTest {
     when(mockTransactionTrace.getTraceFrames()).thenReturn(Collections.emptyList());
   }
 
-  @Nested
-  @DisplayName("create method")
-  class CreateMethodTests {
+  @Test
+  @DisplayName("should create function for OPCODE_TRACER that returns OpCodeLoggerTracerResult")
+  void shouldCreateFunctionForOpcodeTracer() {
+    // Given
+    Function<TransactionTrace, DebugTraceTransactionResult> function =
+        DebugTraceTransactionStepFactory.create(TracerType.OPCODE_TRACER);
 
-    @Test
-    @DisplayName("should create function for OPCODE_TRACER that returns OpCodeLoggerTracerResult")
-    void shouldCreateFunctionForOpcodeTracer() {
-      // Given
-      Function<TransactionTrace, DebugTraceTransactionResult> function =
-          DebugTraceTransactionStepFactory.create(TracerType.OPCODE_TRACER);
+    // When
+    DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
 
-      // When
-      DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
-
-      // Then
-      assertThat(result).isNotNull();
-      assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
-      assertThat(result.getResult()).isInstanceOf(OpCodeLoggerTracerResult.class);
-    }
-
-    @ParameterizedTest
-    @EnumSource(
-        value = TracerType.class,
-        names = {"CALL_TRACER", "FLAT_CALL_TRACER", "PRESTATE_TRACER"})
-    @DisplayName("should create function for unimplemented tracers")
-    void shouldCreateFunctionForNotYetImplementedTracers(final TracerType tracerType) {
-      // Given
-      Function<TransactionTrace, DebugTraceTransactionResult> function =
-          DebugTraceTransactionStepFactory.create(tracerType);
-
-      // When
-      DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
-
-      // Then
-      assertThat(result).isNotNull();
-      assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
-      assertThat(result.getResult())
-          .isInstanceOf(DebugTraceTransactionStepFactory.UnImplementedTracerResult.class);
-    }
-
-    @ParameterizedTest
-    @EnumSource(TracerType.class)
-    @DisplayName("should create non-null function for all tracer types")
-    void shouldCreateNonNullFunctionForAllTracerTypes(final TracerType tracerType) {
-      // When
-      Function<TransactionTrace, DebugTraceTransactionResult> function =
-          DebugTraceTransactionStepFactory.create(tracerType);
-
-      // Then
-      assertThat(function).isNotNull();
-    }
-
-    @ParameterizedTest
-    @EnumSource(TracerType.class)
-    @DisplayName("should return non-null result with correct transaction hash for all tracer types")
-    void shouldReturnNonNullResultWithCorrectTransactionHashForAllTracerTypes(
-        final TracerType tracerType) {
-      // Given
-      Function<TransactionTrace, DebugTraceTransactionResult> function =
-          DebugTraceTransactionStepFactory.create(tracerType);
-
-      // When
-      DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
-
-      // Then
-      assertThat(result).isNotNull();
-      assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
-      assertThat(result.getResult()).isNotNull();
-    }
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
+    assertThat(result.getResult()).isInstanceOf(OpCodeLoggerTracerResult.class);
   }
 
-  @Nested
-  @DisplayName("createAsync method")
-  class CreateAsyncMethodTests {
+  @ParameterizedTest
+  @EnumSource(
+      value = TracerType.class,
+      names = {"CALL_TRACER", "FLAT_CALL_TRACER", "PRESTATE_TRACER"})
+  @DisplayName("should create function for unimplemented tracers")
+  void shouldCreateFunctionForNotYetImplementedTracers(final TracerType tracerType) {
+    // Given
+    Function<TransactionTrace, DebugTraceTransactionResult> function =
+        DebugTraceTransactionStepFactory.create(tracerType);
 
-    @Test
-    @DisplayName("should create async function for OPCODE_TRACER")
-    void shouldCreateAsyncFunctionForOpcodeTracer() throws Exception {
-      // Given
-      Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
-          DebugTraceTransactionStepFactory.createAsync(TracerType.OPCODE_TRACER);
+    // When
+    DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
 
-      // When
-      CompletableFuture<DebugTraceTransactionResult> future =
-          asyncFunction.apply(mockTransactionTrace);
-      DebugTraceTransactionResult result = future.get();
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
+    assertThat(result.getResult())
+        .isInstanceOf(DebugTraceTransactionStepFactory.UnImplementedTracerResult.class);
+  }
 
-      // Then
-      assertThat(future).isNotNull();
-      assertThat(future.isDone()).isTrue();
-      assertThat(result).isNotNull();
-      assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
-      assertThat(result.getResult()).isInstanceOf(OpCodeLoggerTracerResult.class);
-    }
+  @ParameterizedTest
+  @EnumSource(TracerType.class)
+  @DisplayName("should create non-null function for all tracer types")
+  void shouldCreateNonNullFunctionForAllTracerTypes(final TracerType tracerType) {
+    // When
+    Function<TransactionTrace, DebugTraceTransactionResult> function =
+        DebugTraceTransactionStepFactory.create(tracerType);
 
-    @ParameterizedTest
-    @EnumSource(TracerType.class)
-    @DisplayName("should create non-null async function for all tracer types")
-    void shouldCreateNonNullAsyncFunctionForAllTracerTypes(final TracerType tracerType) {
-      // When
-      Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
-          DebugTraceTransactionStepFactory.createAsync(tracerType);
+    // Then
+    assertThat(function).isNotNull();
+  }
 
-      // Then
-      assertThat(asyncFunction).isNotNull();
-    }
+  @ParameterizedTest
+  @EnumSource(TracerType.class)
+  @DisplayName("should return non-null result with correct transaction hash for all tracer types")
+  void shouldReturnNonNullResultWithCorrectTransactionHashForAllTracerTypes(
+      final TracerType tracerType) {
+    // Given
+    Function<TransactionTrace, DebugTraceTransactionResult> function =
+        DebugTraceTransactionStepFactory.create(tracerType);
 
-    @ParameterizedTest
-    @EnumSource(TracerType.class)
-    @DisplayName("should return completed future with non-null result for all tracer types")
-    void shouldReturnCompletedFutureWithNonNullResultForAllTracerTypes(final TracerType tracerType)
-        throws Exception {
-      // Given
-      Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
-          DebugTraceTransactionStepFactory.createAsync(tracerType);
+    // When
+    DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
 
-      // When
-      CompletableFuture<DebugTraceTransactionResult> future =
-          asyncFunction.apply(mockTransactionTrace);
-      DebugTraceTransactionResult result = future.get();
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
+    assertThat(result.getResult()).isNotNull();
+  }
 
-      // Then
-      assertThat(future).isNotNull();
-      assertThat(future.isDone()).isTrue();
-      assertThat(result).isNotNull();
-      assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
-      assertThat(result.getResult()).isNotNull();
-    }
+  @Test
+  @DisplayName("should create async function for OPCODE_TRACER")
+  void shouldCreateAsyncFunctionForOpcodeTracer() throws Exception {
+    // Given
+    Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
+        DebugTraceTransactionStepFactory.createAsync(TracerType.OPCODE_TRACER);
 
-    @Test
-    @DisplayName("should produce same result type as synchronous version")
-    void shouldProduceSameResultTypeAsSynchronousVersion() throws Exception {
-      // Given
-      TracerType tracerType = TracerType.OPCODE_TRACER;
-      Function<TransactionTrace, DebugTraceTransactionResult> syncFunction =
-          DebugTraceTransactionStepFactory.create(tracerType);
-      Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
-          DebugTraceTransactionStepFactory.createAsync(tracerType);
+    // When
+    CompletableFuture<DebugTraceTransactionResult> future =
+        asyncFunction.apply(mockTransactionTrace);
+    DebugTraceTransactionResult result = future.get();
 
-      // When
-      DebugTraceTransactionResult syncResult = syncFunction.apply(mockTransactionTrace);
-      DebugTraceTransactionResult asyncResult = asyncFunction.apply(mockTransactionTrace).get();
+    // Then
+    assertThat(future).isNotNull();
+    assertThat(future.isDone()).isTrue();
+    assertThat(result).isNotNull();
+    assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
+    assertThat(result.getResult()).isInstanceOf(OpCodeLoggerTracerResult.class);
+  }
 
-      // Then
-      assertThat(asyncResult.getTxHash()).isEqualTo(syncResult.getTxHash());
-      assertThat(asyncResult.getResult().getClass()).isEqualTo(syncResult.getResult().getClass());
-    }
+  @ParameterizedTest
+  @EnumSource(TracerType.class)
+  @DisplayName("should create non-null async function for all tracer types")
+  void shouldCreateNonNullAsyncFunctionForAllTracerTypes(final TracerType tracerType) {
+    // When
+    Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
+        DebugTraceTransactionStepFactory.createAsync(tracerType);
+
+    // Then
+    assertThat(asyncFunction).isNotNull();
+  }
+
+  @ParameterizedTest
+  @EnumSource(TracerType.class)
+  @DisplayName("should return completed future with non-null result for all tracer types")
+  void shouldReturnCompletedFutureWithNonNullResultForAllTracerTypes(final TracerType tracerType)
+      throws Exception {
+    // Given
+    Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
+        DebugTraceTransactionStepFactory.createAsync(tracerType);
+
+    // When
+    CompletableFuture<DebugTraceTransactionResult> future =
+        asyncFunction.apply(mockTransactionTrace);
+    DebugTraceTransactionResult result = future.get();
+
+    // Then
+    assertThat(future).isNotNull();
+    assertThat(future.isDone()).isTrue();
+    assertThat(result).isNotNull();
+    assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
+    assertThat(result.getResult()).isNotNull();
+  }
+
+  @Test
+  @DisplayName("should produce same result type as synchronous version")
+  void shouldProduceSameResultTypeAsSynchronousVersion() throws Exception {
+    // Given
+    TracerType tracerType = TracerType.OPCODE_TRACER;
+    Function<TransactionTrace, DebugTraceTransactionResult> syncFunction =
+        DebugTraceTransactionStepFactory.create(tracerType);
+    Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
+        DebugTraceTransactionStepFactory.createAsync(tracerType);
+
+    // When
+    DebugTraceTransactionResult syncResult = syncFunction.apply(mockTransactionTrace);
+    DebugTraceTransactionResult asyncResult = asyncFunction.apply(mockTransactionTrace).get();
+
+    // Then
+    assertThat(asyncResult.getTxHash()).isEqualTo(syncResult.getTxHash());
+    assertThat(asyncResult.getResult().getClass()).isEqualTo(syncResult.getResult().getClass());
   }
 }
