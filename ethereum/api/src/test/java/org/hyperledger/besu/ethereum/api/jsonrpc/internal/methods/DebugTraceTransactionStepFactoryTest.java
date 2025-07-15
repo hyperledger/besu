@@ -75,8 +75,7 @@ class DebugTraceTransactionStepFactoryTest {
   class CreateMethodTests {
 
     @Test
-    @DisplayName(
-        "should create function for OPCODE_TRACER that returns DebugStructLoggerTracerResult")
+    @DisplayName("should create function for OPCODE_TRACER that returns OpCodeLoggerTracerResult")
     void shouldCreateFunctionForOpcodeTracer() {
       // Given
       Function<TransactionTrace, DebugTraceTransactionResult> function =
@@ -95,7 +94,7 @@ class DebugTraceTransactionStepFactoryTest {
     @EnumSource(
         value = TracerType.class,
         names = {"CALL_TRACER", "FLAT_CALL_TRACER", "PRESTATE_TRACER"})
-    @DisplayName("should create function for not-yet-implemented tracers")
+    @DisplayName("should create function for unimplemented tracers")
     void shouldCreateFunctionForNotYetImplementedTracers(final TracerType tracerType) {
       // Given
       Function<TransactionTrace, DebugTraceTransactionResult> function =
@@ -108,7 +107,7 @@ class DebugTraceTransactionStepFactoryTest {
       assertThat(result).isNotNull();
       assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
       assertThat(result.getResult())
-          .isInstanceOf(DebugTraceTransactionStepFactory.NotYetImplemented.class);
+          .isInstanceOf(DebugTraceTransactionStepFactory.UnImplementedTracerResult.class);
     }
 
     @ParameterizedTest

@@ -112,7 +112,7 @@ public class DebugTraceTransactionIntegrationTest {
     // TODO: Replace with the correct class when implemented. This assertion will start failing when
     // proper implementation is available.
     assertThat(successResponse.getResult())
-        .isInstanceOf(DebugTraceTransactionStepFactory.NotYetImplemented.class);
+        .isInstanceOf(DebugTraceTransactionStepFactory.UnImplementedTracerResult.class);
     // Other assertions can be added here to validate the result structure
   }
 
