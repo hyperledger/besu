@@ -20,11 +20,14 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.era1prepipeline.Era1ImportPrepipelineFactory;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.era1prepipeline.FileImportChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -34,6 +37,7 @@ public class FullSyncDownloader {
 
   private static final Logger LOG = LoggerFactory.getLogger(FullSyncDownloader.class);
   private final ChainDownloader chainDownloader;
+  private final Optional<ChainDownloader> era1PrepipelineChainDownloader;
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolContext protocolContext;
   private final SyncState syncState;
@@ -52,8 +56,23 @@ public class FullSyncDownloader {
     this.protocolContext = protocolContext;
     this.syncState = syncState;
 
-    // TODO: utilise syncConfig.era1ImportPrepipelineEnabled() to start the ERA1 import prepipeline
-    // here
+    if (syncConfig.era1ImportPrepipelineEnabled()) {
+      this.era1PrepipelineChainDownloader =
+          Optional.of(
+              new FileImportChainDownloader(
+                  new Era1ImportPrepipelineFactory(
+                      metricsSystem,
+                      syncConfig.era1DataPath(),
+                      protocolSchedule,
+                      protocolContext,
+                      ethContext,
+                      terminationCondition),
+                  protocolContext.getBlockchain(),
+                  ethContext.getScheduler()));
+    } else {
+      this.era1PrepipelineChainDownloader = Optional.empty();
+    }
+
     this.chainDownloader =
         FullSyncChainDownloader.create(
             syncConfig,
@@ -68,11 +87,24 @@ public class FullSyncDownloader {
   }
 
   public CompletableFuture<Void> start() {
+    if (era1PrepipelineChainDownloader.isPresent()) {
+      LOG.info(
+          "Starting ERA1 file import prepipeline. Full sync will start after prepipeline completion");
+      CompletableFuture<Void> era1PipelineFuture = era1PrepipelineChainDownloader.get().start();
+      return era1PipelineFuture.thenAccept((v) -> startFullSyncChainDownloader());
+
+    } else {
+      return startFullSyncChainDownloader();
+    }
+  }
+
+  private CompletableFuture<Void> startFullSyncChainDownloader() {
     LOG.info("Starting full sync.");
     return chainDownloader.start();
   }
 
   public void stop() {
+    era1PrepipelineChainDownloader.ifPresent((p) -> p.cancel());
     chainDownloader.cancel();
   }
 
