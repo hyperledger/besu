@@ -118,7 +118,7 @@ public abstract class AbstractMessageProcessor {
     frame.clearLogs();
     frame.clearGasRefund();
 
-    frame.getEip7928AccessList().ifPresent(Eip7928AccessList::clear);
+    // frame.getEip7928AccessList().ifPresent(Eip7928AccessList::clear);
 
     frame.rollback();
   }
