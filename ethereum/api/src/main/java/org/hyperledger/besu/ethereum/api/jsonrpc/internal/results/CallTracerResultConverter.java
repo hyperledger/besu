@@ -86,18 +86,22 @@ public class CallTracerResultConverter {
       toAddress = transaction.getTo().map(Address::toHexString).orElse(null);
     }
 
-    return CallTracerResult.builder()
-        .type(callType)
-        .from(transaction.getSender().toHexString())
-        .to(toAddress)
-        .value(transaction.getValue().toShortHexString())
-        .gas(transaction.getGasLimit())
-        .gasUsed(calculateCorrectGasUsed(transactionTrace, result))
-        .input(transaction.getPayload().toHexString())
-        .output(result.getOutput().toHexString())
-        .error(result.isSuccessful() ? null : determineErrorMessage(result))
-        .revertReason(result.getRevertReason().map(Bytes::toHexString).orElse(null))
-        .build();
+    var builder =
+        CallTracerResult.builder()
+            .type(callType)
+            .from(transaction.getSender().toHexString())
+            .to(toAddress)
+            .value(transaction.getValue().toShortHexString())
+            .gas(transaction.getGasLimit())
+            .gasUsed(calculateCorrectGasUsed(transactionTrace, result))
+            .input(transaction.getPayload().toHexString())
+            .error(result.isSuccessful() ? null : determineErrorMessage(result))
+            .revertReason(result.getRevertReason().map(Bytes::toHexString).orElse(null));
+    // Handle output field consistently
+    if (shouldIncludeOutput(result, callType)) {
+      builder.output(result.getOutput().toHexString());
+    }
+    return builder.build();
   }
 
   /** Determines error message from transaction processing result. */
@@ -149,13 +153,17 @@ public class CallTracerResultConverter {
             .gas(transaction.getGasLimit())
             .gasUsed(calculateCorrectGasUsed(transactionTrace, result)) // Set gas early
             .input(transaction.getPayload().toHexString())
-            .output(result.getOutput().toHexString()) // Set output early
             .error(result.isSuccessful() ? null : determineErrorMessage(result)) // Set error early
             .revertReason(
                 result
                     .getRevertReason()
                     .map(Bytes::toHexString)
                     .orElse(null)); // Set revert reason early
+
+    // Handle output field - only set if there's actual output data
+    if (shouldIncludeOutput(result, rootCallType)) {
+      rootBuilder.output(result.getOutput().toHexString());
+    }
 
     // For simple transactions (like ETH transfers with just STOP frame),
     // we can return early since all data is already set
@@ -197,9 +205,12 @@ public class CallTracerResultConverter {
           CallTracerResult.Builder completedCall = callStack.pop();
 
           // Set output and gas used for completed call
-          completedCall
-              .output(frame.getOutputData().toHexString())
-              .gasUsed(calculateGasUsedFromFrame(frame));
+          completedCall.gasUsed(calculateGasUsedFromFrame(frame));
+
+          // Only set output if there's actual data
+          if (!frame.getOutputData().isEmpty()) {
+            completedCall.output(frame.getOutputData().toHexString());
+          }
 
           // Handle errors for nested calls
           if (frame.getExceptionalHaltReason().isPresent()) {
@@ -221,8 +232,8 @@ public class CallTracerResultConverter {
           // This is the root call ending - only update specific fields from frame data
           LOG.debug("*** Call Tracer: Root call ending with opcode: {}", opcode);
 
-          // Update output if frame has more specific data
-          if (!frame.getOutputData().isEmpty()) {
+          // Update output only if frame has actual data and we should include it
+          if (!frame.getOutputData().isEmpty() && shouldIncludeOutput(result, rootCallType)) {
             rootBuilder.output(frame.getOutputData().toHexString());
           }
 
@@ -262,6 +273,22 @@ public class CallTracerResultConverter {
     }
 
     return rootBuilder.build();
+  }
+
+  /**
+   * Determines whether to include the output field based on Geth's behavior. Geth omits output for
+   * simple EOA-to-EOA transactions.
+   */
+  private static boolean shouldIncludeOutput(
+      final TransactionProcessingResult result, final String callType) {
+    // For CREATE transactions, always include output (contract bytecode or empty on failure)
+    if ("CREATE".equals(callType)) {
+      return true;
+    }
+
+    // For CALL transactions, only include output if there's actual return data
+    // Simple EOA-to-EOA transfers have empty output and should omit the field
+    return !result.getOutput().isEmpty();
   }
 
   /** Checks if the opcode starts a new call context. */
