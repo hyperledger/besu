@@ -269,6 +269,10 @@ public class MainnetTransactionProcessor {
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
 
+        for (var codeDelegation : transaction.getCodeDelegationList().get()) {
+          eip7928AccessList.ifPresent(t -> t.addAccount(codeDelegation.address()));
+        }
+
         // worldState.commit();
       }
 
