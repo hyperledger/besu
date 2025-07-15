@@ -360,7 +360,8 @@ public class MainnetTransactionProcessor {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
         final Code code =
-            processCodeFromAccount(worldState, eip2930WarmAddressList, worldState.get(to), eip7928AccessList);
+            processCodeFromAccount(
+                worldState, eip2930WarmAddressList, worldState.get(to), eip7928AccessList);
 
         initialFrame =
             commonMessageFrameBuilder
@@ -576,7 +577,9 @@ public class MainnetTransactionProcessor {
   }
 
   private Code processCodeFromAccount(
-      final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract,
+      final WorldUpdater worldUpdater,
+      final Set<Address> warmAddressList,
+      final Account contract,
       final Optional<TransactionAccessList> eip7928AccessList) {
     if (contract == null) {
       return CodeV0.EMPTY_CODE;
@@ -604,7 +607,9 @@ public class MainnetTransactionProcessor {
   }
 
   private Code delegationTargetCode(
-      final WorldUpdater worldUpdater, final Set<Address> warmAddressList, final Account contract,
+      final WorldUpdater worldUpdater,
+      final Set<Address> warmAddressList,
+      final Account contract,
       final Optional<TransactionAccessList> eip7928AccessList) {
     // we need to look up the target account and its code, but do NOT charge gas for it
     final CodeDelegationHelper.Target target =

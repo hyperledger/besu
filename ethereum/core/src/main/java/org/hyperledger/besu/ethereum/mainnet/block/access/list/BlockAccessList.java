@@ -29,6 +29,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -210,7 +211,10 @@ public class BlockAccessList {
             StorageSlotKey slotKeyObj = new StorageSlotKey(touchedSlot);
 
             if (updatedStorage.containsKey(touchedSlot)) {
-              final UInt256 originalValue = account.getOriginalStorageValue(touchedSlot);
+              final UInt256 originalValue =
+                  builder
+                      .getLastWriteValue(touchedSlot)
+                      .orElse(account.getOriginalStorageValue(touchedSlot));
               final UInt256 updatedValue = updatedStorage.get(touchedSlot);
 
               final boolean isSet = originalValue == null;
@@ -256,6 +260,16 @@ public class BlockAccessList {
 
       AccountBuilder(final Address address) {
         this.address = address;
+      }
+
+      Optional<UInt256> getLastWriteValue(final UInt256 slot) {
+        final StorageSlotKey slotKeyObj = new StorageSlotKey(slot);
+        final List<StorageChange> storageChanges = this.slotWrites.get(slotKeyObj);
+        if (storageChanges != null && !storageChanges.isEmpty()) {
+          return Optional.of(storageChanges.getLast().newValue());
+        } else {
+          return Optional.empty();
+        }
       }
 
       void addStorageWrite(final StorageSlotKey slot, final int txIndex, final UInt256 value) {
