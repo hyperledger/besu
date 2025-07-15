@@ -28,7 +28,7 @@ Having the following accounts is necessary for contributing code/issues to Besu.
 
 ### Other important information
 
-* [Roadmap](https://wiki.hyperledger.org/pages/viewpage.action?pageId=24781786)
+* [Roadmap](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154278/Besu+Roadmap+Planning)
 * [Code of Conduct](https://wiki.hyperledger.org/display/BESU/Code+of+Conduct)
 * [Governance](https://wiki.hyperledger.org/display/BESU/Governance)
 
