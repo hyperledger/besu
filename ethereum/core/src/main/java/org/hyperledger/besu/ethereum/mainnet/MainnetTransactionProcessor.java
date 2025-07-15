@@ -437,7 +437,8 @@ public class MainnetTransactionProcessor {
                     TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
                     "transaction price must be greater than base fee"),
                 Optional.empty(),
-                Optional.empty());
+                Optional.empty(),
+                eip7928AccessList);
           }
           coinbaseCalculator = coinbaseFeePriceCalculator;
         }
@@ -451,9 +452,7 @@ public class MainnetTransactionProcessor {
       operationTracer.traceBeforeRewardTransaction(worldUpdater, transaction, coinbaseWeiDelta);
       if (!coinbaseWeiDelta.isZero() || !clearEmptyAccounts) {
         final var coinbase = worldState.getOrCreate(miningBeneficiary);
-        initialFrame
-            .getEip7928AccessList()
-            .ifPresent(t -> t.addAccount(coinbase.getAddress()));
+        initialFrame.getEip7928AccessList().ifPresent(t -> t.addAccount(coinbase.getAddress()));
         coinbase.incrementBalance(coinbaseWeiDelta);
         eip7928AccessList.ifPresent(t -> t.addAccount(miningBeneficiary));
       }
@@ -500,7 +499,8 @@ public class MainnetTransactionProcessor {
             refundedGas,
             validationResult,
             initialFrame.getRevertReason(),
-            initialFrame.getExceptionalHaltReason());
+            initialFrame.getExceptionalHaltReason(),
+            eip7928AccessList);
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(

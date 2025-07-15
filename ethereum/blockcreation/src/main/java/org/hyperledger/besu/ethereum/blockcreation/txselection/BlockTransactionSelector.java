@@ -467,7 +467,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             TransactionValidationParams.mining(),
             blockSelectionContext.blobGasPrice(),
             Optional.of(transactionAccessList));
-    if (txWorldStateUpdater instanceof StackedUpdater<?,?> stackedUpdater) {
+    if (txWorldStateUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
       balBuilder.addTransactionLevelAccessList(transactionAccessList, stackedUpdater);
     }
     return result;

@@ -136,10 +136,12 @@ public class BlockAccessList {
   public static class BlockAccessListBuilder {
     final Map<Address, AccountBuilder> accountChangesBuilders = new HashMap<>();
 
-    public void addTransactionLevelAccessList(final TransactionAccessList txList, final StackedUpdater<?,?> updater) {
+    public void addTransactionLevelAccessList(
+        final TransactionAccessList txList, final StackedUpdater<?, ?> updater) {
       for (UpdateTrackingAccount<?> account : updater.getUpdatedAccounts()) {
         final Address address = account.getAddress();
-        if(!txList.getAccounts().containsKey(address) || excludedAddresses.contains(address)) {
+
+        if (!txList.getAccounts().containsKey(address) || excludedAddresses.contains(address)) {
           continue;
         }
 
@@ -212,7 +214,11 @@ public class BlockAccessList {
       for (Map.Entry<Address, AccountAccessList> account : txList.getAccounts().entrySet()) {
         Address address = account.getKey();
 
-        if (updater.getUpdatedAccounts().stream().filter(a -> a.getAddress().equals(address)).findAny().isPresent() || excludedAddresses.contains(address)) {
+        if (updater.getUpdatedAccounts().stream()
+                .filter(a -> a.getAddress().equals(address))
+                .findAny()
+                .isPresent()
+            || excludedAddresses.contains(address)) {
           continue;
         }
 

@@ -17,12 +17,11 @@ package org.hyperledger.besu.ethereum.mainnet.block.access.list;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.frame.Eip7928AccessList;
 
-import io.vertx.core.impl.ConcurrentHashSet;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.vertx.core.impl.ConcurrentHashSet;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class TransactionAccessList implements Eip7928AccessList {
@@ -75,6 +74,11 @@ public class TransactionAccessList implements Eip7928AccessList {
 
     public Set<UInt256> getSlots() {
       return slots;
+    }
+
+    @Override
+    public String toString() {
+      return "AccountAccessList{" + "address=" + address + ", slots=" + slots + '}';
     }
   }
 }

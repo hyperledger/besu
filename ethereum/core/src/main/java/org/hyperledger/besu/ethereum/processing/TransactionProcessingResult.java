@@ -79,7 +79,8 @@ public class TransactionProcessingResult
       final long gasRemaining,
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
-      final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
+      final Optional<ExceptionalHaltReason> exceptionalHaltReason,
+      final Optional<TransactionAccessList> transactionAccessList) {
     return new TransactionProcessingResult(
         Status.FAILED,
         List.of(),
@@ -89,7 +90,7 @@ public class TransactionProcessingResult
         validationResult,
         revertReason,
         exceptionalHaltReason,
-        Optional.empty());
+        transactionAccessList);
   }
 
   public static TransactionProcessingResult successful(
