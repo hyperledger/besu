@@ -25,6 +25,8 @@ import java.util.Deque;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Converts TransactionTrace objects to CallTracerResult format following Geth specifications.
@@ -39,7 +41,7 @@ import org.apache.tuweni.bytes.Bytes;
  * </ul>
  */
 public class CallTracerResultConverter {
-
+  private static final Logger LOG = LoggerFactory.getLogger(CallTracerResultConverter.class);
   /**
    * Converts a TransactionTrace to CallTracerResult.
    *
@@ -350,6 +352,7 @@ public class CallTracerResultConverter {
     if (result.isSuccessful()) {
       // For successful transactions, use transactionTrace.getGas()
       // which is calculated as: gasLimit - gasRemaining
+      LOG.warn("*** Using gas from transaction trace: {}", transactionTrace.getGas());
       return transactionTrace.getGas();
     } else {
       // For failed transactions, we need to investigate what Geth reports
