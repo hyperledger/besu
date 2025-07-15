@@ -54,6 +54,7 @@ public class SynchronizerConfiguration {
   public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
 
   public static final Boolean DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED = Boolean.FALSE;
+  public static final Path DEFAULT_ERA1_DATA_PATH = Path.of("/");
 
   // Fast sync config
   private final int syncPivotDistance;
@@ -316,7 +317,7 @@ public class SynchronizerConfiguration {
     private boolean isPeerTaskSystemEnabled = false;
     private boolean snapSyncSavePreCheckpointHeadersOnlyEnabled = true;
     private boolean era1ImportPrepipelineEnabled = DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED;
-    private Path era1DataPath = null;
+    private Path era1DataPath = DEFAULT_ERA1_DATA_PATH;
 
     private long propagationManagerGetBlockTimeoutMillis =
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;

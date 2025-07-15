@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration.DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
 
 import org.hyperledger.besu.cli.DefaultCommandValues;
@@ -368,7 +369,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
       description =
           "The path to the directory containing ERA1 files to import. (default: ${DEFAULT-VALUE})")
-  private Path era1DataPath = null;
+  private Path era1DataPath = SynchronizerConfiguration.DEFAULT_ERA1_DATA_PATH;
 
   private SynchronizerOptions() {}
 

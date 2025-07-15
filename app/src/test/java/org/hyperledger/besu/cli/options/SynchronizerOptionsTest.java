@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 
+import java.nio.file.Path;
 import java.util.List;
 
 import com.google.common.collect.Range;
@@ -80,7 +81,9 @@ public class SynchronizerOptionsTest
                 .isSnapSyncTransactionIndexingEnabled(Boolean.TRUE)
                 .build())
         .snapSyncSavePreCheckpointHeadersOnlyEnabled(
-            SnapSyncConfiguration.DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED);
+            SnapSyncConfiguration.DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED)
+            .era1ImportPrepipelineEnabled(true)
+            .era1DataPath(Path.of("/"));
   }
 
   @Override
