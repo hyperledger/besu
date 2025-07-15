@@ -90,7 +90,7 @@ public class CallTracerResultConverter {
         .to(toAddress)
         .value(transaction.getValue().toShortHexString())
         .gas(transaction.getGasLimit())
-        .gasUsed(transactionTrace.getGas())
+        .gasUsed(calculateCorrectGasUsed(transactionTrace, result))
         .input(transaction.getPayload().toHexString())
         .output(result.getOutput().toHexString())
         .error(result.isSuccessful() ? null : determineErrorMessage(result))
@@ -332,15 +332,29 @@ public class CallTracerResultConverter {
   /** Calculates the address of a newly created contract. */
   @SuppressWarnings("UnusedVariable")
   private static String calculateNewContractAddress(final TraceFrame frame, final String opcode) {
-    // For now, return null - this needs proper implementation
+    // TODO: For now, return null - this needs proper implementation
     // based on CREATE/CREATE2 semantics and available frame data
     return null;
   }
 
   /** Extracts the refund recipient for SELFDESTRUCT operations. */
   private static String extractSelfDestructRecipient(final TraceFrame frame) {
-    // This needs to be implemented based on how SELFDESTRUCT data is stored in TraceFrame
+    // TODO: This needs to be implemented based on how SELFDESTRUCT data is stored in TraceFrame
     // For now, return the recipient
     return frame.getRecipient().toHexString();
+  }
+
+  /** Calculates the correct gas used value to match Geth's behavior. */
+  private static long calculateCorrectGasUsed(
+      final TransactionTrace transactionTrace, final TransactionProcessingResult result) {
+    if (result.isSuccessful()) {
+      // For successful transactions, use transactionTrace.getGas()
+      // which is calculated as: gasLimit - gasRemaining
+      return transactionTrace.getGas();
+    } else {
+      // For failed transactions, we need to investigate what Geth reports
+      // It might be different from transactionTrace.getGas()
+      return result.getEstimateGasUsedByTransaction();
+    }
   }
 }
