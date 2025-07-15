@@ -20,6 +20,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -188,7 +189,7 @@ public class SyncBlockBodyTest {
 
   private static ProtocolSpec getProtocolSpec() {
     return new ProtocolSpec(
-        "root",
+        HardforkId.MainnetHardforkId.CANCUN,
         null,
         null,
         null,
