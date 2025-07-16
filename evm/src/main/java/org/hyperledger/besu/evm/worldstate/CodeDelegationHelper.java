@@ -19,7 +19,10 @@ import static org.hyperledger.besu.evm.code.CodeV0.EMPTY_CODE;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.CodeDelegationAccount;
+import org.hyperledger.besu.evm.frame.Eip7928AccessList;
 
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -78,7 +81,7 @@ public class CodeDelegationHelper {
    *     code delegation or if the account is null.
    */
   public static Target getTarget(
-      final WorldUpdater worldUpdater, final Predicate<Address> isPrecompile, final Account account)
+      final WorldUpdater worldUpdater, final Predicate<Address> isPrecompile, final Account account, final Optional<? extends Eip7928AccessList> eip7928AccessList)
       throws IllegalArgumentException {
     if (account == null) {
       throw new IllegalArgumentException("Account must not be null.");
@@ -90,6 +93,7 @@ public class CodeDelegationHelper {
 
     final Address targetAddress =
         Address.wrap(account.getCode().slice(CODE_DELEGATION_PREFIX.size()));
+    eip7928AccessList.ifPresent(t -> t.addAccount(targetAddress));
 
     return new Target(targetAddress, processTargetCode(worldUpdater, isPrecompile, targetAddress));
   }

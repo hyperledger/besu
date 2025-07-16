@@ -263,11 +263,15 @@ public class MainnetTransactionProcessor {
         }
 
         final CodeDelegationResult codeDelegationResult =
-            maybeCodeDelegationProcessor.get().process(worldState, transaction);
+            maybeCodeDelegationProcessor.get().process(worldState, transaction, eip7928AccessList);
         eip2930WarmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
+
+        for(var address : codeDelegationResult.accessedDelegatorAddresses()) {
+          eip7928AccessList.ifPresent(t -> t.addAccount(address));
+        }
 
         for (var codeDelegation : transaction.getCodeDelegationList().get()) {
           eip7928AccessList.ifPresent(t -> t.addAccount(codeDelegation.address()));
@@ -613,10 +617,8 @@ public class MainnetTransactionProcessor {
       final Optional<TransactionAccessList> eip7928AccessList) {
     // we need to look up the target account and its code, but do NOT charge gas for it
     final CodeDelegationHelper.Target target =
-        getTarget(worldUpdater, gasCalculator::isPrecompile, contract);
+        getTarget(worldUpdater, gasCalculator::isPrecompile, contract, eip7928AccessList);
     warmAddressList.add(target.address());
-
-    eip7928AccessList.ifPresent(t -> t.addAccount(target.address()));
 
     return target.code();
   }

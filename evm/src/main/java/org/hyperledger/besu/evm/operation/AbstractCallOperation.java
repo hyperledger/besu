@@ -344,6 +344,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     final Hash codeHash = account.getCodeHash();
+    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(account.getAddress()));
     if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
       return CodeV0.EMPTY_CODE;
     }
@@ -365,7 +366,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     final CodeDelegationHelper.Target target =
-        getTarget(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account);
+        getTarget(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account, frame.getEip7928AccessList());
 
     if (accountHasCodeCache) {
       // If the account has a code cache, we can return the cached code of the target
