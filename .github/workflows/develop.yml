@@ -93,7 +93,7 @@ jobs:
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
-  multiArch:
+  multiArchDockerPublish:
     needs: buildDocker
     runs-on: ubuntu-22.04
     permissions:
@@ -120,7 +120,7 @@ jobs:
       - name: multi-arch docker
         run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
   docker-verify:
-    needs: [multiArch]
+    needs: [multiArchDockerPublish]
     env:
       CONTAINER_NAME: besu-check
       RELEASE_VERSION: ${{ env.BUILD_TARGET_NAME}}
