@@ -89,6 +89,10 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
           "Invalid transaction trace parameter (index 1)",
           RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
           e);
+    } catch (IllegalArgumentException e) {
+      // Handle invalid tracer type from TracerType.fromString()
+      throw new InvalidJsonRpcParameters(
+          e.getMessage(), RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS, e);
     }
     return traceOptions;
   }
@@ -115,7 +119,7 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
 
                       TransactionSource transactionSource = new TransactionSource(block);
                       DebugOperationTracer debugOperationTracer =
-                          new DebugOperationTracer(traceOptions, true);
+                          new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
                       ExecuteTransactionStep executeTransactionStep =
                           new ExecuteTransactionStep(
                               chainUpdater,
@@ -124,8 +128,7 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                               debugOperationTracer,
                               protocolSpec,
                               block);
-                      DebugTraceTransactionStep debugTraceTransactionStep =
-                          new DebugTraceTransactionStep();
+
                       Pipeline<TransactionTrace> traceBlockPipeline =
                           createPipelineFrom(
                                   "getTransactions",
@@ -136,7 +139,10 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                                   "debug_trace_block")
                               .thenProcess("executeTransaction", executeTransactionStep)
                               .thenProcessAsyncOrdered(
-                                  "debugTraceTransactionStep", debugTraceTransactionStep, 4)
+                                  "debugTraceTransactionStep",
+                                  DebugTraceTransactionStepFactory.createAsync(
+                                      traceOptions.tracerType()),
+                                  4)
                               .andFinishWith("collect_results", tracesList::add);
 
                       try {
