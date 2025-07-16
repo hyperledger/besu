@@ -348,6 +348,7 @@ public class MainnetTransactionProcessor {
       if (transaction.isContractCreation()) {
         final Address contractAddress =
             Address.contractAddress(senderAddress, sender.getNonce() - 1L);
+        eip7928AccessList.ifPresent(t -> t.addAccount(contractAddress));
 
         final Bytes initCodeBytes = transaction.getPayload();
         Code code = contractCreationProcessor.wrapCodeForCreation(initCodeBytes);
@@ -363,6 +364,7 @@ public class MainnetTransactionProcessor {
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
+        eip7928AccessList.ifPresent(t -> t.addAccount(to));
         final Code code =
             processCodeFromAccount(
                 worldState, eip2930WarmAddressList, worldState.get(to), eip7928AccessList);
