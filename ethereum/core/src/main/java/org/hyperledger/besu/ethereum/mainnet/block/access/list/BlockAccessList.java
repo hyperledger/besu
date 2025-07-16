@@ -275,6 +275,7 @@ public class BlockAccessList {
       void addStorageWrite(final StorageSlotKey slot, final int txIndex, final UInt256 value) {
         final List<StorageChange> changes =
             slotWrites.computeIfAbsent(slot, __ -> new ArrayList<>());
+        slotReads.remove(slot);
         changes.add(new StorageChange(txIndex, value));
       }
 
