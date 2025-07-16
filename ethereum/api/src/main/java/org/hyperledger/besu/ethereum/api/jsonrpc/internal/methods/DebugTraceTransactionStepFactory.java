@@ -55,19 +55,19 @@ public class DebugTraceTransactionStepFactory {
       case CALL_TRACER ->
           transactionTrace -> {
             // TODO: Implement callTracer logic and wire it here
-            var result = new UnImplementedTracerResult();
+            var result = new UnimplementedTracerResult();
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
       case FLAT_CALL_TRACER ->
           transactionTrace -> {
             // TODO: Implement flatCallTracer logic and wire it here
-            var result = new UnImplementedTracerResult();
+            var result = new UnimplementedTracerResult();
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
       case PRESTATE_TRACER ->
           transactionTrace -> {
             // TODO: Implement prestateTracer logic and wire it here
-            var result = new UnImplementedTracerResult();
+            var result = new UnimplementedTracerResult();
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
     };
@@ -88,7 +88,7 @@ public class DebugTraceTransactionStepFactory {
         CompletableFuture.supplyAsync(() -> create(tracerType).apply(transactionTrace));
   }
 
-  public static class UnImplementedTracerResult {
+  public static class UnimplementedTracerResult {
     @JsonGetter("error")
     public String getError() {
       return "Not Yet Implemented";

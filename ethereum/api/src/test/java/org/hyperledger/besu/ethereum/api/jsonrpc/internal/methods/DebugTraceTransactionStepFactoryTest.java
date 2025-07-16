@@ -102,7 +102,7 @@ class DebugTraceTransactionStepFactoryTest {
     assertThat(result).isNotNull();
     assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
     assertThat(result.getResult())
-        .isInstanceOf(DebugTraceTransactionStepFactory.UnImplementedTracerResult.class);
+        .isInstanceOf(DebugTraceTransactionStepFactory.UnimplementedTracerResult.class);
   }
 
   @ParameterizedTest
