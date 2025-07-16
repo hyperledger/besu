@@ -205,12 +205,15 @@ public abstract class BenchmarkExecutor {
             });
 
     int executions = 0;
-    long elapsed = 0;
-    startNanoTime = System.nanoTime();
-    while (executions < execIterations && elapsed < execTimeInNano) {
+    long totalElapsed = 0;
+
+    while (executions < execIterations && totalElapsed < execTimeInNano) {
+      long iterationStart = System.nanoTime();
       contract.computePrecompile(arg, fakeFrame);
+      long iterationElapsed = System.nanoTime() - iterationStart;
+
+      totalElapsed += iterationElapsed;
       executions++;
-      elapsed = System.nanoTime() - startNanoTime;
     }
 
     if (asyncProfiler.get() != null) {
@@ -221,7 +224,7 @@ public abstract class BenchmarkExecutor {
       }
     }
 
-    return elapsed / 1.0e9D / executions;
+    return (totalElapsed / 1.0e9D) / executions;
   }
 
   /**
