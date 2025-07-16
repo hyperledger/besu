@@ -195,6 +195,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
         .value(value(frame))
         .apparentValue(apparentValue(frame))
         .code(code)
+        .eip7928AccessList(frame.getEip7928AccessList().get()) // TODO: Not safe
         .isStatic(isStatic(frame))
         .completer(child -> complete(frame, child))
         .build();
