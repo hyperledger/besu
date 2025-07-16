@@ -89,14 +89,14 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     final VersionedHash[] versionedHashes = extractVersionedHashes(requestContext);
-    // metrics: requested blobs
     if (versionedHashes.length > REQUEST_MAX_VERSIONED_HASHES) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
     requestedCounter.inc(versionedHashes.length);
-    final List<BlobAndProofV2> result = Stream.of(versionedHashes).map(this::getBlobAndProofOrNull).toList();
+    final List<BlobAndProofV2> result =
+        Stream.of(versionedHashes).map(this::getBlobAndProofOrNull).toList();
     long available = result.stream().filter(java.util.Objects::nonNull).count();
     availableCounter.inc(available);
     if (available > 0) {
