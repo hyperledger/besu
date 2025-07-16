@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
@@ -99,7 +100,8 @@ class BonsaiWorldStateProviderTest {
             blockchain,
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            throwingWorldStateHealerSupplier());
+            throwingWorldStateHealerSupplier(),
+            new CodeCache());
 
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeader1 =
@@ -143,7 +145,8 @@ class BonsaiWorldStateProviderTest {
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
             EvmConfiguration.DEFAULT,
-            throwingWorldStateHealerSupplier());
+            throwingWorldStateHealerSupplier(),
+            new CodeCache());
 
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeader512 =
@@ -173,7 +176,8 @@ class BonsaiWorldStateProviderTest {
             blockchain,
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
-            throwingWorldStateHealerSupplier());
+            throwingWorldStateHealerSupplier(),
+            new CodeCache());
 
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeader511 =
@@ -214,7 +218,8 @@ class BonsaiWorldStateProviderTest {
                 blockchain,
                 new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT,
-                throwingWorldStateHealerSupplier()));
+                throwingWorldStateHealerSupplier(),
+                new CodeCache()));
 
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeader1 =
@@ -258,7 +263,8 @@ class BonsaiWorldStateProviderTest {
                 blockchain,
                 new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT,
-                throwingWorldStateHealerSupplier()));
+                throwingWorldStateHealerSupplier(),
+                new CodeCache()));
 
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeader1 =
@@ -297,7 +303,8 @@ class BonsaiWorldStateProviderTest {
                 blockchain,
                 new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT,
-                throwingWorldStateHealerSupplier()));
+                throwingWorldStateHealerSupplier(),
+                new CodeCache()));
 
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeader1 =

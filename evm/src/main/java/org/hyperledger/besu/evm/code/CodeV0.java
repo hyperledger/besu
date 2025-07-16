@@ -24,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Suppliers;
@@ -40,23 +39,36 @@ public class CodeV0 implements Code {
   private final Bytes bytes;
 
   /** The hash of the code, needed for accessing metadata about the bytecode */
-  private final Supplier<Hash> codeHash;
+  private Hash codeHash;
 
-  /** Used to cache valid jump destinations. */
-  private long[] validJumpDestinations;
+  private Integer size;
 
   /** Code section info for the legacy code */
   private final CodeSection codeSectionZero;
 
+  /** Bit mask for jump destinations, used to optimize JUMP/JUMPI operations */
+  private long[] jumpDestBitMask = null;
+
   /**
    * Public constructor.
    *
-   * @param bytes The byte representation of the code.
+   * @param byteCode The byte representation of the code.
    */
-  CodeV0(final Bytes bytes) {
-    this.bytes = bytes;
-    this.codeHash = Suppliers.memoize(() -> Hash.hash(bytes));
-    this.codeSectionZero = new CodeSection(bytes.size(), 0, -1, -1, 0);
+  public CodeV0(final Bytes byteCode) {
+    this(byteCode, byteCode.isEmpty() ? Hash.EMPTY : null);
+  }
+
+  /**
+   * Public constructor.
+   *
+   * @param byteCode The byte representation of the code.
+   * @param codeHash the hash of the bytecode
+   */
+  public CodeV0(final Bytes byteCode, final Hash codeHash) {
+    this.bytes = byteCode;
+    this.codeHash = codeHash;
+
+    this.codeSectionZero = new CodeSection(Suppliers.memoize(this::getSize), 0, -1, -1, 0);
   }
 
   /**
@@ -71,7 +83,7 @@ public class CodeV0 implements Code {
     if (other == this) return true;
     if (!(other instanceof CodeV0 that)) return false;
 
-    return this.bytes.equals(that.bytes);
+    return this.getCodeHash().equals(that.getCodeHash());
   }
 
   @Override
@@ -86,7 +98,11 @@ public class CodeV0 implements Code {
    */
   @Override
   public int getSize() {
-    return bytes.size();
+    if (size == null) {
+      size = bytes.size();
+    }
+
+    return size;
   }
 
   @Override
@@ -111,7 +127,12 @@ public class CodeV0 implements Code {
 
   @Override
   public Hash getCodeHash() {
-    return codeHash.get();
+    if (codeHash != null) {
+      return codeHash;
+    }
+
+    codeHash = Hash.hash(bytes);
+    return codeHash;
   }
 
   @Override
@@ -119,12 +140,21 @@ public class CodeV0 implements Code {
     if (jumpDestination < 0 || jumpDestination >= getSize()) {
       return true;
     }
-    if (validJumpDestinations == null || validJumpDestinations.length == 0) {
-      validJumpDestinations = calculateJumpDests();
+
+    if (jumpDestBitMask == null) {
+      jumpDestBitMask = calculateJumpDestBitMask();
     }
 
-    final long targetLong = validJumpDestinations[jumpDestination >>> 6];
+    // This selects which long in the array holds the bit for the given offset:
+    //	1)	>>> 6 is equivalent to jumpDestination / 64
+    //	2)	Each long holds 64 bits, so this finds the correct chunk
+    final long targetLong = jumpDestBitMask[jumpDestination >>> 6];
+
+    // 1) & 0x3F is jumpDestination % 64
+    // 2)	1L << ... gives a mask for the specific bit in that long
     final long targetBit = 1L << (jumpDestination & 0x3F);
+
+    // If the bit is not set, then it is an invalid jump destination
     return (targetLong & targetBit) == 0L;
   }
 
@@ -167,28 +197,77 @@ public class CodeV0 implements Code {
     return Bytes.EMPTY;
   }
 
+  @Override
+  public int readBigEndianI16(final int index) {
+    return Words.readBigEndianI16(index, bytes.toArrayUnsafe());
+  }
+
+  @Override
+  public int readBigEndianU16(final int index) {
+    return Words.readBigEndianU16(index, bytes.toArrayUnsafe());
+  }
+
+  @Override
+  public int readU8(final int index) {
+    return bytes.toArrayUnsafe()[index] & 0xff;
+  }
+
+  @Override
+  public String prettyPrint() {
+    int i = 0;
+    int len = bytes.size();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    PrintStream ps = new PrintStream(out);
+    ps.println("0x # Legacy EVM Code");
+    while (i < len) {
+      i += printInstruction(i, ps);
+    }
+    return out.toString(StandardCharsets.UTF_8);
+  }
+
   /**
-   * Calculate jump destination.
-   *
-   * @return the long [ ]
+   * Computes a bitmask where each bit set to 1 indicates a valid `JUMPDEST` opcode in the EVM
+   * bytecode. The bitmap is organized in 64-byte chunks, each represented as a `long` (64 bits).
+   * This is used for efficiently validating dynamic jumps (`JUMP`, `JUMPI`) at runtime.
    */
-  long[] calculateJumpDests() {
+  long[] calculateJumpDestBitMask() {
+    // Total number of bytes in the bytecode
     final int size = getSize();
+
+    // Allocate enough longs to cover all bytes, one long (64 bits) per 64-byte chunk
     final long[] bitmap = new long[(size >> 6) + 1];
-    final byte[] rawCode = bytes.toArrayUnsafe();
+
+    // Get the raw EVM bytecode as a byte array (no copying)
+    final byte[] rawCode = getBytes().toArrayUnsafe();
     final int length = rawCode.length;
+
+    // Iterate through the bytecode
     for (int i = 0; i < length; ) {
+      // One 64-bit entry corresponds to 64 bytecode positions
       long thisEntry = 0L;
+
+      // Compute which bitmap entry we are in (i / 64)
       final int entryPos = i >> 6;
+
+      // Compute the number of bytes we can safely examine in this 64-byte window
       final int max = Math.min(64, length - (entryPos << 6));
+
+      // j is the position within this 64-byte window
       int j = i & 0x3F;
+
+      // Scan through this 64-byte chunk of the bytecode
       for (; j < max; i++, j++) {
         final byte operationNum = rawCode[i];
+
+        // Skip all opcodes below 0x5b (JUMPDEST), since only PUSH1–PUSH32 and JUMPDEST matter
         if (operationNum >= JumpDestOperation.OPCODE) {
           switch (operationNum) {
+            // JUMPDEST opcode (0x5b): mark as a valid jump destination
             case JumpDestOperation.OPCODE:
-              thisEntry |= 1L << j;
+              thisEntry |= 1L << j; // Set the bit at position j
               break;
+            // PUSH1–PUSH32 opcodes (0x60–0x7f): these consume 1-32 bytes of data that should be
+            // skipped
             case 0x60:
               i += 1;
               j += 1;
@@ -318,40 +397,18 @@ public class CodeV0 implements Code {
               j += 32;
               break;
             default:
+              // No default case needed: any unhandled opcode >= 0x5b but not PUSH or JUMPDEST is
+              // skipped
           }
         }
       }
+
+      // Store the computed bitmask for this 64-byte chunk
       bitmap[entryPos] = thisEntry;
     }
+
+    // Return the full jump destination bitmask
     return bitmap;
-  }
-
-  @Override
-  public int readBigEndianI16(final int index) {
-    return Words.readBigEndianI16(index, bytes.toArrayUnsafe());
-  }
-
-  @Override
-  public int readBigEndianU16(final int index) {
-    return Words.readBigEndianU16(index, bytes.toArrayUnsafe());
-  }
-
-  @Override
-  public int readU8(final int index) {
-    return bytes.toArrayUnsafe()[index] & 0xff;
-  }
-
-  @Override
-  public String prettyPrint() {
-    int i = 0;
-    int len = bytes.size();
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    PrintStream ps = new PrintStream(out);
-    ps.println("0x # Legacy EVM Code");
-    while (i < len) {
-      i += printInstruction(i, ps);
-    }
-    return out.toString(StandardCharsets.UTF_8);
   }
 
   /**

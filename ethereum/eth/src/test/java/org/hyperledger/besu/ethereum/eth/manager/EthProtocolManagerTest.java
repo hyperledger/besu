@@ -211,11 +211,14 @@ public final class EthProtocolManagerTest {
           StatusMessage.builder()
               .protocolVersion(EthProtocol.LATEST.getVersion())
               .networkId(BigInteger.valueOf(2222))
-              .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
               .bestHash(blockchain.getChainHeadHash())
               .genesisHash(
                   blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash())
               .forkId(forkId)
+              .blockRange(
+                  new StatusMessage.BlockRange(
+                      blockchain.getEarliestBlockNumber().get(),
+                      blockchain.getChainHeadBlockNumber()))
               .build();
 
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, statusMessage));
@@ -243,7 +246,7 @@ public final class EthProtocolManagerTest {
 
       final StatusMessage workPeerStatus =
           StatusMessage.builder()
-              .protocolVersion(EthProtocol.LATEST.getVersion())
+              .protocolVersion(EthProtocol.ETH68.getVersion())
               .networkId(BigInteger.ONE)
               .totalDifficulty(blockchain.getChainHead().getTotalDifficulty().add(20))
               .bestHash(blockchain.getChainHeadHash())
@@ -256,11 +259,14 @@ public final class EthProtocolManagerTest {
           StatusMessage.builder()
               .protocolVersion(EthProtocol.LATEST.getVersion())
               .networkId(BigInteger.ONE)
-              .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
               .bestHash(blockchain.getChainHeadHash())
               .genesisHash(
                   blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash())
               .forkId(forkId)
+              .blockRange(
+                  new StatusMessage.BlockRange(
+                      blockchain.getEarliestBlockNumber().get(),
+                      blockchain.getChainHeadBlockNumber()))
               .build();
 
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(stakePeer, stakePeerStatus));
@@ -357,10 +363,13 @@ public final class EthProtocolManagerTest {
           StatusMessage.builder()
               .protocolVersion(EthProtocol.LATEST.getVersion())
               .networkId(BigInteger.ONE)
-              .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
               .bestHash(blockchain.getChainHeadHash())
               .genesisHash(gen.hash())
               .forkId(forkId)
+              .blockRange(
+                  new StatusMessage.BlockRange(
+                      blockchain.getEarliestBlockNumber().get(),
+                      blockchain.getChainHeadBlockNumber()))
               .build();
 
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, statusMessage));
@@ -1206,11 +1215,14 @@ public final class EthProtocolManagerTest {
           StatusMessage.builder()
               .protocolVersion(EthProtocol.LATEST.getVersion())
               .networkId(BigInteger.ONE)
-              .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
               .bestHash(blockchain.getChainHeadHash())
               .genesisHash(
                   blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash())
               .forkId(forkId)
+              .blockRange(
+                  new StatusMessage.BlockRange(
+                      blockchain.getEarliestBlockNumber().get(),
+                      blockchain.getChainHeadBlockNumber()))
               .build();
 
       ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, statusMessage));
