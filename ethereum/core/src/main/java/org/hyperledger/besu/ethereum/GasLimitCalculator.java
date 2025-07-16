@@ -53,6 +53,15 @@ public interface GasLimitCalculator {
   }
 
   /**
+   * Retrieves the target blob gas per block. Added in Cancun.
+   *
+   * @return The target blob gas per block.
+   */
+  default long getTargetBlobGasPerBlock() {
+    return 0L;
+  }
+
+  /**
    * Compute the new value for the excess blob gas, given the parent value and the blob gas used
    *
    * @param parentExcessBlobGas excess blob gas from the parent

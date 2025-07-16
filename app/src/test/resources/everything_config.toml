@@ -239,3 +239,7 @@ plugin-continue-on-error=false
 
 # snapsync
 snapsync-synchronizer-transaction-indexing-enabled=true
+snapsync-synchronizer-pre-checkpoint-headers-only-enabled=true
+
+# history expiry
+history-expiry-prune=false

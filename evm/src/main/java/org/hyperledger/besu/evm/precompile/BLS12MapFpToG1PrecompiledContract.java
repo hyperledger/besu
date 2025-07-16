@@ -30,7 +30,7 @@ public class BLS12MapFpToG1PrecompiledContract extends AbstractBLS12PrecompiledC
   /** Instantiates a new BLS12MapFpToG1 precompiled contract. */
   BLS12MapFpToG1PrecompiledContract() {
     super(
-        "BLS12_MAP_FIELD_TO_CURVE",
+        "BLS12_MAP_FP_TO_G1",
         LibGnarkEIP2537.BLS12_MAP_FP_TO_G1_OPERATION_SHIM_VALUE,
         PARAMETER_LENGTH);
   }
