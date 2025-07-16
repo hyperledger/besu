@@ -16,12 +16,11 @@ package org.hyperledger.besu.cli.options;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration.DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
 
-import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 
-import java.nio.file.Path;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
@@ -97,7 +96,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String ERA1_IMPORT_PREPIPELINE_ENABLED_FLAG =
       "--era1-import-prepipeline-enabled";
-  private static final String ERA1_DATA_PATH_FLAG = "--era1-data-path";
+  private static final String ERA1_DATA_URI_FLAG = "--era1-data-uri";
 
   /**
    * Parse block propagation range.
@@ -357,18 +356,18 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       paramLabel = "<Boolean>",
       arity = "0..1",
       description =
-          "Enable the ERA1 import prepipeline for FULL sync. ERA1 files will be imported from the path specified by "
-              + ERA1_DATA_PATH_FLAG
-              + ". If a sync mode other than FULL is selected, this will have no affect. (default: ${DEFAULT-VALUE})")
+          "Enable the ERA1 import prepipeline for FULL sync. ERA1 files will be imported from the URI specified by "
+              + ERA1_DATA_URI_FLAG
+              + " (currently only local files and http is supported). If a sync mode other than FULL is selected, this will have no affect. (default: ${DEFAULT-VALUE})")
   private Boolean era1ImportPrepipelineEnabled =
       SynchronizerConfiguration.DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED;
 
   @CommandLine.Option(
-      names = {ERA1_DATA_PATH_FLAG},
-      paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
+      names = {ERA1_DATA_URI_FLAG},
+      paramLabel = "<URI>",
       description =
-          "The path to the directory containing ERA1 files to import. (default: ${DEFAULT-VALUE})")
-  private Path era1DataPath = SynchronizerConfiguration.DEFAULT_ERA1_DATA_PATH;
+          "The URI to attempt to load ERA1 files from. For local files, a simple path may be used (e.g. /home/user/era1). (default: ${DEFAULT-VALUE})")
+  private URI era1DataUri = SynchronizerConfiguration.DEFAULT_ERA1_DATA_URI;
 
   private SynchronizerOptions() {}
 
@@ -445,7 +444,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.snapSyncSavePreCheckpointHeadersOnlyEnabled =
         config.isSnapSyncSavePreCheckpointHeadersOnlyEnabled();
     options.era1ImportPrepipelineEnabled = config.era1ImportPrepipelineEnabled();
-    options.era1DataPath = config.era1DataPath();
+    options.era1DataUri = config.era1DataUri();
     return options;
   }
 
@@ -485,7 +484,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.snapSyncSavePreCheckpointHeadersOnlyEnabled(
         snapSyncSavePreCheckpointHeadersOnlyEnabled);
     builder.era1ImportPrepipelineEnabled(era1ImportPrepipelineEnabled);
-    builder.era1DataPath(era1DataPath);
+    builder.era1DataUri(era1DataUri);
     return builder;
   }
 
@@ -547,8 +546,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(snapSyncSavePreCheckpointHeadersOnlyEnabled),
             ERA1_IMPORT_PREPIPELINE_ENABLED_FLAG,
             OptionParser.format(era1ImportPrepipelineEnabled),
-            ERA1_DATA_PATH_FLAG,
-            OptionParser.format(era1DataPath));
+            ERA1_DATA_URI_FLAG,
+            OptionParser.format(era1DataUri));
     return value;
   }
 }

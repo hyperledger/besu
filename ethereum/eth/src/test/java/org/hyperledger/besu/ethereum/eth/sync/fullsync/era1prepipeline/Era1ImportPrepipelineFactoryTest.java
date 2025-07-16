@@ -28,6 +28,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -41,7 +42,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class Era1ImportPrepipelineFactoryTest {
-  private static Path testFilePath;
+  private static URI testFileUri;
 
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
@@ -52,13 +53,14 @@ public class Era1ImportPrepipelineFactoryTest {
 
   @BeforeAll
   public static void setupClass() throws URISyntaxException {
-    testFilePath =
+    testFileUri =
         Path.of(
                 Era1FileSourceTest.class
                     .getClassLoader()
                     .getResource("mainnet-00000-5ec1ffb8.era1")
                     .toURI())
-            .getParent();
+            .getParent()
+            .toUri();
   }
 
   @BeforeEach
@@ -83,7 +85,7 @@ public class Era1ImportPrepipelineFactoryTest {
     era1ImportPrepipelineFactory =
         new Era1ImportPrepipelineFactory(
             metricsSystem,
-            testFilePath,
+            testFileUri,
             protocolSchedule,
             protocolContext,
             ethContext,
@@ -99,7 +101,7 @@ public class Era1ImportPrepipelineFactoryTest {
 
   @Test
   public void test() throws ExecutionException, InterruptedException, TimeoutException {
-    Pipeline<Path> pipeline =
+    Pipeline<URI> pipeline =
         era1ImportPrepipelineFactory.createFileImportPipelineForCurrentBlockNumber(0);
     CompletableFuture<Void> pipelineFuture = ethContext.getScheduler().startPipeline(pipeline);
     pipelineFuture.get();

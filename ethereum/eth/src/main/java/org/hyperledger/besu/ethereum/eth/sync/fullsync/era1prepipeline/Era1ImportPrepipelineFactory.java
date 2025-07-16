@@ -28,7 +28,7 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
-import java.nio.file.Path;
+import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -39,7 +39,7 @@ import java.util.stream.Stream;
 public class Era1ImportPrepipelineFactory implements FileImportPipelineFactory {
 
   private final MetricsSystem metricsSystem;
-  private final Path era1DataPath;
+  private final URI era1DataUri;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
@@ -47,13 +47,13 @@ public class Era1ImportPrepipelineFactory implements FileImportPipelineFactory {
 
   public Era1ImportPrepipelineFactory(
       final MetricsSystem metricsSystem,
-      final Path era1DataPath,
+      final URI era1DataUri,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncTerminationCondition syncTerminationCondition) {
     this.metricsSystem = metricsSystem;
-    this.era1DataPath = era1DataPath;
+    this.era1DataUri = era1DataUri;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -61,10 +61,21 @@ public class Era1ImportPrepipelineFactory implements FileImportPipelineFactory {
   }
 
   @Override
-  public Pipeline<Path> createFileImportPipelineForCurrentBlockNumber(
+  public Pipeline<URI> createFileImportPipelineForCurrentBlockNumber(
       final long currentHeadBlockNumber) {
+    URI dataUri =
+        era1DataUri.getScheme() == null
+            ? URI.create("file://" + era1DataUri.getPath())
+            : era1DataUri;
+
     final String inputSourceName = "ERA1 File Source";
-    final Iterator<Path> era1FileSource = new Era1FileSource(era1DataPath, currentHeadBlockNumber);
+    final Iterator<URI> era1UriSource =
+        switch (dataUri.getScheme()) {
+          case "file" -> new Era1FileSource(dataUri, currentHeadBlockNumber);
+          case "http", "https" -> new Era1HttpFileSource(dataUri, currentHeadBlockNumber);
+          default ->
+              throw new IllegalStateException("Unexpected URI scheme: " + era1DataUri.getScheme());
+        };
     final int bufferSize = Runtime.getRuntime().availableProcessors();
     final LabelledMetric<Counter> processedTotalMetric =
         metricsSystem.createLabelledCounter(
@@ -76,7 +87,7 @@ public class Era1ImportPrepipelineFactory implements FileImportPipelineFactory {
     final boolean tracingEnabled = true;
     final String pipelineName = "ERA1 File Import Prepipeline";
 
-    final Function<Path, CompletableFuture<List<Block>>> era1FileReader =
+    final Function<URI, CompletableFuture<List<Block>>> era1FileReader =
         new Era1FileReader(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
     final Function<List<Block>, Stream<Block>> flatMapBlockListsFunction =
         (blockList) -> blockList.stream().filter((b) -> b.getHeader().getNumber() != 0);
@@ -86,7 +97,7 @@ public class Era1ImportPrepipelineFactory implements FileImportPipelineFactory {
 
     return PipelineBuilder.createPipelineFrom(
             inputSourceName,
-            era1FileSource,
+            era1UriSource,
             bufferSize,
             processedTotalMetric,
             tracingEnabled,

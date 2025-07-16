@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fullsync.era1prepipeline;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
@@ -22,7 +23,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class Era1FileSourceTest {
-  private static Path testFilePath;
+  private static URI testFilePath;
 
   @BeforeAll
   public static void setupClass() throws URISyntaxException {
@@ -32,7 +33,8 @@ public class Era1FileSourceTest {
                     .getClassLoader()
                     .getResource("mainnet-00000-5ec1ffb8.era1")
                     .toURI())
-            .getParent();
+            .getParent()
+            .toUri();
   }
 
   @Test

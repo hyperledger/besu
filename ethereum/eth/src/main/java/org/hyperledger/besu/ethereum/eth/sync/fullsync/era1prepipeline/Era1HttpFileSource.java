@@ -16,27 +16,29 @@ package org.hyperledger.besu.ethereum.eth.sync.fullsync.era1prepipeline;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Era1FileSource implements Iterator<URI> {
-  private static final Pattern ERA1_FILE_PATTERN =
-      Pattern.compile("(?:mainnet|sepolia)-(?<fileNumber>\\d{5})-[0-9a-fA-f]{8}.era1");
+public class Era1HttpFileSource implements Iterator<URI> {
+  private static final Pattern ERA1_LINK_PATTERN =
+      Pattern.compile(
+          "<a href=\"(?<fileName>(?:mainnet|sepolia)-(?<fileNumber>\\d{5})-[0-9a-fA-f]{8}.era1)\">");
+  private static final String ERA1_PATTERN_FILE_NAME_GROUP = "fileName";
   private static final String ERA1_PATTERN_FILE_NUMBER_GROUP = "fileNumber";
 
-  private final URI era1PathUri;
+  private final URI era1Uri;
 
   private int currentFileNumber;
   private final Map<Integer, URI> era1DirectoryContentsByFileNumber = new HashMap<>();
 
-  public Era1FileSource(final URI era1PathUri, final long currentHeadBlockNumber) {
-    this.era1PathUri = era1PathUri;
+  public Era1HttpFileSource(final URI era1Uri, final long currentHeadBlockNumber) {
+    this.era1Uri = era1Uri;
     currentFileNumber = (int) (currentHeadBlockNumber / 8192);
   }
 
@@ -58,18 +60,19 @@ public class Era1FileSource implements Iterator<URI> {
   }
 
   private void populateEra1DirectoryContents() {
+    HttpRequest getRequest = HttpRequest.newBuilder(era1Uri).GET().build();
+    HttpResponse<String> getResponse;
+    try (HttpClient httpClient = HttpClient.newHttpClient()) {
+      getResponse = httpClient.send(getRequest, HttpResponse.BodyHandlers.ofString());
+    } catch (IOException | InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    Matcher matcher = ERA1_LINK_PATTERN.matcher(getResponse.body());
+    while (matcher.find()) {
+      String fileName = matcher.group(ERA1_PATTERN_FILE_NAME_GROUP);
+      int fileNumber = Integer.parseInt(matcher.group(ERA1_PATTERN_FILE_NUMBER_GROUP));
 
-    try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(era1PathUri))) {
-      directoryStream.forEach(
-          (file) -> {
-            Matcher matcher = ERA1_FILE_PATTERN.matcher(file.getFileName().toString());
-            if (matcher.matches()) {
-              era1DirectoryContentsByFileNumber.put(
-                  Integer.parseInt(matcher.group(ERA1_PATTERN_FILE_NUMBER_GROUP)), file.toUri());
-            }
-          });
-    } catch (IOException e) {
-      throw new RuntimeException("IOException attempting to inspect supplied era1 data path", e);
+      era1DirectoryContentsByFileNumber.put(fileNumber, era1Uri.resolve(fileName));
     }
   }
 }

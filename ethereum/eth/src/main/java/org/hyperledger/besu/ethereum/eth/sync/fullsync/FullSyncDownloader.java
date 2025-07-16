@@ -62,7 +62,7 @@ public class FullSyncDownloader {
               new FileImportChainDownloader(
                   new Era1ImportPrepipelineFactory(
                       metricsSystem,
-                      syncConfig.era1DataPath(),
+                      syncConfig.era1DataUri(),
                       protocolSchedule,
                       protocolContext,
                       ethContext,

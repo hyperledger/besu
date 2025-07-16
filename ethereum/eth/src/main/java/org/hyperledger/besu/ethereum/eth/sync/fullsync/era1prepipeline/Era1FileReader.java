@@ -27,9 +27,8 @@ import org.hyperledger.besu.util.era1.Era1Reader;
 import org.hyperledger.besu.util.era1.Era1ReaderListener;
 import org.hyperledger.besu.util.snappy.SnappyFactory;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -39,7 +38,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Era1FileReader implements Function<Path, CompletableFuture<List<Block>>> {
+public class Era1FileReader implements Function<URI, CompletableFuture<List<Block>>> {
   private static final Logger LOG = LoggerFactory.getLogger(Era1FileReader.class);
   private static final int ERA1_BLOCK_COUNT_MAX = 8192;
 
@@ -50,15 +49,15 @@ public class Era1FileReader implements Function<Path, CompletableFuture<List<Blo
   }
 
   @Override
-  public CompletableFuture<List<Block>> apply(final Path path) {
-    LOG.info("Reading {} and producing blocks for import", path.toString());
+  public CompletableFuture<List<Block>> apply(final URI pathUri) {
+    LOG.info("Reading {} and producing blocks for import", pathUri.toString());
     Era1Reader reader = new Era1Reader(new SnappyFactory());
 
     final List<BlockHeader> headersFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
     final List<BlockBody> bodiesFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
     try {
       reader.read(
-          new FileInputStream(path.toFile()),
+          pathUri.toURL().openStream(),
           new Era1ReaderListener() {
 
             @Override
@@ -91,7 +90,7 @@ public class Era1FileReader implements Function<Path, CompletableFuture<List<Blo
             }
           });
     } catch (IOException e) {
-      LOG.error("Failed reading {} and creating blocks", path.toString(), e);
+      LOG.error("Failed reading {} and creating blocks", pathUri, e);
       throw new RuntimeException(e);
     }
 
@@ -99,6 +98,7 @@ public class Era1FileReader implements Function<Path, CompletableFuture<List<Blo
     for (int i = 0; i < headersFutures.size(); i++) {
       blocks.add(new Block(headersFutures.get(i), bodiesFutures.get(i)));
     }
+
     return CompletableFuture.completedFuture(blocks);
   }
 }

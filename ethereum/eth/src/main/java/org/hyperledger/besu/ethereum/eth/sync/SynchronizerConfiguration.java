@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.services.tasks.CachingTaskCollection;
 
-import java.nio.file.Path;
+import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Range;
@@ -54,7 +54,7 @@ public class SynchronizerConfiguration {
   public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
 
   public static final Boolean DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED = Boolean.FALSE;
-  public static final Path DEFAULT_ERA1_DATA_PATH = Path.of("/");
+  public static final URI DEFAULT_ERA1_DATA_URI = URI.create("https://mainnet.era1.nimbus.team/");
 
   // Fast sync config
   private final int syncPivotDistance;
@@ -94,7 +94,7 @@ public class SynchronizerConfiguration {
 
   // ERA1 import prepipeline config
   private final boolean era1ImportPrepipelineEnabled;
-  private final Path era1DataPath;
+  private final URI era1DataUri;
 
   private SynchronizerConfiguration(
       final int syncPivotDistance,
@@ -122,7 +122,7 @@ public class SynchronizerConfiguration {
       final boolean isPeerTaskSystemEnabled,
       final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled,
       final boolean era1ImportPrepipelineEnabled,
-      final Path era1DataPath) {
+      final URI era1DataUri) {
     this.syncPivotDistance = syncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.syncMinimumPeerCount = syncMinimumPeerCount;
@@ -148,7 +148,7 @@ public class SynchronizerConfiguration {
     this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
     this.snapSyncSavePreCheckpointHeadersOnlyEnabled = snapSyncSavePreCheckpointHeadersOnlyEnabled;
     this.era1ImportPrepipelineEnabled = era1ImportPrepipelineEnabled;
-    this.era1DataPath = era1DataPath;
+    this.era1DataUri = era1DataUri;
   }
 
   public static Builder builder() {
@@ -286,8 +286,8 @@ public class SynchronizerConfiguration {
     return era1ImportPrepipelineEnabled;
   }
 
-  public Path era1DataPath() {
-    return era1DataPath;
+  public URI era1DataUri() {
+    return era1DataUri;
   }
 
   public static class Builder {
@@ -317,7 +317,7 @@ public class SynchronizerConfiguration {
     private boolean isPeerTaskSystemEnabled = false;
     private boolean snapSyncSavePreCheckpointHeadersOnlyEnabled = true;
     private boolean era1ImportPrepipelineEnabled = DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED;
-    private Path era1DataPath = DEFAULT_ERA1_DATA_PATH;
+    private URI era1DataUri = DEFAULT_ERA1_DATA_URI;
 
     private long propagationManagerGetBlockTimeoutMillis =
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
@@ -461,8 +461,8 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder era1DataPath(final Path era1DataPath) {
-      this.era1DataPath = era1DataPath;
+    public Builder era1DataUri(final URI era1DataUri) {
+      this.era1DataUri = era1DataUri;
       return this;
     }
 
@@ -493,7 +493,7 @@ public class SynchronizerConfiguration {
           isPeerTaskSystemEnabled,
           snapSyncSavePreCheckpointHeadersOnlyEnabled,
           era1ImportPrepipelineEnabled,
-          era1DataPath);
+          era1DataUri);
     }
   }
 }

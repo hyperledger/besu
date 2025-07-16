@@ -229,7 +229,7 @@ snapsync-server-enabled=true
 Xbonsai-full-flat-db-enabled=true
 Xpeertask-system-enabled=false
 era1-import-prepipeline-enabled=true
-era1-data-path="/"
+era1-data-uri="mainnet.era1.nimbus.team/"
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000
