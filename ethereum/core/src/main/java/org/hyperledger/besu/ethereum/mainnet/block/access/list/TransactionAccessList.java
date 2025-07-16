@@ -53,6 +53,7 @@ public class TransactionAccessList implements Eip7928AccessList {
 
   @Override
   public void addSlotAccessForAccount(final Address address, final UInt256 slotKey) {
+    addAccount(address);
     accounts.get(address).addSlotAccess(slotKey);
   }
 
