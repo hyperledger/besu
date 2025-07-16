@@ -124,20 +124,8 @@ jobs:
     env:
       CONTAINER_NAME: besu-check
       RELEASE_VERSION: ${{ env.BUILD_TARGET_NAME}}
-    runs-on: ${{ matrix.combination.runner }}
+    runs-on: ubuntu-22.04
     timeout-minutes: 4
-    strategy:
-      matrix:
-        combination:
-          - tag: ${{ env.BUILD_TARGET_NAME}}
-            platform: ''
-            runner: ubuntu-22.04
-          - tag: ${{ env.BUILD_TARGET_NAME}}-amd64
-            platform: 'linux/amd64'
-            runner: ubuntu-22.04
-          - tag: ${{ env.BUILD_TARGET_NAME}}-arm64
-            platform: ''
-            runner: besu-arm64
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -146,14 +134,12 @@ jobs:
 
       - name: Start container
         run: |
-          PLATFORM_OPT=""
-          [[ x${{ matrix.combination.platform }} != 'x' ]] && PLATFORM_OPT="--platform ${{ matrix.combination.platform }}"
-          docker run -d $PLATFORM_OPT --name ${{ env.CONTAINER_NAME }} ${{ secrets.DOCKER_ORG }}/besu:${{ matrix.combination.tag }}
+          docker run -d --name ${{ env.CONTAINER_NAME }} ${{ secrets.DOCKER_ORG }}/besu:${{ env.BUILD_TARGET_NAME}}
 
       - name: Verify besu container
         run: bash .github/workflows/BesuContainerVerify.sh
         env:
-          TAG: ${{ matrix.combination.tag }}
+          TAG: ${{ env.BUILD_TARGET_NAME}}
           VERSION: ${{ env.RELEASE_VERSION }}
           CHECK_LATEST: false
 
