@@ -194,6 +194,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         .sender(parent.getRecipientAddress())
         .value(value)
         .apparentValue(value)
+        .eip7928AccessList(parent.getEip7928AccessList().get()) // TODO: Not safe
         .code(code)
         .completer(child -> complete(parent, child, evm))
         .build();
