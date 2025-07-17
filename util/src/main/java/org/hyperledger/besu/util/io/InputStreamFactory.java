@@ -17,7 +17,15 @@ package org.hyperledger.besu.util.io;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 
+/** Factory for constructing InputStreams */
 public class InputStreamFactory {
+
+  /**
+   * Create a BufferedInputStream wrapping the supplied inputStream
+   *
+   * @param inputStream The InputStream to be wrapped by the constructed BufferedInputStream
+   * @return a BufferedInputStream wrapping the supplied inputStream
+   */
   public BufferedInputStream wrapInBufferedInputStream(final InputStream inputStream) {
     return new BufferedInputStream(inputStream);
   }
