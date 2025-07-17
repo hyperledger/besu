@@ -84,7 +84,6 @@ public class BesuNodeFactory {
         config.getExtraCLIOptions(),
         config.getStaticNodes(),
         config.isDnsEnabled(),
-        config.getPrivacyParameters(),
         config.getRunCommand(),
         config.getKeyPair(),
         config.isStrictTxReplayProtectionEnabled(),
@@ -311,6 +310,21 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createPluginsNode(
+      final String name,
+      final List<String> plugins,
+      final UnaryOperator<BesuNodeConfigurationBuilder> configBuilder)
+      throws IOException {
+
+    BesuNodeConfigurationBuilder builder =
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .plugins(plugins);
+
+    return create(configBuilder.apply(builder).build());
+  }
+
   public BesuNode createArchiveNodeWithRpcApis(final String name, final String... enabledRpcApis)
       throws IOException {
     final JsonRpcConfiguration jsonRpcConfig = node.createJsonRpcEnabledConfig();
@@ -475,7 +489,7 @@ public class BesuNodeFactory {
     config.setAccountAllowlist(accountAllowList);
     config.setAccountPermissioningConfigFilePath(configFile.getAbsolutePath());
     final PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.of(config), Optional.empty());
+        new PermissioningConfiguration(Optional.of(config));
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
@@ -562,7 +576,9 @@ public class BesuNodeFactory {
             .dataStorageConfiguration(
                 storageFormat == DataStorageFormat.FOREST
                     ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
-                    : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+                    : storageFormat == DataStorageFormat.BONSAI
+                        ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
+                        : DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG)
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
     if (fixedPort) {
       builder.p2pPort(

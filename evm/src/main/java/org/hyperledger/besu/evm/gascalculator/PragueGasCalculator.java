@@ -40,34 +40,18 @@ public class PragueGasCalculator extends CancunGasCalculator {
 
   final long existingAccountGasRefund;
 
-  /**
-   * The default mainnet target blobs per block for Prague getBlobGasPerBlob() * 6 blobs = 131072 *
-   * 6 = 786432 = 0xC0000
-   */
-  private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_PRAGUE = 6;
-
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], DEFAULT_TARGET_BLOBS_PER_BLOCK_PRAGUE);
-  }
-
-  /**
-   * Instantiates a new Prague Gas Calculator
-   *
-   * @param targetBlobsPerBlock the target blobs per block
-   */
-  public PragueGasCalculator(final int targetBlobsPerBlock) {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], targetBlobsPerBlock);
+    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
   }
 
   /**
    * Instantiates a new Prague Gas Calculator
    *
    * @param maxPrecompile the max precompile
-   * @param targetBlobsPerBlock the target blobs per block
    */
-  protected PragueGasCalculator(final int maxPrecompile, final int targetBlobsPerBlock) {
-    super(maxPrecompile, targetBlobsPerBlock);
+  protected PragueGasCalculator(final int maxPrecompile) {
+    super(maxPrecompile);
     this.existingAccountGasRefund = newAccountGasCost() - CodeDelegation.PER_AUTH_BASE_COST;
   }
 
@@ -140,10 +124,8 @@ public class PragueGasCalculator extends CancunGasCalculator {
       return 0;
     }
 
-    final Address targetAddress =
-        CodeDelegationHelper.getTargetAccount(
-                frame.getWorldUpdater(), this::isPrecompile, targetAccount)
-            .getTargetAddress();
+    final Address targetAddress = CodeDelegationHelper.getTargetAddress(targetAccount.getCode());
+
     final boolean isWarm = isPrecompile(targetAddress) || frame.warmUpAddress(targetAddress);
     return isWarm ? getWarmStorageReadCost() : getColdAccountAccessCost();
   }

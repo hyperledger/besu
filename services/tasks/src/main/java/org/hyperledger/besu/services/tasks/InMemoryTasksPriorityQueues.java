@@ -22,7 +22,8 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.Nonnull;
+
+import jakarta.validation.constraints.NotNull;
 
 /**
  * The InMemory tasks priority queues.
@@ -48,7 +49,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     }
   }
 
-  @Nonnull
+  @NotNull
   private PriorityQueue<T> newEmptyQueue() {
     return new PriorityQueue<>(Comparator.comparingLong(TasksPriorityProvider::getPriority));
   }

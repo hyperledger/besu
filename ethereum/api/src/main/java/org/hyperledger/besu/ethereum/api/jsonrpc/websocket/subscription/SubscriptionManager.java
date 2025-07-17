@@ -15,20 +15,16 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.PrivateLogsSubscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.UnsubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.response.SubscriptionResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * The SubscriptionManager is responsible for managing subscriptions and sending messages to the
  * clients that have an active subscription.
  */
-public class SubscriptionManager extends AbstractVerticle implements PrivateTransactionObserver {
+public class SubscriptionManager extends AbstractVerticle {
 
   private static final Logger LOG = LoggerFactory.getLogger(SubscriptionManager.class);
 
@@ -58,12 +54,10 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
   private final SubscriptionBuilder subscriptionBuilder = new SubscriptionBuilder();
   private final LabelledMetric<Counter> subscribeCounter;
   private final LabelledMetric<Counter> unsubscribeCounter;
-  private final List<PrivateTransactionEvent> privateTransactionEvents = new ArrayList<>();
 
   public SubscriptionManager(
       final MetricsSystem metricsSystem, final Blockchain blockchainQueries) {
     this(metricsSystem);
-    blockchainQueries.observeBlockAdded(event -> onBlockAdded());
   }
 
   public SubscriptionManager(final MetricsSystem metricsSystem) {
@@ -169,29 +163,5 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
             LOG.error("Failed to notify subscribers.", result.cause());
           }
         });
-  }
-
-  @Override
-  public void onPrivateTransactionProcessed(final PrivateTransactionEvent event) {
-    privateTransactionEvents.add(event);
-  }
-
-  void onBlockAdded() {
-    privateTransactionEvents.forEach(this::processPrivateTransactionEvents);
-  }
-
-  private void processPrivateTransactionEvents(final PrivateTransactionEvent event) {
-    // When a user is removed from a privacy group, remove all subscriptions from that user to that
-    // group
-    subscriptionsOfType(SubscriptionType.LOGS, PrivateLogsSubscription.class).stream()
-        .filter(
-            subscription ->
-                subscription.getPrivacyUserId().equals(event.getPrivacyUserId())
-                    && subscription.getPrivacyGroupId().equals(event.getPrivacyGroupId()))
-        .forEach(
-            subscription ->
-                this.unsubscribe(
-                    new UnsubscribeRequest(
-                        subscription.getSubscriptionId(), subscription.getConnectionId())));
   }
 }

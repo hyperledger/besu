@@ -1,7 +1,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-blockcreation'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -28,7 +28,7 @@ dependencies {
   implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'io.consensys.tuweni:tuweni-units'
 
-  testImplementation project(':besu')
+  testImplementation project(':app')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')

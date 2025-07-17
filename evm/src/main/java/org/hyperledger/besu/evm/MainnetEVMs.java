@@ -52,6 +52,7 @@ import org.hyperledger.besu.evm.operation.ChainIdOperation;
 import org.hyperledger.besu.evm.operation.CodeCopyOperation;
 import org.hyperledger.besu.evm.operation.CodeSizeOperation;
 import org.hyperledger.besu.evm.operation.CoinbaseOperation;
+import org.hyperledger.besu.evm.operation.CountLeadingZerosOperation;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.CreateOperation;
 import org.hyperledger.besu.evm.operation.DataCopyOperation;
@@ -1031,16 +1032,6 @@ public class MainnetEVMs {
   /**
    * Osaka evm.
    *
-   * @param evmConfiguration the evm configuration
-   * @return the evm
-   */
-  public static EVM osaka(final EvmConfiguration evmConfiguration) {
-    return osaka(DEV_NET_CHAIN_ID, evmConfiguration);
-  }
-
-  /**
-   * Osaka evm.
-   *
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration
    * @return the evm
@@ -1095,8 +1086,8 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerPragueOperations(registry, gasCalculator, chainID);
 
-    // EIP-5920 PAY opcode
-    registry.put(new PayOperation(gasCalculator));
+    // EIP-7939: CLZ opcode
+    registry.put(new CountLeadingZerosOperation(gasCalculator));
   }
 
   private static void registerEOFOperations(
@@ -1480,6 +1471,9 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerBogotaOperations(registry, gasCalculator, chainID);
+
+    // EIP-5920 PAY opcode
+    registry.put(new PayOperation(gasCalculator));
   }
 
   /**

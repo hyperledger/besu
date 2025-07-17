@@ -14,14 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.assertj.core.api.Assertions.fail;
+import static org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper.computeBlobKzgProof;
+import static org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper.computeBlobKzgProofs;
 
-import org.hyperledger.besu.datatypes.Blob;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
-import org.hyperledger.besu.datatypes.KZGCommitment;
-import org.hyperledger.besu.datatypes.KZGProof;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
-import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
+import org.hyperledger.besu.ethereum.core.kzg.Blob;
+import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
+import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
+import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,45 +34,37 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.Bytes48;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
+/**
+ * A utility class for creating blobs and their associated cryptographic artifacts (KZG commitments,
+ * proofs, and versioned hashes) for testing purposes.
+ *
+ * <p>This class facilitates testing scenarios involving Ethereum's blob and KZG cryptographic
+ * primitives. It uses the CKZG4844JNI library to compute KZG commitments and proofs and provides
+ * methods to generate blobs and their associated data.
+ *
+ * <p>To ensure the required trusted setup is loaded, use the {@link
+ * org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension} in your test classes. This
+ * extension handles loading the native library and trusted setup automatically.
+ *
+ * @see org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension
+ */
 public class BlobTestFixture {
 
   private byte byteValue = 0x00;
 
-  public BlobTestFixture() {
-    try {
-      // optimistically tear down a potential previous loaded trusted setup
-      KZGPointEvalPrecompiledContract.tearDown();
-    } catch (Throwable ignore) {
-      // and ignore errors in case no trusted setup was already loaded
-    }
-    try {
-      CKZG4844JNI.loadNativeLibrary();
-      CKZG4844JNI.loadTrustedSetupFromResource(
-          "/kzg-trusted-setups/mainnet.txt", BlobTestFixture.class, 0);
-
-    } catch (Exception e) {
-      fail("Failed to compute commitment", e);
-    }
-  }
-
-  record BlobTriplet(
-      Blob blob, KZGCommitment kzgCommitment, KZGProof kzgProof, VersionedHash versionedHash) {}
-  ;
-
-  public BlobTriplet createBlobTriplet() {
+  public BlobProofBundle createBlobProofBundle(final BlobType blobType) {
     byte[] rawMaterial = new byte[131072];
     rawMaterial[0] = byteValue++;
-
     Bytes48 commitment = Bytes48.wrap(CKZG4844JNI.blobToKzgCommitment(rawMaterial));
-
-    Bytes48 proof =
-        Bytes48.wrap(CKZG4844JNI.computeBlobKzgProof(rawMaterial, commitment.toArray()));
-    VersionedHash versionedHash = hashCommitment(new KZGCommitment(commitment));
-    return new BlobTriplet(
-        new Blob(Bytes.wrap(rawMaterial)),
-        new KZGCommitment(commitment),
-        new KZGProof(proof),
-        versionedHash);
+    Blob blob = new Blob(Bytes.wrap(rawMaterial));
+    KZGCommitment kzgCommitment = new KZGCommitment(commitment);
+    List<KZGProof> proofs =
+        switch (blobType) {
+          case KZG_PROOF -> List.of(computeBlobKzgProof(blob, kzgCommitment));
+          case KZG_CELL_PROOFS -> computeBlobKzgProofs(blob);
+        };
+    return new BlobProofBundle(
+        blobType, blob, kzgCommitment, proofs, hashCommitment(new KZGCommitment(commitment)));
   }
 
   public BlobsWithCommitments createBlobsWithCommitments(final int blobCount) {
@@ -79,13 +73,14 @@ public class BlobTestFixture {
     List<KZGProof> proofs = new ArrayList<>();
     List<VersionedHash> versionedHashes = new ArrayList<>();
     for (int i = 0; i < blobCount; i++) {
-      BlobTriplet blobTriplet = createBlobTriplet();
-      blobs.add(blobTriplet.blob());
-      commitments.add(blobTriplet.kzgCommitment());
-      proofs.add(blobTriplet.kzgProof());
-      versionedHashes.add(blobTriplet.versionedHash());
+      BlobProofBundle blobProofBundle = createBlobProofBundle(BlobType.KZG_PROOF);
+      blobs.add(blobProofBundle.getBlob());
+      commitments.add(blobProofBundle.getKzgCommitment());
+      proofs.addAll(blobProofBundle.getKzgProof());
+      versionedHashes.add(blobProofBundle.getVersionedHash());
     }
-    return new BlobsWithCommitments(commitments, blobs, proofs, versionedHashes);
+    return new BlobsWithCommitments(
+        BlobType.KZG_PROOF, commitments, blobs, proofs, versionedHashes);
   }
 
   private VersionedHash hashCommitment(final KZGCommitment commitment) {

@@ -33,7 +33,6 @@ import java.util.function.Function;
 
 public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
 
-  protected boolean stratumMiningEnabled;
   protected final EpochCalculator epochCalculator;
 
   public PoWMinerExecutor(
@@ -81,7 +80,6 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
         new PoWSolver(
             miningConfiguration,
             nextBlockProtocolSpec.getPoWHasher().get(),
-            stratumMiningEnabled,
             ethHashObservers,
             epochCalculator);
     final Function<BlockHeader, PoWBlockCreator> blockCreator =
@@ -105,10 +103,6 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     } else {
       miningConfiguration.setCoinbase(Address.wrap(coinbase.copy()));
     }
-  }
-
-  void setStratumMiningEnabled(final boolean stratumMiningEnabled) {
-    this.stratumMiningEnabled = stratumMiningEnabled;
   }
 
   @Override

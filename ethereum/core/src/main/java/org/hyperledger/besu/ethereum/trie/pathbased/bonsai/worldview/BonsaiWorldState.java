@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
@@ -52,9 +53,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
@@ -63,19 +64,22 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class BonsaiWorldState extends PathBasedWorldState {
 
   protected BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
+  private final CodeCache codeCache;
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig) {
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache) {
     this(
         worldStateKeyValueStorage,
         archive.getCachedMerkleTrieLoader(),
         archive.getCachedWorldStorageManager(),
         archive.getTrieLogManager(),
         evmConfiguration,
-        worldStateConfig);
+        worldStateConfig,
+        codeCache);
   }
 
   public BonsaiWorldState(
@@ -84,7 +88,8 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final PathBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig) {
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache) {
     super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager, worldStateConfig);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
@@ -92,16 +97,18 @@ public class BonsaiWorldState extends PathBasedWorldState {
         new BonsaiWorldStateUpdateAccumulator(
             this,
             (addr, value) ->
-                bonsaiCachedMerkleTrieLoader.preLoadAccount(
+                this.bonsaiCachedMerkleTrieLoader.preLoadAccount(
                     getWorldStateStorage(), worldStateRootHash, addr),
             (addr, value) ->
                 this.bonsaiCachedMerkleTrieLoader.preLoadStorageSlot(
                     getWorldStateStorage(), addr, value),
-            evmConfiguration));
+            evmConfiguration,
+            codeCache));
+    this.codeCache = codeCache;
   }
 
   @Override
-  public Optional<Bytes> getCode(@Nonnull final Address address, final Hash codeHash) {
+  public Optional<Bytes> getCode(@NotNull final Address address, final Hash codeHash) {
     return getWorldStateStorage().getCode(codeHash, address.addressHash());
   }
 
@@ -308,11 +315,13 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final BonsaiAccount oldAccount =
           getWorldStateStorage()
               .getAccount(address.addressHash())
-              .map(bytes -> BonsaiAccount.fromRLP(BonsaiWorldState.this, address, bytes, true))
+              .map(
+                  bytes ->
+                      BonsaiAccount.fromRLP(BonsaiWorldState.this, address, bytes, true, codeCache))
               .orElse(null);
       if (oldAccount == null) {
         // This is when an account is both created and deleted within the scope of the same
-        // block.  A not-uncommon DeFi bot pattern.
+        // block. A not-uncommon DeFi bot pattern.
         continue;
       }
       final Hash addressHash = address.addressHash();
@@ -369,7 +378,10 @@ public class BonsaiWorldState extends PathBasedWorldState {
     return calculateRootHash(
         Optional.of(
             new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
+                noOpSegmentedTx,
+                noOpTx,
+                worldStateKeyValueStorage.getFlatDbStrategy(),
+                worldStateKeyValueStorage.getComposedWorldStateStorage())),
         accumulator.copy());
   }
 
@@ -377,7 +389,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
   public Account get(final Address address) {
     return getWorldStateStorage()
         .getAccount(address.addressHash())
-        .map(bytes -> BonsaiAccount.fromRLP(accumulator, address, bytes, true))
+        .map(bytes -> BonsaiAccount.fromRLP(accumulator, address, bytes, true, codeCache))
         .orElse(null);
   }
 
@@ -471,5 +483,10 @@ public class BonsaiWorldState extends PathBasedWorldState {
   @Override
   protected Hash getEmptyTrieHash() {
     return Hash.EMPTY_TRIE_HASH;
+  }
+
+  @Override
+  public CodeCache codeCache() {
+    return codeCache;
   }
 }

@@ -15,6 +15,18 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
+import static org.hyperledger.besu.datatypes.Address.P256_VERIFY;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
+
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
+
+import java.math.BigInteger;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Gas Calculator for Osaka
@@ -24,31 +36,111 @@ import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
  * </UL>
  */
 public class OsakaGasCalculator extends PragueGasCalculator {
+  /** constant indicating the maximum integer value for L1 precompile addresses (0xFF) */
+  public static final int MAX_L1_PRECOMPILE = 255;
 
-  /** The default mainnet target blobs per block for Osaka */
-  private static final int DEFAULT_TARGET_BLOBS_PER_BLOCK_OSAKA = 9;
+  /** configured maximum l2 precompile address value for this fork / gas calculator. */
+  protected int maxL2Precompile;
 
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], DEFAULT_TARGET_BLOBS_PER_BLOCK_OSAKA);
+    this(BLS12_MAP_FP2_TO_G2.getInt(16), P256_VERIFY.getInt(16));
   }
 
   /**
    * Instantiates a new Osaka Gas Calculator
    *
-   * @param targetBlobsPerBlock the target blobs per block
+   * @param maxPrecompile the max precompile address from the L1 precompile range (0x01 - 0xFF)
+   * @param maxL2Precompile max precompile address from the L2 precompile space (0x0100 - 0x01FF)
    */
-  public OsakaGasCalculator(final int targetBlobsPerBlock) {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19], targetBlobsPerBlock);
+  protected OsakaGasCalculator(final int maxPrecompile, final int maxL2Precompile) {
+    super(maxPrecompile);
+    this.maxL2Precompile = maxL2Precompile;
   }
 
   /**
-   * Instantiates a new Osaka Gas Calculator
+   * Instantiates a new Osaka Gas Calculator, uses default P256_VERIFY as max L2 precompile.
    *
-   * @param maxPrecompile the max precompile
-   * @param targetBlobsPerBlock the target blobs per block
+   * @param maxPrecompile the max precompile address from the L1 precompile range (0x01 - 0xFF)
    */
-  protected OsakaGasCalculator(final int maxPrecompile, final int targetBlobsPerBlock) {
-    super(maxPrecompile, targetBlobsPerBlock);
+  protected OsakaGasCalculator(final int maxPrecompile) {
+    this(maxPrecompile, P256_VERIFY.getInt(16));
+  }
+
+  @Override
+  public boolean isPrecompile(final Address address) {
+    final byte[] addressBytes = address.toArrayUnsafe();
+
+    // First 18 bytes must be zero:
+    for (int i = 0; i < 18; i++) {
+      if (addressBytes[i] != 0) {
+        return false;
+      }
+    }
+    // Interpret last two bytes as big-endian unsigned short.
+    final int precompileValue = address.getInt(16);
+
+    // values in range [1, 0x01FF] inclusive to include L1 and L2 precompiles,
+    // assert max precompile in each range:
+    return (precompileValue > 0)
+        && ((precompileValue <= MAX_L1_PRECOMPILE)
+            ? precompileValue <= this.maxPrecompile
+            : precompileValue <= maxL2Precompile);
+  }
+
+  @Override
+  public long modExpGasCost(final Bytes input) {
+    final long baseLength = BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
+    final long exponentLength =
+        BigIntegerModularExponentiationPrecompiledContract.exponentLength(input);
+    final long modulusLength =
+        BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
+    final long exponentOffset =
+        clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
+
+    final long maxLength = Math.max(modulusLength, baseLength);
+    if (maxLength <= 0) {
+      return 500L;
+    }
+    long multiplicationComplexity = 16;
+    long words = (maxLength + 7L) / 8L;
+    words = Words.clampedMultiply(words, words);
+    if (maxLength > 32) {
+      multiplicationComplexity = words * 2;
+    }
+
+    long maxExponentLength = Long.MAX_VALUE / words * 3 / 8;
+    if (exponentLength > maxExponentLength) {
+      return Long.MAX_VALUE;
+    }
+
+    final long firstExponentBytesCap =
+        Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
+    final BigInteger firstExpBytes =
+        BigIntegerModularExponentiationPrecompiledContract.extractParameter(
+            input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
+    final long adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
+
+    long gasRequirement =
+        clampedMultiply(multiplicationComplexity, Math.max(adjustedExponentLength, 1L));
+
+    return Math.max(gasRequirement, 500L);
+  }
+
+  /**
+   * Adjusted exponent length.
+   *
+   * @param exponentLength the exponent length
+   * @param firstExpBytes the first exp bytes
+   * @return the long
+   */
+  public static long adjustedExponentLength(
+      final long exponentLength, final BigInteger firstExpBytes) {
+    final int bitLength = bitLength(firstExpBytes);
+    if (exponentLength <= WORD_SIZE) {
+      return bitLength;
+    } else {
+      return clampedAdd(clampedMultiply(16, (exponentLength - WORD_SIZE)), bitLength);
+    }
   }
 }

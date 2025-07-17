@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -57,9 +57,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,9 +162,8 @@ public class TraceFilter extends TraceBlock {
                   final MainnetTransactionProcessor transactionProcessor =
                       protocolSpec.getTransactionProcessor();
                   final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
-
                   DebugOperationTracer debugOperationTracer =
-                      new DebugOperationTracer(new TraceOptions(false, false, true), false);
+                      new DebugOperationTracer(new OpCodeTracerConfig(false, false, true), false);
                   ExecuteTransactionStep executeTransactionStep =
                       new ExecuteTransactionStep(
                           chainUpdater,
@@ -207,7 +206,7 @@ public class TraceFilter extends TraceBlock {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result.getArrayNode());
   }
 
-  @Nonnull
+  @NotNull
   private List<Block> getBlockList(
       final long fromBlock, final long toBlock, final Optional<Block> block) {
     List<Block> blockList = new ArrayList<>();

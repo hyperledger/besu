@@ -27,7 +27,7 @@ import org.web3j.protocol.core.methods.response.EthEstimateGas;
 public class EthEstimateGasTransaction implements Transaction<EthEstimateGas> {
   private final String contractAddress;
   private final String functionCall;
-  private final String from = "";
+  private final String from = "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73";
 
   public EthEstimateGasTransaction(final String contractAddress, final String functionCall) {
     this.contractAddress = contractAddress;
@@ -45,7 +45,7 @@ public class EthEstimateGasTransaction implements Transaction<EthEstimateGas> {
               new org.web3j.protocol.core.methods.request.Transaction(
                   from,
                   nonce,
-                  BigInteger.ZERO,
+                  null,
                   BigInteger.ZERO,
                   contractAddress,
                   BigInteger.ZERO,

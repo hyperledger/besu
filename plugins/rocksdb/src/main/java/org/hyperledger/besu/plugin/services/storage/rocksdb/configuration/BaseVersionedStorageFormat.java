@@ -17,8 +17,6 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
-import java.util.OptionalInt;
-
 /** Base versioned data storage format */
 public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
   /** Original Forest version, not used since replace by FOREST_WITH_VARIABLES */
@@ -44,7 +42,17 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
    * Current Bonsai version, with receipts using compaction, in order to make Receipts use less disk
    * space
    */
-  BONSAI_WITH_RECEIPT_COMPACTION(DataStorageFormat.BONSAI, 3);
+  BONSAI_WITH_RECEIPT_COMPACTION(DataStorageFormat.BONSAI, 3),
+  /**
+   * Current Bonsai archive version, with blockchain variables in a dedicated column family, in
+   * order to make BlobDB more effective
+   */
+  BONSAI_ARCHIVE_WITH_VARIABLES(DataStorageFormat.X_BONSAI_ARCHIVE, 1),
+  /**
+   * Current Bonsai archive version, with receipts using compaction, in order to make Receipts use
+   * less disk space
+   */
+  BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION(DataStorageFormat.X_BONSAI_ARCHIVE, 2);
 
   private final DataStorageFormat format;
   private final int version;
@@ -65,6 +73,7 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
     return switch (configuration.getDatabaseFormat()) {
       case FOREST -> FOREST_WITH_RECEIPT_COMPACTION;
       case BONSAI -> BONSAI_WITH_RECEIPT_COMPACTION;
+      case X_BONSAI_ARCHIVE -> BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION;
     };
   }
 
@@ -76,11 +85,6 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
   @Override
   public int getVersion() {
     return version;
-  }
-
-  @Override
-  public OptionalInt getPrivacyVersion() {
-    return OptionalInt.empty();
   }
 
   @Override

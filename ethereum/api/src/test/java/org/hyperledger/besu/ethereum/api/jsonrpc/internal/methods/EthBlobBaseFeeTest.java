@@ -19,12 +19,14 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -39,6 +41,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class EthBlobBaseFeeTest {
+  private static final int MAX_BLOBS_PER_BLOCK = 6;
+  private static final int TARGET_BLOBS_PER_BLOCK = 3;
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private MutableBlockchain blockchain;
   private EthBlobBaseFee method;
@@ -58,22 +62,43 @@ public class EthBlobBaseFeeTest {
   /** Tests that the method returns the expected blob base fee */
   @Test
   public void shouldReturnBlobBaseFee() {
-    configureProtocolSpec(FeeMarket.cancunDefault(5, Optional.empty()), new CancunGasCalculator());
+    final CancunTargetingGasLimitCalculator gasLimitCalculator =
+        new CancunTargetingGasLimitCalculator(
+            0L,
+            FeeMarket.cancunDefault(0L, Optional.empty()),
+            new CancunGasCalculator(),
+            MAX_BLOBS_PER_BLOCK,
+            TARGET_BLOBS_PER_BLOCK);
+    configureProtocolSpec(
+        FeeMarket.cancunDefault(5, Optional.empty()),
+        new CancunGasCalculator(),
+        gasLimitCalculator);
     assertThat(requestBlobBaseFee().getResult()).isEqualTo("0x1");
   }
 
   /** Tests that the method returns zero for forks that do not support blob transactions */
   @Test
   public void shouldReturnZeroForNonBlobForks() {
-    configureProtocolSpec(FeeMarket.london(5, Optional.empty()), new ShanghaiGasCalculator());
+    final CancunTargetingGasLimitCalculator gasLimitCalculator =
+        new CancunTargetingGasLimitCalculator(
+            0L,
+            FeeMarket.cancunDefault(0L, Optional.empty()),
+            new ShanghaiGasCalculator(),
+            MAX_BLOBS_PER_BLOCK,
+            TARGET_BLOBS_PER_BLOCK);
+    configureProtocolSpec(
+        FeeMarket.london(5, Optional.empty()), new ShanghaiGasCalculator(), gasLimitCalculator);
     assertThat(requestBlobBaseFee().getResult()).isEqualTo("0x0");
   }
 
   private void configureProtocolSpec(
-      final BaseFeeMarket feeMarket, final GasCalculator gasCalculator) {
+      final BaseFeeMarket feeMarket,
+      final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator) {
     ProtocolSpec spec = mock(ProtocolSpec.class);
     when(spec.getFeeMarket()).thenReturn(feeMarket);
     when(spec.getGasCalculator()).thenReturn(gasCalculator);
+    when(spec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSchedule.getForNextBlockHeader(
             blockchain.getChainHeadHeader(), blockchain.getChainHeadHeader().getTimestamp()))
         .thenReturn(spec);

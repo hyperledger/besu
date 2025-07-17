@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcesso
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -82,6 +83,7 @@ class BlockImportExceptionHandlingTest {
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
   private final GasCalculator gasCalculator = mock(GasCalculator.class);
+  private final GasLimitCalculator gasLimitCalculator = mock(GasLimitCalculator.class);
   private final FeeMarket feeMarket = mock(FeeMarket.class);
   protected final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
@@ -105,11 +107,12 @@ class BlockImportExceptionHandlingTest {
               (BonsaiWorldStateKeyValueStorage)
                   worldStateStorageCoordinator.worldStateKeyValueStorage(),
               EvmConfiguration.DEFAULT,
-              createStatefulConfigWithTrie()));
+              createStatefulConfigWithTrie(),
+              new CodeCache()));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
-  private MainnetBlockValidator mainnetBlockValidator;
+  private BlockValidator mainnetBlockValidator;
 
   @BeforeEach
   public void setup() {
@@ -118,9 +121,11 @@ class BlockImportExceptionHandlingTest {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockHashProcessor()).thenReturn(new FrontierBlockHashProcessor());
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
+    when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
     mainnetBlockValidator =
-        new MainnetBlockValidator(blockHeaderValidator, blockBodyValidator, blockProcessor);
+        MainnetBlockValidatorBuilder.frontier(
+            blockHeaderValidator, blockBodyValidator, blockProcessor);
   }
 
   @Test
