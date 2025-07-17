@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dockertest
 env:
   registry: docker.io
 
@@ -129,6 +130,9 @@ jobs:
       - name: Start container
         run: |
           docker run -d --name ${{ env.CONTAINER_NAME }} ${{ secrets.DOCKER_ORG }}/besu:${{ env.BUILD_TARGET_NAME }}
+
+      - name: Wait for container to initialize
+        run: sleep 10
 
       - name: Verify besu container
         run: bash .github/workflows/BesuContainerVerify.sh
