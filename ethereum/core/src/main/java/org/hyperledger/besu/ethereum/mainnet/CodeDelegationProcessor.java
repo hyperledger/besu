@@ -68,7 +68,9 @@ public class CodeDelegationProcessor {
    * @return The result of the code delegation processing.
    */
   public CodeDelegationResult process(
-      final WorldUpdater worldUpdater, final Transaction transaction, final Optional<TransactionAccessList> eip7928AccessList) {
+      final WorldUpdater worldUpdater,
+      final Transaction transaction,
+      final Optional<TransactionAccessList> eip7928AccessList) {
     final CodeDelegationResult result = new CodeDelegationResult();
 
     transaction
@@ -123,9 +125,8 @@ public class CodeDelegationProcessor {
 
     final Optional<MutableAccount> maybeAuthorityAccount =
         Optional.ofNullable(worldUpdater.getAccount(authorizer.get()));
-
-    result.addAccessedDelegatorAddress(authorizer.get());
     eip7928AccessList.ifPresent(t -> t.addAccount(authorizer.get()));
+    result.addAccessedDelegatorAddress(authorizer.get());
 
     MutableAccount authority;
     boolean authorityDoesAlreadyExist = false;
@@ -146,8 +147,6 @@ public class CodeDelegationProcessor {
 
       authorityDoesAlreadyExist = true;
     }
-
-    eip7928AccessList.ifPresent(t -> t.addAccount(codeDelegation.address()));
 
     if (codeDelegation.nonce() != authority.getNonce()) {
       LOG.trace(

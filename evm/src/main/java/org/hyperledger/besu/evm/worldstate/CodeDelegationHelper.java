@@ -93,20 +93,21 @@ public class CodeDelegationHelper {
 
     final Address targetAddress =
         Address.wrap(account.getCode().slice(CODE_DELEGATION_PREFIX.size()));
-    eip7928AccessList.ifPresent(t -> t.addAccount(targetAddress));
 
-    return new Target(targetAddress, processTargetCode(worldUpdater, isPrecompile, targetAddress));
+    return new Target(targetAddress, processTargetCode(worldUpdater, isPrecompile, targetAddress, eip7928AccessList));
   }
 
   private static Code processTargetCode(
       final WorldUpdater worldUpdater,
       final Predicate<Address> isPrecompile,
-      final Address targetAddress) {
+      final Address targetAddress,
+      final Optional<? extends Eip7928AccessList> eip7928AccessList) {
     if (targetAddress == null) {
       return EMPTY_CODE;
     }
 
     final Account targetAccount = worldUpdater.get(targetAddress);
+    eip7928AccessList.ifPresent(t -> t.addAccount(targetAddress));
 
     if (targetAccount == null || isPrecompile.test(targetAddress)) {
       return EMPTY_CODE;

@@ -271,14 +271,6 @@ public class MainnetTransactionProcessor {
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
 
-        for(var address : codeDelegationResult.accessedDelegatorAddresses()) {
-          eip7928AccessList.ifPresent(t -> t.addAccount(address));
-        }
-
-        for (var codeDelegation : transaction.getCodeDelegationList().get()) {
-          eip7928AccessList.ifPresent(t -> t.addAccount(codeDelegation.address()));
-        }
-
         // worldState.commit();
       }
 
@@ -338,10 +330,12 @@ public class MainnetTransactionProcessor {
       if (eip7928AccessList.isPresent()) {
         commonMessageFrameBuilder.eip7928AccessList(eip7928AccessList.get());
 
-        for(Map.Entry<Address, Bytes32> entry : eip2930StorageList.entries()) {
+        for (Map.Entry<Address, Bytes32> entry : eip2930StorageList.entries()) {
           final Address address = entry.getKey();
           final Bytes32 slotKey = entry.getValue();
-          eip7928AccessList.get().addSlotAccessForAccount(address, UInt256.fromHexString(slotKey.toHexString()));
+          eip7928AccessList
+              .get()
+              .addSlotAccessForAccount(address, UInt256.fromHexString(slotKey.toHexString()));
         }
       }
 
@@ -598,8 +592,6 @@ public class MainnetTransactionProcessor {
     if (contract == null) {
       return CodeV0.EMPTY_CODE;
     }
-
-    eip7928AccessList.ifPresent(t -> t.addAccount(contract.getAddress()));
 
     final Hash codeHash = contract.getCodeHash();
     if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
