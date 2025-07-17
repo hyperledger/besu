@@ -25,6 +25,7 @@ import org.hyperledger.besu.util.era1.Era1ExecutionBlockHeader;
 import org.hyperledger.besu.util.era1.Era1ExecutionBlockReceipts;
 import org.hyperledger.besu.util.era1.Era1Reader;
 import org.hyperledger.besu.util.era1.Era1ReaderListener;
+import org.hyperledger.besu.util.io.InputStreamFactory;
 import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import java.io.IOException;
@@ -51,7 +52,7 @@ public class Era1FileReader implements Function<URI, CompletableFuture<List<Bloc
   @Override
   public CompletableFuture<List<Block>> apply(final URI pathUri) {
     LOG.info("Reading {} and producing blocks for import", pathUri.toString());
-    Era1Reader reader = new Era1Reader(new SnappyFactory());
+    Era1Reader reader = new Era1Reader(new SnappyFactory(), new InputStreamFactory());
 
     final List<BlockHeader> headersFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
     final List<BlockBody> bodiesFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);

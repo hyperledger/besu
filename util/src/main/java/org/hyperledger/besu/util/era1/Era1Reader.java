@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.util.era1;
 
+import org.hyperledger.besu.util.io.InputStreamFactory;
 import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import java.io.BufferedInputStream;
@@ -38,14 +39,18 @@ public class Era1Reader {
   private static final int BLOCK_INDEX_COUNT_LENGTH = 8;
 
   private final SnappyFactory snappyFactory;
+  private final InputStreamFactory inputStreamFactory;
 
   /**
    * Creates a new Era1Reader with the supplied SnappyFactory
    *
    * @param snappyFactory A factory to provide objects for snappy decompression
+   * @param inputStreamFactory A factory to provide input stream objects
    */
-  public Era1Reader(final SnappyFactory snappyFactory) {
+  public Era1Reader(
+      final SnappyFactory snappyFactory, final InputStreamFactory inputStreamFactory) {
     this.snappyFactory = snappyFactory;
+    this.inputStreamFactory = inputStreamFactory;
   }
 
   /**
@@ -60,7 +65,8 @@ public class Era1Reader {
   public void read(final InputStream inputStream, final Era1ReaderListener listener)
       throws IOException {
     int blockIndex = 0;
-    BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+    BufferedInputStream bufferedInputStream =
+        inputStreamFactory.wrapInBufferedInputStream(inputStream);
     byte[] typeBytes;
     while ((typeBytes = bufferedInputStream.readNBytes(TYPE_LENGTH)).length != 0) {
       Era1Type type = Era1Type.getForTypeCode(typeBytes);
