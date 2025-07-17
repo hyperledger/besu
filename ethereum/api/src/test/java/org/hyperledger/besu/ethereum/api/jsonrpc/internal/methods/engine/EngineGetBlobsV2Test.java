@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +57,11 @@ public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
     ProtocolContext protocolContext = mock(ProtocolContext.class);
     method =
         new EngineGetBlobsV2(
-            mock(Vertx.class), protocolContext, mock(EngineCallListener.class), transactionPool);
+            mock(Vertx.class),
+            protocolContext,
+            mock(EngineCallListener.class),
+            transactionPool,
+            new NoOpMetricsSystem());
   }
 
   @Test

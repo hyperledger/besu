@@ -20,32 +20,31 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"gas", "failed", "returnValue", "structLogs"})
-public class DebugTraceTransactionDetails {
+public class OpCodeLoggerTracerResult {
 
   private final List<StructLog> structLogs;
   private final String returnValue;
   private final long gas;
   private final boolean failed;
 
-  public DebugTraceTransactionDetails(final TransactionTrace transactionTrace) {
+  public OpCodeLoggerTracerResult(final TransactionTrace transactionTrace) {
     gas = transactionTrace.getGas();
     returnValue = transactionTrace.getResult().getOutput().toString().substring(2);
     structLogs = new ArrayList<>(transactionTrace.getTraceFrames().size());
     transactionTrace.getTraceFrames().parallelStream()
-        .map(DebugTraceTransactionDetails::createStructLog)
+        .map(OpCodeLoggerTracerResult::createStructLog)
         .forEachOrdered(structLogs::add);
     failed = !transactionTrace.getResult().isSuccessful();
   }
 
   public static Collection<DebugTraceTransactionResult> of(
       final Collection<TransactionTrace> traces) {
-    return traces.stream().map(DebugTraceTransactionResult::new).collect(Collectors.toList());
+    return DebugTraceTransactionResult.of(traces, OpCodeLoggerTracerResult::new);
   }
 
   private static StructLog createStructLog(final TraceFrame frame) {
