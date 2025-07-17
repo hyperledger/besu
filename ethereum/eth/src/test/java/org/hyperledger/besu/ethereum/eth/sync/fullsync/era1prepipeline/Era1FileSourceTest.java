@@ -46,12 +46,11 @@ public class Era1FileSourceTest {
   @Test
   public void testNext() throws URISyntaxException {
     Era1FileSource era1FileSource = new Era1FileSource(testFilePath, 0);
-    Path expectedResult =
-        Path.of(
-            Era1FileSourceTest.class
-                .getClassLoader()
-                .getResource("mainnet-00000-5ec1ffb8.era1")
-                .toURI());
+    URI expectedResult =
+        Era1FileSourceTest.class
+            .getClassLoader()
+            .getResource("mainnet-00000-5ec1ffb8.era1")
+            .toURI();
     Assertions.assertEquals(expectedResult, era1FileSource.next());
   }
 
