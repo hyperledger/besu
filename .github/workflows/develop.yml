@@ -123,7 +123,7 @@ jobs:
     needs: [multiArchDockerPublish]
     env:
       CONTAINER_NAME: besu-check
-      RELEASE_VERSION: ${{ env.BUILD_TARGET_NAME}}
+      RELEASE_VERSION: ${{ env.BUILD_TARGET_NAME }}
     runs-on: ubuntu-22.04
     timeout-minutes: 4
     steps:
