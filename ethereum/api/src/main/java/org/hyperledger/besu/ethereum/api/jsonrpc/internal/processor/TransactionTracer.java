@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -98,7 +97,7 @@ public class TransactionTracer {
     final boolean showMemory =
         transactionTraceParams
             .map(TransactionTraceParams::traceOptions)
-            .map(TraceOptions::traceMemory)
+            .map(options -> options.opCodeTracerConfig().traceMemory())
             .orElse(true);
 
     if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
