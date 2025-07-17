@@ -123,19 +123,18 @@ jobs:
     needs: [multiArchDockerPublish]
     env:
       CONTAINER_NAME: besu-check
-      RELEASE_VERSION: ${{ env.BUILD_TARGET_NAME }}
     runs-on: ubuntu-22.04
     timeout-minutes: 4
     steps:
       - name: Start container
         run: |
-          docker run -d --name ${{ env.CONTAINER_NAME }} ${{ secrets.DOCKER_ORG }}/besu:${{ env.BUILD_TARGET_NAME}}
+          docker run -d --name ${{ env.CONTAINER_NAME }} ${{ secrets.DOCKER_ORG }}/besu:${{ env.BUILD_TARGET_NAME }}
 
       - name: Verify besu container
         run: bash .github/workflows/BesuContainerVerify.sh
         env:
-          TAG: ${{ env.BUILD_TARGET_NAME}}
-          VERSION: ${{ env.RELEASE_VERSION }}
+          TAG: ${{ env.BUILD_TARGET_NAME }}
+          VERSION: ${{ env.BUILD_TARGET_NAME }}
           CHECK_LATEST: false
 
       - name: Stop container
