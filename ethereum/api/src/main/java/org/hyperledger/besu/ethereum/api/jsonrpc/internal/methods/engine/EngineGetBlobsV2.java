@@ -35,7 +35,6 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -92,8 +91,8 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
     final VersionedHash[] versionedHashes = extractVersionedHashes(requestContext);
     if (versionedHashes.length > REQUEST_MAX_VERSIONED_HASHES) {
       return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(),
-              RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
+          requestContext.getRequest().getId(),
+          RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
     requestedCounter.inc(versionedHashes.length);
     List<BlobAndProofV2> result = new ArrayList<>(versionedHashes.length);
@@ -109,7 +108,9 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
         // wrong blob type. this is a miss
         missCounter.inc();
         LOG.trace("Unsupported blob type KZG_PROOF for versioned hash: {}", versionedHash);
-        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null); // KZG_PROOF type is not supported in this method
+        return new JsonRpcSuccessResponse(
+            requestContext.getRequest().getId(),
+            null); // KZG_PROOF type is not supported in this method
       }
       result.add(createBlobAndProofV2(blobProofBundle));
     }
