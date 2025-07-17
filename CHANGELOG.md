@@ -14,7 +14,7 @@
 
 #### Fusaka devnets
 - EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417), [#8946](https://github.com/hyperledger/besu/pull/8946)
-- Add `engine_getBlobsV3` method to the Engine API 
+- Add `engine_getBlobsV3` method to the Engine API [#8967](https://github.com/hyperledger/besu/pull/8967)
 
 ### Bug fixes
 
