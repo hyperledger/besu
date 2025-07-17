@@ -134,7 +134,7 @@ jobs:
   #       run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ needs.init.outputs.build_target_name }} -Prelease.releaseVersion=develop
         
   docker-verify:
-    needs: [init, publishDockerManifest]
+    needs: [init]
     env:
       CONTAINER_NAME: besu-check
     runs-on: ubuntu-22.04
