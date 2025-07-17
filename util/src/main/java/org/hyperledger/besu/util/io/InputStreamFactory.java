@@ -20,6 +20,9 @@ import java.io.InputStream;
 /** Factory for constructing InputStreams */
 public class InputStreamFactory {
 
+  /** Constructs an InputStreamFactory */
+  public InputStreamFactory() {}
+
   /**
    * Create a BufferedInputStream wrapping the supplied inputStream
    *
