@@ -93,7 +93,7 @@ jobs:
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
-  multiArch:
+  multiArchDockerPublish:
     needs: buildDocker
     runs-on: ubuntu-22.04
     permissions:
@@ -119,3 +119,24 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: multi-arch docker
         run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
+  docker-verify:
+    needs: [multiArchDockerPublish]
+    env:
+      CONTAINER_NAME: besu-check
+    runs-on: ubuntu-22.04
+    timeout-minutes: 4
+    steps:
+      - name: Start container
+        run: |
+          docker run -d --name ${{ env.CONTAINER_NAME }} ${{ secrets.DOCKER_ORG }}/besu:${{ env.BUILD_TARGET_NAME }}
+
+      - name: Verify besu container
+        run: bash .github/workflows/BesuContainerVerify.sh
+        env:
+          TAG: ${{ env.BUILD_TARGET_NAME }}
+          VERSION: ${{ env.BUILD_TARGET_NAME }}
+          CHECK_LATEST: false
+
+      - name: Stop container
+        run: docker stop ${{ env.CONTAINER_NAME }}
+
