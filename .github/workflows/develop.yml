@@ -26,6 +26,7 @@ jobs:
 
       - name: hadoLint
         run: docker run --rm -i hadolint/hadolint < docker/Dockerfile
+
   buildDocker:
     needs: hadolint
     permissions:
@@ -94,34 +95,36 @@ jobs:
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
-  multiArchDockerPublish:
-    needs: buildDocker
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Set up Java
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
-        with:
-          distribution: temurin
-          java-version: 21
-      - name: setup gradle
-        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
-        with:
-          cache-disabled: true
-      - name: login to ${{ env.registry }}
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
-        with:
-          registry: ${{ env.registry }}
-          username: ${{ secrets.DOCKER_USER_RW }}
-          password: ${{ secrets.DOCKER_PASSWORD_RW }}
-      - name: multi-arch docker
-        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
+
+  # multiArchDockerPublish:
+  #   needs: buildDocker
+  #   runs-on: ubuntu-22.04
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #     - name: Checkout Repo
+  #       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+  #     - name: Set up Java
+  #       uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
+  #       with:
+  #         distribution: temurin
+  #         java-version: 21
+  #     - name: setup gradle
+  #       uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+  #       with:
+  #         cache-disabled: true
+  #     - name: login to ${{ env.registry }}
+  #       uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+  #       with:
+  #         registry: ${{ env.registry }}
+  #         username: ${{ secrets.DOCKER_USER_RW }}
+  #         password: ${{ secrets.DOCKER_PASSWORD_RW }}
+  #     - name: multi-arch docker
+  #       run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
+        
   docker-verify:
-    needs: [multiArchDockerPublish]
+    needs: [buildDocker]
     env:
       CONTAINER_NAME: besu-check
     runs-on: ubuntu-22.04
@@ -129,6 +132,7 @@ jobs:
     steps:
       - name: Start container
         run: |
+          env
           docker run -d --name ${{ env.CONTAINER_NAME }} ${{ secrets.DOCKER_ORG }}/besu:${{ env.BUILD_TARGET_NAME }}
 
       - name: Wait for container to initialize
