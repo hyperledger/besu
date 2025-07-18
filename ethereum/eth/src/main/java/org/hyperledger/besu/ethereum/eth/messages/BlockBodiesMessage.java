@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
@@ -72,5 +73,10 @@ public final class BlockBodiesMessage extends AbstractMessageData {
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)
         .readList(rlp -> BlockBody.readWrappedBodyFrom(rlp, blockHeaderFunctions, true));
+  }
+
+  public List<SyncBlockBody> syncBodies(final ProtocolSchedule protocolSchedule) {
+    return new BytesValueRLPInput(data, false)
+        .readList(rlp -> SyncBlockBody.readWrappedBodyFrom(rlp, true, protocolSchedule));
   }
 }

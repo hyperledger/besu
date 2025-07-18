@@ -222,8 +222,7 @@ public class BonsaiArchiver implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent addedBlockContext) {
     initialize();
-    final Optional<Long> blockNumber =
-        Optional.of(addedBlockContext.getBlock().getHeader().getNumber());
+    final Optional<Long> blockNumber = Optional.of(addedBlockContext.getHeader().getNumber());
     blockNumber.ifPresent(
         blockNum -> {
           // Since moving blocks can be done in batches we only want
