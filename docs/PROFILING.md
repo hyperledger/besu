@@ -1,12 +1,12 @@
-# Profiling Besu with `asprof`
+# Profiling Besu with Async Profiler (asprof)
 
 This guide explains how to set up and run [Async Profiler](https://github.com/async-profiler/async-profiler) to profile a running Besu instance.
 
 ---
 
-## 1. Setup
+## Setup
 
-### a. Download and Extract
+### Download and Extract
 
 Please refer to the release page of [Async Profiler](https://github.com/async-profiler/async-profiler/releases) to check for the latest version.
 
@@ -25,10 +25,10 @@ Extract it to a shared location, such as `/opt/besu`:
 
 ```bash
 sudo mkdir -p /opt/besu
-sudo tar -xzf async-profiler-4.0-linux-*.tar.gz -C /opt/besu
+sudo tar -xzf async-profiler-4.0-linux-*.tar.gz -C /opt/besu/async-profiler-4.0:
 ```
 
-### b. Configure System Settings
+### Configure System Settings
 
 Run the following to ensure the profiler has necessary kernel access:
 
@@ -41,7 +41,7 @@ These settings may need to be re-applied after a reboot.
 
 ---
 
-## 2. Determine CPU Architecture
+## Determine CPU Architecture
 
 Check system architecture to choose the correct profiling event:
 
@@ -49,8 +49,8 @@ Check system architecture to choose the correct profiling event:
 uname -m
 ```
 
-- `x86_64`: Use `-e wall` for wall-clock profiling.
-- `arm64` or `aarch64`: Use `-e cpu`, since `-e wall` is unstable on ARM.
+- `x86_64`: All events are stable
+- `arm64` or `aarch64`: `-e wall` is unstable on ARM in general. Use `-e cpu` for CPU profiling and add `--cstack vm` to avoid AsyncGetCallTrace related JVM bugs.
 
 ---
 
@@ -62,6 +62,7 @@ The profiler **must be run as the same user** running the Besu process (e.g., `e
 sudo /opt/besu/async-profiler-4.0-linux-*/bin/asprof \
   -d 300 \
   -e [wall|cpu] \
+  --cstack vm \
   -t \
   -i 11ms \
   -f /tmp/besu-profile.html \
@@ -74,33 +75,33 @@ Should you need to run it as a specific user (e.g., `execution`), use:
 sudo -u execution /opt/besu/async-profiler-4.0-linux-*/bin/asprof \
   -d 300 \
   -e [wall|cpu] \
+  --cstack vm \
   -t \
   -i 11ms \
   -f /tmp/besu-profile.html \
   <PID>
 ```
 
-### Flag explanation
+### Profiling Options Explained
 
 - `-d 300`: Profile duration in seconds.
 - `-e wall|cpu`: Profiling event based on architecture.
-- `-t`: Include thread stack traces.
+- `-t`: Profile threads separately.
 - `-i 11ms`: Sampling interval.
 - `-f`: Output HTML flamegraph path.
 
 ---
 
-## 4. Analyze the Results
+## Analyze the Results
 
 Once complete, open the generated flamegraph (e.g., `/tmp/besu-profile.html`) in your browser to analyze performance bottlenecks.
-**How to read the flamegraph ? **
 
-- Top boxes: These represent the methods currently running when CPU samples were taken.
-- Boxes underneath: These represent methods called earlier, eventually leading to the methods above them.
+#### How to read the flamegraph
 
-The width of each box shows how much total time was spent in this method (including any methods it called).
+- Top boxes: Show the methods actively running when CPU samples were taken.
+- Boxes underneath: Represent the call stack leading up to the active methods (top boxes).
 
-So:
+The width of each box shows how much total time was spent in this method (including any methods it called):
 
 - Wide boxes = Potential hot spots.
 - Tall stacks = Deep call chains.
@@ -110,3 +111,9 @@ It will look something like this:
 ![image](images/flamegraph_01.png)
 
 The highlighted area shows the most performance-critical section of the flamegraph, revealing the methods in Besu that consume the most time during block processing.
+
+
+## Troubleshooting
+
+If you experience any issues while using the profiler, refer to the official troubleshooting guide for solutions and common pitfalls:
+[Async Profiler Troubleshooting Guide](https://github.com/async-profiler/async-profiler/blob/5fffdb1eaa538b20e5990ca6b96898ffa157fc91/docs/Troubleshooting.md)
