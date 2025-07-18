@@ -208,9 +208,11 @@ public class ECIESHandshaker implements Handshaker {
       }
     } catch (final InvalidCipherTextException e) {
       status.set(Handshaker.HandshakeStatus.FAILED);
+      buf.clear(); // TODO SLD buf.release() throws errors
       throw new HandshakeException("Decrypting an incoming handshake message failed", e);
     } catch (final SecurityModuleException e) {
       status.set(Handshaker.HandshakeStatus.FAILED);
+      buf.clear(); // TODO SLD buf.release() throws errors
       throw new HandshakeException(
           "Unable to create ECDH Key agreement due to Crypto engine failure", e);
     }
@@ -311,11 +313,13 @@ public class ECIESHandshaker implements Handshaker {
       computeSecrets();
     } catch (final SecurityModuleException e) {
       status.set(Handshaker.HandshakeStatus.FAILED);
+      buf.clear(); // TODO SLD buf.release() throws errors
       throw new HandshakeException(
           "Unable to create ECDH Key agreement due to Crypto engine failure", e);
     }
 
     status.set(Handshaker.HandshakeStatus.SUCCESS);
+    buf.clear(); // TODO SLD buf.release() throws errors
     LOG.trace("Handshake status set to {}", status.get());
     return nextMsg.map(bv -> Unpooled.wrappedBuffer(bv.toArray()));
   }
