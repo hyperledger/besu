@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FlatCallTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 
@@ -47,25 +48,24 @@ public class DebugTraceTransactionStepFactory {
       final TracerType tracerType) {
     return switch (tracerType) {
       case OPCODE_TRACER ->
-          transactionTrace -> {
+          (transactionTrace) -> {
             // default - struct/opcode logger tracer
             var result = new OpCodeLoggerTracerResult(transactionTrace);
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
       case CALL_TRACER ->
-          transactionTrace -> {
+          (transactionTrace) -> {
             // TODO: Implement callTracer logic and wire it here
             var result = new UnimplementedTracerResult();
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
       case FLAT_CALL_TRACER ->
-          transactionTrace -> {
-            // TODO: Implement flatCallTracer logic and wire it here
-            var result = new UnimplementedTracerResult();
+          (transactionTrace) -> {
+            final FlatCallTracerResult result = FlatCallTracerResult.from(transactionTrace);
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
       case PRESTATE_TRACER ->
-          transactionTrace -> {
+          (transactionTrace) -> {
             // TODO: Implement prestateTracer logic and wire it here
             var result = new UnimplementedTracerResult();
             return new DebugTraceTransactionResult(transactionTrace, result);

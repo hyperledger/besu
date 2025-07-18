@@ -129,7 +129,7 @@ public class FlatTrace implements Trace {
     this.revertReason = revertReason;
   }
 
-  static Builder freshBuilder(final TransactionTrace transactionTrace) {
+  public static Builder freshBuilder(final TransactionTrace transactionTrace) {
     return FlatTrace.builder()
         .resultBuilder(Result.builder())
         .actionBuilder(Action.Builder.from(transactionTrace));
