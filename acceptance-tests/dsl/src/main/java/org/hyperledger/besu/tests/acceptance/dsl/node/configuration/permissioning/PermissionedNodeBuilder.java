@@ -51,7 +51,6 @@ import org.assertj.core.util.Lists;
 public class PermissionedNodeBuilder {
 
   private String name;
-  private GenesisConfigurationProvider genesisConfigProvider;
   private boolean localConfigNodesPermissioningEnabled = false;
   private Path localConfigNodesPermissioningFile = null;
   private Collection<URI> localConfigPermittedNodes = null;
@@ -63,6 +62,7 @@ public class PermissionedNodeBuilder {
   private List<String> staticNodes = new ArrayList<>();
   private boolean isDnsEnabled = false;
   private boolean mining = true;
+  private GenesisConfigurationProvider genesisConfigProvider;
 
   public PermissionedNodeBuilder name(final String name) {
     this.name = name;
@@ -164,10 +164,8 @@ public class PermissionedNodeBuilder {
 
     builder.dnsEnabled(isDnsEnabled);
 
-    if (genesisConfigProvider != null) {
-      builder.genesisConfigProvider(genesisConfigProvider);
-      builder.devMode(false);
-    }
+    builder.genesisConfigProvider(genesisConfigProvider);
+    builder.devMode(false);
 
     try {
       return new BesuNodeFactory().create(builder.build());
