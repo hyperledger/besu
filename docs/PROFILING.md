@@ -119,10 +119,22 @@ If you experience any issues while using the profiler, refer to the official tro
 [Async Profiler Troubleshooting Guide](https://github.com/async-profiler/async-profiler/blob/5fffdb1eaa538b20e5990ca6b96898ffa157fc91/docs/Troubleshooting.md)
 
 ### Additional Notes
-* JDK-specific issues: Some problems are caused by bugs or limitations in the JDK itself (e.g., AsyncGetCallTrace stability). Always check if the issue is known for your JDK version.
-* Nightly Builds: Async Profiler regularly fixes issues in nightly builds that are not yet available in the latest stable release. If you encounter a problem, especially a crash, consider testing with the nightly build of Async Profiler.
-* JVM Crashes: If your JVM crashes when using Async Profiler, carefully inspect the crash logs. You can often find:
-* A known issue already discussed on the Async Profiler GitHub Issues.
-* A workaround (e.g., alternative flags like --cstack vm).
-* A JDK patch or newer JDK version that resolves the problem.
-* A nightly build of Async Profiler where the issue is already fixed.
+
+#### JDK-specific issues
+Some problems are caused by bugs or limitations in the JDK itself (e.g., AsyncGetCallTrace stability).
+* Check if the issue is known for your JDK version.
+* Sometimes upgrading to a newer JDK resolves the problem.
+
+#### Nightly builds
+Async Profiler regularly fixes issues in nightly builds that are not yet available in stable releases.
+* If you encounter problems (especially crashes), try the nightly build.
+* Be aware that nightly builds may include experimental changes.
+
+#### JVM crashes
+If your JVM crashes while using Async Profiler:
+* Inspect the JVM crash logs for clues about the error.
+* Check the GitHub issues to see if:
+  * There is a known issue matching your crash.
+  * There is a workaround (e.g., using --cstack vm).
+  * There is a fix available in a newer JDK version.
+  * There is a fix included in the Async Profiler nightly builds.
