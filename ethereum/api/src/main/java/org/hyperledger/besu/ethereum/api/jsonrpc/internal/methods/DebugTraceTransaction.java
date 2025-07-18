@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
@@ -75,24 +75,29 @@ public class DebugTraceTransaction implements JsonRpcMethod {
             "Invalid transaction trace parameter (index 1)",
             RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
             e);
+      } catch (IllegalArgumentException e) {
+        // Handle invalid tracer type from TracerType.fromString()
+        throw new InvalidJsonRpcParameters(
+            e.getMessage(), RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS, e);
       }
-      final DebugTraceTransactionDetails debugTraceTransactionResult =
+      final DebugTraceTransactionResult debugResult =
           debugTraceTransactionResult(hash, transactionWithMetadata.get(), traceOptions);
 
       return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(), debugTraceTransactionResult);
+          requestContext.getRequest().getId(), debugResult.getResult());
     } else {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }
   }
 
-  private DebugTraceTransactionDetails debugTraceTransactionResult(
+  private DebugTraceTransactionResult debugTraceTransactionResult(
       final Hash hash,
       final TransactionWithMetadata transactionWithMetadata,
       final TraceOptions traceOptions) {
     final Hash blockHash = transactionWithMetadata.getBlockHash().get();
 
-    final DebugOperationTracer execTracer = new DebugOperationTracer(traceOptions, true);
+    final DebugOperationTracer execTracer =
+        new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
 
     return Tracer.processTracing(
             blockchain,
@@ -100,7 +105,7 @@ public class DebugTraceTransaction implements JsonRpcMethod {
             mutableWorldState ->
                 transactionTracer
                     .traceTransaction(mutableWorldState, blockHash, hash, execTracer)
-                    .map(DebugTraceTransactionDetails::new))
+                    .map(DebugTraceTransactionStepFactory.create(traceOptions.tracerType())))
         .orElse(null);
   }
 }
