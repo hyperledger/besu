@@ -174,19 +174,19 @@ public class BlockAccessList {
 
           if (wrappedAccount != null) {
             Wei newBalance = account.getBalance();
-            Wei originalBalance = wrappedAccount.getBalance();
+            Wei originalBalance = builder.getLastBalance().orElse(wrappedAccount.getBalance());
             if (!newBalance.equals(originalBalance)) {
               builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
             }
 
             long newNonce = account.getNonce();
-            long originalNonce = wrappedAccount.getNonce();
-            if (newNonce != originalNonce) {
+            long originalNonce = builder.getLastNonce().orElse(wrappedAccount.getNonce());
+            if (newNonce > 0 && newNonce > originalNonce) {
               builder.addNonceChange(txList.getIndex(), newNonce);
             }
 
             Bytes newCode = account.getCode();
-            Bytes originalCode = wrappedAccount.getCode();
+            Bytes originalCode = builder.getLastCode().orElse(wrappedAccount.getCode());
             if (!newCode.isEmpty() && !newCode.isZero() && !newCode.equals(originalCode)) {
               builder.addCodeChange(txList.getIndex(), newCode);
             }
@@ -196,12 +196,11 @@ public class BlockAccessList {
               builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
             }
 
-            long newNonce = account.getNonce();
-            builder.addNonceChange(txList.getIndex(), newNonce);
-
             Bytes newCode = account.getCode();
             if (!newCode.isEmpty() && !newCode.isZero()) {
+              long newNonce = account.getNonce();
               builder.addCodeChange(txList.getIndex(), newCode);
+              builder.addNonceChange(txList.getIndex(), newNonce);
             }
           }
 
@@ -267,6 +266,42 @@ public class BlockAccessList {
         final List<StorageChange> storageChanges = this.slotWrites.get(slotKeyObj);
         if (storageChanges != null && !storageChanges.isEmpty()) {
           return Optional.of(storageChanges.getLast().newValue());
+        } else {
+          return Optional.empty();
+        }
+      }
+
+      Optional<Wei> getLastBalance() {
+        if (this.balances.isEmpty()) {
+          return Optional.empty();
+        }
+        final BalanceChange balanceChange = this.balances.getLast();
+        if (balanceChange != null) {
+          return Optional.of(Wei.fromHexString(balanceChange.postBalance().toHexString()));
+        } else {
+          return Optional.empty();
+        }
+      }
+
+      Optional<Long> getLastNonce() {
+        if (this.nonces.isEmpty()) {
+          return Optional.empty();
+        }
+        final NonceChange nonceChange = this.nonces.getLast();
+        if (nonceChange != null) {
+          return Optional.of(nonceChange.newNonce());
+        } else {
+          return Optional.empty();
+        }
+      }
+
+      Optional<Bytes> getLastCode() {
+        if (this.codes.isEmpty()) {
+          return Optional.empty();
+        }
+        final CodeChange codeChange = this.codes.getLast();
+        if (codeChange != null) {
+          return Optional.of(codeChange.newCode());
         } else {
           return Optional.empty();
         }

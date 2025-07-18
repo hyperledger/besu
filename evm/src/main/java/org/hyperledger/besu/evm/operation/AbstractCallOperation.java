@@ -366,7 +366,11 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     final CodeDelegationHelper.Target target =
-        getTarget(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account, frame.getEip7928AccessList());
+        getTarget(
+            frame.getWorldUpdater(),
+            evm.getGasCalculator()::isPrecompile,
+            account,
+            frame.getEip7928AccessList());
 
     if (accountHasCodeCache) {
       // If the account has a code cache, we can return the cached code of the target
