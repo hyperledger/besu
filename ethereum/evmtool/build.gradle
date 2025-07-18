@@ -58,6 +58,7 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'tools.profiler:async-profiler:4.0'
   implementation 'com.github.oshi:oshi-core:6.6.5'
+  implementation 'org.apache.commons:commons-math3:3.6.1'
 
   annotationProcessor 'com.google.dagger:dagger-compiler'
   annotationProcessor 'info.picocli:picocli-codegen'
