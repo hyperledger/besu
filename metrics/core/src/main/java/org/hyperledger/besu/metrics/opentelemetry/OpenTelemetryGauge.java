@@ -21,7 +21,6 @@ import java.util.List;
 import io.opentelemetry.api.metrics.Meter;
 
 /** The Open telemetry gauge. */
-@SuppressWarnings("removal") // remove when deprecated LabelledGauge is removed
 public class OpenTelemetryGauge extends OpenTelemetryLabelledSuppliedMetric
     implements LabelledSuppliedMetric {
   /**

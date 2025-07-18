@@ -20,7 +20,6 @@ import org.hyperledger.besu.consensus.common.bft.queries.BftQueryServiceImpl;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
 import org.hyperledger.besu.plugin.services.query.BftQueryService;
 import org.hyperledger.besu.plugin.services.query.PoaQueryService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -65,6 +64,5 @@ public class BftQueryPluginServiceFactory implements PluginServiceFactory {
             blockInterface, blockchain, validatorProvider, nodeKey, consensusMechanismName);
     besuContext.addService(BftQueryService.class, service);
     besuContext.addService(PoaQueryService.class, service);
-    besuContext.addService(PoAMetricsService.class, service);
   }
 }
