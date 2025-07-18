@@ -30,8 +30,10 @@ import org.hyperledger.besu.evm.internal.CodeCache;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -59,10 +61,10 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   private long nonce;
   private Wei balance;
 
-  @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
-  private final Bytes oldCode;
-  @Nullable private Hash updatedCodeHash;
+  private final Supplier<Bytes> oldCode;
   private final Hash oldCodeHash;
+  @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
+  @Nullable private Hash updatedCodeHash;
 
   // Only contains updated storage entries, but may contain entry with a value of 0 to signify
   // deletion.
@@ -84,9 +86,10 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     this.nonce = 0;
     this.balance = Wei.ZERO;
 
-    this.updatedCode = Bytes.EMPTY;
-    this.oldCode = Bytes.EMPTY;
+    this.oldCode = Suppliers.memoize(() -> Bytes.EMPTY);
     this.oldCodeHash = Hash.EMPTY;
+
+    this.updatedCode = Bytes.EMPTY;
     this.updatedStorage = new TreeMap<>();
   }
 
@@ -108,7 +111,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     this.nonce = account.getNonce();
     this.balance = account.getBalance();
 
-    this.oldCode = account.getCode();
+    this.oldCode = Suppliers.memoize(account::getCode);
     this.oldCodeHash = account.getCodeHash();
 
     this.updatedStorage = new TreeMap<>();
@@ -208,7 +211,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   @Override
   public Bytes getCode() {
     // Note that we set code for new account, so it's only null if account isn't.
-    return updatedCode == null ? oldCode : updatedCode;
+    return updatedCode == null ? oldCode.get() : updatedCode;
   }
 
   @Override
@@ -229,7 +232,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   @Override
   public boolean hasCode() {
     // Note that we set code for new account, so it's only null if account isn't.
-    return updatedCode == null ? !oldCode.isEmpty() : !updatedCode.isEmpty();
+    return updatedCode == null ? !oldCodeHash.equals(Hash.EMPTY) : !updatedCode.isEmpty();
   }
 
   @Override
