@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The Pipeline.
  *
- * @param <I> the type parameter
+ * @param <I> the input pipe type parameter
  */
 public class Pipeline<I> {
   private static final Logger LOG = LoggerFactory.getLogger(Pipeline.class);
