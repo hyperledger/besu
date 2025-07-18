@@ -252,6 +252,7 @@ import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.IExecutionStrategy;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.ParseResult;
 
 /** Represents the main Besu CLI command that runs the Besu Ethereum client full node. */
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
@@ -829,6 +830,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuParameterExceptionHandler parameterExceptionHandler,
       final BesuExecutionExceptionHandler executionExceptionHandler,
       final String... args) {
+
+    try {
+
+      final ParseResult pr = commandLine.parseArgs(args);
+      rejectDuplicateBooleanOptions(pr);
+    } catch (ParameterException e) {
+      return parameterExceptionHandler.handleParseException(e, args);
+    }
+
     return commandLine
         .setExecutionStrategy(executionStrategy)
         .setParameterExceptionHandler(parameterExceptionHandler)
@@ -839,11 +849,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .execute(args);
   }
 
+  private static final Set<String> UNIQUE_BOOLEAN_OPTS =
+      Set.of("--p2p-enabled", "--privacy-enabled", "--Xbonsai-full-flat-db-enabled");
+
+  private static void rejectDuplicateBooleanOptions(final ParseResult pr) {
+    for (String opt : UNIQUE_BOOLEAN_OPTS) {
+      if (pr.hasMatchedOption(opt) && pr.matchedOption(opt).stringValues().size() > 1) {
+        throw new ParameterException(
+            pr.commandSpec().commandLine(),
+            String.format("Option '%s' (<BOOLEAN>) should be specified only once", opt));
+      }
+    }
+  }
+
   /** Used by Dagger to parse all options into a commandline instance. */
   public void toCommandLine() {
+
     commandLine =
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
             .setCaseInsensitiveEnumValuesAllowed(true);
+    ;
   }
 
   @Override
