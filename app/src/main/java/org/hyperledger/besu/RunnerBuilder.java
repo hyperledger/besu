@@ -112,6 +112,8 @@ import org.hyperledger.besu.nat.docker.DockerNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.health.LivenessCheckService;
+import org.hyperledger.besu.plugin.services.health.ReadinessCheckService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
@@ -813,8 +815,20 @@ public class RunnerBuilder {
                   metricsSystem,
                   natService,
                   nonEngineMethods,
-                  new HealthService(new LivenessCheck()),
-                  new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
+                  new HealthService(
+                      besuPluginContext != null
+                              && besuPluginContext
+                                  .getService(LivenessCheckService.class)
+                                  .isPresent()
+                          ? besuPluginContext.getService(LivenessCheckService.class).get()
+                          : new LivenessCheck()),
+                  new HealthService(
+                      besuPluginContext != null
+                              && besuPluginContext
+                                  .getService(ReadinessCheckService.class)
+                                  .isPresent()
+                          ? besuPluginContext.getService(ReadinessCheckService.class).get()
+                          : new ReadinessCheck(peerNetwork, synchronizer))));
     }
 
     final SubscriptionManager subscriptionManager =
@@ -880,8 +894,20 @@ public class RunnerBuilder {
                   Optional.ofNullable(engineSocketConfig),
                   besuController.getProtocolManager().ethContext().getScheduler(),
                   authToUse,
-                  new HealthService(new LivenessCheck()),
-                  new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
+                  new HealthService(
+                      besuPluginContext != null
+                              && besuPluginContext
+                                  .getService(LivenessCheckService.class)
+                                  .isPresent()
+                          ? besuPluginContext.getService(LivenessCheckService.class).get()
+                          : new LivenessCheck()),
+                  new HealthService(
+                      besuPluginContext != null
+                              && besuPluginContext
+                                  .getService(ReadinessCheckService.class)
+                                  .isPresent()
+                          ? besuPluginContext.getService(ReadinessCheckService.class).get()
+                          : new ReadinessCheck(peerNetwork, synchronizer))));
     }
 
     Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
