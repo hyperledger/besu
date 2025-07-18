@@ -46,17 +46,17 @@ import io.vertx.core.Vertx;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
+public class EngineGetBlobsV3Test extends TrustedSetupClassLoaderExtension {
 
   private TransactionPool transactionPool;
-  private EngineGetBlobsV2 method;
+  private EngineGetBlobsV3 method;
 
   @BeforeEach
   public void setup() {
     transactionPool = mock(TransactionPool.class);
     ProtocolContext protocolContext = mock(ProtocolContext.class);
     method =
-        new EngineGetBlobsV2(
+        new EngineGetBlobsV3(
             mock(Vertx.class),
             protocolContext,
             mock(EngineCallListener.class),
@@ -66,7 +66,7 @@ public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
 
   @Test
   public void shouldReturnMethodName() {
-    assertThat(method.getName()).isEqualTo(RpcMethod.ENGINE_GET_BLOBS_V2.getMethodName());
+    assertThat(method.getName()).isEqualTo(RpcMethod.ENGINE_GET_BLOBS_V3.getMethodName());
   }
 
   @Test
@@ -82,12 +82,12 @@ public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
     VersionedHash unknown = new VersionedHash((byte) 1, Hash.ZERO);
     JsonRpcSuccessResponse response = getSuccessResponse(buildRequestContext(unknown));
     List<BlobAndProofV2> result = extractResult(response);
-
-    assertThat(result).isNull();
+    assertThat(result).hasSize(1);
+    assertThat(result.getFirst()).isNull();
   }
 
   @Test
-  public void shouldNotReturnPartialResults() {
+  public void shouldReturnPartialResults() {
     BlobProofBundle bundle = createBundleAndRegisterToPool();
     VersionedHash known = bundle.getVersionedHash();
     VersionedHash unknown = new VersionedHash((byte) 1, Hash.ZERO);
@@ -96,7 +96,10 @@ public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
         getSuccessResponse(buildRequestContext(known, unknown, known));
     List<BlobAndProofV2> result = extractResult(response);
 
-    assertThat(result).isNull();
+    assertThat(result).hasSize(3);
+    assertThat(result.get(0)).isNotNull();
+    assertThat(result.get(1)).isNull();
+    assertThat(result.get(2)).isNotNull();
   }
 
   @Test
@@ -109,8 +112,8 @@ public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
     JsonRpcRequestContext requestContext = buildRequestContext(versionedHash);
     JsonRpcSuccessResponse response = getSuccessResponse(requestContext);
     List<BlobAndProofV2> result = extractResult(response);
-
-    assertThat(result).isNull();
+    assertThat(result).hasSize(1);
+    assertThat(result.getFirst()).isNull();
   }
 
   @Test
@@ -148,7 +151,7 @@ public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
       throw new RuntimeException(e);
     }
     when(context.getRequest())
-        .thenReturn(new JsonRpcRequest("2.0", "engine_getBlobsV2", new Object[] {}));
+        .thenReturn(new JsonRpcRequest("2.0", "engine_getBlobsV3", new Object[] {}));
     return context;
   }
 
