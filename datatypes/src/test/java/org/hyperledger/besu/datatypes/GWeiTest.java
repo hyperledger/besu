@@ -33,25 +33,25 @@ class GWeiTest {
   @Test
   void gWeiFromLongValue() {
     final GWei gwei = GWei.of(1);
-    assertThat(gwei.getValue()).isEqualTo(BigInteger.ONE);
+    assertThat(gwei.getAsBigInteger()).isEqualTo(BigInteger.ONE);
   }
 
   @Test
   void gWeiFromBigIntegerValue() {
     final GWei gwei = GWei.of(BigInteger.TWO);
-    assertThat(gwei.getValue()).isEqualTo(BigInteger.TWO);
+    assertThat(gwei.getAsBigInteger()).isEqualTo(BigInteger.TWO);
   }
 
   @Test
   void gWeiFromUInt64Value() {
     final GWei gwei = GWei.of(UInt64.valueOf(2));
-    assertThat(gwei.getValue()).isEqualTo(BigInteger.TWO);
+    assertThat(gwei.getAsBigInteger()).isEqualTo(BigInteger.TWO);
   }
 
   @Test
   void gWeiFromHexStringValue() {
     final GWei gwei = GWei.fromHexString("0x0000000000000002");
-    assertThat(gwei.getValue()).isEqualTo(BigInteger.TWO);
+    assertThat(gwei.getAsBigInteger()).isEqualTo(BigInteger.TWO);
   }
 
   @Test

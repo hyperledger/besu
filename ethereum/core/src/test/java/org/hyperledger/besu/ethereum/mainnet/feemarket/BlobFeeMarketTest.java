@@ -69,7 +69,7 @@ class BlobFeeMarketTest {
 
   private long blobGasPrice(final BlobGas excess, final BlobSchedule blobSchedule) {
     double dgufDenominator = blobSchedule.getBaseFeeUpdateFraction();
-    double fakeExpo = excess.getValue().longValue() / dgufDenominator;
+    double fakeExpo = excess.getAsBigInteger().longValue() / dgufDenominator;
     return (long) (1 * Math.exp(fakeExpo));
   }
 }

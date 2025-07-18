@@ -126,11 +126,6 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
   }
 
   @Override
-  public Number getValue() {
-    return getAsBigInteger();
-  }
-
-  @Override
   public BigInteger getAsBigInteger() {
     return toBigInteger();
   }
