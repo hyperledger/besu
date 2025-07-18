@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.era1prepipeline.Era1ImportPrepipelineFactory;
@@ -56,7 +57,7 @@ public class FullSyncDownloader {
     this.protocolContext = protocolContext;
     this.syncState = syncState;
 
-    if (syncConfig.era1ImportPrepipelineEnabled()) {
+    if (syncConfig.getSyncMode() == SyncMode.FULL && syncConfig.era1ImportPrepipelineEnabled()) {
       this.era1PrepipelineChainDownloader =
           Optional.of(
               new FileImportChainDownloader(
