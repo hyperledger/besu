@@ -185,14 +185,10 @@ public abstract class BenchmarkExecutor {
 
     // Fully warmup and execute, test case by test case
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      try {
-        final double execTime =
-            runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
-        long gasCost = contract.gasRequirement(testCase.getValue());
-        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
-      } catch (final IllegalArgumentException e) {
-        output.printf("%s Input is Invalid%n", testCase.getKey());
-      }
+      final double execTime =
+          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
+      long gasCost = contract.gasRequirement(testCase.getValue());
+      logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
     }
   }
 
@@ -219,6 +215,8 @@ public abstract class BenchmarkExecutor {
         if (result.output() != null) {
           // adds iterationElapsed if absent, or sums with existing value
           totalElapsedByTestName.merge(testCase.getKey(), iterationElapsed, Long::sum);
+        } else {
+          throw new IllegalArgumentException("Input is Invalid for " + testCase.getValue());
         }
       }
       executions++;
@@ -232,7 +230,7 @@ public abstract class BenchmarkExecutor {
         long gasCost = contract.gasRequirement(testCases.get(testCase.getKey()));
         logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
       } else {
-        output.printf("%s Input is Invalid%n", testCase.getKey());
+        output.printf("%s Test case missing from results%n", testCase.getKey());
       }
     }
   }
@@ -248,7 +246,7 @@ public abstract class BenchmarkExecutor {
   protected double runPrecompileBenchmark(
       final String testName, final Bytes arg, final PrecompiledContract contract) {
     if (contract.computePrecompile(arg, fakeFrame).output() == null) {
-      throw new IllegalArgumentException("Input is Invalid");
+      throw new IllegalArgumentException("Input is Invalid for " + testName);
     }
 
     // Warmup individual test case fully
@@ -277,18 +275,13 @@ public abstract class BenchmarkExecutor {
 
     int executions = 0;
     long totalElapsed = 0;
-    boolean isInvalidCase = false;
     while (executions < execIterations && totalElapsed < execTimeInNano) {
       long iterationStart = System.nanoTime();
-      final var result = contract.computePrecompile(arg, fakeFrame);
+      contract.computePrecompile(arg, fakeFrame);
       long iterationElapsed = System.nanoTime() - iterationStart;
 
       totalElapsed += iterationElapsed;
       executions++;
-      if (result.output() == null) {
-        isInvalidCase = true;
-        break;
-      }
     }
 
     if (asyncProfiler.get() != null) {
@@ -297,10 +290,6 @@ public abstract class BenchmarkExecutor {
       } catch (Throwable t) {
         output.println("async profiler unavailable: " + t.getMessage());
       }
-    }
-
-    if (isInvalidCase) {
-      throw new IllegalArgumentException("Input is Invalid");
     }
 
     return totalElapsed / 1.0e9D / executions;

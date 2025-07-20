@@ -20,18 +20,10 @@ import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.SequencedMap;
 
-import com.google.common.base.Splitter;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Benchmark AltBN128 add, mul, and pairings */
@@ -96,39 +88,10 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
             "012b7638324563dc328b870d414807ed27426354bc83f22c42690f717ae7137e19dffc74cd0183d631cb39f5f58d2846744119913519373ebb95f2654a989390"
                 + "2034b5942fbdd612f2553a9fd9fa5eb4c3e5ce6a34ed100f62de0e380f4e67f8016027893e1f5082bdc48651667776e2b1e32a85edd33ff430eef15e8e68b3d4"));
 
-    testCases.putAll(loadAddTestCasesFromCsv());
-
     PrecompiledContract contract =
         EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.ALTBN128_ADD);
 
     precompile(testCases, contract, forkVersion);
-  }
-
-  private Map<String, Bytes> loadAddTestCasesFromCsv() {
-    Map<String, Bytes> testCases = new LinkedHashMap<>();
-
-    try (InputStream is = getClass().getResourceAsStream("/benchmarks/eip196_g1_add.csv");
-        BufferedReader reader =
-            new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-
-      String line = reader.readLine(); // Skip header
-      int testNumber = 0;
-
-      while ((line = reader.readLine()) != null) {
-        List<String> parts = Splitter.on(',').splitToList(line);
-        if (parts.size() >= 2) {
-          String input = parts.getFirst().trim();
-          // Only add valid test cases (non-empty input)
-          if (!input.isEmpty() && !input.equals("0x")) {
-            testCases.put("EcAddCase" + testNumber++, Bytes.fromHexString(input));
-          }
-        }
-      }
-    } catch (IOException e) {
-      throw new IllegalStateException("Failed to load AltBN128 add test cases from CSV", e);
-    }
-
-    return testCases;
   }
 
   private void benchmarkMul(final EvmSpecVersion forkVersion) {
