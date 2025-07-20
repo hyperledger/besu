@@ -133,7 +133,7 @@ public abstract class BenchmarkExecutor {
     this.output = output;
     this.precompileTableHeader =
         () -> {
-          if (benchmarkConfig.warmInvert()) output.println("--warmInvert enabled");
+          if (benchmarkConfig.attemptCacheBust()) output.println("--attempt-cache-bust=true");
           output.printf("--warm-iterations=%d%n", warmIterations);
           output.printf("--exec-iterations=%d%n", execIterations);
           output.printf(
@@ -172,8 +172,8 @@ public abstract class BenchmarkExecutor {
           }
         });
 
-    if (config.warmInvert()) {
-      runPrecompileInvertedWarmup(filteredTestCases, contract);
+    if (config.attemptCacheBust()) {
+      runPrecompileAttemptCacheBust(filteredTestCases, contract);
     } else {
       runPrecompile(filteredTestCases, contract);
     }
@@ -195,7 +195,7 @@ public abstract class BenchmarkExecutor {
     }
   }
 
-  private void runPrecompileInvertedWarmup(
+  private void runPrecompileAttemptCacheBust(
       final Map<String, Bytes> testCases, final PrecompiledContract contract) {
 
     // Warmup all test cases in serial inside one warmup iteration
