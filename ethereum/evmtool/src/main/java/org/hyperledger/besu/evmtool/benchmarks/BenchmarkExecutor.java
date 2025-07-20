@@ -43,6 +43,7 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.SequencedMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -154,7 +155,7 @@ public abstract class BenchmarkExecutor {
    * @param evmSpecVersion EVM specification version to run the precompile for.
    */
   public void precompile(
-      final Map<String, Bytes> testCases, // TODO SLD enforce LinkedHashMap?
+      final SequencedMap<String, Bytes> testCases,
       final PrecompiledContract contract,
       final EvmSpecVersion evmSpecVersion) {
 

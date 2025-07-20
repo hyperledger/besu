@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SequencedMap;
 
 import com.google.common.base.Splitter;
 import org.apache.tuweni.bytes.Bytes;
@@ -64,7 +65,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkAdd(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "EcAdd",
         Bytes.fromHexString(
@@ -131,7 +132,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkMul(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "mul1",
         Bytes.fromHexString(
@@ -153,7 +154,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkPairings(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "2 pairings",
         Bytes.fromHexString(
