@@ -31,7 +31,7 @@ public final class BesuProvider extends Provider {
   public BesuProvider() {
     super(PROVIDER_NAME, "1.0", info);
     AccessController.doPrivileged(
-        (PrivilegedAction)
+        (PrivilegedAction<Void>)
             () -> {
               put("MessageDigest.Blake2bf", Blake2bfMessageDigest.class.getName());
               return null;
