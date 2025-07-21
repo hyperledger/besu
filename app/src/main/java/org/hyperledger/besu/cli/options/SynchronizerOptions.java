@@ -376,7 +376,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       paramLabel = "<INTEGER>",
       description =
           "How many parallel pipelines to use in the ERA1 import prepipeline (default: ${DEFAULT-VALUE})")
-  private int era1ImportPrepipelineConcurrency =
+  private Integer era1ImportPrepipelineConcurrency =
       SynchronizerConfiguration.DEFAULT_ERA1_IMPORT_PREPIPELINE_CONCURRENCY;
 
   private SynchronizerOptions() {}
