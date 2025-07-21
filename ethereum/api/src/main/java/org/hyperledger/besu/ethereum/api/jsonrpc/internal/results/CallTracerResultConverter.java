@@ -138,7 +138,7 @@ public class CallTracerResultConverter {
       rootToAddress = transaction.getTo().map(Address::toHexString).orElse(null);
     }
 
-    LOG.info(
+    LOG.warn(
         "*** Call Tracer: Type: {}, Number of Frames: {}, Root To Address: {}",
         rootCallType,
         frames.size(),
@@ -168,7 +168,7 @@ public class CallTracerResultConverter {
     // For simple transactions (like ETH transfers with just STOP frame),
     // we can return early since all data is already set
     if (frames.size() == 1 && "STOP".equals(frames.get(0).getOpcode())) {
-      LOG.info("*** Call Tracer: Simple transaction with STOP frame, returning early");
+      LOG.warn("*** Call Tracer: Simple transaction with STOP frame, returning early");
       return rootBuilder.build();
     }
 
@@ -176,15 +176,12 @@ public class CallTracerResultConverter {
     Deque<CallTracerResult.Builder> callStack = new ArrayDeque<>();
     callStack.push(rootBuilder);
 
-    // Track call depth to handle nested calls properly
-    int currentDepth = 0;
-
     // Process each trace frame
     for (int i = 0; i < frames.size(); i++) {
       TraceFrame frame = frames.get(i);
       String opcode = frame.getOpcode();
 
-      LOG.debug(
+      LOG.warn(
           "*** Call Tracer: Processing frame {}: opcode={}, depth={}, gas={}",
           i,
           opcode,
@@ -193,12 +190,37 @@ public class CallTracerResultConverter {
 
       // Handle call-starting opcodes
       if (isCallStartOpcode(opcode)) {
-        // Create new call context
-        CallTracerResult.Builder callBuilder = createCallFromFrame(frame, opcode);
-        callStack.push(callBuilder);
-        currentDepth = frame.getDepth();
+        // Determine addresses
+        String toAddress = determineToAddress(frame, opcode);
+        String fromAddress = null;
 
-      } else if (isCallEndOpcode(opcode) || frame.getDepth() < currentDepth) {
+        // Get "from" address from parent call's "to" address
+        if (!callStack.isEmpty()) {
+          CallTracerResult.Builder parentCall = callStack.peek();
+          fromAddress = parentCall.build().getTo();
+        }
+
+        // Create new call context
+        CallTracerResult.Builder callBuilder =
+            CallTracerResult.builder()
+                .type(opcode)
+                .from(fromAddress)
+                .to(toAddress)
+                .gas(frame.getGasRemaining())
+                .input(frame.getInputData().toHexString());
+
+        // Handle value based on call type
+        if ("STATICCALL".equals(opcode)) {
+          callBuilder.value("0x0");
+        } else {
+          callBuilder.value(frame.getValue().toShortHexString());
+        }
+
+        LOG.warn("CALL START: {}", callBuilder);
+
+        callStack.push(callBuilder);
+
+      } else if (isCallEndOpcode(opcode)) {
         // Handle call completion
         if (callStack.size() > 1) {
           // This is a nested call completion
@@ -227,10 +249,9 @@ public class CallTracerResultConverter {
             parentCall.addCall(completedCall.build());
           }
 
-          currentDepth = frame.getDepth();
         } else {
           // This is the root call ending - only update specific fields from frame data
-          LOG.debug("*** Call Tracer: Root call ending with opcode: {}", opcode);
+          LOG.warn("*** Call Tracer: Root call ending with opcode: {}", opcode);
 
           // Update output only if frame has actual data and we should include it
           if (!frame.getOutputData().isEmpty() && shouldIncludeOutput(result, rootCallType)) {
@@ -313,30 +334,6 @@ public class CallTracerResultConverter {
       case "RETURN", "REVERT", "STOP", "INVALID" -> true;
       default -> false;
     };
-  }
-
-  /** Creates a CallTracerResult.Builder from a trace frame for call-starting opcodes. */
-  private static CallTracerResult.Builder createCallFromFrame(
-      final TraceFrame frame, final String opcode) {
-    String toAddress = determineToAddress(frame, opcode);
-    String fromAddress = frame.getRecipient().toHexString(); // This may need refinement
-
-    CallTracerResult.Builder builder =
-        CallTracerResult.builder()
-            .type(opcode)
-            .from(fromAddress)
-            .to(toAddress)
-            .gas(frame.getGasRemaining())
-            .input(frame.getInputData().toHexString());
-
-    // Handle value based on call type
-    if ("STATICCALL".equals(opcode)) {
-      builder.value("0x0"); // STATICCALL always has zero value
-    } else {
-      builder.value(frame.getValue().toShortHexString());
-    }
-
-    return builder;
   }
 
   /** Determines the "to" address based on the opcode and frame data. */

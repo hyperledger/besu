@@ -21,6 +21,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.google.common.base.MoreObjects;
 
 /**
  * Represents the result format for Ethereum's callTracer as specified in the Geth documentation.
@@ -469,6 +470,23 @@ public class CallTracerResult {
         this.calls.add(call);
       }
       return this;
+    }
+
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(this)
+          .add("type", type)
+          .add("from", from)
+          .add("to", to)
+          .add("value", value)
+          .add("gas", gas)
+          .add("gasUsed", gasUsed)
+          .add("input", input)
+          .add("output", output)
+          .add("error", error)
+          .add("revertReason", revertReason)
+          .add("calls", calls)
+          .toString();
     }
 
     /**
