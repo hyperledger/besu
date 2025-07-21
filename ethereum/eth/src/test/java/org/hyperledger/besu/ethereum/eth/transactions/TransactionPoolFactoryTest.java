@@ -315,7 +315,7 @@ public class TransactionPoolFactoryTest {
             ethContext,
             Collections.emptyList(),
             Optional.empty(),
-                syncConfig,
+            syncConfig,
             mock(EthScheduler.class),
             mock(ForkIdManager.class));
   }
