@@ -54,7 +54,6 @@ public enum RpcMethod {
   DEBUG_GET_RAW_TRANSACTION("debug_getRawTransaction"),
   ENGINE_GET_BLOBS_V1("engine_getBlobsV1"),
   ENGINE_GET_BLOBS_V2("engine_getBlobsV2"),
-  ENGINE_GET_BLOBS_V3("engine_getBlobsV3"),
   ENGINE_GET_PAYLOAD_V1("engine_getPayloadV1"),
   ENGINE_GET_PAYLOAD_V2("engine_getPayloadV2"),
   ENGINE_GET_PAYLOAD_V3("engine_getPayloadV3"),
