@@ -1,6 +1,6 @@
 # Besu Ethereum Client
  [![CircleCI](https://circleci.com/gh/hyperledger/besu/tree/main.svg?style=svg)](https://circleci.com/gh/hyperledger/besu/tree/main)
- [![CodeQL](https://github.com/hyperledger/besu/actions/workflows/codeql.yml/badge.svg)](https://github.com/hyperledger/besu/actions)
+ [![CodeQL](https://github.com/hyperledger/besu/actions/workflows/codeql.yml/badge.svg)](https://github.com/hyperledger/besu/actions/workflows/codeql.yml)
  [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3174/badge)](https://bestpractices.coreinfrastructure.org/projects/3174)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/hyperledger/besu/blob/main/LICENSE)
  [![Discord](https://img.shields.io/discord/905194001349627914?logo=Hyperledger&style=plastic)](https://discord.com/invite/hyperledger)
