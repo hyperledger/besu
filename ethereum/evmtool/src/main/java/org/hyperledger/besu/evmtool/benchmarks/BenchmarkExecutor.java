@@ -64,7 +64,7 @@ public abstract class BenchmarkExecutor {
   /** Where to write the output of the benchmarks. */
   protected final PrintStream output;
 
-  protected final BenchmarkConfig config;
+  private final BenchmarkConfig config;
 
   private Runnable precompileTableHeader;
   int warmIterations;
