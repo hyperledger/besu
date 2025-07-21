@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import static org.hyperledger.besu.evm.internal.Words.toAddress;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -23,6 +25,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -333,26 +336,37 @@ public class CallTracerResultConverter {
   /** Determines the "to" address based on the opcode and frame data. */
   private static String determineToAddress(final TraceFrame frame, final String opcode) {
     return switch (opcode) {
-      case "CALL", "STATICCALL" ->
-          // The contract or receiving address being called
-          frame.getRecipient().toHexString();
+      case "CALL", "STATICCALL", "DELEGATECALL", "CALLCODE" -> {
+        // Extract "to" address from EVM stack (like Besu's FlatTraceGenerator)
+        Optional<Bytes[]> stack = frame.getStack();
+        if (stack.isPresent() && stack.get().length > 1) {
+          // Use the same logic as Besu: stack[stack.length - 2]
+          Bytes[] stackArray = stack.get();
+          Address toAddress = toAddress(stackArray[stackArray.length - 2]);
+          yield toAddress.toString();
+        } else {
+          // Fallback to recipient if stack is not available
+          yield frame.getRecipient().toHexString();
+        }
+      }
 
-      case "DELEGATECALL" ->
-          // The contract whose code is being executed
-          frame.getRecipient().toHexString();
+      case "CREATE", "CREATE2" -> {
+        // For CREATE operations, the address might be in the recipient
+        // or calculated differently - need to investigate
+        yield frame.getRecipient().toHexString();
+      }
 
-      case "CALLCODE" ->
-          // Similar to DELEGATECALL
-          frame.getRecipient().toHexString();
-
-      case "CREATE", "CREATE2" ->
-          // The address of the newly deployed contract
-          // This might need to be calculated or extracted from subsequent frames
-          calculateNewContractAddress(frame, opcode);
-
-      case "SELFDESTRUCT", "SUICIDE" ->
-          // The address of the refund recipient
-          extractSelfDestructRecipient(frame);
+      case "SELFDESTRUCT", "SUICIDE" -> {
+        // Extract refund recipient from stack
+        Optional<Bytes[]> stack = frame.getStack();
+        if (stack.isPresent() && stack.get().length > 0) {
+          Bytes[] stackArray = stack.get();
+          Address refundAddress = toAddress(stackArray[stackArray.length - 1]);
+          yield refundAddress.toString();
+        } else {
+          yield frame.getRecipient().toHexString();
+        }
+      }
 
       default -> frame.getRecipient().toHexString();
     };
