@@ -250,6 +250,8 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.IExecutionStrategy;
+import picocli.CommandLine.Model.ITypeInfo;
+import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
@@ -832,13 +834,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final String... args) {
 
     try {
-
+      // Parse and run duplicate-check
       final ParseResult pr = commandLine.parseArgs(args);
-      rejectDuplicateBooleanOptions(pr);
+      rejectDuplicateScalarOptions(pr); // your generic validator
     } catch (ParameterException e) {
+      // ← Send it to the standard handler: prints one line & exits status 1
       return parameterExceptionHandler.handleParseException(e, args);
     }
-
     return commandLine
         .setExecutionStrategy(executionStrategy)
         .setParameterExceptionHandler(parameterExceptionHandler)
@@ -849,26 +851,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .execute(args);
   }
 
-  private static final Set<String> UNIQUE_BOOLEAN_OPTS =
-      Set.of("--p2p-enabled", "--privacy-enabled", "--Xbonsai-full-flat-db-enabled");
-
-  private static void rejectDuplicateBooleanOptions(final ParseResult pr) {
-    for (String opt : UNIQUE_BOOLEAN_OPTS) {
-      if (pr.hasMatchedOption(opt) && pr.matchedOption(opt).stringValues().size() > 1) {
-        throw new ParameterException(
-            pr.commandSpec().commandLine(),
-            String.format("Option '%s' (<BOOLEAN>) should be specified only once", opt));
-      }
-    }
-  }
-
   /** Used by Dagger to parse all options into a commandline instance. */
   public void toCommandLine() {
-
     commandLine =
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
-            .setCaseInsensitiveEnumValuesAllowed(true);
-    ;
+            .setCaseInsensitiveEnumValuesAllowed(true)
+            .setToggleBooleanFlags(false);
   }
 
   @Override
@@ -958,6 +946,33 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             precompileCounter
                 .labels(cacheEvent.precompile(), cacheEvent.cacheMetric().name())
                 .inc());
+  }
+
+  /** Reject any option that is not multi-valued but appears more than once. */
+  private static void rejectDuplicateScalarOptions(final ParseResult pr) {
+    for (OptionSpec spec : pr.matchedOptions()) {
+
+      // skip help/version flags
+      if (spec.usageHelp() || spec.versionHelp()) {
+        continue;
+      }
+
+      // ── determine if this option can repeat
+      ITypeInfo type = spec.typeInfo();
+      boolean multiValued =
+          spec.arity().max() > 1 || type.isMultiValue() || type.isCollection() || type.isArray();
+
+      if (multiValued) {
+        continue; // lists are allowed to repeat
+      }
+
+      // ── single-valued: abort if it appears more than once ───────────
+      if (pr.matchedOption(spec.longestName()).stringValues().size() > 1) {
+        throw new ParameterException(
+            pr.commandSpec().commandLine(),
+            String.format("Option '%s' should be specified only once", spec.longestName()));
+      }
+    }
   }
 
   private void checkPermissionsAndPrintPaths(final String userName) {
