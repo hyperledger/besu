@@ -113,9 +113,9 @@ class TraceServiceImplTest {
     verify(opTracer)
         .traceStartBlock(
             any(),
-            tracedBlock.getHeader(),
-            tracedBlock.getBody(),
-            tracedBlock.getHeader().getCoinbase());
+            eq(tracedBlock.getHeader()),
+            eq(tracedBlock.getBody()),
+            eq(tracedBlock.getHeader().getCoinbase()));
 
     tracedBlock
         .getBody()
@@ -147,13 +147,10 @@ class TraceServiceImplTest {
     traceService.trace(
         startBlock,
         endBlock,
-        worldState -> {
-          assertThat(worldState.get(addressToVerify).getNonce()).isEqualTo(0);
-        },
-        worldState -> {
-          assertThat(worldState.get(addressToVerify).getNonce())
-              .isEqualTo(persistedNonceForAccount);
-        },
+        worldState -> assertThat(worldState.get(addressToVerify).getNonce()).isEqualTo(0),
+        worldState ->
+            assertThat(worldState.get(addressToVerify).getNonce())
+                .isEqualTo(persistedNonceForAccount),
         opTracer);
 
     assertThat(worldStateArchive.getWorldState().get(addressToVerify).getNonce())
@@ -167,9 +164,9 @@ class TraceServiceImplTest {
               verify(opTracer)
                   .traceStartBlock(
                       any(),
-                      tracedBlock.getHeader(),
-                      tracedBlock.getBody(),
-                      tracedBlock.getHeader().getCoinbase());
+                      eq(tracedBlock.getHeader()),
+                      eq(tracedBlock.getBody()),
+                      eq(tracedBlock.getHeader().getCoinbase()));
               tracedBlock
                   .getBody()
                   .getTransactions()
