@@ -53,7 +53,9 @@ public enum BesuMetricCategory implements MetricCategory {
   /** Transaction pool besu metric category. */
   TRANSACTION_POOL("transaction_pool"),
   /** Block processing besu metric category. */
-  BLOCK_PROCESSING("block_processing");
+  BLOCK_PROCESSING("block_processing"),
+  /** Block processing besu metric category. */
+  BONSAI_CACHE("bonsai_cache");
 
   private static final Optional<String> BESU_PREFIX = Optional.of("besu_");
 

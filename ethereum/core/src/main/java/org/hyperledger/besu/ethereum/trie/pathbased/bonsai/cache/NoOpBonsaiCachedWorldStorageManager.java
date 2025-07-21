@@ -26,8 +26,13 @@ import java.util.function.Function;
 public class NoOpBonsaiCachedWorldStorageManager extends BonsaiCachedWorldStorageManager {
 
   public NoOpBonsaiCachedWorldStorageManager(
-      final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage) {
-    super(null, bonsaiWorldStateKeyValueStorage, WorldStateConfig.createStatefulConfigWithTrie());
+      final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage,
+      final CodeCache codeCache) {
+    super(
+        null,
+        bonsaiWorldStateKeyValueStorage,
+        WorldStateConfig.createStatefulConfigWithTrie(),
+        codeCache);
   }
 
   @Override
