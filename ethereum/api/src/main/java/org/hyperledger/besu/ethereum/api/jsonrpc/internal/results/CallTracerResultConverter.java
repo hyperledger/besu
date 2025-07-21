@@ -196,6 +196,13 @@ public class CallTracerResultConverter {
           fromAddress = parentCall.build().getTo();
         }
 
+        // Get the next frame for input data (like FlatTraceGenerator does)
+        final TraceFrame nextFrame = (i + 1 < frames.size()) ? frames.get(i + 1) : null;
+        // Use next frame's input data (the actual call being made)
+        final String inputData =
+            (nextFrame != null)
+                ? nextFrame.getInputData().toHexString()
+                : frame.getInputData().toHexString();
         // Create new call context
         CallTracerResult.Builder callBuilder =
             CallTracerResult.builder()
@@ -203,7 +210,7 @@ public class CallTracerResultConverter {
                 .from(fromAddress)
                 .to(toAddress)
                 .gas(frame.getGasRemaining())
-                .input(frame.getInputData().toHexString());
+                .input(inputData);
 
         // Handle value based on call type
         if ("STATICCALL".equals(opcode)) {
