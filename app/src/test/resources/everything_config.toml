@@ -230,6 +230,7 @@ Xbonsai-full-flat-db-enabled=true
 Xpeertask-system-enabled=false
 era1-import-prepipeline-enabled=true
 era1-data-uri="mainnet.era1.nimbus.team/"
+era1-import-prepipeline-concurrency=4
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000

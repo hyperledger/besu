@@ -40,6 +40,7 @@ public class Era1ImportPrepipelineFactory implements FileImportPipelineFactory {
 
   private final MetricsSystem metricsSystem;
   private final URI era1DataUri;
+  private final int concurrency;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
@@ -48,12 +49,14 @@ public class Era1ImportPrepipelineFactory implements FileImportPipelineFactory {
   public Era1ImportPrepipelineFactory(
       final MetricsSystem metricsSystem,
       final URI era1DataUri,
+      final int concurrency,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncTerminationCondition syncTerminationCondition) {
     this.metricsSystem = metricsSystem;
     this.era1DataUri = era1DataUri;
+    this.concurrency = concurrency;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -76,7 +79,6 @@ public class Era1ImportPrepipelineFactory implements FileImportPipelineFactory {
           default ->
               throw new IllegalStateException("Unexpected URI scheme: " + era1DataUri.getScheme());
         };
-    final int bufferSize = Runtime.getRuntime().availableProcessors();
     final LabelledMetric<Counter> processedTotalMetric =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.SYNCHRONIZER,
@@ -98,13 +100,13 @@ public class Era1ImportPrepipelineFactory implements FileImportPipelineFactory {
     return PipelineBuilder.createPipelineFrom(
             inputSourceName,
             era1UriSource,
-            bufferSize,
+            concurrency,
             processedTotalMetric,
             tracingEnabled,
             pipelineName)
-        .thenProcessAsyncOrdered("ERA1 File Reader", era1FileReader, bufferSize)
+        .thenProcessAsyncOrdered("ERA1 File Reader", era1FileReader, concurrency)
         .thenFlatMap(
-            "Flat Map Block Lists and Filter Block 0", flatMapBlockListsFunction, bufferSize)
+            "Flat Map Block Lists and Filter Block 0", flatMapBlockListsFunction, concurrency)
         .andFinishWith("Import ERA1 Block", importBlockFunction);
   }
 }

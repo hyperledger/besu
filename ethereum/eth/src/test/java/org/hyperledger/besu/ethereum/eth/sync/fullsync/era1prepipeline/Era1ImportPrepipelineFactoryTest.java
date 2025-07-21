@@ -86,6 +86,7 @@ public class Era1ImportPrepipelineFactoryTest {
         new Era1ImportPrepipelineFactory(
             metricsSystem,
             testFileUri,
+            4,
             protocolSchedule,
             protocolContext,
             ethContext,

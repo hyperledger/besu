@@ -97,6 +97,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String ERA1_IMPORT_PREPIPELINE_ENABLED_FLAG =
       "--era1-import-prepipeline-enabled";
   private static final String ERA1_DATA_URI_FLAG = "--era1-data-uri";
+  private static final String ERA1_IMPORT_PREPIPELINE_CONCURRENCY_FLAG =
+      "--era1-import-prepipeline-concurrency";
 
   /**
    * Parse block propagation range.
@@ -363,11 +365,19 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SynchronizerConfiguration.DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED;
 
   @CommandLine.Option(
-      names = {ERA1_DATA_URI_FLAG},
+      names = ERA1_DATA_URI_FLAG,
       paramLabel = "<URI>",
       description =
           "The URI to attempt to load ERA1 files from. For local files, a simple path may be used (e.g. /home/user/era1). (default: ${DEFAULT-VALUE})")
   private URI era1DataUri = SynchronizerConfiguration.DEFAULT_ERA1_DATA_URI;
+
+  @CommandLine.Option(
+      names = ERA1_IMPORT_PREPIPELINE_CONCURRENCY_FLAG,
+      paramLabel = "<INTEGER>",
+      description =
+          "How many parallel pipelines to use in the ERA1 import prepipeline (default: ${DEFAULT-VALUE})")
+  private int era1ImportPrepipelineConcurrency =
+      SynchronizerConfiguration.DEFAULT_ERA1_IMPORT_PREPIPELINE_CONCURRENCY;
 
   private SynchronizerOptions() {}
 
@@ -445,6 +455,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.isSnapSyncSavePreCheckpointHeadersOnlyEnabled();
     options.era1ImportPrepipelineEnabled = config.era1ImportPrepipelineEnabled();
     options.era1DataUri = config.era1DataUri();
+    options.era1ImportPrepipelineConcurrency = config.era1ImportPrepipelineConcurrency();
     return options;
   }
 
@@ -485,6 +496,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         snapSyncSavePreCheckpointHeadersOnlyEnabled);
     builder.era1ImportPrepipelineEnabled(era1ImportPrepipelineEnabled);
     builder.era1DataUri(era1DataUri);
+    builder.era1ImportPrepipelineConcurrency(era1ImportPrepipelineConcurrency);
     return builder;
   }
 
@@ -547,7 +559,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             ERA1_IMPORT_PREPIPELINE_ENABLED_FLAG,
             OptionParser.format(era1ImportPrepipelineEnabled),
             ERA1_DATA_URI_FLAG,
-            OptionParser.format(era1DataUri));
+            OptionParser.format(era1DataUri),
+            ERA1_IMPORT_PREPIPELINE_CONCURRENCY_FLAG,
+            OptionParser.format(era1ImportPrepipelineConcurrency));
     return value;
   }
 }

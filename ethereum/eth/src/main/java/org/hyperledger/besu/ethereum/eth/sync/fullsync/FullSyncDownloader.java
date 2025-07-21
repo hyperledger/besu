@@ -64,6 +64,7 @@ public class FullSyncDownloader {
                   new Era1ImportPrepipelineFactory(
                       metricsSystem,
                       syncConfig.era1DataUri(),
+                      syncConfig.era1ImportPrepipelineConcurrency(),
                       protocolSchedule,
                       protocolContext,
                       ethContext,
