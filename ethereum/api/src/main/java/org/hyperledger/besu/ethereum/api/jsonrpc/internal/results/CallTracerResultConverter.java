@@ -378,21 +378,6 @@ public class CallTracerResultConverter {
     return Math.max(0, frame.getGasRemaining());
   }
 
-  /** Calculates the address of a newly created contract. */
-  @SuppressWarnings("UnusedVariable")
-  private static String calculateNewContractAddress(final TraceFrame frame, final String opcode) {
-    // TODO: For now, return null - this needs proper implementation
-    // based on CREATE/CREATE2 semantics and available frame data
-    return null;
-  }
-
-  /** Extracts the refund recipient for SELFDESTRUCT operations. */
-  private static String extractSelfDestructRecipient(final TraceFrame frame) {
-    // TODO: This needs to be implemented based on how SELFDESTRUCT data is stored in TraceFrame
-    // For now, return the recipient
-    return frame.getRecipient().toHexString();
-  }
-
   /** Calculates the correct gas used value to match Geth's behavior. */
   private static long calculateCorrectGasUsed(
       final TransactionTrace transactionTrace, final TransactionProcessingResult result) {
