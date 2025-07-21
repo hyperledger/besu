@@ -19,6 +19,8 @@ import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.InvalidSystemCallAddressException;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
 
+import java.util.Optional;
+
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -68,5 +70,10 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
       LOG.warn("Invalid system call address: {}", historyStorageAddress);
     }
     return null;
+  }
+
+  @Override
+  public Optional<Address> getHistoryContract() {
+    return Optional.of(historyStorageAddress);
   }
 }

@@ -3,12 +3,17 @@
 ## Unreleased
 
 ### Breaking Changes
+- Change in behavior for `eth_estimateGas`, to improve accuracy, when used on a network with a base fee market, the internal transaction simulation does not anymore underprice transactions, so if there are no gas pricing related fields specified in the request, then gas price for the transaction is set to the base fee value [#8888](https://github.com/hyperledger/besu/pull/8888)  
 
 ### Upcoming Breaking Changes
 
 ### Additions and Improvements
+- Improve transaction simulation and gas estimation when no gas pricing is present [#8888](https://github.com/hyperledger/besu/pull/8888)
+- Add option to trace reference tests during execution [#8878](https://github.com/hyperledger/besu/pull/8878)
+- Expose methods to query hardfork by block header or for the next block in the Plugin API [#8909](https://github.com/hyperledger/besu/pull/8909)
 
-#### Fusaka
+#### Fusaka devnets
+- EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417), [#8946](https://github.com/hyperledger/besu/pull/8946)
 
 ### Bug fixes
 
@@ -25,6 +30,7 @@
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Stratum mining has been removed (part of PoW) [#8802](https://github.com/hyperledger/besu/pull/8802)
   - PoW RPCs removed: `eth_getWork`, `eth_submitWork`, `eth_getHashrate`, `eth_submitHashrate`, `eth_hashrate`
+  - Privacy RPC API groups removed: `EEA` and `PRIV` [#8803](https://github.com/hyperledger/besu/pull/8803)
 - Introduce history expiry behaviour for mainnet [8875](https://github.com/hyperledger/besu/pull/8875)
   - SNAP sync will now download only headers for pre-checkpoint (pre-merge) blocks
   - `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` can be set to false to force SNAP sync to download pre-checkpoint (pre-merge) blocks

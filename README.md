@@ -48,22 +48,23 @@ Instructions for how to get started with developing on the Besu codebase. Please
 * [Code Coverage](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154288/Code+coverage)
 * [Logging](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154291/Logging) or the [Documentation's Logging section](https://besu.hyperledger.org/public-networks/how-to/monitor/logging)
 
+### Profiling Besu
+
+Besu supports performance profiling using [Async Profiler](https://github.com/async-profiler/async-profiler), a low-overhead sampling profiler.  
+You can find setup and usage instructions in the [Profiling Guide](docs/PROFILING.md).
+
+Profiling can help identify performance bottlenecks in block processing, transaction validation, and EVM execution.  
+Please ensure the profiler is run as the same user that started the Besu process.
 
 ## Release Notes
 
 [Release Notes](CHANGELOG.md)
 
-## Special thanks
+## Reference Tests and JSON Tracing
 
-YourKit for providing us with a free profiler open source license. 
+Besu includes support for running Ethereum reference tests and generating detailed EVM execution traces.
 
-YourKit supports open source projects with innovative and intelligent tools
-for monitoring and profiling Java and .NET applications.
-YourKit is the creator of <a href="https://www.yourkit.com/java/profiler/">YourKit Java Profiler</a>,
-<a href="https://www.yourkit.com/.net/profiler/">YourKit .NET Profiler</a>,
-and <a href="https://www.yourkit.com/youmonitor/">YourKit YouMonitor</a>.
-
-![YourKit Logo](https://www.yourkit.com/images/yklogo.png)
+To learn how to run the tests and enable opcode-level JSON tracing for debugging and correctness verification, see the [Reference Test Execution and Tracing Guide](REFERENCE_TESTS.md).
 
 [Besu Issues]: https://github.com/hyperledger/besu/issues
 [Besu User Documentation]: https://besu.hyperledger.org

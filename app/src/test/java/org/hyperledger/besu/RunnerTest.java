@@ -164,22 +164,6 @@ public final class RunnerTest {
     syncFromGenesis(SyncMode.FULL, getFastSyncGenesis(), true);
   }
 
-  @Test
-  public void fastSyncFromGenesis() throws Exception {
-    // set merge flag to false, otherwise this test can fail if a merge test runs first
-    MergeConfiguration.setMergeEnabled(false);
-
-    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), false);
-  }
-
-  @Test
-  public void fastSyncFromGenesisUsingPeerTaskSystem() throws Exception {
-    // set merge flag to false, otherwise this test can fail if a merge test runs first
-    MergeConfiguration.setMergeEnabled(false);
-
-    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), true);
-  }
-
   private void syncFromGenesis(
       final SyncMode mode, final GenesisConfig genesisConfig, final boolean isPeerTaskSystemEnabled)
       throws Exception {
@@ -378,10 +362,8 @@ public final class RunnerTest {
   }
 
   private int getNumber(final Response response) throws IOException {
-    final int currentBlock =
-        UInt256.fromHexString(new JsonObject(response.body().string()).getString("result"))
-            .intValue();
-    return currentBlock;
+    return UInt256.fromHexString(new JsonObject(response.body().string()).getString("result"))
+        .intValue();
   }
 
   private Request getRequest(final String method, final String baseUrl) {

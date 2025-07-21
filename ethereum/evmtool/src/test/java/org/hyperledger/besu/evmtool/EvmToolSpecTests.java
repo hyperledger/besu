@@ -54,10 +54,6 @@ public class EvmToolSpecTests {
   static final ObjectMapper objectMapper = new ObjectMapper();
   static final ObjectReader specReader = objectMapper.reader();
 
-  public static Object[][] blocktestTests() {
-    return findSpecFiles(new String[] {"block-test"});
-  }
-
   public static Object[][] b11rTests() {
     return findSpecFiles(new String[] {"b11r"});
   }
@@ -124,7 +120,6 @@ public class EvmToolSpecTests {
 
   @ParameterizedTest(name = "{0}")
   @MethodSource({
-    "blocktestTests",
     "b11rTests",
     "codeValidateTests",
     "prettyPrintTests",
