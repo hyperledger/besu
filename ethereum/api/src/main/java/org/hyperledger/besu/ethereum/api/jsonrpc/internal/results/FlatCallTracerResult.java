@@ -15,30 +15,31 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
 public class FlatCallTracerResult {
   // CALL, CALLCODE, DELEGATECALL, STATICCALL
-  private static final Set<Integer> CALL_OPCODES = Set.of(0xF1, 0xF2, 0xF4, 0xFA);
+  private static final Set<String> CALL_OPCODES =
+      Set.of("call", "callcode", "delegatecall", "staticcall");
 
   // CREATE, CREATE2
-  private static final Set<Integer> CREATE_OPCODES = Set.of(0xF0, 0xF5);
+  private static final Set<String> CREATE_OPCODES = Set.of("create", "create2");
 
-  private final List<Trace> callTraces;
+  private final List<FlatTrace> callTraces;
 
-  private FlatCallTracerResult(final List<Trace> callTraces) {
+  private FlatCallTracerResult(final List<FlatTrace> callTraces) {
     this.callTraces = callTraces;
   }
 
   @JsonGetter
-  public List<Trace> getCalls() {
+  public List<FlatTrace> getCalls() {
     return callTraces;
   }
 
@@ -46,30 +47,25 @@ public class FlatCallTracerResult {
     return new FlatCallTracerResult(generateFlatCallTrace(transactionTrace));
   }
 
-  private static List<Trace> generateFlatCallTrace(final TransactionTrace transactionTrace) {
-    final List<TraceFrame> onlyCallTraces =
-        transactionTrace.getTraceFrames().stream()
-            .filter(
-                traceFrame ->
-                    isCall(traceFrame.getOpcodeNumber()) || isCreate(traceFrame.getOpcodeNumber()))
-            .toList();
-    final TransactionTrace filteredTransactionTrace =
-        new TransactionTrace(
-            transactionTrace.getTransaction(),
-            transactionTrace.getResult(),
-            onlyCallTraces,
-            transactionTrace.getBlock());
+  private static List<FlatTrace> generateFlatCallTrace(final TransactionTrace transactionTrace) {
+    final Stream<FlatTrace> allFlatTraces =
+        FlatTraceGenerator.generateFromTransactionTraceAndBlock(
+                null, transactionTrace, transactionTrace.getBlock().orElse(null))
+            .map(FlatTrace.class::cast);
 
-    return FlatTraceGenerator.generateFromTransactionTraceAndBlock(
-            null, filteredTransactionTrace, transactionTrace.getBlock().orElse(null))
+    return allFlatTraces
+        .filter(
+            trace ->
+                isCall(trace.getAction().getCallType())
+                    || isCreate(trace.getAction().getCallType()))
         .toList();
   }
 
-  private static boolean isCall(final int opcode) {
-    return CALL_OPCODES.contains(opcode);
+  private static boolean isCall(final String callType) {
+    return CALL_OPCODES.contains(callType);
   }
 
-  private static boolean isCreate(final int opcode) {
-    return CREATE_OPCODES.contains(opcode);
+  private static boolean isCreate(final String callType) {
+    return CREATE_OPCODES.contains(callType);
   }
 }

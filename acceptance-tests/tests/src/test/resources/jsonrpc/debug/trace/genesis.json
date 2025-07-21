@@ -15,11 +15,9 @@
     "terminalTotalDifficulty":0,
     "cancunTime":0,
     "pragueTime":0,
-    "qbft": {
-      "blockperiodseconds": 1,
-      "epochlength": 30000,
-      "requesttimeoutseconds": 5,
-      "blockreward": "5000000000000000000"
+    "clique": {
+      "period": 5,
+      "epoch": 30000
     },
     "depositContractAddress": "0x4242424242424242424242424242424242424242",
     "withdrawalRequestContractAddress": "0x00A3ca265EBcb825B45F985A16CEFB49958cE017",
