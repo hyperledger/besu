@@ -101,12 +101,8 @@ class TraceServiceImplTest {
     traceService.trace(
         blockNumber,
         blockNumber,
-        worldState -> {
-          assertThat(worldState.get(addressToVerify).getNonce()).isEqualTo(1);
-        },
-        worldState -> {
-          assertThat(worldState.get(addressToVerify).getNonce()).isEqualTo(2);
-        },
+        worldState -> assertThat(worldState.get(addressToVerify).getNonce()).isEqualTo(1),
+        worldState -> assertThat(worldState.get(addressToVerify).getNonce()).isEqualTo(2),
         opTracer);
 
     assertThat(worldStateArchive.getWorldState().get(addressToVerify).getNonce())
@@ -116,7 +112,10 @@ class TraceServiceImplTest {
 
     verify(opTracer)
         .traceStartBlock(
-            tracedBlock.getHeader(), tracedBlock.getBody(), tracedBlock.getHeader().getCoinbase());
+            any(),
+            tracedBlock.getHeader(),
+            tracedBlock.getBody(),
+            tracedBlock.getHeader().getCoinbase());
 
     tracedBlock
         .getBody()
@@ -167,6 +166,7 @@ class TraceServiceImplTest {
             tracedBlock -> {
               verify(opTracer)
                   .traceStartBlock(
+                      any(),
                       tracedBlock.getHeader(),
                       tracedBlock.getBody(),
                       tracedBlock.getHeader().getCoinbase());
@@ -319,7 +319,10 @@ class TraceServiceImplTest {
 
     @Override
     public void traceStartBlock(
-        final BlockHeader blockHeader, final BlockBody blockBody, final Address miningBeneficiary) {
+        final WorldView worldView,
+        final BlockHeader blockHeader,
+        final BlockBody blockBody,
+        final Address miningBeneficiary) {
       if (!traceStartBlockCalled.add(blockHeader.getBlockHash())) {
         fail("traceStartBlock already called for block " + blockHeader);
       }

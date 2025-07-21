@@ -164,7 +164,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
     LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
-    blockTracer.traceStartBlock(blockHeader, miningBeneficiary);
+    blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
 
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
