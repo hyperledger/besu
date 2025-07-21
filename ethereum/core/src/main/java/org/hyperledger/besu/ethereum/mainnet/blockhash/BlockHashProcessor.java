@@ -30,4 +30,8 @@ public interface BlockHashProcessor extends BlockContextProcessor<Void, BlockPro
   default Optional<Address> getHistoryContract() {
     return Optional.empty();
   }
+
+  default Optional<Address> getBeaconRootsContract() {
+    return Optional.empty();
+  }
 }
