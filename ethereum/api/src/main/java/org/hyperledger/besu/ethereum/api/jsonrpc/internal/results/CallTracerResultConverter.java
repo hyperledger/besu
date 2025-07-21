@@ -181,13 +181,6 @@ public class CallTracerResultConverter {
       TraceFrame frame = frames.get(i);
       String opcode = frame.getOpcode();
 
-      LOG.warn(
-          "*** Call Tracer: Processing frame {}: opcode={}, depth={}, gas={}",
-          i,
-          opcode,
-          frame.getDepth(),
-          frame.getGasRemaining());
-
       // Handle call-starting opcodes
       if (isCallStartOpcode(opcode)) {
         // Determine addresses
@@ -242,6 +235,7 @@ public class CallTracerResultConverter {
           if (frame.getRevertReason().isPresent()) {
             completedCall.revertReason(frame.getRevertReason().get().toHexString());
           }
+          LOG.warn("CALL RETURN: {}", completedCall);
 
           // Add completed call to parent
           CallTracerResult.Builder parentCall = callStack.peek();
