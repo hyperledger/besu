@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetAccount;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTarget;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -24,17 +25,14 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.CodeDelegationAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A skeleton class for implementing call operations.
@@ -43,8 +41,6 @@ import org.slf4j.LoggerFactory;
  * execute, and then updates the current message context based on its execution.
  */
 public abstract class AbstractCallOperation extends AbstractOperation {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractCallOperation.class);
 
   /** The constant UNDERFLOW_RESPONSE. */
   protected static final OperationResult UNDERFLOW_RESPONSE =
@@ -189,29 +185,19 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Address to = to(frame);
     final boolean accountIsWarm = frame.warmUpAddress(to) || gasCalculator().isPrecompile(to);
-    final long cost = cost(frame, accountIsWarm);
+    long cost = cost(frame, accountIsWarm);
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    final Account contract = frame.getWorldUpdater().get(to);
+    cost = clampedAdd(cost, gasCalculator().calculateCodeDelegationResolutionGas(frame, contract));
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
     frame.decrementRemainingGas(cost);
 
     frame.clearReturnData();
-
-    final Account contract = frame.getWorldUpdater().get(to);
-
-    // code resolution gas must be deducted before we check for frame depth too deep to be spec
-    // compliant
-    try {
-      deductGasForCodeDelegationResolution(frame, contract);
-    } catch (InsufficientGasException e) {
-      LOG.atDebug()
-          .setMessage(
-              "Insufficient gas for covering code delegation resolution. remaining gas {}, gas cost: {}")
-          .addArgument(frame.getRemainingGas())
-          .addArgument(e.getGasCost())
-          .log();
-      return new OperationResult(e.getGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
 
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
@@ -258,47 +244,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
     return new OperationResult(cost, null, 0);
-  }
-
-  /**
-   * Deducts the gas cost for delegated code resolution.
-   *
-   * @param frame the message frame
-   * @param contract the account
-   * @throws InsufficientGasException if there is insufficient gas to resolve delegated code
-   */
-  protected void deductGasForCodeDelegationResolution(
-      final MessageFrame frame, final Account contract) throws InsufficientGasException {
-    if (contract == null || !hasCodeDelegation(contract.getCode())) {
-      return;
-    }
-
-    final long codeDelegationResolutionGas =
-        CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract);
-
-    if (frame.getRemainingGas() < codeDelegationResolutionGas) {
-      throw new InsufficientGasException(
-          codeDelegationResolutionGas,
-          "Insufficient gas to resolve delegated code. Gas required: "
-              + codeDelegationResolutionGas
-              + ", Gas available: "
-              + frame.getRemainingGas());
-    }
-
-    frame.decrementRemainingGas(codeDelegationResolutionGas);
-  }
-
-  /**
-   * Calculates Cost.
-   *
-   * @param frame the frame
-   * @return the long
-   * @deprecated use the form with the `accountIsWarm` boolean
-   */
-  @Deprecated(since = "24.2.0", forRemoval = true)
-  @SuppressWarnings("InlineMeSuggester") // downstream users override, so @InlineMe is inappropriate
-  public long cost(final MessageFrame frame) {
-    return cost(frame, true);
   }
 
   /**
@@ -385,7 +330,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @param account the account which codes needs to be retrieved
    * @return the code
    */
-  protected static Code getCode(final EVM evm, final MessageFrame frame, final Account account) {
+  protected Code getCode(final EVM evm, final MessageFrame frame, final Account account) {
     if (account == null) {
       return CodeV0.EMPTY_CODE;
     }
@@ -395,13 +340,32 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return CodeV0.EMPTY_CODE;
     }
 
-    if (!hasCodeDelegation(account.getCode())) {
-      return evm.getCode(account.getCodeHash(), account.getCode());
+    final boolean accountHasCodeCache = account.getCodeCache() != null;
+
+    final Code code;
+    // Bonsai accounts may have a fully cached code, so we use that one
+    if (accountHasCodeCache) {
+      code = account.getOrCreateCachedCode();
+    }
+    // Any other account can only use the cached jump dest analysis if available
+    else {
+      code = evm.getOrCreateCachedJumpDest(codeHash, account.getCode());
     }
 
-    final CodeDelegationAccount targetAccount =
-        getTargetAccount(frame.getWorldUpdater(), evm.getGasCalculator(), account);
+    if (!hasCodeDelegation(code.getBytes())) {
+      return code;
+    }
 
-    return evm.getCode(targetAccount.getCodeHash(), targetAccount.getCode());
+    final CodeDelegationHelper.Target target =
+        getTarget(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account);
+
+    if (accountHasCodeCache) {
+      // If the account has a code cache, we can return the cached code of the target
+      return target.code();
+    }
+
+    // otherwise we can only use the cached jump destination analysis
+    final Code targetCode = target.code();
+    return evm.getOrCreateCachedJumpDest(targetCode.getCodeHash(), targetCode.getBytes());
   }
 }

@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * A map that stores storage keys and their associated values, with a consumer to process updates.
@@ -45,7 +46,7 @@ public class StorageConsumingMap<K, T> extends ForwardingMap<K, T> {
   }
 
   @Override
-  public T put(@Nonnull final K slotKey, @Nonnull final T value) {
+  public T put(@NotNull final K slotKey, @NotNull final T value) {
     consumer.process(address, slotKey);
     return storages.put(slotKey, value);
   }

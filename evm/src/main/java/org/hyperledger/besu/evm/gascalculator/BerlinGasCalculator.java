@@ -69,7 +69,8 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   // unchanged from Frontier
   private static final long COPY_WORD_GAS_COST = 3L;
 
-  private final int maxPrecompile;
+  /** configured maximum valid precompile address for this fork/gas calculator */
+  protected final int maxPrecompile;
 
   /**
    * Instantiates a new Berlin gas calculator.
@@ -146,32 +147,6 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   public long sloadOperationGasCost(
       final MessageFrame frame, final UInt256 key, final boolean slotIsWarm) {
     return (slotIsWarm ? getWarmStorageReadCost() : getColdSloadCost());
-  }
-
-  // Redefined costs from EIP-2929
-  @Override
-  @SuppressWarnings("java:S5738")
-  public long callOperationGasCost(
-      final MessageFrame frame,
-      final long stipend,
-      final long inputDataOffset,
-      final long inputDataLength,
-      final long outputDataOffset,
-      final long outputDataLength,
-      final Wei transferValue,
-      final Account recipient,
-      final Address to) {
-    return callOperationGasCost(
-        frame,
-        stipend,
-        inputDataOffset,
-        inputDataLength,
-        outputDataOffset,
-        outputDataLength,
-        transferValue,
-        recipient,
-        to,
-        frame.warmUpAddress(to) || isPrecompile(to));
   }
 
   // Redefined costs from EIP-2929

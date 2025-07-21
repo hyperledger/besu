@@ -18,7 +18,7 @@ apply plugin: 'java-library'
 apply plugin: 'idea'
 
 jar {
-  archiveBaseName = 'besu-evm'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -34,12 +34,16 @@ jar {
 dependencies {
   api 'org.slf4j:slf4j-api'
 
+  annotationProcessor 'com.google.dagger:dagger-compiler'
+
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:rlp')
+  implementation project(':util')
 
   implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
   implementation 'net.java.dev.jna:jna'
   implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'io.consensys.tuweni:tuweni-units'

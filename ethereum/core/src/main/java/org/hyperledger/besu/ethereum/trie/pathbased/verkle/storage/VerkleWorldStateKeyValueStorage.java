@@ -154,7 +154,8 @@ public class VerkleWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     return new Updater(
         composedWorldStateStorage.startTransaction(),
         trieLogStorage.startTransaction(),
-        getFlatDbStrategy());
+        getFlatDbStrategy(),
+        composedWorldStateStorage);
   }
 
   public static class Updater implements PathBasedWorldStateKeyValueStorage.Updater {
@@ -162,19 +163,23 @@ public class VerkleWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     private final SegmentedKeyValueStorageTransaction composedWorldStateTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
     private final FlatDbStrategy flatDbStrategy;
+    private final SegmentedKeyValueStorage worldStorage;
 
     public Updater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
-        final FlatDbStrategy flatDbStrategy) {
+        final FlatDbStrategy flatDbStrategy,
+        final SegmentedKeyValueStorage worldStorage) {
 
       this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
       this.flatDbStrategy = flatDbStrategy;
+      this.worldStorage = worldStorage;
     }
 
     public Updater removeCode(final Hash accountHash, final Hash codeHash) {
-      flatDbStrategy.removeFlatCode(composedWorldStateTransaction, accountHash, codeHash);
+      flatDbStrategy.removeFlatCode(
+          worldStorage, composedWorldStateTransaction, accountHash, codeHash);
       return this;
     }
 
@@ -189,12 +194,13 @@ public class VerkleWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
         // Don't save empty values
         return this;
       }
-      flatDbStrategy.putFlatCode(composedWorldStateTransaction, accountHash, codeHash, code);
+      flatDbStrategy.putFlatCode(
+          worldStorage, composedWorldStateTransaction, accountHash, codeHash, code);
       return this;
     }
 
     public Updater removeAccountInfoState(final Hash accountHash) {
-      flatDbStrategy.removeFlatAccount(composedWorldStateTransaction, accountHash);
+      flatDbStrategy.removeFlatAccount(worldStorage, composedWorldStateTransaction, accountHash);
       return this;
     }
 
@@ -203,20 +209,21 @@ public class VerkleWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
         // Don't save empty values
         return this;
       }
-      flatDbStrategy.putFlatAccount(composedWorldStateTransaction, accountHash, accountValue);
+      flatDbStrategy.putFlatAccount(
+          worldStorage, composedWorldStateTransaction, accountHash, accountValue);
       return this;
     }
 
     public Updater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
       flatDbStrategy.putFlatAccountStorageValueByStorageSlotHash(
-          composedWorldStateTransaction, accountHash, slotHash, storage);
+          worldStorage, composedWorldStateTransaction, accountHash, slotHash, storage);
       return this;
     }
 
     public void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
       flatDbStrategy.removeFlatAccountStorageValueByStorageSlotHash(
-          composedWorldStateTransaction, accountHash, slotHash);
+          worldStorage, composedWorldStateTransaction, accountHash, slotHash);
     }
 
     @Override
@@ -244,6 +251,16 @@ public class VerkleWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     public void commit() {
       // write the log ahead, then the worldstate
       trieLogStorageTransaction.commit();
+      composedWorldStateTransaction.commit();
+    }
+
+    @Override
+    public void commitTrieLogOnly() {
+      trieLogStorageTransaction.commit();
+    }
+
+    @Override
+    public void commitComposedOnly() {
       composedWorldStateTransaction.commit();
     }
 

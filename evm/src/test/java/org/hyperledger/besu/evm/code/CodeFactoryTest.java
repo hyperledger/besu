@@ -594,27 +594,27 @@ class CodeFactoryTest {
   }
 
   private static void validCode(final String str) {
-    EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
-    Code code = evm.getCodeUncached(bytesFromPrettyPrint(str));
+    EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
+    Code code = evm.wrapCode(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isTrue();
   }
 
   private static void invalidCode(final String str, final String error) {
-    EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
-    Code code = evm.getCodeUncached(bytesFromPrettyPrint(str));
+    EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
+    Code code = evm.wrapCode(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isFalse();
     assertThat(((CodeInvalid) code).getInvalidReason()).contains(error);
   }
 
   private static void invalidCode(final String str) {
-    EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
-    Code code = evm.getCodeUncached(bytesFromPrettyPrint(str));
+    EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
+    Code code = evm.wrapCode(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isFalse();
   }
 
   private static void invalidCodeForCreation(final String str) {
-    EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
-    Code code = evm.getCodeForCreation(bytesFromPrettyPrint(str));
+    EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
+    Code code = evm.wrapCodeForCreation(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isFalse();
   }
 }

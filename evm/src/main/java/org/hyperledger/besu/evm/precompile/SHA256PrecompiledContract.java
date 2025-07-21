@@ -18,8 +18,7 @@ import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import javax.annotation.Nonnull;
-
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Sha256 precompiled contract. */
@@ -30,7 +29,7 @@ public class SHA256PrecompiledContract extends AbstractPrecompiledContract {
    *
    * @param gasCalculator the gas calculator
    */
-  public SHA256PrecompiledContract(final GasCalculator gasCalculator) {
+  SHA256PrecompiledContract(final GasCalculator gasCalculator) {
     super("SHA256", gasCalculator);
   }
 
@@ -39,10 +38,10 @@ public class SHA256PrecompiledContract extends AbstractPrecompiledContract {
     return gasCalculator().sha256PrecompiledContractGasCost(input);
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
     return PrecompileContractResult.success(Hash.sha256(input));
   }
 }

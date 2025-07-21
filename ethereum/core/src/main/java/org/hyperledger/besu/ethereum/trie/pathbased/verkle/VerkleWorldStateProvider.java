@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.verkle;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.cache.VerkleCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.storage.VerkleWorldStateKeyValueStorage;
@@ -32,7 +33,8 @@ public class VerkleWorldStateProvider extends PathBasedWorldStateProvider {
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final ServiceManager pluginContext,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final CodeCache codeCache) {
     super(
         DataStorageFormat.VERKLE,
         worldStateKeyValueStorage,
@@ -40,8 +42,10 @@ public class VerkleWorldStateProvider extends PathBasedWorldStateProvider {
         maxLayersToLoad,
         pluginContext);
     provideCachedWorldStorageManager(
-        new VerkleCachedWorldStorageManager(this, worldStateKeyValueStorage, worldStateConfig));
+        new VerkleCachedWorldStorageManager(
+            this, worldStateKeyValueStorage, worldStateConfig, codeCache));
     loadHeadWorldState(
-        new VerkleWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
+        new VerkleWorldState(
+            this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache));
   }
 }

@@ -31,10 +31,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nonnull;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       LoggerFactory.getLogger(AltBN128PairingPrecompiledContract.class);
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
-  private static final String PRECOMPILE_NAME = "AltBN128Pairing";
+  private static final String PRECOMPILE_NAME = "BN256_PAIRING";
 
   private static final Cache<Integer, PrecompileInputResultTuple> bnPairingCache =
       Caffeine.newBuilder()
@@ -65,7 +65,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
   private final long pairingGasCost;
   private final long baseGasCost;
 
-  private AltBN128PairingPrecompiledContract(
+  AltBN128PairingPrecompiledContract(
       final GasCalculator gasCalculator, final long pairingGasCost, final long baseGasCost) {
     super(
         PRECOMPILE_NAME,
@@ -74,16 +74,6 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
         Integer.MAX_VALUE / PARAMETER_LENGTH * PARAMETER_LENGTH);
     this.pairingGasCost = pairingGasCost;
     this.baseGasCost = baseGasCost;
-  }
-
-  /**
-   * Create Byzantium AltBN128Pairing precompiled contract.
-   *
-   * @param gasCalculator the gas calculator
-   * @return the AltBN128Pairing precompiled contract
-   */
-  public static AltBN128PairingPrecompiledContract byzantium(final GasCalculator gasCalculator) {
-    return new AltBN128PairingPrecompiledContract(gasCalculator, 80_000L, 100_000L);
   }
 
   /**
@@ -102,10 +92,10 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     return (pairingGasCost * parameters) + baseGasCost;
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
     if (input.isEmpty()) {
       return PrecompileContractResult.success(TRUE);
     }
@@ -151,7 +141,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     return res.cachedResult();
   }
 
-  @Nonnull
+  @NotNull
   private static PrecompileContractResult computeDefault(final Bytes input) {
     final int parameters = input.size() / PARAMETER_LENGTH;
     final List<AltBn128Point> a = new ArrayList<>();

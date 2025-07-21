@@ -27,8 +27,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -36,8 +38,10 @@ import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
+import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
@@ -45,6 +49,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -116,6 +121,7 @@ public class RespondingEthPeer {
   private static RespondingEthPeer create(
       final EthProtocolManager ethProtocolManager,
       final Optional<SnapProtocolManager> snapProtocolManager,
+      final Capability capability,
       final Hash chainHeadHash,
       final Difficulty totalDifficulty,
       final OptionalLong estimatedHeight,
@@ -124,7 +130,7 @@ public class RespondingEthPeer {
       final boolean addToEthPeers) {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
 
-    final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.LATEST));
+    final Set<Capability> caps = new HashSet<>(Collections.singletonList(capability));
     final BlockingQueue<OutgoingMessage> outgoingMessages = new ArrayBlockingQueue<>(1000);
     final MockPeerConnection peerConnection =
         new MockPeerConnection(
@@ -132,8 +138,22 @@ public class RespondingEthPeer {
     ethPeers.registerNewConnection(peerConnection, peerValidators);
     final int before = ethPeers.peerCount();
     final EthPeer peer = ethPeers.peer(peerConnection);
-    peer.registerStatusReceived(
-        chainHeadHash, totalDifficulty, EthProtocol.LATEST.getVersion(), peerConnection);
+
+    StatusMessage.Builder statusMessageBuilder =
+        StatusMessage.builder()
+            .protocolVersion(capability.getVersion())
+            .networkId(BigInteger.ONE)
+            .genesisHash(gen.hash())
+            .bestHash(chainHeadHash)
+            .forkId(new ForkId(Hash.ZERO, 0));
+    if (capability.getVersion() < EthProtocolVersion.V69) {
+      statusMessageBuilder.totalDifficulty(totalDifficulty);
+    } else if (EthProtocol.isEth69Compatible(capability)) {
+      statusMessageBuilder.blockRange(new StatusMessage.BlockRange(0, estimatedHeight.orElse(0)));
+    }
+    StatusMessage statusMessage = statusMessageBuilder.build();
+
+    peer.registerStatusReceived(statusMessage, peerConnection);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
     if (addToEthPeers) {
       peer.registerStatusSent(peerConnection);
@@ -297,7 +317,7 @@ public class RespondingEthPeer {
           response = EthServer.constructGetBodiesResponse(blockchain, msg, 200, maxMsgSize);
           break;
         case EthProtocolMessages.GET_RECEIPTS:
-          response = EthServer.constructGetReceiptsResponse(blockchain, msg, 200, maxMsgSize);
+          response = EthServer.constructGetReceiptsResponse(blockchain, msg, 200, maxMsgSize, cap);
           break;
         case EthProtocolMessages.GET_NODE_DATA:
           response =
@@ -366,7 +386,10 @@ public class RespondingEthPeer {
               Lists.newArrayList(receiptsMessage.receipts());
           final List<List<TransactionReceipt>> partialReceipts =
               originalReceipts.subList(0, (int) (originalReceipts.size() * portion));
-          partialResponse = ReceiptsMessage.create(partialReceipts);
+          partialResponse =
+              ReceiptsMessage.create(
+                  partialReceipts,
+                  TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
           break;
         case EthProtocolMessages.GET_NODE_DATA:
           final NodeDataMessage nodeDataMessage = NodeDataMessage.readFrom(originalResponse);
@@ -400,7 +423,10 @@ public class RespondingEthPeer {
           response = BlockBodiesMessage.create(Collections.emptyList());
           break;
         case EthProtocolMessages.GET_RECEIPTS:
-          response = ReceiptsMessage.create(Collections.emptyList());
+          response =
+              ReceiptsMessage.create(
+                  Collections.emptyList(),
+                  TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
           break;
         case EthProtocolMessages.GET_NODE_DATA:
           response = NodeDataMessage.create(Collections.emptyList());
@@ -422,13 +448,16 @@ public class RespondingEthPeer {
     private final List<PeerValidator> peerValidators = new ArrayList<>();
     private boolean isServingSnap = false;
     private boolean addToEthPeers = true;
+    private Capability capability = EthProtocol.LATEST;
 
     public RespondingEthPeer build() {
       checkNotNull(ethProtocolManager, "Must configure EthProtocolManager");
+      checkNotNull(capability, "Must configure Capability");
 
       return RespondingEthPeer.create(
           ethProtocolManager,
           snapProtocolManager,
+          capability,
           chainHeadHash,
           totalDifficulty,
           estimatedHeight,
@@ -490,6 +519,11 @@ public class RespondingEthPeer {
 
     public Builder addToEthPeers(final boolean addToEthPeers) {
       this.addToEthPeers = addToEthPeers;
+      return this;
+    }
+
+    public Builder capability(final Capability capability) {
+      this.capability = capability;
       return this;
     }
   }

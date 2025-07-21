@@ -33,14 +33,22 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.tx.exceptions.ContractCallException;
 
 public class BftMiningSoakTest extends ParameterizedBftTestBase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BftMiningSoakTest.class);
 
   private final int NUM_STEPS = 5;
 
   private final int MIN_TEST_TIME_MINS = 60;
 
   private static final long ONE_MINUTE = Duration.of(1, ChronoUnit.MINUTES).toMillis();
+
+  private static final long THREE_MINUTES = Duration.of(3, ChronoUnit.MINUTES).toMillis();
 
   private static final long TEN_SECONDS = Duration.of(10, ChronoUnit.SECONDS).toMillis();
 
@@ -61,7 +69,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
     // Create a mix of Bonsai and Forest DB nodes
     final BesuNode minerNode1 = nodeFactory.createBonsaiNodeFixedPort(besu, "miner1");
-    final BesuNode minerNode2 = nodeFactory.createForestNodeFixedPort(besu, "miner2");
+    final BesuNode minerNode2 = nodeFactory.createBonsaiArchiveNodeFixedPort(besu, "miner2");
     final BesuNode minerNode3 = nodeFactory.createBonsaiNodeFixedPort(besu, "miner3");
     final BesuNode minerNode4 = nodeFactory.createForestNodeFixedPort(besu, "miner4");
 
@@ -80,6 +88,13 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     //    applying new forks.
     SimpleStorage simpleStorageContract =
         minerNode1.execute(contractTransactions.createSmartContract(SimpleStorage.class));
+
+    // Create another instance of the contract referencing the same contract address but on the
+    // archive node. This contract instance should be able to query state from the beginning of
+    // the test
+    SimpleStorage simpleStorageArchive =
+        minerNode2.execute(contractTransactions.createSmartContract(SimpleStorage.class));
+    simpleStorageArchive.setContractAddress(simpleStorageContract.getContractAddress());
 
     // Check the contract address is as expected for this sender & nonce
     contractVerifier
@@ -102,6 +117,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
     // Set to something new
     simpleStorageContract.set(BigInteger.valueOf(101)).send();
+
+    // Save this block height to check on the archive node at the end of the test
+    BigInteger archiveChainHeight = minerNode1.execute(ethTransactions.blockNumber());
 
     // Check the state of the contract has updated correctly. We'll set & get this several times
     // during the test
@@ -131,6 +149,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     // Step 2
     // Stop one of the nodes, check that the chain continues mining
     // blocks
+    LOG.info("Stopping node 4 to check the chain continues mining (albeit more slowly)");
     stopNode(minerNode4);
 
     nextStepEndTime =
@@ -150,6 +169,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     // Step 3
     // Stop another one of the nodes, check that the chain now stops
     // mining blocks
+    LOG.info("Stopping node 3 to check that the chain stalls");
     stopNode(minerNode3);
 
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
@@ -169,8 +189,8 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     // Step 4
     // Restart both of the stopped nodes. Check that the chain resumes
     // mining blocks
+    LOG.info("Starting node 3 and node 4 to ensure the chain resumes mining new blocks");
     startNode(minerNode3);
-
     startNode(minerNode4);
 
     previousStepEndTime = Instant.now();
@@ -202,16 +222,21 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       lastChainHeight = chainHeight;
     }
 
+    LOG.info("Updating the value in the smart contract from 101 to 201");
     // Update our smart contract before upgrading from berlin to london
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(101));
     simpleStorageContract.set(BigInteger.valueOf(201)).send();
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(201));
 
+    LOG.info(
+        "Upgrading the entire chain to the London fork one node at a time. The genesis for each node will be updated to londonBlock = "
+            + lastChainHeight.intValue()
+            + 120);
     // Upgrade the chain from berlin to london in 120 blocks time
-    upgradeToLondon(
-        minerNode1, minerNode2, minerNode3, minerNode4, lastChainHeight.intValue() + 120);
+    int londonBlockNumber = lastChainHeight.intValue() + 120;
+    upgradeToLondon(minerNode1, minerNode2, minerNode3, minerNode4, londonBlockNumber);
 
-    cluster.verify(blockchain.reachesHeight(minerNode4, 1, 180));
+    minerNode4.verify(blockchain.minimumHeight(londonBlockNumber, 180));
 
     previousStepEndTime = Instant.now();
 
@@ -219,6 +244,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     nextStepEndTime =
         previousStepEndTime.plus(getTestDurationMins() / NUM_STEPS, ChronoUnit.MINUTES);
     lastChainHeight = chainHeight;
+
+    // Allow the chain to restart mining blocks
+    Thread.sleep(THREE_MINUTES);
 
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
       Thread.sleep(ONE_MINUTE);
@@ -230,6 +258,8 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       lastChainHeight = chainHeight;
     }
 
+    LOG.info(
+        "Chain has successfully upgraded to the London fork. Checking the contract state is correct");
     // Check that the state of our smart contract is still correct
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(201));
 
@@ -238,18 +268,47 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(301));
 
     // Upgrade the chain to shanghai in 120 seconds. Then try to deploy a shanghai contract
+    Instant shanghaiUpgradeStartTime = Instant.now();
     upgradeToShanghai(
-        minerNode1, minerNode2, minerNode3, minerNode4, Instant.now().getEpochSecond() + 120);
+        minerNode1,
+        minerNode2,
+        minerNode3,
+        minerNode4,
+        shanghaiUpgradeStartTime.getEpochSecond() + 120);
 
     cluster.verify(blockchain.reachesHeight(minerNode4, 1, 180));
 
+    // Check if has been 120 seconds since the upgrade and wait otherwise
+    while (Instant.now().getEpochSecond() < shanghaiUpgradeStartTime.getEpochSecond() + 130) {
+      Thread.sleep(TEN_SECONDS);
+    }
+
+    LOG.info(
+        "Deploying a smart contract that should only work if the chain is running on the shanghai fork");
     SimpleStorageShanghai simpleStorageContractShanghai =
         minerNode1.execute(contractTransactions.createSmartContract(SimpleStorageShanghai.class));
 
     // Check the contract address is as expected for this sender & nonce
     contractVerifier
-        .validTransactionReceipt("0x05d91b9031a655d08e654177336d08543ac4b711")
+        .validTransactionReceipt("0xfeae27388a65ee984f452f86effed42aabd438fd")
         .verify(simpleStorageContractShanghai);
+
+    // Archive node test. Check the state of the contract when it was first updated in the test
+    LOG.info(
+        "Checking that the archive node shows us the original smart contract value if we set a historic block number");
+    simpleStorageArchive.setDefaultBlockParameter(
+        DefaultBlockParameter.valueOf(archiveChainHeight));
+    assertThat(simpleStorageArchive.get().send()).isEqualTo(BigInteger.valueOf(101));
+
+    try {
+      simpleStorageContract.setDefaultBlockParameter(
+          DefaultBlockParameter.valueOf(archiveChainHeight));
+      // Should throw ContractCallException because a non-archive not can't satisfy this request
+      simpleStorageContract.get().send();
+      Assertions.fail("Request for historic state from non-archive node should have failed");
+    } catch (ContractCallException e) {
+      // Ignore
+    }
   }
 
   private static void updateGenesisConfigToLondon(
@@ -285,21 +344,26 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       final int londonBlockNumber)
       throws InterruptedException {
     // Node 1
+
+    LOG.info("Upgrading node 1 to london fork");
     stopNode(minerNode1);
     updateGenesisConfigToLondon(minerNode1, true, londonBlockNumber);
     startNode(minerNode1);
 
     // Node 2
+    LOG.info("Upgrading node 2 to london fork");
     stopNode(minerNode2);
     updateGenesisConfigToLondon(minerNode2, true, londonBlockNumber);
     startNode(minerNode2);
 
     // Node 3
+    LOG.info("Upgrading node 3 to london fork");
     stopNode(minerNode3);
     updateGenesisConfigToLondon(minerNode3, true, londonBlockNumber);
     startNode(minerNode3);
 
     // Node 4
+    LOG.info("Upgrading node 4 to london fork");
     stopNode(minerNode4);
     updateGenesisConfigToLondon(minerNode4, true, londonBlockNumber);
     startNode(minerNode4);
@@ -313,21 +377,25 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       final long shanghaiTime)
       throws InterruptedException {
     // Node 1
+    LOG.info("Upgrading node 1 to shanghai fork");
     stopNode(minerNode1);
     updateGenesisConfigToShanghai(minerNode1, shanghaiTime);
     startNode(minerNode1);
 
     // Node 2
+    LOG.info("Upgrading node 2 to shanghai fork");
     stopNode(minerNode2);
     updateGenesisConfigToShanghai(minerNode2, shanghaiTime);
     startNode(minerNode2);
 
     // Node 3
+    LOG.info("Upgrading node 3 to shanghai fork");
     stopNode(minerNode3);
     updateGenesisConfigToShanghai(minerNode3, shanghaiTime);
     startNode(minerNode3);
 
     // Node 4
+    LOG.info("Upgrading node 4 to shanghai fork");
     stopNode(minerNode4);
     updateGenesisConfigToShanghai(minerNode4, shanghaiTime);
     startNode(minerNode4);

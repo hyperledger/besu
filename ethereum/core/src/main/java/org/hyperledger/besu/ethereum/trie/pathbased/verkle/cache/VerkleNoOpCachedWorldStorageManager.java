@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.verkle.cache;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.pathbased.verkle.storage.VerkleWorldStateKeyValueStorage;
@@ -26,8 +27,13 @@ import java.util.function.Function;
 public class VerkleNoOpCachedWorldStorageManager extends VerkleCachedWorldStorageManager {
 
   public VerkleNoOpCachedWorldStorageManager(
-      final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage) {
-    super(null, verkleWorldStateKeyValueStorage, WorldStateConfig.createStatefulConfigWithTrie());
+      final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage,
+      final CodeCache codeCache) {
+    super(
+        null,
+        verkleWorldStateKeyValueStorage,
+        WorldStateConfig.createStatefulConfigWithTrie(),
+        codeCache);
   }
 
   @Override

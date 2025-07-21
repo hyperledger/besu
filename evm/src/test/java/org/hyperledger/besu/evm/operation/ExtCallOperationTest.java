@@ -27,7 +27,7 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.EOFGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -44,13 +44,12 @@ public class ExtCallOperationTest {
 
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
-  private static final EVM EOF_EVM = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
-  public static final Code LEGACY_CODE =
-      EOF_EVM.getCodeUncached(Bytes.of(ExtCallOperation.OPCODE, 1));
+  private static final EVM EOF_EVM = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
+  public static final Code LEGACY_CODE = EOF_EVM.wrapCode(Bytes.of(ExtCallOperation.OPCODE, 1));
   public static final Code SIMPLE_EOF =
-      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
+      EOF_EVM.wrapCode(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
   public static final Code INVALID_EOF =
-      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000023"));
+      EOF_EVM.wrapCode(Bytes.fromHexString("0xEF00010100040200010001040000000080000023"));
   private static final Address CONTRACT_ADDRESS = Address.fromHexString("0xc0de");
 
   static Iterable<Arguments> data() {
@@ -115,7 +114,7 @@ public class ExtCallOperationTest {
       final Bytes stackItem,
       final boolean validCode,
       final boolean warmAddress) {
-    final ExtCallOperation operation = new ExtCallOperation(new OsakaGasCalculator());
+    final ExtCallOperation operation = new ExtCallOperation(new EOFGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -133,6 +132,7 @@ public class ExtCallOperationTest {
     }
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF).getCodeHash());
+    when(account.getOrCreateCachedCode()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF));
     when(account.getCode()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF).getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);
@@ -206,7 +206,7 @@ public class ExtCallOperationTest {
       final Wei valueSent,
       final Wei valueWeiHave,
       final boolean isStatic) {
-    final ExtCallOperation operation = new ExtCallOperation(new OsakaGasCalculator());
+    final ExtCallOperation operation = new ExtCallOperation(new EOFGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -223,6 +223,7 @@ public class ExtCallOperationTest {
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
     when(account.getBalance()).thenReturn(valueWeiHave);
     when(account.getCodeHash()).thenReturn(SIMPLE_EOF.getCodeHash());
+    when(account.getOrCreateCachedCode()).thenReturn(SIMPLE_EOF);
     when(account.getCode()).thenReturn(SIMPLE_EOF.getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);
@@ -242,7 +243,7 @@ public class ExtCallOperationTest {
 
   @Test
   void overflowTest() {
-    final ExtCallOperation operation = new ExtCallOperation(new OsakaGasCalculator());
+    final ExtCallOperation operation = new ExtCallOperation(new EOFGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -258,6 +259,7 @@ public class ExtCallOperationTest {
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn(SIMPLE_EOF.getCodeHash());
+    when(account.getOrCreateCachedCode()).thenReturn(SIMPLE_EOF);
     when(account.getCode()).thenReturn(SIMPLE_EOF.getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);
@@ -281,7 +283,7 @@ public class ExtCallOperationTest {
 
   @Test
   void legacyTest() {
-    final ExtCallOperation operation = new ExtCallOperation(new OsakaGasCalculator());
+    final ExtCallOperation operation = new ExtCallOperation(new EOFGasCalculator());
 
     final var messageFrame =
         new TestMessageFrameBuilder()
@@ -297,6 +299,7 @@ public class ExtCallOperationTest {
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn(SIMPLE_EOF.getCodeHash());
+    when(account.getOrCreateCachedCode()).thenReturn(SIMPLE_EOF);
     when(account.getCode()).thenReturn(SIMPLE_EOF.getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);

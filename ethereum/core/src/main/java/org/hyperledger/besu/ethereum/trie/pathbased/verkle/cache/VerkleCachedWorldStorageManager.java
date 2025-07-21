@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.verkle.cache;
 
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
@@ -28,11 +29,15 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 public class VerkleCachedWorldStorageManager extends PathBasedCachedWorldStorageManager {
 
+  private final CodeCache codeCache;
+
   public VerkleCachedWorldStorageManager(
       final VerkleWorldStateProvider archive,
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final WorldStateConfig worldStateConfig) {
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache) {
     super(archive, worldStateKeyValueStorage, worldStateConfig);
+    this.codeCache = codeCache;
   }
 
   @Override
@@ -44,7 +49,8 @@ public class VerkleCachedWorldStorageManager extends PathBasedCachedWorldStorage
         (VerkleWorldStateProvider) archive,
         (VerkleWorldStateKeyValueStorage) worldStateKeyValueStorage,
         evmConfiguration,
-        WorldStateConfig.newBuilder(worldStateConfig).build());
+        WorldStateConfig.newBuilder(worldStateConfig).build(),
+        codeCache);
   }
 
   @Override

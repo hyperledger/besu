@@ -53,6 +53,7 @@ public class DifficultyCalculatorTests {
     Map<String, String> postMergeOverrides = new HashMap<>();
     postMergeOverrides.put("shanghaiTime", "999999999999");
     postMergeOverrides.put("cancunTime","999999999999");
+    postMergeOverrides.put("pragueTime","999999999999");
     return Stream.of(
         Arguments.of(
             "/BasicTests/difficultyMainNetwork.json",

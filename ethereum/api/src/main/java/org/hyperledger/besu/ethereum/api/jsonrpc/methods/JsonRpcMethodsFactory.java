@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -76,7 +75,6 @@ public class JsonRpcMethodsFactory {
       final Optional<AccountLocalConfigPermissioningController> accountsAllowlistController,
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistController,
       final Collection<String> rpcApis,
-      final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
@@ -117,8 +115,6 @@ public class JsonRpcMethodsFactory {
                   dataDir,
                   transactionSimulator,
                   ethScheduler),
-              new EeaJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
                   miningCoordinator,
                   protocolSchedule,
@@ -136,8 +132,10 @@ public class JsonRpcMethodsFactory {
                   filterManager,
                   transactionPool,
                   miningCoordinator,
+                  miningConfiguration,
                   supportedCapabilities,
                   apiConfiguration,
+                  genesisConfigOptions,
                   transactionSimulator),
               new NetJsonRpcMethods(
                   p2pNetwork,
@@ -148,14 +146,6 @@ public class JsonRpcMethodsFactory {
                   graphQLConfiguration),
               new MinerJsonRpcMethods(miningConfiguration, miningCoordinator),
               new PermJsonRpcMethods(accountsAllowlistController, nodeAllowlistController),
-              new PrivJsonRpcMethods(
-                  blockchainQueries,
-                  protocolSchedule,
-                  transactionPool,
-                  privacyParameters,
-                  filterManager),
-              new PrivxJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientNodeName),
               new TraceJsonRpcMethods(
                   blockchainQueries,

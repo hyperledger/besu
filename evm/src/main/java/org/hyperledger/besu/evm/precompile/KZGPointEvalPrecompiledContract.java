@@ -24,12 +24,12 @@ import org.hyperledger.besu.evm.internal.Words;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.Nonnull;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.annotations.VisibleForTesting;
 import ethereum.ckzg4844.CKZG4844JNI;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -110,11 +110,11 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   }
 
   /** Default constructor. */
-  public KZGPointEvalPrecompiledContract() {}
+  KZGPointEvalPrecompiledContract() {}
 
   @Override
   public String getName() {
-    return "KZGPointEval";
+    return "KZG_POINT_EVALUATION";
   }
 
   @Override
@@ -123,10 +123,10 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     return 50000;
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
 
     if (input.size() != 192) {
       return PrecompileContractResult.halt(

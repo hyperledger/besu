@@ -189,26 +189,36 @@ public class StateTestSubCommand implements Runnable {
   }
 
   private void executeStateTest(final Map<String, GeneralStateTestCaseSpec> generalStateTests) {
-    for (final Map.Entry<String, GeneralStateTestCaseSpec> generalStateTestEntry :
-        generalStateTests.entrySet()) {
-      if (testName == null || testName.equals(generalStateTestEntry.getKey())) {
-        generalStateTestEntry
-            .getValue()
-            .finalStateSpecs()
-            .forEach((__, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs));
+    int repeatCount = Math.max(1, parentCommand.getRepeatCount());
+    for (int i = 0; i < repeatCount; i++) {
+      boolean isLastIteration = (i == repeatCount - 1);
+      for (final Map.Entry<String, GeneralStateTestCaseSpec> generalStateTestEntry :
+          generalStateTests.entrySet()) {
+        if (testName == null || testName.equals(generalStateTestEntry.getKey())) {
+          generalStateTestEntry
+              .getValue()
+              .finalStateSpecs()
+              .forEach(
+                  (__, specs) ->
+                      traceTestSpecs(generalStateTestEntry.getKey(), specs, isLastIteration));
+        }
       }
     }
   }
 
-  private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
+  private void traceTestSpecs(
+      final String test,
+      final List<GeneralStateTestCaseEipSpec> specs,
+      final boolean isLastIteration) {
     final OperationTracer tracer = // You should have picked Mercy.
-        parentCommand.showJsonResults
+        parentCommand.showJsonResults && isLastIteration
             ? new StandardJsonTracer(
                 parentCommand.out,
                 parentCommand.showMemory,
                 !parentCommand.hideStack,
                 parentCommand.showReturnData,
                 parentCommand.showStorage,
+                parentCommand.eip3155strict,
                 parentCommand.showStatelessAccessWitness)
             : OperationTracer.NO_TRACING;
 
@@ -231,7 +241,7 @@ public class StateTestSubCommand implements Runnable {
       final Transaction transaction = spec.getTransaction(0);
       final ObjectNode summaryLine = objectMapper.createObjectNode();
       if (transaction == null) {
-        if (parentCommand.showJsonAlloc || parentCommand.showJsonResults) {
+        if ((parentCommand.showJsonAlloc || parentCommand.showJsonResults) && isLastIteration) {
           parentCommand.out.println(
               "{\"error\":\"Transaction was invalid, trace and alloc unavailable.\"}");
         }
@@ -271,11 +281,10 @@ public class StateTestSubCommand implements Runnable {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
+                tracer,
                 (__, blockNumber) ->
                     Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
-                false,
                 TransactionValidationParams.processingBlock(),
-                tracer,
                 blobGasPrice);
         timer.stop();
         if (shouldClearEmptyAccounts(spec.getFork())) {
@@ -297,7 +306,11 @@ public class StateTestSubCommand implements Runnable {
         final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
         final float mGps = gasUsed * 1000.0f / timeNs;
 
-        summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
+        if (parentCommand.eip3155strict) {
+          summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
+        } else {
+          summaryLine.put("gasUsed", gasUsed);
+        }
 
         if (!parentCommand.noTime) {
           summaryLine.put("time", timeNs);
@@ -310,7 +323,7 @@ public class StateTestSubCommand implements Runnable {
         summaryLine.put("d", spec.getDataIndex());
         summaryLine.put("g", spec.getGasIndex());
         summaryLine.put("v", spec.getValueIndex());
-        summaryLine.put("postHash", worldState.rootHash().toHexString());
+        summaryLine.put("stateRoot", worldState.rootHash().toHexString());
         final List<Log> logs = result.getLogs();
         final Hash actualLogsHash = Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo)));
         summaryLine.put("postLogsHash", actualLogsHash.toHexString());
@@ -329,12 +342,14 @@ public class StateTestSubCommand implements Runnable {
         if (!result.getValidationResult().isValid()) {
           summaryLine.put("error", result.getValidationResult().getErrorMessage());
         }
-        if (parentCommand.showJsonAlloc) {
+        if (parentCommand.showJsonAlloc && isLastIteration) {
           EvmToolCommand.dumpWorldState(worldState, parentCommand.out);
         }
       }
 
-      parentCommand.out.println(summaryLine);
+      if (isLastIteration) {
+        parentCommand.out.println(summaryLine);
+      }
     }
   }
 }

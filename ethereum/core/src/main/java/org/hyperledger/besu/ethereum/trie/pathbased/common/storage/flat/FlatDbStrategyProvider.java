@@ -36,8 +36,8 @@ public abstract class FlatDbStrategyProvider {
 
   // 0x666C61744462537461747573
   public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
-  private final MetricsSystem metricsSystem;
-  private final DataStorageConfiguration dataStorageConfiguration;
+  protected final MetricsSystem metricsSystem;
+  protected final DataStorageConfiguration dataStorageConfiguration;
   protected FlatDbMode flatDbMode;
   protected FlatDbStrategy flatDbStrategy;
 
@@ -115,8 +115,8 @@ public abstract class FlatDbStrategyProvider {
                 .orElseGet(
                     () -> {
                       // if we do not have a db-supplied config for flatdb, derive it:
-                      // default to partial if trie data exists, but the flat config does not,
-                      // and default to the storage config otherwise
+                      //  - default to partial if trie data exists but the flat config does not,
+                      //  - otherwise go with the requested mode
                       var flatDbModeVal =
                           existingTrieData
                               ? alternativeFlatDbModeForExistingDatabase().getVersion()

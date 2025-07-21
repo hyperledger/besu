@@ -14,12 +14,16 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.VERKLE_WITH_RECEIPT_COMPACTION;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.VERKLE_WITH_VARIABLES;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.BLOB_BLOCKCHAIN_GARBAGE_COLLECTION_ENABLED;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.BLOB_GARBAGE_COLLECTION_AGE_CUTOFF;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.BLOB_GARBAGE_COLLECTION_FORCE_THRESHOLD;
 
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -62,8 +66,8 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       EnumSet.of(
           FOREST_WITH_RECEIPT_COMPACTION,
           BONSAI_WITH_RECEIPT_COMPACTION,
+          BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION,
           VERKLE_WITH_RECEIPT_COMPACTION);
-
   private static final String NAME = "rocksdb";
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
   private DatabaseMetadata databaseMetadata;
@@ -166,7 +170,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                   metricsSystem,
                   rocksDBMetricsFactory);
         }
-        case BONSAI -> {
+        case BONSAI, X_BONSAI_ARCHIVE -> {
           LOG.debug("BONSAI mode detected, Using OptimisticTransactionDB.");
           segmentedStorage =
               new OptimisticRocksDBColumnarKeyValueStorage(
@@ -211,10 +215,31 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
               + " could not be found. You may not have the appropriate permission to access the item.";
       throw new StorageException(message, e);
     }
-    rocksDBConfiguration =
-        RocksDBConfigurationBuilder.from(configuration.get())
-            .databaseDir(storagePath(commonConfiguration))
-            .build();
+    final RocksDBFactoryConfiguration factoryConfig = configuration.get();
+    var configBuilder =
+        RocksDBConfigurationBuilder.from(factoryConfig)
+            .databaseDir(storagePath(commonConfiguration));
+
+    if (commonConfiguration.getDataStorageConfiguration().isHistoryExpiryPruneEnabled()) {
+      configBuilder.isBlockchainGarbageCollectionEnabled(true);
+      final double blobGarbageCollectionAgeCutoff =
+          factoryConfig.getBlobGarbageCollectionAgeCutoff().orElse(0.5);
+      final double blobGarbageCollectionForceThreshold =
+          factoryConfig.getBlobGarbageCollectionForceThreshold().orElse(0.1);
+      configBuilder.blobGarbageCollectionAgeCutoff(Optional.of(blobGarbageCollectionAgeCutoff));
+      configBuilder.blobGarbageCollectionForceThreshold(
+          Optional.of(blobGarbageCollectionForceThreshold));
+      LOG.atInfo()
+          .setMessage("History expiry prune is enabled so setting {}; {}={}; {}={}")
+          .addArgument(BLOB_BLOCKCHAIN_GARBAGE_COLLECTION_ENABLED)
+          .addArgument(BLOB_GARBAGE_COLLECTION_AGE_CUTOFF)
+          .addArgument(blobGarbageCollectionAgeCutoff)
+          .addArgument(BLOB_GARBAGE_COLLECTION_FORCE_THRESHOLD)
+          .addArgument(blobGarbageCollectionForceThreshold)
+          .log();
+    }
+
+    rocksDBConfiguration = configBuilder.build();
   }
 
   private boolean requiresInit() {

@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.txselection.BlockTransactionSelectio
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.time.Duration;
@@ -142,21 +143,6 @@ public abstract class MiningConfiguration {
   }
 
   @Value.Default
-  public boolean isStratumMiningEnabled() {
-    return false;
-  }
-
-  @Value.Default
-  public String getStratumNetworkInterface() {
-    return "0.0.0.0";
-  }
-
-  @Value.Default
-  public int getStratumPort() {
-    return 8008;
-  }
-
-  @Value.Default
   public PositiveNumber getNonPoaBlockTxsSelectionMaxTime() {
     return DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
   }
@@ -213,7 +199,9 @@ public abstract class MiningConfiguration {
 
   @Value.Immutable
   public interface MutableInitValues {
-    Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
+    // This is the default extra data containing version info, capped at 32 bytes.
+    Bytes DEFAULT_EXTRA_DATA = BesuVersionUtils.versionForExtraData();
+
     Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
     Wei DEFAULT_MIN_PRIORITY_FEE_PER_GAS = Wei.ZERO;
     double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
@@ -376,11 +364,6 @@ public abstract class MiningConfiguration {
     @Value.Default
     default long getPosBlockCreationRepetitionMinDuration() {
       return DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
-    }
-
-    @Value.Default
-    default String getStratumExtranonce() {
-      return "080c";
     }
   }
 }

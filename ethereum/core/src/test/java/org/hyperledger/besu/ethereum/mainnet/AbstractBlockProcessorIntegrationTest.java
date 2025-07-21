@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelTransactionPreprocessing;
@@ -260,24 +259,11 @@ class AbstractBlockProcessorIntegrationTest {
             protocolContext,
             blockchain,
             worldStateParallel,
-            block.getHeader(),
-            List.of(transactions),
-            block.getBody().getOmmers(),
-            block.getBody().getWithdrawals(),
-            null,
+            block,
             new ParallelTransactionPreprocessing(transactionProcessor, Runnable::run));
 
     BlockProcessingResult sequentialResult =
-        blockProcessor.processBlock(
-            protocolContext,
-            blockchain,
-            worldStateSequential,
-            block.getHeader(),
-            List.of(transactions),
-            block.getBody().getOmmers(),
-            block.getBody().getWithdrawals(),
-            null,
-            new NoPreprocessing());
+        blockProcessor.processBlock(protocolContext, blockchain, worldStateSequential, block);
 
     assertTrue(sequentialResult.isSuccessful());
     assertTrue(parallelResult.isSuccessful());

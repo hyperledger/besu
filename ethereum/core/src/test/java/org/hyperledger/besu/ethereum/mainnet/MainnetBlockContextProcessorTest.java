@@ -27,13 +27,19 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.InvalidSystemCallAddressException;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +60,8 @@ public class MainnetBlockContextProcessorTest {
     mockMessageCallProcessor = mock(MessageCallProcessor.class);
     mockBlockHashLookup = mock(BlockHashLookup.class);
     when(mockTransactionProcessor.getMessageProcessor(any())).thenReturn(mockMessageCallProcessor);
+    when(mockMessageCallProcessor.getOrCreateCachedJumpDest(any(), any()))
+        .thenReturn(CodeV0.EMPTY_CODE);
   }
 
   @Test
@@ -90,10 +98,39 @@ public class MainnetBlockContextProcessorTest {
   }
 
   @Test
-  void shouldReturnEmptyWhenContractDoesNotExist() {
+  void shouldThrowExceptionOnFailedExecutionWithHaltReason() {
+    doAnswer(
+            invocation -> {
+              MessageFrame messageFrame = invocation.getArgument(0);
+              messageFrame.getMessageFrameStack().pop();
+              messageFrame.setState(MessageFrame.State.COMPLETED_FAILED);
+              messageFrame.setExceptionalHaltReason(
+                  Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+              return null;
+            })
+        .when(mockMessageCallProcessor)
+        .process(any(), any());
+    final MutableWorldState worldState = createWorldState(CALL_ADDRESS);
+    var exception = assertThrows(RuntimeException.class, () -> processSystemCall(worldState));
+    assertThat(exception.getMessage()).isEqualTo("System call halted: Stack underflow");
+  }
+
+  @Test
+  void shouldThrowExceptionIfSystemCallAddressDoesNotExist() {
     final MutableWorldState worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
-    Bytes actualOutput = processSystemCall(worldState);
-    assertThat(actualOutput).isEqualTo(Bytes.EMPTY);
+    var exception =
+        assertThrows(InvalidSystemCallAddressException.class, () -> processSystemCall(worldState));
+    assertThat(exception.getMessage()).isEqualTo("Invalid system call address: " + CALL_ADDRESS);
+  }
+
+  @Test
+  void shouldThrowExceptionIfSystemCallHasNoCode() {
+    Bytes code = Bytes.EMPTY;
+    final MutableWorldState worldState = createWorldState(CALL_ADDRESS, code);
+    var exception =
+        assertThrows(InvalidSystemCallAddressException.class, () -> processSystemCall(worldState));
+    assertThat(exception.getMessage())
+        .isEqualTo("Invalid system call, no code at address " + CALL_ADDRESS);
   }
 
   Bytes processSystemCall(final MutableWorldState worldState) {
@@ -112,9 +149,14 @@ public class MainnetBlockContextProcessorTest {
   }
 
   private MutableWorldState createWorldState(final Address address) {
+    return createWorldState(address, Bytes.fromHexString("0x00"));
+  }
+
+  private MutableWorldState createWorldState(final Address address, final Bytes code) {
     final MutableWorldState worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
     final WorldUpdater updater = worldState.updater();
-    updater.getOrCreate(address);
+    MutableAccount account = updater.getOrCreate(address);
+    account.setCode(code);
     updater.commit();
     return worldState;
   }

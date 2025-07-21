@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.NavigableMap;
@@ -80,7 +81,7 @@ public class VerkleAccount extends PathBasedAccount {
         tracked.getNonce(),
         tracked.getBalance(),
         tracked.getCodeHash(),
-        tracked.getCode(),
+        new CodeV0(tracked.getCode()),
         true);
     this.codeSize = tracked.getCodeSize().orElse(0L);
     updatedStorage.putAll(tracked.getUpdatedStorage());

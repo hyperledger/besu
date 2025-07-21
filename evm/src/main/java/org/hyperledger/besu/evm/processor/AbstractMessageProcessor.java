@@ -27,7 +27,6 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -229,23 +228,33 @@ public abstract class AbstractMessageProcessor {
   }
 
   /**
-   * Gets code from evm.
+   * Gets or creates code instance with a cached jump destination.
    *
    * @param codeHash the code hash
    * @param codeBytes the code bytes
-   * @return the code from evm
+   * @return the code instance with the cached jump destination
    */
-  public Code getCodeFromEVM(@Nonnull final Hash codeHash, final Bytes codeBytes) {
-    return evm.getCode(codeHash, codeBytes);
+  public Code getOrCreateCachedJumpDest(final Hash codeHash, final Bytes codeBytes) {
+    return evm.getOrCreateCachedJumpDest(codeHash, codeBytes);
   }
 
   /**
-   * Gets code from evm, with handling for EOF code plus calldata
+   * Wraps code in the correct Code object.
    *
    * @param codeBytes the code bytes
-   * @return the code from evm
+   * @return the wrapped code from the evm
    */
-  public Code getCodeFromEVMForCreation(final Bytes codeBytes) {
-    return evm.getCodeForCreation(codeBytes);
+  public Code wrapCode(final Bytes codeBytes) {
+    return evm.wrapCode(codeBytes);
+  }
+
+  /**
+   * Wraps the code from the evm, with handling for EOF code plus calldata
+   *
+   * @param codeBytes the code bytes
+   * @return the wrapped code from the evm
+   */
+  public Code wrapCodeForCreation(final Bytes codeBytes) {
+    return evm.wrapCodeForCreation(codeBytes);
   }
 }

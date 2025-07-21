@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import java.util.List;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 
+@JsonPropertyOrder(alphabetic = true)
 public class CallProcessingResult {
   @JsonProperty("status")
   private final String status;
@@ -31,20 +33,19 @@ public class CallProcessingResult {
   private final String gasUsed;
 
   @JsonProperty("error")
-  private final ErrorDetails error;
+  private final JsonRpcError error;
 
   @JsonProperty("logs")
-  private final List<LogResult> logs;
+  private final LogsResult logs;
 
   public CallProcessingResult(
       @JsonProperty("status") final int status,
       @JsonProperty("returnData") final Bytes returnData,
       @JsonProperty("gasUsed") final long gasUsed,
-      @JsonProperty("error") final ErrorDetails error,
-      @JsonProperty("logs") final List<LogResult> logs) {
+      @JsonProperty("error") final JsonRpcError error,
+      @JsonProperty("logs") final LogsResult logs) {
     this.status = Quantity.create(status);
     this.returnData = returnData.toString();
-
     this.gasUsed = Quantity.create(gasUsed);
     this.error = error;
     this.logs = logs;
@@ -63,33 +64,12 @@ public class CallProcessingResult {
   }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  public ErrorDetails getError() {
+  public JsonRpcError getError() {
     return error;
   }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  public List<LogResult> getLogs() {
+  public LogsResult getLogs() {
     return logs;
-  }
-
-  public record ErrorDetails(
-      @JsonProperty("code") long code,
-      @JsonProperty("message") String message,
-      @JsonProperty("data") Bytes data) {
-
-    @Override
-    public long code() {
-      return code;
-    }
-
-    @Override
-    public String message() {
-      return message;
-    }
-
-    @Override
-    public Bytes data() {
-      return data;
-    }
   }
 }

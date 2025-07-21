@@ -32,8 +32,7 @@ import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import javax.annotation.Nonnull;
-
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,19 +46,19 @@ class CodeV0Test {
 
   @BeforeEach
   void startUp() {
-    evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+    evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
   }
 
   @Test
   void shouldReuseJumpDestMap() {
     final JumpOperation operation = new JumpOperation(evm.getGasCalculator());
     final Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
-    final CodeV0 getsCached = (CodeV0) spy(evm.getCodeUncached(jumpBytes));
+    final CodeV0 getsCached = (CodeV0) spy(evm.wrapCode(jumpBytes));
     MessageFrame frame = createJumpFrame(getsCached);
 
     OperationResult result = operation.execute(frame, evm);
     assertNull(result.getHaltReason());
-    Mockito.verify(getsCached, times(1)).calculateJumpDests();
+    Mockito.verify(getsCached, times(1)).calculateJumpDestBitMask();
 
     // do it again to prove we don't recalculate, and we hit the cache
 
@@ -67,10 +66,10 @@ class CodeV0Test {
 
     result = operation.execute(frame, evm);
     assertNull(result.getHaltReason());
-    Mockito.verify(getsCached, times(1)).calculateJumpDests();
+    Mockito.verify(getsCached, times(1)).calculateJumpDestBitMask();
   }
 
-  @Nonnull
+  @NotNull
   private MessageFrame createJumpFrame(final CodeV0 getsCached) {
     final MessageFrame frame =
         MessageFrame.builder()

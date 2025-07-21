@@ -19,10 +19,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.internal.CodeCache;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -50,6 +53,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   private final Hash addressHash;
 
   @Nullable private A account; // null if this is a new account.
+  @Nullable private CodeCache codeCache;
 
   private boolean immutable;
 
@@ -112,6 +116,12 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     this.oldCodeSize = oldCode.size();
 
     this.updatedStorage = new TreeMap<>();
+
+    // if the original account to be tracked is a BonsaiAccount, we can use its code cache.
+    final CodeCache codeCache = account.getCodeCache();
+    if (codeCache != null) {
+      this.codeCache = codeCache;
+    }
   }
 
   /**
@@ -145,6 +155,11 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
    */
   public boolean codeWasUpdated() {
     return updatedCode != null;
+  }
+
+  @Override
+  public CodeCache getCodeCache() {
+    return codeCache;
   }
 
   /**
@@ -238,6 +253,27 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     }
     this.updatedCode = code;
     this.updatedCodeHash = null;
+  }
+
+  @Override
+  public Code getOrCreateCachedCode() {
+    // if it is not a BonsaiAccount, we don't have access to the code cache
+    // so we just return the code as is.
+    if (codeCache == null) {
+      return new CodeV0(getCode(), getCodeHash());
+    }
+
+    // if the code already exists in the cache, return it
+    final Code cachedCode = codeCache.getIfPresent(getCodeHash());
+    if (cachedCode != null) {
+      return cachedCode;
+    }
+
+    // if the code is not in the cache, create a new CodeV0 instance and put it in the cache
+    final Code newCode = new CodeV0(getCode(), getCodeHash());
+    codeCache.put(getCodeHash(), newCode);
+
+    return newCode;
   }
 
   /** Mark transaction boundary. */

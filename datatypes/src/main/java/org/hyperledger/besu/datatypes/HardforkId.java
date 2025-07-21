@@ -47,8 +47,10 @@ public interface HardforkId {
     FRONTIER(true, "Frontier"),
     /** Homestead fork. */
     HOMESTEAD(true, "Homestead"),
-    /** DAO Fork fork. */
-    DAO_FORK(true, "DAO Fork"),
+    /** DAO Recovery Init fork. */
+    DAO_RECOVERY_INIT(true, "DAO Recovery Init"),
+    /** DAO Recovery Transition fork. */
+    DAO_RECOVERY_TRANSITION(true, "DAO Recovery Transition"),
     /** Tangerine Whistle fork. */
     TANGERINE_WHISTLE(true, "Tangerine Whistle"),
     /** Spurious Dragon fork. */
@@ -85,6 +87,16 @@ public interface HardforkId {
     PRAGUE(true, "Prague"),
     /** Osaka fork. */
     OSAKA(false, "Osaka"),
+    /** BPO1 fork. */
+    BPO1(false, "BPO1"),
+    /** BPO2 fork. */
+    BPO2(false, "BPO2"),
+    /** BPO3 fork. */
+    BPO3(false, "BPO3"),
+    /** BPO4 fork. */
+    BPO4(false, "BPO4"),
+    /** BPO5 fork. */
+    BPO5(false, "BPO5"),
     /** Amsterdam fork. */
     AMSTERDAM(false, "Amsterdam"),
     /** Bogota fork. */
@@ -94,9 +106,9 @@ public interface HardforkId {
     /** Bangkok fork. */
     BANGKOK(false, "Bangkok"),
     /** Development fork, for accepted and unscheduled EIPs. */
-    FUTURE_EIPS(false, "Development, for accepted and unscheduled EIPs"),
+    FUTURE_EIPS(false, "FutureEips"),
     /** Developmental fork, for experimental EIPs. */
-    EXPERIMENTAL_EIPS(false, "Developmental, for experimental EIPs");
+    EXPERIMENTAL_EIPS(false, "ExperimentalEips");
 
     final boolean finalized;
     final String description;
@@ -136,6 +148,8 @@ public interface HardforkId {
     FRONTIER(true, "Frontier"),
     /** Homestead fork. */
     HOMESTEAD(true, "Homestead"),
+    /** Classic Recovery Init fork. */
+    CLASSIC_RECOVERY_INIT(true, "Classic Recovery Init"),
     /** Classic Tangerine Whistle fork. */
     CLASSIC_TANGERINE_WHISTLE(true, "Classic Tangerine Whistle"),
     /** Die Hard fork. */

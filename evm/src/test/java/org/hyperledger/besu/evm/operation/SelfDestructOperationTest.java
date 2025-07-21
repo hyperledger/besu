@@ -54,7 +54,7 @@ public class SelfDestructOperationTest {
   @Mock private WorldUpdater worldUpdater;
   @Mock private MutableAccount accountOriginator;
   @Mock private MutableAccount accountBeneficiary;
-  private final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+  private final EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
 
   private final SelfDestructOperation frontierOperation =
       new SelfDestructOperation(new ConstantinopleGasCalculator());
@@ -78,7 +78,7 @@ public class SelfDestructOperationTest {
             .sender(beneficiaryAddress)
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(evm.getCodeUncached(SELFDESTRUCT_CODE))
+            .code(evm.wrapCode(SELFDESTRUCT_CODE))
             .completer(__ -> {})
             .address(originatorAddress)
             .blockHashLookup((__, ___) -> Hash.ZERO)

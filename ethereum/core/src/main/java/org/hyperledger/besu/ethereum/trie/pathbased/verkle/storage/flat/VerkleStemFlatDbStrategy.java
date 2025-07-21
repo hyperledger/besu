@@ -137,6 +137,7 @@ public class VerkleStemFlatDbStrategy extends FlatDbStrategy {
 
   @Override
   public void putFlatAccount(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Bytes accountValue) {
@@ -145,21 +146,25 @@ public class VerkleStemFlatDbStrategy extends FlatDbStrategy {
 
   @Override
   public void removeFlatAccount(
-      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash) {
     // nothing to do with stem flat db
   }
 
   @Override
   public void putFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash,
-      final Bytes storage) {
+      final Bytes storageValue) {
     // nothing to do with stem flat db
   }
 
   @Override
   public void removeFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash) {

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -35,9 +34,9 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -70,7 +69,6 @@ class ParallelizedConcurrentTransactionProcessorTest {
   @Mock private BlockHeader blockHeader;
   @Mock ProtocolContext protocolContext;
   @Mock private Transaction transaction;
-  @Mock private PrivateMetadataUpdater privateMetadataUpdater;
   @Mock private TransactionCollisionDetector transactionCollisionDetector;
 
   private BonsaiWorldState worldState;
@@ -91,10 +89,12 @@ class ParallelizedConcurrentTransactionProcessorTest {
         new BonsaiWorldState(
             bonsaiWorldStateKeyValueStorage,
             new NoopBonsaiCachedMerkleTrieLoader(),
-            new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
+            new NoOpBonsaiCachedWorldStorageManager(
+                bonsaiWorldStateKeyValueStorage, new CodeCache()),
             new NoOpTrieLogManager(),
             EvmConfiguration.DEFAULT,
-            createStatefulConfigWithTrie());
+            createStatefulConfigWithTrie(),
+            new CodeCache());
 
     when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
     when(chainHeadBlockHeader.getStateRoot()).thenReturn(Hash.EMPTY_TRIE_HASH);
@@ -118,7 +118,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     Mockito.when(
             transactionProcessor.processTransaction(
-                any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any(), any()))
+                any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
@@ -130,8 +130,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
         transaction,
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
-        blobGasPrice,
-        privateMetadataUpdater);
+        blobGasPrice);
 
     verify(transactionProcessor, times(1))
         .processTransaction(
@@ -141,9 +140,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
             eq(miningBeneficiary),
             any(OperationTracer.class),
             any(BlockHashLookup.class),
-            eq(true),
             eq(TransactionValidationParams.processingBlock()),
-            eq(privateMetadataUpdater),
             eq(blobGasPrice));
 
     assertTrue(
@@ -160,14 +157,15 @@ class ParallelizedConcurrentTransactionProcessorTest {
     Wei blobGasPrice = Wei.ZERO;
 
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.failed(
                 0,
                 0,
                 ValidationResult.invalid(
                     TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE),
-                Optional.of(Bytes.EMPTY)));
+                Optional.of(Bytes.EMPTY),
+                Optional.empty()));
 
     processor.runTransaction(
         protocolContext,
@@ -176,8 +174,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
         transaction,
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
-        blobGasPrice,
-        privateMetadataUpdater);
+        blobGasPrice);
 
     Optional<TransactionProcessingResult> result =
         processor.applyParallelizedTransactionResult(
@@ -193,7 +190,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     Mockito.when(
             transactionProcessor.processTransaction(
-                any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any(), any()))
+                any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
@@ -205,8 +202,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
         transaction,
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
-        blobGasPrice,
-        privateMetadataUpdater);
+        blobGasPrice);
 
     verify(transactionProcessor, times(1))
         .processTransaction(
@@ -216,9 +212,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
             eq(miningBeneficiary),
             any(OperationTracer.class),
             any(BlockHashLookup.class),
-            eq(true),
             eq(TransactionValidationParams.processingBlock()),
-            eq(privateMetadataUpdater),
             eq(blobGasPrice));
 
     // simulate a conflict

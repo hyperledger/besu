@@ -148,7 +148,7 @@ public class EthMaxPriorityFeePerGasTest {
     final var genesisBlock = createFakeBlock(0, 0, genesisBaseFee);
     blocksByNumber.put(0L, genesisBlock);
 
-    final var baseFeeMarket = FeeMarket.cancun(0, Optional.empty());
+    final var baseFeeMarket = FeeMarket.cancunDefault(0, Optional.empty());
 
     var baseFee = genesisBaseFee;
     for (long i = 1; i <= chainHeadBlockNumber; i++) {

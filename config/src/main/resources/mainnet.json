@@ -16,6 +16,10 @@
     "terminalTotalDifficulty": 58750000000000000000000,
     "shanghaiTime": 1681338455,
     "cancunTime": 1710338135,
+    "pragueTime": 1746612311,
+    "depositContractAddress": "0x00000000219ab540356cbb839cbe05303d7705fa",
+    "withdrawalRequestContractAddress": "0x00000961ef480eb55e80d19ad83579a64c007002",
+    "consolidationRequestContractAddress": "0x0000bbddc7ce488642fb579f8b00f3a590007251",
     "blobSchedule": {
       "cancun": {
         "target": 3,
@@ -30,7 +34,6 @@
     },
     "ethash": {
     },
-    "depositContractAddress": "0x00000000219ab540356cbb839cbe05303d7705fa",
     "discovery": {
       "dns": "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.mainnet.ethdisco.net",
       "bootnodes": [
@@ -41,9 +44,10 @@
       ]
     },
     "checkpoint": {
-      "hash": "0x44bca881b07a6a09f83b130798072441705d9a665c5ac8bdf2f39a3cdf3bee29",
-      "number": 11052984,
-      "totalDifficulty": "0x3D103014E5C74E5E196"
+      "comment": "Start sync from first proof of stake block",
+      "hash": "0x56a9bb0302da44b8c0b3df540781424684c3af04d0b7a38d72842b762076a664",
+      "number": 15537394,
+      "totalDifficulty": "0xC70D815D562D3CFA955"
     }
   },
   "nonce": "0x42",

@@ -73,7 +73,8 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
     return new Updater(
         ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
         trieLogStorage.startTransaction(),
-        getFlatDbStrategy());
+        getFlatDbStrategy(),
+        composedWorldStateStorage);
   }
 
   @Override

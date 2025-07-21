@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
@@ -35,11 +36,14 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldStateUpdateAccumulator
     extends PathBasedWorldStateUpdateAccumulator<BonsaiAccount> {
+  private final CodeCache codeCache;
+
   public BonsaiWorldStateUpdateAccumulator(
       final PathBasedWorldView world,
       final Consumer<PathBasedValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final CodeCache codeCache) {
     super(
         world,
         accountPreloader,
@@ -48,6 +52,7 @@ public class BonsaiWorldStateUpdateAccumulator
           /*nothing to preload for the code*/
         },
         evmConfiguration);
+    this.codeCache = codeCache;
   }
 
   @Override
@@ -57,7 +62,8 @@ public class BonsaiWorldStateUpdateAccumulator
             wrappedWorldView(),
             getAccountPreloader(),
             getStoragePreloader(),
-            getEvmConfiguration());
+            getEvmConfiguration(),
+            codeCache);
     copy.cloneFromUpdater(this);
     return copy;
   }
@@ -89,9 +95,11 @@ public class BonsaiWorldStateUpdateAccumulator
       final Hash addressHash,
       final long nonce,
       final Wei balance,
+      final Hash storageRoot,
+      final Hash codeHash,
       final boolean mutable) {
     return new BonsaiAccount(
-        context, address, addressHash, nonce, balance, Hash.EMPTY_TRIE_HASH, Hash.EMPTY, mutable);
+        context, address, addressHash, nonce, balance, storageRoot, codeHash, mutable);
   }
 
   @Override
@@ -123,5 +131,10 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   protected boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate() {
     return true;
+  }
+
+  @Override
+  public CodeCache codeCache() {
+    return codeCache;
   }
 }

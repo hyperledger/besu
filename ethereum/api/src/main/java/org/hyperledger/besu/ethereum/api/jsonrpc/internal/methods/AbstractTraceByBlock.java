@@ -32,12 +32,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -121,9 +124,12 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
 
   protected TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
     return new TraceOptions(
-        traceTypes.contains(TraceType.STATE_DIFF),
-        false,
-        traceTypes.contains(TraceType.TRACE) || traceTypes.contains(TraceType.VM_TRACE),
-        false);
+        TracerType.OPCODE_TRACER,
+        new OpCodeTracerConfig(
+            traceTypes.contains(TraceType.STATE_DIFF),
+            false,
+            traceTypes.contains(TraceType.TRACE) || traceTypes.contains(TraceType.VM_TRACE),
+            false),
+        Map.of());
   }
 }

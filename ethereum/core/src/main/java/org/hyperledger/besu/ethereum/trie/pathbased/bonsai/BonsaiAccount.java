@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.NavigableMap;
@@ -95,7 +96,7 @@ public class BonsaiAccount extends PathBasedAccount {
         tracked.getNonce(),
         tracked.getBalance(),
         tracked.getCodeHash(),
-        tracked.getCode(),
+        new CodeV0(tracked.getCode()),
         true);
     this.storageRoot = Hash.EMPTY_TRIE_HASH;
     updatedStorage.putAll(tracked.getUpdatedStorage());

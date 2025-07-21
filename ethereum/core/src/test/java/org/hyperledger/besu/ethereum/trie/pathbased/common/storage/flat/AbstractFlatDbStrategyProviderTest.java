@@ -95,7 +95,8 @@ public abstract class AbstractFlatDbStrategyProviderTest {
         segmentedKeyValueStorage.startTransaction();
     final CodeHashCodeStorageStrategy codeHashCodeStorageStrategy =
         new CodeHashCodeStorageStrategy();
-    codeHashCodeStorageStrategy.putFlatCode(transaction, null, Hash.hash(Bytes.of(1)), Bytes.of(1));
+    codeHashCodeStorageStrategy.putFlatCode(
+        segmentedKeyValueStorage, transaction, null, Hash.hash(Bytes.of(1)), Bytes.of(1));
     transaction.commit();
 
     final FlatDbStrategyProvider flatDbStrategyProvider =

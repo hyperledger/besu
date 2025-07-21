@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
@@ -54,7 +55,8 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final ServiceManager pluginContext,
       final EvmConfiguration evmConfiguration,
-      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
+      final Supplier<WorldStateHealer> worldStateHealerSupplier,
+      final CodeCache codeCache) {
     super(
         DataStorageFormat.BONSAI,
         worldStateKeyValueStorage,
@@ -63,10 +65,13 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
         pluginContext);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
+    this.evmConfiguration = evmConfiguration;
     provideCachedWorldStorageManager(
-        new BonsaiCachedWorldStorageManager(this, worldStateKeyValueStorage, worldStateConfig));
+        new BonsaiCachedWorldStorageManager(
+            this, worldStateKeyValueStorage, worldStateConfig, codeCache));
     loadHeadWorldState(
-        new BonsaiWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
+        new BonsaiWorldState(
+            this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache));
   }
 
   @VisibleForTesting
@@ -77,13 +82,16 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
       final Blockchain blockchain,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final EvmConfiguration evmConfiguration,
-      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
+      final Supplier<WorldStateHealer> worldStateHealerSupplier,
+      final CodeCache codeCache) {
     super(worldStateKeyValueStorage, blockchain, trieLogManager);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
+    this.evmConfiguration = evmConfiguration;
     provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);
     loadHeadWorldState(
-        new BonsaiWorldState(this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig));
+        new BonsaiWorldState(
+            this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache));
   }
 
   public BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader() {

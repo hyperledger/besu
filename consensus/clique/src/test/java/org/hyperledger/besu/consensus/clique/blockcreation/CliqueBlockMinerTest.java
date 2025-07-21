@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -86,7 +86,7 @@ class CliqueBlockMinerTest {
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
     final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
+        new ProtocolContext.Builder().withConsensusContext(cliqueContext).build();
 
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =
@@ -98,7 +98,7 @@ class CliqueBlockMinerTest {
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-
+    when(protocolSpec.getHardforkId()).thenReturn(FRONTIER);
     final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
 
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
@@ -142,7 +142,7 @@ class CliqueBlockMinerTest {
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
     final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
+        new ProtocolContext.Builder().withConsensusContext(cliqueContext).build();
 
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =
@@ -154,7 +154,7 @@ class CliqueBlockMinerTest {
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-
+    when(protocolSpec.getHardforkId()).thenReturn(FRONTIER);
     final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
 
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);

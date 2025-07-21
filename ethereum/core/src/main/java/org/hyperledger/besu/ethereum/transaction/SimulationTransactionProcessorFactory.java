@@ -19,10 +19,12 @@ import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.processor.OverriddenPrecompilesMessageCallProcessor;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
+import org.hyperledger.besu.evm.processor.SimulationMessageCallProcessor;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SimulationTransactionProcessorFactory {
@@ -52,34 +54,77 @@ public class SimulationTransactionProcessorFactory {
     MainnetTransactionProcessor baseProcessor =
         protocolSchedule.getByBlockHeader(processableHeader).getTransactionProcessor();
 
-    return maybeStateOverrides
-        .flatMap(this::extractPrecompileAddressOverrides)
-        .map(
-            precompileOverrides -> createProcessorWithOverrides(baseProcessor, precompileOverrides))
-        .orElse(baseProcessor);
+    Map<Address, Address> precompileOverrides =
+        maybeStateOverrides.map(this::extractPrecompileAddressOverrides).orElse(Map.of());
+
+    return createProcessor(baseProcessor, precompileOverrides);
   }
 
-  private Optional<Map<Address, Address>> extractPrecompileAddressOverrides(
+  private Map<Address, Address> extractPrecompileAddressOverrides(
       final StateOverrideMap stateOverrides) {
-    Map<Address, Address> addressOverrides =
-        stateOverrides.entrySet().stream()
-            .filter(entry -> entry.getValue().getMovePrecompileToAddress().isPresent())
-            .collect(
-                Collectors.toMap(
-                    Map.Entry::getKey,
-                    entry -> entry.getValue().getMovePrecompileToAddress().get()));
-
-    return addressOverrides.isEmpty() ? Optional.empty() : Optional.of(addressOverrides);
+    return stateOverrides.entrySet().stream()
+        .filter(entry -> entry.getValue().getMovePrecompileToAddress().isPresent())
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey, entry -> entry.getValue().getMovePrecompileToAddress().get()));
   }
 
-  private MainnetTransactionProcessor createProcessorWithOverrides(
+  private MainnetTransactionProcessor createProcessor(
       final MainnetTransactionProcessor baseProcessor,
       final Map<Address, Address> precompileAddressOverrides) {
+
+    if (precompileAddressOverrides.isEmpty()) {
+      return baseProcessor;
+    }
+
     return MainnetTransactionProcessor.builder()
         .populateFrom(baseProcessor)
         .messageCallProcessor(
-            new OverriddenPrecompilesMessageCallProcessor(
-                baseProcessor.getMessageCallProcessor(), precompileAddressOverrides))
+            new SimulationMessageCallProcessor(
+                baseProcessor.getMessageCallProcessor(),
+                originalPrecompileRegistry ->
+                    overridePrecompileAddresses(
+                        originalPrecompileRegistry, precompileAddressOverrides)))
         .build();
+  }
+
+  /**
+   * Creates a new PrecompileContractRegistry with the specified address overrides.
+   *
+   * @param originalRegistry the original precompile contract registry
+   * @param precompileOverrides the address overrides
+   * @return a new PrecompileContractRegistry with the overrides applied
+   * @throws IllegalArgumentException if an override address does not exist in the original registry
+   */
+  public static PrecompileContractRegistry overridePrecompileAddresses(
+      final PrecompileContractRegistry originalRegistry,
+      final Map<Address, Address> precompileOverrides) {
+
+    PrecompileContractRegistry newRegistry = new PrecompileContractRegistry();
+    Set<Address> originalAddresses = originalRegistry.getPrecompileAddresses();
+
+    precompileOverrides.forEach(
+        (oldAddress, newAddress) -> {
+          if (!originalAddresses.contains(oldAddress)) {
+            throw new IllegalArgumentException("Address " + oldAddress + " is not a precompile.");
+          }
+          if (newRegistry.getPrecompileAddresses().contains(newAddress)) {
+            throw new IllegalArgumentException("Duplicate precompile address: " + newAddress);
+          }
+          newRegistry.put(newAddress, originalRegistry.get(oldAddress));
+        });
+
+    originalAddresses.stream()
+        .filter(originalAddress -> !precompileOverrides.containsKey(originalAddress))
+        .forEach(
+            originalAddress -> {
+              if (newRegistry.getPrecompileAddresses().contains(originalAddress)) {
+                throw new IllegalArgumentException(
+                    "Duplicate precompile address: " + originalAddress);
+              }
+              newRegistry.put(originalAddress, originalRegistry.get(originalAddress));
+            });
+
+    return newRegistry;
   }
 }

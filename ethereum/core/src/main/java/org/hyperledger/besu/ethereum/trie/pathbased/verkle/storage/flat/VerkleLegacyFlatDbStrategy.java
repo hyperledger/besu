@@ -108,6 +108,7 @@ public class VerkleLegacyFlatDbStrategy extends FlatDbStrategy {
 
   @Override
   public void putFlatAccount(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Bytes accountValue) {
@@ -116,24 +117,28 @@ public class VerkleLegacyFlatDbStrategy extends FlatDbStrategy {
 
   @Override
   public void removeFlatAccount(
-      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash) {
     transaction.remove(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe());
   }
 
   @Override
   public void putFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash,
-      final Bytes storage) {
+      final Bytes storageValue) {
     transaction.put(
         ACCOUNT_STORAGE_STORAGE,
         Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(),
-        storage.toArrayUnsafe());
+        storageValue.toArrayUnsafe());
   }
 
   @Override
   public void removeFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash) {

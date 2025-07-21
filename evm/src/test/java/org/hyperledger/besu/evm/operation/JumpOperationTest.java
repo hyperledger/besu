@@ -56,7 +56,7 @@ class JumpOperationTest {
 
   @BeforeEach
   void init() {
-    evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+    evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
   }
 
   @Test
@@ -66,7 +66,7 @@ class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(evm.getCodeUncached(jumpBytes))
+            .code(evm.wrapCode(jumpBytes))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -81,7 +81,7 @@ class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(evm.getCodeUncached(jumpBytes))
+            .code(evm.wrapCode(jumpBytes))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -96,7 +96,7 @@ class JumpOperationTest {
     final MessageFrame frameDestinationGreaterThanCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0xFFFFFFFF"))
-            .code(evm.getCodeUncached(jumpBytes))
+            .code(evm.wrapCode(jumpBytes))
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
@@ -106,7 +106,7 @@ class JumpOperationTest {
     final MessageFrame frameDestinationEqualsToCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x04"))
-            .code(evm.getCodeUncached(badJump))
+            .code(evm.wrapCode(badJump))
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
@@ -124,7 +124,7 @@ class JumpOperationTest {
     final MessageFrame longContract =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x12c"))
-            .code(evm.getCodeUncached(longCode))
+            .code(evm.wrapCode(longCode))
             .build();
     longContract.setPC(255);
 

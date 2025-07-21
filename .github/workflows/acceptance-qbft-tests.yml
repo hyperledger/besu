@@ -1,0 +1,131 @@
+name: acceptance-qbft-tests
+on:
+  workflow_dispatch:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+      - release-*
+      - verkle
+      - performance
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_OPTS: "-Xmx1g"
+  total-runners: 4
+
+jobs:
+  acceptanceTestEthereum:
+    runs-on: ubuntu-22.04
+    name: "Acceptance Runner"
+    permissions:
+      statuses: write
+      checks: write
+    strategy:
+      fail-fast: true
+      matrix:
+        runner_index: [0,1,2,3]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+        continue-on-error: true
+      - name: Set up Java
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
+        with:
+          distribution: temurin
+          java-version: 21
+        continue-on-error: true
+      - name: Install required packages
+        run:  sudo apt-get install -y xmlstarlet
+        continue-on-error: true
+      - name: setup gradle
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
+        continue-on-error: true
+      - name: List unit tests
+        run: ./gradlew acceptanceQbftTest --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        continue-on-error: true
+      - name: Extract current test list
+        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo ' acceptanceQbftTest'" | tee tmp/currentTests.list
+        continue-on-error: true
+      - name: Get acceptance test reports
+        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
+        continue-on-error: true
+        with:
+          branch: main
+          workflow: update-test-reports.yml
+          name: acceptance-qbft-test-results
+          path: tmp/junit-xml-reports-downloaded
+          if_no_artifact_found: ignore
+      - name: Split tests
+        run: .github/workflows/splitTestsByTime.sh tmp/junit-xml-reports-downloaded "tmp/junit-xml-reports-downloaded/acceptance-qbft-node-.*-test-results" "TEST-" ${{env.total-runners}} ${{ matrix.runner_index }} > testList.txt
+        continue-on-error: true
+      - name: format gradle args
+        # we do not need the module task here
+        run:  cat testList.txt | cut -f 2- -d ' ' | tee gradleArgs.txt
+        continue-on-error: true
+      - name: Upload Timing
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        if: matrix.runner_index == 0
+        with:
+          name: acceptance-qbft-tests-timing
+          path: 'tmp/timing.tsv'
+        continue-on-error: true
+      - name: Upload Lists
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        if: matrix.runner_index == 0
+        with:
+          name: acceptance-tests-lists
+          path: 'tmp/*.list'
+        continue-on-error: true
+      - name: Upload gradle test tasks
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        with:
+          name: test-args-${{ matrix.runner_index }}.txt
+          path: '*.txt'
+        continue-on-error: true
+      - name: run acceptance tests
+        run: ./gradlew acceptanceQbftTest `cat gradleArgs.txt` -Dorg.gradle.caching=true
+        continue-on-error: true
+      - name: Remove downloaded test results
+        run: rm -rf tmp/junit-xml-reports-downloaded
+        continue-on-error: true
+      - name: Upload Acceptance Test Results
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        with:
+          name: acceptance-qbft-node-${{matrix.runner_index}}-test-results
+          path: 'acceptance-qbft-tests/tests/build/test-results/**/TEST-*.xml'
+        continue-on-error: true
+      - name: Upload Acceptance Test HTML Reports
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        if: success() || failure()
+        with:
+          name: acceptance-qbft-node-${{matrix.runner_index}}-test-html-reports
+          path: 'acceptance-qbft-tests/tests/build/reports/tests/**'
+        continue-on-error: true
+  acceptqbfttests-passed:
+    name: "acceptqbfttests-passed"
+    runs-on: ubuntu-22.04
+    needs: [ acceptanceTestEthereum ]
+    permissions:
+      checks: write
+      statuses: write
+    if: always()
+    steps:
+      # Fail if any `needs` job was not a success.
+      # Along with `if: always()`, this allows this job to act as a single required status check for the entire workflow.
+      - name: Fail on workflow error
+        run: exit 1
+        if: >-
+          ${{
+            contains(needs.*.result, 'failure')
+            || contains(needs.*.result, 'cancelled')
+            || contains(needs.*.result, 'skipped')
+          }}
+        continue-on-error: true

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.Preprocessin
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor.ParallelizedPreProcessingContext;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 
@@ -45,7 +44,6 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
   @Override
   public Optional<PreprocessingContext> run(
       final ProtocolContext protocolContext,
-      final PrivateMetadataUpdater privateMetadataUpdater,
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final Address miningBeneficiary,
@@ -63,7 +61,6 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
           miningBeneficiary,
           blockHashLookup,
           blobGasPrice,
-          privateMetadataUpdater,
           executor);
       return Optional.of(
           new ParallelizedPreProcessingContext(parallelizedConcurrentTransactionProcessor));

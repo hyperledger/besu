@@ -84,7 +84,7 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public WorldStateKeyValueStorage createWorldStateStorage(
       final DataStorageConfiguration dataStorageConfiguration) {
-    if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+    if (dataStorageConfiguration.getDataStorageFormat().isBonsaiFormat()) {
       return new BonsaiWorldStateKeyValueStorage(this, metricsSystem, dataStorageConfiguration);
     } else if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.VERKLE)) {
       return new VerkleWorldStateKeyValueStorage(

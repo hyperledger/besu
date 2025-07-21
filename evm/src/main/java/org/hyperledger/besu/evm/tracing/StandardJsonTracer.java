@@ -41,15 +41,16 @@ public class StandardJsonTracer implements OperationTracer {
   private final boolean showStack;
   private final boolean showReturnData;
   private final boolean showStorage;
+  private final boolean eip3155strict;
   private final boolean showStatelessAccessWitness;
   private int pc;
   private int section;
   private List<String> stack;
-  private String gas;
+  private long gas;
   private Bytes memory;
   private int memorySize;
   private int depth;
-  private int subdepth;
+  private int functionDepth;
   private String storageString;
 
   /**
@@ -60,6 +61,25 @@ public class StandardJsonTracer implements OperationTracer {
    * @param showStack show the stack in trace lines
    * @param showReturnData show return data in trace lines
    * @param showStorage show the updated storage
+   */
+  public StandardJsonTracer(
+      final PrintWriter out,
+      final boolean showMemory,
+      final boolean showStack,
+      final boolean showReturnData,
+      final boolean showStorage) {
+    this(out, showMemory, showStack, showReturnData, showStorage, false, false);
+  }
+
+  /**
+   * Instantiates a new Standard json tracer.
+   *
+   * @param out the out
+   * @param showMemory show memory in trace lines
+   * @param showStack show the stack in trace lines
+   * @param showReturnData show return data in trace lines
+   * @param showStorage show the updated storage
+   * @param eip3155strict Output EIP-3155 compatible traces
    * @param showStatelessAccessWitness show accesses to the stateless witness
    */
   public StandardJsonTracer(
@@ -68,12 +88,14 @@ public class StandardJsonTracer implements OperationTracer {
       final boolean showStack,
       final boolean showReturnData,
       final boolean showStorage,
+      final boolean eip3155strict,
       final boolean showStatelessAccessWitness) {
     this.out = out;
     this.showMemory = showMemory;
     this.showStack = showStack;
     this.showReturnData = showReturnData;
     this.showStorage = showStorage;
+    this.eip3155strict = eip3155strict;
     this.showStatelessAccessWitness = showStatelessAccessWitness;
   }
 
@@ -85,6 +107,57 @@ public class StandardJsonTracer implements OperationTracer {
    * @param showStack show the stack in trace lines
    * @param showReturnData show return data in trace lines
    * @param showStorage show updated storage
+   */
+  public StandardJsonTracer(
+      final PrintStream out,
+      final boolean showMemory,
+      final boolean showStack,
+      final boolean showReturnData,
+      final boolean showStorage) {
+    this(
+        new PrintWriter(out, true, StandardCharsets.UTF_8),
+        showMemory,
+        showStack,
+        showReturnData,
+        showStorage);
+  }
+
+  /**
+   * Instantiates a new Standard json tracer.
+   *
+   * @param out the out
+   * @param showMemory show memory in trace lines
+   * @param showStack show the stack in trace lines
+   * @param showReturnData show return data in trace lines
+   * @param showStorage show updated storage
+   * @param eip3155strict Output eip-3155 compatible traces
+   */
+  public StandardJsonTracer(
+      final PrintStream out,
+      final boolean showMemory,
+      final boolean showStack,
+      final boolean showReturnData,
+      final boolean showStorage,
+      final boolean eip3155strict) {
+    this(
+        new PrintWriter(out, true, StandardCharsets.UTF_8),
+        showMemory,
+        showStack,
+        showReturnData,
+        showStorage,
+        eip3155strict,
+        false);
+  }
+
+  /**
+   * Instantiates a new Standard json tracer.
+   *
+   * @param out the out
+   * @param showMemory show memory in trace lines
+   * @param showStack show the stack in trace lines
+   * @param showReturnData show return data in trace lines
+   * @param showStorage show updated storage
+   * @param eip3155strict Output eip-3155 compatible traces
    * @param showStatelessAccessWitness show accesses to the stateless witness
    */
   public StandardJsonTracer(
@@ -93,6 +166,7 @@ public class StandardJsonTracer implements OperationTracer {
       final boolean showStack,
       final boolean showReturnData,
       final boolean showStorage,
+      final boolean eip3155strict,
       final boolean showStatelessAccessWitness) {
     this(
         new PrintWriter(out, true, StandardCharsets.UTF_8),
@@ -100,6 +174,7 @@ public class StandardJsonTracer implements OperationTracer {
         showStack,
         showReturnData,
         showStorage,
+        eip3155strict,
         showStatelessAccessWitness);
   }
 
@@ -133,9 +208,9 @@ public class StandardJsonTracer implements OperationTracer {
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
     }
-    pc = messageFrame.getPC() - messageFrame.getCode().getCodeSection(0).getEntryPoint();
+    pc = messageFrame.getPC();
     section = messageFrame.getSection();
-    gas = shortNumber(messageFrame.getRemainingGas());
+    gas = messageFrame.getRemainingGas();
     memorySize = messageFrame.memoryWordSize() * 32;
     if (showMemory && memorySize > 0) {
       memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
@@ -143,7 +218,8 @@ public class StandardJsonTracer implements OperationTracer {
       memory = null;
     }
     depth = messageFrame.getMessageStackSize();
-    subdepth = messageFrame.returnStackSize();
+    functionDepth =
+        messageFrame.getCode().getEofVersion() > 0 ? messageFrame.returnStackSize() + 1 : 0;
 
     StringBuilder sb = new StringBuilder();
     if (showStorage) {
@@ -194,20 +270,23 @@ public class StandardJsonTracer implements OperationTracer {
     if (eofContract) {
       sb.append("\"section\":").append(section).append(",");
     }
-    sb.append("\"op\":").append(opcode).append(",");
+    if (eip3155strict) {
+      sb.append("\"op\":").append(opcode).append(",");
+    } else {
+      sb.append("\"op\":\"").append(fastHexByte(opcode)).append("\",");
+    }
     OpcodeInfo opInfo = OpcodeInfo.getOpcode(opcode);
     if (eofContract && opInfo.pcAdvance() > 1) {
-      var immediate =
-          messageFrame
-              .getCode()
-              .getBytes()
-              .slice(
-                  pc + messageFrame.getCode().getCodeSection(0).getEntryPoint() + 1,
-                  opInfo.pcAdvance() - 1);
+      var immediate = messageFrame.getCode().getBytes().slice(pc + 1, opInfo.pcAdvance() - 1);
       sb.append("\"immediate\":\"").append(immediate.toHexString()).append("\",");
     }
-    sb.append("\"gas\":\"").append(gas).append("\",");
-    sb.append("\"gasCost\":\"").append(shortNumber(thisGasCost)).append("\",");
+    if (eip3155strict) {
+      sb.append("\"gas\":\"").append(shortNumber(gas)).append("\",");
+      sb.append("\"gasCost\":\"").append(shortNumber(thisGasCost)).append("\",");
+    } else {
+      sb.append("\"gas\":").append(Long.toUnsignedString(gas)).append(",");
+      sb.append("\"gasCost\":").append(Long.toUnsignedString(thisGasCost)).append(",");
+    }
     if (memory != null) {
       sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
     }
@@ -219,8 +298,8 @@ public class StandardJsonTracer implements OperationTracer {
       sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     }
     sb.append("\"depth\":").append(depth).append(",");
-    if (subdepth >= 1) {
-      sb.append("\"functionDepth\":").append(subdepth).append(",");
+    if (functionDepth > 0) {
+      sb.append("\"functionDepth\":").append(functionDepth).append(",");
     }
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
     sb.append("\"opName\":\"").append(currentOp.getName()).append("\"");
@@ -267,5 +346,13 @@ public class StandardJsonTracer implements OperationTracer {
   public void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
     // precompile calls are not part of the standard trace
+  }
+
+  private String fastHexByte(final int b) {
+    char[] result = new char[] {'0', 'x', '-', '-'};
+    result[2] = "0123456789abcdef".charAt(b >> 4 & 15);
+    result[3] = "0123456789abcdef".charAt(b & 15);
+
+    return new String(result);
   }
 }

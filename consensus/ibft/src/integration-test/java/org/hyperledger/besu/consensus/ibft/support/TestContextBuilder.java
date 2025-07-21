@@ -351,11 +351,11 @@ public class TestContextBuilder {
             blockChain, epochManager, blockInterface);
 
     final ProtocolContext protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            new BftContext(validatorProvider, epochManager, blockInterface),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withWorldStateArchive(worldStateArchive)
+            .withConsensusContext(new BftContext(validatorProvider, epochManager, blockInterface))
+            .build();
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
 

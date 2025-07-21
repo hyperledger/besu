@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-util'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -33,8 +33,12 @@ dependencies {
   api 'org.slf4j:slf4j-api'
 
   annotationProcessor 'org.apache.logging.log4j:log4j-core'
+  annotationProcessor 'com.google.dagger:dagger-compiler'
 
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
+  implementation 'com.github.ben-manes.caffeine:caffeine'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.logging.log4j:log4j-core'

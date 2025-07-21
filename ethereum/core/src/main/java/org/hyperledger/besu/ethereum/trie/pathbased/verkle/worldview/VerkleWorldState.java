@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.stateless.adapter.TrieKeyUtils;
 import org.hyperledger.besu.ethereum.stateless.hasher.StemHasher;
 import org.hyperledger.besu.ethereum.stateless.util.Parameters;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
@@ -68,17 +69,21 @@ public class VerkleWorldState extends PathBasedWorldState {
 
   private final VerklePreloader verklePreloader;
 
+  private final CodeCache codeCache;
+
   public VerkleWorldState(
       final VerkleWorldStateProvider archive,
       final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig) {
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache) {
     this(
         worldStateKeyValueStorage,
         archive.getCachedWorldStorageManager(),
         archive.getTrieLogManager(),
         evmConfiguration,
-        worldStateConfig);
+        worldStateConfig,
+        codeCache);
   }
 
   public VerkleWorldState(
@@ -86,7 +91,8 @@ public class VerkleWorldState extends PathBasedWorldState {
       final PathBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig) {
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache) {
     super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager, worldStateConfig);
     this.verklePreloader = new VerklePreloader(worldStateKeyValueStorage.getStemPreloader());
     this.setAccumulator(
@@ -95,12 +101,19 @@ public class VerkleWorldState extends PathBasedWorldState {
             (addr, value) -> verklePreloader.preLoadAccount(addr),
             verklePreloader::preLoadStorageSlot,
             verklePreloader::preLoadCode,
-            evmConfiguration));
+            evmConfiguration,
+            codeCache));
+    this.codeCache = codeCache;
   }
 
   @Override
   public VerkleWorldStateKeyValueStorage getWorldStateStorage() {
     return (VerkleWorldStateKeyValueStorage) worldStateKeyValueStorage;
+  }
+
+  @Override
+  public CodeCache codeCache() {
+    return codeCache;
   }
 
   @Override
@@ -472,7 +485,10 @@ public class VerkleWorldState extends PathBasedWorldState {
     return calculateRootHash(
         Optional.of(
             new VerkleWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
+                noOpSegmentedTx,
+                noOpTx,
+                worldStateKeyValueStorage.getFlatDbStrategy(),
+                worldStateKeyValueStorage.getComposedWorldStateStorage())),
         accumulator.copy());
   }
 

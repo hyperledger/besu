@@ -210,6 +210,7 @@ public class T8nServerSubCommand implements Runnable {
                           !parentCommand.hideStack,
                           parentCommand.showReturnData,
                           parentCommand.showStorage,
+                          parentCommand.eip3155strict,
                           parentCommand.showStatelessAccessWitness);
                   outputStreams.put(jsonTracer, traceDest);
                   return jsonTracer;

@@ -45,7 +45,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -117,7 +116,6 @@ public class BftBlockCreatorTest {
         bftProtocolSchedule.createProtocolSchedule(
             configOptions,
             forksSchedule,
-            PrivacyParameters.DEFAULT,
             false,
             bftExtraDataEncoder,
             EvmConfiguration.DEFAULT,
@@ -126,11 +124,12 @@ public class BftBlockCreatorTest {
             false,
             new NoOpMetricsSystem());
     final ProtocolContext protContext =
-        new ProtocolContext(
-            blockchain,
-            createInMemoryWorldStateArchive(),
-            setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withWorldStateArchive(createInMemoryWorldStateArchive())
+            .withConsensusContext(
+                setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder))
+            .build();
 
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();

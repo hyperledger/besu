@@ -246,6 +246,61 @@ public class MainnetProtocolSpecFactory {
         metricsSystem);
   }
 
+  public ProtocolSpecBuilder bpo1Definition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.bpo1Definition(
+        chainId,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        miningConfiguration,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
+  }
+
+  public ProtocolSpecBuilder bpo2Definition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.bpo2Definition(
+        chainId,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        miningConfiguration,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
+  }
+
+  public ProtocolSpecBuilder bpo3Definition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.bpo3Definition(
+        chainId,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        miningConfiguration,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
+  }
+
+  public ProtocolSpecBuilder bpo4Definition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.bpo4Definition(
+        chainId,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        miningConfiguration,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
+  }
+
+  public ProtocolSpecBuilder bpo5Definition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.bpo5Definition(
+        chainId,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        miningConfiguration,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
+  }
+
   /**
    * The "future" fork consists of EIPs that have been approved for Ethereum Mainnet but not
    * scheduled for a fork. This is also known as "Eligible For Inclusion" (EFI) or "Considered for

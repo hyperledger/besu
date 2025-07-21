@@ -97,6 +97,7 @@ public class RocksDBKeyValueStorageFactoryTest {
       // Side effect is creation of the Metadata version file
       final BaseVersionedStorageFormat expectedVersion =
           BaseVersionedStorageFormat.defaultForNewDB(dataStorageConfiguration);
+
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
     }

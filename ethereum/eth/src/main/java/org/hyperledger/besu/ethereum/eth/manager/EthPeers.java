@@ -29,12 +29,16 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
+import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerClientName;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -54,12 +58,12 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +80,7 @@ public class EthPeers implements PeerSelector {
       Comparator.comparing((final EthPeer p) -> p.getReputation().getScore())
           .thenComparing(CHAIN_HEIGHT);
 
-  public static final Comparator<EthPeer> HEAVIEST_CHAIN =
+  public static final Comparator<EthPeer> TOTAL_DIFFICULTY_THEN_HEIGHT =
       TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> LEAST_TO_MOST_BUSY =
@@ -114,7 +118,6 @@ public class EthPeers implements PeerSelector {
   private RlpxAgent rlpxAgent;
 
   private final Counter connectedPeersCounter;
-  //  private List<ProtocolManager> protocolManagers;
   private ChainHeadTracker tracker;
   private SnapServerChecker snapServerChecker;
   private boolean snapServerPeersNeeded = false;
@@ -137,7 +140,7 @@ public class EthPeers implements PeerSelector {
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.maxMessageSize = maxMessageSize;
-    this.bestPeerComparator = HEAVIEST_CHAIN;
+    this.bestPeerComparator = TOTAL_DIFFICULTY_THEN_HEIGHT;
     this.localNodeId = localNodeId;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
@@ -173,6 +176,26 @@ public class EthPeers implements PeerSelector {
     connectedPeersCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.PEERS, "connected_total", "Total number of peers connected");
+
+    final LabelledSuppliedMetric peerClientLabelledGauge =
+        metricsSystem.createLabelledSuppliedGauge(
+            BesuMetricCategory.PEERS,
+            "peer_count_by_client",
+            "The number of clients connected by client",
+            "client");
+
+    for (final var clientName : PeerClientName.values()) {
+      peerClientLabelledGauge.labels(
+          () -> countConnectedPeersByClientName(clientName), clientName.getDisplayName());
+    }
+  }
+
+  private double countConnectedPeersByClientName(final PeerClientName clientName) {
+    return streamAllActiveConnections()
+        .map(PeerConnection::getPeerInfo)
+        .map(PeerInfo::getClientName)
+        .filter(clientName::equals)
+        .count();
   }
 
   public void registerNewConnection(
@@ -200,7 +223,7 @@ public class EthPeers implements PeerSelector {
     }
   }
 
-  @Nonnull
+  @NotNull
   private List<PeerConnection> getIncompleteConnections(final Bytes id) {
     return incompleteConnections.asMap().keySet().stream()
         .filter(nrc -> nrc.getPeer().getId().equals(id))

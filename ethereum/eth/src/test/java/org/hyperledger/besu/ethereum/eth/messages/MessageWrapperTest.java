@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -209,7 +210,8 @@ public class MessageWrapperTest {
                                 false)),
                         LogsBloomFilter.fromHexString(
                             "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
-                        Optional.empty()))));
+                        Optional.empty()))),
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
     final Bytes actual = receiptsMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }

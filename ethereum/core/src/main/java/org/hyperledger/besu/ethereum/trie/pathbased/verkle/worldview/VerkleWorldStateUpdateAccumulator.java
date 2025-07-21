@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
@@ -36,13 +37,17 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class VerkleWorldStateUpdateAccumulator
     extends PathBasedWorldStateUpdateAccumulator<VerkleAccount> {
 
+  private final CodeCache codeCache;
+
   public VerkleWorldStateUpdateAccumulator(
       final PathBasedWorldView world,
       final Consumer<PathBasedValue<VerkleAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
       final Consumer<Bytes> codePreloader,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final CodeCache codeCache) {
     super(world, accountPreloader, storagePreloader, codePreloader, evmConfiguration);
+    this.codeCache = codeCache;
   }
 
   @Override
@@ -53,7 +58,8 @@ public class VerkleWorldStateUpdateAccumulator
             getAccountPreloader(),
             getStoragePreloader(),
             getCodePreloader(),
-            getEvmConfiguration());
+            getEvmConfiguration(),
+            codeCache);
     copy.cloneFromUpdater(this);
     return copy;
   }
@@ -85,8 +91,10 @@ public class VerkleWorldStateUpdateAccumulator
       final Hash addressHash,
       final long nonce,
       final Wei balance,
+      final Hash storageRoot,
+      final Hash codeHash,
       final boolean mutable) {
-    return new VerkleAccount(context, address, addressHash, nonce, balance, 0, Hash.EMPTY, mutable);
+    return new VerkleAccount(context, address, addressHash, nonce, balance, 0, codeHash, mutable);
   }
 
   @Override
@@ -112,5 +120,10 @@ public class VerkleWorldStateUpdateAccumulator
   @Override
   protected boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate() {
     return false;
+  }
+
+  @Override
+  public CodeCache codeCache() {
+    return codeCache;
   }
 }

@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
@@ -142,6 +142,7 @@ public class DebugTraceTransactionTest {
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
         new TransactionTrace(transaction, result, traceFrames);
+    when(transaction.getHash()).thenReturn(transactionHash);
     when(transaction.getGasLimit()).thenReturn(100L);
     when(result.getGasRemaining()).thenReturn(27L);
     when(result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
@@ -156,8 +157,8 @@ public class DebugTraceTransactionTest {
         .thenReturn(Optional.of(transactionTrace));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceTransaction.response(request);
-    final DebugTraceTransactionDetails transactionResult =
-        (DebugTraceTransactionDetails) response.getResult();
+    final OpCodeLoggerTracerResult transactionResult =
+        (OpCodeLoggerTracerResult) response.getResult();
 
     assertThat(transactionResult.getGas()).isEqualTo(73);
     assertThat(transactionResult.getReturnValue()).isEqualTo("1234");

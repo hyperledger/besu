@@ -274,7 +274,15 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     }
 
     final ACCOUNT newAccount =
-        createAccount(this, address, hashAndSaveAccountPreImage(address), nonce, balance, true);
+        createAccount(
+            this,
+            address,
+            hashAndSaveAccountPreImage(address),
+            nonce,
+            balance,
+            Hash.EMPTY_TRIE_HASH,
+            Hash.EMPTY,
+            true);
     pathBasedValue.setUpdated(newAccount);
     return track(new UpdateTrackingAccount<>(newAccount));
   }
@@ -949,6 +957,8 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       final Hash addressHash,
       final long nonce,
       final Wei balance,
+      final Hash storageRoot,
+      final Hash codeHash,
       final boolean mutable);
 
   protected abstract ACCOUNT createAccount(

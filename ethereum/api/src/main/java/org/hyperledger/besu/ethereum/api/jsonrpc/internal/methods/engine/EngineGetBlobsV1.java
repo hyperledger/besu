@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
@@ -26,14 +27,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV1;
+import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Arrays;
 import java.util.List;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import io.vertx.core.Vertx;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * #### Specification
@@ -72,7 +74,7 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public String getName() {
-    return "engine_getBlobsV1";
+    return RpcMethod.ENGINE_GET_BLOBS_V1.getMethodName();
   }
 
   @Override
@@ -90,7 +92,7 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
     if (versionedHashes.length > 128) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
-          RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST);
+          RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
 
     final List<BlobAndProofV1> result = getBlobV1Result(versionedHashes);
@@ -98,18 +100,21 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
-  private @Nonnull List<BlobAndProofV1> getBlobV1Result(final VersionedHash[] versionedHashes) {
+  private @NotNull List<BlobAndProofV1> getBlobV1Result(final VersionedHash[] versionedHashes) {
     return Arrays.stream(versionedHashes)
-        .map(transactionPool::getBlobQuad)
+        .map(transactionPool::getBlobProofBundle)
         .map(this::getBlobAndProofV1)
         .toList();
   }
 
-  private @Nullable BlobAndProofV1 getBlobAndProofV1(final BlobsWithCommitments.BlobQuad bq) {
+  private @Nullable BlobAndProofV1 getBlobAndProofV1(final BlobProofBundle bq) {
     if (bq == null) {
       return null;
     }
+    if (bq.getBlobType() != BlobType.KZG_PROOF) {
+      return null;
+    }
     return new BlobAndProofV1(
-        bq.blob().getData().toHexString(), bq.kzgProof().getData().toHexString());
+        bq.getBlob().getData().toHexString(), bq.getKzgProof().getFirst().getData().toHexString());
   }
 }

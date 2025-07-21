@@ -104,6 +104,8 @@ public class BlockHeaderBuilder {
         .extraData(Bytes.EMPTY)
         .mixHash(Hash.EMPTY)
         .nonce(0)
+        .blobGasUsed(0L)
+        .excessBlobGas(BlobGas.ZERO)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions());
   }
 
@@ -132,6 +134,33 @@ public class BlockHeaderBuilder {
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
         .requestsHash(header.getRequestsHash().orElse(null))
         .executionWitness(header.getExecutionWitness().orElse(null));
+  }
+
+  public static BlockHeaderBuilder fromHeader(
+      final org.hyperledger.besu.plugin.data.BlockHeader header) {
+    return create()
+        .parentHash(header.getParentHash())
+        .ommersHash(header.getOmmersHash())
+        .coinbase(header.getCoinbase())
+        .stateRoot(header.getStateRoot())
+        .transactionsRoot(header.getTransactionsRoot())
+        .receiptsRoot(header.getReceiptsRoot())
+        .logsBloom(new LogsBloomFilter(header.getLogsBloom()))
+        .difficulty(Difficulty.of(header.getDifficulty().getAsBigInteger()))
+        .number(header.getNumber())
+        .gasLimit(header.getGasLimit())
+        .gasUsed(header.getGasUsed())
+        .timestamp(header.getTimestamp())
+        .extraData(header.getExtraData())
+        .baseFee(header.getBaseFee().map(Wei::fromQuantity).orElse(null))
+        .mixHash(header.getMixHash())
+        .nonce(header.getNonce())
+        .prevRandao(header.getPrevRandao().orElse(null))
+        .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
+        .blobGasUsed(header.getBlobGasUsed().orElse(null))
+        .excessBlobGas(header.getExcessBlobGas().map(BlobGas::fromQuantity).orElse(null))
+        .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
+        .requestsHash(header.getRequestsHash().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {

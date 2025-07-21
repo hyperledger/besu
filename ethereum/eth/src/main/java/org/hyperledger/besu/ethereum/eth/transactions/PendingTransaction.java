@@ -14,15 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper.CELL_PROOFS_PER_BLOB;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.ACCESS_LIST_ENTRY_SHALLOW_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.ACCESS_LIST_STORAGE_KEY_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.BLOBS_WITH_COMMITMENTS_SIZE;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.BLOB_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.BLOB_PROOF_BUNDLE_SIZE_V0;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.BLOB_PROOF_BUNDLE_SIZE_V1;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.CODE_DELEGATION_ENTRY_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.EIP1559_AND_EIP4844_SHALLOW_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.FRONTIER_AND_ACCESS_LIST_SHALLOW_SIZE;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.KZG_COMMITMENT_OR_PROOF_SIZE;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.LIST_SHALLOW_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.KZG_PROOF_CONTAINER_SHALLOW_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.KZG_PROOF_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.OPTIONAL_ACCESS_LIST_SHALLOW_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.OPTIONAL_CHAIN_ID_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.OPTIONAL_CODE_DELEGATION_LIST_SHALLOW_SIZE;
@@ -30,7 +32,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.OPTIONAL_TO_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.PAYLOAD_SHALLOW_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.PENDING_TRANSACTION_SHALLOW_SIZE;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.VERSIONED_HASH_SIZE;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MemorySize.calculateListShallowSize;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
@@ -198,12 +200,21 @@ public abstract class PendingTransaction
   private int computeBlobWithCommitmentsMemorySize() {
     final int blobCount = transaction.getBlobCount();
 
-    return OPTIONAL_SHALLOW_SIZE
-        + BLOBS_WITH_COMMITMENTS_SIZE
-        + (LIST_SHALLOW_SIZE * 4)
-        + (KZG_COMMITMENT_OR_PROOF_SIZE * blobCount * 2)
-        + (VERSIONED_HASH_SIZE * blobCount)
-        + (BLOB_SIZE * blobCount);
+    return switch (transaction.getBlobsWithCommitments().get().getBlobType()) {
+      case KZG_PROOF ->
+          OPTIONAL_SHALLOW_SIZE
+              + BLOBS_WITH_COMMITMENTS_SIZE
+              + calculateListShallowSize(blobCount) // list of KZGProofBundle
+              + BLOB_PROOF_BUNDLE_SIZE_V0 * blobCount;
+      case KZG_CELL_PROOFS ->
+          OPTIONAL_SHALLOW_SIZE
+              + BLOBS_WITH_COMMITMENTS_SIZE
+              + calculateListShallowSize(blobCount) // list of KZGProofBundle
+              + (BLOB_PROOF_BUNDLE_SIZE_V1
+                      + KZG_PROOF_CONTAINER_SHALLOW_SIZE
+                      + KZG_PROOF_SIZE * CELL_PROOFS_PER_BLOB)
+                  * blobCount;
+    };
   }
 
   private int computePayloadMemorySize() {
@@ -435,16 +446,29 @@ public abstract class PendingTransaction
     int OPTIONAL_CHAIN_ID_SIZE = 80;
     int PAYLOAD_SHALLOW_SIZE = 32;
     int ACCESS_LIST_STORAGE_KEY_SIZE = 32;
-    int ACCESS_LIST_ENTRY_SHALLOW_SIZE = 248;
+    int ACCESS_LIST_ENTRY_SHALLOW_SIZE = 168;
     int OPTIONAL_ACCESS_LIST_SHALLOW_SIZE = 40;
     int OPTIONAL_CODE_DELEGATION_LIST_SHALLOW_SIZE = 40;
     int CODE_DELEGATION_ENTRY_SIZE = 520;
-    int VERSIONED_HASH_SIZE = 96;
-    int LIST_SHALLOW_SIZE = 48;
     int OPTIONAL_SHALLOW_SIZE = 16;
-    int KZG_COMMITMENT_OR_PROOF_SIZE = 112;
-    int BLOB_SIZE = 131136;
-    int BLOBS_WITH_COMMITMENTS_SIZE = 40;
+    int KZG_PROOF_CONTAINER_SHALLOW_SIZE = 24;
+    int KZG_PROOF_SIZE = 112;
+    int BLOBS_WITH_COMMITMENTS_SIZE = 48;
+    int BLOB_PROOF_BUNDLE_SIZE_V0 = 131536;
+    int BLOB_PROOF_BUNDLE_SIZE_V1 = 393576;
     int PENDING_TRANSACTION_SHALLOW_SIZE = 40;
+
+    /**
+     * This calculation is for an immutable List
+     *
+     * @param length the length of the list
+     * @return the memory shallow size of the list and the contained array
+     */
+    static int calculateListShallowSize(final int length) {
+      // list object shallow size is 24.
+      // array w/o elements size is 16.
+      // for every 2 objects in the array add 8
+      return 40 + ((length + 1) / 2) * 8;
+    }
   }
 }

@@ -31,121 +31,40 @@ import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.Nonnull;
 
 import com.google.common.collect.MultimapBuilder;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 
 class EVMExecutorTest {
 
   @Test
-  void currentEVM() {
-    var subject = EVMExecutor.evm();
-    assertThat(subject.getEVMVersion()).isEqualTo(EvmSpecVersion.PRAGUE);
-  }
-
-  @ParameterizedTest
-  @EnumSource(EvmSpecVersion.class)
-  void evmByRequest(final EvmSpecVersion version) {
-    var subject = EVMExecutor.evm(version);
-    assertThat(subject.getEVMVersion()).isEqualTo(version);
-  }
-
-  @ParameterizedTest
-  @EnumSource(EvmSpecVersion.class)
-  void evmWithChainIDByRequest(final EvmSpecVersion version) {
-    var subject = EVMExecutor.evm(version, BigInteger.TEN);
-    assertThat(subject.getEVMVersion()).isEqualTo(version);
-    if (EvmSpecVersion.ISTANBUL.compareTo(version) <= 0) {
-      assertThat(subject.getChainId()).map(Bytes::trimLeadingZeros).map(Bytes::toInt).contains(10);
-    } else {
-      assertThat(subject.getChainId()).isEmpty();
-    }
-  }
-
-  @ParameterizedTest
-  @EnumSource(EvmSpecVersion.class)
-  void evmWithChainIDByBytes(final EvmSpecVersion version) {
-    var subject = EVMExecutor.evm(version, Bytes.fromHexString("0xc4a1201d"));
-    assertThat(subject.getEVMVersion()).isEqualTo(version);
-    if (EvmSpecVersion.ISTANBUL.compareTo(version) <= 0) {
-      assertThat(subject.getChainId())
-          .map(Bytes::trimLeadingZeros)
-          .map(Bytes::toInt)
-          .contains(0xc4a1201d);
-    } else {
-      assertThat(subject.getChainId()).isEmpty();
-    }
-  }
-
-  @Test
   void customEVM() {
     var subject =
-        EVMExecutor.evm(
-            new EVM(
-                new OperationRegistry(),
-                new FrontierGasCalculator(),
-                EvmConfiguration.DEFAULT,
-                EvmSpecVersion.EXPERIMENTAL_EIPS));
+        new EVMExecutor(
+            EvmSpec.evmSpec(
+                new EVM(
+                    new OperationRegistry(),
+                    new FrontierGasCalculator(),
+                    EvmConfiguration.DEFAULT,
+                    EvmSpecVersion.EXPERIMENTAL_EIPS)));
     assertThat(subject).isNotNull();
   }
 
   @Test
-  void nullEVM() {
-    assertThrows(NullPointerException.class, () -> EVMExecutor.evm((EVM) null));
-  }
-
-  @SuppressWarnings({"removal", "InlineMeInliner"})
-  @Test
-  void defaultChainIdAPIs() {
-    Bytes32 defaultChainId = Bytes32.leftPad(Bytes.of(1));
-
-    EVMExecutor istanbulEVM = EVMExecutor.istanbul(EvmConfiguration.DEFAULT);
-    assertThat(istanbulEVM.getChainId()).contains(defaultChainId);
-
-    EVMExecutor berlinEVM = EVMExecutor.berlin(EvmConfiguration.DEFAULT);
-    assertThat(berlinEVM.getChainId()).contains(defaultChainId);
-
-    EVMExecutor londonEVM = EVMExecutor.london(EvmConfiguration.DEFAULT);
-    assertThat(londonEVM.getChainId()).contains(defaultChainId);
-
-    EVMExecutor parisEVM = EVMExecutor.paris(EvmConfiguration.DEFAULT);
-    assertThat(parisEVM.getChainId()).contains(defaultChainId);
-
-    EVMExecutor shanghaiEVM = EVMExecutor.shanghai(EvmConfiguration.DEFAULT);
-    assertThat(shanghaiEVM.getChainId()).contains(defaultChainId);
-
-    EVMExecutor cancunEVM = EVMExecutor.cancun(EvmConfiguration.DEFAULT);
-    assertThat(cancunEVM.getChainId()).contains(defaultChainId);
-
-    EVMExecutor cancunEOFEVM =
-        EVMExecutor.cancunEOF(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
-    assertThat(cancunEOFEVM.getChainId()).contains(defaultChainId);
-
-    EVMExecutor pragueEVM =
-        EVMExecutor.prague(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
-    assertThat(pragueEVM.getChainId()).contains(defaultChainId);
-
-    EVMExecutor osakaEVM =
-        EVMExecutor.osaka(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
-    assertThat(osakaEVM.getChainId()).contains(defaultChainId);
-
-    EVMExecutor futureEipsVM = EVMExecutor.futureEips(EvmConfiguration.DEFAULT);
-    assertThat(futureEipsVM.getChainId()).contains(defaultChainId);
+  void nullEvmSpec() {
+    assertThrows(NullPointerException.class, () -> new EVMExecutor((EvmSpec) null));
   }
 
   @Test
   void executeBytes() {
     var result =
-        EVMExecutor.evm(EvmSpecVersion.SHANGHAI)
+        new EVMExecutor(EvmSpec.evmSpec(EvmSpecVersion.SHANGHAI))
             .worldUpdater(createSimpleWorld().updater())
             .execute(Bytes.fromHexString("0x6001600255"), Bytes.EMPTY, Wei.ZERO, Address.ZERO);
     assertThat(result).isNotNull();
@@ -157,7 +76,13 @@ class EVMExecutorTest {
 
     var tracer = new StandardJsonTracer(System.out, false, true, true, false, false);
     var result =
-        EVMExecutor.evm(EvmSpecVersion.SHANGHAI)
+        new EVMExecutor(
+                EvmSpec.evmSpec(EvmSpecVersion.SHANGHAI)
+                    .precompileContractRegistry(new PrecompileContractRegistry())
+                    .requireDeposit(false)
+                    .initialNonce(42)
+                    .contractValidationRules(List.of())
+                    .forceCommitAddresses(List.of()))
             .messageFrameType(MessageFrame.Type.CONTRACT_CREATION)
             .worldUpdater(simpleWorld.updater())
             .tracer(tracer)
@@ -184,11 +109,6 @@ class EVMExecutorTest {
             .gasLimit(15_000_000L)
             .blockHashLookup((__, ___) -> Hash.ZERO)
             .versionedHashes(Optional.empty())
-            .precompileContractRegistry(new PrecompileContractRegistry())
-            .requireDeposit(false)
-            .initialNonce(42)
-            .contractValidationRules(List.of())
-            .forceCommitAddresses(List.of())
             .warmAddress(Address.ZERO)
             .accessListWarmStorage(
                 Address.ZERO, Bytes32.ZERO, Bytes32.leftPad(Bytes.ofUnsignedLong(2L)))
@@ -202,7 +122,7 @@ class EVMExecutorTest {
   void anternateExecStack() {
     SimpleWorld simpleWorld = createSimpleWorld();
     var result =
-        EVMExecutor.evm(EvmSpecVersion.SHANGHAI)
+        new EVMExecutor(EvmSpec.evmSpec(EvmSpecVersion.SHANGHAI))
             .worldUpdater(simpleWorld.updater())
             .messageFrameType(MessageFrame.Type.MESSAGE_CALL)
             .code(Bytes.fromHexString("0x6001600255"))
@@ -213,7 +133,7 @@ class EVMExecutorTest {
     assertThat(result).isNotNull();
   }
 
-  @Nonnull
+  @NotNull
   private static SimpleWorld createSimpleWorld() {
     SimpleWorld simpleWorld = new SimpleWorld();
 

@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -65,12 +65,15 @@ public class SystemCallProcessor {
   public Bytes process(
       final Address callAddress, final BlockProcessingContext context, final Bytes inputData) {
     WorldUpdater updater = context.getWorldState().updater();
-
-    // if no code exists at CALL_ADDRESS, the call must fail silently
     final Account maybeContract = updater.get(callAddress);
     if (maybeContract == null) {
-      LOG.trace("System call address not found {}", callAddress);
-      return Bytes.EMPTY;
+      LOG.error("Invalid system call address: {}", callAddress);
+      throw new InvalidSystemCallAddressException("Invalid system call address: " + callAddress);
+    }
+    if (maybeContract.getCode().isEmpty()) {
+      LOG.error("Invalid system call address: {}", callAddress);
+      throw new InvalidSystemCallAddressException(
+          "Invalid system call, no code at address " + callAddress);
     }
 
     final AbstractMessageProcessor processor =
@@ -97,8 +100,13 @@ public class SystemCallProcessor {
       return frame.getOutputData();
     }
 
-    // the call must execute to completion
-    throw new RuntimeException("System call did not execute to completion");
+    // The call must execute to completion
+    String errorMessage =
+        frame
+            .getExceptionalHaltReason()
+            .map(haltReason -> "System call halted: " + haltReason.getDescription())
+            .orElse("System call did not execute to completion");
+    throw new RuntimeException(errorMessage);
   }
 
   private MessageFrame createMessageFrame(
@@ -108,7 +116,6 @@ public class SystemCallProcessor {
       final BlockHashLookup blockHashLookup,
       final Bytes inputData) {
 
-    final Optional<Account> maybeContract = Optional.ofNullable(worldUpdater.get(callAddress));
     final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
 
@@ -130,10 +137,21 @@ public class SystemCallProcessor {
         .inputData(inputData)
         .sender(SYSTEM_ADDRESS)
         .blockHashLookup(blockHashLookup)
-        .code(
-            maybeContract
-                .map(c -> processor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
-                .orElse(CodeV0.EMPTY_CODE))
+        .code(getCode(worldUpdater.get(callAddress), processor))
         .build();
+  }
+
+  private Code getCode(final Account contract, final AbstractMessageProcessor processor) {
+    if (contract == null) {
+      return CodeV0.EMPTY_CODE;
+    }
+
+    // Bonsai accounts may have a fully cached code, so we use that one
+    if (contract.getCodeCache() != null) {
+      return contract.getOrCreateCachedCode();
+    }
+
+    // Any other account can only use the cached jump dest analysis if available
+    return processor.getOrCreateCachedJumpDest(contract.getCodeHash(), contract.getCode());
   }
 }
