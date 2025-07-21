@@ -180,18 +180,6 @@ public abstract class BenchmarkExecutor {
     }
   }
 
-  private void runPrecompile(
-      final Map<String, Bytes> testCases, final PrecompiledContract contract) {
-
-    // Fully warmup and execute, test case by test case
-    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      final double execTime =
-          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
-      long gasCost = contract.gasRequirement(testCase.getValue());
-      logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
-    }
-  }
-
   private void runPrecompileAttemptCacheBust(
       final Map<String, Bytes> testCases, final PrecompiledContract contract) {
 
@@ -232,6 +220,18 @@ public abstract class BenchmarkExecutor {
       } else {
         output.printf("%s Test case missing from results%n", testCase.getKey());
       }
+    }
+  }
+
+  private void runPrecompile(
+      final Map<String, Bytes> testCases, final PrecompiledContract contract) {
+
+    // Fully warmup and execute, test case by test case
+    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+      final double execTime =
+          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
+      long gasCost = contract.gasRequirement(testCase.getValue());
+      logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
     }
   }
 
