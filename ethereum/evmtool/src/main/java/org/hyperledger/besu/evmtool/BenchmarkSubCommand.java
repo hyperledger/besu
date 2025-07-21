@@ -144,7 +144,7 @@ public class BenchmarkSubCommand implements Runnable {
   @Option(
       names = {"--attempt-cache-bust"},
       description =
-          "Run each test case within each warmup and exec iteration, if the benchmark supports it. This attempts to warm the code without warming the data, i.e. avoids warming CPU caches. Benchmark must have sufficient number and variety of test cases to be effective.",
+          "Run each test case within each warmup and exec iteration. This attempts to warm the code without warming the data, i.e. avoid warming CPU caches. Benchmark must have sufficient number and variety of test cases to be effective. --warm-time and --exec-time are ignored.",
       scope = LOCAL,
       negatable = true)
   Boolean attemptCacheBust = false;

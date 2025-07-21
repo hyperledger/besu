@@ -134,9 +134,14 @@ public abstract class BenchmarkExecutor {
     this.output = output;
     this.precompileTableHeader =
         () -> {
-          if (benchmarkConfig.attemptCacheBust()) output.println("--attempt-cache-bust=true");
+          if (benchmarkConfig.attemptCacheBust())
+            output.println("--attempt-cache-bust=true (--warm-time and --exec-time ignored)");
           output.printf("--warm-iterations=%d%n", warmIterations);
+          if (!benchmarkConfig.attemptCacheBust())
+            output.printf("--warm-time=%ss%n", warmTimeInNano / 1.0e9D);
           output.printf("--exec-iterations=%d%n", execIterations);
+          if (!benchmarkConfig.attemptCacheBust())
+            output.printf("--exec-time=%ss%n", execTimeInNano / 1.0e9D);
           output.printf(
               "%-30s | %12s | %12s | %15s | %15s%n",
               "", "Actual cost", "Derived Cost", "Iteration time", "Throughput");
@@ -194,8 +199,7 @@ public abstract class BenchmarkExecutor {
     // Also run all test cases in serial inside one iteration
     Map<String, Long> totalElapsedByTestName = new HashMap<>();
     int executions = 0;
-    while (executions < execIterations /* && totalElapsed < execTimeInNano*/) {
-
+    while (executions < execIterations) {
       for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
         final long iterationStart = System.nanoTime();
         final var result = contract.computePrecompile(testCase.getValue(), fakeFrame);
@@ -249,7 +253,7 @@ public abstract class BenchmarkExecutor {
       throw new IllegalArgumentException("Input is Invalid for " + testName);
     }
 
-    // Warmup individual test case fully
+    // Warmup individual test case fully, which may have side effect of warming cpu caches
     long startWarmNanoTime = System.nanoTime();
     for (int i = 0;
         i < warmIterations && System.nanoTime() - startWarmNanoTime < warmTimeInNano;
