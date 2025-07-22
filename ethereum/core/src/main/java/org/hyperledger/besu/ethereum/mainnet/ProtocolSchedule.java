@@ -39,7 +39,7 @@ public interface ProtocolSchedule {
             .number(parentBlockHeader.getNumber() + 1)
             .timestamp(timestampForNextBlock)
             .parentHash(parentBlockHeader.getBlockHash())
-            .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+            .blockHeaderFunctions(getByBlockHeader(parentBlockHeader).getBlockHeaderFunctions())
             .buildBlockHeader();
     return getByBlockHeader(nextBlockHeader);
   }

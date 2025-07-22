@@ -84,7 +84,8 @@ public abstract class AbstractTraceByHash implements JsonRpcMethod {
                     .trace(
                         mutableWorldState,
                         block,
-                        new DebugOperationTracer(new OpCodeTracerConfig(false, false, true), false))
+                        new DebugOperationTracer(
+                            new OpCodeTracerConfig(false, false, true, false), false))
                     .map(BlockTrace::getTransactionTraces)
                     .orElse(Collections.emptyList())
                     .stream()

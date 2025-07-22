@@ -224,6 +224,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
     }
 
+    // frame addition is automatically handled by parent messageFrameStack
     MessageFrame.builder()
         .parentMessageFrame(frame)
         .type(MessageFrame.Type.MESSAGE_CALL)
@@ -235,10 +236,10 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         .value(value(frame))
         .apparentValue(apparentValue(frame))
         .code(code)
+        .accessWitness(frame.getAccessWitness())
         .isStatic(isStatic(frame))
         .completer(child -> complete(frame, child))
         .build();
-    // see note in stack depth check about incrementing cost
     frame.incrementRemainingGas(cost);
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);

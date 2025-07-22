@@ -315,9 +315,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final BonsaiAccount oldAccount =
           getWorldStateStorage()
               .getAccount(address.addressHash())
-              .map(
-                  bytes ->
-                      BonsaiAccount.fromRLP(BonsaiWorldState.this, address, bytes, true, codeCache))
+              .map(bytes -> BonsaiAccount.fromRLP(BonsaiWorldState.this, address, bytes, true))
               .orElse(null);
       if (oldAccount == null) {
         // This is when an account is both created and deleted within the scope of the same
@@ -389,7 +387,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
   public Account get(final Address address) {
     return getWorldStateStorage()
         .getAccount(address.addressHash())
-        .map(bytes -> BonsaiAccount.fromRLP(accumulator, address, bytes, true, codeCache))
+        .map(bytes -> BonsaiAccount.fromRLP(accumulator, address, bytes, true))
         .orElse(null);
   }
 

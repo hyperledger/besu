@@ -63,12 +63,21 @@ public class BlockHashOperation extends AbstractOperation {
         || soughtBlock >= currentBlockNumber
         || soughtBlock < (currentBlockNumber - blockHashLookup.getLookback())) {
       frame.pushStackItem(Bytes32.ZERO);
-    } else {
-      final Hash blockHash = blockHashLookup.apply(frame, soughtBlock);
-      frame.pushStackItem(blockHash);
+      return new OperationResult(cost, null);
     }
 
-    return new OperationResult(cost, null);
+    final long remainingGas = frame.getRemainingGas();
+    final Hash blockHash = blockHashLookup.apply(frame, soughtBlock);
+    final long lookupCost = remainingGas - frame.getRemainingGas();
+    // give lookupCost back as it will be taken after
+    frame.incrementRemainingGas(lookupCost);
+
+    if (blockHash == null) { // when blockHashLookup return null we have INSUFFICIENT_GAS issue
+      return new OperationResult(cost + lookupCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    frame.pushStackItem(blockHash);
+    return new OperationResult(cost + lookupCost, null);
   }
 
   /**

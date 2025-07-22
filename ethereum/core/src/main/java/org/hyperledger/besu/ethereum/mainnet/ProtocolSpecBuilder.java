@@ -78,6 +78,8 @@ public class ProtocolSpecBuilder {
   protected BlockHashProcessor blockHashProcessor;
   private FeeMarketBuilder feeMarketBuilder = (__) -> FeeMarket.legacy();
   private BlobSchedule blobSchedule = new BlobSchedule.NoBlobSchedule();
+  private ExecutionWitnessValidator executionWitnessValidator =
+      new ExecutionWitnessValidator.ProhibitedExecutionWitness();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
@@ -262,6 +264,12 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder executionWitnessValidator(
+      final ExecutionWitnessValidator executionWitnessValidator) {
+    this.executionWitnessValidator = executionWitnessValidator;
+    return this;
+  }
+
   public ProtocolSpecBuilder isPoS(final boolean isPoS) {
     this.isPoS = isPoS;
     return this;
@@ -372,7 +380,8 @@ public class ProtocolSpecBuilder {
         blockHashProcessor,
         isPoS,
         isReplayProtectionSupported,
-        Optional.ofNullable(transactionPoolPreProcessor));
+        Optional.ofNullable(transactionPoolPreProcessor),
+        executionWitnessValidator);
   }
 
   private BlockProcessor createBlockProcessor(

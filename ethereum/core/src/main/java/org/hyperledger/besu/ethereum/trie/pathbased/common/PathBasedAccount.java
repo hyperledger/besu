@@ -61,7 +61,6 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
    * @param codeHash The hash of the account's code.
    * @param mutable A boolean indicating if the account is mutable. If false, the account is
    *     considered immutable.
-   * @param codeCache The global cache used to store and retrieve the account's code.
    */
   public PathBasedAccount(
       final PathBasedWorldView context,
@@ -70,15 +69,14 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
       final long nonce,
       final Wei balance,
       final Hash codeHash,
-      final boolean mutable,
-      final CodeCache codeCache) {
+      final boolean mutable) {
     this.context = context;
     this.address = address;
     this.addressHash = addressHash;
     this.nonce = nonce;
     this.balance = balance;
     this.codeHash = codeHash;
-    this.codeCache = codeCache;
+    this.codeCache = context.codeCache();
 
     this.immutable = !mutable;
 
@@ -113,8 +111,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
       final Wei balance,
       final Hash codeHash,
       final Code code,
-      final boolean mutable,
-      final CodeCache codeCache) {
+      final boolean mutable) {
     this.context = context;
     this.address = address;
     this.addressHash = addressHash;
@@ -122,7 +119,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     this.balance = balance;
     this.codeHash = codeHash;
     this.immutable = !mutable;
-    this.codeCache = codeCache;
+    this.codeCache = context.codeCache();
 
     if (code == null && codeHash.equals(Hash.EMPTY)) {
       this.code = CodeV0.EMPTY_CODE;
@@ -137,6 +134,36 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
   @Override
   public org.hyperledger.besu.evm.internal.CodeCache getCodeCache() {
     return codeCache;
+  }
+
+  public PathBasedAccount(
+      final PathBasedWorldView context,
+      final Address address,
+      final AccountValue stateTrieAccount,
+      final boolean mutable) {
+    this(
+        context,
+        address,
+        address.addressHash(),
+        stateTrieAccount.getNonce(),
+        stateTrieAccount.getBalance(),
+        stateTrieAccount.getCodeHash(),
+        mutable);
+  }
+
+  public PathBasedAccount(
+      final PathBasedAccount toCopy, final PathBasedWorldView context, final boolean mutable) {
+    this.context = context;
+    this.address = toCopy.address;
+    this.addressHash = toCopy.addressHash;
+    this.nonce = toCopy.nonce;
+    this.balance = toCopy.balance;
+    this.codeHash = toCopy.codeHash;
+    this.code = toCopy.code;
+    this.codeCache = context.codeCache();
+    updatedStorage.putAll(toCopy.updatedStorage);
+
+    this.immutable = !mutable;
   }
 
   @Override
@@ -240,6 +267,11 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
   @Override
   public Hash getCodeHash() {
     return codeHash;
+  }
+
+  @Override
+  public Optional<Long> getCodeSize() {
+    return Optional.of((long) getCode().size());
   }
 
   @Override

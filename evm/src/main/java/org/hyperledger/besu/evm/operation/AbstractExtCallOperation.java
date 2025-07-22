@@ -194,6 +194,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
         .sender(sender(frame))
         .value(value(frame))
         .apparentValue(apparentValue(frame))
+        .accessWitness(frame.getAccessWitness())
         .code(code)
         .isStatic(isStatic(frame))
         .completer(child -> complete(frame, child))

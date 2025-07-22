@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.io.IOException;
@@ -260,19 +261,19 @@ class BlockchainReferenceTestCaseSpecTest {
 
     Assertions.assertEquals(1, blockchainReferenceTestCaseSpec.testCaseSpecs.size());
     Assertions.assertEquals(
-        1,
-        blockchainReferenceTestCaseSpec
-            .testCaseSpecs
-            .get("Call1MB1024Calldepth_d0g0v0_London")
-            .getCandidateBlocks()
-            .length);
+            1,
+            blockchainReferenceTestCaseSpec
+                    .testCaseSpecs
+                    .get("Call1MB1024Calldepth_d0g0v0_London")
+                    .getCandidateBlocks()
+                    .length);
     Assertions.assertEquals(
-        true,
-        blockchainReferenceTestCaseSpec
-            .testCaseSpecs
-            .get("Call1MB1024Calldepth_d0g0v0_London")
-            .getCandidateBlocks()[0]
-            .areAllTransactionsValid());
+            true,
+            blockchainReferenceTestCaseSpec
+                    .testCaseSpecs
+                    .get("Call1MB1024Calldepth_d0g0v0_London")
+                    .getCandidateBlocks()[0]
+                    .areAllTransactionsValid());
   }
 
   @Test
@@ -293,18 +294,19 @@ class BlockchainReferenceTestCaseSpecTest {
 
     Assertions.assertEquals(1, blockchainReferenceTestCaseSpec.testCaseSpecs.size());
     Assertions.assertEquals(
-        1,
-        blockchainReferenceTestCaseSpec
-            .testCaseSpecs
-            .get("ValueOverflow_d0g0v0_EIP150")
-            .getCandidateBlocks()
-            .length);
+            1,
+            blockchainReferenceTestCaseSpec
+                    .testCaseSpecs
+                    .get("ValueOverflow_d0g0v0_EIP150")
+                    .getCandidateBlocks()
+                    .length);
     Assertions.assertEquals(
-        false,
-        blockchainReferenceTestCaseSpec
-            .testCaseSpecs
-            .get("ValueOverflow_d0g0v0_EIP150")
-            .getCandidateBlocks()[0]
-            .areAllTransactionsValid());
+            false,
+            blockchainReferenceTestCaseSpec
+                    .testCaseSpecs
+                    .get("ValueOverflow_d0g0v0_EIP150")
+                    .getCandidateBlocks()[0]
+                    .areAllTransactionsValid());
+
   }
 }

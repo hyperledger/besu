@@ -20,5 +20,10 @@ package org.hyperledger.besu.ethereum.debug;
  * @param traceStorage Used by opcode tracer to enable storage capture
  * @param traceMemory Used by opcode tracer to enable memory capture
  * @param traceStack Used by opcode tracer to enable stack capture
+ * @param traceStatelessAccessWitness Used by opcode to enable trace stateless access witness
  */
-public record OpCodeTracerConfig(boolean traceStorage, boolean traceMemory, boolean traceStack) {}
+public record OpCodeTracerConfig(
+    boolean traceStorage,
+    boolean traceMemory,
+    boolean traceStack,
+    boolean traceStatelessAccessWitness) {}

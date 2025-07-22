@@ -181,12 +181,13 @@ configure(allprojects - project(':platform')) {
     }
 
     mavenCentral()
+    mavenLocal()
 
     // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
     def ethExecSpecTestsRepo = ivy {
       url 'https://github.com'
       patternLayout {
-        artifact '/[organisation]/[module]/releases/download/v[revision]/[classifier].[ext]'
+        artifact '/[organisation]/[module]/releases/download/[revision]/[artifact]_[classifier].[ext]'
       }
       metadataSources {
         artifact()

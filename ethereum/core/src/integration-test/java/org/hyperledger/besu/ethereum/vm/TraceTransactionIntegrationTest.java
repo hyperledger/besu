@@ -127,7 +127,7 @@ public class TraceTransactionIntegrationTest {
 
     // Now call the transaction to execute the SSTORE.
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(new OpCodeTracerConfig(true, true, true), false);
+        new DebugOperationTracer(new OpCodeTracerConfig(true, true, true, false), false);
     final Transaction executeTransaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
@@ -171,7 +171,7 @@ public class TraceTransactionIntegrationTest {
   @Test
   public void shouldTraceContractCreation() {
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(new OpCodeTracerConfig(true, true, true), false);
+        new DebugOperationTracer(new OpCodeTracerConfig(true, true, true, false), false);
     final Transaction transaction =
         Transaction.readFrom(
             new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));

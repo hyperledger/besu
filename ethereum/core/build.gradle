@@ -41,6 +41,7 @@ dependencies {
   implementation project(':datatypes')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
+  implementation project(':ethereum:verkletrie')
   implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':plugin-api')
@@ -58,6 +59,9 @@ dependencies {
 
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
+
+  implementation 'org.hyperledger.besu:besu-stateless'
+
   implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'io.consensys.tuweni:tuweni-concurrent'
   implementation 'io.consensys.tuweni:tuweni-units'

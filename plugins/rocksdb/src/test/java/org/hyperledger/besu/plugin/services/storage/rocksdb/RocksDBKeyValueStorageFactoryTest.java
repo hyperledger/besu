@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.FOREST;
-import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.X_BONSAI_ARCHIVE;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
@@ -76,11 +75,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
       // Side effect is creation of the Metadata version file
       final BaseVersionedStorageFormat expectedVersion =
-          dataStorageFormat == BONSAI
-              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
-              : (dataStorageFormat == X_BONSAI_ARCHIVE
-                  ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION
-                  : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
+          BaseVersionedStorageFormat.defaultForNewDB(dataStorageConfiguration);
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
     }
@@ -101,11 +96,8 @@ public class RocksDBKeyValueStorageFactoryTest {
     try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
       // Side effect is creation of the Metadata version file
       final BaseVersionedStorageFormat expectedVersion =
-          dataStorageFormat == BONSAI
-              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
-              : (dataStorageFormat == X_BONSAI_ARCHIVE
-                  ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION
-                  : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
+          BaseVersionedStorageFormat.defaultForNewDB(dataStorageConfiguration);
+
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
     }

@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -110,6 +111,11 @@ public class SimpleAccount implements MutableAccount {
   @Override
   public Hash getCodeHash() {
     return codeHash.get();
+  }
+
+  @Override
+  public Optional<Long> getCodeSize() {
+    return Optional.of((long) (this.code == null ? 0 : this.code.size()));
   }
 
   @Override

@@ -27,6 +27,10 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoOpBonsaiCache
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.verkle.cache.VerkleNoOpCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.verkle.cache.preloader.StemPreloader;
+import org.hyperledger.besu.ethereum.trie.pathbased.verkle.storage.VerkleWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -55,6 +59,9 @@ public class GenesisWorldStateProvider {
         == DataStorageFormat.X_BONSAI_ARCHIVE) {
       return createGenesisBonsaiWorldState(
           DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG, codeCache);
+    } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
+        == DataStorageFormat.VERKLE) {
+      return createGenesisVerkleWorldState(dataStorageConfiguration, codeCache);
     } else {
       return createGenesisForestWorldState();
     }
@@ -81,6 +88,26 @@ public class GenesisWorldStateProvider {
         bonsaiWorldStateKeyValueStorage,
         bonsaiCachedMerkleTrieLoader,
         new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage, codeCache),
+        new NoOpTrieLogManager(),
+        EvmConfiguration.DEFAULT,
+        createStatefulConfigWithTrie(),
+        codeCache);
+  }
+
+  private static MutableWorldState createGenesisVerkleWorldState(
+      final DataStorageConfiguration dataStorageConfiguration, final CodeCache codeCache) {
+    final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
+        new VerkleWorldStateKeyValueStorage(
+            new KeyValueStorageProvider(
+                segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
+                new InMemoryKeyValueStorage(),
+                new NoOpMetricsSystem()),
+            new StemPreloader(),
+            dataStorageConfiguration,
+            new NoOpMetricsSystem());
+    return new VerkleWorldState(
+        verkleWorldStateKeyValueStorage,
+        new VerkleNoOpCachedWorldStorageManager(verkleWorldStateKeyValueStorage, codeCache),
         new NoOpTrieLogManager(),
         EvmConfiguration.DEFAULT,
         createStatefulConfigWithTrie(),

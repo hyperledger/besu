@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionWitnessParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -373,13 +374,14 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
 
   protected EnginePayloadParameter mockEnginePayload(
       final BlockHeader header, final List<String> txs) {
-    return mockEnginePayload(header, txs, null);
+    return mockEnginePayload(header, txs, null, null);
   }
 
   protected EnginePayloadParameter mockEnginePayload(
       final BlockHeader header,
       final List<String> txs,
-      final List<WithdrawalParameter> withdrawals) {
+      final List<WithdrawalParameter> withdrawals,
+      final ExecutionWitnessParameter executionWitness) {
     return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
@@ -397,7 +399,8 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         txs,
         withdrawals,
         header.getBlobGasUsed().map(UnsignedLongParameter::new).orElse(null),
-        header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null));
+        header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null),
+        executionWitness);
   }
 
   protected BlockHeader setupValidPayload(

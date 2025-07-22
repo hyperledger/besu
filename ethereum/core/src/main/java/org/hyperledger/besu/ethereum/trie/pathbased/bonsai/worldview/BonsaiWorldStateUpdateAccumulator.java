@@ -21,12 +21,18 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
+
+import java.util.Optional;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldStateUpdateAccumulator
     extends PathBasedWorldStateUpdateAccumulator<BonsaiAccount> {
@@ -38,8 +44,14 @@ public class BonsaiWorldStateUpdateAccumulator
       final Consumer<StorageSlotKey> storagePreloader,
       final EvmConfiguration evmConfiguration,
       final CodeCache codeCache) {
-    super(world, accountPreloader, storagePreloader, evmConfiguration);
-
+    super(
+        world,
+        accountPreloader,
+        storagePreloader,
+        (__, ___) -> {
+          /*nothing to preload for the code*/
+        },
+        evmConfiguration);
     this.codeCache = codeCache;
   }
 
@@ -73,7 +85,7 @@ public class BonsaiWorldStateUpdateAccumulator
       final Address address,
       final AccountValue stateTrieAccount,
       final boolean mutable) {
-    return new BonsaiAccount(context, address, stateTrieAccount, mutable, codeCache);
+    return new BonsaiAccount(context, address, stateTrieAccount, mutable);
   }
 
   @Override
@@ -87,19 +99,38 @@ public class BonsaiWorldStateUpdateAccumulator
       final Hash codeHash,
       final boolean mutable) {
     return new BonsaiAccount(
-        context, address, addressHash, nonce, balance, storageRoot, codeHash, mutable, codeCache);
+        context, address, addressHash, nonce, balance, storageRoot, codeHash, mutable);
   }
 
   @Override
   protected BonsaiAccount createAccount(
       final PathBasedWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
-    return new BonsaiAccount(context, tracked, codeCache);
+    return new BonsaiAccount(context, tracked);
   }
 
   @Override
   protected void assertCloseEnoughForDiffing(
       final BonsaiAccount source, final AccountValue account, final String context) {
     BonsaiAccount.assertCloseEnoughForDiffing(source, account, context);
+  }
+
+  @Override
+  protected Optional<UInt256> getStorageValueByStorageSlotKey(
+      final PathBasedWorldState worldState,
+      final Address address,
+      final StorageSlotKey storageSlotKey) {
+    return ((BonsaiWorldState) worldState)
+        .getStorageValueByStorageSlotKey(
+            () ->
+                Optional.ofNullable(loadAccount(address, PathBasedValue::getPrior))
+                    .map(PathBasedAccount::getStorageRoot),
+            address,
+            storageSlotKey);
+  }
+
+  @Override
+  protected boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate() {
+    return true;
   }
 
   @Override

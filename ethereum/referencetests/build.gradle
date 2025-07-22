@@ -28,6 +28,20 @@ jar {
   }
 }
 
+configurations {
+  referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
+
+  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
+  executionRefTestImplementation.extendsFrom referenceTestImplementation {
+    canBeResolved = true
+    canBeConsumed = false
+  }
+  verkleRefTestImplemention.extendsFrom referenceTestImplementation {
+    canBeResolved = true
+    canBeConsumed = false
+  }
+}
+
 def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
   final referenceTestsPath = 'src/reference-test/external-resources/BlockchainTests'
   final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
@@ -46,10 +60,37 @@ def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
     )
 }
 
-def executionSpecTests = tasks.register("executionSpecTests") {
-  final referenceTestsPath = "$buildDir/execution-spec-tests/"
+def verkleSpecTests = tasks.register("verkleSpecTests") {
+  final referenceTestsPath = "$buildDir/execution-spec-tests/verkle/"
   final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
-  def tarPath = configurations.tarConfig.files.find{ it.name.startsWith('execution-spec-tests')}
+  def tarPath = configurations.verkleRefTestImplemention.files.find {
+    it.absolutePath.contains('execution-spec-tests')
+  }
+
+  copy {
+    from tarTree(tarPath)
+    into "$referenceTestsPath"
+  }
+
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath + "/fixtures/blockchain_tests/verkle"),
+    file("src/reference-test/templates/VerkleSpecTest.java.template"),
+    "verkle/fixtures",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec/verkle",
+    "VerkleSpecTest",
+    "org.hyperledger.besu.ethereum.vm.executionspec.verkle"
+    )
+}
+
+def executionSpecTests = tasks.register("executionSpecTests") {
+  final referenceTestsPath = "$buildDir/execution-spec-tests/all"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  def tarPath = configurations.executionRefTestImplementation.files.find {
+    it.absolutePath.contains('execution-spec-tests')
+  }
 
   copy {
     from tarTree(tarPath)
@@ -62,7 +103,7 @@ def executionSpecTests = tasks.register("executionSpecTests") {
   generateTestFiles(
     fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
     file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
-    "fixtures",
+    "all/fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
     "ExecutionSpecBlockchainTest",
     "org.hyperledger.besu.ethereum.vm.executionspec",
@@ -72,7 +113,7 @@ def executionSpecTests = tasks.register("executionSpecTests") {
   generateTestFiles(
     fileTree(referenceTestsPath + "/fixtures/state_tests"),
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
-    "fixtures",
+    "all/fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
     "ExecutionSpecStateTest",
     "org.hyperledger.besu.ethereum.vm.executionspec",
@@ -119,6 +160,7 @@ sourceSets {
       srcDirs "src/reference-test/java",
         blockchainReferenceTests,
         executionSpecTests,
+        verkleSpecTests,
         generalstateReferenceTests,
         generalstateRegressionReferenceTests
     }
@@ -136,6 +178,7 @@ dependencies {
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:trie')
   implementation project(':metrics:core')
   implementation project(':util')
   implementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
@@ -161,8 +204,6 @@ dependencies {
   referenceTestImplementation project(path: ':plugin-api')
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
-  // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:4.5.0:fixtures_develop@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.consensys.tuweni:tuweni-bytes'
@@ -170,6 +211,28 @@ dependencies {
   referenceTestImplementation 'org.assertj:assertj-core'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-params'
+
+  // the following will be resolved via custom ivy repository declared in root build.gradle
+  executionRefTestImplementation dependencies.create('ethereum:execution-spec-tests') {
+    version {
+      strictly 'v4.5.0'
+    }
+    artifact {
+      name = 'fixtures'
+      classifier = 'stable'
+      type = 'tar.gz'
+    }
+  }
+  verkleRefTestImplemention dependencies.create('ethereum:execution-spec-tests') {
+    version {
+      strictly 'verkle@v0.0.9-alpha-1'
+    }
+    artifact {
+      name = 'fixtures'
+      classifier = 'verkle-genesis'
+      type = 'tar.gz'
+    }
+  }
 
   referenceTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }
@@ -190,7 +253,7 @@ tasks.register('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
-    def expectedHash = 'c67e485ff8b5be9abc8ad15345ec21aa22e290d9'
+    def expectedHash = '9201075490807f58811078e9bb5ec895b4ac01a5'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
       exec {
@@ -257,15 +320,5 @@ def generateTestFiles(
       .replaceAll("%%TESTS_NAME%%", namePrefix + "_" + idx)
       .replaceAll("%%PACKAGE_NAME%%", packageString)
     testFile.newWriter().withWriter { w -> w << testFileContents }
-  }
-}
-
-configurations {
-  referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
-  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
-  tarConfig.extendsFrom referenceTestImplementation
-  tarConfig {
-    canBeResolved = true
-    canBeConsumed = false
   }
 }

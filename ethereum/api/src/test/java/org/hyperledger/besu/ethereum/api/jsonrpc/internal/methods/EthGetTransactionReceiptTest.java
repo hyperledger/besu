@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ExecutionWitnessValidator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -169,7 +170,8 @@ public class EthGetTransactionReceiptTest {
           new FrontierBlockHashProcessor(),
           true,
           true,
-          Optional.empty());
+          Optional.empty(),
+          new ExecutionWitnessValidator.ProhibitedExecutionWitness());
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
           TestHardforkId.STATUS,
@@ -200,7 +202,8 @@ public class EthGetTransactionReceiptTest {
           new FrontierBlockHashProcessor(),
           true,
           true,
-          Optional.empty());
+          Optional.empty(),
+          new ExecutionWitnessValidator.ProhibitedExecutionWitness());
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);

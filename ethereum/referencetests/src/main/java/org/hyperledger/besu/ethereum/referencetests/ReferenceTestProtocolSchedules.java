@@ -114,7 +114,8 @@ public class ReferenceTestProtocolSchedules {
                 Map.entry("Future_EIPs", createSchedule(genesisStub.clone().futureEipsTime(0))),
                 Map.entry(
                     "Experimental_EIPs",
-                    createSchedule(genesisStub.clone().experimentalEipsTime(0))))
+                    createSchedule(genesisStub.clone().experimentalEipsTime(0))),
+                Map.entry("Verkle", createSchedule(genesisStub.clone().verkleTime(0))))
             .entrySet()
             .stream()
             .map(e -> Map.entry(e.getKey().toLowerCase(Locale.ROOT), e.getValue()))

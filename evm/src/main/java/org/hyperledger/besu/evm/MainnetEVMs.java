@@ -1404,6 +1404,58 @@ public class MainnetEVMs {
   }
 
   /**
+   * Verkle evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM verkle(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        verkleOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.PRAGUE);
+  }
+
+  /**
+   * Operation registry for verkle's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry verkleOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerVerkleOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register Verkle operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerVerkleOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    // basing off of shanghai for devnet-7
+    registerShanghaiOperations(registry, gasCalculator, chainID);
+    // EIP-6780 nerf self destruct
+    registry.put(new SelfDestructOperation(gasCalculator, true));
+    // mimic a weird behavior by geth that ignores eip-1706
+    registry.put(new SStoreOperation(gasCalculator, 272L));
+  }
+
+  /**
    * Future eips evm.
    *
    * @param evmConfiguration the evm configuration

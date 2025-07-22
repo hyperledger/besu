@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -47,6 +48,12 @@ public class PmtStateTrieAccountValue extends AbstractStateTrieAccountValue
   @Override
   public Hash getStorageRoot() {
     return storageRoot;
+  }
+
+  @Override
+  public Optional<Long> getCodeSize() {
+    throw new UnsupportedOperationException(
+        "Retrieving code size from state trie account value is not possible with Patricia Merkle Trie");
   }
 
   @Override

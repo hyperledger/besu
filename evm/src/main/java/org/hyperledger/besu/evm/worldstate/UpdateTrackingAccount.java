@@ -29,6 +29,7 @@ import org.hyperledger.besu.evm.internal.CodeCache;
 
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
 
@@ -63,6 +64,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   private final Bytes oldCode;
   @Nullable private Hash updatedCodeHash;
   private final Hash oldCodeHash;
+  private final int oldCodeSize;
 
   // Only contains updated storage entries, but may contain entry with a value of 0 to signify
   // deletion.
@@ -87,6 +89,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     this.updatedCode = Bytes.EMPTY;
     this.oldCode = Bytes.EMPTY;
     this.oldCodeHash = Hash.EMPTY;
+    this.oldCodeSize = 0;
     this.updatedStorage = new TreeMap<>();
   }
 
@@ -110,6 +113,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
     this.oldCode = account.getCode();
     this.oldCodeHash = account.getCodeHash();
+    this.oldCodeSize = oldCode.size();
 
     this.updatedStorage = new TreeMap<>();
 
@@ -223,6 +227,16 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
         updatedCodeHash = Hash.hash(updatedCode);
       }
       return updatedCodeHash;
+    }
+  }
+
+  @Override
+  public Optional<Long> getCodeSize() {
+    if (updatedCode == null) {
+      // Note that we set code for new account, so it's only null if account isn't.
+      return Optional.of((long) oldCodeSize);
+    } else {
+      return Optional.of((long) updatedCode.size());
     }
   }
 

@@ -42,6 +42,7 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SPURIOUS_DRAGON;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.TANGERINE_WHISTLE;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.VERKLE;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsProcessor.pragueRequestsProcessors;
 
 import org.hyperledger.besu.config.BlobSchedule;
@@ -66,6 +67,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.Eip7709BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -85,6 +87,7 @@ import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.EOFGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.Eip4762GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -177,7 +180,7 @@ public abstract class MainnetProtocolSpecs {
                     .transactionValidatorFactory(transactionValidatorFactory)
                     .contractCreationProcessor(contractCreationProcessor)
                     .messageCallProcessor(messageCallProcessor)
-                    .clearEmptyAccounts(false)
+                    .clearEmptyAccountStrategy(new ClearEmptyAccountStrategy.NotClearEmptyAccount())
                     .warmCoinbase(false)
                     .maxStackSize(evmConfiguration.evmStackSize())
                     .feeMarket(FeeMarket.legacy())
@@ -327,7 +330,7 @@ public abstract class MainnetProtocolSpecs {
                     .transactionValidatorFactory(transactionValidator)
                     .contractCreationProcessor(contractCreationProcessor)
                     .messageCallProcessor(messageCallProcessor)
-                    .clearEmptyAccounts(true)
+                    .clearEmptyAccountStrategy(new ClearEmptyAccountStrategy.ClearEmptyAccount())
                     .warmCoinbase(false)
                     .maxStackSize(evmConfiguration.evmStackSize())
                     .feeMarket(feeMarket)
@@ -518,7 +521,7 @@ public abstract class MainnetProtocolSpecs {
                     .transactionValidatorFactory(transactionValidatorFactory)
                     .contractCreationProcessor(contractCreationProcessor)
                     .messageCallProcessor(messageCallProcessor)
-                    .clearEmptyAccounts(true)
+                    .clearEmptyAccountStrategy(new ClearEmptyAccountStrategy.ClearEmptyAccount())
                     .warmCoinbase(false)
                     .maxStackSize(evmConfiguration.evmStackSize())
                     .feeMarket(feeMarket)
@@ -624,6 +627,8 @@ public abstract class MainnetProtocolSpecs {
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
+    final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
+        new ClearEmptyAccountStrategy.ClearEmptyAccount();
     return parisDefinition(
             chainId,
             enableRevertReason,
@@ -651,7 +656,7 @@ public abstract class MainnetProtocolSpecs {
                     .transactionValidatorFactory(transactionValidatorFactory)
                     .contractCreationProcessor(contractCreationProcessor)
                     .messageCallProcessor(messageCallProcessor)
-                    .clearEmptyAccounts(true)
+                    .clearEmptyAccountStrategy(clearEmptyAccountStrategy)
                     .warmCoinbase(true)
                     .maxStackSize(evmConfiguration.evmStackSize())
                     .feeMarket(feeMarket)
@@ -671,10 +676,58 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
                     evm.getMaxInitcodeSize()))
-        .withdrawalsProcessor(new WithdrawalsProcessor())
+        .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::noBlobBlockHeaderValidator)
         .hardforkId(SHANGHAI);
+  }
+
+  static ProtocolSpecBuilder verkleDefinition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
+        new ClearEmptyAccountStrategy.ClearEmptyAccountWithException(
+            List.of(Eip7709BlockHashProcessor.EIP_7709_HISTORY_STORAGE_ADDRESS));
+    return shanghaiDefinition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
+        .gasCalculator(Eip4762GasCalculator::new)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.verkle(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidatorFactory,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidatorFactory)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccountStrategy(clearEmptyAccountStrategy)
+                    .warmCoinbase(true)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
+                    .build())
+        .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
+        .executionWitnessValidator(new ExecutionWitnessValidator.AllowedExecutionWitness())
+        .blockHashProcessor(new Eip7709BlockHashProcessor())
+        .blockHeaderFunctions(new VerkleDevnetBlockHeaderFunctions())
+        .hardforkId(VERKLE);
   }
 
   static ProtocolSpecBuilder cancunDefinition(
@@ -739,7 +792,7 @@ public abstract class MainnetProtocolSpecs {
                     .transactionValidatorFactory(transactionValidator)
                     .contractCreationProcessor(contractCreationProcessor)
                     .messageCallProcessor(messageCallProcessor)
-                    .clearEmptyAccounts(true)
+                    .clearEmptyAccountStrategy(new ClearEmptyAccountStrategy.ClearEmptyAccount())
                     .warmCoinbase(true)
                     .maxStackSize(evmConfiguration.evmStackSize())
                     .feeMarket(feeMarket)
@@ -851,7 +904,8 @@ public abstract class MainnetProtocolSpecs {
                         .transactionValidatorFactory(transactionValidator)
                         .contractCreationProcessor(contractCreationProcessor)
                         .messageCallProcessor(messageCallProcessor)
-                        .clearEmptyAccounts(true)
+                        .clearEmptyAccountStrategy(
+                            new ClearEmptyAccountStrategy.ClearEmptyAccount())
                         .warmCoinbase(true)
                         .maxStackSize(evmConfiguration.evmStackSize())
                         .feeMarket(feeMarket)

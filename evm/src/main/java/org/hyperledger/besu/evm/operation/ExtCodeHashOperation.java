@@ -22,8 +22,6 @@ import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.OverflowException;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -59,49 +57,42 @@ public class ExtCodeHashOperation extends AbstractOperation {
   /**
    * Cost of Ext code hash operation.
    *
+   * @param frame the current frame
+   * @param address the address to use
    * @param accountIsWarm the account is warm
    * @return the long
    */
-  protected long cost(final boolean accountIsWarm) {
-    return gasCalculator().extCodeHashOperationGasCost()
-        + (accountIsWarm
-            ? gasCalculator().getWarmStorageReadCost()
-            : gasCalculator().getColdAccountAccessCost());
+  protected long cost(
+      final MessageFrame frame, final Address address, final boolean accountIsWarm) {
+    return gasCalculator().extCodeHashOperationGasCost(frame, accountIsWarm, address);
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      final Address address = Words.toAddress(frame.popStackItem());
-      final boolean accountIsWarm =
-          frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final long cost = cost(accountIsWarm);
-      if (frame.getRemainingGas() < cost) {
-        return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      }
+    final Address address = Words.toAddress(frame.popStackItem());
+    final boolean accountIsWarm =
+        frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
+    final long cost = cost(frame, address, accountIsWarm);
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
 
-      final Account account = frame.getWorldUpdater().get(address);
+    final Account account = frame.getWorldUpdater().get(address);
 
-      if (account == null || account.isEmpty()) {
-        frame.pushStackItem(Bytes.EMPTY);
-      } else {
-        if (enableEIP3540) {
-          final Bytes code = account.getCode();
-          if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
-            frame.pushStackItem(EOF_REPLACEMENT_HASH);
-          } else {
-            frame.pushStackItem(account.getCodeHash());
-          }
+    if (account == null || account.isEmpty()) {
+      frame.pushStackItem(Bytes.EMPTY);
+    } else {
+      if (enableEIP3540) {
+        final Bytes code = account.getCode();
+        if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
+          frame.pushStackItem(EOF_REPLACEMENT_HASH);
         } else {
           frame.pushStackItem(account.getCodeHash());
         }
+      } else {
+        frame.pushStackItem(account.getCodeHash());
       }
-      return new OperationResult(cost, null);
-
-    } catch (final UnderflowException ufe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
-    } catch (final OverflowException ofe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
+    return new OperationResult(cost, null);
   }
 }

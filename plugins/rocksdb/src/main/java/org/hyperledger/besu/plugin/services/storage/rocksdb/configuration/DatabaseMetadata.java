@@ -151,6 +151,7 @@ public class DatabaseMetadata {
         switch (v1.version()) {
           case 1 -> BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
           case 2 -> BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+          case 3 -> BaseVersionedStorageFormat.VERKLE_WITH_VARIABLES;
           default -> throw new StorageException("Unsupported db version: " + v1.version());
         };
 

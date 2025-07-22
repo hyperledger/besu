@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * historical block hash access in smart contracts.
  */
 public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
+
   private static final Logger LOG = LoggerFactory.getLogger(PragueBlockHashProcessor.class);
 
   private static final Address HISTORY_STORAGE_ADDRESS =

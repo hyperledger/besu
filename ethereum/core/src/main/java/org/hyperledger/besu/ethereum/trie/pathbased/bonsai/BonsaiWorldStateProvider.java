@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManage
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -56,7 +57,12 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
       final EvmConfiguration evmConfiguration,
       final Supplier<WorldStateHealer> worldStateHealerSupplier,
       final CodeCache codeCache) {
-    super(worldStateKeyValueStorage, blockchain, maxLayersToLoad, pluginContext);
+    super(
+        DataStorageFormat.BONSAI,
+        worldStateKeyValueStorage,
+        blockchain,
+        maxLayersToLoad,
+        pluginContext);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     this.evmConfiguration = evmConfiguration;

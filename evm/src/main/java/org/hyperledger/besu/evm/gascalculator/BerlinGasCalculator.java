@@ -48,7 +48,8 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   protected static final long ACCESS_LIST_STORAGE_COST = 1900L;
 
   // redefinitions for EIP-2929
-  private static final long SLOAD_GAS = WARM_STORAGE_READ_COST;
+  /** The constant SLOAD_GAS. */
+  protected static final long SLOAD_GAS = WARM_STORAGE_READ_COST;
 
   /** The constant SSTORE_RESET_GAS. */
   protected static final long SSTORE_RESET_GAS = 5000L - COLD_SLOAD_COST;
@@ -120,8 +121,9 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   // Zeroed out old costs
   @Override
-  public long getBalanceOperationGasCost() {
-    return 0L;
+  public long balanceOperationGasCost(
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
+    return accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost();
   }
 
   @Override
@@ -130,18 +132,21 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   @Override
-  public long extCodeHashOperationGasCost() {
-    return 0L;
+  public long extCodeHashOperationGasCost(
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
+    return (accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
   }
 
   @Override
-  public long getExtCodeSizeOperationGasCost() {
-    return 0L;
+  public long extCodeSizeOperationGasCost(
+      final MessageFrame frame, final boolean accountIsWarm, final Address address) {
+    return (accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
   }
 
   @Override
-  public long getSloadOperationGasCost() {
-    return 0L;
+  public long sloadOperationGasCost(
+      final MessageFrame frame, final UInt256 key, final boolean slotIsWarm) {
+    return (slotIsWarm ? getWarmStorageReadCost() : getColdSloadCost());
   }
 
   // Redefined costs from EIP-2929
@@ -176,14 +181,31 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   // defined in Frontier, but re-implemented with no base cost.
   @Override
   public long extCodeCopyOperationGasCost(
-      final MessageFrame frame, final long offset, final long length) {
-    return copyWordsToMemoryGasCost(frame, 0L, COPY_WORD_GAS_COST, offset, length);
+      final MessageFrame frame, final long memOffset, final long readSize) {
+    return copyWordsToMemoryGasCost(frame, 0L, COPY_WORD_GAS_COST, memOffset, readSize);
+  }
+
+  // defined in Frontier, but re-implemented with no base cost.
+  @Override
+  public long extCodeCopyOperationGasCost(
+      final MessageFrame frame,
+      final Address address,
+      final boolean accountIsWarm,
+      final long memOffset,
+      final long codeOffset,
+      final long readSize,
+      final long codeSize) {
+    return clampedAdd(
+        extCodeCopyOperationGasCost(frame, memOffset, readSize),
+        accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
   }
 
   // defined in Istanbul, but re-implemented with new constants
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageCost(
+      final MessageFrame frame,
+      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {

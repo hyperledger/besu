@@ -81,6 +81,9 @@ public class ProtocolSpec {
   private final RequestsValidator requestsValidator;
   private final Optional<RequestProcessorCoordinator> requestProcessorCoordinator;
   private final BlockHashProcessor blockHashProcessor;
+
+  private final ExecutionWitnessValidator executionWitnessValidator;
+
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
   private final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor;
@@ -116,6 +119,8 @@ public class ProtocolSpec {
    * @param isPoS indicates whether the current spec is PoS
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
+   * @param transactionPoolPreProcessor transaction pool processor
+   * @param executionWitnessValidator the witness validator to use
    */
   public ProtocolSpec(
       final HardforkId hardforkId,
@@ -146,7 +151,8 @@ public class ProtocolSpec {
       final BlockHashProcessor blockHashProcessor,
       final boolean isPoS,
       final boolean isReplayProtectionSupported,
-      final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor) {
+      final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor,
+      final ExecutionWitnessValidator executionWitnessValidator) {
     this.hardforkId = hardforkId;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
@@ -176,6 +182,7 @@ public class ProtocolSpec {
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
     this.transactionPoolPreProcessor = transactionPoolPreProcessor;
+    this.executionWitnessValidator = executionWitnessValidator;
   }
 
   /**
@@ -381,6 +388,10 @@ public class ProtocolSpec {
 
   public BlockHashProcessor getBlockHashProcessor() {
     return blockHashProcessor;
+  }
+
+  public ExecutionWitnessValidator getExecutionWitnessValidator() {
+    return executionWitnessValidator;
   }
 
   /**

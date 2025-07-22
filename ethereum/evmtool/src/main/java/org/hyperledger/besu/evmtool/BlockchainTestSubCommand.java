@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
+import org.hyperledger.besu.ethereum.referencetests.CandidateBlock;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
@@ -180,15 +181,13 @@ public class BlockchainTestSubCommand implements Runnable {
     final MutableBlockchain blockchain = spec.getBlockchain();
     final ProtocolContext context = spec.getProtocolContext();
 
-    for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
-        spec.getCandidateBlocks()) {
+    for (final CandidateBlock candidateBlock : spec.getCandidateBlocks()) {
       if (!candidateBlock.isExecutable()) {
         return;
       }
 
       try {
         final Block block = candidateBlock.getBlock();
-
         final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
 

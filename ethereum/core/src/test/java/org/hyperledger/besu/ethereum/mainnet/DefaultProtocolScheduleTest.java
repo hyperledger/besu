@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -204,7 +205,9 @@ public class DefaultProtocolScheduleTest {
   @Test
   public void getForNextBlockHeader_shouldGetHeaderForNextBlockNumber() {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+    when(spec1.getBlockHeaderFunctions()).thenReturn(mock(BlockHeaderFunctions.class));
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+    when(spec2.getBlockHeaderFunctions()).thenReturn(mock(BlockHeaderFunctions.class));
 
     when(spec1.getHardforkId()).thenReturn(FRONTIER);
     when(spec2.getHardforkId()).thenReturn(HOMESTEAD);
@@ -224,7 +227,9 @@ public class DefaultProtocolScheduleTest {
   @Test
   public void getForNextBlockHeader_shouldGetHeaderForNextTimestamp() {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
+    when(spec1.getBlockHeaderFunctions()).thenReturn(mock(BlockHeaderFunctions.class));
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
+    when(spec2.getBlockHeaderFunctions()).thenReturn(mock(BlockHeaderFunctions.class));
 
     when(spec1.getHardforkId()).thenReturn(FRONTIER);
     when(spec2.getHardforkId()).thenReturn(HOMESTEAD);

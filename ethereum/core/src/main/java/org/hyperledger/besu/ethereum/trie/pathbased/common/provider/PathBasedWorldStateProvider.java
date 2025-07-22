@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   protected final WorldStateConfig worldStateConfig;
 
   public PathBasedWorldStateProvider(
+      final DataStorageFormat dataStorageFormat,
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
@@ -71,6 +73,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
         blockchain,
         new TrieLogManager(
             blockchain,
+            dataStorageFormat,
             worldStateKeyValueStorage,
             maxLayersToLoad.orElse(PathBasedCachedWorldStorageManager.RETAINED_LAYERS),
             pluginContext));
@@ -198,6 +201,22 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
    * @return the full world state, if available
    */
   private Optional<MutableWorldState> getFullWorldStateFromHead(final Hash blockHash) {
+    /* // TODO begin remove rolling tests before merging on main
+    Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
+    if (blockHeader.isPresent()) {
+      Optional<BlockHeader> parentHeader =
+          blockchain.getBlockHeader(blockHeader.get().getParentHash());
+      if (parentHeader.isPresent()) {
+        Optional<MutableWorldState> worldState =
+            rollFullWorldStateToBlockHash(headWorldState, parentHeader.get().getBlockHash());
+        if (worldState.isEmpty()) {
+          System.out.println("failed rollback to " + parentHeader.get().getNumber());
+          throw new RuntimeException("invalid trielog");
+        }
+        System.out.println("rollback to " + parentHeader.get().getNumber());
+      }
+    }
+    // TODO end remove before merging on main*/
     return rollFullWorldStateToBlockHash(headWorldState, blockHash);
   }
 
@@ -391,5 +410,10 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
     } catch (Exception e) {
       // no op
     }
+  }
+
+  @Override
+  public void heal(final Optional<Address> maybeAccountToRepair, final Bytes location) {
+    // by default no heal mechanism
   }
 }

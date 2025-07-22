@@ -56,6 +56,12 @@ public interface TransactionTraceParams {
     return false;
   }
 
+  @JsonProperty(value = "disableStatelessAccessWitness")
+  @Value.Default
+  default boolean disableStatelessAccessWitness() {
+    return false;
+  }
+
   @JsonProperty("tracer")
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @Nullable
@@ -77,7 +83,8 @@ public interface TransactionTraceParams {
    */
   default TraceOptions traceOptions() {
     var defaultTracerConfig =
-        new OpCodeTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
+        new OpCodeTracerConfig(
+            !disableStorage(), !disableMemory(), !disableStack(), !disableStatelessAccessWitness());
 
     // Convert string tracer to TracerType enum, handling null case
     TracerType tracerType =

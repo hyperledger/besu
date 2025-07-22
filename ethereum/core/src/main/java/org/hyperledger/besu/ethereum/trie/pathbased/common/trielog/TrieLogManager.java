@@ -17,12 +17,14 @@ package org.hyperledger.besu.ethereum.trie.pathbased.common.trielog;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.BonsaiTrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.pathbased.verkle.trielog.VerkleTrieLogFactoryImpl;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.TrieLogService;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
@@ -51,13 +53,14 @@ public class TrieLogManager {
 
   public TrieLogManager(
       final Blockchain blockchain,
+      final DataStorageFormat dataStorageFormat,
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final long maxLayersToLoad,
       final ServiceManager pluginContext) {
     this.blockchain = blockchain;
     this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.maxLayersToLoad = maxLayersToLoad;
-    this.trieLogFactory = setupTrieLogFactory(pluginContext);
+    this.trieLogFactory = setupTrieLogFactory(dataStorageFormat, pluginContext);
   }
 
   public synchronized void saveTrieLog(
@@ -133,7 +136,8 @@ public class TrieLogManager {
     trieLogObservers.unsubscribe(id);
   }
 
-  private TrieLogFactory setupTrieLogFactory(final ServiceManager pluginContext) {
+  private TrieLogFactory setupTrieLogFactory(
+      final DataStorageFormat dataStorageFormat, final ServiceManager pluginContext) {
     // if we have a TrieLogService from pluginContext, use it.
     var trieLogServicez =
         Optional.ofNullable(pluginContext)
@@ -152,8 +156,12 @@ public class TrieLogManager {
         return trieLogService.getTrieLogFactory().get();
       }
     }
-    // Otherwise default to TrieLogFactoryImpl
-    return new TrieLogFactoryImpl();
+    // Otherwise default to VERKLE TrieLogFactoryImpl
+    if (dataStorageFormat.equals(DataStorageFormat.VERKLE)) {
+      return new VerkleTrieLogFactoryImpl();
+    }
+    // or default to BONSAI TrieLogFactoryImpl
+    return new BonsaiTrieLogFactoryImpl();
   }
 
   private TrieLogProvider getTrieLogProvider() {

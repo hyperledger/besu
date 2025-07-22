@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -92,6 +93,8 @@ public class RefundSstoreGasTest {
 
   private final Supplier<UInt256> mockSupplierForOriginalValue = mockSupplier();
   private final Supplier<UInt256> mockSupplierCurrentValue = mockSupplier();
+  private final MessageFrame mockMessageFrame = mock(MessageFrame.class);
+  private final UInt256 key = UInt256.ZERO;
 
   @SuppressWarnings("unchecked")
   private <T> Supplier<T> mockSupplier() {
@@ -114,9 +117,14 @@ public class RefundSstoreGasTest {
       final long expectedGasCost,
       final long expectedGasRefund) {
     setUp(originalValue, currentValue);
+    // TODO VERKLE assert new method signature change leaked into this test, REVIEW IT LATER
     Assertions.assertThat(
             gasCalculator.calculateStorageCost(
-                newValue, mockSupplierCurrentValue, mockSupplierForOriginalValue))
+                mockMessageFrame,
+                key,
+                newValue,
+                mockSupplierCurrentValue,
+                mockSupplierForOriginalValue))
         .isEqualTo(expectedGasCost);
   }
 

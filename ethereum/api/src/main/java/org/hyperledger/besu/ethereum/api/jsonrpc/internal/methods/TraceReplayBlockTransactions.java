@@ -144,7 +144,8 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
 
               final TransactionSource transactionSource = new TransactionSource(block);
               final DebugOperationTracer debugOperationTracer =
-                  new DebugOperationTracer(new OpCodeTracerConfig(false, false, true), false);
+                  new DebugOperationTracer(
+                      new OpCodeTracerConfig(false, false, true, false), false);
               final ExecuteTransactionStep executeTransactionStep =
                   new ExecuteTransactionStep(
                       chainUpdater,

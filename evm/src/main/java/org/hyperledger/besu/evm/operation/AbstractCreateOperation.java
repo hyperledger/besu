@@ -120,6 +120,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         frame.incrementRemainingGas(cost);
       }
     }
+
     return new OperationResult(cost, null, getPcIncrement());
   }
 
@@ -195,6 +196,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         .value(value)
         .apparentValue(value)
         .code(code)
+        .accessWitness(parent.getAccessWitness())
         .completer(child -> complete(parent, child, evm))
         .build();
 

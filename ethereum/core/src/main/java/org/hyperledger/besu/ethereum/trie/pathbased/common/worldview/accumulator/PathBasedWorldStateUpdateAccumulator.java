@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorl
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.AccountConsumingMap;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.CodeConsumingMap;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.evm.account.Account;
@@ -62,9 +63,9 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       LoggerFactory.getLogger(PathBasedWorldStateUpdateAccumulator.class);
   protected final Consumer<PathBasedValue<ACCOUNT>> accountPreloader;
   protected final Consumer<StorageSlotKey> storagePreloader;
-
+  private final Consumer<Bytes> codePreloader;
   private final AccountConsumingMap<PathBasedValue<ACCOUNT>> accountsToUpdate;
-  private final Map<Address, PathBasedValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
+  private final CodeConsumingMap codeToUpdate;
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
   protected final EvmConfiguration evmConfiguration;
 
@@ -81,11 +82,14 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       final PathBasedWorldView world,
       final Consumer<PathBasedValue<ACCOUNT>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
+      final Consumer<Bytes> codePreloader,
       final EvmConfiguration evmConfiguration) {
     super(world, evmConfiguration);
     this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
+    this.codeToUpdate = new CodeConsumingMap(new ConcurrentHashMap<>(), codePreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
+    this.codePreloader = codePreloader;
     this.isAccumulatorStateChanged = false;
     this.evmConfiguration = evmConfiguration;
   }
@@ -229,6 +233,10 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
 
   public Consumer<StorageSlotKey> getStoragePreloader() {
     return storagePreloader;
+  }
+
+  public Consumer<Bytes> getCodePreloader() {
+    return codePreloader;
   }
 
   public EvmConfiguration getEvmConfiguration() {
@@ -674,7 +682,8 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       final Address address,
       final AccountValue expectedValue,
       final AccountValue replacementValue) {
-    if (Objects.equals(expectedValue, replacementValue)) {
+    if (shouldIgnoreIdenticalValuesDuringAccountRollingUpdate()
+        && Objects.equals(expectedValue, replacementValue)) {
       // non-change, a cached read.
       return;
     }
@@ -957,4 +966,9 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
 
   protected abstract void assertCloseEnoughForDiffing(
       final ACCOUNT source, final AccountValue account, final String context);
+
+  protected abstract Optional<UInt256> getStorageValueByStorageSlotKey(
+      PathBasedWorldState worldState, Address address, StorageSlotKey storageSlotKey);
+
+  protected abstract boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate();
 }

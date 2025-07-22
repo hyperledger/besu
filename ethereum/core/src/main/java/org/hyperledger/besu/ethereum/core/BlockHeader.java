@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.witness.ExecutionWitness;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -68,7 +69,8 @@ public class BlockHeader extends SealableBlockHeader
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
-      final BlockHeaderFunctions blockHeaderFunctions) {
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final ExecutionWitness executionWitness) {
     this(
         parentHash,
         ommersHash,
@@ -92,7 +94,8 @@ public class BlockHeader extends SealableBlockHeader
         parentBeaconBlockRoot,
         requestsHash,
         blockHeaderFunctions,
-        Optional.empty());
+        Optional.empty(),
+        executionWitness);
   }
 
   private BlockHeader(
@@ -118,7 +121,8 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
       final BlockHeaderFunctions blockHeaderFunctions,
-      final Optional<Bytes> rawRlp) {
+      final Optional<Bytes> rawRlp,
+      final ExecutionWitness executionWitness) {
     super(
         parentHash,
         ommersHash,
@@ -139,7 +143,8 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsHash);
+        requestsHash,
+        executionWitness);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -284,6 +289,10 @@ public class BlockHeader extends SealableBlockHeader
         !headerRlp.isEndOfCurrentList() ? headerRlp.readBytes32() : null;
     final Hash requestsHash =
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
+
+    final ExecutionWitness executionWitness =
+        !headerRlp.isEndOfCurrentList() ? ExecutionWitness.readFrom(headerRlp) : null;
+
     headerRlp.leaveList();
     return new BlockHeader(
         parentHash,
@@ -308,7 +317,8 @@ public class BlockHeader extends SealableBlockHeader
         parentBeaconBlockRoot,
         requestsHash,
         blockHeaderFunctions,
-        Optional.of(headerRlp.raw()));
+        Optional.of(headerRlp.raw()),
+        executionWitness);
   }
 
   @Override
@@ -395,11 +405,12 @@ public class BlockHeader extends SealableBlockHeader
             .getRequestsHash()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
-        blockHeaderFunctions);
+        blockHeaderFunctions,
+        (ExecutionWitness) pluginBlockHeader.getExecutionWitness().orElse(null));
   }
 
   @Override
   public String toLogString() {
-    return getNumber() + " (" + getHash() + ")";
+    return getNumber() + " (" + getHash() + " " + getParentHash() + ")";
   }
 }

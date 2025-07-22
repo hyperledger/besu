@@ -18,6 +18,7 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
@@ -72,6 +73,30 @@ public class CallCodeOperation extends AbstractCallOperation {
   @Override
   protected Address address(final MessageFrame frame) {
     return frame.getRecipientAddress();
+  }
+
+  @Override
+  public long cost(final MessageFrame frame, final boolean accountIsWarm) {
+    final long stipend = gas(frame);
+    final long inputDataOffset = inputDataOffset(frame);
+    final long inputDataLength = inputDataLength(frame);
+    final long outputDataOffset = outputDataOffset(frame);
+    final long outputDataLength = outputDataLength(frame);
+    final Account recipient = frame.getWorldUpdater().get(address(frame));
+    final Address to = to(frame);
+    GasCalculator gasCalculator = gasCalculator();
+
+    return gasCalculator.callCodeOperationGasCost(
+        frame,
+        stipend,
+        inputDataOffset,
+        inputDataLength,
+        outputDataOffset,
+        outputDataLength,
+        value(frame),
+        recipient,
+        to,
+        accountIsWarm);
   }
 
   @Override

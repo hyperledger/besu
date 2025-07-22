@@ -126,7 +126,8 @@ public class SnapServerTest {
                 noopMetrics,
                 dbMode == FlatDbMode.FULL
                     ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
-                    : DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG) {
+                    : DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG,
+                storage) {
               @Override
               public FlatDbMode getFlatDbMode() {
                 return dbMode;

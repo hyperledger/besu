@@ -28,7 +28,7 @@ public record TraceOptions(
     OpCodeTracerConfig opCodeTracerConfig,
     Map<String, Object> tracerConfig) {
   private static final OpCodeTracerConfig DEFAULT_OPCODE_TRACER_CONFIG =
-      new OpCodeTracerConfig(true, false, true);
+      new OpCodeTracerConfig(true, false, true, false);
 
   /**
    * Default tracer configuration. Used by trace_ and debug_ methods when no tracer type is

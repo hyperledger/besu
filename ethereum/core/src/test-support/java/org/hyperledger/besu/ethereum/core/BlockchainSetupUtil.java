@@ -18,6 +18,7 @@ import static org.assertj.core.util.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createVerkleInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfig;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -192,15 +194,27 @@ public class BlockchainSetupUtil {
     try {
       final GenesisConfig genesisConfig = GenesisConfig.fromSource(chainResources.getGenesisURL());
       final ProtocolSchedule protocolSchedule = protocolScheduleProvider.get(genesisConfig);
-
       // only used in tests no global code cache is needed
+      DataStorageConfiguration dataStorageConfiguration;
+      switch (storageFormat) {
+        case VERKLE -> dataStorageConfiguration = DataStorageConfiguration.DEFAULT_VERKLE_CONFIG;
+        case BONSAI -> dataStorageConfiguration = DataStorageConfiguration.DEFAULT_BONSAI_CONFIG;
+        default -> dataStorageConfiguration = DataStorageConfiguration.DEFAULT_CONFIG;
+      }
       final GenesisState genesisState =
-          GenesisState.fromConfig(genesisConfig, protocolSchedule, new CodeCache());
-      final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-      final WorldStateArchive worldArchive =
-          storageFormat == DataStorageFormat.BONSAI
-              ? createBonsaiInMemoryWorldStateArchive(blockchain, serviceManager)
-              : createInMemoryWorldStateArchive();
+          GenesisState.fromConfig(
+              dataStorageConfiguration, genesisConfig, protocolSchedule, new CodeCache());
+      final BlockHeaderFunctions blockHeaderFunctions =
+          ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
+      final MutableBlockchain blockchain =
+          createInMemoryBlockchain(genesisState.getBlock(), blockHeaderFunctions);
+      final WorldStateArchive worldArchive;
+      switch (storageFormat) {
+        case BONSAI ->
+            worldArchive = createBonsaiInMemoryWorldStateArchive(blockchain, serviceManager);
+        case VERKLE -> worldArchive = createVerkleInMemoryWorldStateArchive(blockchain);
+        default -> worldArchive = createInMemoryWorldStateArchive();
+      }
       final TransactionPool transactionPool = mock(TransactionPool.class);
 
       genesisState.writeStateTo(worldArchive.getWorldState());
@@ -208,8 +222,6 @@ public class BlockchainSetupUtil {
 
       final Path blocksPath = Path.of(chainResources.getBlocksURL().toURI());
       final List<Block> blocks = new ArrayList<>();
-      final BlockHeaderFunctions blockHeaderFunctions =
-          ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
       try (final RawBlockIterator iterator =
           new RawBlockIterator(blocksPath, blockHeaderFunctions)) {
         while (iterator.hasNext()) {

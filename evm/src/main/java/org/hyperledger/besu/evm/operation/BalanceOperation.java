@@ -20,8 +20,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.OverflowException;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -41,34 +39,28 @@ public class BalanceOperation extends AbstractOperation {
   /**
    * Gets Balance operation Gas Cost plus warm storage read cost or cold account access cost.
    *
+   * @param frame current frame
+   * @param address to use for get balance
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @return the long
    */
-  protected long cost(final boolean accountIsWarm) {
-    return gasCalculator().getBalanceOperationGasCost()
-        + (accountIsWarm
-            ? gasCalculator().getWarmStorageReadCost()
-            : gasCalculator().getColdAccountAccessCost());
+  protected long cost(
+      final MessageFrame frame, final Address address, final boolean accountIsWarm) {
+    return gasCalculator().balanceOperationGasCost(frame, accountIsWarm, address);
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      final Address address = Words.toAddress(frame.popStackItem());
-      final boolean accountIsWarm =
-          frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final long cost = cost(accountIsWarm);
-      if (frame.getRemainingGas() < cost) {
-        return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      } else {
-        final Account account = frame.getWorldUpdater().get(address);
-        frame.pushStackItem(account == null ? Bytes.EMPTY : account.getBalance());
-        return new OperationResult(cost, null);
-      }
-    } catch (final UnderflowException ufe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
-    } catch (final OverflowException ofe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+    final Address address = Words.toAddress(frame.popStackItem());
+    final boolean accountIsWarm =
+        frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
+    final long cost = cost(frame, address, accountIsWarm);
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    } else {
+      final Account account = frame.getWorldUpdater().get(address);
+      frame.pushStackItem(account == null ? Bytes.EMPTY : account.getBalance());
+      return new OperationResult(cost, null);
     }
   }
 }

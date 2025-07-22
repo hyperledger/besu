@@ -56,8 +56,10 @@ public class ForkIdManager {
     checkNotNull(blockchain);
     checkNotNull(blockNumberForks);
     this.chainHeadSupplier = blockchain::getChainHeadHeader;
+
     try {
       this.genesisHash = blockchain.getGenesisBlock().getHash();
+      System.out.println("genesis hash " + genesisHash);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

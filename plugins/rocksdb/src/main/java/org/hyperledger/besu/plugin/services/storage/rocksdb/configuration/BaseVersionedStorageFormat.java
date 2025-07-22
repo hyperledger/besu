@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.X_BONSAI_ARCHIVE;
+
 import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -43,6 +46,7 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
    * space
    */
   BONSAI_WITH_RECEIPT_COMPACTION(DataStorageFormat.BONSAI, 3),
+
   /**
    * Current Bonsai archive version, with blockchain variables in a dedicated column family, in
    * order to make BlobDB more effective
@@ -52,7 +56,20 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
    * Current Bonsai archive version, with receipts using compaction, in order to make Receipts use
    * less disk space
    */
-  BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION(DataStorageFormat.X_BONSAI_ARCHIVE, 2);
+  BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION(DataStorageFormat.X_BONSAI_ARCHIVE, 2),
+
+  /** Original Verkle version, not used since replace by VERKLE_WITH_VARIABLES */
+  VERKLE_ORIGINAL(DataStorageFormat.VERKLE, 1),
+  /**
+   * Current Verkle version, with blockchain variables in a dedicated column family, in order to
+   * make BlobDB more effective
+   */
+  VERKLE_WITH_VARIABLES(DataStorageFormat.VERKLE, 2),
+  /**
+   * Current Verkle version, with receipts using compaction, in order to make Receipts use less disk
+   * space
+   */
+  VERKLE_WITH_RECEIPT_COMPACTION(DataStorageFormat.VERKLE, 3);
 
   private final DataStorageFormat format;
   private final int version;
@@ -74,6 +91,7 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
       case FOREST -> FOREST_WITH_RECEIPT_COMPACTION;
       case BONSAI -> BONSAI_WITH_RECEIPT_COMPACTION;
       case X_BONSAI_ARCHIVE -> BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION;
+      case VERKLE -> VERKLE_WITH_RECEIPT_COMPACTION;
     };
   }
 

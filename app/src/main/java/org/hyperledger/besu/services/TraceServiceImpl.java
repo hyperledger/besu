@@ -192,7 +192,6 @@ public class TraceServiceImpl implements TraceService {
     final Address miningBeneficiary =
         protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(block.getHeader());
     tracer.traceStartBlock(block.getHeader(), block.getBody(), miningBeneficiary);
-
     block
         .getBody()
         .getTransactions()

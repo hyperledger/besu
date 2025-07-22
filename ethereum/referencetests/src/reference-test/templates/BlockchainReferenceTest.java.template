@@ -22,7 +22,7 @@ public class %%TESTS_NAME%% {
       };
 
   public static Stream<Arguments> getTestParametersForConfig() {
-    return generateTestParametersForConfig(TEST_CONFIG_FILE_DIR_PATH).stream()
+    return generateTestParametersForConfig(TEST_CONFIG_FILE_DIR_PATH, BlockchainReferenceTestCaseSpec.class).stream()
         .map(params -> Arguments.of(params[0], params[1], params[2]));
   }
 

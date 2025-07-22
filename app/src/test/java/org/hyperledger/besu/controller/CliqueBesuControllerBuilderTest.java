@@ -220,7 +220,8 @@ public class CliqueBesuControllerBuilderTest {
             null,
             null,
             null,
-            new CliqueBlockHeaderFunctions());
+            new CliqueBlockHeaderFunctions(),
+            null);
     final Block block1 = new Block(header1, BlockBody.empty());
 
     protocolContext.getBlockchain().appendBlock(block1, List.of());

@@ -64,6 +64,9 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   private PathBasedExtraStorageOptions pathBasedExtraStorageOptions =
       PathBasedExtraStorageOptions.create();
 
+  /** Options specific to verkle storage modes. */
+  @Mixin private VerkleSubStorageOptions verkleSubStorageOptions = VerkleSubStorageOptions.create();
+
   /** Default Constructor. */
   DataStorageOptions() {}
 
@@ -83,6 +86,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    */
   public void validate(final CommandLine commandLine) {
     pathBasedExtraStorageOptions.validate(commandLine, dataStorageFormat);
+
+    verkleSubStorageOptions.validate(commandLine, dataStorageFormat);
   }
 
   /**
@@ -99,6 +104,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         PathBasedExtraStorageOptions.fromConfig(
             domainObject.getPathBasedExtraStorageConfiguration());
     dataStorageOptions.historyExpiryPrune = domainObject.getHistoryExpiryPruneEnabled();
+    dataStorageOptions.verkleSubStorageOptions =
+        VerkleSubStorageOptions.fromConfig(domainObject.getVerkleSubStorageConfiguration());
     return dataStorageOptions;
   }
 
@@ -109,7 +116,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
             .dataStorageFormat(dataStorageFormat)
             .receiptCompactionEnabled(receiptCompactionEnabled)
             .historyExpiryPruneEnabled(historyExpiryPrune)
-            .pathBasedExtraStorageConfiguration(pathBasedExtraStorageOptions.toDomainObject());
+            .pathBasedExtraStorageConfiguration(pathBasedExtraStorageOptions.toDomainObject())
+            .verkleSubStorageConfiguration(verkleSubStorageOptions.toDomainObject());
     return builder.build();
   }
 
@@ -117,6 +125,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   public List<String> getCLIOptions() {
     final List<String> cliOptions = CommandLineUtils.getCLIOptions(this, new DataStorageOptions());
     cliOptions.addAll(pathBasedExtraStorageOptions.getCLIOptions());
+    cliOptions.addAll(verkleSubStorageOptions.getCLIOptions());
     return cliOptions;
   }
 

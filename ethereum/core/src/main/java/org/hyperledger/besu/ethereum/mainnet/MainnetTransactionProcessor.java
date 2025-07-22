@@ -20,6 +20,7 @@ import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDe
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -47,13 +48,21 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -75,7 +84,7 @@ public class MainnetTransactionProcessor {
 
   private final int maxStackSize;
 
-  private final boolean clearEmptyAccounts;
+  private final ClearEmptyAccountStrategy clearEmptyAccountStrategy;
 
   protected final boolean warmCoinbase;
 
@@ -89,7 +98,7 @@ public class MainnetTransactionProcessor {
       final TransactionValidatorFactory transactionValidatorFactory,
       final ContractCreationProcessor contractCreationProcessor,
       final MessageCallProcessor messageCallProcessor,
-      final boolean clearEmptyAccounts,
+      final ClearEmptyAccountStrategy clearEmptyAccountStrategy,
       final boolean warmCoinbase,
       final int maxStackSize,
       final FeeMarket feeMarket,
@@ -99,7 +108,7 @@ public class MainnetTransactionProcessor {
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
-    this.clearEmptyAccounts = clearEmptyAccounts;
+    this.clearEmptyAccountStrategy = clearEmptyAccountStrategy;
     this.warmCoinbase = warmCoinbase;
     this.maxStackSize = maxStackSize;
     this.feeMarket = feeMarket;
@@ -279,6 +288,10 @@ public class MainnetTransactionProcessor {
           transaction.getGasLimit(),
           intrinsicGas);
 
+      final AccessWitness accessWitness = gasCalculator.newAccessWitness();
+      accessWitness.touchBaseTx(
+          transaction.getSender(), transaction.getTo(), transaction.getValue());
+
       final WorldUpdater worldUpdater = worldState.updater();
 
       operationTracer.traceStartTransaction(worldUpdater, transaction);
@@ -298,7 +311,8 @@ public class MainnetTransactionProcessor {
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
-              .accessListWarmStorage(storageList);
+              .accessListWarmStorage(storageList)
+              .accessWitness(accessWitness);
 
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(
@@ -381,11 +395,11 @@ public class MainnetTransactionProcessor {
       final Wei balancePriorToRefund = sender.getBalance();
       sender.incrementBalance(refundedWei);
       LOG.atTrace()
-          .setMessage("refunded sender {}  {} wei ({} -> {})")
+          .setMessage("refunded sender {}  {} wei (balance before:{} -> after:{})")
           .addArgument(senderAddress)
-          .addArgument(refundedWei)
-          .addArgument(balancePriorToRefund)
-          .addArgument(sender.getBalance())
+          .addArgument(refundedWei.toShortHexString())
+          .addArgument(balancePriorToRefund.toShortHexString())
+          .addArgument(sender.getBalance().toShortHexString())
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
@@ -419,7 +433,9 @@ public class MainnetTransactionProcessor {
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
       operationTracer.traceBeforeRewardTransaction(worldUpdater, transaction, coinbaseWeiDelta);
-      if (!coinbaseWeiDelta.isZero() || !clearEmptyAccounts) {
+
+      if (!coinbaseWeiDelta.isZero()
+          || !clearEmptyAccountStrategy.clearEmptyAccountAllowed(miningBeneficiary)) {
         final var coinbase = worldState.getOrCreate(miningBeneficiary);
         coinbase.incrementBalance(coinbaseWeiDelta);
       }
@@ -436,9 +452,7 @@ public class MainnetTransactionProcessor {
 
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
-      if (clearEmptyAccounts) {
-        worldState.clearAccountsThatAreEmpty();
-      }
+      clearEmptyAccountStrategy.process(worldState);
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         return TransactionProcessingResult.successful(
@@ -505,6 +519,43 @@ public class MainnetTransactionProcessor {
     }
   }
 
+  public static void checkTransactionGas(final Hash transactionHash, final long expectedGas) {
+    String url =
+        "https://rpc.verkle-gen-devnet-6.ethpandaops.io/x/eth_getTransactionReceipt/"
+            + transactionHash.toHexString();
+    HttpClient client = HttpClient.newHttpClient();
+    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
+
+    try {
+      HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+      Pattern pattern = Pattern.compile("<pre class=\"json\">(.*?)</pre>", Pattern.DOTALL);
+      Matcher matcher = pattern.matcher(response.body());
+      if (matcher.find()) {
+        matcher.find();
+        String jsonResponseText = matcher.group(1).replaceAll("&#34;", "\"");
+        JsonObject jsonResponse = new JsonObject(jsonResponseText);
+        JsonObject result = jsonResponse.getJsonObject("result");
+        long gasUsed =
+            Long.parseLong(result.getString("gasUsed").substring(2), 16); // Convert hex to decimal
+
+        System.out.println(" expectedGas " + expectedGas);
+        if (gasUsed != expectedGas) {
+          System.out.println(
+              "Gas used ("
+                  + gasUsed
+                  + ") does not match expected gas ("
+                  + expectedGas
+                  + "). Transaction hash: "
+                  + transactionHash);
+        }
+      } else {
+        throw new InterruptedException("invalid regex exception ");
+      }
+    } catch (IOException | InterruptedException e) {
+      // e.printStackTrace();
+    }
+  }
+
   public void process(final MessageFrame frame, final OperationTracer operationTracer) {
     final AbstractMessageProcessor executor = getMessageProcessor(frame.getType());
 
@@ -523,7 +574,7 @@ public class MainnetTransactionProcessor {
   }
 
   public boolean getClearEmptyAccounts() {
-    return clearEmptyAccounts;
+    return !(clearEmptyAccountStrategy instanceof ClearEmptyAccountStrategy.NotClearEmptyAccount);
   }
 
   private String printableStackTraceFromThrowable(final RuntimeException re) {
@@ -580,7 +631,7 @@ public class MainnetTransactionProcessor {
     private TransactionValidatorFactory transactionValidatorFactory;
     private ContractCreationProcessor contractCreationProcessor;
     private MessageCallProcessor messageCallProcessor;
-    private boolean clearEmptyAccounts;
+    private ClearEmptyAccountStrategy clearEmptyAccountStrategy;
     private boolean warmCoinbase;
     private int maxStackSize;
     private FeeMarket feeMarket;
@@ -609,8 +660,9 @@ public class MainnetTransactionProcessor {
       return this;
     }
 
-    public Builder clearEmptyAccounts(final boolean clearEmptyAccounts) {
-      this.clearEmptyAccounts = clearEmptyAccounts;
+    public Builder clearEmptyAccountStrategy(
+        final ClearEmptyAccountStrategy clearEmptyAccountStrategy) {
+      this.clearEmptyAccountStrategy = clearEmptyAccountStrategy;
       return this;
     }
 
@@ -646,7 +698,7 @@ public class MainnetTransactionProcessor {
       this.transactionValidatorFactory = processor.transactionValidatorFactory;
       this.contractCreationProcessor = processor.contractCreationProcessor;
       this.messageCallProcessor = processor.messageCallProcessor;
-      this.clearEmptyAccounts = processor.clearEmptyAccounts;
+      this.clearEmptyAccountStrategy = processor.clearEmptyAccountStrategy;
       this.warmCoinbase = processor.warmCoinbase;
       this.maxStackSize = processor.maxStackSize;
       this.feeMarket = processor.feeMarket;
@@ -661,7 +713,7 @@ public class MainnetTransactionProcessor {
           transactionValidatorFactory,
           contractCreationProcessor,
           messageCallProcessor,
-          clearEmptyAccounts,
+          clearEmptyAccountStrategy,
           warmCoinbase,
           maxStackSize,
           feeMarket,

@@ -42,7 +42,9 @@ public abstract class FlatDbStrategyProvider {
   protected FlatDbStrategy flatDbStrategy;
 
   public FlatDbStrategyProvider(
-      final MetricsSystem metricsSystem, final DataStorageConfiguration dataStorageConfiguration) {
+      final MetricsSystem metricsSystem,
+      final DataStorageConfiguration dataStorageConfiguration,
+      final SegmentedKeyValueStorage composedWorldStateStorage) {
     this.metricsSystem = metricsSystem;
     this.dataStorageConfiguration = dataStorageConfiguration;
   }
@@ -103,7 +105,6 @@ public abstract class FlatDbStrategyProvider {
 
     final var existingTrieData =
         composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).isPresent();
-
     var flatDbMode =
         FlatDbMode.fromVersion(
             composedWorldStateStorage
@@ -123,7 +124,6 @@ public abstract class FlatDbStrategyProvider {
                       setDbModeTx.put(
                           TRIE_BRANCH_STORAGE, FLAT_DB_MODE, flatDbModeVal.toArrayUnsafe());
                       setDbModeTx.commit();
-
                       return flatDbModeVal;
                     }));
     LOG.info("Flat db mode found {}", flatDbMode);

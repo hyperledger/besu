@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.BonsaiTrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
@@ -100,7 +100,8 @@ class LogRollingTests {
           null,
           null,
           null,
-          new MainnetBlockHeaderFunctions());
+          new MainnetBlockHeaderFunctions(),
+          null);
   private static final BlockHeader headerTwo =
       new BlockHeader(
           headerOne.getHash(),
@@ -124,7 +125,8 @@ class LogRollingTests {
           null,
           null,
           null,
-          new MainnetBlockHeaderFunctions());
+          new MainnetBlockHeaderFunctions(),
+          null);
 
   @BeforeEach
   void createStorage() {
@@ -191,7 +193,7 @@ class LogRollingTests {
     final Optional<byte[]> value = trieLogStorage.get(headerOne.getHash().toArrayUnsafe());
 
     final TrieLogLayer layer =
-        TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
+        BonsaiTrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
 
     secondUpdater.rollForward(layer);
     secondUpdater.commit();
@@ -338,7 +340,9 @@ class LogRollingTests {
   private TrieLogLayer getTrieLogLayer(final KeyValueStorage storage, final Bytes key) {
     return storage
         .get(key.toArrayUnsafe())
-        .map(bytes -> TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false)))
+        .map(
+            bytes ->
+                BonsaiTrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false)))
         .get();
   }
 

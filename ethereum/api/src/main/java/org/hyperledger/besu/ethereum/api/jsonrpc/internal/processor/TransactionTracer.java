@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -99,6 +100,11 @@ public class TransactionTracer {
             .map(TransactionTraceParams::traceOptions)
             .map(options -> options.opCodeTracerConfig().traceMemory())
             .orElse(true);
+    final boolean showStatelessAccessWitness =
+        transactionTraceParams
+            .map(TransactionTraceParams::traceOptions)
+            .map(traceOptions -> traceOptions.opCodeTracerConfig().traceStatelessAccessWitness())
+            .orElse(TraceOptions.DEFAULT.opCodeTracerConfig().traceStatelessAccessWitness());
 
     if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
       throw new RuntimeException(
@@ -134,7 +140,14 @@ public class TransactionTracer {
                             stackedUpdater,
                             transaction,
                             transactionProcessor,
-                            new StandardJsonTracer(out, showMemory, true, true, false, true),
+                            new StandardJsonTracer(
+                                out,
+                                showMemory,
+                                true,
+                                true,
+                                false,
+                                true,
+                                showStatelessAccessWitness),
                             blobGasPrice);
                     out.println(
                         summaryTrace(

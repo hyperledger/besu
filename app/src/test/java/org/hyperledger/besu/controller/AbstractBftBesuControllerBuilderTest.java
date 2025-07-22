@@ -191,7 +191,8 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             null,
             null,
             null,
-            getBlockHeaderFunctions());
+            getBlockHeaderFunctions(),
+            null);
     final Block block1 = new Block(header1, BlockBody.empty());
 
     protocolContext.getBlockchain().appendBlock(block1, List.of());

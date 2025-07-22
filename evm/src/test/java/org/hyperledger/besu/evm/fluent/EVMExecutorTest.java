@@ -74,7 +74,7 @@ class EVMExecutorTest {
   void giantExecuteStack() {
     SimpleWorld simpleWorld = createSimpleWorld();
 
-    var tracer = new StandardJsonTracer(System.out, false, true, true, false);
+    var tracer = new StandardJsonTracer(System.out, false, true, true, false, false);
     var result =
         new EVMExecutor(
                 EvmSpec.evmSpec(EvmSpecVersion.SHANGHAI)
@@ -112,8 +112,9 @@ class EVMExecutorTest {
             .warmAddress(Address.ZERO)
             .accessListWarmStorage(
                 Address.ZERO, Bytes32.ZERO, Bytes32.leftPad(Bytes.ofUnsignedLong(2L)))
-            .messageCallProcessor(new MessageCallProcessor(null, null))
-            .contractCallProcessor(new ContractCreationProcessor(null, true, null, 1L))
+            .messageCallProcessor(evmSpec -> new MessageCallProcessor(evmSpec.getEvm(), null))
+            .contractCallProcessor(
+                evmSpec -> new ContractCreationProcessor(evmSpec.getEvm(), true, null, 1L))
             .execute();
     assertThat(result).isNotNull();
   }

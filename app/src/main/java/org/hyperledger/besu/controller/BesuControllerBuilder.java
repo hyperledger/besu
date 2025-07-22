@@ -94,6 +94,8 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchi
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.trie.pathbased.verkle.VerkleWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -1216,6 +1218,20 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
             worldStateHealerSupplier,
+            codeCache);
+      }
+      case VERKLE -> {
+        final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage =
+            worldStateStorageCoordinator.getStrategy(VerkleWorldStateKeyValueStorage.class);
+        yield new VerkleWorldStateProvider(
+            worldStateKeyValueStorage,
+            blockchain,
+            Optional.of(
+                dataStorageConfiguration
+                    .getPathBasedExtraStorageConfiguration()
+                    .getMaxLayersToLoad()),
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            evmConfiguration,
             codeCache);
       }
       case FOREST -> {

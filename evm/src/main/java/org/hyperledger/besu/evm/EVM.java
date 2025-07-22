@@ -15,9 +15,9 @@
 package org.hyperledger.besu.evm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.EOFLayout;
@@ -55,7 +55,6 @@ import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.OrOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
-import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.SDivOperation;
 import org.hyperledger.besu.evm.operation.SGtOperation;
 import org.hyperledger.besu.evm.operation.SLtOperation;
@@ -212,14 +211,30 @@ public class EVM {
 
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
       int opcode;
       int pc = frame.getPC();
+
       try {
         opcode = code[pc] & 0xff;
         currentOperation = operationArray[opcode];
+
+        final Address contractAddress = frame.getContractAddress();
+        long statelessGas =
+            frame
+                .getAccessWitness()
+                .touchCodeChunks(
+                    contractAddress,
+                    frame.wasCreatedInTransaction(contractAddress),
+                    frame.getPC(),
+                    1,
+                    code.length,
+                    frame.getRemainingGas());
+        frame.decrementRemainingGas(statelessGas);
+
       } catch (ArrayIndexOutOfBoundsException aiiobe) {
         opcode = 0;
         currentOperation = endOfScriptStop;
@@ -268,39 +283,6 @@ public class EVM {
                   enableShanghai
                       ? Push0Operation.staticOperation(frame)
                       : InvalidOperation.invalidOperationResult(opcode);
-              case 0x60, // PUSH1-32
-                  0x61,
-                  0x62,
-                  0x63,
-                  0x64,
-                  0x65,
-                  0x66,
-                  0x67,
-                  0x68,
-                  0x69,
-                  0x6a,
-                  0x6b,
-                  0x6c,
-                  0x6d,
-                  0x6e,
-                  0x6f,
-                  0x70,
-                  0x71,
-                  0x72,
-                  0x73,
-                  0x74,
-                  0x75,
-                  0x76,
-                  0x77,
-                  0x78,
-                  0x79,
-                  0x7a,
-                  0x7b,
-                  0x7c,
-                  0x7d,
-                  0x7e,
-                  0x7f ->
-                  PushOperation.staticOperation(frame, code, pc, opcode - PUSH_BASE);
               case 0x80, // DUP1-16
                   0x81,
                   0x82,
@@ -345,6 +327,7 @@ public class EVM {
       } catch (final UnderflowException ue) {
         result = UNDERFLOW_RESPONSE;
       }
+
       final ExceptionalHaltReason haltReason = result.getHaltReason();
       if (haltReason != null) {
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);

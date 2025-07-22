@@ -56,7 +56,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private OptionalLong bpo3Time = OptionalLong.empty();
   private OptionalLong bpo4Time = OptionalLong.empty();
   private OptionalLong bpo5Time = OptionalLong.empty();
-
+  private OptionalLong verkleTime = OptionalLong.empty();
   private OptionalLong futureEipsTime = OptionalLong.empty();
   private OptionalLong experimentalEipsTime = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
@@ -290,6 +290,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public OptionalLong getBpo5Time() {
     return bpo5Time;
+  }
+
+  @Override
+  public OptionalLong getVerkleTime() {
+    return verkleTime;
   }
 
   @Override
@@ -783,6 +788,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions bpo5Time(final long timestamp) {
     bpo5Time = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  /**
+   * Verkle time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions verkleTime(final long timestamp) {
+    verkleTime = OptionalLong.of(timestamp);
     return this;
   }
 

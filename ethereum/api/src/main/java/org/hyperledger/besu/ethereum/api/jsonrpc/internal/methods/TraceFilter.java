@@ -163,7 +163,8 @@ public class TraceFilter extends TraceBlock {
                       protocolSpec.getTransactionProcessor();
                   final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
                   DebugOperationTracer debugOperationTracer =
-                      new DebugOperationTracer(new OpCodeTracerConfig(false, false, true), false);
+                      new DebugOperationTracer(
+                          new OpCodeTracerConfig(false, false, true, false), false);
                   ExecuteTransactionStep executeTransactionStep =
                       new ExecuteTransactionStep(
                           chainUpdater,

@@ -264,6 +264,7 @@ public class EngineExchangeTransitionConfigurationTest {
           public ParsedExtraData parseExtraData(final BlockHeader header) {
             return null;
           }
-        });
+        },
+        null);
   }
 }

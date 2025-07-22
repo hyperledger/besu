@@ -213,6 +213,17 @@ public class MainnetProtocolSpecFactory {
         metricsSystem);
   }
 
+  public ProtocolSpecBuilder verkleDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.verkleDefinition(
+        chainId,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        miningConfiguration,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
+  }
+
   public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.pragueDefinition(
         chainId,

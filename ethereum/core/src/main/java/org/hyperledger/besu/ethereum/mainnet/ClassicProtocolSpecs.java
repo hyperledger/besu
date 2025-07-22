@@ -33,6 +33,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccount;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.ClassicEVMs;
 import org.hyperledger.besu.evm.MainnetEVMs;
@@ -193,7 +194,7 @@ public class ClassicProtocolSpecs {
                     .transactionValidatorFactory(transactionValidatorFactory)
                     .contractCreationProcessor(contractCreationProcessor)
                     .messageCallProcessor(messageCallProcessor)
-                    .clearEmptyAccounts(true)
+                    .clearEmptyAccountStrategy(new ClearEmptyAccount())
                     .warmCoinbase(false)
                     .maxStackSize(evmConfiguration.evmStackSize())
                     .feeMarket(feeMarket)
@@ -376,7 +377,7 @@ public class ClassicProtocolSpecs {
                     .transactionValidatorFactory(transactionValidatorFactory)
                     .contractCreationProcessor(contractCreationProcessor)
                     .messageCallProcessor(messageCallProcessor)
-                    .clearEmptyAccounts(true)
+                    .clearEmptyAccountStrategy(new ClearEmptyAccount())
                     .warmCoinbase(true)
                     .maxStackSize(evmConfiguration.evmStackSize())
                     .feeMarket(feeMarket)

@@ -18,10 +18,19 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * A map that stores storage keys and their associated values, with a consumer to process updates.
+ *
+ * <p>Each time a new value is added or updated, the consumer processes the storage key.
+ *
+ * <p>This class uses a thread-safe {@link ConcurrentMap} to store data, allowing concurrent
+ * modifications.
+ */
 public class StorageConsumingMap<K, T> extends ForwardingMap<K, T> {
 
   private final Address address;
@@ -46,6 +55,7 @@ public class StorageConsumingMap<K, T> extends ForwardingMap<K, T> {
     return consumer;
   }
 
+  @Nonnull
   @Override
   protected Map<K, T> delegate() {
     return storages;

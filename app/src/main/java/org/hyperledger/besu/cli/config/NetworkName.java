@@ -35,6 +35,7 @@ public enum NetworkName {
   HOLESKY("/holesky.json", BigInteger.valueOf(17000), true, NativeRequirement.MAINNET),
   /** Hoodi network name. */
   HOODI("/hoodi.json", BigInteger.valueOf(560048), true, NativeRequirement.MAINNET),
+
   /**
    * EPHEMERY network name. The actual networkId used is calculated based on this default value and
    * the current time. https://ephemery.dev/
@@ -51,7 +52,10 @@ public enum NetworkName {
   /** Classic network name. */
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
   /** Mordor network name. */
-  MORDOR("/mordor.json", BigInteger.valueOf(7));
+  MORDOR("/mordor.json", BigInteger.valueOf(7)),
+
+  /** Verkle kaustinen testnet */
+  KAUSTINEN("/kaustinen.json", BigInteger.valueOf(69420));
 
   private final String genesisFile;
   private final BigInteger networkId;

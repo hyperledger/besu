@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -107,6 +108,11 @@ public abstract class AbstractJsonRpcHttpServiceTest {
   protected void setupBonsaiBlockchain() {
     blockchainSetupUtil = getBlockchainSetupUtil(DataStorageFormat.BONSAI);
     blockchainSetupUtil.importAllBlocks();
+  }
+
+  protected void setupVerkleBlockchain() {
+    blockchainSetupUtil = getBlockchainSetupUtil(DataStorageFormat.VERKLE);
+    blockchainSetupUtil.importAllBlocks(HeaderValidationMode.NONE, HeaderValidationMode.FULL);
   }
 
   protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {

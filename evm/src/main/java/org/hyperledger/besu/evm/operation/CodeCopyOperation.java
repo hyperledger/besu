@@ -38,16 +38,18 @@ public class CodeCopyOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final long memOffset = clampedToLong(frame.popStackItem());
     final long sourceOffset = clampedToLong(frame.popStackItem());
-    final long numBytes = clampedToLong(frame.popStackItem());
+    final long readSize = clampedToLong(frame.popStackItem());
 
-    final long cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
+    final Code code = frame.getCode();
+
+    final long cost =
+        gasCalculator()
+            .codeCopyOperationGasCost(frame, memOffset, sourceOffset, readSize, code.getSize());
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    final Code code = frame.getCode();
-
-    frame.writeMemory(memOffset, sourceOffset, numBytes, code.getBytes(), true);
+    frame.writeMemory(memOffset, sourceOffset, readSize, code.getBytes(), true);
 
     return new OperationResult(cost, null);
   }

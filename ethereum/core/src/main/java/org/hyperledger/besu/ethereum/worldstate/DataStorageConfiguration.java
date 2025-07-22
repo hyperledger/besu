@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.PathBasedUnstable;
+import org.hyperledger.besu.ethereum.worldstate.VerkleSubStorageConfiguration.VerkleUnstable;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import org.immutables.value.Value;
@@ -54,11 +55,33 @@ public interface DataStorageConfiguration {
           .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DISABLED)
           .build();
 
+  DataStorageConfiguration DEFAULT_VERKLE_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.VERKLE)
+          .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DEFAULT)
+          .verkleSubStorageConfiguration(VerkleSubStorageConfiguration.DEFAULT)
+          .build();
+
+  DataStorageConfiguration DEFAULT_VERKLE_STEM_DB_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.VERKLE)
+          .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DEFAULT)
+          .verkleSubStorageConfiguration(
+              ImmutableVerkleSubStorageConfiguration.builder()
+                  .unstable(VerkleUnstable.STEM_MODE)
+                  .build())
+          .build();
+
   DataStorageFormat getDataStorageFormat();
 
   @Value.Default
   default PathBasedExtraStorageConfiguration getPathBasedExtraStorageConfiguration() {
     return PathBasedExtraStorageConfiguration.DEFAULT;
+  }
+
+  @Value.Default
+  default VerkleSubStorageConfiguration getVerkleSubStorageConfiguration() {
+    return VerkleSubStorageConfiguration.DEFAULT;
   }
 
   @Value.Default

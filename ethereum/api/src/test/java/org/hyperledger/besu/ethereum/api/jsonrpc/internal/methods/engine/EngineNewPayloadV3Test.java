@@ -125,7 +125,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .timestamp(pragueHardfork.milestone())
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(pragueHeader, emptyList(), null));
+    var resp = resp(mockEnginePayload(pragueHeader, emptyList()));
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -138,7 +138,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .timestamp(cancunHardfork.milestone() - 1)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(shanghaiHeader, emptyList(), null));
+    var resp = resp(mockEnginePayload(shanghaiHeader, emptyList()));
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -186,7 +186,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.empty());
-    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList(), null);
+
+    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList(), null, null);
 
     ValidationResult<RpcErrorType> res =
         method.validateParameters(
@@ -203,7 +204,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.empty());
-    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList(), null);
+    final EnginePayloadParameter payload = mockEnginePayload(mockHeader, emptyList());
 
     ValidationResult<RpcErrorType> res =
         method.validateParameters(
@@ -258,7 +259,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .blobGasUsed(null)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, emptyList(), List.of()));
+    var resp = resp(mockEnginePayload(blockHeader, emptyList(), List.of(), null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -277,7 +278,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .blobGasUsed(100L)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, emptyList(), List.of()));
+    var resp = resp(mockEnginePayload(blockHeader, emptyList(), List.of(), null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
