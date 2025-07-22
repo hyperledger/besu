@@ -336,12 +336,10 @@ public class BlockSimulator {
       }
 
       transactionUpdater.commit();
-      transactionUpdater.markTransactionBoundary();
+      blockUpdater.commit();
 
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
     }
-
-    blockUpdater.commit();
 
     blockStateCallSimulationResult.set(balBuilder.build());
     return blockStateCallSimulationResult;
