@@ -90,8 +90,7 @@ class TransactionCollisionDetectorTest {
         Wei.ONE,
         Hash.EMPTY_TRIE_HASH,
         Hash.EMPTY,
-        false,
-        new CodeCache());
+        false);
   }
 
   @Test

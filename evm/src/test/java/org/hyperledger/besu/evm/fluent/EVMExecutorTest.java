@@ -112,8 +112,9 @@ class EVMExecutorTest {
             .warmAddress(Address.ZERO)
             .accessListWarmStorage(
                 Address.ZERO, Bytes32.ZERO, Bytes32.leftPad(Bytes.ofUnsignedLong(2L)))
-            .messageCallProcessor(evm -> new MessageCallProcessor(evm, null))
-            .contractCallProcessor(evm -> new ContractCreationProcessor(evm, true, null, 1L))
+            .messageCallProcessor(evmSpec -> new MessageCallProcessor(evmSpec.getEvm(), null))
+            .contractCallProcessor(
+                evmSpec -> new ContractCreationProcessor(evmSpec.getEvm(), true, null, 1L))
             .execute();
     assertThat(result).isNotNull();
   }

@@ -39,6 +39,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
@@ -535,25 +536,26 @@ public class EVMExecutor {
   }
 
   /**
-   * Sets Message call processor.
+   * Sets the message call processor.
    *
-   * @param messageCallProcessor the message call processor
-   * @return the evm executor
+   * @param processorFactory the function to create the message call processor
+   * @return the EVM executor
    */
-  public EVMExecutor messageCallProcessor(final MessageCallProcessor messageCallProcessor) {
-    this.messageCallProcessor = messageCallProcessor;
+  public EVMExecutor messageCallProcessor(
+      final Function<EvmSpec, MessageCallProcessor> processorFactory) {
+    this.messageCallProcessor = processorFactory.apply(evmSpec);
     return this;
   }
 
   /**
    * Sets Contract call processor.
    *
-   * @param contractCreationProcessor the contract creation processor
+   * @param processorFactory the function to create the contract call processor
    * @return the evm executor
    */
   public EVMExecutor contractCallProcessor(
-      final ContractCreationProcessor contractCreationProcessor) {
-    this.contractCreationProcessor = contractCreationProcessor;
+      final Function<EvmSpec, ContractCreationProcessor> processorFactory) {
+    this.contractCreationProcessor = processorFactory.apply(evmSpec);
     return this;
   }
 
