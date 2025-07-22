@@ -1130,7 +1130,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
     besuPluginContext.addService(
         TransactionValidatorService.class, transactionValidatorServiceImpl);
-    besuPluginContext.addService(P2PService.class, p2pServiceImpl);
 
     // register built-in plugins
     rocksDBPlugin = new RocksDBPlugin();
