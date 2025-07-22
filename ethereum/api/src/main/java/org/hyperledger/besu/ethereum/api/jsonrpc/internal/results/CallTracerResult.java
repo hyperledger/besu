@@ -489,7 +489,7 @@ public class CallTracerResult {
       return this;
     }
 
-    public Builder incGasUsed(BigInteger amount) {
+    public Builder incGasUsed(final BigInteger amount) {
       if (this.gasUsed == null) {
         this.gasUsed = BigInteger.ZERO;
       }
@@ -497,20 +497,12 @@ public class CallTracerResult {
       return this;
     }
 
-    public Builder incGasUsed(long amount) {
-      return incGasUsed(BigInteger.valueOf(amount));
-    }
-
-    public Builder decGasUsed(BigInteger amount) {
+    public Builder decGasUsed(final BigInteger amount) {
       if (this.gasUsed == null) {
         this.gasUsed = BigInteger.ZERO;
       }
       this.gasUsed = this.gasUsed.subtract(amount);
       return this;
-    }
-
-    public Builder decGasUsed(long amount) {
-      return decGasUsed(BigInteger.valueOf(amount));
     }
 
     @Override
