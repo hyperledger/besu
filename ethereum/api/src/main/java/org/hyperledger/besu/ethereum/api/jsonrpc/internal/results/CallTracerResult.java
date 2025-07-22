@@ -251,6 +251,23 @@ public class CallTracerResult {
     return "0x" + value.toString(16);
   }
 
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("type", type)
+        .add("from", from)
+        .add("to", to)
+        .add("value", value)
+        .add("gas", gas)
+        .add("gasUsed", gasUsed)
+        .add("input", input)
+        .add("output", output)
+        .add("error", error)
+        .add("revertReason", revertReason)
+        .add("calls", calls)
+        .toString();
+  }
+
   /**
    * Creates a new Builder instance for constructing CallTracerResult objects.
    *
@@ -470,6 +487,30 @@ public class CallTracerResult {
         this.calls.add(call);
       }
       return this;
+    }
+
+    public Builder incGasUsed(BigInteger amount) {
+      if (this.gasUsed == null) {
+        this.gasUsed = BigInteger.ZERO;
+      }
+      this.gasUsed = this.gasUsed.add(amount);
+      return this;
+    }
+
+    public Builder incGasUsed(long amount) {
+      return incGasUsed(BigInteger.valueOf(amount));
+    }
+
+    public Builder decGasUsed(BigInteger amount) {
+      if (this.gasUsed == null) {
+        this.gasUsed = BigInteger.ZERO;
+      }
+      this.gasUsed = this.gasUsed.subtract(amount);
+      return this;
+    }
+
+    public Builder decGasUsed(long amount) {
+      return decGasUsed(BigInteger.valueOf(amount));
     }
 
     @Override

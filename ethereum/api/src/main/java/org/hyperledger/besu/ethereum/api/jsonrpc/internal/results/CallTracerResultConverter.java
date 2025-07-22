@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -183,6 +184,16 @@ public class CallTracerResultConverter {
     for (int i = 0; i < frames.size(); i++) {
       TraceFrame frame = frames.get(i);
       String opcode = frame.getOpcode();
+
+      // Accumulate gas cost for current call level using BigInteger
+      BigInteger frameGasCost =
+          BigInteger.valueOf(frame.getGasCost().orElse(0L))
+              .add(BigInteger.valueOf(frame.getPrecompiledGasCost().orElse(0L)));
+
+      if (!callStack.isEmpty()) {
+        CallTracerResult.Builder currentCall = callStack.peek();
+        currentCall.incGasUsed(frameGasCost);
+      }
 
       // Handle call-starting opcodes
       if (isCallStartOpcode(opcode)) {
