@@ -82,12 +82,12 @@ public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
     VersionedHash unknown = new VersionedHash((byte) 1, Hash.ZERO);
     JsonRpcSuccessResponse response = getSuccessResponse(buildRequestContext(unknown));
     List<BlobAndProofV2> result = extractResult(response);
-    assertThat(result).hasSize(1);
-    assertThat(result.getFirst()).isNull();
+
+    assertThat(result).isNull();
   }
 
   @Test
-  public void shouldReturnPartialResults() {
+  public void shouldNotReturnPartialResults() {
     BlobProofBundle bundle = createBundleAndRegisterToPool();
     VersionedHash known = bundle.getVersionedHash();
     VersionedHash unknown = new VersionedHash((byte) 1, Hash.ZERO);
@@ -96,10 +96,7 @@ public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
         getSuccessResponse(buildRequestContext(known, unknown, known));
     List<BlobAndProofV2> result = extractResult(response);
 
-    assertThat(result).hasSize(3);
-    assertThat(result.get(0)).isNotNull();
-    assertThat(result.get(1)).isNull();
-    assertThat(result.get(2)).isNotNull();
+    assertThat(result).isNull();
   }
 
   @Test
@@ -112,8 +109,8 @@ public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
     JsonRpcRequestContext requestContext = buildRequestContext(versionedHash);
     JsonRpcSuccessResponse response = getSuccessResponse(requestContext);
     List<BlobAndProofV2> result = extractResult(response);
-    assertThat(result).hasSize(1);
-    assertThat(result.getFirst()).isNull();
+
+    assertThat(result).isNull();
   }
 
   @Test
