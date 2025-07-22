@@ -102,10 +102,14 @@ public class CallTracerResultConverter {
         }
       }
 
-      final long gasAfter = (exitFrame != null) ? exitFrame.getGasRemainingPostExecution() : 0L;
-      final long gasUsed = Math.max(0, gasBefore - gasAfter);
+      long gasUsed;
+      if (exitFrame != null && exitFrame.getGasRemainingPostExecution() > 0) {
+        gasUsed = Math.max(0, gasBefore - exitFrame.getGasRemainingPostExecution());
+      } else {
+        gasUsed = frame.getGasCost().orElse(0L) + frame.getPrecompiledGasCost().orElse(0L);
+      }
 
-      final String toAddress = resolveToAddress(frame, stack);
+      final String toAddress = resolveToAddress(frame, opcode);
 
       final CallTracerResult.Builder parent = stack.peek();
       final CallTracerResult parentResult = (parent != null) ? parent.build() : null;
@@ -152,28 +156,23 @@ public class CallTracerResultConverter {
     return root.build();
   }
 
-  private static String resolveToAddress(
-      final TraceFrame frame, final Deque<CallTracerResult.Builder> stack) {
-    final String opcode = frame.getOpcode();
-    switch (opcode) {
-      case "DELEGATECALL":
-        final CallTracerResult.Builder parent = stack.peek();
-        final CallTracerResult parentResult = (parent != null) ? parent.build() : null;
-        return (parentResult != null) ? parentResult.getTo() : null;
-      case "CREATE":
-      case "CREATE2":
-        return null;
-      case "CALL":
-      case "STATICCALL":
-      case "CALLCODE":
-        return frame
+  private static String resolveToAddress(final TraceFrame frame, final String opcode) {
+    return switch (opcode) {
+      case "DELEGATECALL" -> {
+        yield frame.getRecipient().toHexString();
+      }
+      case "CREATE", "CREATE2" -> {
+        yield null;
+      }
+      case "CALL", "STATICCALL", "CALLCODE" -> {
+        yield frame
             .getStack()
             .filter(s -> s.length > 1)
-            .map(s -> toAddress(s[1]).toHexString())
+            .map(s -> toAddress(s[s.length - 2]).toHexString())
             .orElse(null);
-      default:
-        return null;
-    }
+      }
+      default -> null;
+    };
   }
 
   private static CallTracerResult createRootCallFromTransaction(final TransactionTrace trace) {
