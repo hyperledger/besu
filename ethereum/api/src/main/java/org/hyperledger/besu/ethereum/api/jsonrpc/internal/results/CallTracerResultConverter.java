@@ -26,6 +26,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,6 +116,13 @@ public class CallTracerResultConverter {
       final CallTracerResult parentResult = (parent != null) ? parent.build() : null;
       final String fromAddress = (parentResult != null) ? parentResult.getTo() : null;
 
+      final Bytes inputData;
+      if (i + 1 < frames.size() && frames.get(i + 1).getDepth() == callDepth + 1) {
+        inputData = frames.get(i + 1).getInputData();
+      } else {
+        inputData = frame.getInputData();
+      }
+
       final CallTracerResult.Builder builder =
           CallTracerResult.builder()
               .type(opcode)
@@ -123,7 +131,7 @@ public class CallTracerResultConverter {
               .value("STATICCALL".equals(opcode) ? "0x0" : frame.getValue().toShortHexString())
               .gas(gasBefore)
               .gasUsed(gasUsed)
-              .input(frame.getInputData().toHexString());
+              .input(inputData.toHexString());
 
       if (exitFrame != null) {
         if (!exitFrame.getOutputData().isEmpty()) {
@@ -158,19 +166,14 @@ public class CallTracerResultConverter {
 
   private static String resolveToAddress(final TraceFrame frame, final String opcode) {
     return switch (opcode) {
-      case "DELEGATECALL" -> {
-        yield frame.getRecipient().toHexString();
-      }
-      case "CREATE", "CREATE2" -> {
-        yield null;
-      }
-      case "CALL", "STATICCALL", "CALLCODE" -> {
-        yield frame
-            .getStack()
-            .filter(s -> s.length > 1)
-            .map(s -> toAddress(s[s.length - 2]).toHexString())
-            .orElse(null);
-      }
+      case "DELEGATECALL" -> frame.getRecipient().toHexString();
+      case "CREATE", "CREATE2" -> null;
+      case "CALL", "STATICCALL", "CALLCODE" ->
+          frame
+              .getStack()
+              .filter(s -> s.length > 1)
+              .map(s -> toAddress(s[s.length - 2]).toHexString())
+              .orElse(null);
       default -> null;
     };
   }
