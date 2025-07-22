@@ -73,7 +73,8 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), BLOCK_NOT_FOUND);
     }
 
-    final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions, recordChildCallGas);
+    final DebugOperationTracer tracer =
+        new DebugOperationTracer(traceOptions.opCodeTracerConfig(), recordChildCallGas);
     return transactionSimulator
         .process(
             callParams,
