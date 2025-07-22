@@ -201,7 +201,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
    * @return the full world state, if available
    */
   private Optional<MutableWorldState> getFullWorldStateFromHead(final Hash blockHash) {
-    // TODO begin remove rolling tests before merging on main
+    /* // TODO begin remove rolling tests before merging on main
     Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
     if (blockHeader.isPresent()) {
       Optional<BlockHeader> parentHeader =
@@ -216,7 +216,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
         System.out.println("rollback to " + parentHeader.get().getNumber());
       }
     }
-    // TODO end remove before merging on main
+    // TODO end remove before merging on main*/
     return rollFullWorldStateToBlockHash(headWorldState, blockHash);
   }
 

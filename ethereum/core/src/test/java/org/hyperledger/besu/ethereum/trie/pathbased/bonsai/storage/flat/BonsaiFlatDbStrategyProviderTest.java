@@ -45,8 +45,11 @@ class BonsaiFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
 
   @Test
   void loadsPartialFlatDbStrategyWhenNoFlatDbModeStored() {
+    final SegmentedKeyValueStorage segmentedKeyValueStorage = createSegmentedKeyValueStorage();
     final BonsaiFlatDbStrategyProvider bonsaiFlatDbStrategyProvider =
-        createFlatDbStrategyProvider(DataStorageConfiguration.DEFAULT_CONFIG);
+        createFlatDbStrategyProvider(
+            DataStorageConfiguration.DEFAULT_CONFIG, segmentedKeyValueStorage);
+    bonsaiFlatDbStrategyProvider.loadFlatDbStrategy(segmentedKeyValueStorage);
     assertThat(bonsaiFlatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
   }
 
@@ -60,10 +63,14 @@ class BonsaiFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
             DataStorageConfiguration.DEFAULT_CONFIG, segmentedKeyValueStorage);
     bonsaiFlatDbStrategyProvider.upgradeToFullFlatDbMode(segmentedKeyValueStorage);
     assertThat(bonsaiFlatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
-    assertThat(bonsaiFlatDbStrategyProvider.getFlatDbStrategy()).isNotNull();
-    assertThat(bonsaiFlatDbStrategyProvider.getFlatDbStrategy())
+    assertThat(bonsaiFlatDbStrategyProvider.getFlatDbStrategy(segmentedKeyValueStorage))
+        .isNotNull();
+    assertThat(bonsaiFlatDbStrategyProvider.getFlatDbStrategy(segmentedKeyValueStorage))
         .isInstanceOf(BonsaiFullFlatDbStrategy.class);
-    assertThat(bonsaiFlatDbStrategyProvider.getFlatDbStrategy().getCodeStorageStrategy())
+    assertThat(
+            bonsaiFlatDbStrategyProvider
+                .getFlatDbStrategy(segmentedKeyValueStorage)
+                .getCodeStorageStrategy())
         .isInstanceOf(CodeHashCodeStorageStrategy.class);
   }
 
@@ -78,8 +85,9 @@ class BonsaiFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
 
     bonsaiFlatDbStrategyProvider.downgradeToPartialFlatDbMode(segmentedKeyValueStorage);
     assertThat(bonsaiFlatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.PARTIAL);
-    assertThat(bonsaiFlatDbStrategyProvider.getFlatDbStrategy()).isNotNull();
-    assertThat(bonsaiFlatDbStrategyProvider.getFlatDbStrategy())
+    assertThat(bonsaiFlatDbStrategyProvider.getFlatDbStrategy(segmentedKeyValueStorage))
+        .isNotNull();
+    assertThat(bonsaiFlatDbStrategyProvider.getFlatDbStrategy(segmentedKeyValueStorage))
         .isInstanceOf(BonsaiPartialFlatDbStrategy.class);
   }
 
@@ -112,8 +120,12 @@ class BonsaiFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
 
     final FlatDbStrategyProvider flatDbStrategyProvider =
         createFlatDbStrategyProvider(dataStorageConfiguration, segmentedKeyValueStorage);
+    flatDbStrategyProvider.loadFlatDbStrategy(segmentedKeyValueStorage);
     assertThat(flatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
-    assertThat(flatDbStrategyProvider.getFlatDbStrategy().getCodeStorageStrategy())
+    assertThat(
+            flatDbStrategyProvider
+                .getFlatDbStrategy(segmentedKeyValueStorage)
+                .getCodeStorageStrategy())
         .isInstanceOf(AccountHashCodeStorageStrategy.class);
   }
 
@@ -131,10 +143,14 @@ class BonsaiFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
 
     archiveFlatDbStrategyProvider.upgradeToFullFlatDbMode(segmentedKeyValueStorage);
     assertThat(archiveFlatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
-    assertThat(archiveFlatDbStrategyProvider.getFlatDbStrategy()).isNotNull();
-    assertThat(archiveFlatDbStrategyProvider.getFlatDbStrategy())
+    assertThat(archiveFlatDbStrategyProvider.getFlatDbStrategy(segmentedKeyValueStorage))
+        .isNotNull();
+    assertThat(archiveFlatDbStrategyProvider.getFlatDbStrategy(segmentedKeyValueStorage))
         .isInstanceOf(BonsaiArchiveFlatDbStrategy.class);
-    assertThat(archiveFlatDbStrategyProvider.getFlatDbStrategy().getCodeStorageStrategy())
+    assertThat(
+            archiveFlatDbStrategyProvider
+                .getFlatDbStrategy(segmentedKeyValueStorage)
+                .getCodeStorageStrategy())
         .isInstanceOf(CodeHashCodeStorageStrategy.class);
   }
 
@@ -166,7 +182,10 @@ class BonsaiFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
             ? CodeHashCodeStorageStrategy.class
             : AccountHashCodeStorageStrategy.class;
     assertThat(flatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
-    assertThat(flatDbStrategyProvider.getFlatDbStrategy().getCodeStorageStrategy())
+    assertThat(
+            flatDbStrategyProvider
+                .getFlatDbStrategy(segmentedKeyValueStorage)
+                .getCodeStorageStrategy())
         .isInstanceOf(expectedCodeStorageClass);
   }
 
@@ -205,7 +224,10 @@ class BonsaiFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
 
     flatDbStrategyProvider.loadFlatDbStrategy(segmentedKeyValueStorage);
     assertThat(flatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
-    assertThat(flatDbStrategyProvider.getFlatDbStrategy().getCodeStorageStrategy())
+    assertThat(
+            flatDbStrategyProvider
+                .getFlatDbStrategy(segmentedKeyValueStorage)
+                .getCodeStorageStrategy())
         .isInstanceOf(AccountHashCodeStorageStrategy.class);
   }
 
@@ -243,7 +265,10 @@ class BonsaiFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
 
     flatDbStrategyProvider.loadFlatDbStrategy(segmentedKeyValueStorage);
     assertThat(flatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
-    assertThat(flatDbStrategyProvider.getFlatDbStrategy().getCodeStorageStrategy())
+    assertThat(
+            flatDbStrategyProvider
+                .getFlatDbStrategy(segmentedKeyValueStorage)
+                .getCodeStorageStrategy())
         .isInstanceOf(CodeHashCodeStorageStrategy.class);
   }
 
@@ -261,8 +286,8 @@ class BonsaiFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
 
     flatDbStrategyProvider.downgradeToPartialFlatDbMode(segmentedKeyValueStorage);
     assertThat(flatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.PARTIAL);
-    assertThat(flatDbStrategyProvider.getFlatDbStrategy()).isNotNull();
-    assertThat(flatDbStrategyProvider.getFlatDbStrategy())
+    assertThat(flatDbStrategyProvider.getFlatDbStrategy(segmentedKeyValueStorage)).isNotNull();
+    assertThat(flatDbStrategyProvider.getFlatDbStrategy(segmentedKeyValueStorage))
         .isInstanceOf(BonsaiPartialFlatDbStrategy.class);
   }
 

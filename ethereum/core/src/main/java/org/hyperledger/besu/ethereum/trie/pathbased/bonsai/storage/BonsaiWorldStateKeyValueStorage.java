@@ -64,6 +64,7 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     this.flatDbStrategyProvider =
         new BonsaiFlatDbStrategyProvider(
             metricsSystem, dataStorageConfiguration, composedWorldStateStorage);
+    this.flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
   }
 
   public BonsaiWorldStateKeyValueStorage(
@@ -178,7 +179,8 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
 
   @Override
   public BonsaiFlatDbStrategy getFlatDbStrategy() {
-    return (BonsaiFlatDbStrategy) flatDbStrategyProvider.getFlatDbStrategy();
+    return (BonsaiFlatDbStrategy)
+        flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage);
   }
 
   @Override

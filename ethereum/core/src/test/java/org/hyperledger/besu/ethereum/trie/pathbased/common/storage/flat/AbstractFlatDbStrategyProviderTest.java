@@ -45,6 +45,7 @@ public abstract class AbstractFlatDbStrategyProviderTest {
     final FlatDbStrategyProvider strategyProvider =
         createFlatDbStrategyProvider(
             DataStorageConfiguration.DEFAULT_CONFIG, segmentedKeyValueStorage);
+    strategyProvider.loadFlatDbStrategy(segmentedKeyValueStorage);
     assertThat(strategyProvider.getFlatDbMode()).isEqualTo(flatDbMode);
   }
 
@@ -63,14 +64,19 @@ public abstract class AbstractFlatDbStrategyProviderTest {
                             .build())
                     .build())
             .build();
+    final SegmentedKeyValueStorage segmentedKeyValueStorage = createSegmentedKeyValueStorage();
     final FlatDbStrategyProvider flatDbStrategyProvider =
-        createFlatDbStrategyProvider(dataStorageConfiguration);
+        createFlatDbStrategyProvider(dataStorageConfiguration, segmentedKeyValueStorage);
+    flatDbStrategyProvider.loadFlatDbStrategy(segmentedKeyValueStorage);
     final Class<? extends CodeStorageStrategy> expectedCodeStorageClass =
         codeByHashEnabled
             ? CodeHashCodeStorageStrategy.class
             : AccountHashCodeStorageStrategy.class;
-    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.FULL);
-    assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
+    assertThat(flatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
+    assertThat(
+            flatDbStrategyProvider
+                .getFlatDbStrategy(segmentedKeyValueStorage)
+                .getCodeStorageStrategy())
         .isInstanceOf(expectedCodeStorageClass);
   }
 
@@ -101,9 +107,12 @@ public abstract class AbstractFlatDbStrategyProviderTest {
 
     final FlatDbStrategyProvider flatDbStrategyProvider =
         createFlatDbStrategyProvider(dataStorageConfiguration, segmentedKeyValueStorage);
-
-    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.FULL);
-    assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
+    flatDbStrategyProvider.loadFlatDbStrategy(segmentedKeyValueStorage);
+    assertThat(flatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
+    assertThat(
+            flatDbStrategyProvider
+                .getFlatDbStrategy(segmentedKeyValueStorage)
+                .getCodeStorageStrategy())
         .isInstanceOf(CodeHashCodeStorageStrategy.class);
   }
 

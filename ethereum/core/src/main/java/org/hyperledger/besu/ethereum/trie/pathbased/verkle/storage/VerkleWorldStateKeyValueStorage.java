@@ -70,6 +70,7 @@ public class VerkleWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     this.flatDbStrategyProvider =
         new VerkleFlatDbStrategyProvider(
             metricsSystem, dataStorageConfiguration, composedWorldStateStorage);
+    this.flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
   }
 
   public VerkleWorldStateKeyValueStorage(
@@ -89,7 +90,7 @@ public class VerkleWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
 
   @Override
   public FlatDbStrategy getFlatDbStrategy() {
-    return flatDbStrategyProvider.getFlatDbStrategy();
+    return flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage);
   }
 
   @Override
@@ -147,6 +148,7 @@ public class VerkleWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
   @Override
   public void clear() {
     super.clear();
+    this.flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
   }
 
   @Override

@@ -47,7 +47,6 @@ public abstract class FlatDbStrategyProvider {
       final SegmentedKeyValueStorage composedWorldStateStorage) {
     this.metricsSystem = metricsSystem;
     this.dataStorageConfiguration = dataStorageConfiguration;
-    loadFlatDbStrategy(composedWorldStateStorage);
   }
 
   public void loadFlatDbStrategy(final SegmentedKeyValueStorage composedWorldStateStorage) {
@@ -106,7 +105,6 @@ public abstract class FlatDbStrategyProvider {
 
     final var existingTrieData =
         composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).isPresent();
-
     var flatDbMode =
         FlatDbMode.fromVersion(
             composedWorldStateStorage
@@ -126,7 +124,6 @@ public abstract class FlatDbStrategyProvider {
                       setDbModeTx.put(
                           TRIE_BRANCH_STORAGE, FLAT_DB_MODE, flatDbModeVal.toArrayUnsafe());
                       setDbModeTx.commit();
-
                       return flatDbModeVal;
                     }));
     LOG.info("Flat db mode found {}", flatDbMode);
@@ -134,7 +131,11 @@ public abstract class FlatDbStrategyProvider {
     return flatDbMode;
   }
 
-  public FlatDbStrategy getFlatDbStrategy() {
+  public FlatDbStrategy getFlatDbStrategy(
+      final SegmentedKeyValueStorage composedWorldStateStorage) {
+    if (flatDbStrategy == null) {
+      loadFlatDbStrategy(composedWorldStateStorage);
+    }
     return flatDbStrategy;
   }
 

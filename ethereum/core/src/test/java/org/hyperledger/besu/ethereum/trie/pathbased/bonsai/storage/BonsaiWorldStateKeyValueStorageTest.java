@@ -41,6 +41,8 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
@@ -65,12 +67,18 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class BonsaiWorldStateKeyValueStorageTest {
+
+  @Mock BonsaiWorldStateUpdateAccumulator bonsaiWorldState;
 
   public static Collection<Object[]> flatDbMode() {
     return Arrays.asList(
@@ -433,6 +441,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @MethodSource("flatDbModeAndKeyMapper")
   void clear_putGetAccountFlatDbStrategy(
       final FlatDbMode flatDbMode, final Function<byte[], byte[]> keyMapper) {
+
+    when(bonsaiWorldState.codeCache()).thenReturn(new CodeCache());
+
     final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
 
     // save world state root hash
@@ -471,7 +482,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     BonsaiAccount retrievedAccount =
         BonsaiAccount.fromRLP(
-            null, account, storage.getAccount(account.addressHash()).get(), false);
+            bonsaiWorldState, account, storage.getAccount(account.addressHash()).get(), false);
     assertThat(retrievedAccount.getBalance())
         .isEqualTo(
             Wei.fromHexString(

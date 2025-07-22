@@ -33,18 +33,26 @@ class VerkleFlatDbStrategyProviderTest extends AbstractFlatDbStrategyProviderTes
 
   @Test
   void loadsLegacyFlatDbStrategyWhenNoFlatDbModeStored() {
+    final SegmentedKeyValueStorage segmentedKeyValueStorage = createSegmentedKeyValueStorage();
     final FlatDbStrategyProvider strategyProvider =
-        createFlatDbStrategyProvider(DataStorageConfiguration.DEFAULT_CONFIG);
+        createFlatDbStrategyProvider(
+            DataStorageConfiguration.DEFAULT_CONFIG, segmentedKeyValueStorage);
+    strategyProvider.loadFlatDbStrategy(segmentedKeyValueStorage);
     assertThat(strategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
-    assertThat(strategyProvider.getFlatDbStrategy()).isInstanceOf(VerkleLegacyFlatDbStrategy.class);
+    assertThat(strategyProvider.getFlatDbStrategy(segmentedKeyValueStorage))
+        .isInstanceOf(VerkleLegacyFlatDbStrategy.class);
   }
 
   @Test
   void loadsStemBasedFlatDbStrategyWhenConfigured() {
+    final SegmentedKeyValueStorage segmentedKeyValueStorage = createSegmentedKeyValueStorage();
     final FlatDbStrategyProvider strategyProvider =
-        createFlatDbStrategyProvider(DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG);
+        createFlatDbStrategyProvider(
+            DataStorageConfiguration.DEFAULT_VERKLE_STEM_DB_CONFIG, segmentedKeyValueStorage);
+    strategyProvider.loadFlatDbStrategy(segmentedKeyValueStorage);
     assertThat(strategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.STEM);
-    assertThat(strategyProvider.getFlatDbStrategy()).isInstanceOf(VerkleStemFlatDbStrategy.class);
+    assertThat(strategyProvider.getFlatDbStrategy(segmentedKeyValueStorage))
+        .isInstanceOf(VerkleStemFlatDbStrategy.class);
   }
 
   @Override
