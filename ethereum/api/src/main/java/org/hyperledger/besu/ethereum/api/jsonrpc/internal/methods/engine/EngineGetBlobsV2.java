@@ -33,8 +33,8 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -95,15 +95,27 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
     requestedCounter.inc(versionedHashes.length);
-    final List<BlobAndProofV2> result =
-        Stream.of(versionedHashes).map(this::getBlobAndProofOrNull).toList();
-    long available = result.stream().filter(java.util.Objects::nonNull).count();
-    availableCounter.inc(available);
-    if (available > 0) {
-      hitCounter.inc();
-    } else {
-      missCounter.inc();
+    List<BlobAndProofV2> result = new ArrayList<>(versionedHashes.length);
+    for (VersionedHash versionedHash : versionedHashes) {
+      BlobProofBundle blobProofBundle = transactionPool.getBlobProofBundle(versionedHash);
+      if (blobProofBundle == null) {
+        // no partial responses. this is a miss
+        missCounter.inc();
+        LOG.trace("No BlobProofBundle found for versioned hash: {}", versionedHash);
+        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+      }
+      if (blobProofBundle.getBlobType() == BlobType.KZG_PROOF) {
+        // wrong blob type. this is a miss
+        missCounter.inc();
+        LOG.trace("Unsupported blob type KZG_PROOF for versioned hash: {}", versionedHash);
+        return new JsonRpcSuccessResponse(
+            requestContext.getRequest().getId(),
+            null); // KZG_PROOF type is not supported in this method
+      }
+      result.add(createBlobAndProofV2(blobProofBundle));
     }
+    availableCounter.inc(versionedHashes.length);
+    hitCounter.inc();
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
@@ -116,19 +128,6 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
           RpcErrorType.INVALID_VERSIONED_HASHES_PARAMS,
           e);
     }
-  }
-
-  private BlobAndProofV2 getBlobAndProofOrNull(final VersionedHash versionedHash) {
-    final BlobProofBundle bundle = transactionPool.getBlobProofBundle(versionedHash);
-    if (bundle == null) {
-      LOG.trace("No BlobProofBundle found for versioned hash: {}", versionedHash);
-      return null;
-    }
-    if (bundle.getBlobType() == BlobType.KZG_PROOF) {
-      LOG.trace("Unsupported blob type KZG_PROOF for versioned hash: {}", versionedHash);
-      return null;
-    }
-    return createBlobAndProofV2(bundle);
   }
 
   private BlobAndProofV2 createBlobAndProofV2(final BlobProofBundle blobProofBundle) {
