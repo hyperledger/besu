@@ -103,11 +103,27 @@ public class CallTracerResultConverter {
         }
       }
 
-      long gasUsed;
-      if (exitFrame != null && exitFrame.getGasRemainingPostExecution() > 0) {
-        gasUsed = Math.max(0, gasBefore - exitFrame.getGasRemainingPostExecution());
-      } else {
+      final long gasAfter =
+          (exitFrame != null && exitFrame.getGasRemainingPostExecution() > 0)
+              ? exitFrame.getGasRemainingPostExecution()
+              : -1;
+
+      final long gasUsed;
+      if (gasAfter >= 0) {
+        gasUsed = Math.max(0, gasBefore - gasAfter);
+      } else if (frame.getGasCost().isPresent() || frame.getPrecompiledGasCost().isPresent()) {
         gasUsed = frame.getGasCost().orElse(0L) + frame.getPrecompiledGasCost().orElse(0L);
+        LOG.warn(
+            "Used fallback gasUsed computation using gasCost/precompiledGasCost for frame at depth {} with opcode {}: gasUsed = {}",
+            frame.getDepth(),
+            opcode,
+            gasUsed);
+      } else {
+        LOG.warn(
+            "Unable to determine gasUsed for frame at depth {} with opcode {}",
+            frame.getDepth(),
+            opcode);
+        gasUsed = 0;
       }
 
       final String toAddress = resolveToAddress(frame, opcode);
