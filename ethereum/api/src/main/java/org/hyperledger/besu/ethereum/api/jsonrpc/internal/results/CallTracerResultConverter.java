@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CallTracerResultConverter {
+
   private static final Logger LOG = LoggerFactory.getLogger("CallTracerConverter");
 
   public static CallTracerResult convert(final TransactionTrace transactionTrace) {
@@ -51,12 +52,12 @@ public class CallTracerResultConverter {
   }
 
   private static CallTracerResult buildCallHierarchyFromFrames(final TransactionTrace trace) {
-    List<TraceFrame> frames = trace.getTraceFrames();
-    Transaction tx = trace.getTransaction();
+    final List<TraceFrame> frames = trace.getTraceFrames();
+    final Transaction tx = trace.getTransaction();
 
-    Deque<CallTracerResult.Builder> stack = new ArrayDeque<>();
+    final Deque<CallTracerResult.Builder> stack = new ArrayDeque<>();
 
-    CallTracerResult.Builder root =
+    final CallTracerResult.Builder root =
         CallTracerResult.builder()
             .type(tx.isContractCreation() ? "CREATE" : "CALL")
             .from(tx.getSender().toHexString())
@@ -71,8 +72,8 @@ public class CallTracerResultConverter {
     stack.push(root);
 
     for (int i = 0; i < frames.size(); i++) {
-      TraceFrame frame = frames.get(i);
-      String opcode = frame.getOpcode();
+      final TraceFrame frame = frames.get(i);
+      final String opcode = frame.getOpcode();
 
       if (!("CALL".equals(opcode)
           || "CALLCODE".equals(opcode)
@@ -83,12 +84,12 @@ public class CallTracerResultConverter {
         continue;
       }
 
-      int callDepth = frame.getDepth();
-      long gasBefore = frame.getGasRemaining();
+      final int callDepth = frame.getDepth();
+      final long gasBefore = frame.getGasRemaining();
 
       TraceFrame exitFrame = null;
       for (int j = i + 1; j < frames.size(); j++) {
-        TraceFrame maybeExit = frames.get(j);
+        final TraceFrame maybeExit = frames.get(j);
         if (maybeExit.getDepth() < callDepth) {
           break;
         }
@@ -101,16 +102,16 @@ public class CallTracerResultConverter {
         }
       }
 
-      long gasAfter = (exitFrame != null) ? exitFrame.getGasRemainingPostExecution() : 0L;
-      long gasUsed = Math.max(0, gasBefore - gasAfter);
+      final long gasAfter = (exitFrame != null) ? exitFrame.getGasRemainingPostExecution() : 0L;
+      final long gasUsed = Math.max(0, gasBefore - gasAfter);
 
-      String toAddress = resolveToAddress(frame, stack);
+      final String toAddress = resolveToAddress(frame, stack);
 
-      CallTracerResult.Builder parent = stack.peek();
-      CallTracerResult parentResult = (parent != null) ? parent.build() : null;
-      String fromAddress = (parentResult != null) ? parentResult.getTo() : null;
+      final CallTracerResult.Builder parent = stack.peek();
+      final CallTracerResult parentResult = (parent != null) ? parent.build() : null;
+      final String fromAddress = (parentResult != null) ? parentResult.getTo() : null;
 
-      CallTracerResult.Builder builder =
+      final CallTracerResult.Builder builder =
           CallTracerResult.builder()
               .type(opcode)
               .from(fromAddress)
@@ -118,10 +119,12 @@ public class CallTracerResultConverter {
               .value("STATICCALL".equals(opcode) ? "0x0" : frame.getValue().toShortHexString())
               .gas(gasBefore)
               .gasUsed(gasUsed)
-              .input(frame.getInputData().toHexString())
-              .output(exitFrame != null ? exitFrame.getOutputData().toHexString() : "0x");
+              .input(frame.getInputData().toHexString());
 
       if (exitFrame != null) {
+        if (!exitFrame.getOutputData().isEmpty()) {
+          builder.output(exitFrame.getOutputData().toHexString());
+        }
         if (exitFrame.getExceptionalHaltReason().isPresent()) {
           builder.error("execution reverted");
         }
@@ -132,15 +135,18 @@ public class CallTracerResultConverter {
     }
 
     while (stack.size() > 1) {
-      CallTracerResult.Builder child = stack.pop();
+      final CallTracerResult.Builder child = stack.pop();
       stack.peek().addCall(child.build());
     }
 
-    TransactionProcessingResult result = trace.getResult();
+    final TransactionProcessingResult result = trace.getResult();
     root.gasUsed(trace.getGas());
     if (!result.isSuccessful()) {
       root.error("execution reverted");
       result.getRevertReason().ifPresent(reason -> root.revertReason(reason.toHexString()));
+    }
+    if (!result.getOutput().isEmpty()) {
+      root.output(result.getOutput().toHexString());
     }
 
     return root.build();
@@ -148,11 +154,11 @@ public class CallTracerResultConverter {
 
   private static String resolveToAddress(
       final TraceFrame frame, final Deque<CallTracerResult.Builder> stack) {
-    String opcode = frame.getOpcode();
+    final String opcode = frame.getOpcode();
     switch (opcode) {
       case "DELEGATECALL":
-        CallTracerResult.Builder parent = stack.peek();
-        CallTracerResult parentResult = (parent != null) ? parent.build() : null;
+        final CallTracerResult.Builder parent = stack.peek();
+        final CallTracerResult parentResult = (parent != null) ? parent.build() : null;
         return (parentResult != null) ? parentResult.getTo() : null;
       case "CREATE":
       case "CREATE2":
@@ -171,9 +177,9 @@ public class CallTracerResultConverter {
   }
 
   private static CallTracerResult createRootCallFromTransaction(final TransactionTrace trace) {
-    Transaction tx = trace.getTransaction();
-    TransactionProcessingResult result = trace.getResult();
-    CallTracerResult.Builder rootBuilder =
+    final Transaction tx = trace.getTransaction();
+    final TransactionProcessingResult result = trace.getResult();
+    final CallTracerResult.Builder rootBuilder =
         CallTracerResult.builder()
             .type(tx.isContractCreation() ? "CREATE" : "CALL")
             .from(tx.getSender().toHexString())
@@ -184,8 +190,11 @@ public class CallTracerResultConverter {
             .value(tx.getValue().toShortHexString())
             .gas(tx.getGasLimit())
             .gasUsed(trace.getGas())
-            .input(tx.getPayload().toHexString())
-            .output("0x");
+            .input(tx.getPayload().toHexString());
+
+    if (!result.getOutput().isEmpty()) {
+      rootBuilder.output(result.getOutput().toHexString());
+    }
 
     if (!result.isSuccessful()) {
       rootBuilder.error("execution reverted");
