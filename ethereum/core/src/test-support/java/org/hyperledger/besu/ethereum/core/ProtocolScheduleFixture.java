@@ -44,9 +44,9 @@ public class ProtocolScheduleFixture {
           false,
           new NoOpMetricsSystem());
 
-  // A pointer to a specific testnet. Used widely in tests.
-  // One spot to change if we permanently or temporarily want to test with a different network.
-  public static final ProtocolSchedule TESTING_NETWORK = ProtocolScheduleFixture.SEPOLIA;
+  // A pointer to a specific network. Used widely in tests.
+  // One spot to change if we permanently or temporarily want to run tests with a different network.
+  public static final ProtocolSchedule TESTING_NETWORK = ProtocolScheduleFixture.MAINNET;
 
   public static final ProtocolSchedule MAINNET =
       MainnetProtocolSchedule.fromConfig(
