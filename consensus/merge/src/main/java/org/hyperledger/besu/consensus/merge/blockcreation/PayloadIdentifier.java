@@ -91,11 +91,6 @@ public class PayloadIdentifier implements Quantity {
   }
 
   @Override
-  public Number getValue() {
-    return getAsBigInteger();
-  }
-
-  @Override
   public BigInteger getAsBigInteger() {
     return val.toBigInteger();
   }

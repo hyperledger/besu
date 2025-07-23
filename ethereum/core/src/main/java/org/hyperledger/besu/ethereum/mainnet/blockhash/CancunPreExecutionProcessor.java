@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 /** Processes the beacon block storage if it is present in the block header. */
-public class CancunBlockHashProcessor extends FrontierBlockHashProcessor {
+public class CancunPreExecutionProcessor extends FrontierPreExecutionProcessor {
 
   @Override
   public Void process(final BlockProcessingContext context) {
