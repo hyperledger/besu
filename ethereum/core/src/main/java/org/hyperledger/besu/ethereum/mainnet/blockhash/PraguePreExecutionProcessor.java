@@ -31,27 +31,27 @@ import org.slf4j.LoggerFactory;
  * responsible for managing the storage of block hashes to support EIP-2935, which introduces
  * historical block hash access in smart contracts.
  */
-public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
-  private static final Logger LOG = LoggerFactory.getLogger(PragueBlockHashProcessor.class);
+public class PraguePreExecutionProcessor extends CancunPreExecutionProcessor {
+  private static final Logger LOG = LoggerFactory.getLogger(PraguePreExecutionProcessor.class);
 
   private static final Address HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0x0000f90827f1c53a10cb7a02335b175320002935");
 
   protected final Address historyStorageAddress;
 
-  /** Constructs a BlockHashProcessor. */
-  public PragueBlockHashProcessor() {
+  /** Constructs a PraguePreExecutionProcessor. */
+  public PraguePreExecutionProcessor() {
     this(HISTORY_STORAGE_ADDRESS);
   }
 
   /**
-   * Constructs a BlockHashProcessor with a specified history save window. This constructor is
-   * primarily used for testing.
+   * Constructs a PraguePreExecutionProcessor with a specified history save window. This constructor
+   * is primarily used for testing.
    *
    * @param historyStorageAddress the address of the contract storing the history
    */
   @VisibleForTesting
-  public PragueBlockHashProcessor(final Address historyStorageAddress) {
+  public PraguePreExecutionProcessor(final Address historyStorageAddress) {
     this.historyStorageAddress = historyStorageAddress;
   }
 

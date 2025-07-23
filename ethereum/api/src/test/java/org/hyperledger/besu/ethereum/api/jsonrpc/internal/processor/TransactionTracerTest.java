@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -87,7 +87,7 @@ public class TransactionTracerTest {
   @Mock private ProtocolSpec protocolSpec;
   @Mock private GasCalculator gasCalculator;
   @Mock private GasLimitCalculator gasLimitCalculator;
-  @Mock private BlockHashProcessor blockHashProcessor;
+  @Mock private PreExecutionProcessor preExecutionProcessor;
 
   @Mock private Tracer.TraceableState mutableWorldState;
 
@@ -125,7 +125,7 @@ public class TransactionTracerTest {
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
     when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
-    when(protocolSpec.getBlockHashProcessor()).thenReturn(blockHashProcessor);
+    when(protocolSpec.getPreExecutionProcessor()).thenReturn(preExecutionProcessor);
     when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
   }
 

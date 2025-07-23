@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.vm.BlockchainBasedBlockHashLookup;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
-public class FrontierBlockHashProcessor implements BlockHashProcessor {
+public class FrontierPreExecutionProcessor implements PreExecutionProcessor {
 
   @Override
   public Void process(final BlockProcessingContext context) {

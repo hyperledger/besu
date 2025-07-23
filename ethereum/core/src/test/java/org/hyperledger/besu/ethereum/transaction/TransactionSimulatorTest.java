@@ -50,7 +50,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
@@ -999,7 +999,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
 
   private void mockProtocolSpecForProcessWithWorldUpdater(final long txGasLimitCap) {
     final BlockHeaderFunctions blockHeaderFunctions = mock(BlockHeaderFunctions.class);
-    final BlockHashProcessor blockHashProcessor = mock(BlockHashProcessor.class);
+    final PreExecutionProcessor preExecutionProcessor = mock(PreExecutionProcessor.class);
     when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
@@ -1007,7 +1007,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getBlockHeaderFunctions()).thenReturn(blockHeaderFunctions);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0));
-    when(protocolSpec.getBlockHashProcessor()).thenReturn(blockHashProcessor);
+    when(protocolSpec.getPreExecutionProcessor()).thenReturn(preExecutionProcessor);
     when(protocolSpec.getGasCalculator()).thenReturn(new FrontierGasCalculator());
     when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSpec.getDifficultyCalculator()).thenReturn((time, parent) -> BigInteger.TEN);
