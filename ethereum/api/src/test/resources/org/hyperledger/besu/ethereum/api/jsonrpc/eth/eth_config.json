@@ -1,0 +1,48 @@
+{
+  "request": {
+    "id": 8,
+    "comment" : "eth_config for hive genesis",
+    "jsonrpc": "2.0",
+    "method": "eth_config",
+    "params": []
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 8,
+    "result": {
+      "current": {
+        "activationTime" : 1444660040,
+        "blobSchedule" : {
+          "baseFeeUpdateFraction" : 3338477,
+          "max" : 6,
+          "target" : 3
+        },
+        "chainId" : "0x1",
+        "precompiles" : {
+          "0x0000000000000000000000000000000000000001" : "ECREC",
+          "0x0000000000000000000000000000000000000002" : "SHA256",
+          "0x0000000000000000000000000000000000000003" : "RIPEMD160",
+          "0x0000000000000000000000000000000000000004" : "ID",
+          "0x0000000000000000000000000000000000000005" : "MODEXP",
+          "0x0000000000000000000000000000000000000006" : "BN254_ADD",
+          "0x0000000000000000000000000000000000000007" : "BN254_MUL",
+          "0x0000000000000000000000000000000000000008" : "BN254_PAIRING",
+          "0x0000000000000000000000000000000000000009" : "BLAKE2F",
+          "0x000000000000000000000000000000000000000a" : "KZG_POINT_EVALUATION"
+        },
+        "systemContracts" : {
+          "BEACON_ROOTS_ADDRESS" : "0x000f3df6d732807ef1319fb7b8bb8522d0beac02"
+        }
+      },
+      "currentHash" : "0x3af40c89",
+      "currentForkId" : "0x97fa8ff0",
+      "next" : null,
+      "nextHash" : null,
+      "nextForkId" : null,
+      "last" : null,
+      "lastHash" : null,
+      "lastForkId" : null
+    }
+  },
+  "statusCode": 200
+}

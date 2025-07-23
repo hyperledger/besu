@@ -115,11 +115,6 @@ public final class BlobGas extends BaseUInt64Value<BlobGas> implements Quantity 
   }
 
   @Override
-  public Number getValue() {
-    return getAsBigInteger();
-  }
-
-  @Override
   public BigInteger getAsBigInteger() {
     return toBigInteger();
   }

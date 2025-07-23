@@ -29,7 +29,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.DelegatingBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.SoftAssertions;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -174,7 +173,7 @@ public class GeneralStateReferenceTestTools {
             blockHeader,
             transaction,
             blockHeader.getCoinbase(),
-            protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader),
+            protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, blockHeader),
             TransactionValidationParams.processingBlock(),
             blobGasPrice);
     if (result.isInvalid()) {

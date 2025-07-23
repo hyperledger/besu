@@ -184,7 +184,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<Bytes32> maybePrevRandao,
       final Optional<Bytes32> maybeParentBeaconBlockRoot,
       final long timestamp,
-      boolean rewardCoinbase,
+      final boolean rewardCoinbase,
       final BlockHeader parentHeader) {
 
     final var timings = new BlockCreationTiming();
@@ -226,10 +226,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               disposableWorldState,
               newProtocolSpec,
               newProtocolSpec
-                  .getBlockHashProcessor()
+                  .getPreExecutionProcessor()
                   .createBlockHashLookup(protocolContext.getBlockchain(), processableBlockHeader),
               operationTracer);
-      newProtocolSpec.getBlockHashProcessor().process(blockProcessingContext);
+      newProtocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
 
       timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =

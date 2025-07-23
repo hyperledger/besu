@@ -26,6 +26,11 @@ jar {
       'Commit-Hash': getGitCommitDetails(40).hash
       )
   }
+
+  dependsOn ':generateArtifactsCatalog'
+  from(project.rootProject.layout.buildDirectory.file('reports/dependencies/besu-artifacts-catalog.json')) {
+    into('META-INF')
+  }
 }
 
 dependencies {

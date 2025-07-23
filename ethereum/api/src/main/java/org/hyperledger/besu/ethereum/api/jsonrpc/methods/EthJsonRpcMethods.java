@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthBlockNumber
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCall;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthChainId;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCoinbase;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthConfig;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCreateAccessList;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthEstimateGas;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthFeeHistory;
@@ -89,6 +91,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final Set<Capability> supportedCapabilities;
   private final ApiConfiguration apiConfiguration;
+  private final GenesisConfigOptions genesisConfigOptions;
   private final TransactionSimulator transactionSimulator;
 
   public EthJsonRpcMethods(
@@ -101,6 +104,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final MiningConfiguration miningConfiguration,
       final Set<Capability> supportedCapabilities,
       final ApiConfiguration apiConfiguration,
+      final GenesisConfigOptions genesisConfigOptions,
       final TransactionSimulator transactionSimulator) {
     this.blockchainQueries = blockchainQueries;
     this.synchronizer = synchronizer;
@@ -111,6 +115,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.miningConfiguration = miningConfiguration;
     this.supportedCapabilities = supportedCapabilities;
     this.apiConfiguration = apiConfiguration;
+    this.genesisConfigOptions = genesisConfigOptions;
     this.transactionSimulator = transactionSimulator;
   }
 
@@ -158,6 +163,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthCreateAccessList(blockchainQueries, transactionSimulator),
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
+        new EthConfig(blockchainQueries, protocolSchedule, genesisConfigOptions),
         new EthProtocolVersion(supportedCapabilities),
         new EthGasPrice(blockchainQueries, apiConfiguration),
         new EthChainId(protocolSchedule.getChainId()),
