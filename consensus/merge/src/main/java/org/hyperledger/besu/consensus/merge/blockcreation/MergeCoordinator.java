@@ -614,7 +614,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     validationResult
         .getYield()
         .ifPresentOrElse(
-            result -> chain.storeBlock(block, result.getReceipts()),
+            result -> chain.storeBlock(block, result.getReceipts(), Optional.empty()),
             () -> LOG.debug("empty yield in blockProcessingResult"));
     return validationResult;
   }

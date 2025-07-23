@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,9 +35,11 @@ public interface MutableBlockchain extends Blockchain {
    * as long as they are connected.
    *
    * @param block The block to append.
+   * @param blockAccessList Block access list if not present in the block.
    * @param receipts The list of receipts associated with this block's transactions.
    */
-  void appendBlock(Block block, List<TransactionReceipt> receipts);
+  void appendBlock(
+      Block block, List<TransactionReceipt> receipts, Optional<BlockAccessList> blockAccessList);
 
   /**
    * Adds a block to the blockchain without indexing transactions.
@@ -46,9 +49,11 @@ public interface MutableBlockchain extends Blockchain {
    * as long as they are connected.
    *
    * @param block The block to append.
+   * @param blockAccessList Block access list if not present in the block.
    * @param receipts The list of receipts associated with this block's transactions.
    */
-  void appendBlockWithoutIndexingTransactions(Block block, List<TransactionReceipt> receipts);
+  void appendBlockWithoutIndexingTransactions(
+      Block block, List<TransactionReceipt> receipts, Optional<BlockAccessList> blockAccessList);
 
   /**
    * Adds a syncBlock to the blockchain.
@@ -85,7 +90,8 @@ public interface MutableBlockchain extends Blockchain {
    * @param block The block to append.
    * @param receipts The list of receipts associated with this block's transactions.
    */
-  void storeBlock(Block block, List<TransactionReceipt> receipts);
+  void storeBlock(
+      Block block, List<TransactionReceipt> receipts, Optional<BlockAccessList> blockAccessList);
 
   /**
    * Store a block header to the blockchain, updating the chain state.

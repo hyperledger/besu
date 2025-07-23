@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockImportResult.BlockImportStatus
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 
 import java.util.List;
+import java.util.Optional;
 
 public class MainnetBlockImporter implements BlockImporter {
 
@@ -52,7 +53,12 @@ public class MainnetBlockImporter implements BlockImporter {
           .getYield()
           .ifPresent(
               processingOutputs -> {
-                context.getBlockchain().appendBlock(block, processingOutputs.getReceipts());
+                context
+                    .getBlockchain()
+                    .appendBlock(
+                        block,
+                        processingOutputs.getReceipts(),
+                        processingOutputs.getBlockAccessList());
 
                 // move the head worldstate if block processing was successful:
                 context
@@ -81,9 +87,11 @@ public class MainnetBlockImporter implements BlockImporter {
     if (blockValidator.validateBlockForSyncing(
         context, block, receipts, headerValidationMode, ommerValidationMode, bodyValidationMode)) {
       if (importWithTxIndexing) {
-        context.getBlockchain().appendBlock(block, receipts);
+        context.getBlockchain().appendBlock(block, receipts, Optional.empty());
       } else {
-        context.getBlockchain().appendBlockWithoutIndexingTransactions(block, receipts);
+        context
+            .getBlockchain()
+            .appendBlockWithoutIndexingTransactions(block, receipts, Optional.empty());
       }
       return new BlockImportResult(true);
     }

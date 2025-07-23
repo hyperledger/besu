@@ -45,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.constraints.NotBlank;
@@ -159,7 +160,7 @@ public class RestoreState implements Runnable {
         }
         receiptsRlp.leaveList();
 
-        blockchain.appendBlock(new Block(header, body), receipts);
+        blockchain.appendBlock(new Block(header, body), receipts, Optional.empty());
       }
     }
     LOG.info("Chain data loaded");
