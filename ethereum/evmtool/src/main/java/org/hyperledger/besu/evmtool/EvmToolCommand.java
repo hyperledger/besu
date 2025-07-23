@@ -265,6 +265,10 @@ public class EvmToolCommand implements Runnable {
       description = "display version info")
   boolean versionInfoRequested;
 
+  Integer getRepeatCount() {
+    return repeat;
+  }
+
   static final Joiner STORAGE_JOINER = Joiner.on(",\n");
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
   PrintWriter out;
@@ -428,8 +432,7 @@ public class EvmToolCommand implements Runnable {
       if (codeBytes.isEmpty() && !createTransaction) {
         codeBytes = component.getWorldState().get(receiver).getCode();
       }
-      Code code =
-          createTransaction ? evm.getCodeForCreation(codeBytes) : evm.getCodeUncached(codeBytes);
+      Code code = createTransaction ? evm.wrapCodeForCreation(codeBytes) : evm.wrapCode(codeBytes);
       if (!code.isValid()) {
         out.println(((CodeInvalid) code).getInvalidReason());
         return;
@@ -560,7 +563,7 @@ public class EvmToolCommand implements Runnable {
               .put("output", initialMessageFrame.getOutputData().toHexString())
               .put("gasUsed", "0x" + Long.toHexString(evmGas))
               .put("pass", initialMessageFrame.getExceptionalHaltReason().isEmpty())
-              .put("fork", protocolSpec.getName());
+              .put("fork", protocolSpec.getHardforkId().description());
           if (!noTime) {
             resultLine.put("timens", lastTime).put("time", lastTime / 1000);
           }

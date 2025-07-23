@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.clique;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -100,7 +101,7 @@ public class CliqueProtocolScheduleTest {
                 new NoOpMetricsSystem())
             .getByBlockHeader(blockHeader(0));
 
-    assertThat(homestead.getName()).isEqualTo("Frontier");
+    assertThat(homestead.getHardforkId()).isEqualTo(FRONTIER);
     assertThat(homestead.getBlockReward()).isEqualTo(Wei.ZERO);
     assertThat(homestead.isSkipZeroBlockRewards()).isEqualTo(true);
     assertThat(homestead.getDifficultyCalculator()).isInstanceOf(CliqueDifficultyCalculator.class);
