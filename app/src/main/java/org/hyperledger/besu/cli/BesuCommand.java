@@ -2535,6 +2535,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
 
+    if (miningParametersSupplier.get().getTargetGasLimit().isPresent()) {
+      builder.setTargetGasLimit(miningParametersSupplier.get().getTargetGasLimit().getAsLong());
+    }
+
     builder
         .setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled())
         .setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation())

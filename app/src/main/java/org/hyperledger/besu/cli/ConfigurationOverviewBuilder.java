@@ -65,6 +65,7 @@ public class ConfigurationOverviewBuilder {
   private boolean isHistoryExpiryPruneEnabled = false;
   private boolean isParallelTxProcessingEnabled = false;
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
+  private Long targetGasLimit;
 
   /**
    * Create a new ConfigurationOverviewBuilder.
@@ -355,6 +356,17 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets the target gas limit.
+   *
+   * @param targetGasLimit the target gas limit
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTargetGasLimit(final Long targetGasLimit) {
+    this.targetGasLimit = targetGasLimit;
+    return this;
+  }
+
+  /**
    * Build configuration overview.
    *
    * @return the string representing configuration overview
@@ -467,6 +479,10 @@ public class ConfigurationOverviewBuilder {
       lines.add(blobDBString.toString());
     }
 
+    if (targetGasLimit != null) {
+      lines.add("Target Gas Limit: " + normalizeGas(targetGasLimit));
+    }
+
     lines.add("");
     lines.add("Host:");
 
@@ -534,5 +550,15 @@ public class ConfigurationOverviewBuilder {
 
   private String normalizeSize(final long size) {
     return String.format("%.02f", (double) (size) / 1024 / 1024 / 1024) + " GB";
+  }
+
+  private static String normalizeGas(final long gas) {
+    final double normalizedGas = gas / 1_000_000D;
+    if (normalizedGas < 1) {
+      return String.format("%,d", gas);
+    } else {
+      final String format = normalizedGas % 1 == 0 ? "%.0fM" : "%.1fM";
+      return String.format(format, normalizedGas);
+    }
   }
 }
