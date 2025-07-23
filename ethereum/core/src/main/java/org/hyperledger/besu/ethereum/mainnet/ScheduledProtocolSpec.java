@@ -74,7 +74,7 @@ public interface ScheduledProtocolSpec {
 
     @Override
     public Hardfork fork() {
-      return new Hardfork(protocolSpec.getName(), timestamp);
+      return new Hardfork(protocolSpec.getHardforkId().description(), timestamp);
     }
 
     @Override
@@ -110,7 +110,7 @@ public interface ScheduledProtocolSpec {
 
     @Override
     public Hardfork fork() {
-      return new Hardfork(protocolSpec.getName(), blockNumber);
+      return new Hardfork(protocolSpec.getHardforkId().description(), blockNumber);
     }
 
     @Override

@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
+import java.util.Optional;
+
 public class EthGetBlockTransactionCountByHash implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
@@ -49,11 +51,12 @@ public class EthGetBlockTransactionCountByHash implements JsonRpcMethod {
           RpcErrorType.INVALID_BLOCK_HASH_PARAMS,
           e);
     }
-    final Integer count = blockchain.getTransactionCount(hash);
+    final Optional<Integer> count = blockchain.getTransactionCount(hash);
 
-    if (count == -1) {
+    if (count.isEmpty()) {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(count));
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), Quantity.create(count.get()));
   }
 }
