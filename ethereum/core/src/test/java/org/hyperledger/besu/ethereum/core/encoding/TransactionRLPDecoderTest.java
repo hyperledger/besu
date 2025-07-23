@@ -116,6 +116,13 @@ class TransactionRLPDecoderTest {
   }
 
   @Test
+  void shouldReturnOptionalEmptyWithOx() {
+    assertThatThrownBy(
+            () -> TransactionDecoder.decodeOpaqueBytes(Bytes.EMPTY, EncodingContext.BLOCK_BODY))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void testForAccessListTransaction() {
     BlockDataGenerator gen = new BlockDataGenerator();
     Transaction accessListTransaction = gen.transaction(TransactionType.ACCESS_LIST);

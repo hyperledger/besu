@@ -109,6 +109,10 @@ public class TransactionDecoder {
   public static Transaction decodeOpaqueBytes(
       final Bytes opaqueBytes, final EncodingContext context) {
     var transactionType = getTransactionType(opaqueBytes);
+    if (opaqueBytes.isEmpty()) {
+
+      throw new IllegalArgumentException("Unsupported transaction type: empty opaque bytes");
+    }
     if (transactionType.isPresent()) {
       return decodeTypedTransaction(opaqueBytes, transactionType.get(), context);
     } else {
@@ -128,6 +132,9 @@ public class TransactionDecoder {
    */
   private static Optional<TransactionType> getTransactionType(final Bytes opaqueBytes) {
     try {
+      if (opaqueBytes.isEmpty()) {
+        return Optional.empty();
+      }
       byte transactionTypeByte = opaqueBytes.get(0);
       return Optional.of(TransactionType.of(transactionTypeByte));
     } catch (IllegalArgumentException ex) {
