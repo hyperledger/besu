@@ -64,7 +64,7 @@ public class FrequentMessageMulticaster implements ValidatorMulticaster {
       final MessageData message, final Collection<Address> denylist) {
     return () -> {
       LOG.debug(
-          "Broadcasting round change every {} ms on thread {}",
+          "Broadcasting message every {} ms on thread {}",
           interval,
           Thread.currentThread().threadId());
       multicaster.send(message, denylist);
