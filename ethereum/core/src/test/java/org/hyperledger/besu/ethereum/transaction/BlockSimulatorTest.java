@@ -41,7 +41,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
@@ -101,7 +101,7 @@ public class BlockSimulatorTest {
     when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(gasLimitCalculator.nextGasLimit(anyLong(), anyLong(), anyLong())).thenReturn(1L);
     when(protocolSpec.getFeeMarket()).thenReturn(mock(FeeMarket.class));
-    when(protocolSpec.getBlockHashProcessor()).thenReturn(mock(BlockHashProcessor.class));
+    when(protocolSpec.getPreExecutionProcessor()).thenReturn(mock(PreExecutionProcessor.class));
   }
 
   @Test

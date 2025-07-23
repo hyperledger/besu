@@ -65,9 +65,9 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunPreExecutionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PraguePreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
@@ -202,7 +202,7 @@ public abstract class MainnetProtocolSpecs {
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .evmConfiguration(evmConfiguration)
-        .blockHashProcessor(new FrontierBlockHashProcessor())
+        .preExecutionProcessor(new FrontierPreExecutionProcessor())
         .hardforkId(FRONTIER);
   }
 
@@ -763,7 +763,7 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::blobAwareBlockHeaderValidator)
-        .blockHashProcessor(new CancunBlockHashProcessor())
+        .preExecutionProcessor(new CancunPreExecutionProcessor())
         .hardforkId(CANCUN);
   }
 
@@ -863,7 +863,7 @@ public abstract class MainnetProtocolSpecs {
                                 new CodeDelegationService()))
                         .build())
             // EIP-2935 Blockhash processor
-            .blockHashProcessor(new PragueBlockHashProcessor())
+            .preExecutionProcessor(new PraguePreExecutionProcessor())
             .hardforkId(PRAGUE);
     try {
       RequestContractAddresses requestContractAddresses =
