@@ -98,9 +98,7 @@ public class ForkIdManager {
         return forkId;
       }
     }
-    return allForkIds.isEmpty()
-        ? new ForkId(genesisHashCrc, 0)
-        : allForkIds.get(allForkIds.size() - 1);
+    return allForkIds.isEmpty() ? new ForkId(genesisHashCrc, 0) : allForkIds.getLast();
   }
 
   @VisibleForTesting
@@ -232,5 +230,14 @@ public class ForkIdManager {
 
   private static Bytes getCurrentCrcHash(final CRC32 crc) {
     return Bytes.ofUnsignedInt(crc.getValue());
+  }
+
+  public ForkId getForkIdByTimestamp(final long timestamp) {
+    for (final ForkId forkId : timestampsForkIds) {
+      if (timestamp < forkId.getNext()) {
+        return forkId;
+      }
+    }
+    return allForkIds.isEmpty() ? new ForkId(genesisHashCrc, 0) : allForkIds.getLast();
   }
 }

@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcesso
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -106,7 +107,8 @@ class BlockImportExceptionHandlingTest {
               (BonsaiWorldStateKeyValueStorage)
                   worldStateStorageCoordinator.worldStateKeyValueStorage(),
               EvmConfiguration.DEFAULT,
-              createStatefulConfigWithTrie()));
+              createStatefulConfigWithTrie(),
+              new CodeCache()));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
