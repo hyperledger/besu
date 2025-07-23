@@ -34,9 +34,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ProtocolScheduleFixture {
 
-  public static final ProtocolSchedule SEPOLIA =
+  public static final ProtocolSchedule MAINNET =
       MainnetProtocolSchedule.fromConfig(
-          getSepoliaConfigOptions(),
+          getMainnetConfigOptions(),
           Optional.empty(),
           Optional.empty(),
           MiningConfiguration.newDefault(),
@@ -48,22 +48,8 @@ public class ProtocolScheduleFixture {
   // One spot to change if we permanently or temporarily want to run tests with a different network.
   public static final ProtocolSchedule TESTING_NETWORK = ProtocolScheduleFixture.MAINNET;
 
-  public static final ProtocolSchedule MAINNET =
-      MainnetProtocolSchedule.fromConfig(
-          getMainnetConfigOptions(),
-          Optional.empty(),
-          Optional.empty(),
-          MiningConfiguration.newDefault(),
-          new BadBlockManager(),
-          false,
-          new NoOpMetricsSystem());
-
   private static GenesisConfigOptions getMainnetConfigOptions() {
     return getGenesisConfigOptions("/mainnet.json");
-  }
-
-  private static GenesisConfigOptions getSepoliaConfigOptions() {
-    return getGenesisConfigOptions("/sepolia.json");
   }
 
   public static GenesisConfigOptions getGenesisConfigOptions(final String genesisConfig) {
