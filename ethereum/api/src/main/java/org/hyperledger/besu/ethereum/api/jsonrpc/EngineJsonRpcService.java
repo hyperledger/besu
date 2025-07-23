@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.tuweni.net.tls.VertxTrustOptions.allowlistClients;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils.truncToken;
 
-import org.hyperledger.besu.ethereum.api.handlers.EngineJsonRpcParserHandler;
 import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
@@ -151,8 +150,6 @@ public class EngineJsonRpcService {
   private final HealthService readinessService;
 
   private final MetricsSystem metricsSystem;
-  private final EngineJsonRpcParserHandler engineJsonRpcParserHandler =
-      new EngineJsonRpcParserHandler();
 
   /**
    * Construct a EngineJsonRpcService to handle either http or websocket clients
@@ -448,7 +445,7 @@ public class EngineJsonRpcService {
           HandlerFactory.authentication(authenticationService.get(), config.getNoAuthRpcApis()));
     }
     mainRoute
-        .handler(engineJsonRpcParserHandler.handler())
+        .handler(HandlerFactory.jsonRpcParser())
         .handler(
             HandlerFactory.timeout(new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods));
     if (authenticationService.isPresent()) {

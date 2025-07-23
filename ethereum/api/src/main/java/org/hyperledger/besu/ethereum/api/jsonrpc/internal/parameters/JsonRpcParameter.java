@@ -28,10 +28,6 @@ public class JsonRpcParameter {
       new ObjectMapper()
           .registerModule(new Jdk8Module()); // Handle JDK8 Optionals (de)serialization
 
-  protected ObjectMapper getObjectMapper() {
-    return mapper;
-  }
-
   /**
    * Retrieves a required parameter at the given index interpreted as the given class. Throws
    * InvalidJsonRpcParameters if parameter is missing or of the wrong type.
@@ -74,7 +70,7 @@ public class JsonRpcParameter {
       param = paramClass.cast(rawParam);
     } else {
       try {
-        param = getObjectMapper().convertValue(rawParam, paramClass);
+        param = mapper.convertValue(rawParam, paramClass);
       } catch (final Exception e) {
         throw new JsonRpcParameterException(
             String.format(
@@ -96,9 +92,8 @@ public class JsonRpcParameter {
     Object rawParam = params[index];
     if (List.class.isAssignableFrom(rawParam.getClass())) {
       try {
-        String listJson = getObjectMapper().writeValueAsString(rawParam);
-        List<T> returnedList =
-            getObjectMapper().readValue(listJson, new TypeReference<List<T>>() {});
+        String listJson = mapper.writeValueAsString(rawParam);
+        List<T> returnedList = mapper.readValue(listJson, new TypeReference<List<T>>() {});
         return Optional.of(returnedList);
       } catch (JsonProcessingException e) {
         throw new JsonRpcParameterException(
