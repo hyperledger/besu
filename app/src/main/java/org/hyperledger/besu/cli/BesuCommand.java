@@ -232,6 +232,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -240,6 +242,7 @@ import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.jackson.DatabindCodec;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -1608,7 +1611,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration = createEngineJsonRpcConfiguration();
+      // align JSON decoding limit with HTTP body limit
+      // character count is close to size in bytes
+      final long maxRequestContentLength =
+          Math.max(
+              jsonRpcConfiguration.getMaxRequestContentLength(),
+              engineJsonRpcConfiguration.getMaxRequestContentLength());
+      configureVertxJsonDecodingMaxLength((int) maxRequestContentLength);
     }
+
     graphQLConfiguration =
         graphQlOptions.graphQLConfiguration(
             hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
@@ -1641,6 +1652,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     logger.info(generateConfigurationOverview());
     logger.info("Security Module: {}", securityModuleName);
+  }
+
+  private static void configureVertxJsonDecodingMaxLength(final int maxStringLength) {
+    // Supports large sized engine_newPayload decoding
+
+    // This is a global setting for the Vert.x ObjectMapper
+    // which is used by both the JsonRpc and EngineJsonRpc services
+    // Attempting to limit the scope of the mapper config leads to extra serialisation steps
+    ObjectMapper om = DatabindCodec.mapper();
+    StreamReadConstraints src =
+        StreamReadConstraints.builder().maxStringLength(maxStringLength).build();
+    om.getFactory().setStreamReadConstraints(src);
   }
 
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
