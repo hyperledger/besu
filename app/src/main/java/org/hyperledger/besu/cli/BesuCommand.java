@@ -1848,7 +1848,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private SynchronizerConfiguration buildSyncConfig() {
     return unstableSynchronizerOptions
         .toDomainObject()
-        .syncMode(syncMode)
+        .syncMode(getDefaultSyncModeIfNotSet())
         .syncMinimumPeerCount(syncMinPeerCount)
         .build();
   }
