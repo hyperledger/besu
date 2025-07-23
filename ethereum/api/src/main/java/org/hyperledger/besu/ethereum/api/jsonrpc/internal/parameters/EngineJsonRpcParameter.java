@@ -19,8 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 /**
- * Engine-API specific JsonRpcParameter that allows large payloads. This is needed for
- * engine_newPayload which can contain very large transactions.
+ * Engine-specific JsonRpcParameter that allows large payloads. This is needed for engine_newPayload
+ * which can contain very large transactions.
  */
 public class EngineJsonRpcParameter extends JsonRpcParameter {
 
