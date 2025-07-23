@@ -24,7 +24,7 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
  * accordance with EIP-7709. It is not used yet since the fork that this EIP should go in has not
  * been decided yet.
  */
-public class Eip7709BlockHashProcessor extends PragueBlockHashProcessor {
+public class Eip7709PreExecutionProcessor extends PraguePreExecutionProcessor {
 
   @Override
   public BlockHashLookup createBlockHashLookup(
