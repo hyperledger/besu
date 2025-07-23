@@ -78,6 +78,7 @@ import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.TransactionValidatorService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.mining.MiningService;
+import org.hyperledger.besu.plugin.services.p2p.P2PService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
@@ -86,6 +87,7 @@ import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.MiningServiceImpl;
+import org.hyperledger.besu.services.P2PServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
@@ -214,7 +216,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     runner.startExternalServices();
 
-    loadAdditionalServices(besuController, besuPluginContext);
+    loadAdditionalServices(besuController, besuPluginContext, runner);
 
     component.rpcEndpointService().init(runner.getInProcessRpcMethods());
 
@@ -252,7 +254,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   }
 
   private void loadAdditionalServices(
-      final BesuController besuController, final BesuPluginContextImpl besuPluginContext) {
+      final BesuController besuController,
+      final BesuPluginContextImpl besuPluginContext,
+      final Runner runner) {
     final TraceServiceImpl traceService =
         new TraceServiceImpl(
             new BlockchainQueries(
@@ -275,6 +279,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         new TransactionPoolServiceImpl(besuController.getTransactionPool()));
     besuPluginContext.addService(
         MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
+
+    // Add the P2P service with the real network (first time)
+    final P2PServiceImpl p2pService = new P2PServiceImpl(runner.getP2PNetwork());
+    besuPluginContext.addService(P2PService.class, p2pService);
   }
 
   private void killRunner(final String name) {
@@ -612,6 +620,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           TransactionValidatorService.class, transactionValidatorServiceImpl);
       besuPluginContext.addService(
           TransactionSimulationService.class, transactionSimulationServiceImpl);
+      // P2P service will be added later in loadAdditionalServices when the network is available
       final Path pluginsPath;
       final String pluginDir = System.getProperty("besu.plugins.dir");
       if (pluginDir == null || pluginDir.isEmpty()) {
