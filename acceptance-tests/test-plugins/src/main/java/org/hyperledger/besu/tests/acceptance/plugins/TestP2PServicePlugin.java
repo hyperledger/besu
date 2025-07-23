@@ -59,12 +59,22 @@ public class TestP2PServicePlugin implements BesuPlugin {
     LOG.info("Registering TestP2PServicePlugin");
     this.serviceManager = serviceManager;
 
-    // Get the data directory from BesuConfiguration service
-    callbackDir =
-        serviceManager
-            .getService(BesuConfiguration.class)
-            .map(config -> config.getDataPath().resolve("plugins").toFile())
-            .orElse(new File(System.getProperty("besu.plugins.dir", "plugins")));
+    // Get the data directory from BesuConfiguration service (node-specific, avoids sticky system
+    // property issue)
+    final var besuConfigService = serviceManager.getService(BesuConfiguration.class);
+    if (besuConfigService.isPresent()) {
+      final var dataPath = besuConfigService.get().getDataPath();
+      if (dataPath != null) {
+        callbackDir = dataPath.resolve("plugins").toFile();
+        LOG.info("BesuConfiguration service available, status logging enabled to: {}", callbackDir);
+      } else {
+        callbackDir = null;
+        LOG.warn("BesuConfiguration dataPath is null, plugin status logging will be disabled");
+      }
+    } else {
+      callbackDir = null;
+      LOG.warn("BesuConfiguration service not available, plugin status logging will be disabled");
+    }
 
     serviceManager
         .getService(PicoCLIOptions.class)
@@ -91,6 +101,11 @@ public class TestP2PServicePlugin implements BesuPlugin {
   }
 
   private void writeP2PStatus(final String status, final String message) {
+    if (callbackDir == null) {
+      LOG.debug("P2P status logging disabled - callbackDir is null: {} - {}", status, message);
+      return;
+    }
+
     try {
       final File statusFile = new File(callbackDir, "p2p_status.txt");
       if (!statusFile.getParentFile().exists()) {
