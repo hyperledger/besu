@@ -49,7 +49,7 @@ import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -166,7 +166,7 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           null,
           Optional.empty(),
-          new FrontierBlockHashProcessor(),
+          new FrontierPreExecutionProcessor(),
           true,
           true,
           Optional.empty());
@@ -197,7 +197,7 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           null,
           Optional.empty(),
-          new FrontierBlockHashProcessor(),
+          new FrontierPreExecutionProcessor(),
           true,
           true,
           Optional.empty());
