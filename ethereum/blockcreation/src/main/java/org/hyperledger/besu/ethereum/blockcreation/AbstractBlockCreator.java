@@ -194,6 +194,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       timings.register("duplicateWorldState");
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
+      final boolean includeBlockAccessList =
+          newProtocolSpec.getBlockAccessListFactory().isPresent();
 
       final ProcessableBlockHeader processableBlockHeader =
           createPending(
@@ -323,7 +325,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               transactionResults.getSelectedTransactions(),
               ommers,
               withdrawals,
-              transactionResults.getBlockAccessList());
+              includeBlockAccessList ? transactionResults.getBlockAccessList() : Optional.empty());
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);

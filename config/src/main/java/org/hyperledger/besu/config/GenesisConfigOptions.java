@@ -271,6 +271,13 @@ public interface GenesisConfigOptions {
   OptionalLong getOsakaTime();
 
   /**
+   * Gets Amsterdam time.
+   *
+   * @return the osaka time
+   */
+  OptionalLong getAmsterdamTime();
+
+  /**
    * Gets bpo1 time.
    *
    * @return the bpo1 time

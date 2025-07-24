@@ -281,6 +281,8 @@ public class BlockSimulator {
             .orElseGet(protocolSpec::getMiningBeneficiaryCalculator);
 
     final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
+    // TODO: Or if a feature flag or a param enabled
+    final boolean includeBlockAccessList = protocolSpec.getBlockAccessListFactory().isPresent();
 
     final WorldUpdater blockUpdater = ws.updater();
     for (int transactionLocation = 0;
@@ -323,7 +325,7 @@ public class BlockSimulator {
           transactionSimulatorResult.orElseThrow(
               () -> new BlockStateCallException("Transaction simulator result is empty"));
 
-      if (transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+      if (includeBlockAccessList && transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
         transactionSimulationResult
             .result()
             .getTransactionAccessList()
@@ -341,7 +343,9 @@ public class BlockSimulator {
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
     }
 
-    blockStateCallSimulationResult.set(balBuilder.build());
+    if (includeBlockAccessList) {
+      blockStateCallSimulationResult.set(balBuilder.build());
+    }
     return blockStateCallSimulationResult;
   }
 

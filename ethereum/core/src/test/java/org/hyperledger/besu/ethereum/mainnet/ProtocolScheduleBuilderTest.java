@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO1;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO2;
@@ -94,6 +95,7 @@ class ProtocolScheduleBuilderTest {
     when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 3));
     when(configOptions.getPragueTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 5));
     when(configOptions.getOsakaTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 7));
+    when(configOptions.getAmsterdamTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 8));
     when(configOptions.getBpo1Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 9));
     when(configOptions.getBpo2Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 11));
     when(configOptions.getBpo3Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 13));
@@ -154,27 +156,32 @@ class ProtocolScheduleBuilderTest {
         .isEqualTo(OSAKA);
     assertThat(
             protocolSchedule
-                .getByBlockHeader(blockHeader(57, PRE_SHANGHAI_TIMESTAMP + 9))
+                .getByBlockHeader(blockHeader(57, PRE_SHANGHAI_TIMESTAMP + 8))
+                .getHardforkId())
+        .isEqualTo(AMSTERDAM);
+    assertThat(
+            protocolSchedule
+                .getByBlockHeader(blockHeader(58, PRE_SHANGHAI_TIMESTAMP + 9))
                 .getHardforkId())
         .isEqualTo(BPO1);
     assertThat(
             protocolSchedule
-                .getByBlockHeader(blockHeader(58, PRE_SHANGHAI_TIMESTAMP + 11))
+                .getByBlockHeader(blockHeader(59, PRE_SHANGHAI_TIMESTAMP + 11))
                 .getHardforkId())
         .isEqualTo(BPO2);
     assertThat(
             protocolSchedule
-                .getByBlockHeader(blockHeader(59, PRE_SHANGHAI_TIMESTAMP + 13))
+                .getByBlockHeader(blockHeader(60, PRE_SHANGHAI_TIMESTAMP + 13))
                 .getHardforkId())
         .isEqualTo(BPO3);
     assertThat(
             protocolSchedule
-                .getByBlockHeader(blockHeader(60, PRE_SHANGHAI_TIMESTAMP + 15))
+                .getByBlockHeader(blockHeader(61, PRE_SHANGHAI_TIMESTAMP + 15))
                 .getHardforkId())
         .isEqualTo(BPO4);
     assertThat(
             protocolSchedule
-                .getByBlockHeader(blockHeader(61, PRE_SHANGHAI_TIMESTAMP + 17))
+                .getByBlockHeader(blockHeader(62, PRE_SHANGHAI_TIMESTAMP + 17))
                 .getHardforkId())
         .isEqualTo(BPO5);
   }
@@ -194,6 +201,7 @@ class ProtocolScheduleBuilderTest {
     when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(0));
     when(configOptions.getPragueTime()).thenReturn(OptionalLong.of(0));
     when(configOptions.getOsakaTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getAmsterdamTime()).thenReturn(OptionalLong.of(0));
     when(configOptions.getBpo1Time()).thenReturn(OptionalLong.of(0));
     when(configOptions.getBpo2Time()).thenReturn(OptionalLong.of(0));
     when(configOptions.getBpo3Time()).thenReturn(OptionalLong.of(0));
@@ -228,6 +236,10 @@ class ProtocolScheduleBuilderTest {
     final Optional<Long> maybeOsakaMileStone = protocolSchedule.milestoneFor(OSAKA);
     assertThat(maybeOsakaMileStone).isPresent();
     assertThat(maybeOsakaMileStone.get()).isEqualTo(0);
+
+    final Optional<Long> maybeAmsterdamMileStone = protocolSchedule.milestoneFor(AMSTERDAM);
+    assertThat(maybeAmsterdamMileStone).isPresent();
+    assertThat(maybeAmsterdamMileStone.get()).isEqualTo(0);
 
     final Optional<Long> maybeBpo1MileStone = protocolSchedule.milestoneFor(BPO1);
     assertThat(maybeBpo1MileStone).isPresent();

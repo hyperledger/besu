@@ -329,6 +329,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getAmsterdamTime() {
+    return getOptionalLong("amsterdamtime");
+  }
+
+  @Override
   public OptionalLong getBpo1Time() {
     return getOptionalLong("bpo1time");
   }

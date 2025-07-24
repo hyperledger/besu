@@ -1,4 +1,4 @@
-/*
+/*ethereum/core/src/main/java/org/hyperledger/besu/ethereum/mainnet/MainnetProtocolSpecs.java
  * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -36,6 +36,7 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.ISTANB
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.MUIR_GLACIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PARIS;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PETERSBURG;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
@@ -66,6 +67,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PraguePreExecutionProcessor;
@@ -925,6 +927,30 @@ public abstract class MainnetProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
         .blockValidatorBuilder(MainnetBlockValidatorBuilder::osaka)
         .hardforkId(OSAKA);
+  }
+
+  static ProtocolSpecBuilder amsterdamDefinition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    return bpo5Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
+        .evmBuilder(
+            (gasCalculator, __) ->
+                MainnetEVMs.amsterdam(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .blockAccessListFactory(new BlockAccessListManager())
+        .hardforkId(AMSTERDAM);
   }
 
   static ProtocolSpecBuilder bpo1Definition(

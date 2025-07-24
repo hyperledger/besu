@@ -235,6 +235,18 @@ public class MainnetProtocolSpecFactory {
         metricsSystem);
   }
 
+
+  public ProtocolSpecBuilder amsterdamDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.amsterdamDefinition(
+        chainId,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        miningConfiguration,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
+  }
+
   public ProtocolSpecBuilder bpo1Definition(final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.bpo1Definition(
         chainId,
