@@ -75,6 +75,7 @@ public class BlockSimulatorTest {
   @Mock private MiningConfiguration miningConfiguration;
   @Mock private MutableWorldState mutableWorldState;
   @Mock private Blockchain blockchain;
+  @Mock private WorldUpdater updater;
 
   private BlockHeader blockHeader;
   private BlockSimulator blockSimulator;
@@ -134,6 +135,10 @@ public class BlockSimulatorTest {
   @Test
   public void shouldStopWhenTransactionSimulationIsInvalid() {
 
+    when(worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
+        .thenReturn(Optional.of(mutableWorldState));
+    when(mutableWorldState.updater()).thenReturn(updater);
+
     CallParameter callParameter = mock(CallParameter.class);
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);
 
@@ -159,6 +164,10 @@ public class BlockSimulatorTest {
 
   @Test
   public void shouldStopWhenTransactionSimulationIsEmpty() {
+
+    when(worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
+        .thenReturn(Optional.of(mutableWorldState));
+    when(mutableWorldState.updater()).thenReturn(updater);
 
     CallParameter callParameter = mock(CallParameter.class);
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);

@@ -1038,7 +1038,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
   private void verifyTransactionWasProcessed(final Transaction expectedTransaction) {
     verify(transactionProcessor)
         .processTransaction(
-            any(), any(), eq(expectedTransaction), any(), any(), any(), any(), any(Wei.class));
+            any(), any(), eq(expectedTransaction), any(), any(), any(), any(), any(Wei.class), any());
   }
 
   private ImmutableCallParameter.Builder legacyTransactionCallParameterBuilder() {
