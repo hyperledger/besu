@@ -54,10 +54,10 @@ To profile benchmarks with [Async Profiler](https://github.com/jvm-profiling-too
 ./gradlew :ethereum:core:jmh \
   -Pincludes=SomeBenchmark \
   -PasyncProfiler=/path/to/libasyncProfiler.so \
-  -PasyncProfilerOptions="flamegraph;output=flames.svg"
+  -PasyncProfilerOptions="output=flamegraph"
 ```
 
-This will generate a `flames.svg` file after the benchmark run.
+This will generate two html profiling files flame-cpu-forward.html and flame-cpu-reverse.html after the benchmark run.
 
 ---
 
@@ -73,5 +73,6 @@ SomeBenchmark.benchmark                  avgt   20  8.951 ± 0.149  ns/op
 
 ## 📚 References
 
+- [JMH Gradle plugin documentation](https://github.com/melix/jmh-gradle-plugin)
 - [JMH Documentation](https://openjdk.org/projects/code-tools/jmh/)
 - [Async Profiler GitHub](https://github.com/jvm-profiling-tools/async-profiler)
