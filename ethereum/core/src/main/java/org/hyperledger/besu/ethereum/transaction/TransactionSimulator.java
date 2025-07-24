@@ -384,7 +384,9 @@ public class TransactionSimulator {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(processableHeader);
     final BlockHashLookup blockHashLookup =
-        protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, processableHeader);
+        protocolSpec
+            .getPreExecutionProcessor()
+            .createBlockHashLookup(blockchain, processableHeader);
     return processWithWorldUpdater(
         callParams,
         maybeStateOverrides,

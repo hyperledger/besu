@@ -526,7 +526,7 @@ public class EvmToolCommand implements Runnable {
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(
                     protocolSpec
-                        .getBlockHashProcessor()
+                        .getPreExecutionProcessor()
                         .createBlockHashLookup(component.getBlockchain(), blockHeader))
                 .accessListWarmAddresses(addressList)
                 .build();
