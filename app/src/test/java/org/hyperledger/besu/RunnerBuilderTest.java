@@ -77,6 +77,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
@@ -229,7 +230,7 @@ public final class RunnerBuilderTest {
               BlockDataGenerator.BlockOptions.create()
                   .setBlockNumber(1 + i)
                   .setParentHash(inMemoryBlockchain.getChainHeadHash()));
-      inMemoryBlockchain.appendBlock(block, gen.receipts(block));
+      inMemoryBlockchain.appendBlock(block, gen.receipts(block), Optional.empty());
       assertThat(
               storageProvider
                   .getStorageBySegmentIdentifier(VARIABLES)

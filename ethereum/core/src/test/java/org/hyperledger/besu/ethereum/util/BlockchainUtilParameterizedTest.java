@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Random;
 import java.util.stream.Stream;
@@ -63,7 +64,7 @@ public class BlockchainUtilParameterizedTest {
               .setParentHash(localBlockchain.getBlockHashByNumber(i - 1).get());
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
-      localBlockchain.appendBlock(block, receipts);
+      localBlockchain.appendBlock(block, receipts, Optional.empty());
     }
   }
 
@@ -76,7 +77,7 @@ public class BlockchainUtilParameterizedTest {
       final List<TransactionReceipt> receipts =
           localBlockchain.getTxReceipts(commonHeader.getHash()).get();
       final BlockBody commonBody = localBlockchain.getBlockBody(commonHeader.getHash()).get();
-      remoteBlockchain.appendBlock(new Block(commonHeader, commonBody), receipts);
+      remoteBlockchain.appendBlock(new Block(commonHeader, commonBody), receipts, Optional.empty());
     }
     // Remaining blocks are disparate.
     for (long i = commonAncestorHeight + 1L; i <= chainHeight; i++) {
@@ -86,7 +87,7 @@ public class BlockchainUtilParameterizedTest {
               .setParentHash(localBlockchain.getBlockHashByNumber(i - 1).get());
       final Block localBlock = blockDataGenerator.block(localOptions);
       final List<TransactionReceipt> localReceipts = blockDataGenerator.receipts(localBlock);
-      localBlockchain.appendBlock(localBlock, localReceipts);
+      localBlockchain.appendBlock(localBlock, localReceipts, Optional.empty());
 
       final BlockDataGenerator.BlockOptions remoteOptions =
           new BlockDataGenerator.BlockOptions()
@@ -95,7 +96,7 @@ public class BlockchainUtilParameterizedTest {
               .setParentHash(remoteBlockchain.getBlockHashByNumber(i - 1).get());
       final Block remoteBlock = blockDataGenerator.block(remoteOptions);
       final List<TransactionReceipt> remoteReceipts = blockDataGenerator.receipts(remoteBlock);
-      remoteBlockchain.appendBlock(remoteBlock, remoteReceipts);
+      remoteBlockchain.appendBlock(remoteBlock, remoteReceipts, Optional.empty());
     }
     headers = new ArrayList<>();
     for (long i = 0L; i <= remoteBlockchain.getChainHeadBlockNumber(); i++) {

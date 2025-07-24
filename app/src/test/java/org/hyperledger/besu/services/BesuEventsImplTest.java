@@ -281,7 +281,7 @@ public class BesuEventsImplTest {
             new BlockDataGenerator.BlockOptions()
                 .setParentHash(blockchain.getGenesisBlock().getHash()));
     List<TransactionReceipt> transactionReceipts = gen.receipts(block);
-    blockchain.appendBlock(block, transactionReceipts);
+    blockchain.appendBlock(block, transactionReceipts, Optional.empty());
     assertThat(result.get()).isNotNull();
     assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
     assertThat(result.get().getTransactionReceipts()).isEqualTo(transactionReceipts);
@@ -300,7 +300,7 @@ public class BesuEventsImplTest {
         gen.block(
             new BlockDataGenerator.BlockOptions()
                 .setParentHash(blockchain.getGenesisBlock().getHash()));
-    blockchain.appendBlock(block, gen.receipts(block));
+    blockchain.appendBlock(block, gen.receipts(block), Optional.empty());
     assertThat(result.get()).isNull();
   }
 
@@ -310,7 +310,7 @@ public class BesuEventsImplTest {
         gen.block(
             new BlockDataGenerator.BlockOptions()
                 .setParentHash(blockchain.getGenesisBlock().getHash()));
-    blockchain.appendBlock(block, gen.receipts(block));
+    blockchain.appendBlock(block, gen.receipts(block), Optional.empty());
   }
 
   @Test
@@ -330,7 +330,7 @@ public class BesuEventsImplTest {
             new BlockDataGenerator.BlockOptions()
                 .setParentHash(blockchain.getGenesisBlock().getHash())
                 .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
-    blockchain.appendBlock(block, gen.receipts(block));
+    blockchain.appendBlock(block, gen.receipts(block), Optional.empty());
     assertThat(result.get()).isNull();
 
     final var forkBlock =
@@ -339,7 +339,7 @@ public class BesuEventsImplTest {
                 .setParentHash(blockchain.getGenesisBlock().getHash())
                 .setDifficulty(block.getHeader().getDifficulty().subtract(1))
                 .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
-    blockchain.appendBlock(forkBlock, gen.receipts(forkBlock));
+    blockchain.appendBlock(forkBlock, gen.receipts(forkBlock), Optional.empty());
     assertThat(result.get()).isNull();
 
     final var reorgBlock =
@@ -350,7 +350,7 @@ public class BesuEventsImplTest {
                 .setBlockNumber(forkBlock.getHeader().getNumber() + 1));
 
     List<TransactionReceipt> transactionReceipts = gen.receipts(reorgBlock);
-    blockchain.appendBlock(reorgBlock, transactionReceipts);
+    blockchain.appendBlock(reorgBlock, transactionReceipts, Optional.empty());
     assertThat(result.get()).isNotNull();
     assertThat(result.get().getBlockHeader()).isEqualTo(reorgBlock.getHeader());
     assertThat(result.get().getTransactionReceipts()).isEqualTo(transactionReceipts);
@@ -370,7 +370,7 @@ public class BesuEventsImplTest {
             new BlockDataGenerator.BlockOptions()
                 .setParentHash(blockchain.getGenesisBlock().getHash())
                 .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
-    blockchain.appendBlock(block, gen.receipts(block));
+    blockchain.appendBlock(block, gen.receipts(block), Optional.empty());
     assertThat(result.get()).isNull();
 
     final var reorgBlock =
@@ -378,7 +378,7 @@ public class BesuEventsImplTest {
             new BlockDataGenerator.BlockOptions()
                 .setParentHash(blockchain.getGenesisBlock().getHash())
                 .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
-    blockchain.appendBlock(reorgBlock, gen.receipts(reorgBlock));
+    blockchain.appendBlock(reorgBlock, gen.receipts(reorgBlock), Optional.empty());
     assertThat(result.get()).isNull();
   }
 
@@ -389,7 +389,7 @@ public class BesuEventsImplTest {
             new BlockDataGenerator.BlockOptions()
                 .setParentHash(blockchain.getGenesisBlock().getHash())
                 .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
-    blockchain.appendBlock(block, gen.receipts(block));
+    blockchain.appendBlock(block, gen.receipts(block), Optional.empty());
 
     final var reorgBlock =
         gen.block(
@@ -397,7 +397,7 @@ public class BesuEventsImplTest {
                 .setParentHash(blockchain.getGenesisBlock().getHash())
                 .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
     List<TransactionReceipt> transactionReceipts = gen.receipts(reorgBlock);
-    blockchain.appendBlock(reorgBlock, transactionReceipts);
+    blockchain.appendBlock(reorgBlock, transactionReceipts, Optional.empty());
   }
 
   @Test
@@ -484,7 +484,7 @@ public class BesuEventsImplTest {
         gen.block(
             new BlockDataGenerator.BlockOptions()
                 .setParentHash(blockchain.getGenesisBlock().getHash()));
-    blockchain.appendBlock(block, gen.receipts(block));
+    blockchain.appendBlock(block, gen.receipts(block), Optional.empty());
     assertThat(result).hasSize(4);
   }
 
@@ -498,7 +498,7 @@ public class BesuEventsImplTest {
         gen.block(
             new BlockDataGenerator.BlockOptions()
                 .setParentHash(blockchain.getGenesisBlock().getHash()));
-    blockchain.appendBlock(block, gen.receipts(block));
+    blockchain.appendBlock(block, gen.receipts(block), Optional.empty());
     assertThat(result).hasSize(4);
 
     result.clear();
@@ -506,7 +506,7 @@ public class BesuEventsImplTest {
     serviceImpl.removeLogListener(id);
     final var block2 =
         gen.block(new BlockDataGenerator.BlockOptions().setParentHash(block.getHash()));
-    blockchain.appendBlock(block2, gen.receipts(block2));
+    blockchain.appendBlock(block2, gen.receipts(block2), Optional.empty());
 
     assertThat(result).isEmpty();
   }

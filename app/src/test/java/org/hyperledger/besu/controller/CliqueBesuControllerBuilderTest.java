@@ -61,6 +61,7 @@ import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -227,7 +228,7 @@ public class CliqueBesuControllerBuilderTest {
             new CliqueBlockHeaderFunctions());
     final Block block1 = new Block(header1, BlockBody.empty());
 
-    protocolContext.getBlockchain().appendBlock(block1, List.of());
+    protocolContext.getBlockchain().appendBlock(block1, List.of(), Optional.empty());
 
     assertThat(miningConfiguration.getBlockPeriodSeconds()).isNotEmpty().hasValue(2);
     assertThat(miningConfiguration.getBlockTxsSelectionMaxTime()).isEqualTo(2000 * 75 / 100);
