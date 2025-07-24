@@ -339,7 +339,7 @@ public class BackwardSyncContext {
           .log();
       this.getProtocolContext()
           .getBlockchain()
-          .appendBlock(block, optResult.getYield().get().getReceipts(), Optional.empty());
+          .appendBlock(block, optResult.getYield().get().getReceipts(), optResult.getYield().get().getBlockAccessList());
       possiblyMoveHead(block);
       logBlockImportProgress(block.getHeader().getNumber());
     } else {
