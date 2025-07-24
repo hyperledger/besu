@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
@@ -22,6 +22,7 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.SignUtil;
 
 import java.math.BigInteger;
@@ -36,22 +37,39 @@ import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.utils.Numeric;
 
 public class ExtendTransactionValidatorPluginTest extends AcceptanceTestBase {
-  private BesuNode minerNode;
+  private BesuNode minerNode, minerNode2, minerNode3;
   private BesuNode extraValidatorNode;
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode = besu.createMinerNode("miner");
+    minerNode =
+        besu.createQbftNode(
+            "miner",
+            b ->
+                b.genesisConfigProvider(
+                    GenesisConfigurationFactory::createQbftLondonGenesisConfig));
+    minerNode2 =
+        besu.createQbftNode(
+            "miner2",
+            b ->
+                b.genesisConfigProvider(
+                    GenesisConfigurationFactory::createQbftLondonGenesisConfig));
+    minerNode3 =
+        besu.createQbftNode(
+            "miner3",
+            b ->
+                b.genesisConfigProvider(
+                    GenesisConfigurationFactory::createQbftLondonGenesisConfig));
     extraValidatorNode =
-        besu.createPluginsNode(
+        besu.createQbftPluginsNode(
             "node1",
             Collections.singletonList("testPlugins"),
             Collections.singletonList("--plugin-tx-validator-test-enabled=true"),
             "DEBUG");
-    cluster.start(minerNode, extraValidatorNode);
+    cluster.start(minerNode, extraValidatorNode, minerNode2, minerNode3);
 
-    minerNode.awaitPeerDiscovery(net.awaitPeerCount(1));
-    extraValidatorNode.awaitPeerDiscovery(net.awaitPeerCount(1));
+    minerNode.awaitPeerDiscovery(net.awaitPeerCount(3));
+    extraValidatorNode.awaitPeerDiscovery(net.awaitPeerCount(3));
   }
 
   @Test
@@ -62,7 +80,7 @@ public class ExtendTransactionValidatorPluginTest extends AcceptanceTestBase {
 
     final RawTransaction eip1559Tx =
         RawTransaction.createEtherTransaction(
-            1337L,
+            4L,
             sender.getNextNonce(),
             DefaultGasProvider.GAS_LIMIT,
             recipient.getAddress(),
@@ -87,7 +105,7 @@ public class ExtendTransactionValidatorPluginTest extends AcceptanceTestBase {
 
     final RawTransaction eip1559Tx =
         RawTransaction.createEtherTransaction(
-            1337L,
+            4L,
             sender.getNextNonce(),
             DefaultGasProvider.GAS_LIMIT,
             recipient.getAddress(),

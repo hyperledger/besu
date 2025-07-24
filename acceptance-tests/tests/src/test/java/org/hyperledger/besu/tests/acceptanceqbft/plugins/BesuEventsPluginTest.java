@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptanceqbft.plugins;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 
 import java.util.Collections;
 
@@ -28,7 +29,12 @@ public class BesuEventsPluginTest extends AcceptanceTestBase {
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode = besu.createQbftNode("minerNode");
+    minerNode =
+        besu.createQbftNode(
+            "minerNode",
+            b ->
+                b.genesisConfigProvider(
+                    GenesisConfigurationFactory::createQbftLondonGenesisConfig));
     pluginNode =
         besu.createQbftPluginsNode(
             "node1", Collections.singletonList("testPlugins"), Collections.emptyList());
