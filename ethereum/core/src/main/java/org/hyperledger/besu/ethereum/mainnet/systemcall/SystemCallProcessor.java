@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -92,7 +93,7 @@ public class SystemCallProcessor {
 
     Deque<MessageFrame> stack = frame.getMessageFrameStack();
     while (!stack.isEmpty()) {
-      processor.process(stack.peekFirst(), context.getOperationTracer());
+      processor.process(stack.peekFirst(), OperationTracer.NO_TRACING);
     }
 
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
