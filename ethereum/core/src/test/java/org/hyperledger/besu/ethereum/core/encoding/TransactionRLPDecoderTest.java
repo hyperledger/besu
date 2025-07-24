@@ -116,7 +116,7 @@ class TransactionRLPDecoderTest {
   }
 
   @Test
-  void shouldReturnOptionalEmptyWithOx() {
+  void shouldThrowIllegalArgWithEmptyBytes() {
     assertThatThrownBy(
             () -> TransactionDecoder.decodeOpaqueBytes(Bytes.EMPTY, EncodingContext.BLOCK_BODY))
         .isInstanceOf(IllegalArgumentException.class);
