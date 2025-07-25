@@ -37,7 +37,7 @@ public class JsonRpcConfiguration {
   public static final int DEFAULT_ENGINE_JSON_RPC_PORT = 8551;
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
   public static final int DEFAULT_MAX_BATCH_SIZE = 1024;
-  public static final long DEFAULT_MAX_REQUEST_CONTENT_LENGTH = 5 * 1024 * 1024; // 5MB
+  public static final long DEFAULT_MAX_REQUEST_CONTENT_LENGTH = 128 * 1024 * 1024; // 128MB
   public static final boolean DEFAULT_PRETTY_JSON_ENABLED = false;
 
   private boolean enabled;
