@@ -1000,7 +1000,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
-    return bpo5Definition(
+    return osakaDefinition(
             chainId,
             enableRevertReason,
             genesisConfigOptions,

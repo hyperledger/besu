@@ -329,8 +329,7 @@ public class BlockHeader extends SealableBlockHeader
     if (!(obj instanceof BlockHeader other)) {
       return false;
     }
-    return getHash().equals(other.getHash())
-        && Objects.equals(getBalHash(), other.getBalHash());
+    return getHash().equals(other.getHash()) && Objects.equals(getBalHash(), other.getBalHash());
   }
 
   @Override
@@ -409,10 +408,7 @@ public class BlockHeader extends SealableBlockHeader
             .getRequestsHash()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
-        pluginBlockHeader
-            .getBalHash()
-            .map(h -> Hash.fromHexString(h.toHexString()))
-            .orElse(null),
+        pluginBlockHeader.getBalHash().map(h -> Hash.fromHexString(h.toHexString())).orElse(null),
         blockHeaderFunctions);
   }
 
