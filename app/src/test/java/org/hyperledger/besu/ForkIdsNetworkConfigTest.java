@@ -186,6 +186,7 @@ public class ForkIdsNetworkConfigTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
+                    false,
                     new NoOpMetricsSystem()));
     MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
@@ -195,6 +196,7 @@ public class ForkIdsNetworkConfigTest {
                     false,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
+                    false,
                     false,
                     new NoOpMetricsSystem()));
     final MilestoneStreamingTransitionProtocolSchedule schedule =
