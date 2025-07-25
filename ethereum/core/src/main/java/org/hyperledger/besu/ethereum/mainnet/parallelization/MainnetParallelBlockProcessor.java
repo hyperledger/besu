@@ -60,6 +60,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
+      final boolean isBlockAccessListEnabled,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem) {
     super(
@@ -68,6 +69,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
+        isBlockAccessListEnabled,
         protocolSchedule);
     this.confirmedParallelizedTransactionCounter =
         Optional.of(
@@ -175,6 +177,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         final Wei blockReward,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final boolean skipZeroBlockRewards,
+        final boolean isBlockAccessListEnabled,
         final ProtocolSchedule protocolSchedule) {
       return new MainnetParallelBlockProcessor(
           transactionProcessor,
@@ -182,6 +185,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           blockReward,
           miningBeneficiaryCalculator,
           skipZeroBlockRewards,
+          isBlockAccessListEnabled,
           protocolSchedule,
           metricsSystem);
     }

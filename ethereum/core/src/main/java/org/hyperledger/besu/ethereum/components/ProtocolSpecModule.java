@@ -44,8 +44,9 @@ public class ProtocolSpecModule {
   public ProtocolSpecBuilder frontierProtocolSpec(
       final EvmConfiguration evmConfiguration,
       final boolean isParalleltxEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.frontierDefinition(
-        evmConfiguration, isParalleltxEnabled, metricsSystem);
+        evmConfiguration, isParalleltxEnabled, isBlockAccessListEnabled, metricsSystem);
   }
 }

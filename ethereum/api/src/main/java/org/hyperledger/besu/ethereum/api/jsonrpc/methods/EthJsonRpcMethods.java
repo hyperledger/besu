@@ -125,9 +125,10 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     return RpcApis.ETH.name();
   }
 
+
   @Override
   protected Map<String, JsonRpcMethod> create() {
-    return mapOf(
+    final Map<String, JsonRpcMethod> map = mapOf(
         new EthAccounts(),
         new EthBlockNumber(blockchainQueries),
         new EthGetBalance(blockchainQueries),
@@ -162,7 +163,6 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthSendTransaction(),
         new EthEstimateGas(blockchainQueries, transactionSimulator, apiConfiguration),
         new EthCreateAccessList(blockchainQueries, transactionSimulator),
-        new EthGetBlockAccessListByNumber(blockchainQueries),
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
         new EthConfig(blockchainQueries, protocolSchedule, genesisConfigOptions),
@@ -179,5 +179,10 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             transactionSimulator,
             miningConfiguration,
             apiConfiguration));
+    if (apiConfiguration.isBlockAccessListEnabled()) {
+      final EthGetBlockAccessListByNumber method = new EthGetBlockAccessListByNumber(blockchainQueries);
+      map.put(method.getName(), method);
+    }
+    return map;
   }
 }

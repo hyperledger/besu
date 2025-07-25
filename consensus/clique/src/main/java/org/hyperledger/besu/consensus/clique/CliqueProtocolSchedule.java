@@ -75,6 +75,7 @@ public class CliqueProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
@@ -112,6 +113,7 @@ public class CliqueProtocolSchedule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem)
         .createProtocolSchedule();
   }

@@ -82,6 +82,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   final Wei blockReward;
 
   protected final boolean skipZeroBlockRewards;
+  protected final boolean isBlockAccessListEnabled;
   private final ProtocolSchedule protocolSchedule;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
@@ -93,6 +94,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
+      final boolean isBlockAccessListEnabled,
       final ProtocolSchedule protocolSchedule) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
@@ -100,6 +102,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
+    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
@@ -202,10 +205,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     boolean parallelizedTxFound = false;
     int nbParallelTx = 0;
 
-    final Optional<BlockAccessListManager> blockAccessListFactory =
-        protocolSpec.getBlockAccessListFactory();
-    final Optional<BlockAccessListBuilder> blockAccessListBuilder =
-        blockAccessListFactory.map(f -> f.newBlockAccessListBuilder());
+    Optional<BlockAccessListBuilder> blockAccessListBuilder;
+    // TODO: We are currently using presence of BAL factory as fork-driven activation - change this,
+    // probably just to a boolean flag
+    if (isBlockAccessListEnabled || protocolSpec.getBlockAccessListFactory().isPresent()) {
+      blockAccessListBuilder = Optional.of(BlockAccessList.builder());
+    } else {
+      blockAccessListBuilder = Optional.empty();
+    }
 
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
@@ -214,8 +221,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
       final WorldUpdater blockUpdater = worldState.updater();
 
-      final Optional<TransactionAccessList> transactionAccessList =
-          createAccessList(blockAccessListFactory, i);
+      final Optional<TransactionAccessList> transactionAccessList = createAccessList(blockAccessListBuilder, i);
       TransactionProcessingResult transactionProcessingResult =
           getTransactionProcessingResult(
               preProcessingContext,
@@ -414,8 +420,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   }
 
   private Optional<TransactionAccessList> createAccessList(
-      final Optional<BlockAccessListManager> blockAccessListFactory, final int i) {
-    return blockAccessListFactory.map(f -> f.newTransactionAccessList(i));
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder, final int i) {
+    return blockAccessListBuilder.map(b -> new TransactionAccessList(i));
   }
 
   protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {

@@ -72,6 +72,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 
@@ -95,6 +96,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
                 miningConfiguration,
                 badBlockManager,
                 isParallelTxProcessingEnabled,
+                isBlockAccessListEnabled,
                 metricsSystem)
             .createProtocolSchedule();
     return new BftProtocolSchedule((DefaultProtocolSchedule) protocolSchedule);

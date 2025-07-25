@@ -212,6 +212,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxProcessingEnabled;
 
+  protected boolean isBlockAccessListEnabled;
+
   /** The API configuration */
   protected ApiConfiguration apiConfiguration;
 
@@ -533,6 +535,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   public BesuControllerBuilder isParallelTxProcessingEnabled(
       final boolean isParallelTxProcessingEnabled) {
     this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
+    return this;
+  }
+
+  public BesuControllerBuilder isBlockAccessListEnabled(
+      final boolean isBlockAccessListEnabled) {
+    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
     return this;
   }
 

@@ -60,6 +60,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return new IbftProtocolScheduleBuilder()
         .createProtocolSchedule(
@@ -71,6 +72,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem);
   }
 
@@ -96,6 +98,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return create(
         config,
@@ -106,6 +109,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 

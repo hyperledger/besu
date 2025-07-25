@@ -60,6 +60,7 @@ public class ProtocolScheduleModule {
       final EvmConfiguration evmConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem,
       final MiningConfiguration miningConfiguration) {
 
@@ -73,6 +74,7 @@ public class ProtocolScheduleModule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem);
 
     return builder;

@@ -83,6 +83,7 @@ public class ProtocolSpecBuilder {
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
   private boolean isReplayProtectionSupported = false;
+  private boolean isBlockAccessListEnabled = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
   private BlockAccessListManager blockAccessListFactory;
 
@@ -282,6 +283,12 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder isBlockAccessListEnabled(
+      final boolean isBlockAccessListEnabled) {
+    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
+    return this;
+  }
+
   public ProtocolSpecBuilder blockAccessListFactory(
       final BlockAccessListManager blockAccessListFactory) {
     this.blockAccessListFactory = blockAccessListFactory;
@@ -394,6 +401,7 @@ public class ProtocolSpecBuilder {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
+        isBlockAccessListEnabled,
         protocolSchedule);
   }
 
@@ -426,6 +434,7 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
+        final boolean isBlockAccessListEnabled,
         ProtocolSchedule protocolSchedule);
   }
 

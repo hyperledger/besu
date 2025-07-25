@@ -64,6 +64,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return new QbftProtocolScheduleBuilder()
         .createProtocolSchedule(
@@ -75,6 +76,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem);
   }
 
@@ -100,6 +102,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return create(
         config,
@@ -110,6 +113,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -135,6 +139,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return create(
         config,
@@ -145,6 +150,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
