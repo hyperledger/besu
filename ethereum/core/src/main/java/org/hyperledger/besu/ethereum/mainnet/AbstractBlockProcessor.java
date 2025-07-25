@@ -373,6 +373,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     Optional<BlockAccessList> blockAccessList =
         blockAccessListBuilder.map(BlockAccessList.BlockAccessListBuilder::build);
 
+    try {
+      blockAccessList.ifPresent(t -> {
+        block.getHeader().getBalHash().ifPresent(headerHash -> {
+          final Hash expectedHash = BodyValidation.balHash(t);
+          if (!headerHash.equals(expectedHash)) {
+            LOG.warn("{} (header BAL hash)\n!=\n{} (expected BAL hash)", headerHash, expectedHash);
+          }
+        });
+      });
+    } catch (Exception e) {
+      LOG.error("Error validating BAL hash", e);
+    }
+
     return new BlockProcessingResult(
         Optional.of(
             new BlockProcessingOutputs(worldState, receipts, maybeRequests, blockAccessList)),
