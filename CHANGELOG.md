@@ -13,6 +13,7 @@
 - Improve transaction simulation and gas estimation when no gas pricing is present [#8888](https://github.com/hyperledger/besu/pull/8888)
 - Add option to trace reference tests during execution [#8878](https://github.com/hyperledger/besu/pull/8878)
 - Expose methods to query hardfork by block header or for the next block in the Plugin API [#8909](https://github.com/hyperledger/besu/pull/8909)
+- Enable decoding for large RPC requests [#8877](https://github.com/hyperledger/besu/pull/8877)
 - Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
 
 #### Fusaka devnets
