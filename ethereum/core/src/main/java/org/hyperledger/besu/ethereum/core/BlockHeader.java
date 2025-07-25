@@ -68,6 +68,7 @@ public class BlockHeader extends SealableBlockHeader
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
+      final Hash balHash,
       final BlockHeaderFunctions blockHeaderFunctions) {
     this(
         parentHash,
@@ -91,6 +92,7 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
+        balHash,
         blockHeaderFunctions,
         Optional.empty());
   }
@@ -117,6 +119,7 @@ public class BlockHeader extends SealableBlockHeader
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
+      final Hash balHash,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<Bytes> rawRlp) {
     super(
@@ -139,7 +142,8 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsHash);
+        requestsHash,
+        balHash);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -244,6 +248,9 @@ public class BlockHeader extends SealableBlockHeader
 
             if (requestsHash == null) break;
             out.writeBytes(requestsHash);
+
+            if (balHash == null) break;
+            out.writeBytes(balHash);
           } while (false);
           out.endList();
         });
@@ -284,6 +291,8 @@ public class BlockHeader extends SealableBlockHeader
         !headerRlp.isEndOfCurrentList() ? headerRlp.readBytes32() : null;
     final Hash requestsHash =
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
+    final Hash balHash =
+        !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
     headerRlp.leaveList();
     return new BlockHeader(
         parentHash,
@@ -307,6 +316,7 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
+        balHash,
         blockHeaderFunctions,
         Optional.of(headerRlp.raw()));
   }
@@ -319,12 +329,13 @@ public class BlockHeader extends SealableBlockHeader
     if (!(obj instanceof BlockHeader other)) {
       return false;
     }
-    return getHash().equals(other.getHash());
+    return getHash().equals(other.getHash())
+        && Objects.equals(getBalHash(), other.getBalHash());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getHash());
+    return Objects.hash(getHash(), getBalHash());
   }
 
   @Override
@@ -359,7 +370,10 @@ public class BlockHeader extends SealableBlockHeader
       sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
     }
     if (requestsHash != null) {
-      sb.append("requestsHash=").append(requestsHash);
+      sb.append("requestsHash=").append(requestsHash).append(", ");
+    }
+    if (balHash != null) {
+      sb.append("balHash=").append(balHash);
     }
     return sb.append("}").toString();
   }
@@ -393,6 +407,10 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getParentBeaconBlockRoot().orElse(null),
         pluginBlockHeader
             .getRequestsHash()
+            .map(h -> Hash.fromHexString(h.toHexString()))
+            .orElse(null),
+        pluginBlockHeader
+            .getBalHash()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
         blockHeaderFunctions);

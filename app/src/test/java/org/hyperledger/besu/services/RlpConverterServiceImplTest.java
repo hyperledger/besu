@@ -39,6 +39,7 @@ public class RlpConverterServiceImplTest {
             .timestamp(1710338135 + 1)
             .baseFeePerGas(Wei.of(1000))
             .requestsHash(Hash.ZERO)
+            .balHash(Hash.ZERO)
             .withdrawalsRoot(Hash.ZERO)
             .blobGasUsed(500L)
             .excessBlobGas(BlobGas.of(500L))
@@ -50,5 +51,6 @@ public class RlpConverterServiceImplTest {
     assertThat(header).isEqualTo(deserialized);
     assertThat(header.getBlobGasUsed()).isEqualTo(deserialized.getBlobGasUsed());
     assertThat(header.getExcessBlobGas()).isEqualTo(deserialized.getExcessBlobGas());
+    assertThat(header.getBalHash()).isEqualTo(deserialized.getBalHash());
   }
 }

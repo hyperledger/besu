@@ -310,6 +310,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
               .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null));
+      if (includeBlockAccessList && transactionResults.getBlockAccessList().isPresent()) {
+        builder.balHash(BodyValidation.balHash(transactionResults.getBlockAccessList().get()));
+      }
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }

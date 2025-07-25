@@ -61,6 +61,8 @@ public class ChainForTestCreator {
         null,
         null,
         null,
+        null,
+        null,
         new MainnetBlockHeaderFunctions());
   }
 
@@ -89,6 +91,7 @@ public class ChainForTestCreator {
         blockHeader.getExcessBlobGas().orElse(null),
         blockHeader.getParentBeaconBlockRoot().orElse(null),
         blockHeader.getRequestsHash().orElse(null),
+        null,
         new MainnetBlockHeaderFunctions());
   }
 

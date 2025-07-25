@@ -374,6 +374,11 @@ public class BlockSimulator {
             .gasUsed(blockStateCallSimulationResult.getCumulativeGasUsed())
             .withdrawalsRoot(BodyValidation.withdrawalsRoot(List.of()))
             .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null))
+            .balHash(
+                blockStateCallSimulationResult
+                    .getBlockAccessList()
+                    .map(BodyValidation::balHash)
+                    .orElse(null))
             .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
             .blockHeaderFunctions(new BlockStateCallBlockHeaderFunctions(blockOverrides))
             .buildBlockHeader();
