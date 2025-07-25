@@ -95,7 +95,7 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
                       .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
                       .orElse(BlobGas.ZERO));
       final BlockHashLookup blockHashLookup =
-          protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, header);
+          protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, header);
       result =
           transactionProcessor.processTransaction(
               chainUpdater.getNextUpdater(),

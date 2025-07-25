@@ -23,7 +23,14 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 
 import java.util.Optional;
 
-public interface BlockHashProcessor extends BlockContextProcessor<Void, BlockProcessingContext> {
+/**
+ * A processor that updates the state before transaction execution. This is used to implement
+ * pre-execution logic defined in Ethereum upgrades such as EIP-2935 (access to historical block
+ * hashes) and EIP-4788 (exposing the beacon chain root). *
+ *
+ * <p>This processor is invoked once per block, before any transactions are executed.
+ */
+public interface PreExecutionProcessor extends BlockContextProcessor<Void, BlockProcessingContext> {
 
   BlockHashLookup createBlockHashLookup(Blockchain blockchain, ProcessableBlockHeader blockHeader);
 
