@@ -89,6 +89,13 @@ public class GenesisConfigurationFactory {
         validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
   }
 
+  public static Optional<String> createQbft256r1GenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/crypto/secp256r1.json");
+    return updateGenesisExtraData(
+        validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
+  }
+
   public static Optional<String> createQbftLondonGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
     final String template = readGenesisFile("/qbft/qbft-london.json");
