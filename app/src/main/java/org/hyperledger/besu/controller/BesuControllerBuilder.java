@@ -538,8 +538,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
-  public BesuControllerBuilder isBlockAccessListEnabled(
-      final boolean isBlockAccessListEnabled) {
+  public BesuControllerBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
     this.isBlockAccessListEnabled = isBlockAccessListEnabled;
     return this;
   }

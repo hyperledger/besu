@@ -185,7 +185,10 @@ public class ProtocolScheduleBuilder {
                   MilestoneType.BLOCK_NUMBER,
                   classicBlockNumber,
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem),
+                      evmConfiguration,
+                      isParallelTxProcessingEnabled,
+                      isBlockAccessListEnabled,
+                      metricsSystem),
                   Function.identity());
               protocolSchedule.putBlockNumberMilestone(
                   classicBlockNumber + 1, originalProtocolSpec);

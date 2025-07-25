@@ -283,8 +283,7 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder isBlockAccessListEnabled(
-      final boolean isBlockAccessListEnabled) {
+  public ProtocolSpecBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
     this.isBlockAccessListEnabled = isBlockAccessListEnabled;
     return this;
   }

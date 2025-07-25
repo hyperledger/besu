@@ -69,7 +69,10 @@ public class ClassicProtocolSpecs {
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem)
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .blockHeaderValidatorBuilder(
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createClassicValidator())
@@ -83,7 +86,10 @@ public class ClassicProtocolSpecs {
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem)
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorFactoryBuilder(
@@ -100,7 +106,11 @@ public class ClassicProtocolSpecs {
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return tangerineWhistleDefinition(
-            chainId, evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem)
+            chainId,
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .gasCalculator(DieHardGasCalculator::new)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_PAUSED)
         .hardforkId(DIE_HARD);
@@ -114,7 +124,11 @@ public class ClassicProtocolSpecs {
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return dieHardDefinition(
-            chainId, evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem)
+            chainId,
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .blockReward(MAX_BLOCK_REWARD)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_DELAYED)
         .blockProcessorBuilder(

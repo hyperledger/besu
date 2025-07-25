@@ -325,7 +325,8 @@ public class BlockSimulator {
           transactionSimulatorResult.orElseThrow(
               () -> new BlockStateCallException("Transaction simulator result is empty"));
 
-      if (includeBlockAccessList && transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+      if (includeBlockAccessList
+          && transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
         transactionSimulationResult
             .result()
             .getTransactionAccessList()

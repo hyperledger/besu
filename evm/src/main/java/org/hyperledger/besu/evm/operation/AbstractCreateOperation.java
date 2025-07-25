@@ -184,18 +184,19 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     parent.decrementRemainingGas(childGasStipend);
 
     // frame addition is automatically handled by parent messageFrameStack
-    MessageFrame.Builder builder = MessageFrame.builder()
-        .parentMessageFrame(parent)
-        .type(MessageFrame.Type.CONTRACT_CREATION)
-        .initialGas(childGasStipend)
-        .address(contractAddress)
-        .contract(contractAddress)
-        .inputData(inputData)
-        .sender(parent.getRecipientAddress())
-        .value(value)
-        .apparentValue(value)
-        .code(code)
-        .completer(child -> complete(parent, child, evm));
+    MessageFrame.Builder builder =
+        MessageFrame.builder()
+            .parentMessageFrame(parent)
+            .type(MessageFrame.Type.CONTRACT_CREATION)
+            .initialGas(childGasStipend)
+            .address(contractAddress)
+            .contract(contractAddress)
+            .inputData(inputData)
+            .sender(parent.getRecipientAddress())
+            .value(value)
+            .apparentValue(value)
+            .code(code)
+            .completer(child -> complete(parent, child, evm));
 
     if (parent.getEip7928AccessList().isPresent()) {
       builder.eip7928AccessList(parent.getEip7928AccessList().get());

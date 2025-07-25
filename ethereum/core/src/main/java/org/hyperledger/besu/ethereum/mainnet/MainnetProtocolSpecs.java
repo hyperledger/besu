@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.ARROW_GLACIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO1;
@@ -36,7 +37,6 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.ISTANB
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.MUIR_GLACIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PARIS;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PETERSBURG;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
@@ -223,7 +223,11 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
-    return frontierDefinition(evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem)
+    return frontierDefinition(
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .gasCalculator(HomesteadGasCalculator::new)
         .evmBuilder(MainnetEVMs::homestead)
         .contractCreationProcessorBuilder(
@@ -243,7 +247,11 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
-    return homesteadDefinition(evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem)
+    return homesteadDefinition(
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .blockHeaderValidatorBuilder(
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createDaoValidator())
@@ -282,7 +290,11 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
-    return daoRecoveryInitDefinition(evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem)
+    return daoRecoveryInitDefinition(
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
@@ -295,7 +307,11 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
-    return homesteadDefinition(evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem)
+    return homesteadDefinition(
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .hardforkId(TANGERINE_WHISTLE);
   }
@@ -307,7 +323,10 @@ public abstract class MainnetProtocolSpecs {
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return tangerineWhistleDefinition(
-            evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem)
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .isReplayProtectionSupported(true)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
@@ -357,7 +376,11 @@ public abstract class MainnetProtocolSpecs {
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return spuriousDragonDefinition(
-            chainId, evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem)
+            chainId,
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .gasCalculator(ByzantiumGasCalculator::new)
         .evmBuilder(MainnetEVMs::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)

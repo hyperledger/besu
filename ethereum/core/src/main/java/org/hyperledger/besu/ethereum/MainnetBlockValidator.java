@@ -201,7 +201,8 @@ public class MainnetBlockValidator implements BlockValidator {
         }
 
         return new BlockProcessingResult(
-            Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests, blockAccessList)),
+            Optional.of(
+                new BlockProcessingOutputs(worldState, receipts, maybeRequests, blockAccessList)),
             result.getNbParallelizedTransactions());
       }
     } catch (MerkleTrieException ex) {

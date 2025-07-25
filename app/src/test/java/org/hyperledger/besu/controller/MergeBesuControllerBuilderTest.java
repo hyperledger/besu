@@ -250,7 +250,8 @@ public class MergeBesuControllerBuilderTest {
             .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
             .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
             .buildHeader();
-    blockchain.appendBlock(new Block(parent, BlockBody.empty()), Collections.emptyList(), Optional.empty());
+    blockchain.appendBlock(
+        new Block(parent, BlockBody.empty()), Collections.emptyList(), Optional.empty());
 
     final BlockHeader terminal =
         headerGenerator
@@ -261,7 +262,8 @@ public class MergeBesuControllerBuilderTest {
             .stateRoot(parent.getStateRoot())
             .buildHeader();
 
-    blockchain.appendBlock(new Block(terminal, BlockBody.empty()), Collections.emptyList(), Optional.empty());
+    blockchain.appendBlock(
+        new Block(terminal, BlockBody.empty()), Collections.emptyList(), Optional.empty());
     assertThat(mergeContext.isPostMerge()).isTrue();
   }
 
