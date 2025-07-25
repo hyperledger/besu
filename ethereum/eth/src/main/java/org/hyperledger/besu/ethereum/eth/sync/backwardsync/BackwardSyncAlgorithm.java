@@ -59,11 +59,11 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
 
   public CompletableFuture<Void> pickNextStep() {
     final Optional<Hash> firstHash = context.getBackwardChain().getFirstHashToAppend();
-    if (firstHash.isPresent()) {
-      return handleSyncStep(firstHash.get());
-    }
     if (!context.isReady()) {
       return waitForReady();
+    }
+    if (firstHash.isPresent()) {
+      return handleSyncStep(firstHash.get());
     }
     final Optional<BlockHeader> maybeFirstAncestorHeader =
         context.getBackwardChain().getFirstAncestorHeader();
