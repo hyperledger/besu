@@ -214,19 +214,20 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       blockAccessListBuilder = Optional.empty();
     }
 
+    final WorldUpdater blockUpdater = worldState.updater();
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
+      final WorldUpdater transactionUpdater = blockUpdater.updater();
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
-      final WorldUpdater blockUpdater = worldState.updater();
 
       final Optional<TransactionAccessList> transactionAccessList = createAccessList(blockAccessListBuilder, i);
       TransactionProcessingResult transactionProcessingResult =
           getTransactionProcessingResult(
               preProcessingContext,
               blockProcessingContext,
-              blockUpdater,
+              transactionUpdater,
               blobGasPrice,
               miningBeneficiary,
               transaction,
@@ -234,7 +235,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               transactionAccessList);
 
-      if (blockUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+      if (transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
         transactionProcessingResult
             .getTransactionAccessList()
             .ifPresent(
@@ -252,13 +253,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 transaction.getHash().toHexString());
         LOG.info(errorMessage);
         if (worldState instanceof BonsaiWorldState) {
-          ((BonsaiWorldStateUpdateAccumulator) blockUpdater).reset();
+          ((BonsaiWorldStateUpdateAccumulator) transactionUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
 
+      transactionUpdater.commit();
+      transactionUpdater.markTransactionBoundary();
       blockUpdater.commit();
-      blockUpdater.markTransactionBoundary();
 
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
       final var optionalVersionedHashes = transaction.getVersionedHashes();
