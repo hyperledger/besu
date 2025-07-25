@@ -41,9 +41,9 @@ public class EthProtocolVersionTest {
   }
 
   @Test
-  public void shouldReturn67WhenMaxProtocolIsETH67() {
+  public void shouldReturn67WhenMaxProtocolIsETH68() {
 
-    Capability capability = EthProtocol.ETH67;
+    Capability capability = EthProtocol.ETH68;
     setupSupportedEthProtocols(capability);
     String expectedVersion = "0x" + Integer.toHexString(capability.getVersion());
     final JsonRpcRequestContext request = requestWithParams();
@@ -67,8 +67,8 @@ public class EthProtocolVersionTest {
   }
 
   @Test
-  public void shouldReturn67WhenMixedProtocolsSupported() {
-    Capability capability = EthProtocol.ETH67;
+  public void shouldReturn68WhenMixedProtocolsSupported() {
+    Capability capability = EthProtocol.ETH68;
     setupSupportedEthProtocols(capability);
     String expectedVersion = "0x" + Integer.toHexString(capability.getVersion());
     supportedCapabilities.add(Capability.create("istanbul", 64));
