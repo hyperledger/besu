@@ -191,7 +191,8 @@ public class TraceServiceImpl implements TraceService {
     final BlockHeader header = block.getHeader();
     final Address miningBeneficiary =
         protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(block.getHeader());
-    tracer.traceStartBlock(block.getHeader(), block.getBody(), miningBeneficiary);
+    final WorldUpdater worldUpdater = chainUpdater.getNextUpdater();
+    tracer.traceStartBlock(worldUpdater, block.getHeader(), block.getBody(), miningBeneficiary);
 
     block
         .getBody()
@@ -208,7 +209,6 @@ public class TraceServiceImpl implements TraceService {
                               .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
                               .orElse(BlobGas.ZERO));
 
-              final WorldUpdater worldUpdater = chainUpdater.getNextUpdater();
               final TransactionProcessingResult result =
                   transactionProcessor.processTransaction(
                       worldUpdater,
