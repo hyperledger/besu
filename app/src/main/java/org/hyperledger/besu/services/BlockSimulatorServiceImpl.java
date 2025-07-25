@@ -74,7 +74,8 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final MiningConfiguration miningConfiguration,
       final TransactionSimulator transactionSimulator,
       final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain) {
+      final Blockchain blockchain,
+      final boolean isBlockAccessListEnabled) {
     this.blockchain = blockchain;
     blockSimulator =
         new BlockSimulator(
@@ -83,7 +84,8 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
             transactionSimulator,
             miningConfiguration,
             blockchain,
-            0);
+            0,
+            isBlockAccessListEnabled);
     this.worldStateArchive = worldStateArchive;
   }
 

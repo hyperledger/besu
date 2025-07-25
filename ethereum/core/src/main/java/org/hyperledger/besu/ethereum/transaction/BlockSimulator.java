@@ -97,6 +97,7 @@ public class BlockSimulator {
   private final MiningConfiguration miningConfiguration;
   private final Blockchain blockchain;
   private final long rpcGasCap;
+  private final boolean isBlockAccessListEnabled;
 
   public BlockSimulator(
       final WorldStateArchive worldStateArchive,
@@ -104,13 +105,15 @@ public class BlockSimulator {
       final TransactionSimulator transactionSimulator,
       final MiningConfiguration miningConfiguration,
       final Blockchain blockchain,
-      final long rpcGasCap) {
+      final long rpcGasCap,
+      final boolean isBlockAccessListEnabled) {
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
     this.miningConfiguration = miningConfiguration;
     this.transactionSimulator = transactionSimulator;
     this.blockchain = blockchain;
     this.rpcGasCap = rpcGasCap;
+    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
   }
 
   /**
@@ -281,8 +284,8 @@ public class BlockSimulator {
             .orElseGet(protocolSpec::getMiningBeneficiaryCalculator);
 
     final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
-    // TODO: Or if a feature flag or a param enabled
-    final boolean includeBlockAccessList = protocolSpec.getBlockAccessListFactory().isPresent();
+    final boolean includeBlockAccessList =
+        isBlockAccessListEnabled || protocolSpec.getBlockAccessListFactory().isPresent();
 
     final WorldUpdater blockUpdater = ws.updater();
     for (int transactionLocation = 0;
