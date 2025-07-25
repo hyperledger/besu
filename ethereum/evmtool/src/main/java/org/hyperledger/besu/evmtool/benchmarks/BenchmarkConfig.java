@@ -27,6 +27,7 @@ import java.util.Optional;
  * @param execTime run for an unbounded amount of time.
  * @param warmIterations warm up for an unbounded number of iterations.
  * @param warmTime warm up for an unbounded amount of time.
+ * @param warmInvert if true, run each test case within each warmup iteration
  */
 public record BenchmarkConfig(
     boolean useNative,
@@ -36,4 +37,5 @@ public record BenchmarkConfig(
     Optional<Integer> execIterations,
     Optional<Integer> execTime,
     Optional<Integer> warmIterations,
-    Optional<Integer> warmTime) {}
+    Optional<Integer> warmTime,
+    boolean warmInvert) {}
