@@ -158,4 +158,6 @@ public interface CallParameter {
    * @return an {@link Optional} containing the payload bytes, or empty if not specified
    */
   Optional<Bytes> getPayload();
+
+  List<CodeDelegation> getCodeDelegationAuthorizations();
 }

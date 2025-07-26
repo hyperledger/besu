@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -74,6 +75,11 @@ public abstract class CallParameter implements org.hyperledger.besu.datatypes.Ca
 
   @Override
   public abstract Optional<List<VersionedHash>> getBlobVersionedHashes();
+
+  @Override
+  @JsonProperty("authorizationList")
+  @JsonDeserialize(contentAs = org.hyperledger.besu.ethereum.core.CodeDelegation.class)
+  public abstract List<CodeDelegation> getCodeDelegationAuthorizations();
 
   @Override
   @JsonDeserialize(using = OptionalUnsignedLongDeserializer.class)
