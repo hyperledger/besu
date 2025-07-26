@@ -36,6 +36,7 @@ import org.hyperledger.besu.util.era1.Era1ExecutionBlockHeader;
 import org.hyperledger.besu.util.era1.Era1ExecutionBlockReceipts;
 import org.hyperledger.besu.util.era1.Era1Reader;
 import org.hyperledger.besu.util.era1.Era1ReaderListener;
+import org.hyperledger.besu.util.io.InputStreamFactory;
 import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import java.io.Closeable;
@@ -83,7 +84,7 @@ public class Era1BlockImporter implements Closeable {
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     final ProtocolContext context = controller.getProtocolContext();
 
-    Era1Reader reader = new Era1Reader(new SnappyFactory());
+    Era1Reader reader = new Era1Reader(new SnappyFactory(), new InputStreamFactory());
 
     final List<Future<BlockHeader>> headersFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
     final List<Future<BlockBody>> bodiesFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);

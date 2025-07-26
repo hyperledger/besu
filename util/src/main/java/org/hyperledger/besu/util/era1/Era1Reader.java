@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.util.era1;
 
+import org.hyperledger.besu.util.io.InputStreamFactory;
 import org.hyperledger.besu.util.snappy.SnappyFactory;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,14 +39,18 @@ public class Era1Reader {
   private static final int BLOCK_INDEX_COUNT_LENGTH = 8;
 
   private final SnappyFactory snappyFactory;
+  private final InputStreamFactory inputStreamFactory;
 
   /**
    * Creates a new Era1Reader with the supplied SnappyFactory
    *
    * @param snappyFactory A factory to provide objects for snappy decompression
+   * @param inputStreamFactory A factory to provide input stream objects
    */
-  public Era1Reader(final SnappyFactory snappyFactory) {
+  public Era1Reader(
+      final SnappyFactory snappyFactory, final InputStreamFactory inputStreamFactory) {
     this.snappyFactory = snappyFactory;
+    this.inputStreamFactory = inputStreamFactory;
   }
 
   /**
@@ -59,9 +65,13 @@ public class Era1Reader {
   public void read(final InputStream inputStream, final Era1ReaderListener listener)
       throws IOException {
     int blockIndex = 0;
-    while (inputStream.available() > 0) {
-      Era1Type type = Era1Type.getForTypeCode(inputStream.readNBytes(TYPE_LENGTH));
-      int length = (int) convertLittleEndianBytesToLong(inputStream.readNBytes(LENGTH_LENGTH));
+    BufferedInputStream bufferedInputStream =
+        inputStreamFactory.wrapInBufferedInputStream(inputStream);
+    byte[] typeBytes;
+    while ((typeBytes = bufferedInputStream.readNBytes(TYPE_LENGTH)).length != 0) {
+      Era1Type type = Era1Type.getForTypeCode(typeBytes);
+      int length =
+          (int) convertLittleEndianBytesToLong(bufferedInputStream.readNBytes(LENGTH_LENGTH));
       switch (type) {
         case VERSION -> {
           // do nothing
@@ -69,10 +79,10 @@ public class Era1Reader {
         case EMPTY, ACCUMULATOR, TOTAL_DIFFICULTY -> {
           // skip the bytes that were indicated to be empty
           // TODO read ACCUMULATOR and TOTAL_DIFFICULTY properly?
-          inputStream.skipNBytes(length);
+          bufferedInputStream.skipNBytes(length);
         }
         case COMPRESSED_EXECUTION_BLOCK_HEADER -> {
-          byte[] compressedExecutionBlockHeader = inputStream.readNBytes(length);
+          byte[] compressedExecutionBlockHeader = bufferedInputStream.readNBytes(length);
           try (SnappyFramedInputStream decompressionStream =
               snappyFactory.createFramedInputStream(compressedExecutionBlockHeader)) {
             listener.handleExecutionBlockHeader(
@@ -80,7 +90,7 @@ public class Era1Reader {
           }
         }
         case COMPRESSED_EXECUTION_BLOCK_BODY -> {
-          byte[] compressedExecutionBlock = inputStream.readNBytes(length);
+          byte[] compressedExecutionBlock = bufferedInputStream.readNBytes(length);
           try (SnappyFramedInputStream decompressionStream =
               snappyFactory.createFramedInputStream(compressedExecutionBlock)) {
             listener.handleExecutionBlockBody(
@@ -88,7 +98,7 @@ public class Era1Reader {
           }
         }
         case COMPRESSED_EXECUTION_BLOCK_RECEIPTS -> {
-          byte[] compressedReceipts = inputStream.readNBytes(length);
+          byte[] compressedReceipts = bufferedInputStream.readNBytes(length);
           try (SnappyFramedInputStream decompressionStream =
               snappyFactory.createFramedInputStream(compressedReceipts)) {
             listener.handleExecutionBlockReceipts(
@@ -97,7 +107,7 @@ public class Era1Reader {
         }
         case BLOCK_INDEX -> {
           ByteArrayInputStream blockIndexInputStream =
-              new ByteArrayInputStream(inputStream.readNBytes(length));
+              new ByteArrayInputStream(bufferedInputStream.readNBytes(length));
           long startingBlockIndex =
               convertLittleEndianBytesToLong(
                   blockIndexInputStream.readNBytes(STARTING_BLOCK_INDEX_LENGTH));
@@ -113,12 +123,13 @@ public class Era1Reader {
           if (indexCount != indexes.size()) {
             LOG.warn(
                 "index count does not match number of indexes present for InputStream: {}",
-                inputStream);
+                bufferedInputStream);
           }
           listener.handleBlockIndex(new Era1BlockIndex(startingBlockIndex, indexes));
         }
       }
     }
+    bufferedInputStream.close();
   }
 
   private long convertLittleEndianBytesToLong(final byte[] bytes) {
