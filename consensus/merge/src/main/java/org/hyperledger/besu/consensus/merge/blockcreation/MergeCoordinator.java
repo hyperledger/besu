@@ -905,6 +905,16 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         .orElse(DEFAULT_TARGET_GAS_LIMIT);
   }
 
+  /**
+   * Gets the default gas limit by chain id.
+   *
+   * @param chainId the chain id
+   * @return default gas limit by chain id
+   */
+  public static long getDefaultGasLimitByChainId(final Optional<BigInteger> chainId) {
+    return chainId.map(TESTNET_CHAIN_IDS::get).orElse(DEFAULT_TARGET_GAS_LIMIT);
+  }
+
   private static class BlockCreationTask {
     /** The Block creator. */
     final MergeBlockCreator blockCreator;

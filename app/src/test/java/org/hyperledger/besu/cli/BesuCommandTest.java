@@ -44,6 +44,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -154,6 +155,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   private static final JsonObject GENESIS_WITH_DATA_BLOBS_ENABLED =
       new JsonObject().put("config", new JsonObject().put("cancunTime", 1L));
+
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
 
   static {
     DEFAULT_JSON_RPC_CONFIGURATION = JsonRpcConfiguration.createDefault();
@@ -2769,5 +2772,46 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xchain-pruning-blocks-retained=10000",
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  void shouldShowCorrectFormatForDefaultTargetGasLimit() {
+    parseCommand();
+
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+    verify(mockLogger, atLeastOnce()).info(stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    final String targetGasLimitOutput =
+        ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT);
+    assertThat(stringArgumentCaptor.getAllValues().get(2))
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+  }
+
+  @Test
+  void shouldShowCorrectFormatForCustomTargetGasLimit() {
+    final long customGasLimit = 50_000_000L;
+    parseCommand("--target-gas-limit", String.valueOf(customGasLimit));
+
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+    verify(mockLogger, atLeastOnce()).info(stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong()).isEqualTo(customGasLimit);
+
+    final String targetGasLimitOutput = ConfigurationOverviewBuilder.normalizeGas(customGasLimit);
+    assertThat(stringArgumentCaptor.getAllValues().get(2))
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
   }
 }

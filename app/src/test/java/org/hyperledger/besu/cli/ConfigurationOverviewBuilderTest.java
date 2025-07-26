@@ -227,4 +227,55 @@ class ConfigurationOverviewBuilderTest {
     final String profileSelected = builder.build();
     assertThat(profileSelected).contains("Profile: DEV");
   }
+
+  @Test
+  void setTargetGasLimitGreaterThanMillion() {
+    final long targetGasLimit = 50_000_000L;
+    builder.setTargetGasLimit(targetGasLimit);
+    final String targetGasLimitSelected = builder.build();
+    final String targetGasLimitValue = ConfigurationOverviewBuilder.normalizeGas(targetGasLimit);
+    assertThat(targetGasLimitSelected)
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
+  }
+
+  @Test
+  void setTargetGasLimitGreaterThanMillionWith2Digits() {
+    final long targetGasLimit = 50_550_000L;
+    builder.setTargetGasLimit(targetGasLimit);
+    final String targetGasLimitSelected = builder.build();
+    final String targetGasLimitValue = ConfigurationOverviewBuilder.normalizeGas(targetGasLimit);
+    assertThat(targetGasLimitSelected)
+            .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
+  }
+
+  @Test
+  void setTargetGasLimitGreaterThanMillionWith3Digits() {
+    final long targetGasLimit = 50_555_000L;
+    builder.setTargetGasLimit(targetGasLimit);
+    final String targetGasLimitSelected = builder.build();
+    final String targetGasLimitValue = ConfigurationOverviewBuilder.normalizeGas(targetGasLimit);
+    assertThat(targetGasLimitSelected)
+            .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
+  }
+
+  @Test
+  void setTargetGasLimitGreaterThanMillionWith4Digits() {
+    final long targetGasLimit = 50_555_500L;
+    builder.setTargetGasLimit(targetGasLimit);
+    final String targetGasLimitSelected = builder.build();
+    final String targetGasLimitValue = ConfigurationOverviewBuilder.normalizeGas(targetGasLimit);
+    System.out.println("targetGasLimitValue:" + targetGasLimitValue);
+    assertThat(targetGasLimitSelected)
+            .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
+  }
+
+  @Test
+  void setTargetGasLimitLowerThanMillion() {
+    final long targetGasLimit = 100_000L;
+    builder.setTargetGasLimit(targetGasLimit);
+    final String targetGasLimitSelected = builder.build();
+    final String targetGasLimitValue = ConfigurationOverviewBuilder.normalizeGas(targetGasLimit);
+    assertThat(targetGasLimitSelected)
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
+  }
 }
