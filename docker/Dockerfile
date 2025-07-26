@@ -68,12 +68,12 @@ HEALTHCHECK --start-period=5s --interval=5s --timeout=1s --retries=10 CMD bash -
 # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
-LABEL org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.name="Besu" \
-      org.label-schema.description="Enterprise Ethereum client" \
-      org.label-schema.url="https://besu.hyperledger.org/" \
-      org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/hyperledger/besu.git" \
-      org.label-schema.vendor="Hyperledger" \
-      org.label-schema.version=$VERSION \
-      org.label-schema.schema-version="1.0"
+LABEL org.opencontainers.image.title="Besu" \
+      org.opencontainers.image.description="Enterprise Ethereum client" \
+      org.opencontainers.image.version=$VERSION \
+      org.opencontainers.image.url="https://besu.hyperledger.org/" \
+      org.opencontainers.image.source="https://github.com/hyperledger/besu.git" \
+      org.opencontainers.image.revision=$VCS_REF \
+      org.opencontainers.image.vendor="Hyperledger" \
+      org.opencontainers.image.created=$BUILD_DATE \
+      org.opencontainers.image.licenses="Apache 2.0"

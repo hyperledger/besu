@@ -21,8 +21,8 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Random;
+import java.util.SequencedMap;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -50,7 +50,7 @@ public class SHA256Benchmark extends BenchmarkExecutor {
     PrecompiledContract contract =
         EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.SHA256);
 
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     final Random random = new Random();
     for (int len = 0; len <= 256; len += 16) {
       final byte[] data = new byte[len];

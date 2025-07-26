@@ -74,7 +74,7 @@ public class ChainDataPruner implements BlockAddedObserver {
   }
 
   private void chainPrunerAction(final BlockAddedEvent event) {
-    final long blockNumber = event.getBlock().getHeader().getNumber();
+    final long blockNumber = event.getHeader().getNumber();
     final long storedPruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
     if (blockNumber < storedPruningMark) {
       LOG.warn(
@@ -90,7 +90,7 @@ public class ChainDataPruner implements BlockAddedObserver {
     final KeyValueStorageTransaction recordBlockHashesTransaction =
         prunerStorage.startTransaction();
     final Collection<Hash> forkBlocks = prunerStorage.getForkBlocks(blockNumber);
-    forkBlocks.add(event.getBlock().getHash());
+    forkBlocks.add(event.getHeader().getHash());
     prunerStorage.setForkBlocks(recordBlockHashesTransaction, blockNumber, forkBlocks);
     recordBlockHashesTransaction.commit();
 
