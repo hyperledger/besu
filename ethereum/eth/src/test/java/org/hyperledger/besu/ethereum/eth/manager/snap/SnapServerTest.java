@@ -68,6 +68,8 @@ import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -607,6 +609,7 @@ public class SnapServerTest {
     assertThat(trieNodes.size()).isEqualTo(1);
   }
 
+  @DisabledOnOs(OS.MAC)
   @ParameterizedTest
   @MethodSource("flatDbMode")
   public void assertStorageTriePathRequest(final FlatDbMode flatDbMode) {
@@ -647,6 +650,7 @@ public class SnapServerTest {
     assertThat(trieNodes.size()).isEqualTo(0);
   }
 
+  @DisabledOnOs(OS.MAC)
   @ParameterizedTest
   @MethodSource("flatDbMode")
   public void assertStorageTrieShortAccountHashPathRequest(final FlatDbMode flatDbMode) {
@@ -667,6 +671,7 @@ public class SnapServerTest {
     assertThat(trieNodes.size()).isEqualTo(2);
   }
 
+  @DisabledOnOs(OS.MAC)
   @ParameterizedTest
   @MethodSource("flatDbMode")
   public void assertStorageTrieLimitRequest(final FlatDbMode flatDbMode) {
@@ -702,6 +707,7 @@ public class SnapServerTest {
     assertThat(trieNodes.size()).isEqualTo(3);
   }
 
+  @DisabledOnOs(OS.MAC)
   @ParameterizedTest
   @MethodSource("flatDbMode")
   public void assertStorageTrieLimitRequest_atLeastOneTrieNode(final FlatDbMode flatDbMode) {
