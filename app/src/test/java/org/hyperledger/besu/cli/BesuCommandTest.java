@@ -39,6 +39,7 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
@@ -2769,5 +2770,22 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xchain-pruning-blocks-retained=10000",
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void shouldLogErrorIfDuplicateBooleanOptionUsed() {
+    parseCommand("--p2p-enabled=true", "--p2p-enabled=false");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Option '--p2p-enabled' should be specified only once");
+  }
+
+  @Test
+  public void shouldNotWarnForRepeatableOptionBootnodes() {
+    parseCommand(
+        "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
+        "enode://" + VALID_NODE_ID + "@192.168.0.2:4567");
+
+    // Verify that the logger does NOT warn about duplication
+    verify(mockLogger, never()).warn(contains("bootnodes"));
   }
 }
