@@ -635,7 +635,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         pluginsPath = Path.of(pluginDir);
       }
 
-      besuPluginContext.addService(BesuConfiguration.class, commonPluginConfiguration);
       besuPluginContext.addService(PermissioningService.class, permissioningService);
 
       besuPluginContext.initialize(
