@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -151,7 +153,7 @@ public final class DisconnectMessage extends AbstractMessageData {
     SUBPROTOCOL_TRIGGERED_INVALID_STATUS_MESSAGE((byte) 0x10, "Peer sent invalid status message"),
     SUBPROTOCOL_TRIGGERED_INVALID_BLOCK_RANGE((byte) 0x10, "Invalid block range");
 
-    private static final DisconnectReason[] BY_ID;
+    private static final Map<Byte, DisconnectReason> BY_ID;
     private final Optional<Byte> code;
     private final String message;
 
@@ -162,18 +164,18 @@ public final class DisconnectMessage extends AbstractMessageData {
               .mapToInt(r -> (int) r.code.get())
               .max()
               .getAsInt();
-      BY_ID = new DisconnectReason[maxValue + 1];
-      Stream.of(DisconnectReason.values())
-          .filter(r -> r.code.isPresent() && r.message.isEmpty())
-          .forEach(r -> BY_ID[r.code.get()] = r);
+      BY_ID = new HashMap<>(maxValue + 1);
+      for (DisconnectReason reason : DisconnectReason.values()) {
+        reason.code.ifPresent(code -> BY_ID.putIfAbsent(code, reason));
+      }
     }
 
     public static DisconnectReason forCode(final Byte code) {
-      if (code == null || code >= BY_ID.length || code < 0 || BY_ID[code] == null) {
+      if (code == null || code < 0 || !BY_ID.containsKey(code)) {
         // Be permissive and just return unknown if the disconnect reason is bad
         return UNKNOWN;
       }
-      return BY_ID[code];
+      return BY_ID.get(code);
     }
 
     public static DisconnectReason forCode(final Bytes codeBytes) {
