@@ -41,8 +41,7 @@ public class EthProtocolVersionTest {
   }
 
   @Test
-  public void shouldReturn67WhenMaxProtocolIsETH68() {
-
+  public void shouldReturn68WhenMaxProtocolIsETH68() {
     Capability capability = EthProtocol.ETH68;
     setupSupportedEthProtocols(capability);
     String expectedVersion = "0x" + Integer.toHexString(capability.getVersion());
