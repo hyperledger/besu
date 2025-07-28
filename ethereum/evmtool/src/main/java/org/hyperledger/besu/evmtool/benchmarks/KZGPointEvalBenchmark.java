@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.SequencedMap;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -47,7 +47,7 @@ public class KZGPointEvalBenchmark extends BenchmarkExecutor {
     }
     output.println("Native KZGPointEval");
 
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "kzg-verify",
         Bytes.fromHexString(
