@@ -27,7 +27,9 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.Optional;
@@ -116,39 +118,48 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   }
 
   private CompletableFuture<List<BlockHeader>> downloadHeaderUsingPeerTaskSystem() {
-    GetHeadersFromPeerTask task =
-        hash.map(
-                (h) ->
-                    new GetHeadersFromPeerTask(
-                        h, blockNumber, 1, 0, Direction.FORWARD, protocolSchedule))
-            .orElseGet(
-                () ->
-                    new GetHeadersFromPeerTask(
-                        blockNumber, 1, 0, Direction.FORWARD, protocolSchedule));
-    PeerTaskExecutorResult<List<BlockHeader>> taskResult;
-    if (assignedPeer.isPresent()) {
-      taskResult = ethContext.getPeerTaskExecutor().executeAgainstPeer(task, assignedPeer.get());
-    } else {
-      taskResult = ethContext.getPeerTaskExecutor().execute(task);
-    }
+    try (OperationTimer.TimingContext ignored =
+        metricsSystem
+            .createLabelledTimer(
+                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
+            .labels(GetHeadersFromPeerByHashTask.class.getSimpleName())
+            .startTimer()) {
+      GetHeadersFromPeerTask task =
+          hash.map(
+                  (h) ->
+                      new GetHeadersFromPeerTask(
+                          h, blockNumber, 1, 0, Direction.FORWARD, protocolSchedule))
+              .orElseGet(
+                  () ->
+                      new GetHeadersFromPeerTask(
+                          blockNumber, 1, 0, Direction.FORWARD, protocolSchedule));
+      PeerTaskExecutorResult<List<BlockHeader>> taskResult;
+      if (assignedPeer.isPresent()) {
+        taskResult = ethContext.getPeerTaskExecutor().executeAgainstPeer(task, assignedPeer.get());
+      } else {
+        taskResult = ethContext.getPeerTaskExecutor().execute(task);
+      }
 
-    CompletableFuture<List<BlockHeader>> returnValue = new CompletableFuture<List<BlockHeader>>();
-    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED
-        && taskResult.ethPeer().isPresent()) {
-      returnValue.completeExceptionally(new PeerDisconnectedException(taskResult.ethPeer().get()));
-    } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-        || taskResult.result().isEmpty()) {
-      String logMessage =
-          "Peer "
-              + taskResult.ethPeer().map(EthPeer::getLoggableId).orElse("UNKNOWN")
-              + " failed to successfully return requested block headers. Response code was "
-              + taskResult.responseCode();
-      returnValue.completeExceptionally(new RuntimeException(logMessage));
-      LOG.debug(logMessage);
-    } else {
-      returnValue.complete(taskResult.result().get());
+      CompletableFuture<List<BlockHeader>> returnValue = new CompletableFuture<List<BlockHeader>>();
+      if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED
+          && taskResult.ethPeer().isPresent()) {
+        returnValue.completeExceptionally(
+            new PeerDisconnectedException(taskResult.ethPeer().get()));
+      } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+          || taskResult.result().isEmpty()) {
+        String logMessage =
+            "Peer "
+                + taskResult.ethPeer().map(EthPeer::getLoggableId).orElse("UNKNOWN")
+                + " failed to successfully return requested block headers. Response code was "
+                + taskResult.responseCode();
+        returnValue.completeExceptionally(new RuntimeException(logMessage));
+        LOG.debug(logMessage);
+      } else {
+        returnValue.complete(taskResult.result().get());
+      }
+
+      return returnValue;
     }
-    return returnValue;
   }
 
   private CompletableFuture<PeerTaskResult<List<Block>>> completeBlock(

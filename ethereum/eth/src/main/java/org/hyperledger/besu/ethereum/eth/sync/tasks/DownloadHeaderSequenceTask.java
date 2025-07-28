@@ -41,7 +41,9 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -202,37 +204,47 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         .getScheduler()
         .scheduleServiceTask(
             () -> {
-              // Figure out parameters for our headers request
-              final boolean partiallyFilled = lastFilledHeaderIndex < segmentLength;
-              final BlockHeader referenceHeaderForNextRequest =
-                  partiallyFilled ? headers[lastFilledHeaderIndex] : referenceHeader;
-              final Hash referenceHash = referenceHeaderForNextRequest.getHash();
-              final int count = partiallyFilled ? lastFilledHeaderIndex : segmentLength;
+              try (OperationTimer.TimingContext ignored =
+                  metricsSystem
+                      .createLabelledTimer(
+                          BesuMetricCategory.SYNCHRONIZER,
+                          "task",
+                          "Internal processing tasks",
+                          "taskName")
+                      .labels(GetHeadersFromPeerByHashTask.class.getSimpleName())
+                      .startTimer()) {
+                // Figure out parameters for our headers request
+                final boolean partiallyFilled = lastFilledHeaderIndex < segmentLength;
+                final BlockHeader referenceHeaderForNextRequest =
+                    partiallyFilled ? headers[lastFilledHeaderIndex] : referenceHeader;
+                final Hash referenceHash = referenceHeaderForNextRequest.getHash();
+                final int count = partiallyFilled ? lastFilledHeaderIndex : segmentLength;
 
-              GetHeadersFromPeerTask task =
-                  new GetHeadersFromPeerTask(
-                      referenceHash,
-                      referenceHeaderForNextRequest.getNumber(),
-                      count + 1,
-                      0,
-                      GetHeadersFromPeerTask.Direction.REVERSE,
-                      protocolSchedule);
-              PeerTaskExecutorResult<List<BlockHeader>> taskResult;
-              if (ethPeer.isPresent()) {
-                taskResult =
-                    ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer.get());
-              } else {
-                taskResult = ethContext.getPeerTaskExecutor().execute(task);
-              }
+                GetHeadersFromPeerTask task =
+                    new GetHeadersFromPeerTask(
+                        referenceHash,
+                        referenceHeaderForNextRequest.getNumber(),
+                        count + 1,
+                        0,
+                        GetHeadersFromPeerTask.Direction.REVERSE,
+                        protocolSchedule);
+                PeerTaskExecutorResult<List<BlockHeader>> taskResult;
+                if (ethPeer.isPresent()) {
+                  taskResult =
+                      ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer.get());
+                } else {
+                  taskResult = ethContext.getPeerTaskExecutor().execute(task);
+                }
 
-              if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                  || taskResult.result().isEmpty()) {
-                return CompletableFuture.failedFuture(
-                    new RuntimeException(
-                        "Failed to download headers. Response code was "
-                            + taskResult.responseCode()));
+                if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                    || taskResult.result().isEmpty()) {
+                  return CompletableFuture.failedFuture(
+                      new RuntimeException(
+                          "Failed to download headers. Response code was "
+                              + taskResult.responseCode()));
+                }
+                return CompletableFuture.completedFuture(taskResult);
               }
-              return CompletableFuture.completedFuture(taskResult);
             });
   }
 
@@ -330,15 +342,28 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
               .getScheduler()
               .scheduleServiceTask(
                   () -> {
-                    GetBodiesFromPeerTask task =
-                        new GetBodiesFromPeerTask(List.of(badHeader), protocolSchedule);
-                    PeerTaskExecutorResult<List<Block>> taskResult =
-                        ethContext.getPeerTaskExecutor().executeAgainstPeer(task, badPeer);
-                    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
-                      return CompletableFuture.completedFuture(
-                          taskResult.result().map(List::getFirst).orElse(null));
-                    } else {
-                      return CompletableFuture.failedFuture(new RuntimeException());
+                    try (OperationTimer.TimingContext ignored =
+                        metricsSystem
+                            .createLabelledTimer(
+                                BesuMetricCategory.SYNCHRONIZER,
+                                "task",
+                                "Internal processing tasks",
+                                "taskName")
+                            .labels(
+                                org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask
+                                    .class
+                                    .getSimpleName())
+                            .startTimer()) {
+                      GetBodiesFromPeerTask task =
+                          new GetBodiesFromPeerTask(List.of(badHeader), protocolSchedule);
+                      PeerTaskExecutorResult<List<Block>> taskResult =
+                          ethContext.getPeerTaskExecutor().executeAgainstPeer(task, badPeer);
+                      if (taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
+                        return CompletableFuture.completedFuture(
+                            taskResult.result().map(List::getFirst).orElse(null));
+                      } else {
+                        return CompletableFuture.failedFuture(new RuntimeException());
+                      }
                     }
                   });
     } else {

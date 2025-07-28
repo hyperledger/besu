@@ -22,7 +22,9 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.CompleteSyncBlocksTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,20 +67,27 @@ public class DownloadSyncBodiesStep
       final List<BlockHeader> headers) {
     final int numSyncBlocksToGet = headers.size();
     final List<SyncBlock> syncBlocks = new ArrayList<>(numSyncBlocksToGet);
-    do {
-      final List<BlockHeader> headersForBodiesStillToGet =
-          headers.subList(syncBlocks.size(), numSyncBlocksToGet);
-      GetSyncBlockBodiesFromPeerTask task =
-          new GetSyncBlockBodiesFromPeerTask(headersForBodiesStillToGet, protocolSchedule);
-      PeerTaskExecutorResult<List<SyncBlock>> result =
-          ethContext.getPeerTaskExecutor().execute(task);
-      if (result.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
-          && result.result().isPresent()) {
-        List<SyncBlock> taskResult = result.result().get();
-        syncBlocks.addAll(taskResult);
-      }
-      // repeat until all sync blocks have been downloaded
-    } while (syncBlocks.size() < numSyncBlocksToGet);
-    return CompletableFuture.completedFuture(syncBlocks);
+    try (OperationTimer.TimingContext ignored =
+        metricsSystem
+            .createLabelledTimer(
+                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
+            .labels(CompleteSyncBlocksTask.class.getSimpleName())
+            .startTimer()) {
+      do {
+        final List<BlockHeader> headersForBodiesStillToGet =
+            headers.subList(syncBlocks.size(), numSyncBlocksToGet);
+        GetSyncBlockBodiesFromPeerTask task =
+            new GetSyncBlockBodiesFromPeerTask(headersForBodiesStillToGet, protocolSchedule);
+        PeerTaskExecutorResult<List<SyncBlock>> result =
+            ethContext.getPeerTaskExecutor().execute(task);
+        if (result.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+            && result.result().isPresent()) {
+          List<SyncBlock> taskResult = result.result().get();
+          syncBlocks.addAll(taskResult);
+        }
+        // repeat until all sync blocks have been downloaded
+      } while (syncBlocks.size() < numSyncBlocksToGet);
+      return CompletableFuture.completedFuture(syncBlocks);
+    }
   }
 }

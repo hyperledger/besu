@@ -27,7 +27,9 @@ import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -83,40 +85,50 @@ public class ChainHeadTracker {
           .getScheduler()
           .scheduleServiceTask(
               () -> {
-                GetHeadersFromPeerTask task =
-                    new GetHeadersFromPeerTask(
-                        Hash.wrap(peer.chainState().getBestBlock().getHash()),
-                        0,
-                        1,
-                        0,
-                        Direction.FORWARD,
-                        protocolSchedule);
-                PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                    ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
-                if (taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
-                    && taskResult.result().isPresent()) {
-                  BlockHeader chainHeadHeader = taskResult.result().get().getFirst();
-                  LOG.atDebug()
-                      .setMessage("Retrieved chain head info {} from {}...")
-                      .addArgument(
-                          () ->
-                              chainHeadHeader.getNumber()
-                                  + " ("
-                                  + chainHeadHeader.getBlockHash()
-                                  + ")")
-                      .addArgument(peer::getLoggableId)
-                      .log();
-                  return CompletableFuture.completedFuture(chainHeadHeader);
-                } else {
-                  LOG.atDebug()
-                      .setMessage("Failed to retrieve chain head info. Disconnecting {}... {}")
-                      .addArgument(peer::getLoggableId)
-                      .addArgument(taskResult.responseCode())
-                      .log();
-                  peer.disconnect(
-                      DisconnectMessage.DisconnectReason
-                          .USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
-                  return CompletableFuture.completedFuture(null);
+                try (OperationTimer.TimingContext ignored =
+                    metricsSystem
+                        .createLabelledTimer(
+                            BesuMetricCategory.SYNCHRONIZER,
+                            "task",
+                            "Internal processing tasks",
+                            "taskName")
+                        .labels(GetHeadersFromPeerByHashTask.class.getSimpleName())
+                        .startTimer()) {
+                  GetHeadersFromPeerTask task =
+                      new GetHeadersFromPeerTask(
+                          Hash.wrap(peer.chainState().getBestBlock().getHash()),
+                          0,
+                          1,
+                          0,
+                          Direction.FORWARD,
+                          protocolSchedule);
+                  PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                      ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
+                  if (taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+                      && taskResult.result().isPresent()) {
+                    BlockHeader chainHeadHeader = taskResult.result().get().getFirst();
+                    LOG.atDebug()
+                        .setMessage("Retrieved chain head info {} from {}...")
+                        .addArgument(
+                            () ->
+                                chainHeadHeader.getNumber()
+                                    + " ("
+                                    + chainHeadHeader.getBlockHash()
+                                    + ")")
+                        .addArgument(peer::getLoggableId)
+                        .log();
+                    return CompletableFuture.completedFuture(chainHeadHeader);
+                  } else {
+                    LOG.atDebug()
+                        .setMessage("Failed to retrieve chain head info. Disconnecting {}... {}")
+                        .addArgument(peer::getLoggableId)
+                        .addArgument(taskResult.responseCode())
+                        .log();
+                    peer.disconnect(
+                        DisconnectMessage.DisconnectReason
+                            .USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
+                    return CompletableFuture.completedFuture(null);
+                  }
                 }
               });
     } else {

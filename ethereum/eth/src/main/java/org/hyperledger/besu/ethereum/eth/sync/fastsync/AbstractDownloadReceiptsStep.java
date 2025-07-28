@@ -25,7 +25,9 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPe
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -84,29 +86,36 @@ public abstract class AbstractDownloadReceiptsStep<B, BWR>
       getReceiptsWithPeerTaskSystem(final List<BlockHeader> headers) {
     final ArrayList<BlockHeader> originalBlockHeaders = new ArrayList<>(headers);
     Map<BlockHeader, List<TransactionReceipt>> getReceipts = HashMap.newHashMap(headers.size());
-    do {
-      GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(headers, protocolSchedule);
-      PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
-          ethContext.getPeerTaskExecutor().execute(task);
-      if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
-          && getReceiptsResult.result().isPresent()) {
-        Map<BlockHeader, List<TransactionReceipt>> taskResult = getReceiptsResult.result().get();
-        taskResult
-            .keySet()
-            .forEach(
-                (blockHeader) ->
-                    getReceipts.merge(
-                        blockHeader,
-                        taskResult.get(blockHeader),
-                        (initialReceipts, newReceipts) -> {
-                          throw new IllegalStateException(
-                              "Unexpectedly got receipts for block header already populated!");
-                        }));
-        // remove all the headers we found receipts for
-        headers.removeAll(getReceipts.keySet());
-      }
-      // repeat until all headers have receipts
-    } while (!headers.isEmpty());
+    try (OperationTimer.TimingContext ignored =
+        metricsSystem
+            .createLabelledTimer(
+                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
+            .labels(GetReceiptsForHeadersTask.class.getSimpleName())
+            .startTimer()) {
+      do {
+        GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(headers, protocolSchedule);
+        PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
+            ethContext.getPeerTaskExecutor().execute(task);
+        if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+            && getReceiptsResult.result().isPresent()) {
+          Map<BlockHeader, List<TransactionReceipt>> taskResult = getReceiptsResult.result().get();
+          taskResult
+              .keySet()
+              .forEach(
+                  (blockHeader) ->
+                      getReceipts.merge(
+                          blockHeader,
+                          taskResult.get(blockHeader),
+                          (initialReceipts, newReceipts) -> {
+                            throw new IllegalStateException(
+                                "Unexpectedly got receipts for block header already populated!");
+                          }));
+          // remove all the headers we found receipts for
+          headers.removeAll(getReceipts.keySet());
+        }
+        // repeat until all headers have receipts
+      } while (!headers.isEmpty());
+    }
     if (LOG.isTraceEnabled()) {
       for (BlockHeader blockHeader : originalBlockHeaders) {
         final List<TransactionReceipt> transactionReceipts = getReceipts.get(blockHeader);

@@ -30,7 +30,9 @@ import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTa
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.Optional;
@@ -127,28 +129,39 @@ public class RangeHeadersFetcher {
               .getScheduler()
               .scheduleServiceTask(
                   () -> {
-                    GetHeadersFromPeerTask task =
-                        new GetHeadersFromPeerTask(
-                            referenceHeader.getHash(),
-                            referenceHeader.getNumber(),
-                            // + 1 because lastHeader will be returned as well.
-                            headerCount + 1,
-                            skip,
-                            Direction.FORWARD,
-                            protocolSchedule);
-                    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
-                    if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                        || taskResult.result().isEmpty()) {
-                      LOG.warn(
-                          "Unsuccessfully used peer task system to fetch headers. Response code was {}",
-                          taskResult.responseCode());
-                      return CompletableFuture.failedFuture(
-                          new RuntimeException(
-                              "Unable to retrieve headers. Response code was "
-                                  + taskResult.responseCode()));
+                    try (OperationTimer.TimingContext ignored =
+                        metricsSystem
+                            .createLabelledTimer(
+                                BesuMetricCategory.SYNCHRONIZER,
+                                "task",
+                                "Internal processing tasks",
+                                "taskName")
+                            .labels(GetHeadersFromPeerByHashTask.class.getSimpleName())
+                            .startTimer()) {
+
+                      GetHeadersFromPeerTask task =
+                          new GetHeadersFromPeerTask(
+                              referenceHeader.getHash(),
+                              referenceHeader.getNumber(),
+                              // + 1 because lastHeader will be returned as well.
+                              headerCount + 1,
+                              skip,
+                              Direction.FORWARD,
+                              protocolSchedule);
+                      PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                          ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
+                      if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                          || taskResult.result().isEmpty()) {
+                        LOG.warn(
+                            "Unsuccessfully used peer task system to fetch headers. Response code was {}",
+                            taskResult.responseCode());
+                        return CompletableFuture.failedFuture(
+                            new RuntimeException(
+                                "Unable to retrieve headers. Response code was "
+                                    + taskResult.responseCode()));
+                      }
+                      return CompletableFuture.completedFuture(taskResult.result().get());
                     }
-                    return CompletableFuture.completedFuture(taskResult.result().get());
                   });
     } else {
       headersFuture =

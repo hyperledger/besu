@@ -28,7 +28,9 @@ import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.Map;
@@ -79,29 +81,42 @@ public class CheckpointDownloadBlockStep {
           .getScheduler()
           .scheduleServiceTask(
               () -> {
-                GetReceiptsFromPeerTask task =
-                    new GetReceiptsFromPeerTask(List.of(block.getHeader()), protocolSchedule);
-                PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> executorResult =
-                    ethContext.getPeerTaskExecutor().execute(task);
+                try (OperationTimer.TimingContext ignored =
+                    metricsSystem
+                        .createLabelledTimer(
+                            BesuMetricCategory.SYNCHRONIZER,
+                            "task",
+                            "Internal processing tasks",
+                            "taskName")
+                        .labels(
+                            org.hyperledger.besu.ethereum.eth.manager.task.GetReceiptsFromPeerTask
+                                .class
+                                .getSimpleName())
+                        .startTimer()) {
+                  GetReceiptsFromPeerTask task =
+                      new GetReceiptsFromPeerTask(List.of(block.getHeader()), protocolSchedule);
+                  PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>>
+                      executorResult = ethContext.getPeerTaskExecutor().execute(task);
 
-                if (executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
-                  List<TransactionReceipt> transactionReceipts =
-                      executorResult
-                          .result()
-                          .map((map) -> map.get(block.getHeader()))
-                          .orElseThrow(
-                              () ->
-                                  new IllegalStateException(
-                                      "PeerTask response code was success, but empty"));
-                  if (block.getBody().getTransactions().size() != transactionReceipts.size()) {
-                    throw new IllegalStateException(
-                        "PeerTask response code was success, but incorrect number of receipts returned");
+                  if (executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
+                    List<TransactionReceipt> transactionReceipts =
+                        executorResult
+                            .result()
+                            .map((map) -> map.get(block.getHeader()))
+                            .orElseThrow(
+                                () ->
+                                    new IllegalStateException(
+                                        "PeerTask response code was success, but empty"));
+                    if (block.getBody().getTransactions().size() != transactionReceipts.size()) {
+                      throw new IllegalStateException(
+                          "PeerTask response code was success, but incorrect number of receipts returned");
+                    }
+                    BlockWithReceipts blockWithReceipts =
+                        new BlockWithReceipts(block, transactionReceipts);
+                    return CompletableFuture.completedFuture(Optional.of(blockWithReceipts));
+                  } else {
+                    return CompletableFuture.completedFuture(Optional.empty());
                   }
-                  BlockWithReceipts blockWithReceipts =
-                      new BlockWithReceipts(block, transactionReceipts);
-                  return CompletableFuture.completedFuture(Optional.of(blockWithReceipts));
-                } else {
-                  return CompletableFuture.completedFuture(Optional.empty());
                 }
               });
 

@@ -35,6 +35,7 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.time.Duration;
 import java.util.List;
@@ -186,36 +187,47 @@ public class FastSyncActions {
               .getScheduler()
               .scheduleServiceTask(
                   () -> {
-                    GetHeadersFromPeerTask task =
-                        new GetHeadersFromPeerTask(
-                            hash,
-                            pivotBlockSelector.getMinRequiredBlockNumber(),
-                            1,
-                            0,
-                            GetHeadersFromPeerTask.Direction.FORWARD,
-                            ethContext.getEthPeers().peerCount(),
-                            protocolSchedule);
-                    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        ethContext.getPeerTaskExecutor().execute(task);
-                    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE
-                        || taskResult.responseCode()
-                            == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
-                      LOG.error(
-                          "Failed to download pivot block header. Response Code was {}",
-                          taskResult.responseCode());
-                      return CompletableFuture.failedFuture(new NoAvailablePeersException());
-                    } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                        || taskResult.result().isEmpty()) {
-                      LOG.error(
-                          "Failed to download pivot block header. Response Code was {}",
-                          taskResult.responseCode());
-                      return CompletableFuture.failedFuture(
-                          new RuntimeException(
-                              "Failed to download pivot block header. Response Code was "
-                                  + taskResult.responseCode()));
-                    } else {
-                      return CompletableFuture.completedFuture(
-                          taskResult.result().get().getFirst());
+                    try (OperationTimer.TimingContext ignored =
+                        metricsSystem
+                            .createLabelledTimer(
+                                BesuMetricCategory.SYNCHRONIZER,
+                                "task",
+                                "Internal processing tasks",
+                                "taskName")
+                            .labels(RetryingGetHeaderFromPeerByHashTask.class.getSimpleName())
+                            .startTimer()) {
+                      GetHeadersFromPeerTask task =
+                          new GetHeadersFromPeerTask(
+                              hash,
+                              pivotBlockSelector.getMinRequiredBlockNumber(),
+                              1,
+                              0,
+                              GetHeadersFromPeerTask.Direction.FORWARD,
+                              ethContext.getEthPeers().peerCount(),
+                              protocolSchedule);
+                      PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                          ethContext.getPeerTaskExecutor().execute(task);
+                      if (taskResult.responseCode()
+                              == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE
+                          || taskResult.responseCode()
+                              == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
+                        LOG.error(
+                            "Failed to download pivot block header. Response Code was {}",
+                            taskResult.responseCode());
+                        return CompletableFuture.failedFuture(new NoAvailablePeersException());
+                      } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                          || taskResult.result().isEmpty()) {
+                        LOG.error(
+                            "Failed to download pivot block header. Response Code was {}",
+                            taskResult.responseCode());
+                        return CompletableFuture.failedFuture(
+                            new RuntimeException(
+                                "Failed to download pivot block header. Response Code was "
+                                    + taskResult.responseCode()));
+                      } else {
+                        return CompletableFuture.completedFuture(
+                            taskResult.result().get().getFirst());
+                      }
                     }
                   });
     } else {

@@ -20,7 +20,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.CompleteBlocksTask;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.CompleteBlocksWithPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -60,10 +62,17 @@ public class DownloadBodiesStep
 
   private CompletableFuture<List<Block>> getBodiesWithPeerTaskSystem(
       final List<BlockHeader> headers) {
-
-    final CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
-        new CompleteBlocksWithPeerTask(protocolSchedule, headers, ethContext.getPeerTaskExecutor());
-    final List<Block> blocks = completeBlocksWithPeerTask.retrieveBlocksFromPeers();
-    return CompletableFuture.completedFuture(blocks);
+    try (OperationTimer.TimingContext ignored =
+        metricsSystem
+            .createLabelledTimer(
+                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
+            .labels(CompleteBlocksTask.class.getSimpleName())
+            .startTimer()) {
+      final CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
+          new CompleteBlocksWithPeerTask(
+              protocolSchedule, headers, ethContext.getPeerTaskExecutor());
+      final List<Block> blocks = completeBlocksWithPeerTask.retrieveBlocksFromPeers();
+      return CompletableFuture.completedFuture(blocks);
+    }
   }
 }

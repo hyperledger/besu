@@ -27,7 +27,9 @@ import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.time.Duration;
 import java.util.List;
@@ -201,23 +203,34 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
               .getScheduler()
               .scheduleServiceTask(
                   () -> {
-                    GetHeadersFromPeerTask task =
-                        new GetHeadersFromPeerTask(
-                            hash,
-                            0,
-                            1,
-                            0,
-                            GetHeadersFromPeerTask.Direction.FORWARD,
-                            ethContext.getEthPeers().peerCount(),
-                            protocolSchedule);
-                    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        ethContext.getPeerTaskExecutor().execute(task);
-                    if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                        || taskResult.result().isEmpty()) {
-                      return CompletableFuture.failedFuture(
-                          new RuntimeException("Unable to retrieve header"));
+                    try (OperationTimer.TimingContext ignored =
+                        metricsSystem
+                            .createLabelledTimer(
+                                BesuMetricCategory.SYNCHRONIZER,
+                                "task",
+                                "Internal processing tasks",
+                                "taskName")
+                            .labels(RetryingGetHeaderFromPeerByHashTask.class.getSimpleName())
+                            .startTimer()) {
+                      GetHeadersFromPeerTask task =
+                          new GetHeadersFromPeerTask(
+                              hash,
+                              0,
+                              1,
+                              0,
+                              GetHeadersFromPeerTask.Direction.FORWARD,
+                              ethContext.getEthPeers().peerCount(),
+                              protocolSchedule);
+                      PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                          ethContext.getPeerTaskExecutor().execute(task);
+                      if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                          || taskResult.result().isEmpty()) {
+                        return CompletableFuture.failedFuture(
+                            new RuntimeException("Unable to retrieve header"));
+                      }
+                      return CompletableFuture.completedFuture(
+                          taskResult.result().get().getFirst());
                     }
-                    return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
                   });
     } else {
       resultFuture =
