@@ -364,10 +364,10 @@ public class TransactionPool implements BlockAddedObserver {
   private void processBlockAddedEvent(final BlockAddedEvent e) {
     final long started = System.currentTimeMillis();
     pendingTransactions.manageBlockAdded(
-        e.getBlock().getHeader(),
+        e.getHeader(),
         e.getAddedTransactions(),
         e.getRemovedTransactions(),
-        protocolSchedule.getByBlockHeader(e.getBlock().getHeader()).getFeeMarket());
+        protocolSchedule.getByBlockHeader(e.getHeader()).getFeeMarket());
     reAddTransactions(e.getRemovedTransactions());
     LOG.atTrace()
         .setMessage("Block added event {} processed in {}ms")
