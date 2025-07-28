@@ -55,14 +55,15 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractBlockProcessor implements BlockProcessor {
 
-  @FunctionalInterface
   public interface TransactionReceiptFactory {
-
     TransactionReceipt create(
         TransactionType transactionType,
         TransactionProcessingResult result,
         WorldState worldState,
         long gasUsed);
+
+    TransactionReceipt create(
+        TransactionType transactionType, TransactionProcessingResult result, long gasUsed);
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBlockProcessor.class);
