@@ -124,6 +124,7 @@ class AbstractBlockProcessorIntegrationTest {
             Wei.of(2_000_000_000_000_000L),
             BlockHeader::getCoinbase,
             false,
+            false,
             protocolSchedule);
 
     final BlockProcessor parallelBlockProcessor =
@@ -134,6 +135,7 @@ class AbstractBlockProcessorIntegrationTest {
                 .getTransactionReceiptFactory(),
             Wei.of(2_000_000_000_000_000L),
             BlockHeader::getCoinbase,
+            false,
             false,
             protocolSchedule,
             new NoOpMetricsSystem());
@@ -252,6 +254,7 @@ class AbstractBlockProcessorIntegrationTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
+            false,
             protocolSchedule);
 
     BlockProcessingResult parallelResult =

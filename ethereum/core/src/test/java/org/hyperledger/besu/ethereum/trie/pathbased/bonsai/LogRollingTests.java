@@ -78,31 +78,30 @@ class LogRollingTests {
       Address.fromHexString("0x1111111111111111111111111111111111111111");
 
   private static final BlockHeader headerOne =
-      new BlockHeader(
-          Hash.ZERO,
-          Hash.EMPTY_LIST_HASH,
-          Address.ZERO,
-          Hash.fromHexString("0x0ecfa454ddfe6b740f4af7b7f4c61b5c6bac2854efd2b07b27b1f53dba9bb46c"),
-          Hash.EMPTY_TRIE_HASH,
-          Hash.EMPTY_LIST_HASH,
-          LogsBloomFilter.builder().build(),
-          Difficulty.ONE,
-          1,
-          0,
-          0,
-          0,
-          Bytes.EMPTY,
-          Wei.ZERO,
-          Hash.ZERO,
-          0,
-          null,
-          null, // blobGasUSed
-          null,
-          null,
-          null,
-          null,
-          null,
-          new MainnetBlockHeaderFunctions());
+  new BlockHeader(
+      Hash.ZERO,
+      Hash.EMPTY_LIST_HASH,
+      Address.ZERO,
+      Hash.fromHexString("0x0ecfa454ddfe6b740f4af7b7f4c61b5c6bac2854efd2b07b27b1f53dba9bb46c"),
+      Hash.EMPTY_TRIE_HASH,
+      Hash.EMPTY_LIST_HASH,
+      LogsBloomFilter.builder().build(),
+      Difficulty.ONE,
+      1,
+      0,
+      0,
+      0,
+      Bytes.EMPTY,
+      Wei.ZERO,
+      Hash.ZERO,
+      0,
+      Hash.EMPTY_LIST_HASH,
+      null,                    // blobGasUSed
+      null,
+      null,
+      null,
+      null,
+      new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
       new BlockHeader(
           headerOne.getHash(),
