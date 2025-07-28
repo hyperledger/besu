@@ -44,6 +44,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -195,24 +198,36 @@ public abstract class BenchmarkExecutor {
   private void runPrecompile(
       final Map<String, Bytes> testCases, final PrecompiledContract contract) {
 
-    // Fully warmup and execute, test case by test case
     Map<String, DescriptiveStatistics> timeStatsMap = new LinkedHashMap<>();
-    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      try {
-        /*final double execTime =*/ runPrecompileBenchmark(
-            testCase.getKey(), testCase.getValue(), contract);
-        long gasCost = contract.gasRequirement(testCase.getValue());
-        //        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
-        logResultsWithError(testCase.getKey(), gasCost, timeStats);
-        timeStatsMap.put(testCase.getKey(), timeStats);
-      } catch (final IllegalArgumentException e) {
-        output.printf("%s Input is Invalid%n", testCase.getKey());
+
+    final var fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    final String datePrefix = fmt.format(LocalDateTime.now(ZoneId.systemDefault()));
+    Path out = Paths.get(datePrefix + "_" + contract.getName() + "_results.csv");
+    try (PrintWriter csv =
+        new PrintWriter(Files.newBufferedWriter(out, StandardCharsets.UTF_8), true)) {
+      csv.println("Case,Gas,Derived Gas,Time (ns),Throughput (MGps)");
+      // Fully warmup and execute, test case by test case
+      for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+        try {
+          /*final double execTime =*/ runPrecompileBenchmark(
+              testCase.getKey(), testCase.getValue(), contract);
+          long gasCost = contract.gasRequirement(testCase.getValue());
+          //        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+          logResultsWithError(testCase.getKey(), gasCost, timeStats, csv);
+          timeStatsMap.put(testCase.getKey(), timeStats);
+        } catch (final IllegalArgumentException e) {
+          output.printf("%s Input is Invalid%n", testCase.getKey());
+          csv.println(testCase.getKey() + ",Input is Invalid,,,");
+        }
       }
+      output.println("✔️ Wrote " + timeStatsMap.size() + " cases → " + out.toAbsolutePath());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
 
     // Also log csv output
     //    output.println("Test,Iteration,Time (ns)");
-    Path out = Paths.get("benchmark_results.csv");
+    out = Paths.get(datePrefix + "_benchmark_results.csv");
     try (PrintWriter csv =
         new PrintWriter(Files.newBufferedWriter(out, StandardCharsets.UTF_8), true)) {
       csv.println("case,iteration,time (ns)");
@@ -243,7 +258,10 @@ public abstract class BenchmarkExecutor {
 
   //  compute mean ± error on derived‐gas and MGps (99.9% CI).
   private void logResultsWithError(
-      final String testCase, final long gasCost, final DescriptiveStatistics timeStats) {
+      final String testCase,
+      final long gasCost,
+      final DescriptiveStatistics timeStats,
+      final PrintWriter csv) {
     precompileTableHeader.run();
     int n = (int) timeStats.getN();
     double meanTime = timeStats.getMean() / 1e9;
@@ -279,6 +297,9 @@ public abstract class BenchmarkExecutor {
         meanTime * 1_000_000_000, /* moeTimeSec * 1_000_000_000,*/
         meanTp,
         moeTp);
+    csv.printf(
+        "%s,%d,%.0f,%.1f,%.2f%n",
+        testCase, gasCost, meanDerivedGas, meanTime * 1_000_000_000, meanTp);
     precompileTableHeader = () -> {};
   }
 
@@ -316,22 +337,33 @@ public abstract class BenchmarkExecutor {
       executions++;
     }
 
-    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
-      if (timeStatsMap.containsKey(testCase.getKey())) {
-        //        final double execTime =
-        //            totalElapsedByTestName.get(testCase.getKey()) / 1.0e9D / execIterations;
-        // log the performance of the precompile
-        long gasCost = contract.gasRequirement(testCases.get(testCase.getKey()));
-        //        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
-        logResultsWithError(testCase.getKey(), gasCost, timeStatsMap.get(testCase.getKey()));
-      } else {
-        output.printf("%s Input is Invalid%n", testCase.getKey());
+    final var fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    final String datePrefix = fmt.format(LocalDateTime.now(ZoneId.systemDefault()));
+    Path out = Paths.get(datePrefix + "_" + contract.getName() + "_results.csv");
+    try (PrintWriter csv =
+        new PrintWriter(Files.newBufferedWriter(out, StandardCharsets.UTF_8), true)) {
+      csv.println("Case,Gas,Derived Gas,Time (ns),Throughput (MGps)");
+      for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+        if (timeStatsMap.containsKey(testCase.getKey())) {
+          //        final double execTime =
+          //            totalElapsedByTestName.get(testCase.getKey()) / 1.0e9D / execIterations;
+          // log the performance of the precompile
+          long gasCost = contract.gasRequirement(testCases.get(testCase.getKey()));
+          //        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+          logResultsWithError(testCase.getKey(), gasCost, timeStatsMap.get(testCase.getKey()), csv);
+        } else {
+          output.printf("%s Input is Invalid%n", testCase.getKey());
+          csv.println(testCase.getKey() + ",Input is Invalid,,,");
+        }
       }
+      output.println("✔️ Wrote " + timeStatsMap.size() + " cases → " + out.toAbsolutePath());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
 
-    // Also log csv output
+    // Also log every iteration as csv output for p-value analysis
     //    output.println("Test,Iteration,Time (ns)");
-    Path out = Paths.get("benchmark_results_inverted.csv");
+    out = Paths.get(datePrefix + "_benchmark_results_inverted.csv");
     try (PrintWriter csv =
         new PrintWriter(Files.newBufferedWriter(out, StandardCharsets.UTF_8), true)) {
       csv.println("case,iteration,time (ns)");
