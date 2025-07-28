@@ -111,6 +111,7 @@ public class CliqueMinerExecutorTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
     cliqueEthContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     blockHeaderBuilder = new BlockHeaderTestFixture();

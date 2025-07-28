@@ -533,6 +533,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getCancunEOFTime().ifPresent(l -> builder.put("cancunEOFTime", l));
     getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
     getOsakaTime().ifPresent(l -> builder.put("osakaTime", l));
+    getAmsterdamTime().ifPresent(l -> builder.put("amsterdamTime", l));
     getBpo1Time().ifPresent(l -> builder.put("bpo1Time", l));
     getBpo2Time().ifPresent(l -> builder.put("bpo2Time", l));
     getBpo3Time().ifPresent(l -> builder.put("bpo3Time", l));

@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
@@ -87,7 +88,7 @@ public class NodeCanProduceNextBlockTest {
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
     final Block block_1 = createEmptyBlock(proposerKeyPair);
-    blockChain.appendBlock(block_1, Lists.newArrayList());
+    blockChain.appendBlock(block_1, Lists.newArrayList(), Optional.empty());
 
     assertThat(
             CliqueHelpers.addressIsAllowedToProduceNextBlock(
@@ -115,11 +116,11 @@ public class NodeCanProduceNextBlockTest {
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
     final Block block_1 = createEmptyBlock(proposerKeyPair);
-    blockChain.appendBlock(block_1, Lists.newArrayList());
+    blockChain.appendBlock(block_1, Lists.newArrayList(), Optional.empty());
 
     headerBuilder.number(2).parentHash(block_1.getHash());
     final Block block_2 = createEmptyBlock(otherNodeKeyPair);
-    blockChain.appendBlock(block_2, Lists.newArrayList());
+    blockChain.appendBlock(block_2, Lists.newArrayList(), Optional.empty());
 
     assertThat(
             CliqueHelpers.addressIsAllowedToProduceNextBlock(
@@ -152,7 +153,7 @@ public class NodeCanProduceNextBlockTest {
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(proposerKeyPair);
-    blockChain.appendBlock(block_1, Lists.newArrayList());
+    blockChain.appendBlock(block_1, Lists.newArrayList(), Optional.empty());
 
     headerBuilder.parentHash(block_1.getHeader().getHash()).number(2);
     final BlockHeader block_2 =
@@ -185,15 +186,15 @@ public class NodeCanProduceNextBlockTest {
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(proposerKeyPair);
-    blockChain.appendBlock(block_1, Lists.newArrayList());
+    blockChain.appendBlock(block_1, Lists.newArrayList(), Optional.empty());
 
     headerBuilder.parentHash(block_1.getHash()).number(2);
     final Block block_2 = createEmptyBlock(otherNodeKeyPair);
-    blockChain.appendBlock(block_2, Lists.newArrayList());
+    blockChain.appendBlock(block_2, Lists.newArrayList(), Optional.empty());
 
     headerBuilder.parentHash(block_2.getHash()).number(3);
     final Block block_3 = createEmptyBlock(otherNodeKeyPair);
-    blockChain.appendBlock(block_3, Lists.newArrayList());
+    blockChain.appendBlock(block_3, Lists.newArrayList(), Optional.empty());
 
     assertThat(
             CliqueHelpers.addressIsAllowedToProduceNextBlock(
@@ -233,7 +234,7 @@ public class NodeCanProduceNextBlockTest {
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(otherNodeKeyPair);
-    blockChain.appendBlock(block_1, Lists.newArrayList());
+    blockChain.appendBlock(block_1, Lists.newArrayList(), Optional.empty());
 
     assertThat(
             CliqueHelpers.addressIsAllowedToProduceNextBlock(

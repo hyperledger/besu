@@ -119,7 +119,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Collections.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList(), Optional.empty());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -147,7 +147,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Collections.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList(), Optional.empty());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -161,7 +161,7 @@ public class CliqueMiningCoordinatorTest {
     setupCliqueContextAndBlockchain();
 
     blockChain.appendBlock(
-        createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys), Collections.emptyList());
+        createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys), Collections.emptyList(), Optional.empty());
 
     when(blockMiner.getParentHeader()).thenReturn(blockChain.getChainHeadHeader());
 
@@ -180,7 +180,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Collections.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList(), Optional.empty());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -194,7 +194,7 @@ public class CliqueMiningCoordinatorTest {
     setupCliqueContextAndBlockchain();
 
     blockChain.appendBlock(
-        createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys), Collections.emptyList());
+        createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys), Collections.emptyList(), Optional.empty());
 
     when(blockMiner.getParentHeader()).thenReturn(blockChain.getChainHeadHeader());
 
@@ -213,7 +213,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Collections.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList(), Optional.empty());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -238,7 +238,7 @@ public class CliqueMiningCoordinatorTest {
     when(minerExecutor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(blockMiner));
 
     final Block importedBlock = createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys);
-    blockChain.appendBlock(importedBlock, Collections.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList(), Optional.empty());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.

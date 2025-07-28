@@ -167,7 +167,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
       result
           .getYield()
           .ifPresentOrElse(
-              outputs -> blockchain.appendBlock(block, outputs.getReceipts()),
+              outputs -> blockchain.appendBlock(block, outputs.getReceipts(), Optional.empty()),
               () -> {
                 if (result.causedBy().isPresent()) {
                   throw new RuntimeException(result.errorMessage.get(), result.causedBy().get());

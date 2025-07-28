@@ -81,8 +81,8 @@ public class ForkingValidatorProviderTest {
     header2 = block_2.getHeader();
 
     blockChain = createInMemoryBlockchain(genesisBlock);
-    blockChain.appendBlock(block_1, emptyList());
-    blockChain.appendBlock(block_2, emptyList());
+    blockChain.appendBlock(block_1, emptyList(), Optional.empty());
+    blockChain.appendBlock(block_2, emptyList(), Optional.empty());
   }
 
   private Block createEmptyBlock(final long blockNumber, final Hash parentHash) {

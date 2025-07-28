@@ -16,6 +16,8 @@ package org.hyperledger.besu.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
+
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -24,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class RlpConverterServiceImplTest {
@@ -40,6 +43,7 @@ public class RlpConverterServiceImplTest {
             .baseFeePerGas(Wei.of(1000))
             .requestsHash(Hash.ZERO)
             .balHash(Hash.ZERO)
+            .parentBeaconBlockRoot(Optional.of(Bytes32.ZERO))
             .withdrawalsRoot(Hash.ZERO)
             .blobGasUsed(500L)
             .excessBlobGas(BlobGas.of(500L))

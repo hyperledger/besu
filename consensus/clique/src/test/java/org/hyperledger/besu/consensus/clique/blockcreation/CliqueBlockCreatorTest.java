@@ -118,6 +118,7 @@ public class CliqueBlockCreatorTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
@@ -143,7 +144,7 @@ public class CliqueBlockCreatorTest {
             TestHelpers.createCliqueSignedBlockHeader(
                 headerTestFixture, otherKeyPair, validatorList),
             new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
-    blockchain.appendBlock(emptyBlock, Lists.newArrayList());
+    blockchain.appendBlock(emptyBlock, Lists.newArrayList(), Optional.empty());
   }
 
   @Test

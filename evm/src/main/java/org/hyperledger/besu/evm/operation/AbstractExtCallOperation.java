@@ -184,7 +184,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     // all checks passed, do the call
     final Bytes inputData = frame.readMutableMemory(inputOffset, inputLength);
 
-    MessageFrame.builder()
+    final MessageFrame.Builder builder = MessageFrame.builder()
         .parentMessageFrame(frame)
         .type(MessageFrame.Type.MESSAGE_CALL)
         .initialGas(childGas)
@@ -195,10 +195,14 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
         .value(value(frame))
         .apparentValue(apparentValue(frame))
         .code(code)
-        .eip7928AccessList(frame.getEip7928AccessList().get()) // TODO: Not safe
         .isStatic(isStatic(frame))
-        .completer(child -> complete(frame, child))
-        .build();
+        .completer(child -> complete(frame, child));
+
+    if (frame.getEip7928AccessList().isPresent()) {
+      builder.eip7928AccessList(frame.getEip7928AccessList().get());
+    }
+
+    builder.build();
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
     return new OperationResult(clampedAdd(cost, childGas), null, 0);
