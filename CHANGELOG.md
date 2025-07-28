@@ -15,6 +15,11 @@
 - Expose methods to query hardfork by block header or for the next block in the Plugin API [#8909](https://github.com/hyperledger/besu/pull/8909)
 - Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
 
+#### Performance
+- Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959]
+- Enable decoding for large RPC requests [#8877](https://github.com/hyperledger/besu/pull/8877)
+- Add --attempt-cache-bust to evmtool benchmark subcommand [#8985](https://github.com/hyperledger/besu/pull/8985)
+
 #### Fusaka devnets
 - EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417), [#8946](https://github.com/hyperledger/besu/pull/8946)
 
