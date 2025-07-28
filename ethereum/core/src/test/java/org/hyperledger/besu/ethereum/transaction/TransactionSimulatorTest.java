@@ -1031,7 +1031,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
     }
 
     when(transactionProcessor.processTransaction(
-            any(), any(), eq(transaction), any(), any(), any(), any(), any(Wei.class)))
+            any(), any(), eq(transaction), any(), any(), any(), any(), any(Wei.class), any()))
         .thenReturn(result);
   }
 
