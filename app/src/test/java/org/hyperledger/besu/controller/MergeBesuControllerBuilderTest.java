@@ -170,6 +170,7 @@ public class MergeBesuControllerBuilderTest {
         .when(worldStateKeyValueStorage.updater())
         .thenReturn(mock(ForestWorldStateKeyValueStorage.Updater.class));
     lenient().when(miningConfiguration.getTargetGasLimit()).thenReturn(OptionalLong.empty());
+    lenient().when(ethProtocolConfiguration.getMaxEthCapability()).thenReturn(Integer.MAX_VALUE);
 
     besuControllerBuilder = visitWithMockConfigs(new MergeBesuControllerBuilder());
   }
