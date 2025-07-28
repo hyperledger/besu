@@ -202,15 +202,14 @@ public class PeerTaskExecutor {
     } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED
-        && sleepBetweenRetries());
+        && sleepBetweenRetries(peerTask));
 
     return executorResult;
   }
 
-  private boolean sleepBetweenRetries() {
+  private <T> boolean sleepBetweenRetries(final PeerTask<T> peerTask) {
     try {
-      // sleep for 1 second to match implemented wait between retries in AbstractRetryingPeerTask
-      Thread.sleep(1000);
+      Thread.sleep(peerTask.getDelayBetweenSamePeerRetries());
       return true;
     } catch (InterruptedException e) {
       return false;

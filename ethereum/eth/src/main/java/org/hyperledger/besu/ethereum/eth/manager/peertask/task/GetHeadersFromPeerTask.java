@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -219,6 +220,11 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   @Override
   public int getRetriesWithOtherPeer() {
     return maximumRetriesAgainstDifferentPeers;
+  }
+
+  @Override
+  public Duration getDelayBetweenSamePeerRetries() {
+    return Duration.ZERO;
   }
 
   public Long getBlockNumber() {
