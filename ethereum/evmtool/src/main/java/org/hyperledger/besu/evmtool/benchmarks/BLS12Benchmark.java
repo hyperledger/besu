@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.SequencedMap;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -172,7 +172,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkG1Add(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     for (int i = 0; i < g1PointPairs.length - 1; i++) {
       testCases.put("G1 Add " + i, Bytes.fromHexString(g1PointPairs[i] + g1PointPairs[i + 1]));
     }
@@ -184,7 +184,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkG1MultiExp32Pairs(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
 
     // add test cases for 2, 4, 8, 16, and 32 point/scalar pairs
     for (int i = 1; i <= 5; i++) {
@@ -202,7 +202,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkMapFpToG1(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     for (int i = 0; i < g1PointPairs.length; i++) {
       testCases.put("Map Fp to G1 " + i, Bytes.fromHexString(g1PointPairs[i].substring(0, 128)));
     }
@@ -216,7 +216,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkG2Add(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     for (int i = 0; i < g2PointPairs.length - 1; i++) {
       testCases.put("G2 Add " + i, Bytes.fromHexString(g2PointPairs[i] + g2PointPairs[i + 1]));
     }
@@ -228,7 +228,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkG2MultiExp32Pairs(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
 
     // add test cases for 2, 4, 8, 16, and 32 point/scalar pairs
     for (int i = 1; i <= 5; i++) {
@@ -246,7 +246,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkMapFp2ToG2(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     for (int i = 0; i < g2PointPairs.length; i++) {
       testCases.put("Map Fp2 to G2 " + i, Bytes.fromHexString(g2PointPairs[i].substring(0, 256)));
     }
@@ -260,7 +260,7 @@ public class BLS12Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkBlsPairing(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
 
     // add test cases for 2, 4, 8, 16, and 32 point/scalar pairs
     for (int i = 1; i <= 5; i++) {

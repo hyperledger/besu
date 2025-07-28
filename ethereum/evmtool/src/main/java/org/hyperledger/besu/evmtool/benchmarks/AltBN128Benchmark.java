@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.SequencedMap;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -57,21 +57,36 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkAdd(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
-        "add",
+        "EcAdd",
         Bytes.fromHexString(
             "17c139df0efee0f766bc0204762b774362e4ded88953a39ce849a8a7fa163fa9"
                 + "01e0559bacb160664764a357af8a9fe70baa9258e0b959273ffc5718c6d4cc7c"
                 + "17c139df0efee0f766bc0204762b774362e4ded88953a39ce849a8a7fa163fa9"
                 + "2e83f8d734803fc370eba25ed1f6b8768bd6d83887b87165fc2434fe11a830cb"));
     testCases.put(
-        "AddMarius",
+        "EcAddMarius",
         Bytes.fromHexString(
             "1581d9d4d7eb0e3cdc75739f7098479097d579573f23e70b07cbd40a"
                 + "5d97bbc118da69b1d2cb7b89fdb3bba2524bf135453ce828faea190d8f4d48d572cbe3fe20"
                 + "34b5942fbdd612f2553a9fd9fa5eb4c3e5ce6a34ed100f62de0e380f4e67f8016027893e1f"
                 + "5082bdc48651667776e2b1e32a85edd33ff430eef15e8e68b3d460"));
+    testCases.put(
+        "EcAddAmez1",
+        Bytes.fromHexString(
+            "1f69350cfea1bdf51ecec3a0bdf57732411418502904eb86c10901af310b9ca0291547261fc8bbcf961534f3f3d282d4ab3bfa0b9f3b5ecb3e575d42fd13e25c"
+                + "2034b5942fbdd612f2553a9fd9fa5eb4c3e5ce6a34ed100f62de0e380f4e67f8016027893e1f5082bdc48651667776e2b1e32a85edd33ff430eef15e8e68b3d4"));
+    testCases.put(
+        "EcAddAmez2",
+        Bytes.fromHexString(
+            "03adc0948243eac87e40fd1d4a3b5693c651abd30a88b93f3dbe3f571791c4120e9f7fa4c9ae503399c7a4f0ee0e91961b759d94e49c8ea0d04b448dbc6f3d16"
+                + "2034b5942fbdd612f2553a9fd9fa5eb4c3e5ce6a34ed100f62de0e380f4e67f8016027893e1f5082bdc48651667776e2b1e32a85edd33ff430eef15e8e68b3d4"));
+    testCases.put(
+        "EcAddAmez3",
+        Bytes.fromHexString(
+            "012b7638324563dc328b870d414807ed27426354bc83f22c42690f717ae7137e19dffc74cd0183d631cb39f5f58d2846744119913519373ebb95f2654a989390"
+                + "2034b5942fbdd612f2553a9fd9fa5eb4c3e5ce6a34ed100f62de0e380f4e67f8016027893e1f5082bdc48651667776e2b1e32a85edd33ff430eef15e8e68b3d4"));
 
     PrecompiledContract contract =
         EvmSpec.evmSpec(forkVersion).getPrecompileContractRegistry().get(Address.ALTBN128_ADD);
@@ -80,7 +95,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkMul(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "mul1",
         Bytes.fromHexString(
@@ -102,7 +117,7 @@ public class AltBN128Benchmark extends BenchmarkExecutor {
   }
 
   private void benchmarkPairings(final EvmSpecVersion forkVersion) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "2 pairings",
         Bytes.fromHexString(
