@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -75,7 +75,7 @@ public class ProtocolSpecBuilder {
   private WithdrawalsProcessor withdrawalsProcessor;
   private RequestsValidator requestsValidator = new ProhibitedRequestValidator();
   private RequestProcessorCoordinator requestProcessorCoordinator;
-  protected BlockHashProcessor blockHashProcessor;
+  protected PreExecutionProcessor preExecutionProcessor;
   private FeeMarketBuilder feeMarketBuilder = (__) -> FeeMarket.legacy();
   private BlobSchedule blobSchedule = new BlobSchedule.NoBlobSchedule();
   private BadBlockManager badBlockManager;
@@ -257,8 +257,9 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder blockHashProcessor(final BlockHashProcessor blockHashProcessor) {
-    this.blockHashProcessor = blockHashProcessor;
+  public ProtocolSpecBuilder preExecutionProcessor(
+      final PreExecutionProcessor preExecutionProcessor) {
+    this.preExecutionProcessor = preExecutionProcessor;
     return this;
   }
 
@@ -369,7 +370,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(withdrawalsProcessor),
         requestsValidator,
         Optional.ofNullable(requestProcessorCoordinator),
-        blockHashProcessor,
+        preExecutionProcessor,
         isPoS,
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor));
