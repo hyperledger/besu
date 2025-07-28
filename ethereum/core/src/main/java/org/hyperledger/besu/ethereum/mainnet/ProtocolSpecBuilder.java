@@ -17,13 +17,14 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.BlobSchedule;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -67,14 +68,14 @@ public class ProtocolSpecBuilder {
   private BlockValidatorBuilder blockValidatorBuilder;
   private BlockImporterBuilder blockImporterBuilder;
 
-  private String name;
+  private HardforkId hardforkId;
   private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private WithdrawalsValidator withdrawalsValidator =
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
   private RequestsValidator requestsValidator = new ProhibitedRequestValidator();
   private RequestProcessorCoordinator requestProcessorCoordinator;
-  protected BlockHashProcessor blockHashProcessor;
+  protected PreExecutionProcessor preExecutionProcessor;
   private FeeMarketBuilder feeMarketBuilder = (__) -> FeeMarket.legacy();
   private BlobSchedule blobSchedule = new BlobSchedule.NoBlobSchedule();
   private BadBlockManager badBlockManager;
@@ -204,8 +205,8 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder name(final String name) {
-    this.name = name;
+  public ProtocolSpecBuilder hardforkId(final HardforkId hardforkId) {
+    this.hardforkId = hardforkId;
     return this;
   }
 
@@ -256,8 +257,9 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder blockHashProcessor(final BlockHashProcessor blockHashProcessor) {
-    this.blockHashProcessor = blockHashProcessor;
+  public ProtocolSpecBuilder preExecutionProcessor(
+      final PreExecutionProcessor preExecutionProcessor) {
+    this.preExecutionProcessor = preExecutionProcessor;
     return this;
   }
 
@@ -297,7 +299,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(blockReward, "Missing block reward");
     checkNotNull(difficultyCalculator, "Missing difficulty calculator");
     checkNotNull(transactionReceiptFactory, "Missing transaction receipt factory");
-    checkNotNull(name, "Missing name");
+    checkNotNull(hardforkId, "Missing hardfork id");
     checkNotNull(miningBeneficiaryCalculator, "Missing Mining Beneficiary Calculator");
     checkNotNull(protocolSchedule, "Missing protocol schedule");
     checkNotNull(feeMarketBuilder, "Missing fee market");
@@ -343,7 +345,7 @@ public class ProtocolSpecBuilder {
         blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
     return new ProtocolSpec(
-        name,
+        hardforkId,
         evm,
         transactionValidatorFactory,
         transactionProcessor,
@@ -368,7 +370,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(withdrawalsProcessor),
         requestsValidator,
         Optional.ofNullable(requestProcessorCoordinator),
-        blockHashProcessor,
+        preExecutionProcessor,
         isPoS,
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor));
