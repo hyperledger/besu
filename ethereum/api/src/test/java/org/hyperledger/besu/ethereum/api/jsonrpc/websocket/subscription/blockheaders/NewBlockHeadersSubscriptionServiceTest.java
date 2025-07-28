@@ -42,6 +42,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -268,7 +269,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
       final MutableBlockchain blockchain, final BlockOptions options) {
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
-    blockchain.appendBlock(newBlock, receipts);
+    blockchain.appendBlock(newBlock, receipts, Optional.empty());
 
     return newBlock;
   }

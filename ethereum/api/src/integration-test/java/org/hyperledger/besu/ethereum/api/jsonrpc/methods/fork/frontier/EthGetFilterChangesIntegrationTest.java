@@ -300,7 +300,7 @@ public class EthGetFilterChangesIntegrationTest {
         transactionList.stream()
             .map(transaction -> new TransactionReceipt(1, 1, emptyList(), Optional.empty()))
             .collect(toList());
-    blockchain.appendBlock(block, transactionReceipts);
+    blockchain.appendBlock(block, transactionReceipts, Optional.empty());
     return block;
   }
 

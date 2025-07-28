@@ -393,7 +393,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             miningConfiguration,
             transactionProcessor,
             protocolContext.getBlockchain(),
-            (BonsaiWorldState) disposableWorldState,
+            disposableWorldState,
             transactionPool,
             processableBlockHeader,
             transactionReceiptFactory,

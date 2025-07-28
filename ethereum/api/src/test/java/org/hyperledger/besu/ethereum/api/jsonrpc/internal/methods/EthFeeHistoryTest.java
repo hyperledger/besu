@@ -84,7 +84,7 @@ public class EthFeeHistoryTest {
     final Block genesisBlock = gen.genesisBlock();
     blockchain = createInMemoryBlockchain(genesisBlock);
     gen.blockSequence(genesisBlock, 10)
-        .forEach(block -> blockchain.appendBlock(block, gen.receipts(block)));
+        .forEach(block -> blockchain.appendBlock(block, gen.receipts(block), Optional.empty()));
     miningCoordinator = mock(MergeCoordinator.class);
 
     blockchainQueries = mockBlockchainQueries(blockchain, Wei.of(7));
@@ -358,7 +358,7 @@ public class EthFeeHistoryTest {
     blockOptions.setParentHash(blockchain.getChainHeadHash());
     blockOptions.setBlockNumber(11);
     final Block emptyBlock = gen.block(blockOptions);
-    blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock));
+    blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock), Optional.empty());
     when(protocolSchedule.getForNextBlockHeader(
             eq(blockchain.getChainHeadHeader()),
             eq(blockchain.getChainHeadHeader().getTimestamp())))
@@ -379,7 +379,7 @@ public class EthFeeHistoryTest {
     blockOptions.setParentHash(blockchain.getChainHeadHash());
     blockOptions.setBlockNumber(11);
     final Block emptyBlock = gen.block(blockOptions);
-    blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock));
+    blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock), Optional.empty());
     when(protocolSchedule.getForNextBlockHeader(
             eq(blockchain.getChainHeadHeader()),
             eq(blockchain.getChainHeadHeader().getTimestamp())))

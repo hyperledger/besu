@@ -86,31 +86,30 @@ public class TransactionLogBloomCacherTest {
   @BeforeEach
   public void setup() throws IOException {
     final BlockHeader fakeHeader =
-        new BlockHeader(
-            Hash.EMPTY,
-            Hash.EMPTY,
-            Address.ZERO,
-            Hash.EMPTY,
-            Hash.EMPTY,
-            Hash.EMPTY,
-            testLogsBloomFilter,
-            Difficulty.ZERO,
-            0,
-            0,
-            0,
-            0,
-            Bytes.EMPTY,
-            null,
-            Hash.EMPTY,
-            0,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            new MainnetBlockHeaderFunctions());
+      new BlockHeader(
+        Hash.EMPTY,
+        Hash.EMPTY,
+        Address.ZERO,
+        Hash.EMPTY,
+        Hash.EMPTY,
+        Hash.EMPTY,
+        testLogsBloomFilter,
+        Difficulty.ZERO,
+        0L,
+        0L,
+        0L,
+        0L,
+        Bytes.EMPTY,
+        null,
+        Hash.EMPTY,
+        0L,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
     when(blockchain.getBlockHeader(anyLong())).thenReturn(Optional.of(fakeHeader));
     when(scheduler.scheduleFutureTask(any(Supplier.class), any(Duration.class)))
@@ -280,6 +279,7 @@ public class TransactionLogBloomCacherTest {
             null,
             Hash.EMPTY,
             0,
+            null,
             null,
             null,
             null,
