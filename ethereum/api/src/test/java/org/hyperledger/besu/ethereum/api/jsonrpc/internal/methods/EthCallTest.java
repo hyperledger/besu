@@ -54,13 +54,16 @@ import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,9 +73,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -96,14 +96,11 @@ public class EthCallTest {
     LabelledMetric<Counter> mockGasUsedCounter = mock(LabelledMetric.class);
     Counter mockCounter = mock(Counter.class);
     when(mockGasUsedCounter.labels(any(String[].class))).thenReturn(mockCounter);
-    
+
     when(metricsSystem.createLabelledCounter(
-        any(BesuMetricCategory.class),
-        any(String.class),
-        any(String.class),
-        any(String.class)))
+            any(BesuMetricCategory.class), any(String.class), any(String.class), any(String.class)))
         .thenReturn(mockGasUsedCounter);
-    
+
     method = new EthCall(blockchainQueries, transactionSimulator, metricsSystem);
     blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
