@@ -103,27 +103,18 @@ public class CallTracerResultConverter {
         }
       }
 
-      final long gasAfter =
-          (exitFrame != null && exitFrame.getGasRemainingPostExecution() > 0)
-              ? exitFrame.getGasRemainingPostExecution()
-              : -1;
-
       final long gasUsed;
-      if (gasAfter >= 0) {
-        gasUsed = Math.max(0, gasBefore - gasAfter);
-      } else if (frame.getGasCost().isPresent() || frame.getPrecompiledGasCost().isPresent()) {
-        gasUsed = frame.getGasCost().orElse(0L) + frame.getPrecompiledGasCost().orElse(0L);
-        LOG.warn(
-            "Used fallback gasUsed computation using gasCost/precompiledGasCost for frame at depth {} with opcode {}: gasUsed = {}",
-            frame.getDepth(),
-            opcode,
-            gasUsed);
+      if (exitFrame != null && exitFrame.getGasRemainingPostExecution() >= 0) {
+        gasUsed = gasBefore - exitFrame.getGasRemainingPostExecution();
+      } else if (frame.getPrecompiledGasCost().isPresent()) {
+        gasUsed = frame.getPrecompiledGasCost().getAsLong();
+        LOG.warn("Used precompiledGasCost = {} for opcode {}", gasUsed, opcode);
+      } else if (frame.getGasCost().isPresent()) {
+        gasUsed = frame.getGasCost().getAsLong();
+        LOG.warn("Used gasCost = {} as fallback for opcode {}", gasUsed, opcode);
       } else {
-        LOG.warn(
-            "Unable to determine gasUsed for frame at depth {} with opcode {}",
-            frame.getDepth(),
-            opcode);
         gasUsed = 0;
+        LOG.warn("Unable to determine gasUsed for opcode {} at depth {}", opcode, callDepth);
       }
 
       final String toAddress = resolveToAddress(frame, opcode);
@@ -150,7 +141,7 @@ public class CallTracerResultConverter {
               .input(inputData.toHexString());
 
       if (exitFrame != null) {
-        if (!exitFrame.getOutputData().isEmpty()) {
+        if (exitFrame.getOutputData() != null && !exitFrame.getOutputData().isEmpty()) {
           builder.output(exitFrame.getOutputData().toHexString());
         }
         if (exitFrame.getExceptionalHaltReason().isPresent()) {
@@ -164,16 +155,20 @@ public class CallTracerResultConverter {
 
     while (stack.size() > 1) {
       final CallTracerResult.Builder child = stack.pop();
-      stack.peek().addCall(child.build());
+      final CallTracerResult.Builder parent = stack.peek();
+      if (parent != null) {
+        parent.addCall(child.build());
+      }
     }
 
     final TransactionProcessingResult result = trace.getResult();
-    root.gasUsed(trace.getGas());
+    final long totalGasUsed = trace.getTransaction().getGasLimit() - result.getGasRemaining();
+    root.gasUsed(totalGasUsed);
     if (!result.isSuccessful()) {
       root.error("execution reverted");
       result.getRevertReason().ifPresent(reason -> root.revertReason(reason.toHexString()));
     }
-    if (!result.getOutput().isEmpty()) {
+    if (result.getOutput() != null && !result.getOutput().isEmpty()) {
       root.output(result.getOutput().toHexString());
     }
 
@@ -207,10 +202,10 @@ public class CallTracerResultConverter {
                     : tx.getTo().map(Address::toHexString).orElse(null))
             .value(tx.getValue().toShortHexString())
             .gas(tx.getGasLimit())
-            .gasUsed(trace.getGas())
+            .gasUsed(tx.getGasLimit() - result.getGasRemaining())
             .input(tx.getPayload().toHexString());
 
-    if (!result.getOutput().isEmpty()) {
+    if (result.getOutput() != null && !result.getOutput().isEmpty()) {
       rootBuilder.output(result.getOutput().toHexString());
     }
 
