@@ -147,7 +147,9 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
                               "Peer failed to successfully return requested block headers"));
                       continue;
                     }
-                    taskResult.ethPeer().ifPresent((peer) -> taskResult.result().get().getFirst());
+                    taskResult.ethPeers().stream()
+                        .findAny()
+                        .ifPresent((unused) -> taskResult.result().get().getFirst());
                     processHeaders(taskResult.result().get());
                     if (maximumPossibleCommonAncestorNumber
                         == minimumPossibleCommonAncestorNumber) {
