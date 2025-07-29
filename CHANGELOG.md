@@ -51,6 +51,7 @@
 - Add `WorldStateService` to the plugin API [#9024](https://github.com/hyperledger/besu/pull/9024)
 - Wait for peers before starting Backward Sync [#9003](https://github.com/hyperledger/besu/pull/9003)
 - LUKSO Mainnet Pectra Hardfork [#9070](https://github.com/hyperledger/besu/pull/9070)
+- More informative logs during block creation [#9020](https://github.com/hyperledger/besu/pull/9020)
 
 #### Dependencies
 - Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
