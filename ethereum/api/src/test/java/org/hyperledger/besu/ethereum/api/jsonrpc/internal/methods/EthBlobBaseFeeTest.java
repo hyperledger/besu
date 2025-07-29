@@ -55,7 +55,10 @@ public class EthBlobBaseFeeTest {
     blockchain = createInMemoryBlockchain(genesisBlock);
     blockDataGenerator
         .blockSequence(genesisBlock, 10)
-        .forEach(block -> blockchain.appendBlock(block, blockDataGenerator.receipts(block), Optional.empty()));
+        .forEach(
+            block ->
+                blockchain.appendBlock(
+                    block, blockDataGenerator.receipts(block), Optional.empty()));
     method = new EthBlobBaseFee(blockchain, protocolSchedule);
   }
 

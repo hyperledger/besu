@@ -274,7 +274,14 @@ public class EthCallTest {
 
     final TransactionProcessingResult processingResult =
         new TransactionProcessingResult(
-            null, null, 0, 0, null, null, Optional.of(Bytes.fromHexString(abiHexString)), Optional.empty());
+            null,
+            null,
+            0,
+            0,
+            null,
+            null,
+            Optional.of(Bytes.fromHexString(abiHexString)),
+            Optional.empty());
 
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);
@@ -314,7 +321,14 @@ public class EthCallTest {
     final JsonRpcResponse response = method.response(request);
     final TransactionProcessingResult processingResult =
         new TransactionProcessingResult(
-            null, null, 0, 0, null, null, Optional.of(Bytes.fromHexString(abiHexString)), Optional.empty());
+            null,
+            null,
+            0,
+            0,
+            null,
+            null,
+            Optional.of(Bytes.fromHexString(abiHexString)),
+            Optional.empty());
 
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);
@@ -356,7 +370,14 @@ public class EthCallTest {
 
     final TransactionProcessingResult processingResult =
         new TransactionProcessingResult(
-            null, null, 0, 0, null, null, Optional.of(Bytes.fromHexString(abiHexString)), Optional.empty());
+            null,
+            null,
+            0,
+            0,
+            null,
+            null,
+            Optional.of(Bytes.fromHexString(abiHexString)),
+            Optional.empty());
 
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);

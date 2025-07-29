@@ -89,7 +89,8 @@ public class LogsSubscriptionServiceTest {
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
-    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(
+        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
 
     final ArgumentCaptor<LogResult> captor = ArgumentCaptor.forClass(LogResult.class);
     verify(subscriptionManager).sendMessage(eq(subscription.getSubscriptionId()), captor.capture());
@@ -115,7 +116,8 @@ public class LogsSubscriptionServiceTest {
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
-    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(
+        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
 
     // Cause a reorg that removes the block which emitted an event
     BlockHeader parentHeader = blockchain.getGenesisBlock().getHeader();
@@ -153,7 +155,8 @@ public class LogsSubscriptionServiceTest {
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
-    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(
+        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
 
     // Cause a reorg that removes the block which emitted an event
     BlockHeader parentHeader = blockchain.getGenesisBlock().getHeader();
@@ -166,7 +169,8 @@ public class LogsSubscriptionServiceTest {
     // Now add another block that re-emits the target log
     final BlockWithReceipts newBlockWithLog =
         generateBlock(1, () -> Collections.singletonList(targetLog));
-    blockchain.appendBlock(newBlockWithLog.getBlock(), newBlockWithLog.getReceipts(), Optional.empty());
+    blockchain.appendBlock(
+        newBlockWithLog.getBlock(), newBlockWithLog.getReceipts(), Optional.empty());
     // Sanity check
     assertThat(blockchain.getChainHeadHash()).isEqualTo(newBlockWithLog.getBlock().getHash());
 
@@ -201,7 +205,8 @@ public class LogsSubscriptionServiceTest {
     for (int i = 0; i < 2; i++) {
       final BlockWithReceipts blockWithReceipts = generateBlock(txCount, () -> logs);
       targetBlocks.add(blockWithReceipts);
-      blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+      blockchain.appendBlock(
+          blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
 
       // Add another block with unrelated logs
       final BlockWithReceipts otherBlock = generateBlock(txCount, 2, 2);
@@ -249,7 +254,8 @@ public class LogsSubscriptionServiceTest {
             .limit(3)
             .collect(Collectors.toList());
     registerSubscriptions(subscriptions);
-    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(
+        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
 
     for (LogsSubscription subscription : subscriptions) {
       final ArgumentCaptor<LogResult> captor = ArgumentCaptor.forClass(LogResult.class);
@@ -271,7 +277,8 @@ public class LogsSubscriptionServiceTest {
     registerSubscriptions(subscription);
 
     final BlockWithReceipts blockWithReceipts = generateBlock(2, 0, 0);
-    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(
+        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
 
     final ArgumentCaptor<LogResult> captor = ArgumentCaptor.forClass(LogResult.class);
     verify(subscriptionManager, times(0))
@@ -285,7 +292,8 @@ public class LogsSubscriptionServiceTest {
     registerSubscriptions(subscription);
 
     final BlockWithReceipts blockWithReceipts = generateBlock(2, 2, 2);
-    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(
+        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
 
     final ArgumentCaptor<LogResult> captor = ArgumentCaptor.forClass(LogResult.class);
     verify(subscriptionManager, times(0))

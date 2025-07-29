@@ -19,12 +19,12 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -69,7 +69,9 @@ class CodeDelegationHelperTest {
   @Test
   void getTargetAccountReturnsEmptyIfCodeIsNull() {
     assertThatThrownBy(
-            () -> CodeDelegationHelper.getTarget(worldUpdater, gasCalculator::isPrecompile, null, Optional.empty()))
+            () ->
+                CodeDelegationHelper.getTarget(
+                    worldUpdater, gasCalculator::isPrecompile, null, Optional.empty()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Account must not be null.");
   }
@@ -81,7 +83,8 @@ class CodeDelegationHelperTest {
 
     assertThatThrownBy(
             () ->
-                CodeDelegationHelper.getTarget(worldUpdater, gasCalculator::isPrecompile, account, Optional.empty()))
+                CodeDelegationHelper.getTarget(
+                    worldUpdater, gasCalculator::isPrecompile, account, Optional.empty()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Account does not have code delegation.");
   }
@@ -95,7 +98,8 @@ class CodeDelegationHelperTest {
     when(worldUpdater.get(targetAddress)).thenReturn(null);
 
     CodeDelegationHelper.Target target =
-        CodeDelegationHelper.getTarget(worldUpdater, gasCalculator::isPrecompile, account, Optional.empty());
+        CodeDelegationHelper.getTarget(
+            worldUpdater, gasCalculator::isPrecompile, account, Optional.empty());
 
     assertThat(target.code().getBytes()).isEqualTo(Bytes.EMPTY);
     assertThat(target.address()).isEqualTo(targetAddress);
@@ -113,7 +117,8 @@ class CodeDelegationHelperTest {
     when(gasCalculator.isPrecompile(targetAddress)).thenReturn(true);
 
     CodeDelegationHelper.Target target =
-        CodeDelegationHelper.getTarget(worldUpdater, gasCalculator::isPrecompile, account, Optional.empty());
+        CodeDelegationHelper.getTarget(
+            worldUpdater, gasCalculator::isPrecompile, account, Optional.empty());
 
     assertThat(target.code().getBytes()).isEqualTo(Bytes.EMPTY);
     assertThat(target.address()).isEqualTo(targetAddress);
@@ -133,7 +138,8 @@ class CodeDelegationHelperTest {
     when(gasCalculator.isPrecompile(targetAddress)).thenReturn(false);
 
     CodeDelegationHelper.Target target =
-        CodeDelegationHelper.getTarget(worldUpdater, gasCalculator::isPrecompile, account, Optional.empty());
+        CodeDelegationHelper.getTarget(
+            worldUpdater, gasCalculator::isPrecompile, account, Optional.empty());
 
     assertThat(target.code().getBytes()).isEqualTo(targetCode);
     assertThat(target.address()).isEqualTo(targetAddress);

@@ -161,7 +161,9 @@ public class CliqueMiningCoordinatorTest {
     setupCliqueContextAndBlockchain();
 
     blockChain.appendBlock(
-        createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys), Collections.emptyList(), Optional.empty());
+        createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys),
+        Collections.emptyList(),
+        Optional.empty());
 
     when(blockMiner.getParentHeader()).thenReturn(blockChain.getChainHeadHeader());
 
@@ -194,7 +196,9 @@ public class CliqueMiningCoordinatorTest {
     setupCliqueContextAndBlockchain();
 
     blockChain.appendBlock(
-        createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys), Collections.emptyList(), Optional.empty());
+        createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys),
+        Collections.emptyList(),
+        Optional.empty());
 
     when(blockMiner.getParentHeader()).thenReturn(blockChain.getChainHeadHeader());
 
