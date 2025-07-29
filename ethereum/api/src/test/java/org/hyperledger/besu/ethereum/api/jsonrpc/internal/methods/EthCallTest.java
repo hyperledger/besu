@@ -60,6 +60,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -69,6 +70,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -81,13 +85,26 @@ public class EthCallTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
   @Mock private BlockHeader blockHeader;
+  @Mock private MetricsSystem metricsSystem;
 
   @Captor ArgumentCaptor<PreCloseStateHandler<Optional<JsonRpcResponse>>> mapperCaptor;
   @Captor ArgumentCaptor<CallParameter> callParameterCaptor;
 
   @BeforeEach
   public void setUp() {
-    method = new EthCall(blockchainQueries, transactionSimulator);
+    @SuppressWarnings("unchecked")
+    LabelledMetric<Counter> mockGasUsedCounter = mock(LabelledMetric.class);
+    Counter mockCounter = mock(Counter.class);
+    when(mockGasUsedCounter.labels(any(String[].class))).thenReturn(mockCounter);
+    
+    when(metricsSystem.createLabelledCounter(
+        any(BesuMetricCategory.class),
+        any(String.class),
+        any(String.class),
+        any(String.class)))
+        .thenReturn(mockGasUsedCounter);
+    
+    method = new EthCall(blockchainQueries, transactionSimulator, metricsSystem);
     blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
   }
