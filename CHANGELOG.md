@@ -52,6 +52,7 @@
 - Wait for peers before starting Backward Sync [#9003](https://github.com/hyperledger/besu/pull/9003)
 - LUKSO Mainnet Pectra Hardfork [#9070](https://github.com/hyperledger/besu/pull/9070)
 - More informative logs during block creation [#9020](https://github.com/hyperledger/besu/pull/9020)
+- Faster block creation, reducing the time spent committing world state changes [#9023](https://github.com/hyperledger/besu/pull/9023)
 
 #### Dependencies
 - Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
