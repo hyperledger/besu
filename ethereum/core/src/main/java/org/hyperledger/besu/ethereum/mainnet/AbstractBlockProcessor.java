@@ -213,8 +213,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       blockAccessListBuilder = Optional.empty();
     }
 
-    final WorldUpdater blockUpdater = worldState.updater();
     for (int i = 0; i < transactions.size(); i++) {
+      final WorldUpdater blockUpdater = worldState.updater();
       final Transaction transaction = transactions.get(i);
       final WorldUpdater transactionUpdater = blockUpdater.updater();
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
