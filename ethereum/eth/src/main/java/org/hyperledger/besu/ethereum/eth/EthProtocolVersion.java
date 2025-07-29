@@ -26,7 +26,6 @@ import java.util.List;
  */
 public class EthProtocolVersion {
   public static final int V66 = 66;
-  public static final int V67 = 67;
   public static final int V68 = 68;
   public static final int V69 = 69;
 
@@ -49,12 +48,8 @@ public class EthProtocolVersion {
           EthProtocolMessages.GET_POOLED_TRANSACTIONS,
           EthProtocolMessages.POOLED_TRANSACTIONS);
 
-  /**
-   * eth/67 (EIP-4938, March 2022)
-   *
-   * <p>Version 67 removed the GetNodeData and NodeData messages.
-   */
-  private static final List<Integer> eth67Messages =
+  /** eth/68 */
+  private static final List<Integer> eth68Messages =
       List.of(
           EthProtocolMessages.STATUS,
           EthProtocolMessages.NEW_BLOCK_HASHES,
@@ -102,9 +97,8 @@ public class EthProtocolVersion {
     switch (protocolVersion) {
       case EthProtocolVersion.V66:
         return eth66Messages;
-      case EthProtocolVersion.V67:
       case EthProtocolVersion.V68:
-        return eth67Messages;
+        return eth68Messages;
       case EthProtocolVersion.V69:
         return eth69Messages;
       default:

@@ -156,6 +156,10 @@ public class CliqueBesuControllerBuilderTest {
                 .blockPeriodSeconds(1)
                 .build());
 
+    lenient()
+        .when(ethProtocolConfiguration.getMaxEthCapability())
+        .thenReturn(EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY);
+
     final var jsonTransitions =
         (ObjectNode)
             objectMapper.readTree(
