@@ -64,10 +64,6 @@ public class CallTracerResultConverter {
     final CallInfo rootInfo = new CallInfo(rootBuilder, null);
     depthToCallInfo.put(0, rootInfo);
 
-    // Track cumulative gas cost per depth level
-    final Map<Integer, Long> depthToCumulativeGasCost = new HashMap<>();
-    depthToCumulativeGasCost.put(0, 0L);
-
     // Process all frames
     for (int i = 0; i < frames.size(); i++) {
       final TraceFrame frame = frames.get(i);
@@ -76,12 +72,6 @@ public class CallTracerResultConverter {
 
       // Update max depth encountered
       maxDepth = Math.max(maxDepth, frameDepth);
-
-      // Accumulate gas cost for current depth
-      long currentCumulativeGasCost = depthToCumulativeGasCost.getOrDefault(frameDepth, 0L);
-      currentCumulativeGasCost +=
-          frame.getGasCost().orElse(0L) + frame.getPrecompiledGasCost().orElse(0L);
-      depthToCumulativeGasCost.put(frameDepth, currentCumulativeGasCost);
 
       // Process call operations that create a new context
       if (isCallOp(opcode) || isCreateOp(opcode)) {
@@ -93,16 +83,10 @@ public class CallTracerResultConverter {
         // Create new call for the next depth level
         final CallTracerResult.Builder childBuilder =
             createCallBuilder(frame, opcode, parentCallInfo);
-
-        // Create call info with cumulative gas cost up to this point
         final CallInfo childCallInfo = new CallInfo(childBuilder, frame);
-        childCallInfo.cumulativeGasCost = currentCumulativeGasCost;
 
         // Store call info for this depth
         depthToCallInfo.put(currentDepth + 1, childCallInfo);
-
-        // Reset cumulative gas cost for new depth level
-        depthToCumulativeGasCost.put(currentDepth + 1, 0L);
       }
       // Process return operations that exit a context
       else if (isReturnOp(opcode) || isRevertOp(opcode) || isHaltOp(opcode)) {
@@ -121,8 +105,8 @@ public class CallTracerResultConverter {
           // Set output data and error status
           setOutputAndErrorStatus(childCallInfo.builder, frame, opcode);
 
-          // Calculate gas used, accounting for cumulative gas cost
-          final long gasUsed = calculateGasUsed(entryFrame, frame, childCallInfo);
+          // Calculate gas used
+          final long gasUsed = calculateGasUsed(entryFrame, frame);
           childCallInfo.builder.gasUsed(gasUsed);
 
           // Add code deposit cost for CREATE operations
@@ -145,13 +129,6 @@ public class CallTracerResultConverter {
 
           // Remove this call from tracking as it's now complete
           depthToCallInfo.remove(currentDepth);
-
-          // Add this depth's cumulative gas to parent depth
-          long parentCumulativeGasCost =
-              depthToCumulativeGasCost.getOrDefault(currentDepth - 1, 0L);
-          parentCumulativeGasCost += depthToCumulativeGasCost.getOrDefault(currentDepth, 0L);
-          depthToCumulativeGasCost.put(currentDepth - 1, parentCumulativeGasCost);
-          depthToCumulativeGasCost.remove(currentDepth);
         }
       }
     }
@@ -268,57 +245,31 @@ public class CallTracerResultConverter {
     return frame.getValue().toShortHexString();
   }
 
-  private static long calculateGasUsed(
-      final TraceFrame entryFrame, final TraceFrame exitFrame, final CallInfo callInfo) {
-
+  private static long calculateGasUsed(final TraceFrame entryFrame, final TraceFrame exitFrame) {
     // For root transaction
     if (exitFrame.getDepth() == 0) {
+      // Root transaction: simply calculate difference and account for refunds
       long gasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemaining();
       long gasRefund = exitFrame.getGasRefund();
-      LOG.warn(
-          "Root transaction: entryGas={}, exitGas={}, refund={}, gasUsed={}",
-          entryFrame.getGasRemaining(),
-          exitFrame.getGasRemaining(),
-          gasRefund,
-          Math.max(0, gasUsed - gasRefund));
       return Math.max(0, gasUsed - gasRefund);
     }
 
-    // For nested calls, prefer alternative calculation based on entry frame and
-    // gasRemainingPostExecution
+    // For nested calls
     if (exitFrame.getGasRemainingPostExecution() >= 0) {
-      long altGasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemainingPostExecution();
-
-      // Adjust for the cumulative gas cost that was already accounted for
-      if (callInfo.cumulativeGasCost > 0) {
-        LOG.warn(
-            "Adjusting gas used for cumulative cost: original={}, cumulative={}, adjusted={}",
-            altGasUsed,
-            callInfo.cumulativeGasCost,
-            altGasUsed - callInfo.cumulativeGasCost);
-        altGasUsed -= callInfo.cumulativeGasCost;
-      }
-
-      LOG.warn(
-          "Using alternative gas calculation: entryGas={}, exitGasPost={}, gasUsed={}",
-          entryFrame.getGasRemaining(),
-          exitFrame.getGasRemainingPostExecution(),
-          Math.max(0, altGasUsed));
-
-      return Math.max(0, altGasUsed);
+      // Normal case: gas before call - gas after call = gas used
+      return entryFrame.getGasRemaining() - exitFrame.getGasRemainingPostExecution();
+    }
+    // For precompiled contracts
+    else if (entryFrame.getPrecompiledGasCost().isPresent()) {
+      return entryFrame.getPrecompiledGasCost().getAsLong();
+    }
+    // Fallback to operation gas cost
+    else if (entryFrame.getGasCost().isPresent()) {
+      return entryFrame.getGasCost().getAsLong();
     }
 
-    // Fallback to original calculation but ensure non-negative
-    long initialGas = callInfo.builder.getGas().longValueExact();
-    long finalGas = exitFrame.getGasRemaining();
-
-    LOG.warn(
-        "Fallback gas calculation: initialGas={}, finalGas={}, gasUsed={}",
-        initialGas,
-        finalGas,
-        Math.max(0, initialGas - finalGas));
-
-    return Math.max(0, initialGas - finalGas);
+    LOG.warn("Unable to determine gas used, defaulting to 0");
+    return 0;
   }
 
   private static long calculateGasProvided(final TraceFrame frame, final String opcode) {
@@ -327,26 +278,21 @@ public class CallTracerResultConverter {
       long gasNeeded = frame.getGasCost().getAsLong();
       long currentGas = frame.getGasRemaining();
 
-      LOG.warn(
-          "calculateGasProvided: opcode={}, gasNeeded={}, currentGas={}",
-          opcode,
-          gasNeeded,
-          currentGas);
-
       if (currentGas >= gasNeeded) {
         // Apply the "all but 1/64th" rule from EIP-150
         final long gasRemaining = currentGas - gasNeeded;
         final long gasToProvide = gasRemaining - Math.floorDiv(gasRemaining, 64);
 
         LOG.warn(
-            "calculateGasProvided: gasRemaining={}, gasToProvide={}", gasRemaining, gasToProvide);
+            "calculateGasProvided: gasNeeded={}, currentGas={}, gasRemaining={}, gasToProvide={}",
+            gasNeeded,
+            currentGas,
+            gasRemaining,
+            gasToProvide);
 
         return gasToProvide;
       }
     }
-
-    LOG.warn(
-        "calculateGasProvided: default case, returning gasRemaining={}", frame.getGasRemaining());
 
     // Default to just the gas remaining
     return frame.getGasRemaining();
@@ -374,7 +320,7 @@ public class CallTracerResultConverter {
       LOG.warn("Resolving input data for {} opcode", opcode);
 
       // Check if stack is present
-      if (!frame.getStack().isPresent()) {
+      if (frame.getStack().isEmpty()) {
         LOG.warn("Stack is not present in frame for {} opcode", opcode);
         return frame.getInputData();
       }
@@ -399,7 +345,7 @@ public class CallTracerResultConverter {
                 LOG.warn("CALL stack info: offset={}, length={}", offset, length);
 
                 // Check if memory is present
-                if (!frame.getMemory().isPresent()) {
+                if (frame.getMemory().isEmpty()) {
                   LOG.warn("Memory is not present in frame");
                   return frame.getInputData();
                 }
@@ -408,12 +354,6 @@ public class CallTracerResultConverter {
                     .getMemory()
                     .map(
                         memory -> {
-                          // Log memory information
-                          if (memory == null) {
-                            LOG.warn("Memory array is null");
-                            return frame.getInputData();
-                          }
-
                           LOG.warn("Memory array length: {}", memory.length);
 
                           if (offset >= 0 && length > 0) {
@@ -555,7 +495,6 @@ public class CallTracerResultConverter {
   private static class CallInfo {
     final CallTracerResult.Builder builder;
     final TraceFrame entryFrame;
-    long cumulativeGasCost = 0; // Track cumulative gas cost up to call creation
 
     CallInfo(final CallTracerResult.Builder builder, final TraceFrame entryFrame) {
       this.builder = builder;
@@ -565,12 +504,6 @@ public class CallTracerResultConverter {
     void incGasUsed(final long gas) {
       long currentGasUsed = builder.getGasUsed().longValueExact();
       builder.gasUsed(currentGasUsed + gas);
-    }
-
-    @SuppressWarnings("UnusedMethod")
-    void decGasUsed(final long gas) {
-      long currentGasUsed = builder.getGasUsed().longValueExact();
-      builder.gasUsed(Math.max(0, currentGasUsed - gas));
     }
   }
 
