@@ -122,7 +122,10 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         metricsSystem
             .createLabelledTimer(
                 BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
-            .labels(GetHeadersFromPeerByHashTask.class.getSimpleName())
+            .labels(
+                GetHeadersFromPeerByHashTask.class.getSimpleName()
+                    + "-"
+                    + getClass().getSimpleName())
             .startTimer()) {
       GetHeadersFromPeerTask task =
           hash.map(

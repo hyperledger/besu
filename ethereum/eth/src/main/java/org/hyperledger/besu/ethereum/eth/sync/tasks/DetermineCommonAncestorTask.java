@@ -131,7 +131,10 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
                             "task",
                             "Internal processing tasks",
                             "taskName")
-                        .labels(GetHeadersFromPeerByNumberTask.class.getSimpleName())
+                        .labels(
+                            GetHeadersFromPeerByNumberTask.class.getSimpleName()
+                                + "-"
+                                + getClass().getSimpleName())
                         .startTimer()) {
                   do {
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =

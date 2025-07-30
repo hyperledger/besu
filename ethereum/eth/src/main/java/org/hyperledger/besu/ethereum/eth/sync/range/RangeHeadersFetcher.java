@@ -136,7 +136,10 @@ public class RangeHeadersFetcher {
                                 "task",
                                 "Internal processing tasks",
                                 "taskName")
-                            .labels(GetHeadersFromPeerByHashTask.class.getSimpleName())
+                            .labels(
+                                GetHeadersFromPeerByHashTask.class.getSimpleName()
+                                    + "-"
+                                    + getClass().getSimpleName())
                             .startTimer()) {
 
                       GetHeadersFromPeerTask task =

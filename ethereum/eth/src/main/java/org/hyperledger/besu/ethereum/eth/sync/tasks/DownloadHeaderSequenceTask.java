@@ -211,7 +211,10 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
                           "task",
                           "Internal processing tasks",
                           "taskName")
-                      .labels(GetHeadersFromPeerByHashTask.class.getSimpleName())
+                      .labels(
+                          GetHeadersFromPeerByHashTask.class.getSimpleName()
+                              + "-"
+                              + getClass().getSimpleName())
                       .startTimer()) {
                 // Figure out parameters for our headers request
                 final boolean partiallyFilled = lastFilledHeaderIndex < segmentLength;
