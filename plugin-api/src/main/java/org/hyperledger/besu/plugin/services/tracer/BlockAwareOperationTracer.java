@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services.tracer;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
@@ -36,12 +37,16 @@ public interface BlockAwareOperationTracer extends OperationTracer {
   /**
    * Trace the start of a block.
    *
+   * @param worldView the world view at the start of the block
    * @param blockHeader the header of the block which is traced
    * @param blockBody the body of the block which is traced
    * @param miningBeneficiary the address of miner building the block
    */
   default void traceStartBlock(
-      final BlockHeader blockHeader, final BlockBody blockBody, final Address miningBeneficiary) {}
+      final WorldView worldView,
+      final BlockHeader blockHeader,
+      final BlockBody blockBody,
+      final Address miningBeneficiary) {}
 
   /**
    * Trace the end of a block.
@@ -54,11 +59,14 @@ public interface BlockAwareOperationTracer extends OperationTracer {
   /**
    * When building a block this API is called at the start of the process
    *
+   * @param worldView the world view at the start of the block
    * @param processableBlockHeader the processable header
    * @param miningBeneficiary the address of miner building the block
    */
   default void traceStartBlock(
-      final ProcessableBlockHeader processableBlockHeader, final Address miningBeneficiary) {}
+      final WorldView worldView,
+      final ProcessableBlockHeader processableBlockHeader,
+      final Address miningBeneficiary) {}
 
   @Override
   default boolean isExtendedTracing() {

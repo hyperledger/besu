@@ -31,9 +31,7 @@ import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHash
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.ClassicEVMs;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
@@ -49,7 +47,6 @@ import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
@@ -175,9 +172,7 @@ public class ClassicProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(ClassicDifficultyCalculators.EIP100)
         .transactionReceiptFactory(
-            enableRevertReason
-                ? ClassicProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
-                : ClassicProtocolSpecs::byzantiumTransactionReceiptFactory)
+            new MainnetProtocolSpecs.ByzantiumTransactionReceiptFactory(enableRevertReason))
         .contractCreationProcessorBuilder(
             evm ->
                 new ContractCreationProcessor(
@@ -271,26 +266,6 @@ public class ClassicProtocolSpecs {
         .hardforkId(THANOS);
   }
 
-  private static TransactionReceipt byzantiumTransactionReceiptFactory(
-      // ignored because it's always FRONTIER for byzantium
-      final TransactionType __,
-      final TransactionProcessingResult result,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), Optional.empty());
-  }
-
-  private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
-      // ignored because it's always FRONTIER for byzantium
-      final TransactionType __,
-      final TransactionProcessingResult result,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
-  }
-
   public static ProtocolSpecBuilder magnetoDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
@@ -315,9 +290,7 @@ public class ClassicProtocolSpecs {
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST)))
         .transactionReceiptFactory(
-            enableRevertReason
-                ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled
-                : MainnetProtocolSpecs::berlinTransactionReceiptFactory)
+            new MainnetProtocolSpecs.BerlinTransactionReceiptFactory(enableRevertReason))
         .hardforkId(MAGNETO);
   }
 

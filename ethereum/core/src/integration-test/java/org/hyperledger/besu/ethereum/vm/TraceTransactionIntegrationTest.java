@@ -83,7 +83,7 @@ public class TraceTransactionIntegrationTest {
     transactionProcessor = protocolSpec.getTransactionProcessor();
     blockHashLookup =
         protocolSpec
-            .getBlockHashProcessor()
+            .getPreExecutionProcessor()
             .createBlockHashLookup(blockchain, genesisBlock.getHeader());
   }
 

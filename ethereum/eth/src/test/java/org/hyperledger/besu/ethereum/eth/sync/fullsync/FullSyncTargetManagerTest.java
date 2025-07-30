@@ -75,7 +75,7 @@ public class FullSyncTargetManagerTest {
     final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
 
-    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
+    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.TESTING_NETWORK;
     final ProtocolContext protocolContext =
         new ProtocolContext.Builder()
             .withBlockchain(localBlockchain)

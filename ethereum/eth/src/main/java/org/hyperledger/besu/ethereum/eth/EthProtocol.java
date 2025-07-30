@@ -30,7 +30,6 @@ public class EthProtocol implements SubProtocol {
   public static final String NAME = "eth";
   private static final EthProtocol INSTANCE = new EthProtocol();
   public static final Capability ETH66 = Capability.create(NAME, EthProtocolVersion.V66);
-  public static final Capability ETH67 = Capability.create(NAME, EthProtocolVersion.V67);
   public static final Capability ETH68 = Capability.create(NAME, EthProtocolVersion.V68);
   public static final Capability ETH69 = Capability.create(NAME, EthProtocolVersion.V69);
   public static final BitSet REQUEST_ID_MESSAGES;
@@ -68,7 +67,7 @@ public class EthProtocol implements SubProtocol {
   @Override
   public int messageSpace(final int protocolVersion) {
     return switch (protocolVersion) {
-      case EthProtocolVersion.V66, EthProtocolVersion.V67, EthProtocolVersion.V68 -> 17;
+      case EthProtocolVersion.V66, EthProtocolVersion.V68 -> 17;
       case EthProtocolVersion.V69 -> 18;
       default -> 0;
     };
