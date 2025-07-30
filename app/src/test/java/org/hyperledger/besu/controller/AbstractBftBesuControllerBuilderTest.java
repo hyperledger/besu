@@ -137,6 +137,9 @@ public abstract class AbstractBftBesuControllerBuilderTest {
         .when(synchronizerConfiguration.getBlockPropagationRange())
         .thenReturn(Range.closed(1L, 2L));
 
+    lenient()
+        .when(ethProtocolConfiguration.getMaxEthCapability())
+        .thenReturn(EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY);
     setupBftGenesisConfig();
 
     bftBesuControllerBuilder =

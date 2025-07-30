@@ -479,7 +479,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
           final TransactionReceipt receipt =
               transactionReceiptFactory.create(
-                  transaction.getType(), processingResult, worldState, cumulativeGasUsed);
+                  transaction.getType(), processingResult, cumulativeGasUsed);
 
           transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
 

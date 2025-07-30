@@ -72,9 +72,9 @@ public class NewPooledTransactionHashesMessageSenderTest {
     when(pendingTransactions.getTransactionByHash(any())).thenReturn(Optional.of(tx));
 
     when(peer1.getConnection())
-        .thenReturn(new MockPeerConnection(Set.of(EthProtocol.ETH67), (cap, msg, conn) -> {}));
+        .thenReturn(new MockPeerConnection(Set.of(EthProtocol.ETH68), (cap, msg, conn) -> {}));
     when(peer2.getConnection())
-        .thenReturn(new MockPeerConnection(Set.of(EthProtocol.ETH67), (cap, msg, conn) -> {}));
+        .thenReturn(new MockPeerConnection(Set.of(EthProtocol.ETH68), (cap, msg, conn) -> {}));
   }
 
   @Test
