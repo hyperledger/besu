@@ -104,7 +104,7 @@ public class CallTracerResultConverter {
           setOutputAndErrorStatus(childCallInfo.builder, frame, opcode);
 
           // Calculate gas used
-          final long gasUsed = calculateGasUsed(entryFrame, frame);
+          final long gasUsed = calculateGasUsed(entryFrame, frame, childCallInfo);
           childCallInfo.builder.gasUsed(gasUsed);
 
           // Find parent and add this call to parent's calls
@@ -224,31 +224,27 @@ public class CallTracerResultConverter {
     return frame.getValue().toShortHexString();
   }
 
-  private static long calculateGasUsed(final TraceFrame entryFrame, final TraceFrame exitFrame) {
+  private static long calculateGasUsed(
+      final TraceFrame entryFrame, final TraceFrame exitFrame, final CallInfo callInfo) {
     // For root transaction
     if (exitFrame.getDepth() == 0) {
-      // Use gas remaining from start to end, plus any refunds
       long gasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemaining();
       long gasRefund = exitFrame.getGasRefund();
-      return gasUsed - gasRefund; // Subtract refund (refunds reduce the effective gas used)
+      return gasUsed - gasRefund;
     }
 
     // For nested calls
-    if (exitFrame.getGasRemainingPostExecution() >= 0) {
-      // Normal case: gas before call - gas after call = gas used
-      return entryFrame.getGasRemaining() - exitFrame.getGasRemainingPostExecution();
-    }
-    // For precompiled contracts
-    else if (entryFrame.getPrecompiledGasCost().isPresent()) {
-      return entryFrame.getPrecompiledGasCost().getAsLong();
-    }
-    // Fallback to operation gas cost
-    else if (entryFrame.getGasCost().isPresent()) {
-      return entryFrame.getGasCost().getAsLong();
+    // Use the gas value that was stored during call creation
+    long initialGas = callInfo.builder.getGas().longValueExact();
+    long finalGas = exitFrame.getGasRemaining();
+
+    // Handle possible refunds
+    long refund = 0;
+    if (exitFrame.getGasRefund() > 0) {
+      refund = exitFrame.getGasRefund();
     }
 
-    LOG.warn("Unable to determine gas used, defaulting to 0");
-    return 0;
+    return initialGas - finalGas + refund;
   }
 
   private static long calculateGasProvided(final TraceFrame frame, final String opcode) {

@@ -530,5 +530,9 @@ public class CallTracerResult {
     public CallTracerResult build() {
       return new CallTracerResult(this);
     }
+
+    public BigInteger getGas() {
+      return this.gas;
+    }
   }
 }
