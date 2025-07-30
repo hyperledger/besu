@@ -183,23 +183,29 @@ public class CallTracerResultConverter {
 
   private static CallTracerResult.Builder createCallBuilder(
       final TraceFrame frame, final String opcode, final CallInfo parentCallInfo) {
-
     String fromAddress = null;
     if (parentCallInfo != null && parentCallInfo.builder != null) {
       fromAddress = parentCallInfo.builder.build().getTo();
     }
-
     final String toAddress = resolveToAddress(frame, opcode);
     final Bytes inputData = resolveInputData(frame, opcode);
 
+    // Calculate gas provided to the call using the new method
     final long gasProvided = calculateGasProvided(frame, opcode);
+
+    LOG.warn(
+        "Creating call: opcode={}, from={}, to={}, gas={}",
+        opcode,
+        fromAddress,
+        toAddress,
+        gasProvided);
 
     return CallTracerResult.builder()
         .type(opcode)
         .from(fromAddress)
         .to(toAddress)
         .value(getCallValue(frame, opcode))
-        .gas(gasProvided)
+        .gas(gasProvided) // Use the calculated gas value
         .input(inputData.toHexString());
   }
 
@@ -230,7 +236,13 @@ public class CallTracerResultConverter {
     if (exitFrame.getDepth() == 0) {
       long gasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemaining();
       long gasRefund = exitFrame.getGasRefund();
-      return Math.max(0, gasUsed - gasRefund); // Ensure it's never negative
+      LOG.warn(
+          "Root transaction: entryGas={}, exitGas={}, refund={}, gasUsed={}",
+          entryFrame.getGasRemaining(),
+          exitFrame.getGasRemaining(),
+          gasRefund,
+          Math.max(0, gasUsed - gasRefund));
+      return Math.max(0, gasUsed - gasRefund);
     }
 
     // For nested calls
@@ -238,8 +250,32 @@ public class CallTracerResultConverter {
     long initialGas = callInfo.builder.getGas().longValueExact();
     long finalGas = exitFrame.getGasRemaining();
 
+    LOG.warn(
+        "Nested call (depth={}): initialGas={}, finalGas={}, rawGasUsed={}",
+        exitFrame.getDepth(),
+        initialGas,
+        finalGas,
+        initialGas - finalGas);
+
     // Ensure gasUsed is never negative
-    return Math.max(0, initialGas - finalGas);
+    long gasUsed = Math.max(0, initialGas - finalGas);
+
+    // Check if gasRemainingPostExecution is available and use it if possible
+    if (exitFrame.getGasRemainingPostExecution() >= 0) {
+      long altGasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemainingPostExecution();
+      LOG.warn(
+          "Alternative calculation: entryGas={}, exitGasPost={}, altGasUsed={}",
+          entryFrame.getGasRemaining(),
+          exitFrame.getGasRemainingPostExecution(),
+          altGasUsed);
+
+      // Use alternative calculation if it gives a reasonable value
+      if (altGasUsed > 0) {
+        gasUsed = altGasUsed;
+      }
+    }
+
+    return gasUsed;
   }
 
   private static long calculateGasProvided(final TraceFrame frame, final String opcode) {
