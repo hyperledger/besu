@@ -93,16 +93,16 @@ public class FullSyncDownloader {
       LOG.info(
           "Starting ERA1 file import prepipeline. Full sync will start after prepipeline completion");
       CompletableFuture<Void> era1PipelineFuture = era1PrepipelineChainDownloader.get().start();
-      return era1PipelineFuture.thenAccept((v) -> startFullSyncChainDownloader());
+      return era1PipelineFuture.thenAccept(
+          (v) -> {
+            LOG.info("Starting full sync.");
+            chainDownloader.start();
+          });
 
     } else {
-      return startFullSyncChainDownloader();
+      LOG.info("Starting full sync.");
+      return chainDownloader.start();
     }
-  }
-
-  private CompletableFuture<Void> startFullSyncChainDownloader() {
-    LOG.info("Starting full sync.");
-    return chainDownloader.start();
   }
 
   public void stop() {
