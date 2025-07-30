@@ -323,7 +323,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
             System.currentTimeMillis(),
             miningOn.parentHeader);
     final Optional<BlockAccessList> maybeBlockAccessList =
-        blockCreationResult.getBlock().getBody().getBlockAccessList();
+        blockCreationResult.getTransactionSelectionResults().getBlockAccessList();
     assertThat(maybeBlockAccessList).isNotEmpty();
     final BlockAccessList blockAccessList = maybeBlockAccessList.get();
     final List<AccountChanges> accountChanges = blockAccessList.getAccountChanges();
@@ -374,7 +374,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
-                        false,
+                        true,
                         new NoOpMetricsSystem())
                     .createProtocolSchedule())
             .dataStorageFormat(DataStorageFormat.BONSAI)
