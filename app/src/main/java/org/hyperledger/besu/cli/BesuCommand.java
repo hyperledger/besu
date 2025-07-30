@@ -836,20 +836,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuExecutionExceptionHandler executionExceptionHandler,
       final String... args) {
 
-    CommandLine commandLineWithHandlers =
-        commandLine
-            .setExecutionStrategy(executionStrategy)
-            .setParameterExceptionHandler(parameterExceptionHandler)
-            .setExecutionExceptionHandler(executionExceptionHandler)
-            // As this happens before the plugins registration and plugins can add options, we must
-            // allow unmatched options
-            .setUnmatchedArgumentsAllowed(true);
-
-    // Parse and run duplicate-check
-    final ParseResult pr = commandLineWithHandlers.parseArgs(args);
-    rejectDuplicateScalarOptions(pr);
-
-    return commandLineWithHandlers.execute(args);
+    try {
+      // Parse and run duplicate-check
+      // As this happens before the plugins registration and plugins can add options, we must
+      // allow unmatched options
+      final ParseResult pr = commandLine.setUnmatchedArgumentsAllowed(true).parseArgs(args);
+      rejectDuplicateScalarOptions(pr); // your generic validator
+    } catch (ParameterException e) {
+      // ← Send it to the standard handler: prints one line & exits status 1
+      return parameterExceptionHandler.handleParseException(e, args);
+    }
+    return commandLine
+        .setExecutionStrategy(executionStrategy)
+        .setParameterExceptionHandler(parameterExceptionHandler)
+        .setExecutionExceptionHandler(executionExceptionHandler)
+        // As this happens before the plugins registration and plugins can add options, we must
+        // allow unmatched options
+        .setUnmatchedArgumentsAllowed(true)
+        .execute(args);
   }
 
   /** Used by Dagger to parse all options into a commandline instance. */
