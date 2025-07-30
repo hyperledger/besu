@@ -489,22 +489,6 @@ public class CallTracerResult {
       return this;
     }
 
-    public Builder incGasUsed(final BigInteger amount) {
-      if (this.gasUsed == null) {
-        this.gasUsed = BigInteger.ZERO;
-      }
-      this.gasUsed = this.gasUsed.add(amount);
-      return this;
-    }
-
-    public Builder decGasUsed(final BigInteger amount) {
-      if (this.gasUsed == null) {
-        this.gasUsed = BigInteger.ZERO;
-      }
-      this.gasUsed = this.gasUsed.subtract(amount);
-      return this;
-    }
-
     @Override
     public String toString() {
       return MoreObjects.toStringHelper(this)
@@ -533,6 +517,14 @@ public class CallTracerResult {
 
     public BigInteger getGas() {
       return this.gas;
+    }
+
+    public String getType() {
+      return this.type;
+    }
+
+    public BigInteger getGasUsed() {
+      return this.gasUsed;
     }
   }
 }

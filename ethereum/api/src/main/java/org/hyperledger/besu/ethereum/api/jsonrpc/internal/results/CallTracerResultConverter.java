@@ -64,6 +64,10 @@ public class CallTracerResultConverter {
     final CallInfo rootInfo = new CallInfo(rootBuilder, null);
     depthToCallInfo.put(0, rootInfo);
 
+    // Track cumulative gas cost per depth level
+    final Map<Integer, Long> depthToCumulativeGasCost = new HashMap<>();
+    depthToCumulativeGasCost.put(0, 0L);
+
     // Process all frames
     for (int i = 0; i < frames.size(); i++) {
       final TraceFrame frame = frames.get(i);
@@ -72,6 +76,12 @@ public class CallTracerResultConverter {
 
       // Update max depth encountered
       maxDepth = Math.max(maxDepth, frameDepth);
+
+      // Accumulate gas cost for current depth
+      long currentCumulativeGasCost = depthToCumulativeGasCost.getOrDefault(frameDepth, 0L);
+      currentCumulativeGasCost +=
+          frame.getGasCost().orElse(0L) + frame.getPrecompiledGasCost().orElse(0L);
+      depthToCumulativeGasCost.put(frameDepth, currentCumulativeGasCost);
 
       // Process call operations that create a new context
       if (isCallOp(opcode) || isCreateOp(opcode)) {
@@ -83,8 +93,16 @@ public class CallTracerResultConverter {
         // Create new call for the next depth level
         final CallTracerResult.Builder childBuilder =
             createCallBuilder(frame, opcode, parentCallInfo);
+
+        // Create call info with cumulative gas cost up to this point
         final CallInfo childCallInfo = new CallInfo(childBuilder, frame);
+        childCallInfo.cumulativeGasCost = currentCumulativeGasCost;
+
+        // Store call info for this depth
         depthToCallInfo.put(currentDepth + 1, childCallInfo);
+
+        // Reset cumulative gas cost for new depth level
+        depthToCumulativeGasCost.put(currentDepth + 1, 0L);
       }
       // Process return operations that exit a context
       else if (isReturnOp(opcode) || isRevertOp(opcode) || isHaltOp(opcode)) {
@@ -103,9 +121,20 @@ public class CallTracerResultConverter {
           // Set output data and error status
           setOutputAndErrorStatus(childCallInfo.builder, frame, opcode);
 
-          // Calculate gas used
+          // Calculate gas used, accounting for cumulative gas cost
           final long gasUsed = calculateGasUsed(entryFrame, frame, childCallInfo);
           childCallInfo.builder.gasUsed(gasUsed);
+
+          // Add code deposit cost for CREATE operations
+          if (isCreateOp(childCallInfo.builder.getType()) && frame.getOutputData() != null) {
+            // 200 gas per byte of deployed code
+            long codeDepositCost = frame.getOutputData().size() * 200L;
+            LOG.warn(
+                "Adding code deposit cost: {} for {} bytes",
+                codeDepositCost,
+                frame.getOutputData().size());
+            childCallInfo.incGasUsed(codeDepositCost);
+          }
 
           // Find parent and add this call to parent's calls
           final CallInfo parentCallInfo = depthToCallInfo.get(currentDepth - 1);
@@ -116,6 +145,13 @@ public class CallTracerResultConverter {
 
           // Remove this call from tracking as it's now complete
           depthToCallInfo.remove(currentDepth);
+
+          // Add this depth's cumulative gas to parent depth
+          long parentCumulativeGasCost =
+              depthToCumulativeGasCost.getOrDefault(currentDepth - 1, 0L);
+          parentCumulativeGasCost += depthToCumulativeGasCost.getOrDefault(currentDepth, 0L);
+          depthToCumulativeGasCost.put(currentDepth - 1, parentCumulativeGasCost);
+          depthToCumulativeGasCost.remove(currentDepth);
         }
       }
     }
@@ -183,14 +219,16 @@ public class CallTracerResultConverter {
 
   private static CallTracerResult.Builder createCallBuilder(
       final TraceFrame frame, final String opcode, final CallInfo parentCallInfo) {
+
     String fromAddress = null;
     if (parentCallInfo != null && parentCallInfo.builder != null) {
       fromAddress = parentCallInfo.builder.build().getTo();
     }
+
     final String toAddress = resolveToAddress(frame, opcode);
     final Bytes inputData = resolveInputData(frame, opcode);
 
-    // Calculate gas provided to the call using the new method
+    // Calculate gas provided to the call using EIP-150
     final long gasProvided = calculateGasProvided(frame, opcode);
 
     LOG.warn(
@@ -232,6 +270,7 @@ public class CallTracerResultConverter {
 
   private static long calculateGasUsed(
       final TraceFrame entryFrame, final TraceFrame exitFrame, final CallInfo callInfo) {
+
     // For root transaction
     if (exitFrame.getDepth() == 0) {
       long gasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemaining();
@@ -249,11 +288,23 @@ public class CallTracerResultConverter {
     // gasRemainingPostExecution
     if (exitFrame.getGasRemainingPostExecution() >= 0) {
       long altGasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemainingPostExecution();
+
+      // Adjust for the cumulative gas cost that was already accounted for
+      if (callInfo.cumulativeGasCost > 0) {
+        LOG.warn(
+            "Adjusting gas used for cumulative cost: original={}, cumulative={}, adjusted={}",
+            altGasUsed,
+            callInfo.cumulativeGasCost,
+            altGasUsed - callInfo.cumulativeGasCost);
+        altGasUsed -= callInfo.cumulativeGasCost;
+      }
+
       LOG.warn(
           "Using alternative gas calculation: entryGas={}, exitGasPost={}, gasUsed={}",
           entryFrame.getGasRemaining(),
           exitFrame.getGasRemainingPostExecution(),
-          altGasUsed);
+          Math.max(0, altGasUsed));
+
       return Math.max(0, altGasUsed);
     }
 
@@ -421,6 +472,7 @@ public class CallTracerResultConverter {
               })
           .orElse(frame.getInputData());
     }
+
     LOG.warn("Not a CALL or CREATE op, using frame.getInputData()");
     return frame.getInputData();
   }
@@ -440,6 +492,7 @@ public class CallTracerResultConverter {
     if (startWord >= memory.length) {
       return Bytes.EMPTY;
     }
+
     final int boundedEndWord = Math.min(endWord, memory.length);
 
     // Extract and concatenate memory words
@@ -502,10 +555,22 @@ public class CallTracerResultConverter {
   private static class CallInfo {
     final CallTracerResult.Builder builder;
     final TraceFrame entryFrame;
+    long cumulativeGasCost = 0; // Track cumulative gas cost up to call creation
 
     CallInfo(final CallTracerResult.Builder builder, final TraceFrame entryFrame) {
       this.builder = builder;
       this.entryFrame = entryFrame;
+    }
+
+    void incGasUsed(final long gas) {
+      long currentGasUsed = builder.getGasUsed().longValueExact();
+      builder.gasUsed(currentGasUsed + gas);
+    }
+
+    @SuppressWarnings("UnusedMethod")
+    void decGasUsed(final long gas) {
+      long currentGasUsed = builder.getGasUsed().longValueExact();
+      builder.gasUsed(Math.max(0, currentGasUsed - gas));
     }
   }
 
