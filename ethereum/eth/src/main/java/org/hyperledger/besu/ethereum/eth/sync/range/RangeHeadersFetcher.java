@@ -123,25 +123,22 @@ public class RangeHeadersFetcher {
         .addArgument(skip)
         .log();
     CompletableFuture<List<BlockHeader>> headersFuture;
-    if (syncConfig.isPeerTaskSystemEnabled()) {
-      headersFuture =
-          ethContext
-              .getScheduler()
-              .scheduleServiceTask(
-                  () -> {
-                    try (OperationTimer.TimingContext ignored =
-                        metricsSystem
-                            .createLabelledTimer(
-                                BesuMetricCategory.SYNCHRONIZER,
-                                "task",
-                                "Internal processing tasks",
-                                "taskName")
-                            .labels(
-                                GetHeadersFromPeerByHashTask.class.getSimpleName()
-                                    + "-"
-                                    + getClass().getSimpleName())
-                            .startTimer()) {
 
+    try (OperationTimer.TimingContext ignored =
+        metricsSystem
+            .createLabelledTimer(
+                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
+            .labels(
+                GetHeadersFromPeerByHashTask.class.getSimpleName()
+                    + "-"
+                    + getClass().getSimpleName())
+            .startTimer()) {
+      if (syncConfig.isPeerTaskSystemEnabled()) {
+        headersFuture =
+            ethContext
+                .getScheduler()
+                .scheduleServiceTask(
+                    () -> {
                       GetHeadersFromPeerTask task =
                           new GetHeadersFromPeerTask(
                               referenceHeader.getHash(),
@@ -164,36 +161,36 @@ public class RangeHeadersFetcher {
                                     + taskResult.responseCode()));
                       }
                       return CompletableFuture.completedFuture(taskResult.result().get());
-                    }
-                  });
-    } else {
-      headersFuture =
-          GetHeadersFromPeerByHashTask.startingAtHash(
-                  protocolSchedule,
-                  ethContext,
-                  referenceHeader.getHash(),
-                  referenceHeader.getNumber(),
-                  // + 1 because lastHeader will be returned as well.
-                  headerCount + 1,
-                  skip,
-                  metricsSystem)
-              .assignPeer(peer)
-              .run()
-              .thenApply(PeerTaskResult::getResult);
+                    });
+      } else {
+        headersFuture =
+            GetHeadersFromPeerByHashTask.startingAtHash(
+                    protocolSchedule,
+                    ethContext,
+                    referenceHeader.getHash(),
+                    referenceHeader.getNumber(),
+                    // + 1 because lastHeader will be returned as well.
+                    headerCount + 1,
+                    skip,
+                    metricsSystem)
+                .assignPeer(peer)
+                .run()
+                .thenApply(PeerTaskResult::getResult);
+      }
+      return headersFuture.thenApply(
+          headers -> {
+            if (headers.size() < headerCount) {
+              LOG.atTrace()
+                  .setMessage(
+                      "Peer {} returned fewer headers than requested. Expected: {}, Actual: {}")
+                  .addArgument(peer)
+                  .addArgument(headerCount)
+                  .addArgument(headers.size())
+                  .log();
+            }
+            return stripExistingRangeHeaders(referenceHeader, headers);
+          });
     }
-    return headersFuture.thenApply(
-        headers -> {
-          if (headers.size() < headerCount) {
-            LOG.atTrace()
-                .setMessage(
-                    "Peer {} returned fewer headers than requested. Expected: {}, Actual: {}")
-                .addArgument(peer)
-                .addArgument(headerCount)
-                .addArgument(headers.size())
-                .log();
-          }
-          return stripExistingRangeHeaders(referenceHeader, headers);
-        });
   }
 
   private List<BlockHeader> stripExistingRangeHeaders(

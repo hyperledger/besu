@@ -71,23 +71,20 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
   @Override
   public CompletableFuture<Boolean> validatePeer(
       final EthContext ethContext, final EthPeer ethPeer) {
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      return ethContext
-          .getScheduler()
-          .scheduleServiceTask(
-              () -> {
-                try (OperationTimer.TimingContext ignored =
-                    metricsSystem
-                        .createLabelledTimer(
-                            BesuMetricCategory.SYNCHRONIZER,
-                            "task",
-                            "Internal processing tasks",
-                            "taskName")
-                        .labels(
-                            GetHeadersFromPeerByHashTask.class.getSimpleName()
-                                + "-"
-                                + getClass().getSimpleName())
-                        .startTimer()) {
+    try (OperationTimer.TimingContext ignored =
+        metricsSystem
+            .createLabelledTimer(
+                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
+            .labels(
+                GetHeadersFromPeerByHashTask.class.getSimpleName()
+                    + "-"
+                    + getClass().getSimpleName())
+            .startTimer()) {
+      if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+        return ethContext
+            .getScheduler()
+            .scheduleServiceTask(
+                () -> {
                   GetHeadersFromPeerTask task =
                       new GetHeadersFromPeerTask(
                           blockNumber,
@@ -108,30 +105,30 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
                             validateBlockHeaders(ethPeer, taskResult.result().get()));
                   }
                   return resultFuture;
-                }
-              });
-    } else {
-      final AbstractPeerTask<List<BlockHeader>> getHeaderTask =
-          GetHeadersFromPeerByNumberTask.forSingleNumber(
-                  protocolSchedule, ethContext, blockNumber, metricsSystem)
-              .setTimeout(Duration.ofSeconds(20))
-              .assignPeer(ethPeer);
-      return getHeaderTask
-          .run()
-          .handle(
-              (res, err) -> {
-                if (err != null) {
-                  // Mark peer as invalid on error
-                  LOG.debug(
-                      "Peer {} is invalid because required block ({}) is unavailable: {}",
-                      ethPeer,
-                      blockNumber,
-                      err.toString());
-                  return false;
-                }
-                final List<BlockHeader> headers = res.getResult();
-                return validateBlockHeaders(ethPeer, headers);
-              });
+                });
+      } else {
+        final AbstractPeerTask<List<BlockHeader>> getHeaderTask =
+            GetHeadersFromPeerByNumberTask.forSingleNumber(
+                    protocolSchedule, ethContext, blockNumber, metricsSystem)
+                .setTimeout(Duration.ofSeconds(20))
+                .assignPeer(ethPeer);
+        return getHeaderTask
+            .run()
+            .handle(
+                (res, err) -> {
+                  if (err != null) {
+                    // Mark peer as invalid on error
+                    LOG.debug(
+                        "Peer {} is invalid because required block ({}) is unavailable: {}",
+                        ethPeer,
+                        blockNumber,
+                        err.toString());
+                    return false;
+                  }
+                  final List<BlockHeader> headers = res.getResult();
+                  return validateBlockHeaders(ethPeer, headers);
+                });
+      }
     }
   }
 

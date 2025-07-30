@@ -81,21 +81,31 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         "Downloading block {} from peer {}.",
         blockIdentifier,
         assignedPeer.map(EthPeer::toString).orElse("<any>"));
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      ethContext
-          .getScheduler()
-          .scheduleServiceTask(
-              () -> {
-                downloadHeaderUsingPeerTaskSystem()
-                    .thenCompose(this::completeBlock)
-                    .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
-              });
-    } else {
-      downloadHeader()
-          .thenCompose(
-              (peerTaskResult) -> CompletableFuture.completedFuture(peerTaskResult.getResult()))
-          .thenCompose(this::completeBlock)
-          .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
+    try (OperationTimer.TimingContext ignored =
+        metricsSystem
+            .createLabelledTimer(
+                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
+            .labels(
+                GetHeadersFromPeerByHashTask.class.getSimpleName()
+                    + "-"
+                    + getClass().getSimpleName())
+            .startTimer()) {
+      if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+        ethContext
+            .getScheduler()
+            .scheduleServiceTask(
+                () -> {
+                  downloadHeaderUsingPeerTaskSystem()
+                      .thenCompose(this::completeBlock)
+                      .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
+                });
+      } else {
+        downloadHeader()
+            .thenCompose(
+                (peerTaskResult) -> CompletableFuture.completedFuture(peerTaskResult.getResult()))
+            .thenCompose(this::completeBlock)
+            .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
+      }
     }
   }
 
@@ -118,53 +128,43 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   }
 
   private CompletableFuture<List<BlockHeader>> downloadHeaderUsingPeerTaskSystem() {
-    try (OperationTimer.TimingContext ignored =
-        metricsSystem
-            .createLabelledTimer(
-                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
-            .labels(
-                GetHeadersFromPeerByHashTask.class.getSimpleName()
-                    + "-"
-                    + getClass().getSimpleName())
-            .startTimer()) {
-      GetHeadersFromPeerTask task =
-          hash.map(
-                  (h) ->
-                      new GetHeadersFromPeerTask(
-                          h, blockNumber, 1, 0, Direction.FORWARD, protocolSchedule))
-              .orElseGet(
-                  () ->
-                      new GetHeadersFromPeerTask(
-                          blockNumber, 1, 0, Direction.FORWARD, protocolSchedule));
-      PeerTaskExecutorResult<List<BlockHeader>> taskResult;
-      if (assignedPeer.isPresent()) {
-        taskResult = ethContext.getPeerTaskExecutor().executeAgainstPeer(task, assignedPeer.get());
-      } else {
-        taskResult = ethContext.getPeerTaskExecutor().execute(task);
-      }
-
-      CompletableFuture<List<BlockHeader>> returnValue = new CompletableFuture<List<BlockHeader>>();
-      if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED
-          && !taskResult.ethPeers().isEmpty()) {
-        returnValue.completeExceptionally(
-            new PeerDisconnectedException(taskResult.ethPeers().getLast()));
-      } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-          || taskResult.result().isEmpty()) {
-        String logMessage =
-            "Peer "
-                + (taskResult.ethPeers().isEmpty()
-                    ? "UNKNOWN"
-                    : taskResult.ethPeers().getLast().getLoggableId())
-                + " failed to successfully return requested block headers. Response code was "
-                + taskResult.responseCode();
-        returnValue.completeExceptionally(new RuntimeException(logMessage));
-        LOG.debug(logMessage);
-      } else {
-        returnValue.complete(taskResult.result().get());
-      }
-
-      return returnValue;
+    GetHeadersFromPeerTask task =
+        hash.map(
+                (h) ->
+                    new GetHeadersFromPeerTask(
+                        h, blockNumber, 1, 0, Direction.FORWARD, protocolSchedule))
+            .orElseGet(
+                () ->
+                    new GetHeadersFromPeerTask(
+                        blockNumber, 1, 0, Direction.FORWARD, protocolSchedule));
+    PeerTaskExecutorResult<List<BlockHeader>> taskResult;
+    if (assignedPeer.isPresent()) {
+      taskResult = ethContext.getPeerTaskExecutor().executeAgainstPeer(task, assignedPeer.get());
+    } else {
+      taskResult = ethContext.getPeerTaskExecutor().execute(task);
     }
+
+    CompletableFuture<List<BlockHeader>> returnValue = new CompletableFuture<List<BlockHeader>>();
+    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED
+        && !taskResult.ethPeers().isEmpty()) {
+      returnValue.completeExceptionally(
+          new PeerDisconnectedException(taskResult.ethPeers().getLast()));
+    } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+        || taskResult.result().isEmpty()) {
+      String logMessage =
+          "Peer "
+              + (taskResult.ethPeers().isEmpty()
+                  ? "UNKNOWN"
+                  : taskResult.ethPeers().getLast().getLoggableId())
+              + " failed to successfully return requested block headers. Response code was "
+              + taskResult.responseCode();
+      returnValue.completeExceptionally(new RuntimeException(logMessage));
+      LOG.debug(logMessage);
+    } else {
+      returnValue.complete(taskResult.result().get());
+    }
+
+    return returnValue;
   }
 
   private CompletableFuture<PeerTaskResult<List<Block>>> completeBlock(

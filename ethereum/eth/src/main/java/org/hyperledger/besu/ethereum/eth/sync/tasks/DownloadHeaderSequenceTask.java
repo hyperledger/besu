@@ -153,12 +153,23 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     LOG.debug(
         "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber());
     final CompletableFuture<List<BlockHeader>> headersFuture;
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      headersFuture =
-          downloadHeadersUsingPeerTaskSystem(assignedPeer)
-              .thenCompose(this::processHeadersUsingPeerTask);
-    } else {
-      headersFuture = downloadHeaders(assignedPeer).thenCompose(this::processHeaders);
+
+    try (OperationTimer.TimingContext ignored =
+        metricsSystem
+            .createLabelledTimer(
+                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
+            .labels(
+                GetHeadersFromPeerByHashTask.class.getSimpleName()
+                    + "-"
+                    + getClass().getSimpleName())
+            .startTimer()) {
+      if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+        headersFuture =
+            downloadHeadersUsingPeerTaskSystem(assignedPeer)
+                .thenCompose(this::processHeadersUsingPeerTask);
+      } else {
+        headersFuture = downloadHeaders(assignedPeer).thenCompose(this::processHeaders);
+      }
     }
     return headersFuture.whenComplete(
         (r, t) -> {
@@ -204,50 +215,37 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         .getScheduler()
         .scheduleServiceTask(
             () -> {
-              try (OperationTimer.TimingContext ignored =
-                  metricsSystem
-                      .createLabelledTimer(
-                          BesuMetricCategory.SYNCHRONIZER,
-                          "task",
-                          "Internal processing tasks",
-                          "taskName")
-                      .labels(
-                          GetHeadersFromPeerByHashTask.class.getSimpleName()
-                              + "-"
-                              + getClass().getSimpleName())
-                      .startTimer()) {
-                // Figure out parameters for our headers request
-                final boolean partiallyFilled = lastFilledHeaderIndex < segmentLength;
-                final BlockHeader referenceHeaderForNextRequest =
-                    partiallyFilled ? headers[lastFilledHeaderIndex] : referenceHeader;
-                final Hash referenceHash = referenceHeaderForNextRequest.getHash();
-                final int count = partiallyFilled ? lastFilledHeaderIndex : segmentLength;
+              // Figure out parameters for our headers request
+              final boolean partiallyFilled = lastFilledHeaderIndex < segmentLength;
+              final BlockHeader referenceHeaderForNextRequest =
+                  partiallyFilled ? headers[lastFilledHeaderIndex] : referenceHeader;
+              final Hash referenceHash = referenceHeaderForNextRequest.getHash();
+              final int count = partiallyFilled ? lastFilledHeaderIndex : segmentLength;
 
-                GetHeadersFromPeerTask task =
-                    new GetHeadersFromPeerTask(
-                        referenceHash,
-                        referenceHeaderForNextRequest.getNumber(),
-                        count + 1,
-                        0,
-                        GetHeadersFromPeerTask.Direction.REVERSE,
-                        protocolSchedule);
-                PeerTaskExecutorResult<List<BlockHeader>> taskResult;
-                if (ethPeer.isPresent()) {
-                  taskResult =
-                      ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer.get());
-                } else {
-                  taskResult = ethContext.getPeerTaskExecutor().execute(task);
-                }
-
-                if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                    || taskResult.result().isEmpty()) {
-                  return CompletableFuture.failedFuture(
-                      new RuntimeException(
-                          "Failed to download headers. Response code was "
-                              + taskResult.responseCode()));
-                }
-                return CompletableFuture.completedFuture(taskResult);
+              GetHeadersFromPeerTask task =
+                  new GetHeadersFromPeerTask(
+                      referenceHash,
+                      referenceHeaderForNextRequest.getNumber(),
+                      count + 1,
+                      0,
+                      GetHeadersFromPeerTask.Direction.REVERSE,
+                      protocolSchedule);
+              PeerTaskExecutorResult<List<BlockHeader>> taskResult;
+              if (ethPeer.isPresent()) {
+                taskResult =
+                    ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer.get());
+              } else {
+                taskResult = ethContext.getPeerTaskExecutor().execute(task);
               }
+
+              if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                  || taskResult.result().isEmpty()) {
+                return CompletableFuture.failedFuture(
+                    new RuntimeException(
+                        "Failed to download headers. Response code was "
+                            + taskResult.responseCode()));
+              }
+              return CompletableFuture.completedFuture(taskResult);
             });
   }
 

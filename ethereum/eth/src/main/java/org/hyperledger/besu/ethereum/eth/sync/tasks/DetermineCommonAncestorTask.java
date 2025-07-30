@@ -119,23 +119,20 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
       return;
     }
 
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      ethContext
-          .getScheduler()
-          .scheduleServiceTask(
-              () -> {
-                try (OperationTimer.TimingContext ignored =
-                    metricsSystem
-                        .createLabelledTimer(
-                            BesuMetricCategory.SYNCHRONIZER,
-                            "task",
-                            "Internal processing tasks",
-                            "taskName")
-                        .labels(
-                            GetHeadersFromPeerByNumberTask.class.getSimpleName()
-                                + "-"
-                                + getClass().getSimpleName())
-                        .startTimer()) {
+    try (OperationTimer.TimingContext ignored =
+        metricsSystem
+            .createLabelledTimer(
+                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
+            .labels(
+                GetHeadersFromPeerByNumberTask.class.getSimpleName()
+                    + "-"
+                    + getClass().getSimpleName())
+            .startTimer()) {
+      if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+        ethContext
+            .getScheduler()
+            .scheduleServiceTask(
+                () -> {
                   do {
                     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
                         requestHeadersUsingPeerTaskSystem();
@@ -165,21 +162,21 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
                           new IllegalStateException("No common ancestor."));
                     }
                   } while (!result.isDone());
-                }
-              });
+                });
 
-    } else {
-      requestHeaders()
-          .thenApply(AbstractPeerTask.PeerTaskResult::getResult)
-          .thenCompose(this::processHeaders)
-          .whenComplete(
-              (peerResult, error) -> {
-                if (error != null) {
-                  result.completeExceptionally(error);
-                } else if (!result.isDone()) {
-                  executeTaskTimed();
-                }
-              });
+      } else {
+        requestHeaders()
+            .thenApply(AbstractPeerTask.PeerTaskResult::getResult)
+            .thenCompose(this::processHeaders)
+            .whenComplete(
+                (peerResult, error) -> {
+                  if (error != null) {
+                    result.completeExceptionally(error);
+                  } else if (!result.isDone()) {
+                    executeTaskTimed();
+                  }
+                });
+      }
     }
   }
 

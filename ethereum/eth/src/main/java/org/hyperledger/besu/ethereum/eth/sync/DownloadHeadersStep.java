@@ -101,23 +101,21 @@ public class DownloadHeadersStep
           .run();
     } else {
       LOG.debug("Downloading headers starting from {}", range.getStart().getNumber());
-      if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-        return ethContext
-            .getScheduler()
-            .scheduleServiceTask(
-                () -> {
-                  try (OperationTimer.TimingContext ignored =
-                      metricsSystem
-                          .createLabelledTimer(
-                              BesuMetricCategory.SYNCHRONIZER,
-                              "task",
-                              "Internal processing tasks",
-                              "taskName")
-                          .labels(
-                              GetHeadersFromPeerByHashTask.class.getSimpleName()
-                                  + "-"
-                                  + getClass().getSimpleName())
-                          .startTimer()) {
+
+      try (OperationTimer.TimingContext ignored =
+          metricsSystem
+              .createLabelledTimer(
+                  BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
+              .labels(
+                  GetHeadersFromPeerByHashTask.class.getSimpleName()
+                      + "-"
+                      + getClass().getSimpleName())
+              .startTimer()) {
+        if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+          return ethContext
+              .getScheduler()
+              .scheduleServiceTask(
+                  () -> {
                     GetHeadersFromPeerTask task =
                         new GetHeadersFromPeerTask(
                             range.getStart().getHash(),
@@ -134,18 +132,18 @@ public class DownloadHeadersStep
                           new RuntimeException("Unable to download headers for range " + range));
                     }
                     return CompletableFuture.completedFuture(taskResult.result().get());
-                  }
-                });
-      } else {
-        return GetHeadersFromPeerByHashTask.startingAtHash(
-                protocolSchedule,
-                ethContext,
-                range.getStart().getHash(),
-                range.getStart().getNumber(),
-                headerRequestSize,
-                metricsSystem)
-            .run()
-            .thenApply(PeerTaskResult::getResult);
+                  });
+        } else {
+          return GetHeadersFromPeerByHashTask.startingAtHash(
+                  protocolSchedule,
+                  ethContext,
+                  range.getStart().getHash(),
+                  range.getStart().getNumber(),
+                  headerRequestSize,
+                  metricsSystem)
+              .run()
+              .thenApply(PeerTaskResult::getResult);
+        }
       }
     }
   }
