@@ -87,7 +87,7 @@ public class Era1FileReader implements Function<URI, CompletableFuture<List<Bloc
 
             @Override
             public void handleBlockIndex(final Era1BlockIndex blockIndex) {
-              // not really necessary, do nothing
+              // not necessary, do nothing
             }
           });
     } catch (IOException e) {
