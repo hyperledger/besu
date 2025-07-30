@@ -192,12 +192,14 @@ public class CallTracerResultConverter {
     final String toAddress = resolveToAddress(frame, opcode);
     final Bytes inputData = resolveInputData(frame, opcode);
 
+    final long gasProvided = calculateGasProvided(frame, opcode);
+
     return CallTracerResult.builder()
         .type(opcode)
         .from(fromAddress)
         .to(toAddress)
         .value(getCallValue(frame, opcode))
-        .gas(frame.getGasRemaining())
+        .gas(gasProvided)
         .input(inputData.toHexString());
   }
 
@@ -223,8 +225,17 @@ public class CallTracerResultConverter {
   }
 
   private static long calculateGasUsed(final TraceFrame entryFrame, final TraceFrame exitFrame) {
-    // Gas before call - gas after call = gas used
+    // For root transaction
+    if (exitFrame.getDepth() == 0) {
+      // Use gas remaining from start to end, plus any refunds
+      long gasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemaining();
+      long gasRefund = exitFrame.getGasRefund();
+      return gasUsed - gasRefund; // Subtract refund (refunds reduce the effective gas used)
+    }
+
+    // For nested calls
     if (exitFrame.getGasRemainingPostExecution() >= 0) {
+      // Normal case: gas before call - gas after call = gas used
       return entryFrame.getGasRemaining() - exitFrame.getGasRemainingPostExecution();
     }
     // For precompiled contracts
@@ -238,6 +249,23 @@ public class CallTracerResultConverter {
 
     LOG.warn("Unable to determine gas used, defaulting to 0");
     return 0;
+  }
+
+  private static long calculateGasProvided(final TraceFrame frame, final String opcode) {
+    // For CALL operations, calculate gas provided to the call
+    if (isCallOp(opcode) && frame.getGasCost().isPresent()) {
+      long gasNeeded = frame.getGasCost().getAsLong();
+      long currentGas = frame.getGasRemaining();
+
+      if (currentGas >= gasNeeded) {
+        // Apply the "all but 1/64th" rule from EIP-150
+        final long gasRemaining = currentGas - gasNeeded;
+        return gasRemaining - Math.floorDiv(gasRemaining, 64);
+      }
+    }
+
+    // Default to just the gas remaining
+    return frame.getGasRemaining();
   }
 
   private static String resolveToAddress(final TraceFrame frame, final String opcode) {
