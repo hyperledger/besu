@@ -230,7 +230,7 @@ public class CallTracerResultConverter {
     if (exitFrame.getDepth() == 0) {
       long gasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemaining();
       long gasRefund = exitFrame.getGasRefund();
-      return gasUsed - gasRefund;
+      return Math.max(0, gasUsed - gasRefund); // Ensure it's never negative
     }
 
     // For nested calls
@@ -238,13 +238,8 @@ public class CallTracerResultConverter {
     long initialGas = callInfo.builder.getGas().longValueExact();
     long finalGas = exitFrame.getGasRemaining();
 
-    // Handle possible refunds
-    long refund = 0;
-    if (exitFrame.getGasRefund() > 0) {
-      refund = exitFrame.getGasRefund();
-    }
-
-    return initialGas - finalGas + refund;
+    // Ensure gasUsed is never negative
+    return Math.max(0, initialGas - finalGas);
   }
 
   private static long calculateGasProvided(final TraceFrame frame, final String opcode) {
@@ -253,12 +248,26 @@ public class CallTracerResultConverter {
       long gasNeeded = frame.getGasCost().getAsLong();
       long currentGas = frame.getGasRemaining();
 
+      LOG.warn(
+          "calculateGasProvided: opcode={}, gasNeeded={}, currentGas={}",
+          opcode,
+          gasNeeded,
+          currentGas);
+
       if (currentGas >= gasNeeded) {
         // Apply the "all but 1/64th" rule from EIP-150
         final long gasRemaining = currentGas - gasNeeded;
-        return gasRemaining - Math.floorDiv(gasRemaining, 64);
+        final long gasToProvide = gasRemaining - Math.floorDiv(gasRemaining, 64);
+
+        LOG.warn(
+            "calculateGasProvided: gasRemaining={}, gasToProvide={}", gasRemaining, gasToProvide);
+
+        return gasToProvide;
       }
     }
+
+    LOG.warn(
+        "calculateGasProvided: default case, returning gasRemaining={}", frame.getGasRemaining());
 
     // Default to just the gas remaining
     return frame.getGasRemaining();
