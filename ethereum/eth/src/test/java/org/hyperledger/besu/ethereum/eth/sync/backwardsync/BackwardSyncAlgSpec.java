@@ -33,6 +33,7 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -87,9 +88,9 @@ public class BackwardSyncAlgSpec {
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
-      remoteBlockchain.appendBlock(block, receipts);
+      remoteBlockchain.appendBlock(block, receipts, Optional.empty());
       if (i <= LOCAL_HEIGHT) {
-        localBlockchain.appendBlock(block, receipts);
+        localBlockchain.appendBlock(block, receipts, Optional.empty());
       }
     }
 
@@ -309,7 +310,7 @@ public class BackwardSyncAlgSpec {
     final Block block = blockDataGenerator.block(options);
     final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
-    otherLocalBlockchain.appendBlock(block, receipts);
+    otherLocalBlockchain.appendBlock(block, receipts, Optional.empty());
     return otherLocalBlockchain;
   }
 

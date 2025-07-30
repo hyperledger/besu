@@ -264,7 +264,7 @@ public class FullSyncChainDownloaderTest {
     final Block chainHead = localBlockchain.getChainHeadBlock();
     final Block forkBlock =
         gen.block(gen.nextBlockOptions(chainHead).setDifficulty(Difficulty.ZERO));
-    localBlockchain.appendBlock(forkBlock, gen.receipts(forkBlock));
+    localBlockchain.appendBlock(forkBlock, gen.receipts(forkBlock), Optional.empty());
 
     // Sanity check
     assertThat(targetBlock).isGreaterThan(localBlockchain.getChainHeadBlockNumber());
@@ -503,7 +503,7 @@ public class FullSyncChainDownloaderTest {
       final BlockBody body = blockchain.getBlockBody(header.getHash()).get();
       final List<TransactionReceipt> receipts = blockchain.getTxReceipts(header.getHash()).get();
       final Block block = new Block(header, body);
-      shortChain.appendBlock(block, receipts);
+      shortChain.appendBlock(block, receipts, Optional.empty());
       nextBlock++;
     }
     return shortChain;

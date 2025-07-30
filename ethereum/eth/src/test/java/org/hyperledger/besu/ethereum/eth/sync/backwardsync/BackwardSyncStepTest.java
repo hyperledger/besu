@@ -85,6 +85,7 @@ public class BackwardSyncStepTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
+          false,
           new NoOpMetricsSystem());
 
   private final DeterministicEthScheduler ethScheduler = new DeterministicEthScheduler();
@@ -131,9 +132,9 @@ public class BackwardSyncStepTest {
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
-      remoteBlockchain.appendBlock(block, receipts);
+      remoteBlockchain.appendBlock(block, receipts, Optional.empty());
       if (i <= LOCAL_HEIGHT) {
-        localBlockchain.appendBlock(block, receipts);
+        localBlockchain.appendBlock(block, receipts, Optional.empty());
       }
     }
 
@@ -416,7 +417,7 @@ public class BackwardSyncStepTest {
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
-      blockchain.appendBlock(block, receipts);
+      blockchain.appendBlock(block, receipts, Optional.empty());
     }
   }
 }

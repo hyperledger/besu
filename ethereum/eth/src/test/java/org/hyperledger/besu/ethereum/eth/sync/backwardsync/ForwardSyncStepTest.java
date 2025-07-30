@@ -89,6 +89,7 @@ public class ForwardSyncStepTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
+          false,
           new NoOpMetricsSystem());
   private MutableBlockchain localBlockchain;
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
@@ -129,9 +130,9 @@ public class ForwardSyncStepTest {
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
-      remoteBlockchain.appendBlock(block, receipts);
+      remoteBlockchain.appendBlock(block, receipts, Optional.empty());
       if (i <= LOCAL_HEIGHT) {
-        localBlockchain.appendBlock(block, receipts);
+        localBlockchain.appendBlock(block, receipts, Optional.empty());
       }
     }
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);

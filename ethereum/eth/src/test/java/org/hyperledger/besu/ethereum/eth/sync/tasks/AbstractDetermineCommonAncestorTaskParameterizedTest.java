@@ -87,7 +87,7 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
               .setParentHash(localBlockchain.getBlockHashByNumber(i - 1).get());
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
-      localBlockchain.appendBlock(block, receipts);
+      localBlockchain.appendBlock(block, receipts, Optional.empty());
     }
   }
 
@@ -109,7 +109,7 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
       final List<TransactionReceipt> receipts =
           localBlockchain.getTxReceipts(commonHeader.getHash()).get();
       final BlockBody commonBody = localBlockchain.getBlockBody(commonHeader.getHash()).get();
-      remoteBlockchain.appendBlock(new Block(commonHeader, commonBody), receipts);
+      remoteBlockchain.appendBlock(new Block(commonHeader, commonBody), receipts, Optional.empty());
     }
 
     // Remaining blocks are disparate...
@@ -120,7 +120,7 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
               .setParentHash(localBlockchain.getBlockHashByNumber(i - 1).get());
       final Block localBlock = blockDataGenerator.block(localOptions);
       final List<TransactionReceipt> localReceipts = blockDataGenerator.receipts(localBlock);
-      localBlockchain.appendBlock(localBlock, localReceipts);
+      localBlockchain.appendBlock(localBlock, localReceipts, Optional.empty());
 
       final BlockDataGenerator.BlockOptions remoteOptions =
           new BlockDataGenerator.BlockOptions()
@@ -129,7 +129,7 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
               .setParentHash(remoteBlockchain.getBlockHashByNumber(i - 1).get());
       final Block remoteBlock = blockDataGenerator.block(remoteOptions);
       final List<TransactionReceipt> remoteReceipts = blockDataGenerator.receipts(remoteBlock);
-      remoteBlockchain.appendBlock(remoteBlock, remoteReceipts);
+      remoteBlockchain.appendBlock(remoteBlock, remoteReceipts, Optional.empty());
     }
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();

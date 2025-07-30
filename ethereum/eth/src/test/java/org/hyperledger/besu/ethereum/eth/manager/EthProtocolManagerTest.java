@@ -1171,7 +1171,7 @@ public final class EthProtocolManagerTest {
             .setParentHash(blockchain.getBlockHashByNumber(0L).get());
     final Block block = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(block);
-    blockchain.appendBlock(block, receipts);
+    blockchain.appendBlock(block, receipts, Optional.empty());
 
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =

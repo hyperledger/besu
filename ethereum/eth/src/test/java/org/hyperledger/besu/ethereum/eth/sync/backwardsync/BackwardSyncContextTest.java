@@ -101,6 +101,7 @@ public class BackwardSyncContextTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
+          false,
           new NoOpMetricsSystem());
 
   @Spy
@@ -135,16 +136,16 @@ public class BackwardSyncContextTest {
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
-      remoteBlockchain.appendBlock(block, receipts);
+      remoteBlockchain.appendBlock(block, receipts, Optional.empty());
       if (i <= LOCAL_HEIGHT) {
         if (i == UNCLE_HEIGHT) {
           uncle =
               createUncle(
                   i, localBlockchain.getBlockByNumber(LOCAL_HEIGHT - 4).orElseThrow().getHash());
-          localBlockchain.appendBlock(uncle, blockDataGenerator.receipts(uncle));
+          localBlockchain.appendBlock(uncle, blockDataGenerator.receipts(uncle), Optional.empty());
           localBlockchain.rewindToBlock(i - 1);
         }
-        localBlockchain.appendBlock(block, receipts);
+        localBlockchain.appendBlock(block, receipts, Optional.empty());
       }
     }
     when(protocolContext.getBlockchain()).thenReturn(localBlockchain);
