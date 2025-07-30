@@ -8,7 +8,7 @@
 - Remove deprecated `Quantity.getValue` method (deprecated since 2019) [#8968](https://github.com/hyperledger/besu/pull/8968)
 - Support for block creation on networks running a pre-Byzantium fork is removed, after being deprecated for a few months. If still running a pre-Byzantium network, it needs to be updated to continue to produce blocks [#9005](https://github.com/hyperledger/besu/pull/9005)
 - Remove support for Ethereum protocol version `eth/67`. [#9008](https://github.com/hyperledger/besu/pull/9008). 
-- Abort startup if boolean CLI args options are specified more than once [#8898](https://github.com/hyperledger/besu/pull/8898)
+- Abort startup if boolean command line options are specified more than once [#8898](https://github.com/hyperledger/besu/pull/8898)
 
 ### Upcoming Breaking Changes
 
