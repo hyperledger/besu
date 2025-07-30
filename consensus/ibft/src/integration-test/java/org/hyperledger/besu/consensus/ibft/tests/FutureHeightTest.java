@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -92,7 +91,7 @@ public class FutureHeightTest {
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
 
     // Add block to chain, and notify system of its arrival.
-    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList(), Optional.empty());
+    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList());
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
     context
         .getController()
@@ -126,7 +125,7 @@ public class FutureHeightTest {
     peers.verifyMessagesReceived(expectedPrepareMessage);
 
     // Add block to chain, and notify system of its arrival.
-    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList(), Optional.empty());
+    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList());
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
     context
         .getController()
@@ -189,7 +188,7 @@ public class FutureHeightTest {
     peers.commitForNonProposing(futureHeightRoundId, futureHeightBlock.getHash());
 
     // Add the "interim" block to chain, and notify system of its arrival.
-    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList(), Optional.empty());
+    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList());
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
     context
         .getController()
@@ -208,7 +207,7 @@ public class FutureHeightTest {
     peers.getProposer().injectProposal(futureHeightRoundId, futureHeightBlock);
 
     // Change to the FutureRound, and confirm prepare and commit msgs are sent
-    context.getBlockchain().appendBlock(signedNextHeightBlock, emptyList(), Optional.empty());
+    context.getBlockchain().appendBlock(signedNextHeightBlock, emptyList());
     assertThat(context.getCurrentChainHeight()).isEqualTo(2);
     context
         .getController()

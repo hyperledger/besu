@@ -600,7 +600,7 @@ public class SyncStateTest {
                   .setParentHash(parent.getHash())
                   .setBlockNumber(parent.getNumber() + 1L));
       final List<TransactionReceipt> receipts = gen.receipts(block);
-      blockchain.appendBlock(block, receipts, Optional.empty());
+      blockchain.appendBlock(block, receipts);
     }
   }
 

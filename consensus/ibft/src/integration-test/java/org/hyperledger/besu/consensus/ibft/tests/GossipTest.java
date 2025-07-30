@@ -168,7 +168,7 @@ public class GossipTest {
     ;
 
     // add block to chain so we can move to next block height
-    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList(), Optional.empty());
+    context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList());
     context
         .getController()
         .handleNewBlockEvent(new NewChainHead(signedCurrentHeightBlock.getHeader()));

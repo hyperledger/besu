@@ -49,7 +49,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /*
 Responsible for creating an environment in which integration testing can be conducted.
@@ -210,7 +209,7 @@ public class TestContext {
 
   public void appendBlock(final QbftBlock signedCurrentHeightBlock) {
     blockchain.appendBlock(
-        BlockUtil.toBesuBlock(signedCurrentHeightBlock), Collections.emptyList(), Optional.empty());
+        BlockUtil.toBesuBlock(signedCurrentHeightBlock), Collections.emptyList());
   }
 
   public QbftBlockHeader getBlockHeader(final int blockNumber) {

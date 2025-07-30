@@ -207,7 +207,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
                 .number(executionContextTestFixture.getBlockchain().getChainHeadBlockNumber() + 1)
                 .buildHeader(),
             new BlockBody(List.of(), List.of()));
-    executionContextTestFixture.getBlockchain().appendBlock(block, List.of(), Optional.empty());
+    executionContextTestFixture.getBlockchain().appendBlock(block, List.of());
 
     return executionContextTestFixture;
   }
@@ -455,7 +455,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
   }
 
   protected Transaction createTransactionWithoutChainId(final int transactionNumber) {
-    return createTransaction(transactionNumber, Optional.empty());
+    return createTransaction(transactionNumber);
   }
 
   protected void whenBlockBaseFeeIs(final Wei baseFee) {
@@ -465,7 +465,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
             .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
             .parentHash(blockchain.getChainHeadHash())
             .buildBlockHeader();
-    blockchain.appendBlock(new Block(header, BlockBody.empty()), emptyList(), Optional.empty());
+    blockchain.appendBlock(new Block(header, BlockBody.empty()), emptyList());
   }
 
   protected Transaction createFrontierTransaction(final int transactionNumber, final Wei gasPrice) {
@@ -570,7 +570,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
         transactionList.stream()
             .map(transaction -> new TransactionReceipt(1, 1, emptyList(), Optional.empty()))
             .collect(toList());
-    blockchain.appendBlock(block, transactionReceipts, Optional.empty());
+    blockchain.appendBlock(block, transactionReceipts);
     return block;
   }
 
@@ -593,7 +593,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
         transactionList.stream()
             .map(transaction -> new TransactionReceipt(1, 1, emptyList(), Optional.empty()))
             .collect(toList());
-    blockchain.appendBlock(block, transactionReceipts, Optional.empty());
+    blockchain.appendBlock(block, transactionReceipts);
     return block;
   }
 

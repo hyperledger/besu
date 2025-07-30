@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,7 +82,7 @@ public class EthGetBlockByNumberTest {
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
-      blockchain.appendBlock(block, receipts, Optional.empty());
+      blockchain.appendBlock(block, receipts);
     }
 
     BlockHeader latestHeader = blockchain.getChainHeadBlock().getHeader();

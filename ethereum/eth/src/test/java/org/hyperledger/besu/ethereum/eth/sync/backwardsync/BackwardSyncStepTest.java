@@ -132,9 +132,9 @@ public class BackwardSyncStepTest {
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
-      remoteBlockchain.appendBlock(block, receipts, Optional.empty());
+      remoteBlockchain.appendBlock(block, receipts);
       if (i <= LOCAL_HEIGHT) {
-        localBlockchain.appendBlock(block, receipts, Optional.empty());
+        localBlockchain.appendBlock(block, receipts);
       }
     }
 
@@ -417,7 +417,7 @@ public class BackwardSyncStepTest {
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
-      blockchain.appendBlock(block, receipts, Optional.empty());
+      blockchain.appendBlock(block, receipts);
     }
   }
 }

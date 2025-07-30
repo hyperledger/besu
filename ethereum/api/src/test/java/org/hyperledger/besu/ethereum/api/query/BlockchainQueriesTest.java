@@ -190,7 +190,7 @@ public class BlockchainQueriesTest {
     // Increment and test
     final Block lastBlock = data.blockData.get(2).block;
     final Block nextBlock = gen.nextBlock(lastBlock);
-    data.blockchain.appendBlock(nextBlock, gen.receipts(nextBlock), Optional.empty());
+    data.blockchain.appendBlock(nextBlock, gen.receipts(nextBlock));
 
     // Check that number has incremented
     result = queries.headBlockNumber();
@@ -391,7 +391,7 @@ public class BlockchainQueriesTest {
     final List<TransactionReceipt> forkReceipts = gen.receipts(fork);
 
     // Add fork
-    data.blockchain.appendBlock(fork, forkReceipts, Optional.empty());
+    data.blockchain.appendBlock(fork, forkReceipts);
 
     // check that logs have removed = true
     logs =
@@ -609,7 +609,7 @@ public class BlockchainQueriesTest {
     final MutableBlockchain blockchain = createInMemoryBlockchain(blocks.get(0));
     blockData
         .subList(1, blockData.size())
-        .forEach(b -> blockchain.appendBlock(b.block, b.receipts, Optional.empty()));
+        .forEach(b -> blockchain.appendBlock(b.block, b.receipts));
 
     return new BlockchainWithData(blockchain, blockData, worldStateArchive, scheduler);
   }

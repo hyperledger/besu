@@ -144,7 +144,7 @@ public class DefaultBlockchainTest {
       final Block block = blocks.get(i);
       final List<TransactionReceipt> receipts = gen.receipts(block);
       blockReceipts.add(receipts);
-      mutableBlockchain.appendBlock(block, receipts, Optional.empty());
+      mutableBlockchain.appendBlock(block, receipts);
     }
 
     // Create read only chain
@@ -178,7 +178,7 @@ public class DefaultBlockchainTest {
             block -> {
               final List<TransactionReceipt> receipts = gen.receipts(block);
               blockReceipts.add(receipts);
-              mutableBlockchain.appendBlock(block, receipts, Optional.empty());
+              mutableBlockchain.appendBlock(block, receipts);
             });
 
     // To make sure there are no surprising NPEs during DefaultBlockchain.<init>
@@ -235,7 +235,7 @@ public class DefaultBlockchainTest {
                 .containsExactly(
                     LogWithMetadata.generate(newBlock, receipts, false)
                         .toArray(new LogWithMetadata[] {}))));
-    blockchain.appendBlock(newBlock, receipts, Optional.empty());
+    blockchain.appendBlock(newBlock, receipts);
 
     assertBlockIsHead(blockchain, newBlock);
     assertTotalDifficultiesAreConsistent(blockchain, newBlock);
@@ -256,7 +256,7 @@ public class DefaultBlockchainTest {
         new BlockDataGenerator.BlockOptions().setBlockNumber(1L).setParentHash(Hash.ZERO);
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
-    assertThatThrownBy(() -> blockchain.appendBlock(newBlock, receipts, Optional.empty()))
+    assertThatThrownBy(() -> blockchain.appendBlock(newBlock, receipts))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -277,7 +277,7 @@ public class DefaultBlockchainTest {
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
     receipts.add(gen.receipt());
-    assertThatThrownBy(() -> blockchain.appendBlock(newBlock, receipts, Optional.empty()))
+    assertThatThrownBy(() -> blockchain.appendBlock(newBlock, receipts))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -293,7 +293,7 @@ public class DefaultBlockchainTest {
     final DefaultBlockchain blockchain =
         createMutableBlockchain(kvStore, kvStoreVariables, chain.get(0));
     for (int i = 1; i < chain.size(); i++) {
-      blockchain.appendBlock(chain.get(i), blockReceipts.get(i), Optional.empty());
+      blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
     }
 
     for (int i = 1; i < chain.size(); i++) {
@@ -327,7 +327,7 @@ public class DefaultBlockchainTest {
 
     // Add initial blocks
     for (int i = 1; i < chain.size(); i++) {
-      blockchain.appendBlock(chain.get(i), blockReceipts.get(i), Optional.empty());
+      blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
       expectedLogsWithMetadata.addAll(
           LogWithMetadata.generate(chain.get(i), blockReceipts.get(i), false));
     }
@@ -351,7 +351,7 @@ public class DefaultBlockchainTest {
     reorgedReceipts.add(forkReceipts);
 
     // Add fork
-    blockchain.appendBlock(fork, forkReceipts, Optional.empty());
+    blockchain.appendBlock(fork, forkReceipts);
 
     // Check chain has reorganized
     for (int i = 0; i < reorgedChain.size(); i++) {
@@ -403,7 +403,7 @@ public class DefaultBlockchainTest {
     blockchain.observeBlockAdded(event -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
     List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
-      blockchain.appendBlock(chain.get(i), blockReceipts.get(i), Optional.empty());
+      blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
       expectedLogsWithMetadata.addAll(
           LogWithMetadata.generate(chain.get(i), blockReceipts.get(i), false));
     }
@@ -445,7 +445,7 @@ public class DefaultBlockchainTest {
     reorgedReceipts.addAll(forkReceipts);
 
     // Add first block in fork, which should not cause a reorg
-    blockchain.appendBlock(forkBlocks.get(0), forkReceipts.get(0), Optional.empty());
+    blockchain.appendBlock(forkBlocks.get(0), forkReceipts.get(0));
     // Check chain has not reorganized
     for (int i = 0; i < chain.size(); i++) {
       assertBlockDataIsStored(blockchain, chain.get(i), blockReceipts.get(i));
@@ -463,7 +463,7 @@ public class DefaultBlockchainTest {
     assertThat(forks.stream().anyMatch(f -> f.equals(forkBlocks.get(0).getHash()))).isTrue();
 
     // Add second block in fork, which should cause a reorg
-    blockchain.appendBlock(forkBlocks.get(1), forkReceipts.get(1), Optional.empty());
+    blockchain.appendBlock(forkBlocks.get(1), forkReceipts.get(1));
     // Check chain has reorganized
     for (int i = 0; i < reorgedChain.size(); i++) {
       assertBlockDataIsStored(blockchain, reorgedChain.get(i), reorgedReceipts.get(i));
@@ -524,7 +524,7 @@ public class DefaultBlockchainTest {
     blockchain.observeBlockAdded(event -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
     List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
-      blockchain.appendBlock(chain.get(i), blockReceipts.get(i), Optional.empty());
+      blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
       expectedLogsWithMetadata.addAll(
           LogWithMetadata.generate(chain.get(i), blockReceipts.get(i), false));
     }
@@ -560,7 +560,7 @@ public class DefaultBlockchainTest {
     reorgedReceipts.addAll(forkReceipts);
 
     // Add first block in fork, which should not cause a reorg
-    blockchain.appendBlock(forkBlocks.get(0), forkReceipts.get(0), Optional.empty());
+    blockchain.appendBlock(forkBlocks.get(0), forkReceipts.get(0));
     // Check chain has not reorganized
     for (int i = 0; i < chain.size(); i++) {
       assertBlockDataIsStored(blockchain, chain.get(i), blockReceipts.get(i));
@@ -578,7 +578,7 @@ public class DefaultBlockchainTest {
     assertThat(forks.stream().anyMatch(f -> f.equals(forkBlocks.get(0).getHash()))).isTrue();
 
     // Add second block in fork, which should cause a reorg
-    blockchain.appendBlock(forkBlocks.get(1), forkReceipts.get(1), Optional.empty());
+    blockchain.appendBlock(forkBlocks.get(1), forkReceipts.get(1));
     // Check chain has reorganized
     for (int i = 0; i < reorgedChain.size(); i++) {
       assertBlockDataIsStored(blockchain, reorgedChain.get(i), reorgedReceipts.get(i));
@@ -636,7 +636,7 @@ public class DefaultBlockchainTest {
     blockchain.observeBlockAdded(event -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
     List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
-      blockchain.appendBlock(chain.get(i), blockReceipts.get(i), Optional.empty());
+      blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
       expectedLogsWithMetadata.addAll(
           LogWithMetadata.generate(chain.get(i), blockReceipts.get(i), false));
     }
@@ -661,7 +661,7 @@ public class DefaultBlockchainTest {
     reorgedReceipts.add(forkReceipts);
 
     // Add fork
-    blockchain.appendBlock(fork, forkReceipts, Optional.empty());
+    blockchain.appendBlock(fork, forkReceipts);
 
     // Check chain has reorganized
     for (int i = 0; i < reorgedChain.size(); i++) {
@@ -705,7 +705,7 @@ public class DefaultBlockchainTest {
     final DefaultBlockchain blockchain =
         createMutableBlockchain(kvStore, kvStoreVariables, chain.get(0));
     for (int i = 1; i < chain.size(); i++) {
-      blockchain.appendBlock(chain.get(i), blockReceipts.get(i), Optional.empty());
+      blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
     }
     final Block originalHead = blockchain.getChainHeadBlock();
     final Block targetHead =
@@ -750,7 +750,7 @@ public class DefaultBlockchainTest {
     blockchain.observeBlockAdded(event -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
     List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
-      blockchain.appendBlock(chain.get(i), blockReceipts.get(i), Optional.empty());
+      blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
       expectedLogsWithMetadata.addAll(
           LogWithMetadata.generate(chain.get(i), blockReceipts.get(i), false));
     }
@@ -781,7 +781,7 @@ public class DefaultBlockchainTest {
     // Add fork blocks, which should not cause a reorg
     for (int i = 0; i < forkBlocks.size(); i++) {
       final Block forkBlock = forkBlocks.get(i);
-      blockchain.appendBlock(forkBlock, forkReceipts.get(i), Optional.empty());
+      blockchain.appendBlock(forkBlock, forkReceipts.get(i));
       // Check chain has not reorganized
       for (int j = 0; j < chain.size(); j++) {
         assertBlockDataIsStored(blockchain, chain.get(j), blockReceipts.get(j));
@@ -808,7 +808,7 @@ public class DefaultBlockchainTest {
             .setBlockNumber(forkStart)
             .setDifficulty(chain.get(forkStart).getHeader().getDifficulty().subtract(5L));
     final Block secondFork = gen.block(options);
-    blockchain.appendBlock(secondFork, gen.receipts(secondFork), Optional.empty());
+    blockchain.appendBlock(secondFork, gen.receipts(secondFork));
 
     // We should now be tracking 2 forks
     assertThat(blockchain.blockIsOnCanonicalChain(secondFork.getHash())).isFalse();
@@ -917,7 +917,7 @@ public class DefaultBlockchainTest {
     final AtomicBoolean observerInvoked = new AtomicBoolean(false);
     blockchain.observeBlockAdded(__ -> observerInvoked.set(true));
 
-    blockchain.appendBlock(newBlock, receipts, Optional.empty());
+    blockchain.appendBlock(newBlock, receipts);
 
     assertThat(observerInvoked.get()).isTrue();
   }
@@ -948,7 +948,7 @@ public class DefaultBlockchainTest {
     final AtomicBoolean observer3Invoked = new AtomicBoolean(false);
     blockchain.observeBlockAdded(__ -> observer3Invoked.set(true));
 
-    blockchain.appendBlock(newBlock, receipts, Optional.empty());
+    blockchain.appendBlock(newBlock, receipts);
 
     assertThat(observer1Invoked.get()).isTrue();
     assertThat(observer2Invoked.get()).isTrue();
@@ -996,7 +996,7 @@ public class DefaultBlockchainTest {
     assertThat(blockchain.getTransactionReceiptsCache().get().size()).isEqualTo(0);
     assertThat(blockchain.getTotalDifficultyCache().get().size()).isEqualTo(0);
 
-    blockchain.appendBlock(newBlock, receipts, Optional.empty());
+    blockchain.appendBlock(newBlock, receipts);
 
     assertThat(blockchain.getBlockHeadersCache().get().size()).isEqualTo(1);
     assertThat(blockchain.getBlockHeadersCache().get().getIfPresent(newBlock.getHash()))

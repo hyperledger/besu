@@ -88,9 +88,7 @@ class MainnetBlockBodyValidatorTest {
                 .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
                 .setWithdrawals(Optional.of(withdrawals))
                 .setWithdrawalsRoot(BodyValidation.withdrawalsRoot(withdrawals)));
-    blockchainSetupUtil
-        .getBlockchain()
-        .appendBlock(block, Collections.emptyList(), Optional.empty());
+    blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
     when(withdrawalsValidator.validateWithdrawals(Optional.of(withdrawals))).thenReturn(true);
 
@@ -114,9 +112,7 @@ class MainnetBlockBodyValidatorTest {
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
                 .setWithdrawalsRoot(BodyValidation.withdrawalsRoot(withdrawals)));
-    blockchainSetupUtil
-        .getBlockchain()
-        .appendBlock(block, Collections.emptyList(), Optional.empty());
+    blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
     when(withdrawalsValidator.validateWithdrawals(Optional.empty())).thenReturn(false);
 
@@ -140,9 +136,7 @@ class MainnetBlockBodyValidatorTest {
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
                 .setWithdrawals(Optional.of(withdrawals)));
-    blockchainSetupUtil
-        .getBlockchain()
-        .appendBlock(block, Collections.emptyList(), Optional.empty());
+    blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
     when(withdrawalsValidator.validateWithdrawalsRoot(block)).thenReturn(false);
 
@@ -247,9 +241,7 @@ class MainnetBlockBodyValidatorTest {
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
                 .setWithdrawals(Optional.of(withdrawals)));
-    blockchainSetupUtil
-        .getBlockchain()
-        .appendBlock(block, Collections.emptyList(), Optional.empty());
+    blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
     return block;
   }
 }

@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
 
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
@@ -205,7 +204,7 @@ public class PeerPermissionsAdapterTest {
     adapter.subscribeUpdate((restricted, peers) -> updateDispatched.set(true));
 
     final Block newBlock = gen.nextBlock(blockchain.getGenesisBlock());
-    blockchain.appendBlock(newBlock, gen.receipts(newBlock), Optional.empty());
+    blockchain.appendBlock(newBlock, gen.receipts(newBlock));
 
     assertThat(updateDispatched).isTrue();
   }

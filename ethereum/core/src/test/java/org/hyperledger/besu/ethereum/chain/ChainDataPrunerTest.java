@@ -68,7 +68,7 @@ public class ChainDataPrunerTest {
     gen.blockSequence(genesisBlock, 1000)
         .forEach(
             blk -> {
-              blockchain.appendBlock(blk, gen.receipts(blk), Optional.empty());
+              blockchain.appendBlock(blk, gen.receipts(blk));
               long number = blk.getHeader().getNumber();
               if (number <= 512) {
                 // No prune happened
@@ -111,11 +111,11 @@ public class ChainDataPrunerTest {
     List<Block> canonicalChain = gen.blockSequence(genesisBlock, 1000);
     List<Block> forkChain = gen.blockSequence(genesisBlock, 16);
     for (Block blk : forkChain) {
-      blockchain.storeBlock(blk, gen.receipts(blk), Optional.empty());
+      blockchain.storeBlock(blk, gen.receipts(blk));
     }
     for (int i = 0; i < 512; i++) {
       Block blk = canonicalChain.get(i);
-      blockchain.appendBlock(blk, gen.receipts(blk), Optional.empty());
+      blockchain.appendBlock(blk, gen.receipts(blk));
     }
     // No prune happened
     assertThat(blockchain.getBlockByHash(canonicalChain.get(0).getHash())).isPresent();
@@ -123,7 +123,7 @@ public class ChainDataPrunerTest {
     for (int i = 512; i < 527; i++) {
       final int index = i;
       Block blk = canonicalChain.get(i);
-      blockchain.appendBlock(blk, gen.receipts(blk), Optional.empty());
+      blockchain.appendBlock(blk, gen.receipts(blk));
       // Prune block on canonical chain and fork for i - 512 only
       assertThat(blockchain.getBlockByHash(canonicalChain.get(index - 512).getHash())).isEmpty();
       assertThat(blockchain.getBlockByHash(canonicalChain.get(i - 511).getHash())).isPresent();
@@ -146,7 +146,7 @@ public class ChainDataPrunerTest {
         DefaultBlockchain.createMutable(
             genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
     gen.blockSequence(genesisBlock, 20)
-        .forEach((block) -> blockchain.appendBlock(block, gen.receipts(block), Optional.empty()));
+        .forEach((block) -> blockchain.appendBlock(block, gen.receipts(block)));
     final int mergeBlock = 11;
     final int pruningQuantity = 6;
     // ok, chain now has 20 blocks, including the genesis block

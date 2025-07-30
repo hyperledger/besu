@@ -112,7 +112,7 @@ public class DetermineCommonAncestorTaskTest {
   @Test
   public void shouldFailIfPeerDisconnects() {
     final Block block = blockDataGenerator.nextBlock(localBlockchain.getChainHeadBlock());
-    localBlockchain.appendBlock(block, blockDataGenerator.receipts(block), Optional.empty());
+    localBlockchain.appendBlock(block, blockDataGenerator.receipts(block));
 
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
@@ -146,7 +146,7 @@ public class DetermineCommonAncestorTaskTest {
   @Test
   public void shouldFailIfPeerDisconnectsUsingPeerTaskSystem() {
     final Block block = blockDataGenerator.nextBlock(localBlockchain.getChainHeadBlock());
-    localBlockchain.appendBlock(block, blockDataGenerator.receipts(block), Optional.empty());
+    localBlockchain.appendBlock(block, blockDataGenerator.receipts(block));
 
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
@@ -470,8 +470,8 @@ public class DetermineCommonAncestorTaskTest {
           blockDataGenerator.blockSequence(remoteGenesis, blocksInCommon - 1);
       for (Block commonBlock : commonBlocks) {
         List<TransactionReceipt> receipts = blockDataGenerator.receipts(commonBlock);
-        localBlockchain.appendBlock(commonBlock, receipts, Optional.empty());
-        remoteChain.appendBlock(commonBlock, receipts, Optional.empty());
+        localBlockchain.appendBlock(commonBlock, receipts);
+        remoteChain.appendBlock(commonBlock, receipts);
       }
     }
 
@@ -485,7 +485,7 @@ public class DetermineCommonAncestorTaskTest {
           blockDataGenerator.blockSequence(localChainHead, localBlockCount - currentHeight);
       for (Block localBlock : localBlocks) {
         List<TransactionReceipt> receipts = blockDataGenerator.receipts(localBlock);
-        localBlockchain.appendBlock(localBlock, receipts, Optional.empty());
+        localBlockchain.appendBlock(localBlock, receipts);
       }
     }
 
@@ -499,7 +499,7 @@ public class DetermineCommonAncestorTaskTest {
           blockDataGenerator.blockSequence(remoteChainHead, remoteBlockCount - currentHeight);
       for (Block remoteBlock : remoteBlocks) {
         List<TransactionReceipt> receipts = blockDataGenerator.receipts(remoteBlock);
-        remoteChain.appendBlock(remoteBlock, receipts, Optional.empty());
+        remoteChain.appendBlock(remoteBlock, receipts);
       }
     }
 

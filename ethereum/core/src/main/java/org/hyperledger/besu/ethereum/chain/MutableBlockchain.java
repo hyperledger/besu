@@ -41,6 +41,10 @@ public interface MutableBlockchain extends Blockchain {
   void appendBlock(
       Block block, List<TransactionReceipt> receipts, Optional<BlockAccessList> blockAccessList);
 
+  default void appendBlock(final Block block, final List<TransactionReceipt> receipts) {
+    appendBlock(block, receipts, Optional.empty());
+  }
+
   /**
    * Adds a block to the blockchain without indexing transactions.
    *
@@ -54,6 +58,11 @@ public interface MutableBlockchain extends Blockchain {
    */
   void appendBlockWithoutIndexingTransactions(
       Block block, List<TransactionReceipt> receipts, Optional<BlockAccessList> blockAccessList);
+
+  default void appendBlockWithoutIndexingTransactions(
+      final Block block, final List<TransactionReceipt> receipts) {
+    appendBlockWithoutIndexingTransactions(block, receipts, Optional.empty());
+  }
 
   /**
    * Adds a syncBlock to the blockchain.
@@ -92,6 +101,10 @@ public interface MutableBlockchain extends Blockchain {
    */
   void storeBlock(
       Block block, List<TransactionReceipt> receipts, Optional<BlockAccessList> blockAccessList);
+
+  default void storeBlock(final Block block, final List<TransactionReceipt> receipts) {
+    storeBlock(block, receipts, Optional.empty());
+  }
 
   /**
    * Store a block header to the blockchain, updating the chain state.

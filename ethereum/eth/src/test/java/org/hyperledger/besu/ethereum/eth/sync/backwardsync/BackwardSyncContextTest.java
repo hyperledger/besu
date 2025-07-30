@@ -136,16 +136,16 @@ public class BackwardSyncContextTest {
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
-      remoteBlockchain.appendBlock(block, receipts, Optional.empty());
+      remoteBlockchain.appendBlock(block, receipts);
       if (i <= LOCAL_HEIGHT) {
         if (i == UNCLE_HEIGHT) {
           uncle =
               createUncle(
                   i, localBlockchain.getBlockByNumber(LOCAL_HEIGHT - 4).orElseThrow().getHash());
-          localBlockchain.appendBlock(uncle, blockDataGenerator.receipts(uncle), Optional.empty());
+          localBlockchain.appendBlock(uncle, blockDataGenerator.receipts(uncle));
           localBlockchain.rewindToBlock(i - 1);
         }
-        localBlockchain.appendBlock(block, receipts, Optional.empty());
+        localBlockchain.appendBlock(block, receipts);
       }
     }
     when(protocolContext.getBlockchain()).thenReturn(localBlockchain);

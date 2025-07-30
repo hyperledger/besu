@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.util.Lists;
@@ -70,8 +69,8 @@ public class VoteTallyCacheTestBase {
     block_1 = createEmptyBlock(1, genesisBlock.getHeader().getHash());
     block_2 = createEmptyBlock(2, block_1.getHeader().getHash());
 
-    blockChain.appendBlock(block_1, Collections.emptyList(), Optional.empty());
-    blockChain.appendBlock(block_2, Collections.emptyList(), Optional.empty());
+    blockChain.appendBlock(block_1, Collections.emptyList());
+    blockChain.appendBlock(block_2, Collections.emptyList());
 
     when(blockInterface.validatorsInBlock(any())).thenReturn(validators);
   }

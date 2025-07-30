@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
@@ -90,8 +89,7 @@ public class OperationBenchmarkHelper {
                   .difficulty(Difficulty.ONE)
                   .buildHeader(),
               new BlockBody(emptyList(), emptyList())),
-          emptyList(),
-          Optional.empty());
+          emptyList());
     }
     final MessageFrame messageFrame =
         new MessageFrameTestFixture()

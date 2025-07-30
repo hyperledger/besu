@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -84,7 +83,7 @@ public class CliqueBlockChoiceTests {
     for (int i = 1; i < keyPairs.size(); i++) {
       headerBuilder.number(i);
       headerBuilder.parentHash(blockchain.getChainHeadHash());
-      blockchain.appendBlock(createEmptyBlock(keyPairs.get(i)), List.of(), Optional.empty());
+      blockchain.appendBlock(createEmptyBlock(keyPairs.get(i)), List.of());
     }
   }
 
@@ -117,7 +116,7 @@ public class CliqueBlockChoiceTests {
 
     headerBuilder.difficulty(Difficulty.of(1));
     final Block hiddenBlock = createEmptyBlock(keyPairs.get(1));
-    blockchain.appendBlock(hiddenBlock, List.of(), Optional.empty());
+    blockchain.appendBlock(hiddenBlock, List.of());
 
     headerBuilder.number(9);
     headerBuilder.difficulty(Difficulty.of(1));

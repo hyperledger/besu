@@ -130,9 +130,9 @@ public class ForwardSyncStepTest {
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
-      remoteBlockchain.appendBlock(block, receipts, Optional.empty());
+      remoteBlockchain.appendBlock(block, receipts);
       if (i <= LOCAL_HEIGHT) {
-        localBlockchain.appendBlock(block, receipts, Optional.empty());
+        localBlockchain.appendBlock(block, receipts);
       }
     }
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);

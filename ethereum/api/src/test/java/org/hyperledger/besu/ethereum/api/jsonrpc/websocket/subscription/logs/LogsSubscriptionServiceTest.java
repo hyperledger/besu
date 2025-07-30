@@ -43,7 +43,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -89,8 +88,7 @@ public class LogsSubscriptionServiceTest {
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
-    blockchain.appendBlock(
-        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts());
 
     final ArgumentCaptor<LogResult> captor = ArgumentCaptor.forClass(LogResult.class);
     verify(subscriptionManager).sendMessage(eq(subscription.getSubscriptionId()), captor.capture());
@@ -116,15 +114,14 @@ public class LogsSubscriptionServiceTest {
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
-    blockchain.appendBlock(
-        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts());
 
     // Cause a reorg that removes the block which emitted an event
     BlockHeader parentHeader = blockchain.getGenesisBlock().getHeader();
     while (!blockchain.getChainHeadHash().equals(parentHeader.getHash())) {
       final BlockWithReceipts newBlock = generateBlock(parentHeader, 2, 0, 0);
       parentHeader = newBlock.getBlock().getHeader();
-      blockchain.appendBlock(newBlock.getBlock(), newBlock.getReceipts(), Optional.empty());
+      blockchain.appendBlock(newBlock.getBlock(), newBlock.getReceipts());
     }
 
     final ArgumentCaptor<LogResult> captor = ArgumentCaptor.forClass(LogResult.class);
@@ -155,22 +152,20 @@ public class LogsSubscriptionServiceTest {
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
-    blockchain.appendBlock(
-        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts());
 
     // Cause a reorg that removes the block which emitted an event
     BlockHeader parentHeader = blockchain.getGenesisBlock().getHeader();
     while (!blockchain.getChainHeadHash().equals(parentHeader.getHash())) {
       final BlockWithReceipts newBlock = generateBlock(parentHeader, 2, 0, 0);
       parentHeader = newBlock.getBlock().getHeader();
-      blockchain.appendBlock(newBlock.getBlock(), newBlock.getReceipts(), Optional.empty());
+      blockchain.appendBlock(newBlock.getBlock(), newBlock.getReceipts());
     }
 
     // Now add another block that re-emits the target log
     final BlockWithReceipts newBlockWithLog =
         generateBlock(1, () -> Collections.singletonList(targetLog));
-    blockchain.appendBlock(
-        newBlockWithLog.getBlock(), newBlockWithLog.getReceipts(), Optional.empty());
+    blockchain.appendBlock(newBlockWithLog.getBlock(), newBlockWithLog.getReceipts());
     // Sanity check
     assertThat(blockchain.getChainHeadHash()).isEqualTo(newBlockWithLog.getBlock().getHash());
 
@@ -205,12 +200,11 @@ public class LogsSubscriptionServiceTest {
     for (int i = 0; i < 2; i++) {
       final BlockWithReceipts blockWithReceipts = generateBlock(txCount, () -> logs);
       targetBlocks.add(blockWithReceipts);
-      blockchain.appendBlock(
-          blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+      blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts());
 
       // Add another block with unrelated logs
       final BlockWithReceipts otherBlock = generateBlock(txCount, 2, 2);
-      blockchain.appendBlock(otherBlock.getBlock(), otherBlock.getReceipts(), Optional.empty());
+      blockchain.appendBlock(otherBlock.getBlock(), otherBlock.getReceipts());
     }
 
     final ArgumentCaptor<LogResult> captor = ArgumentCaptor.forClass(LogResult.class);
@@ -254,8 +248,7 @@ public class LogsSubscriptionServiceTest {
             .limit(3)
             .collect(Collectors.toList());
     registerSubscriptions(subscriptions);
-    blockchain.appendBlock(
-        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts());
 
     for (LogsSubscription subscription : subscriptions) {
       final ArgumentCaptor<LogResult> captor = ArgumentCaptor.forClass(LogResult.class);
@@ -277,8 +270,7 @@ public class LogsSubscriptionServiceTest {
     registerSubscriptions(subscription);
 
     final BlockWithReceipts blockWithReceipts = generateBlock(2, 0, 0);
-    blockchain.appendBlock(
-        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts());
 
     final ArgumentCaptor<LogResult> captor = ArgumentCaptor.forClass(LogResult.class);
     verify(subscriptionManager, times(0))
@@ -292,8 +284,7 @@ public class LogsSubscriptionServiceTest {
     registerSubscriptions(subscription);
 
     final BlockWithReceipts blockWithReceipts = generateBlock(2, 2, 2);
-    blockchain.appendBlock(
-        blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), Optional.empty());
+    blockchain.appendBlock(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts());
 
     final ArgumentCaptor<LogResult> captor = ArgumentCaptor.forClass(LogResult.class);
     verify(subscriptionManager, times(0))
