@@ -29,9 +29,7 @@ import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeaders;
 import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.DownloadHeaderSequenceTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.util.FutureUtils;
 
 import java.util.ArrayList;
@@ -102,48 +100,38 @@ public class DownloadHeadersStep
     } else {
       LOG.debug("Downloading headers starting from {}", range.getStart().getNumber());
 
-      try (OperationTimer.TimingContext ignored =
-          metricsSystem
-              .createLabelledTimer(
-                  BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
-              .labels(
-                  GetHeadersFromPeerByHashTask.class.getSimpleName()
-                      + "-"
-                      + getClass().getSimpleName())
-              .startTimer()) {
-        if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-          return ethContext
-              .getScheduler()
-              .scheduleServiceTask(
-                  () -> {
-                    GetHeadersFromPeerTask task =
-                        new GetHeadersFromPeerTask(
-                            range.getStart().getHash(),
-                            range.getStart().getNumber(),
-                            headerRequestSize,
-                            0,
-                            GetHeadersFromPeerTask.Direction.FORWARD,
-                            protocolSchedule);
-                    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        ethContext.getPeerTaskExecutor().execute(task);
-                    if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                        || taskResult.result().isEmpty()) {
-                      return CompletableFuture.failedFuture(
-                          new RuntimeException("Unable to download headers for range " + range));
-                    }
-                    return CompletableFuture.completedFuture(taskResult.result().get());
-                  });
-        } else {
-          return GetHeadersFromPeerByHashTask.startingAtHash(
-                  protocolSchedule,
-                  ethContext,
-                  range.getStart().getHash(),
-                  range.getStart().getNumber(),
-                  headerRequestSize,
-                  metricsSystem)
-              .run()
-              .thenApply(PeerTaskResult::getResult);
-        }
+      if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+        return ethContext
+            .getScheduler()
+            .scheduleServiceTask(
+                () -> {
+                  GetHeadersFromPeerTask task =
+                      new GetHeadersFromPeerTask(
+                          range.getStart().getHash(),
+                          range.getStart().getNumber(),
+                          headerRequestSize,
+                          0,
+                          GetHeadersFromPeerTask.Direction.FORWARD,
+                          protocolSchedule);
+                  PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                      ethContext.getPeerTaskExecutor().execute(task);
+                  if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                      || taskResult.result().isEmpty()) {
+                    return CompletableFuture.failedFuture(
+                        new RuntimeException("Unable to download headers for range " + range));
+                  }
+                  return CompletableFuture.completedFuture(taskResult.result().get());
+                });
+      } else {
+        return GetHeadersFromPeerByHashTask.startingAtHash(
+                protocolSchedule,
+                ethContext,
+                range.getStart().getHash(),
+                range.getStart().getNumber(),
+                headerRequestSize,
+                metricsSystem)
+            .run()
+            .thenApply(PeerTaskResult::getResult);
       }
     }
   }

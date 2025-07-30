@@ -30,9 +30,7 @@ import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTa
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.Optional;
@@ -124,73 +122,63 @@ public class RangeHeadersFetcher {
         .log();
     CompletableFuture<List<BlockHeader>> headersFuture;
 
-    try (OperationTimer.TimingContext ignored =
-        metricsSystem
-            .createLabelledTimer(
-                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
-            .labels(
-                GetHeadersFromPeerByHashTask.class.getSimpleName()
-                    + "-"
-                    + getClass().getSimpleName())
-            .startTimer()) {
-      if (syncConfig.isPeerTaskSystemEnabled()) {
-        headersFuture =
-            ethContext
-                .getScheduler()
-                .scheduleServiceTask(
-                    () -> {
-                      GetHeadersFromPeerTask task =
-                          new GetHeadersFromPeerTask(
-                              referenceHeader.getHash(),
-                              referenceHeader.getNumber(),
-                              // + 1 because lastHeader will be returned as well.
-                              headerCount + 1,
-                              skip,
-                              Direction.FORWARD,
-                              protocolSchedule);
-                      PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                          ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
-                      if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                          || taskResult.result().isEmpty()) {
-                        LOG.warn(
-                            "Unsuccessfully used peer task system to fetch headers. Response code was {}",
-                            taskResult.responseCode());
-                        return CompletableFuture.failedFuture(
-                            new RuntimeException(
-                                "Unable to retrieve headers. Response code was "
-                                    + taskResult.responseCode()));
-                      }
-                      return CompletableFuture.completedFuture(taskResult.result().get());
-                    });
-      } else {
-        headersFuture =
-            GetHeadersFromPeerByHashTask.startingAtHash(
-                    protocolSchedule,
-                    ethContext,
-                    referenceHeader.getHash(),
-                    referenceHeader.getNumber(),
-                    // + 1 because lastHeader will be returned as well.
-                    headerCount + 1,
-                    skip,
-                    metricsSystem)
-                .assignPeer(peer)
-                .run()
-                .thenApply(PeerTaskResult::getResult);
-      }
-      return headersFuture.thenApply(
-          headers -> {
-            if (headers.size() < headerCount) {
-              LOG.atTrace()
-                  .setMessage(
-                      "Peer {} returned fewer headers than requested. Expected: {}, Actual: {}")
-                  .addArgument(peer)
-                  .addArgument(headerCount)
-                  .addArgument(headers.size())
-                  .log();
-            }
-            return stripExistingRangeHeaders(referenceHeader, headers);
-          });
+    if (syncConfig.isPeerTaskSystemEnabled()) {
+      headersFuture =
+          ethContext
+              .getScheduler()
+              .scheduleServiceTask(
+                  () -> {
+                    GetHeadersFromPeerTask task =
+                        new GetHeadersFromPeerTask(
+                            referenceHeader.getHash(),
+                            referenceHeader.getNumber(),
+                            // + 1 because lastHeader will be returned as well.
+                            headerCount + 1,
+                            skip,
+                            Direction.FORWARD,
+                            protocolSchedule);
+                    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                        ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
+                    if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                        || taskResult.result().isEmpty()) {
+                      LOG.warn(
+                          "Unsuccessfully used peer task system to fetch headers. Response code was {}",
+                          taskResult.responseCode());
+                      return CompletableFuture.failedFuture(
+                          new RuntimeException(
+                              "Unable to retrieve headers. Response code was "
+                                  + taskResult.responseCode()));
+                    }
+                    return CompletableFuture.completedFuture(taskResult.result().get());
+                  });
+    } else {
+      headersFuture =
+          GetHeadersFromPeerByHashTask.startingAtHash(
+                  protocolSchedule,
+                  ethContext,
+                  referenceHeader.getHash(),
+                  referenceHeader.getNumber(),
+                  // + 1 because lastHeader will be returned as well.
+                  headerCount + 1,
+                  skip,
+                  metricsSystem)
+              .assignPeer(peer)
+              .run()
+              .thenApply(PeerTaskResult::getResult);
     }
+    return headersFuture.thenApply(
+        headers -> {
+          if (headers.size() < headerCount) {
+            LOG.atTrace()
+                .setMessage(
+                    "Peer {} returned fewer headers than requested. Expected: {}, Actual: {}")
+                .addArgument(peer)
+                .addArgument(headerCount)
+                .addArgument(headers.size())
+                .log();
+          }
+          return stripExistingRangeHeaders(referenceHeader, headers);
+        });
   }
 
   private List<BlockHeader> stripExistingRangeHeaders(

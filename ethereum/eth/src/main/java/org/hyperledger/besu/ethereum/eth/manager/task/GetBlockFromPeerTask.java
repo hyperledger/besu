@@ -27,9 +27,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.Optional;
@@ -81,31 +79,21 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         "Downloading block {} from peer {}.",
         blockIdentifier,
         assignedPeer.map(EthPeer::toString).orElse("<any>"));
-    try (OperationTimer.TimingContext ignored =
-        metricsSystem
-            .createLabelledTimer(
-                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
-            .labels(
-                GetHeadersFromPeerByHashTask.class.getSimpleName()
-                    + "-"
-                    + getClass().getSimpleName())
-            .startTimer()) {
-      if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-        ethContext
-            .getScheduler()
-            .scheduleServiceTask(
-                () -> {
-                  downloadHeaderUsingPeerTaskSystem()
-                      .thenCompose(this::completeBlock)
-                      .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
-                });
-      } else {
-        downloadHeader()
-            .thenCompose(
-                (peerTaskResult) -> CompletableFuture.completedFuture(peerTaskResult.getResult()))
-            .thenCompose(this::completeBlock)
-            .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
-      }
+    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+      ethContext
+          .getScheduler()
+          .scheduleServiceTask(
+              () -> {
+                downloadHeaderUsingPeerTaskSystem()
+                    .thenCompose(this::completeBlock)
+                    .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
+              });
+    } else {
+      downloadHeader()
+          .thenCompose(
+              (peerTaskResult) -> CompletableFuture.completedFuture(peerTaskResult.getResult()))
+          .thenCompose(this::completeBlock)
+          .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
     }
   }
 

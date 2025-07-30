@@ -54,24 +54,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
       final int skip,
       final Direction direction,
       final ProtocolSchedule protocolSchedule) {
-    this(blockNumber, maxHeaders, skip, direction, 5, protocolSchedule);
-  }
-
-  public GetHeadersFromPeerTask(
-      final long blockNumber,
-      final int maxHeaders,
-      final int skip,
-      final Direction direction,
-      final int maximumRetriesAgainstDifferentPeers,
-      final ProtocolSchedule protocolSchedule) {
-    this(
-        null,
-        blockNumber,
-        maxHeaders,
-        skip,
-        direction,
-        maximumRetriesAgainstDifferentPeers,
-        protocolSchedule);
+    this(null, blockNumber, maxHeaders, skip, direction, 5, protocolSchedule);
   }
 
   public GetHeadersFromPeerTask(

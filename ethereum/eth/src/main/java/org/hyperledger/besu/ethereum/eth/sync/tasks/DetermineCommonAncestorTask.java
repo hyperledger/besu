@@ -29,9 +29,7 @@ import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByNumber
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.util.BlockchainUtil;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.OptionalInt;
@@ -119,64 +117,50 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
       return;
     }
 
-    try (OperationTimer.TimingContext ignored =
-        metricsSystem
-            .createLabelledTimer(
-                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
-            .labels(
-                GetHeadersFromPeerByNumberTask.class.getSimpleName()
-                    + "-"
-                    + getClass().getSimpleName())
-            .startTimer()) {
-      if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-        ethContext
-            .getScheduler()
-            .scheduleServiceTask(
-                () -> {
-                  do {
-                    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        requestHeadersUsingPeerTaskSystem();
-                    if (taskResult.responseCode()
-                        == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
-                      result.completeExceptionally(new PeerDisconnectedException(peer));
-                      continue;
-                    } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                        || taskResult.result().isEmpty()) {
-                      result.completeExceptionally(
-                          new RuntimeException(
-                              "Peer failed to successfully return requested block headers"));
-                      continue;
-                    }
-                    taskResult.ethPeers().stream()
-                        .findAny()
-                        .ifPresent((unused) -> taskResult.result().get().getFirst());
-                    processHeaders(taskResult.result().get());
-                    if (maximumPossibleCommonAncestorNumber
-                        == minimumPossibleCommonAncestorNumber) {
-                      // Bingo, we found our common ancestor.
-                      result.complete(commonAncestorCandidate);
-                    } else if (maximumPossibleCommonAncestorNumber
-                            < BlockHeader.GENESIS_BLOCK_NUMBER
-                        && !result.isDone()) {
-                      result.completeExceptionally(
-                          new IllegalStateException("No common ancestor."));
-                    }
-                  } while (!result.isDone());
-                });
-
-      } else {
-        requestHeaders()
-            .thenApply(AbstractPeerTask.PeerTaskResult::getResult)
-            .thenCompose(this::processHeaders)
-            .whenComplete(
-                (peerResult, error) -> {
-                  if (error != null) {
-                    result.completeExceptionally(error);
-                  } else if (!result.isDone()) {
-                    executeTaskTimed();
+    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+      ethContext
+          .getScheduler()
+          .scheduleServiceTask(
+              () -> {
+                do {
+                  PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                      requestHeadersUsingPeerTaskSystem();
+                  if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
+                    result.completeExceptionally(new PeerDisconnectedException(peer));
+                    continue;
+                  } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                      || taskResult.result().isEmpty()) {
+                    result.completeExceptionally(
+                        new RuntimeException(
+                            "Peer failed to successfully return requested block headers"));
+                    continue;
                   }
-                });
-      }
+                  taskResult.ethPeers().stream()
+                      .findAny()
+                      .ifPresent((unused) -> taskResult.result().get().getFirst());
+                  processHeaders(taskResult.result().get());
+                  if (maximumPossibleCommonAncestorNumber == minimumPossibleCommonAncestorNumber) {
+                    // Bingo, we found our common ancestor.
+                    result.complete(commonAncestorCandidate);
+                  } else if (maximumPossibleCommonAncestorNumber < BlockHeader.GENESIS_BLOCK_NUMBER
+                      && !result.isDone()) {
+                    result.completeExceptionally(new IllegalStateException("No common ancestor."));
+                  }
+                } while (!result.isDone());
+              });
+
+    } else {
+      requestHeaders()
+          .thenApply(AbstractPeerTask.PeerTaskResult::getResult)
+          .thenCompose(this::processHeaders)
+          .whenComplete(
+              (peerResult, error) -> {
+                if (error != null) {
+                  result.completeExceptionally(error);
+                } else if (!result.isDone()) {
+                  executeTaskTimed();
+                }
+              });
     }
   }
 

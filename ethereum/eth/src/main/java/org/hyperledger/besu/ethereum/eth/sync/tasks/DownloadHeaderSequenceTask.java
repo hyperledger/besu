@@ -154,22 +154,12 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber());
     final CompletableFuture<List<BlockHeader>> headersFuture;
 
-    try (OperationTimer.TimingContext ignored =
-        metricsSystem
-            .createLabelledTimer(
-                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
-            .labels(
-                GetHeadersFromPeerByHashTask.class.getSimpleName()
-                    + "-"
-                    + getClass().getSimpleName())
-            .startTimer()) {
-      if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-        headersFuture =
-            downloadHeadersUsingPeerTaskSystem(assignedPeer)
-                .thenCompose(this::processHeadersUsingPeerTask);
-      } else {
-        headersFuture = downloadHeaders(assignedPeer).thenCompose(this::processHeaders);
-      }
+    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
+      headersFuture =
+          downloadHeadersUsingPeerTaskSystem(assignedPeer)
+              .thenCompose(this::processHeadersUsingPeerTask);
+    } else {
+      headersFuture = downloadHeaders(assignedPeer).thenCompose(this::processHeaders);
     }
     return headersFuture.whenComplete(
         (r, t) -> {
