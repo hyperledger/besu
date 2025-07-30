@@ -245,37 +245,29 @@ public class CallTracerResultConverter {
       return Math.max(0, gasUsed - gasRefund);
     }
 
-    // For nested calls
-    // Use the gas value that was stored during call creation
+    // For nested calls, prefer alternative calculation based on entry frame and
+    // gasRemainingPostExecution
+    if (exitFrame.getGasRemainingPostExecution() >= 0) {
+      long altGasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemainingPostExecution();
+      LOG.warn(
+          "Using alternative gas calculation: entryGas={}, exitGasPost={}, gasUsed={}",
+          entryFrame.getGasRemaining(),
+          exitFrame.getGasRemainingPostExecution(),
+          altGasUsed);
+      return Math.max(0, altGasUsed);
+    }
+
+    // Fallback to original calculation but ensure non-negative
     long initialGas = callInfo.builder.getGas().longValueExact();
     long finalGas = exitFrame.getGasRemaining();
 
     LOG.warn(
-        "Nested call (depth={}): initialGas={}, finalGas={}, rawGasUsed={}",
-        exitFrame.getDepth(),
+        "Fallback gas calculation: initialGas={}, finalGas={}, gasUsed={}",
         initialGas,
         finalGas,
-        initialGas - finalGas);
+        Math.max(0, initialGas - finalGas));
 
-    // Ensure gasUsed is never negative
-    long gasUsed = Math.max(0, initialGas - finalGas);
-
-    // Check if gasRemainingPostExecution is available and use it if possible
-    if (exitFrame.getGasRemainingPostExecution() >= 0) {
-      long altGasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemainingPostExecution();
-      LOG.warn(
-          "Alternative calculation: entryGas={}, exitGasPost={}, altGasUsed={}",
-          entryFrame.getGasRemaining(),
-          exitFrame.getGasRemainingPostExecution(),
-          altGasUsed);
-
-      // Use alternative calculation if it gives a reasonable value
-      if (altGasUsed > 0) {
-        gasUsed = altGasUsed;
-      }
-    }
-
-    return gasUsed;
+    return Math.max(0, initialGas - finalGas);
   }
 
   private static long calculateGasProvided(final TraceFrame frame, final String opcode) {
