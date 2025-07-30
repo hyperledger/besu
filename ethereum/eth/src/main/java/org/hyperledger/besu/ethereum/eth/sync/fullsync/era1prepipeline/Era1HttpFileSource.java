@@ -31,6 +31,7 @@ public class Era1HttpFileSource implements Iterator<URI> {
           "<a href=\"(?<fileName>(?:mainnet|sepolia)-(?<fileNumber>\\d{5})-[0-9a-fA-f]{8}.era1)\">");
   private static final String ERA1_PATTERN_FILE_NAME_GROUP = "fileName";
   private static final String ERA1_PATTERN_FILE_NUMBER_GROUP = "fileNumber";
+  private static final int ERA1_BLOCK_COUNT = 8192;
 
   private final URI era1Uri;
 
@@ -39,7 +40,7 @@ public class Era1HttpFileSource implements Iterator<URI> {
 
   public Era1HttpFileSource(final URI era1Uri, final long currentHeadBlockNumber) {
     this.era1Uri = era1Uri;
-    currentFileNumber = (int) (currentHeadBlockNumber / 8192);
+    currentFileNumber = (int) (currentHeadBlockNumber / ERA1_BLOCK_COUNT);
   }
 
   @Override

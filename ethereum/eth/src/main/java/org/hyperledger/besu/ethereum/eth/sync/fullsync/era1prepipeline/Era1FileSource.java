@@ -29,6 +29,7 @@ public class Era1FileSource implements Iterator<URI> {
   private static final Pattern ERA1_FILE_PATTERN =
       Pattern.compile("(?:mainnet|sepolia)-(?<fileNumber>\\d{5})-[0-9a-fA-f]{8}.era1");
   private static final String ERA1_PATTERN_FILE_NUMBER_GROUP = "fileNumber";
+  private static final int ERA1_BLOCK_COUNT = 8192;
 
   private final URI era1PathUri;
 
@@ -37,7 +38,7 @@ public class Era1FileSource implements Iterator<URI> {
 
   public Era1FileSource(final URI era1PathUri, final long currentHeadBlockNumber) {
     this.era1PathUri = era1PathUri;
-    currentFileNumber = (int) (currentHeadBlockNumber / 8192);
+    currentFileNumber = (int) (currentHeadBlockNumber / ERA1_BLOCK_COUNT);
   }
 
   @Override
