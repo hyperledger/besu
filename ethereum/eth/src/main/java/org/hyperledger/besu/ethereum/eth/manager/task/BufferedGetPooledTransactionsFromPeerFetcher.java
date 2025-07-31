@@ -25,8 +25,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -94,27 +92,16 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
         futureTransactions =
             ethContext
                 .getScheduler()
-                .scheduleSyncWorkerTask(
+                .scheduleServiceTask(
                     () -> {
-                      try (OperationTimer.TimingContext ignored =
-                          metrics
-                              .getMetricsSystem()
-                              .createLabelledTimer(
-                                  BesuMetricCategory.SYNCHRONIZER,
-                                  "task",
-                                  "Internal processing tasks",
-                                  "taskName")
-                              .labels(GetPooledTransactionsFromPeerTask.class.getSimpleName())
-                              .startTimer()) {
-                        PeerTaskExecutorResult<List<Transaction>> taskResult =
-                            ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
-                        if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                            || taskResult.result().isEmpty()) {
-                          return CompletableFuture.failedFuture(
-                              new RuntimeException("Failed to retrieve transactions for hashes"));
-                        }
-                        return CompletableFuture.completedFuture(taskResult.result().get());
+                      PeerTaskExecutorResult<List<Transaction>> taskResult =
+                          ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
+                      if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                          || taskResult.result().isEmpty()) {
+                        return CompletableFuture.failedFuture(
+                            new RuntimeException("Failed to retrieve transactions for hashes"));
                       }
+                      return CompletableFuture.completedFuture(taskResult.result().get());
                     });
       } else {
         final GetPooledTransactionsFromPeerTask task =

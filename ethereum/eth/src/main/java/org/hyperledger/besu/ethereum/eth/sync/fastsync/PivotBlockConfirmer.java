@@ -24,9 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.util.FutureUtils;
 
 import java.time.Duration;
@@ -219,33 +217,22 @@ class PivotBlockConfirmer {
         .getScheduler()
         .scheduleServiceTask(
             () -> {
-              try (OperationTimer.TimingContext ignored =
-                  metricsSystem
-                      .createLabelledTimer(
-                          BesuMetricCategory.SYNCHRONIZER,
-                          "task",
-                          "Internal processing tasks",
-                          "taskName")
-                      .labels(RetryingGetHeaderFromPeerByNumberTask.class.getSimpleName())
-                      .startTimer()) {
-                PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                    ethContext.getPeerTaskExecutor().execute(task);
-                if (taskResult.responseCode()
-                    == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
-                  // something is probably wrong with the request, so we won't retry as below
-                  return CompletableFuture.failedFuture(
-                      new RuntimeException("Unexpected internal issue"));
-                } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                    || taskResult.result().isEmpty()) {
-                  // recursively call executePivotQueryWithPeerTaskSystem to retry with a different
-                  // peer.
-                  ethContext
-                      .getEthPeers()
-                      .waitForPeer((ethPeer) -> !taskResult.ethPeers().contains(ethPeer));
-                  return executePivotQueryWithPeerTaskSystem(blockNumber);
-                }
-                return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
+              PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                  ethContext.getPeerTaskExecutor().execute(task);
+              if (taskResult.responseCode() == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
+                // something is probably wrong with the request, so we won't retry as below
+                return CompletableFuture.failedFuture(
+                    new RuntimeException("Unexpected internal issue"));
+              } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                  || taskResult.result().isEmpty()) {
+                // recursively call executePivotQueryWithPeerTaskSystem to retry with a different
+                // peer.
+                ethContext
+                    .getEthPeers()
+                    .waitForPeer((ethPeer) -> !taskResult.ethPeers().contains(ethPeer));
+                return executePivotQueryWithPeerTaskSystem(blockNumber);
               }
+              return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
             });
   }
 

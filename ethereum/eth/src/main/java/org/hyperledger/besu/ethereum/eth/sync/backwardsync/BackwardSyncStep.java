@@ -21,8 +21,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetHeadersEndingAtFromPeerByHashTask;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.Optional;
@@ -81,36 +79,24 @@ public class BackwardSyncStep {
           context
               .getEthContext()
               .getScheduler()
-              .scheduleSyncWorkerTask(
+              .scheduleServiceTask(
                   () -> {
-                    try (OperationTimer.TimingContext ignored =
-                        context
-                            .getMetricsSystem()
-                            .createLabelledTimer(
-                                BesuMetricCategory.SYNCHRONIZER,
-                                "task",
-                                "Internal processing tasks",
-                                "taskName")
-                            .labels(
-                                RetryingGetHeadersEndingAtFromPeerByHashTask.class.getSimpleName())
-                            .startTimer()) {
-                      GetHeadersFromPeerTask task =
-                          new GetHeadersFromPeerTask(
-                              hash,
-                              0,
-                              batchSize,
-                              0,
-                              Direction.REVERSE,
-                              context.getEthContext().getEthPeers().peerCount(),
-                              context.getProtocolSchedule());
-                      PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                          context.getEthContext().getPeerTaskExecutor().execute(task);
-                      if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                          || taskResult.result().isEmpty()) {
-                        throw new RuntimeException("Unable to retrieve headers");
-                      }
-                      return CompletableFuture.completedFuture(taskResult.result().get());
+                    GetHeadersFromPeerTask task =
+                        new GetHeadersFromPeerTask(
+                            hash,
+                            0,
+                            batchSize,
+                            0,
+                            Direction.REVERSE,
+                            context.getEthContext().getEthPeers().peerCount(),
+                            context.getProtocolSchedule());
+                    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                        context.getEthContext().getPeerTaskExecutor().execute(task);
+                    if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                        || taskResult.result().isEmpty()) {
+                      throw new RuntimeException("Unable to retrieve headers");
                     }
+                    return CompletableFuture.completedFuture(taskResult.result().get());
                   });
     } else {
       final RetryingGetHeadersEndingAtFromPeerByHashTask

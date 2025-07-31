@@ -21,8 +21,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlocksFromPeersTask;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Comparator;
 import java.util.List;
@@ -89,30 +87,19 @@ public class ForwardSyncStep {
               .getScheduler()
               .scheduleServiceTask(
                   () -> {
-                    try (OperationTimer.TimingContext ignored =
-                        context
-                            .getMetricsSystem()
-                            .createLabelledTimer(
-                                BesuMetricCategory.SYNCHRONIZER,
-                                "task",
-                                "Internal processing tasks",
-                                "taskName")
-                            .labels(RetryingGetBlocksFromPeersTask.class.getSimpleName())
-                            .startTimer()) {
-                      GetBodiesFromPeerTask task =
-                          new GetBodiesFromPeerTask(
-                              blockHeaders,
-                              context.getProtocolSchedule(),
-                              context.getEthContext().getEthPeers().peerCount());
-                      PeerTaskExecutorResult<List<Block>> taskResult =
-                          context.getEthContext().getPeerTaskExecutor().execute(task);
-                      if (taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
-                          && taskResult.result().isPresent()) {
-                        return CompletableFuture.completedFuture(taskResult.result().get());
-                      } else {
-                        return CompletableFuture.failedFuture(
-                            new RuntimeException(taskResult.responseCode().toString()));
-                      }
+                    GetBodiesFromPeerTask task =
+                        new GetBodiesFromPeerTask(
+                            blockHeaders,
+                            context.getProtocolSchedule(),
+                            context.getEthContext().getEthPeers().peerCount());
+                    PeerTaskExecutorResult<List<Block>> taskResult =
+                        context.getEthContext().getPeerTaskExecutor().execute(task);
+                    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+                        && taskResult.result().isPresent()) {
+                      return CompletableFuture.completedFuture(taskResult.result().get());
+                    } else {
+                      return CompletableFuture.failedFuture(
+                          new RuntimeException(taskResult.responseCode().toString()));
                     }
                   });
     } else {

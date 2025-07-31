@@ -35,7 +35,6 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.time.Duration;
 import java.util.List;
@@ -181,79 +180,68 @@ public class FastSyncActions {
   private CompletableFuture<FastSyncState> downloadPivotBlockHeader(final Hash hash) {
     LOG.debug("Downloading pivot block header by hash {}", hash);
     CompletableFuture<BlockHeader> blockHeaderFuture;
-    try (OperationTimer.TimingContext ignored =
-        metricsSystem
-            .createLabelledTimer(
-                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
-            .labels(
-                RetryingGetHeaderFromPeerByHashTask.class.getSimpleName()
-                    + "-"
-                    + getClass().getSimpleName())
-            .startTimer()) {
-      if (syncConfig.isPeerTaskSystemEnabled()) {
-        blockHeaderFuture =
-            ethContext
-                .getScheduler()
-                .scheduleServiceTask(
-                    () -> {
-                      GetHeadersFromPeerTask task =
-                          new GetHeadersFromPeerTask(
-                              hash,
-                              pivotBlockSelector.getMinRequiredBlockNumber(),
-                              1,
-                              0,
-                              GetHeadersFromPeerTask.Direction.FORWARD,
-                              ethContext.getEthPeers().peerCount(),
-                              protocolSchedule);
-                      PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                          ethContext.getPeerTaskExecutor().execute(task);
-                      if (taskResult.responseCode()
-                              == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE
-                          || taskResult.responseCode()
-                              == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
-                        LOG.error(
-                            "Failed to download pivot block header. Response Code was {}",
-                            taskResult.responseCode());
-                        return CompletableFuture.failedFuture(new NoAvailablePeersException());
-                      } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                          || taskResult.result().isEmpty()) {
-                        LOG.error(
-                            "Failed to download pivot block header. Response Code was {}",
-                            taskResult.responseCode());
-                        return CompletableFuture.failedFuture(
-                            new RuntimeException(
-                                "Failed to download pivot block header. Response Code was "
-                                    + taskResult.responseCode()));
-                      } else {
-                        return CompletableFuture.completedFuture(
-                            taskResult.result().get().getFirst());
-                      }
-                    });
-      } else {
-        blockHeaderFuture =
-            RetryingGetHeaderFromPeerByHashTask.byHash(
-                    protocolSchedule,
-                    ethContext,
-                    hash,
-                    pivotBlockSelector.getMinRequiredBlockNumber(),
-                    metricsSystem)
-                .getHeader();
-      }
-
-      return blockHeaderFuture
-          .whenComplete(
-              (blockHeader, throwable) -> {
-                if (throwable != null) {
-                  LOG.debug("Error downloading block header by hash {}", hash);
-                } else {
-                  LOG.atDebug()
-                      .setMessage("Successfully downloaded pivot block header by hash {}")
-                      .addArgument(blockHeader::toLogString)
-                      .log();
-                }
-              })
-          .thenApply(FastSyncState::new);
+    if (syncConfig.isPeerTaskSystemEnabled()) {
+      blockHeaderFuture =
+          ethContext
+              .getScheduler()
+              .scheduleServiceTask(
+                  () -> {
+                    GetHeadersFromPeerTask task =
+                        new GetHeadersFromPeerTask(
+                            hash,
+                            pivotBlockSelector.getMinRequiredBlockNumber(),
+                            1,
+                            0,
+                            GetHeadersFromPeerTask.Direction.FORWARD,
+                            ethContext.getEthPeers().peerCount(),
+                            protocolSchedule);
+                    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                        ethContext.getPeerTaskExecutor().execute(task);
+                    if (taskResult.responseCode() == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE
+                        || taskResult.responseCode()
+                            == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
+                      LOG.error(
+                          "Failed to download pivot block header. Response Code was {}",
+                          taskResult.responseCode());
+                      return CompletableFuture.failedFuture(new NoAvailablePeersException());
+                    } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                        || taskResult.result().isEmpty()) {
+                      LOG.error(
+                          "Failed to download pivot block header. Response Code was {}",
+                          taskResult.responseCode());
+                      return CompletableFuture.failedFuture(
+                          new RuntimeException(
+                              "Failed to download pivot block header. Response Code was "
+                                  + taskResult.responseCode()));
+                    } else {
+                      return CompletableFuture.completedFuture(
+                          taskResult.result().get().getFirst());
+                    }
+                  });
+    } else {
+      blockHeaderFuture =
+          RetryingGetHeaderFromPeerByHashTask.byHash(
+                  protocolSchedule,
+                  ethContext,
+                  hash,
+                  pivotBlockSelector.getMinRequiredBlockNumber(),
+                  metricsSystem)
+              .getHeader();
     }
+
+    return blockHeaderFuture
+        .whenComplete(
+            (blockHeader, throwable) -> {
+              if (throwable != null) {
+                LOG.debug("Error downloading block header by hash {}", hash);
+              } else {
+                LOG.atDebug()
+                    .setMessage("Successfully downloaded pivot block header by hash {}")
+                    .addArgument(blockHeader::toLogString)
+                    .log();
+              }
+            })
+        .thenApply(FastSyncState::new);
   }
 
   public boolean isBlockchainBehind(final long blockNumber) {
