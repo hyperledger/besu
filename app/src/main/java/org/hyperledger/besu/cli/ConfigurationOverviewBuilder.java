@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.cli;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
@@ -32,6 +30,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import oshi.PlatformEnum;
 import oshi.SystemInfo;
@@ -551,10 +551,13 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
-   * Normalize gas string.<br/>
-   * The implemented logic is<br/>
-   * - if the received gas is greater than 1 million, calculates the precision and returns the number as a floating point number with the calculated precision plus an 'M' at the end (e.g., 50.55M)<br/>
-   * - if the received gas is lower than 1 million, returns the number as a decimal integer grouping digits by thousands (e.g., 100,000)
+   * Normalize gas string.<br>
+   * The implemented logic is<br>
+   * - if the received gas is greater than 1 million, calculates the precision and returns the
+   * number as a floating point number with the calculated precision plus an 'M' at the end (e.g.,
+   * 50.55M)<br>
+   * - if the received gas is lower than 1 million, returns the number as a decimal integer grouping
+   * digits by thousands (e.g., 100,000)
    *
    * @param gas the gas
    * @return the formatted string
@@ -564,7 +567,8 @@ public class ConfigurationOverviewBuilder {
     if (normalizedGas < 1) {
       return String.format("%,d", gas);
     } else {
-      final int decimals = (Iterables.get(Splitter.on('.').split(String.valueOf(normalizedGas)), 1)).length();
+      final int decimals =
+          (Iterables.get(Splitter.on('.').split(String.valueOf(normalizedGas)), 1)).length();
       final String format = normalizedGas % 1 == 0 ? "%.0fM" : "%." + decimals + "fM";
       return String.format(format, normalizedGas);
     }

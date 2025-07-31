@@ -245,7 +245,7 @@ class ConfigurationOverviewBuilderTest {
     final String targetGasLimitSelected = builder.build();
     final String targetGasLimitValue = ConfigurationOverviewBuilder.normalizeGas(targetGasLimit);
     assertThat(targetGasLimitSelected)
-            .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
   }
 
   @Test
@@ -255,7 +255,7 @@ class ConfigurationOverviewBuilderTest {
     final String targetGasLimitSelected = builder.build();
     final String targetGasLimitValue = ConfigurationOverviewBuilder.normalizeGas(targetGasLimit);
     assertThat(targetGasLimitSelected)
-            .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
   }
 
   @Test
@@ -266,7 +266,7 @@ class ConfigurationOverviewBuilderTest {
     final String targetGasLimitValue = ConfigurationOverviewBuilder.normalizeGas(targetGasLimit);
     System.out.println("targetGasLimitValue:" + targetGasLimitValue);
     assertThat(targetGasLimitSelected)
-            .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
   }
 
   @Test
