@@ -146,7 +146,7 @@ public final class EthProtocolManagerTest {
       // disconnect the peer gracefully
       final MessageData messageData = GetBlockHeadersMessage.create(1, 1, 0, false);
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
-      ethManager.processMessage(EthProtocol.ETH66, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.ETH68, new DefaultMessage(peer, messageData));
       assertThat(peer.isDisconnected()).isTrue();
     }
   }
@@ -1149,7 +1149,7 @@ public final class EthProtocolManagerTest {
           .isEqualTo(Collections.singletonList(EthProtocol.LATEST));
 
       // assert that all messages transmitted contain the expected block & total difficulty.
-      final ProtocolSchedule protocolSchdeule = ProtocolScheduleFixture.MAINNET;
+      final ProtocolSchedule protocolSchdeule = ProtocolScheduleFixture.TESTING_NETWORK;
       for (final NewBlockMessage msg : messageSentCaptor.getAllValues()) {
         assertThat(msg.block(protocolSchdeule)).isEqualTo(minedBlock);
         assertThat(msg.totalDifficulty(protocolSchdeule)).isEqualTo(expectedTotalDifficulty);
@@ -1302,11 +1302,11 @@ public final class EthProtocolManagerTest {
 
     // Test with max capability = 65. should respect flag
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V67).build();
+        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V68).build();
 
-    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH67, configuration);
-    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH67, configuration);
-    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH67, configuration);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH68, configuration);
+    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68, configuration);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH68, configuration);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66, configuration);
   }
@@ -1316,26 +1316,40 @@ public final class EthProtocolManagerTest {
 
     // If min cap = v67, should not contain v66
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V67).build();
+        EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V69).build();
 
     final EthProtocolManager ethManager = createEthManager(SyncMode.SNAP, configuration);
 
-    assertThat(ethManager.getSupportedCapabilities()).contains(EthProtocol.ETH67);
-    assertThat(ethManager.getSupportedCapabilities()).doesNotContain(EthProtocol.ETH66);
+    assertThat(ethManager.getSupportedCapabilities()).contains(EthProtocol.ETH69);
+    assertThat(ethManager.getSupportedCapabilities()).doesNotContain(EthProtocol.ETH68);
   }
 
   @Test
   public void shouldRespectProtocolForMaxCapabilityIfFlagGreaterThanProtocol() {
 
-    // Test with max capability = 67. should respect protocol
+    // Test with max capability = 68. should respect protocol
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V67).build();
+        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V68).build();
 
-    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH67, configuration);
-    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH67, configuration);
-    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH67, configuration);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH68, configuration);
+    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68, configuration);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH68, configuration);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66, configuration);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenNoCapabilities() {
+    final EthProtocolConfiguration configuration =
+        EthProtocolConfiguration.builder()
+            .minEthCapability(EthProtocolVersion.V69)
+            .maxEthCapability(EthProtocolVersion.V68)
+            .build();
+
+    assertThatThrownBy(() -> createEthManager(SyncMode.SNAP, configuration))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining(
+            "No supported Eth protocol capabilities found. Check the configuration for min and max Eth protocol versions.");
   }
 
   private void assertHighestCapability(final SyncMode syncMode, final Capability capability) {

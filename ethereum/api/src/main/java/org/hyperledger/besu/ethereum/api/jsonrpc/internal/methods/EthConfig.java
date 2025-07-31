@@ -134,7 +134,7 @@ public class EthConfig implements JsonRpcMethod {
             spec.getRequestProcessorCoordinator()
                 .map(RequestProcessorCoordinator::getContractConfigs)
                 .orElse(Map.of()));
-    spec.getBlockHashProcessor()
+    spec.getPreExecutionProcessor()
         .getHistoryContract()
         .ifPresent(a -> systemContracts.put("HISTORY_STORAGE_ADDRESS", a.toHexString()));
     if (spec.getEvm().getEvmVersion().compareTo(EvmSpecVersion.CANCUN) >= 0) {

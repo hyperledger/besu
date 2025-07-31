@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.PoaQueryServiceImpl;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
 import org.hyperledger.besu.plugin.services.query.PoaQueryService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
@@ -46,6 +45,5 @@ public class CliqueQueryPluginServiceFactory implements PluginServiceFactory {
     final PoaQueryServiceImpl service =
         new PoaQueryServiceImpl(blockInterface, blockchain, nodeKey);
     besuContext.addService(PoaQueryService.class, service);
-    besuContext.addService(PoAMetricsService.class, service);
   }
 }

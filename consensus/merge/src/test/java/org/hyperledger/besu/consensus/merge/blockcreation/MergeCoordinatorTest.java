@@ -905,7 +905,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         prevParent, genesisState.getBlock().getHash(), genesisState.getBlock().getHash());
     assertThat(lastBlockAddedEvent.get().getCommonAncestorHash()).isEqualTo(expectedCommonAncestor);
     assertThat(lastBlockAddedEvent.get().getEventType()).isEqualTo(EventType.CHAIN_REORG);
-    assertThat(lastBlockAddedEvent.get().getBlock().getHash()).isEqualTo(prevParent.getBlockHash());
+    assertThat(lastBlockAddedEvent.get().getHeader().getHash())
+        .isEqualTo(prevParent.getBlockHash());
   }
 
   @Test

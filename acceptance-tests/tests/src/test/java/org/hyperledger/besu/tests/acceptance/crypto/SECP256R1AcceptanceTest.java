@@ -60,7 +60,7 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
 
     minerNode =
         besu.createNodeWithNonDefaultSignatureAlgorithm(
-            "minerNode", GENESIS_FILE, minerNodeKeyPair);
+            "minerNode", GENESIS_FILE, minerNodeKeyPair, List.of());
     noDiscoveryCluster.start(minerNode);
 
     otherNode =
