@@ -181,21 +181,21 @@ public class FastSyncActions {
   private CompletableFuture<FastSyncState> downloadPivotBlockHeader(final Hash hash) {
     LOG.debug("Downloading pivot block header by hash {}", hash);
     CompletableFuture<BlockHeader> blockHeaderFuture;
-    if (syncConfig.isPeerTaskSystemEnabled()) {
-      blockHeaderFuture =
-          ethContext
-              .getScheduler()
-              .scheduleServiceTask(
-                  () -> {
-                    try (OperationTimer.TimingContext ignored =
-                        metricsSystem
-                            .createLabelledTimer(
-                                BesuMetricCategory.SYNCHRONIZER,
-                                "task",
-                                "Internal processing tasks",
-                                "taskName")
-                            .labels(RetryingGetHeaderFromPeerByHashTask.class.getSimpleName())
-                            .startTimer()) {
+    try (OperationTimer.TimingContext ignored =
+        metricsSystem
+            .createLabelledTimer(
+                BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName")
+            .labels(
+                RetryingGetHeaderFromPeerByHashTask.class.getSimpleName()
+                    + "-"
+                    + getClass().getSimpleName())
+            .startTimer()) {
+      if (syncConfig.isPeerTaskSystemEnabled()) {
+        blockHeaderFuture =
+            ethContext
+                .getScheduler()
+                .scheduleServiceTask(
+                    () -> {
                       GetHeadersFromPeerTask task =
                           new GetHeadersFromPeerTask(
                               hash,
@@ -228,31 +228,32 @@ public class FastSyncActions {
                         return CompletableFuture.completedFuture(
                             taskResult.result().get().getFirst());
                       }
-                    }
-                  });
-    } else {
-      blockHeaderFuture =
-          RetryingGetHeaderFromPeerByHashTask.byHash(
-                  protocolSchedule,
-                  ethContext,
-                  hash,
-                  pivotBlockSelector.getMinRequiredBlockNumber(),
-                  metricsSystem)
-              .getHeader();
+                    });
+      } else {
+        blockHeaderFuture =
+            RetryingGetHeaderFromPeerByHashTask.byHash(
+                    protocolSchedule,
+                    ethContext,
+                    hash,
+                    pivotBlockSelector.getMinRequiredBlockNumber(),
+                    metricsSystem)
+                .getHeader();
+      }
+
+      return blockHeaderFuture
+          .whenComplete(
+              (blockHeader, throwable) -> {
+                if (throwable != null) {
+                  LOG.debug("Error downloading block header by hash {}", hash);
+                } else {
+                  LOG.atDebug()
+                      .setMessage("Successfully downloaded pivot block header by hash {}")
+                      .addArgument(blockHeader::toLogString)
+                      .log();
+                }
+              })
+          .thenApply(FastSyncState::new);
     }
-    return blockHeaderFuture
-        .whenComplete(
-            (blockHeader, throwable) -> {
-              if (throwable != null) {
-                LOG.debug("Error downloading block header by hash {}", hash);
-              } else {
-                LOG.atDebug()
-                    .setMessage("Successfully downloaded pivot block header by hash {}")
-                    .addArgument(blockHeader::toLogString)
-                    .log();
-              }
-            })
-        .thenApply(FastSyncState::new);
   }
 
   public boolean isBlockchainBehind(final long blockNumber) {
