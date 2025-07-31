@@ -32,6 +32,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OperationsPerInvocation;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -43,7 +44,7 @@ import org.openjdk.jmh.annotations.Warmup;
 
 @State(Scope.Thread)
 @OutputTimeUnit(value = TimeUnit.NANOSECONDS)
-@Warmup(iterations = 1)
+@Measurement(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(2)
 @BenchmarkMode(Mode.AverageTime)
 public class CountLeadingZerosOperationBenchmark {
@@ -89,6 +90,7 @@ public class CountLeadingZerosOperationBenchmark {
 
   @Benchmark
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
+  @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MILLISECONDS)
   public void executeOperation() {
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
       frame.pushStackItem(bytes);
@@ -99,6 +101,7 @@ public class CountLeadingZerosOperationBenchmark {
 
   @Benchmark
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
+  @Warmup(iterations = 1, time = 500, timeUnit = TimeUnit.MILLISECONDS)
   public void baseline() {
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
       frame.pushStackItem(bytes);
