@@ -95,6 +95,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
+  //  private final WorldUpdater worldUpdater;
   private final MutableWorldState worldState;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final BlockSelectionContext blockSelectionContext;
@@ -339,24 +340,27 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   @Override
   public boolean commit() {
     // only add this tx to the selected set if it is not too late,
-    // this need to be done synchronously to avoid that a concurrent timeout
+    // this needs to be done synchronously to avoid that a concurrent timeout
     // could start packing a block while we are updating the state here
+    final boolean isTooLate;
     synchronized (isTimeout) {
-      if (!isTimeout.get()) {
+      isTooLate = isTimeout.get();
+      if (!isTooLate) {
         selectorsStateManager.commit();
         txWorldStateUpdater.commit();
         blockWorldStateUpdater.commit();
+        blockWorldStateUpdater.markTransactionBoundary();
         for (final var pendingAction : selectedTxPendingActions) {
           pendingAction.run();
         }
-        selectedTxPendingActions.clear();
-        return true;
       }
     }
+
     selectedTxPendingActions.clear();
     blockWorldStateUpdater = worldState.updater();
     txWorldStateUpdater = blockWorldStateUpdater.updater();
-    return false;
+
+    return !isTooLate;
   }
 
   @Override
@@ -471,7 +475,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         transaction.getGasLimit() - processingResult.getGasRemaining();
 
     // queue the creation of the receipt and the update of the final results
-    // there actions will be performed on commit if the pending tx is definitely selected
+    // these actions will be performed on commit if the pending tx is definitely selected
     selectedTxPendingActions.add(
         () -> {
           final long cumulativeGasUsed =
