@@ -212,6 +212,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxProcessingEnabled;
 
+  /** whether block access list functionality was enabled via CLI feature flag */
   protected boolean isBlockAccessListEnabled;
 
   /** The API configuration */
@@ -538,6 +539,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  /**
+   * Sets whether functionality related to testing block-level access list implementation should be
+   * enabled. This includes caching of block-level access lists produced during block processing and
+   * enabling an RPC endpoint serving those cached BALs.
+   *
+   * @param isBlockAccessListEnabled true to enable block-level access list testing functionality
+   * @return the besu controller
+   */
   public BesuControllerBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
     this.isBlockAccessListEnabled = isBlockAccessListEnabled;
     return this;

@@ -76,6 +76,7 @@ public class CodeDelegationHelper {
    * @param worldUpdater the world updater.
    * @param isPrecompile function to check if an address belongs to a precompile account.
    * @param account the account which has a code delegation.
+   * @param eip7928AccessList data structure to record account and storage accesses.
    * @return the target address and its code. Throws an exception if the account does not have a
    *     code delegation or if the account is null.
    */

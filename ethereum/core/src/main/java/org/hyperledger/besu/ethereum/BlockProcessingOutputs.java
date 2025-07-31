@@ -58,6 +58,14 @@ public class BlockProcessingOutputs {
     this.maybeBlockAccessList = Optional.empty();
   }
 
+  /**
+   * Creates a new instance.
+   *
+   * @param worldState the world state after processing the block
+   * @param receipts the receipts produced by processing the block
+   * @param maybeRequests the requests produced by processing the block
+   * @param blockAccessList the block-level access list produced by processing the block
+   */
   public BlockProcessingOutputs(
       final MutableWorldState worldState,
       final List<TransactionReceipt> receipts,
@@ -96,6 +104,11 @@ public class BlockProcessingOutputs {
     return maybeRequests;
   }
 
+  /**
+   * Returns the block-level access list produced by processing the block.
+   *
+   * @return the block-level access list produced by processing the block
+   */
   public Optional<BlockAccessList> getBlockAccessList() {
     return maybeBlockAccessList;
   }

@@ -1317,6 +1317,11 @@ public class MessageFrame {
     return txValues.versionedHashes();
   }
 
+  /**
+   * Accessor for Eip7928AccessList, if present.
+   *
+   * @return optional Eip7928AccessList
+   */
   public Optional<Eip7928AccessList> getEip7928AccessList() {
     return eip7928AccessList;
   }
@@ -1629,6 +1634,12 @@ public class MessageFrame {
       return this;
     }
 
+    /**
+     * Sets EIP 7928 access list to record account and storage accesses.
+     *
+     * @param eip7928AccessList access list to record account and storage accesses
+     * @return the builder
+     */
     public Builder eip7928AccessList(final Eip7928AccessList eip7928AccessList) {
       this.eip7928AccessList = Optional.of(eip7928AccessList);
       return this;
