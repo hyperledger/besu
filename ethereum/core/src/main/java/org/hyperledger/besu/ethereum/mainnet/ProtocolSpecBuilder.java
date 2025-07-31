@@ -398,7 +398,7 @@ public class ProtocolSpecBuilder {
         isPoS,
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor),
-        Optional.ofNullable(blockAccessListFactory));
+        Optional.ofNullable(finalBalManager));
   }
 
   private BlockProcessor createBlockProcessor(

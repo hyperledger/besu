@@ -165,7 +165,7 @@ public class ExecutionContextTestFixture {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    false,
+                    true,
                     new NoOpMetricsSystem())
                 .createProtocolSchedule();
       }
