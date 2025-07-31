@@ -65,8 +65,7 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
             transactionSimulator,
             miningConfiguration,
             blockchainQueries.getBlockchain(),
-            apiConfiguration.getGasCap(),
-            apiConfiguration.isBlockAccessListEnabled());
+            apiConfiguration.getGasCap());
   }
 
   @Override

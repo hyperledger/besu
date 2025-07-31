@@ -91,7 +91,6 @@ public class RewardTraceGeneratorTest {
             blockReward,
             BlockHeader::getCoinbase,
             true,
-            false,
             protocolSchedule);
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 
@@ -151,7 +150,6 @@ public class RewardTraceGeneratorTest {
             blockReward,
             BlockHeader::getCoinbase,
             true,
-            false,
             eraRounds,
             protocolSchedule);
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);

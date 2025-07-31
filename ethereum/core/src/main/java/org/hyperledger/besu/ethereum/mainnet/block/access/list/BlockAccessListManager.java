@@ -16,8 +16,31 @@ package org.hyperledger.besu.ethereum.mainnet.block.access.list;
 
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 
-// TODO: Probably remove this?
 public class BlockAccessListManager {
+
+  private final boolean cliActivated;
+  private final boolean forkActivated;
+
+  public BlockAccessListManager() {
+    this(false, false);
+  }
+
+  public BlockAccessListManager(final boolean cliActivated, final boolean forkActivated) {
+    this.cliActivated = cliActivated;
+    this.forkActivated = forkActivated;
+  }
+
+  public boolean isCliActivated() {
+    return cliActivated;
+  }
+
+  public boolean isForkActivated() {
+    return forkActivated;
+  }
+
+  public boolean isEnabled() {
+    return cliActivated || forkActivated;
+  }
 
   public BlockAccessListBuilder newBlockAccessListBuilder() {
     return BlockAccessList.builder();

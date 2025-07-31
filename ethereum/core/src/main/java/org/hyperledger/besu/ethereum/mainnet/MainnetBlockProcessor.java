@@ -36,7 +36,6 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final boolean isBlockAccessListEnabled,
       final ProtocolSchedule protocolSchedule) {
     super(
         transactionProcessor,
@@ -44,7 +43,6 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        isBlockAccessListEnabled,
         protocolSchedule);
   }
 

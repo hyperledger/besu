@@ -137,7 +137,6 @@ public class ClassicProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                isBalEnalbed,
                 protocolSchedule) ->
                 new ClassicBlockProcessor(
                     transactionProcessor,
@@ -145,7 +144,6 @@ public class ClassicProtocolSpecs {
                     blockReward,
                     miningBeneficiaryCalculator,
                     skipZeroBlockRewards,
-                    isBalEnalbed,
                     ecip1017EraRounds,
                     protocolSchedule))
         .hardforkId(GOTHAM);

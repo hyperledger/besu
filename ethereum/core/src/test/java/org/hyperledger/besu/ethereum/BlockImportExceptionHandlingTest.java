@@ -77,7 +77,6 @@ class BlockImportExceptionHandlingTest {
           Wei.ZERO,
           BlockHeader::getCoinbase,
           true,
-          false,
           protocolSchedule);
   private final BlockHeaderValidator blockHeaderValidator = mock(BlockHeaderValidator.class);
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);

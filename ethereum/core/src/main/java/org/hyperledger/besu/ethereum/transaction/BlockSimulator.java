@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -97,7 +98,6 @@ public class BlockSimulator {
   private final MiningConfiguration miningConfiguration;
   private final Blockchain blockchain;
   private final long rpcGasCap;
-  private final boolean isBlockAccessListEnabled;
 
   public BlockSimulator(
       final WorldStateArchive worldStateArchive,
@@ -105,15 +105,13 @@ public class BlockSimulator {
       final TransactionSimulator transactionSimulator,
       final MiningConfiguration miningConfiguration,
       final Blockchain blockchain,
-      final long rpcGasCap,
-      final boolean isBlockAccessListEnabled) {
+      final long rpcGasCap) {
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
     this.miningConfiguration = miningConfiguration;
     this.transactionSimulator = transactionSimulator;
     this.blockchain = blockchain;
     this.rpcGasCap = rpcGasCap;
-    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
   }
 
   /**
@@ -285,7 +283,10 @@ public class BlockSimulator {
 
     final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
     final boolean includeBlockAccessList =
-        isBlockAccessListEnabled || protocolSpec.getBlockAccessListFactory().isPresent();
+        protocolSpec
+            .getBlockAccessListFactory()
+            .map(BlockAccessListManager::isEnabled)
+            .orElse(false);
 
     final WorldUpdater blockUpdater = ws.updater();
     for (int transactionLocation = 0;

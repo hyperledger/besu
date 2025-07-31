@@ -358,6 +358,16 @@ public class ProtocolSpecBuilder {
     final BlockValidator blockValidator =
         blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
+
+    BlockAccessListManager finalBalManager = blockAccessListFactory;
+    if (finalBalManager == null && isBlockAccessListEnabled) {
+      finalBalManager = new BlockAccessListManager(true, false);
+    } else if (finalBalManager != null
+        && isBlockAccessListEnabled
+        && !finalBalManager.isCliActivated()) {
+      finalBalManager = new BlockAccessListManager(true, finalBalManager.isForkActivated());
+    }
+
     return new ProtocolSpec(
         hardforkId,
         evm,
@@ -400,7 +410,6 @@ public class ProtocolSpecBuilder {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        isBlockAccessListEnabled,
         protocolSchedule);
   }
 
@@ -433,7 +442,6 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        final boolean isBlockAccessListEnabled,
         ProtocolSchedule protocolSchedule);
   }
 

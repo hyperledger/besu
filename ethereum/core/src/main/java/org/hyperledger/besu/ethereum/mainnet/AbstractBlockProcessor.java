@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -81,7 +82,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   final Wei blockReward;
 
   protected final boolean skipZeroBlockRewards;
-  protected final boolean isBlockAccessListEnabled;
   private final ProtocolSchedule protocolSchedule;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
@@ -93,7 +93,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final boolean isBlockAccessListEnabled,
       final ProtocolSchedule protocolSchedule) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
@@ -101,7 +100,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
-    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
@@ -205,9 +203,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     int nbParallelTx = 0;
 
     Optional<BlockAccessListBuilder> blockAccessListBuilder;
-    // TODO: We are currently using presence of BAL factory as fork-driven activation - change this,
-    // probably just to a boolean flag
-    if (isBlockAccessListEnabled || protocolSpec.getBlockAccessListFactory().isPresent()) {
+    if (protocolSpec
+        .getBlockAccessListFactory()
+        .map(BlockAccessListManager::isEnabled)
+        .orElse(false)) {
       blockAccessListBuilder = Optional.of(BlockAccessList.builder());
     } else {
       blockAccessListBuilder = Optional.empty();

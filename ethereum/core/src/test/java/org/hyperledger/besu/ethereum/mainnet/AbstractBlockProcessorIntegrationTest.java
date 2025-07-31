@@ -128,7 +128,6 @@ class AbstractBlockProcessorIntegrationTest {
             COINBASE_REWARD,
             BlockHeader::getCoinbase,
             false,
-            true,
             protocolSchedule);
 
     final BlockProcessor parallelBlockProcessor =
@@ -140,7 +139,6 @@ class AbstractBlockProcessorIntegrationTest {
             COINBASE_REWARD,
             BlockHeader::getCoinbase,
             false,
-            true,
             protocolSchedule,
             new NoOpMetricsSystem());
 
@@ -257,7 +255,6 @@ class AbstractBlockProcessorIntegrationTest {
             receiptFactory,
             Wei.ZERO,
             BlockHeader::getCoinbase,
-            true,
             true,
             protocolSchedule);
 

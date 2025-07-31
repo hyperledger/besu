@@ -261,7 +261,6 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                isBalEnabled,
                 protocolSchedule) ->
                 new DaoBlockProcessor(
                     isParallelTxProcessingEnabled
@@ -271,7 +270,6 @@ public abstract class MainnetProtocolSpecs {
                             blockReward,
                             miningBeneficiaryCalculator,
                             skipZeroBlockRewards,
-                            isBalEnabled,
                             protocolSchedule,
                             metricsSystem)
                         : new MainnetBlockProcessor(
@@ -280,7 +278,6 @@ public abstract class MainnetProtocolSpecs {
                             blockReward,
                             miningBeneficiaryCalculator,
                             skipZeroBlockRewards,
-                            isBalEnabled,
                             protocolSchedule)))
         .hardforkId(DAO_RECOVERY_INIT);
   }
@@ -1013,7 +1010,7 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, __) ->
                 MainnetEVMs.amsterdam(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .blockAccessListFactory(new BlockAccessListManager())
+        .blockAccessListFactory(new BlockAccessListManager(isBlockAccessListEnabled, true))
         .hardforkId(AMSTERDAM);
   }
 
