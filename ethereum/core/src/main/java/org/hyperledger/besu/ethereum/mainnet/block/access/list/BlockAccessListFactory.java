@@ -16,16 +16,16 @@ package org.hyperledger.besu.ethereum.mainnet.block.access.list;
 
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 
-public class BlockAccessListManager {
+public class BlockAccessListFactory {
 
   private final boolean cliActivated;
   private final boolean forkActivated;
 
-  public BlockAccessListManager() {
+  public BlockAccessListFactory() {
     this(false, false);
   }
 
-  public BlockAccessListManager(final boolean cliActivated, final boolean forkActivated) {
+  public BlockAccessListFactory(final boolean cliActivated, final boolean forkActivated) {
     this.cliActivated = cliActivated;
     this.forkActivated = forkActivated;
   }

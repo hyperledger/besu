@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -86,7 +86,7 @@ public class ProtocolSpec {
   private final boolean isReplayProtectionSupported;
   private final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor;
 
-  private final Optional<BlockAccessListManager> blockAccessListFactory;
+  private final Optional<BlockAccessListFactory> blockAccessListFactory;
 
   /**
    * Creates a new protocol specification instance.
@@ -150,7 +150,7 @@ public class ProtocolSpec {
       final boolean isPoS,
       final boolean isReplayProtectionSupported,
       final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor,
-      final Optional<BlockAccessListManager> blockAccessListFactory) {
+      final Optional<BlockAccessListFactory> blockAccessListFactory) {
     this.hardforkId = hardforkId;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
@@ -406,7 +406,7 @@ public class ProtocolSpec {
     return transactionPoolPreProcessor;
   }
 
-  public Optional<BlockAccessListManager> getBlockAccessListFactory() {
+  public Optional<BlockAccessListFactory> getBlockAccessListFactory() {
     return blockAccessListFactory;
   }
 }

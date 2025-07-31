@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -205,7 +205,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     Optional<BlockAccessListBuilder> blockAccessListBuilder;
     if (protocolSpec
         .getBlockAccessListFactory()
-        .map(BlockAccessListManager::isEnabled)
+        .map(BlockAccessListFactory::isEnabled)
         .orElse(false)) {
       blockAccessListBuilder = Optional.of(BlockAccessList.builder());
     } else {

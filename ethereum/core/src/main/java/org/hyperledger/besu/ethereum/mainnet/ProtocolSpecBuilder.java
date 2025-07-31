@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
@@ -85,7 +85,7 @@ public class ProtocolSpecBuilder {
   private boolean isReplayProtectionSupported = false;
   private boolean isBlockAccessListEnabled = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
-  private BlockAccessListManager blockAccessListFactory;
+  private BlockAccessListFactory blockAccessListFactory;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -289,7 +289,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder blockAccessListFactory(
-      final BlockAccessListManager blockAccessListFactory) {
+      final BlockAccessListFactory blockAccessListFactory) {
     this.blockAccessListFactory = blockAccessListFactory;
     return this;
   }
@@ -359,13 +359,13 @@ public class ProtocolSpecBuilder {
         blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
 
-    BlockAccessListManager finalBalManager = blockAccessListFactory;
+    BlockAccessListFactory finalBalManager = blockAccessListFactory;
     if (finalBalManager == null && isBlockAccessListEnabled) {
-      finalBalManager = new BlockAccessListManager(true, false);
+      finalBalManager = new BlockAccessListFactory(true, false);
     } else if (finalBalManager != null
         && isBlockAccessListEnabled
         && !finalBalManager.isCliActivated()) {
-      finalBalManager = new BlockAccessListManager(true, finalBalManager.isForkActivated());
+      finalBalManager = new BlockAccessListFactory(true, finalBalManager.isForkActivated());
     }
 
     return new ProtocolSpec(

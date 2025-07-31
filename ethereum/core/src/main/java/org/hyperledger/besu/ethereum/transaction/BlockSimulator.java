@@ -46,7 +46,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListManager;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -285,7 +285,7 @@ public class BlockSimulator {
     final boolean includeBlockAccessList =
         protocolSpec
             .getBlockAccessListFactory()
-            .map(BlockAccessListManager::isEnabled)
+            .map(BlockAccessListFactory::isEnabled)
             .orElse(false);
 
     final WorldUpdater blockUpdater = ws.updater();
