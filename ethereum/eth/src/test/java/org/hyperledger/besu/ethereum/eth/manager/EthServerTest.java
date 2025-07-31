@@ -256,7 +256,7 @@ public class EthServerTest {
     // Check response
     final ReceiptsMessage expectedMsg =
         ReceiptsMessage.create(
-            expectedResults, TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
+            expectedResults, TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION);
     final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.LATEST);
     assertThat(result).contains(expectedMsg);
   }
@@ -278,7 +278,7 @@ public class EthServerTest {
     // Check response
     final ReceiptsMessage expectedMsg =
         ReceiptsMessage.create(
-            expectedResults, TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
+            expectedResults, TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION);
     final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.LATEST);
     assertThat(result).contains(expectedMsg);
   }
@@ -417,7 +417,7 @@ public class EthServerTest {
     receipts.forEach(
         r ->
             TransactionReceiptEncoder.writeTo(
-                r, rlp, TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION));
+                r, rlp, TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION));
     rlp.endList();
     return rlp.encodedSize();
   }

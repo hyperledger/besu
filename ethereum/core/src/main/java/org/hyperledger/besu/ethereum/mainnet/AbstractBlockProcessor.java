@@ -55,14 +55,15 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractBlockProcessor implements BlockProcessor {
 
-  @FunctionalInterface
   public interface TransactionReceiptFactory {
-
     TransactionReceipt create(
         TransactionType transactionType,
         TransactionProcessingResult result,
         WorldState worldState,
         long gasUsed);
+
+    TransactionReceipt create(
+        TransactionType transactionType, TransactionProcessingResult result, long gasUsed);
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBlockProcessor.class);
@@ -107,6 +108,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               // if block import tracer provider is not specified by plugin, default to no tracing
               .orElse(
                   ignored -> {
+                    if (Boolean.getBoolean("besu.debug.traceBlocks")
+                        || "true".equalsIgnoreCase(System.getenv("BESU_TRACE_BLOCKS"))) {
+                      return new BlockAwareJsonTracer();
+                    }
                     LOG.trace("Block Import uses NO_TRACING");
                     return BlockAwareOperationTracer.NO_TRACING;
                   });
@@ -152,7 +157,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
     final BlockHashLookup blockHashLookup =
-        protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader);
+        protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, blockHeader);
 
     final BlockAwareOperationTracer blockTracer =
         getBlockImportTracer(protocolContext, blockHeader);
@@ -160,12 +165,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
     LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
-    blockTracer.traceStartBlock(blockHeader, miningBeneficiary);
+    blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
 
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
             blockHeader, worldState, protocolSpec, blockHashLookup, blockTracer);
-    protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
+    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
 
     Optional<BlockHeader> maybeParentHeader =
         blockchain.getBlockHeader(blockHeader.getParentHash());

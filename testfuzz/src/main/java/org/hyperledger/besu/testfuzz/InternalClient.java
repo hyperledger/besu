@@ -44,7 +44,7 @@ class InternalClient implements FuzzingClient {
   public String differentialFuzz(final String data) {
     try {
       Bytes clientData = Bytes.fromHexString(data);
-      Code code = evm.getCodeUncached(clientData);
+      Code code = evm.wrapCode(clientData);
       if (code.getEofVersion() < 1) {
         return "err: legacy EVM";
       } else if (!code.isValid()) {

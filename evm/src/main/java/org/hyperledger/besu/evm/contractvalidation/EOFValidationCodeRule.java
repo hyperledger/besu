@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.contractvalidation;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.code.CodeInvalid;
@@ -53,7 +52,7 @@ public class EOFValidationCodeRule implements ContractValidationRule {
   @Override
   public Optional<ExceptionalHaltReason> validate(
       final Bytes contractCode, final MessageFrame frame, final EVM evm) {
-    Code code = evm.getCode(Hash.hash(contractCode), contractCode);
+    Code code = evm.wrapCode(contractCode);
     if (!code.isValid()) {
       LOG.trace("EOF Validation Error: {}", ((CodeInvalid) code).getInvalidReason());
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);

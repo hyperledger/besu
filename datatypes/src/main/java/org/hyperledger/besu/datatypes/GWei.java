@@ -116,11 +116,6 @@ public final class GWei extends BaseUInt64Value<GWei> implements Quantity {
   }
 
   @Override
-  public Number getValue() {
-    return getAsBigInteger();
-  }
-
-  @Override
   public BigInteger getAsBigInteger() {
     return toBigInteger();
   }

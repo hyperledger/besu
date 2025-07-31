@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -44,9 +45,15 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode = besu.createMinerNode("minerNode");
+    minerNode =
+        besu.createQbftNode(
+            "minerNode",
+            besuNodeConfigurationBuilder ->
+                besuNodeConfigurationBuilder.genesisConfigProvider(
+                    GenesisConfigurationFactory::createQbftLondonGenesisConfig));
     pluginNode =
-        besu.createPluginsNode("node1", List.of("testPlugins"), List.of("--rpc-http-api=UPDATER"));
+        besu.createQbftPluginsNode(
+            "node1", List.of("testPlugins"), List.of("--rpc-http-api=UPDATER"), "DEBUG");
     cluster.start(minerNode, pluginNode);
     client = new OkHttpClient();
   }

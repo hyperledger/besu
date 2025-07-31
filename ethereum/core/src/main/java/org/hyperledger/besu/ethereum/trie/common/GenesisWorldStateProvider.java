@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
@@ -44,14 +45,16 @@ public class GenesisWorldStateProvider {
    * @return a mutable world state for the Genesis block
    */
   public static MutableWorldState createGenesisWorldState(
-      final DataStorageConfiguration dataStorageConfiguration) {
+      final DataStorageConfiguration dataStorageConfiguration, final CodeCache codeCache) {
 
     if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.BONSAI) {
-      return createGenesisBonsaiWorldState(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+      return createGenesisBonsaiWorldState(
+          DataStorageConfiguration.DEFAULT_BONSAI_CONFIG, codeCache);
     } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.X_BONSAI_ARCHIVE) {
-      return createGenesisBonsaiWorldState(DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG);
+      return createGenesisBonsaiWorldState(
+          DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG, codeCache);
     } else {
       return createGenesisForestWorldState();
     }
@@ -63,7 +66,7 @@ public class GenesisWorldStateProvider {
    * @return a mutable world state for the Genesis block
    */
   private static MutableWorldState createGenesisBonsaiWorldState(
-      final DataStorageConfiguration storageConfiguration) {
+      final DataStorageConfiguration storageConfiguration, final CodeCache codeCache) {
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
@@ -77,10 +80,11 @@ public class GenesisWorldStateProvider {
     return new BonsaiWorldState(
         bonsaiWorldStateKeyValueStorage,
         bonsaiCachedMerkleTrieLoader,
-        new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
+        new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage, codeCache),
         new NoOpTrieLogManager(),
         EvmConfiguration.DEFAULT,
-        createStatefulConfigWithTrie());
+        createStatefulConfigWithTrie(),
+        codeCache);
   }
 
   /**

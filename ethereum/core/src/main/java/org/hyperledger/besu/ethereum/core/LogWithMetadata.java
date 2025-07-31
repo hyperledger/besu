@@ -75,16 +75,31 @@ public class LogWithMetadata extends Log
 
   public static List<LogWithMetadata> generate(
       final Block block, final List<TransactionReceipt> receipts, final boolean removed) {
-    final List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
+    return generate(
+        block.getHeader().getNumber(),
+        block.getHash(),
+        block.getBody().getTransactions().stream().map(Transaction::getHash).toList(),
+        receipts,
+        removed);
+  }
+
+  public static List<LogWithMetadata> generate(
+      final long blockNumber,
+      final Hash blockHash,
+      final List<Hash> txHashes,
+      final List<TransactionReceipt> receipts,
+      final boolean removed) {
+    final int size = receipts.size();
+    final List<LogWithMetadata> logsWithMetadata = new ArrayList<>(size);
     int logIndexOffset = 0;
-    for (int txi = 0; txi < receipts.size(); ++txi) {
+    for (int txi = 0; txi < size; ++txi) {
       final List<LogWithMetadata> logs =
           generate(
               logIndexOffset,
               receipts.get(txi),
-              block.getHeader().getNumber(),
-              block.getHash(),
-              block.getBody().getTransactions().get(txi).getHash(),
+              blockNumber,
+              blockHash,
+              txHashes.get(txi),
               txi,
               removed);
       logIndexOffset += logs.size();
