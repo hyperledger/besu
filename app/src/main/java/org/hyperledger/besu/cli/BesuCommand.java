@@ -421,6 +421,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final TransactionValidatorServiceImpl transactionValidatorServiceImpl;
   private final TransactionSimulationServiceImpl transactionSimulationServiceImpl;
   private final BlockchainServiceImpl blockchainServiceImpl;
+  private P2PServiceImpl p2pServiceImpl;
   private BesuComponent besuComponent;
 
   @Option(
@@ -1254,7 +1255,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getSyncState(),
             besuController.getProtocolContext().getWorldStateArchive()));
 
-    besuPluginContext.addService(P2PService.class, new P2PServiceImpl(runner.getP2PNetwork()));
+    p2pServiceImpl = new P2PServiceImpl(runner.getP2PNetwork());
+    besuPluginContext.addService(P2PService.class, p2pServiceImpl);
 
     besuPluginContext.addService(
         TransactionPoolService.class,
