@@ -99,8 +99,6 @@ public class EVM {
 
   private final JumpDestOnlyCodeCache jumpDestOnlyCodeCache;
 
-  private final JumpDestOnlyCodeCache jumpDestOnlyCodeCache;
-
   /**
    * Instantiates a new Evm.
    *
