@@ -151,7 +151,6 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     LOG.debug(
         "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber());
     final CompletableFuture<List<BlockHeader>> headersFuture;
-
     if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
       headersFuture =
           downloadHeadersUsingPeerTaskSystem(assignedPeer)

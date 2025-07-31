@@ -121,7 +121,6 @@ public class RangeHeadersFetcher {
         .addArgument(skip)
         .log();
     CompletableFuture<List<BlockHeader>> headersFuture;
-
     if (syncConfig.isPeerTaskSystemEnabled()) {
       headersFuture =
           ethContext

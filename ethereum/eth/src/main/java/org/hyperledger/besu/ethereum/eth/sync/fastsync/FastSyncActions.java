@@ -228,7 +228,6 @@ public class FastSyncActions {
                   metricsSystem)
               .getHeader();
     }
-
     return blockHeaderFuture
         .whenComplete(
             (blockHeader, throwable) -> {

@@ -77,6 +77,7 @@ public class ChainHeadTracker {
         .setMessage("Requesting chain head info from {}...")
         .addArgument(peer::getLoggableId)
         .log();
+
     if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
       return ethContext
           .getScheduler()

@@ -60,6 +60,7 @@ public class DownloadBodiesStep
 
   private CompletableFuture<List<Block>> getBodiesWithPeerTaskSystem(
       final List<BlockHeader> headers) {
+
     final CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
         new CompleteBlocksWithPeerTask(protocolSchedule, headers, ethContext.getPeerTaskExecutor());
     final List<Block> blocks = completeBlocksWithPeerTask.retrieveBlocksFromPeers();

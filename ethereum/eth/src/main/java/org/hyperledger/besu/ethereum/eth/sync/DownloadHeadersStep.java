@@ -99,7 +99,6 @@ public class DownloadHeadersStep
           .run();
     } else {
       LOG.debug("Downloading headers starting from {}", range.getStart().getNumber());
-
       if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
         return ethContext
             .getScheduler()

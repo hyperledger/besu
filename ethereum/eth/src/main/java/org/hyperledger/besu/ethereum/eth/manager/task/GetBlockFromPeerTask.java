@@ -151,7 +151,6 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
     } else {
       returnValue.complete(taskResult.result().get());
     }
-
     return returnValue;
   }
 
