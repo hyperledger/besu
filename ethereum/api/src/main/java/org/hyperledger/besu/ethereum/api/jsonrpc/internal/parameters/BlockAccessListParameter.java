@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.S
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -47,6 +48,7 @@ public class BlockAccessListParameter {
     return accountChanges;
   }
 
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   public static class AccountChangesParameter {
     public final String address;
     public final List<SlotChangeParameter> storageChanges;
@@ -70,6 +72,7 @@ public class BlockAccessListParameter {
     }
   }
 
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   public static class SlotChangeParameter {
     public final String slot;
     public final List<StorageChangeParameter> changes;
@@ -80,6 +83,7 @@ public class BlockAccessListParameter {
     }
   }
 
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   public static class StorageChangeParameter {
     public final long txIndex;
     public final String newValue;
@@ -90,6 +94,7 @@ public class BlockAccessListParameter {
     }
   }
 
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   public static class BalanceChangeParameter {
     public final long txIndex;
     public final String postBalance;
@@ -100,6 +105,7 @@ public class BlockAccessListParameter {
     }
   }
 
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   public static class NonceChangeParameter {
     public final long txIndex;
     public final long newNonce;
@@ -110,6 +116,7 @@ public class BlockAccessListParameter {
     }
   }
 
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   public static class CodeChangeParameter {
     public final long txIndex;
     public final String newCode;
