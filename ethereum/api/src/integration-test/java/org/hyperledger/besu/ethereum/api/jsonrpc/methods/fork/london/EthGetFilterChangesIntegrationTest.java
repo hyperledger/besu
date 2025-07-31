@@ -66,6 +66,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.util.Lists;
@@ -229,7 +230,7 @@ public class EthGetFilterChangesIntegrationTest {
     JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
-    transactions.addTransaction(pendingTransaction);
+    transactions.addTransaction(pendingTransaction, Optional.empty());
 
     // We've added one transaction, so there should be one new hash.
     expected =
@@ -297,7 +298,7 @@ public class EthGetFilterChangesIntegrationTest {
             new BlockBody(transactionList, emptyList()));
     final List<TransactionReceipt> transactionReceipts =
         transactionList.stream()
-            .map(transaction -> new TransactionReceipt(1, 1, emptyList()))
+            .map(transaction -> new TransactionReceipt(1, 1, emptyList(), Optional.empty()))
             .collect(toList());
     blockchain.appendBlock(block, transactionReceipts);
     return block;
