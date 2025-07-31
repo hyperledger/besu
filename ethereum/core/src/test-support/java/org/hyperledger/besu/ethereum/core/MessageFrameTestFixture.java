@@ -182,7 +182,7 @@ public class MessageFrameTestFixture {
                 blockHashLookup.orElseGet(
                     () ->
                         protocolSpec
-                            .getBlockHashProcessor()
+                            .getPreExecutionProcessor()
                             .createBlockHashLookup(localBlockchain, localBlockHeader)))
             .maxStackSize(maxStackSize)
             .build();

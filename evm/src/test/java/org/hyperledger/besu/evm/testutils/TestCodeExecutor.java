@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.testutils;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -56,7 +55,7 @@ public class TestCodeExecutor {
     final MessageCallProcessor messageCallProcessor =
         new MessageCallProcessor(evm, new PrecompileContractRegistry());
     final Bytes codeBytes = Bytes.fromHexString(codeHexString.replaceAll("\\s", ""));
-    final Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
+    final Code code = evm.wrapCode(codeBytes);
 
     final MessageFrame initialFrame =
         new TestMessageFrameBuilder()

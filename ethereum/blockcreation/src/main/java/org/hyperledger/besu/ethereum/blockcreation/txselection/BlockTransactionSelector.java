@@ -440,7 +440,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private TransactionProcessingResult processTransaction(final Transaction transaction) {
     final BlockHashLookup blockHashLookup =
         blockSelectionContext
-            .blockHashProcessor()
+            .preExecutionProcessor()
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
     return transactionProcessor.processTransaction(
         txWorldStateUpdater,
@@ -479,7 +479,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
           final TransactionReceipt receipt =
               transactionReceiptFactory.create(
-                  transaction.getType(), processingResult, worldState, cumulativeGasUsed);
+                  transaction.getType(), processingResult, cumulativeGasUsed);
 
           transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
 
