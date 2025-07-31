@@ -125,9 +125,9 @@ public class EthConfig implements JsonRpcMethod {
     PrecompileContractRegistry registry = spec.getPrecompileContractRegistry();
     ObjectNode precompiles = result.putObject("precompiles");
     registry.getPrecompileAddresses().stream()
-            .map(a -> Map.entry(registry.get(a).getName(), a.toHexString()))
-            .sorted(Entry.comparingByKey())
-            .forEach(e -> precompiles.put(e.getKey(), e.getValue()));
+        .map(a -> Map.entry(registry.get(a).getName(), a.toHexString()))
+        .sorted(Entry.comparingByKey())
+        .forEach(e -> precompiles.put(e.getKey(), e.getValue()));
 
     TreeMap<String, String> systemContracts =
         new TreeMap<>(
