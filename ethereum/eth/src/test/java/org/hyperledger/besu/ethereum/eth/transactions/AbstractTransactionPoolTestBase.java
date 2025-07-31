@@ -455,7 +455,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
   }
 
   protected Transaction createTransactionWithoutChainId(final int transactionNumber) {
-    return createTransaction(transactionNumber);
+    return createTransaction(transactionNumber, Optional.empty());
   }
 
   protected void whenBlockBaseFeeIs(final Wei baseFee) {
