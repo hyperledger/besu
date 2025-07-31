@@ -76,6 +76,7 @@ import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.TransactionValidatorService;
+import org.hyperledger.besu.plugin.services.WorldStateService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.mining.MiningService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
@@ -97,6 +98,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.TransactionValidatorServiceImpl;
+import org.hyperledger.besu.services.WorldStateServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 
 import java.io.File;
@@ -275,6 +277,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         new TransactionPoolServiceImpl(besuController.getTransactionPool()));
     besuPluginContext.addService(
         MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
+    besuPluginContext.addService(
+        WorldStateService.class,
+        new WorldStateServiceImpl(besuController.getProtocolContext().getWorldStateArchive()));
   }
 
   private void killRunner(final String name) {
