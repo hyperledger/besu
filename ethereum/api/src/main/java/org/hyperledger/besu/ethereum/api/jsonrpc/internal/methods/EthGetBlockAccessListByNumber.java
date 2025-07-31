@@ -17,10 +17,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockAccessListParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 
 public class EthGetBlockAccessListByNumber extends AbstractBlockParameterMethod {
 
@@ -48,7 +51,16 @@ public class EthGetBlockAccessListByNumber extends AbstractBlockParameterMethod 
       final JsonRpcRequestContext requestContext, final long blockNumber) {
     return getBlockchainQueries()
         .getBlockHashByNumber(blockNumber)
-        .flatMap(hash -> getBlockchainQueries().getBlockchain().getBlockAccessList(hash))
+        .flatMap(
+            hash ->
+                getBlockchainQueries()
+                    .getBlockchain()
+                    .getBlockAccessList(hash)
+                    .map(
+                        bal ->
+                            new BlockAccessListResult(
+                                BodyValidation.balHash(bal).toString(),
+                                BlockAccessListParameter.fromBlockAccessList(bal))))
         .orElse(null);
   }
 }
