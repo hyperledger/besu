@@ -159,6 +159,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
   private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
+  private static final long CUSTOM_TARGET_GAS_LIMIT = 50_000_000L;
   private static final String NETWORK_MAINNET_CONFIG_LOG =
       String.format(
           "%s%s",
@@ -2814,8 +2815,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   void shouldShowCorrectFormatForMainnetCustomTargetGasLimit() {
-    final long customGasLimit = 50_000_000L;
-    parseCommand("--target-gas-limit", String.valueOf(customGasLimit));
+    parseCommand("--target-gas-limit", String.valueOf(CUSTOM_TARGET_GAS_LIMIT));
 
     final ArgumentCaptor<MiningConfiguration> miningArg =
         ArgumentCaptor.forClass(MiningConfiguration.class);
@@ -2826,9 +2826,10 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong()).isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
     final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
-    final String targetGasLimitOutput = ConfigurationOverviewBuilder.normalizeGas(customGasLimit);
+    final String targetGasLimitOutput = ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
         .contains(String.format("%s: %s", "Network", NETWORK_MAINNET_CONFIG_LOG));
     assertThat(startupConfigLog)
@@ -2860,8 +2861,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   void shouldShowCorrectFormatForTestnetCustomTargetGasLimit() {
-    final long customGasLimit = 50_000_000L;
-    parseCommand("--network", "hoodi", "--target-gas-limit", String.valueOf(customGasLimit));
+    parseCommand("--network", "hoodi", "--target-gas-limit", String.valueOf(CUSTOM_TARGET_GAS_LIMIT));
 
     final ArgumentCaptor<MiningConfiguration> miningArg =
         ArgumentCaptor.forClass(MiningConfiguration.class);
@@ -2872,9 +2872,10 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong()).isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
     final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
-    final String targetGasLimitOutput = ConfigurationOverviewBuilder.normalizeGas(customGasLimit);
+    final String targetGasLimitOutput = ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
         .contains(String.format("%s: %s", "Network", NETWORK_HOODI_CONFIG_LOG));
     assertThat(startupConfigLog)
@@ -2906,8 +2907,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   void shouldShowCorrectFormatForCustomNetworkCustomTargetGasLimit() {
-    final long customGasLimit = 50_000_000L;
-    parseCommand("--network", "dev", "--target-gas-limit", String.valueOf(customGasLimit));
+    parseCommand("--network", "dev", "--target-gas-limit", String.valueOf(CUSTOM_TARGET_GAS_LIMIT));
 
     final ArgumentCaptor<MiningConfiguration> miningArg =
         ArgumentCaptor.forClass(MiningConfiguration.class);
@@ -2918,10 +2918,10 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong()).isEqualTo(customGasLimit);
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong()).isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
     final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
-    final String targetGasLimitOutput = ConfigurationOverviewBuilder.normalizeGas(customGasLimit);
+    final String targetGasLimitOutput = ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
         .contains(String.format("%s: %s", "Network", NETWORK_DEV_CONFIG_LOG));
     assertThat(startupConfigLog)
