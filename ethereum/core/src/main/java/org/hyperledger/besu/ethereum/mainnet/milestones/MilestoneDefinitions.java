@@ -205,10 +205,6 @@ public class MilestoneDefinitions {
             config.getOsakaTime(),
             () -> specFactory.osakaDefinition(config)),
         createTimestampMilestone(
-            MainnetHardforkId.AMSTERDAM,
-            config.getAmsterdamTime(),
-            () -> specFactory.amsterdamDefinition(config)),
-        createTimestampMilestone(
             MainnetHardforkId.BPO1, config.getBpo1Time(), () -> specFactory.bpo1Definition(config)),
         createTimestampMilestone(
             MainnetHardforkId.BPO2, config.getBpo2Time(), () -> specFactory.bpo2Definition(config)),
