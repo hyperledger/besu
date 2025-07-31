@@ -17,6 +17,7 @@ package org.hyperledger.besu.services;
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -225,5 +226,18 @@ public class BlockchainServiceImpl implements BlockchainService {
       return Optional.empty();
     }
     return protocolSchedule.getChainId();
+  }
+
+  @Override
+  public HardforkId getHardforkId(final BlockHeader blockHeader) {
+    return protocolSchedule.getByBlockHeader(blockHeader).getHardforkId();
+  }
+
+  @Override
+  public HardforkId getNextBlockHardforkId(
+      final BlockHeader parentBlockHeader, final long timestampForNextBlock) {
+    return protocolSchedule
+        .getForNextBlockHeader(parentBlockHeader, timestampForNextBlock)
+        .getHardforkId();
   }
 }

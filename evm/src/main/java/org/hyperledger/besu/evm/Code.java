@@ -168,4 +168,14 @@ public interface Code {
   default long[] getJumpDestBitMask() {
     return null;
   }
+
+  /**
+   * Sets the jump destination bitmask for this code. This method is intended to be used by the
+   * EVM's JumpService to set the valid jump destinations for the code.
+   *
+   * @param jumpDestBitMask an array of long values representing the jump destinations
+   */
+  default void setJumpDestBitMask(final long[] jumpDestBitMask) {
+    // empty default method to allow setting the jump destination bitmask
+  }
 }

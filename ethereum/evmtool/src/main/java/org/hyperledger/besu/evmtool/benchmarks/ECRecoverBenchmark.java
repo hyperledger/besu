@@ -14,12 +14,17 @@
  */
 package org.hyperledger.besu.evmtool.benchmarks;
 
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.fluent.EvmSpec;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.SequencedMap;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -38,7 +43,9 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
 
   @Override
   public void runBenchmark(final Boolean attemptNative, final String fork) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    EvmSpecVersion evmSpecVersion = EvmSpecVersion.fromName(fork);
+
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "0x0c65a9d9ffc02c7c99e36e32ce0f950c7804ceda",
         Bytes.fromHexString(
@@ -444,14 +451,15 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
         Bytes.fromHexString(
             "0xda13687f911cf8ede5e0a4317d8b9bf691b56bc2f3f4e463c8c2eb1f61a54469000000000000000000000000000000000000000000000000000000000000001bf6e5df315197d9fe994fae7e05e33be4bd090f9533f36c6285b80478cd21c38533928bb06d48795a86c12f5ccb95758e891d8b1b2d62106e85ae36cb8414d56b"));
 
-    final SECP256K1 signatureAlgorithm = new SECP256K1();
+    SignatureAlgorithmFactory.setDefaultInstance();
+    SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
     if (attemptNative != null && (!attemptNative || !signatureAlgorithm.maybeEnableNative())) {
       signatureAlgorithm.disableNative();
     }
-    output.println(signatureAlgorithm.isNative() ? "Native secp256k1" : "Java secp256k1");
+    output.println(signatureAlgorithm.isNative() ? "Native EcRecover" : "Java EcRecover");
 
-    final ECRECPrecompiledContract contract =
-        new ECRECPrecompiledContract(gasCalculatorForFork(fork), signatureAlgorithm);
+    final PrecompiledContract contract =
+        EvmSpec.evmSpec(evmSpecVersion).getPrecompileContractRegistry().get(Address.ECREC);
 
     warmIterations = warmIterations / testCases.size();
     execIterations = execIterations / testCases.size();
@@ -463,8 +471,11 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
     }
     execTime /= testCases.size();
     gasCost /= testCases.size();
-    output.printf(
-        "ecrecover %,6d gas @%,7.1f µs /%,8.1f MGps%n",
-        gasCost, execTime * 1_000_000, gasCost / execTime / 1_000_000);
+    logPrecompilePerformance("ecrecover", gasCost, execTime);
+  }
+
+  @Override
+  public boolean isPrecompile() {
+    return true;
   }
 }

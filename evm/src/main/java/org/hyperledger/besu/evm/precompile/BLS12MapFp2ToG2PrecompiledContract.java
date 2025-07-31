@@ -30,7 +30,7 @@ public class BLS12MapFp2ToG2PrecompiledContract extends AbstractBLS12Precompiled
   /** Instantiates a new BLS12MapFp2ToG2 precompiled contract. */
   BLS12MapFp2ToG2PrecompiledContract() {
     super(
-        "BLS12_MAP_FIELD_TO_CURVE",
+        "BLS12_MAP_FP2_TO_G2",
         LibGnarkEIP2537.BLS12_MAP_FP2_TO_G2_OPERATION_SHIM_VALUE,
         PARAMETER_LENGTH);
   }

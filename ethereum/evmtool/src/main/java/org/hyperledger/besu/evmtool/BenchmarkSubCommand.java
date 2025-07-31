@@ -25,9 +25,11 @@ import org.hyperledger.besu.evmtool.benchmarks.BLS12Benchmark;
 import org.hyperledger.besu.evmtool.benchmarks.BenchmarkConfig;
 import org.hyperledger.besu.evmtool.benchmarks.BenchmarkExecutor;
 import org.hyperledger.besu.evmtool.benchmarks.ECRecoverBenchmark;
+import org.hyperledger.besu.evmtool.benchmarks.KZGPointEvalBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.ModExpBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.P256VerifyBenchmark;
-import org.hyperledger.besu.evmtool.benchmarks.Secp256k1Benchmark;
+import org.hyperledger.besu.evmtool.benchmarks.RipeMD160Benchmark;
+import org.hyperledger.besu.evmtool.benchmarks.SHA256Benchmark;
 import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.LogConfigurator;
 
@@ -35,6 +37,9 @@ import java.io.PrintStream;
 import java.util.EnumSet;
 import java.util.Optional;
 
+import oshi.SystemInfo;
+import oshi.hardware.CentralProcessor;
+import oshi.hardware.HardwareAbstractionLayer;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -64,10 +69,12 @@ public class BenchmarkSubCommand implements Runnable {
     // blake2f
     EcRecover(ECRecoverBenchmark::new),
     ModExp(ModExpBenchmark::new),
-    Secp256k1(Secp256k1Benchmark::new),
     // bls12
     Bls12(BLS12Benchmark::new),
-    p256Verify(P256VerifyBenchmark::new);
+    p256Verify(P256VerifyBenchmark::new),
+    sha256(SHA256Benchmark::new),
+    RipeMD(RipeMD160Benchmark::new),
+    kzgPointEval(KZGPointEvalBenchmark::new);
 
     private final BenchmarkExecutor.Builder executorBuilder;
 
@@ -134,6 +141,14 @@ public class BenchmarkSubCommand implements Runnable {
       scope = LOCAL)
   Optional<Integer> warmTime = Optional.empty();
 
+  @Option(
+      names = {"--attempt-cache-bust"},
+      description =
+          "Run each test case within each warmup and exec iteration. This attempts to warm the code without warming the data, i.e. avoid warming CPU caches. Benchmark must have sufficient number and variety of test cases to be effective. --warm-time, --exec-time and --async-profiler are ignored.",
+      scope = LOCAL,
+      negatable = true)
+  Boolean attemptCacheBust = false;
+
   @Parameters(description = "One or more of ${COMPLETION-CANDIDATES}.")
   EnumSet<Benchmark> benchmarks = EnumSet.noneOf(Benchmark.class);
 
@@ -170,14 +185,37 @@ public class BenchmarkSubCommand implements Runnable {
             execIterations,
             execTime,
             warmIterations,
-            warmTime);
+            warmTime,
+            attemptCacheBust);
     for (var benchmark : benchmarksToRun) {
-      output.println("Benchmarks for " + benchmark + " on fork " + parentCommand.getFork());
+      output.println("\nBenchmarks for " + benchmark + " on fork " + parentCommand.getFork());
       BenchmarkExecutor executor = benchmark.executorBuilder.create(output, benchmarkConfig);
       if (executor.isPrecompile()) {
         BenchmarkExecutor.logPrecompileDerivedGasNotice(output);
       }
       executor.runBenchmark(nativeCode, parentCommand.getFork());
     }
+    logSystemInfo(output);
+  }
+
+  private static void logSystemInfo(final PrintStream output) {
+    output.println(
+        "\n****************************** Hardware Specs ******************************");
+    output.println("*");
+    SystemInfo si = new SystemInfo();
+    HardwareAbstractionLayer hal = si.getHardware();
+    CentralProcessor processor = hal.getProcessor();
+    output.println("* OS: " + si.getOperatingSystem());
+    output.println("* Processor: " + processor.getProcessorIdentifier().getName());
+    output.println(
+        "* Microarchitecture: " + processor.getProcessorIdentifier().getMicroarchitecture());
+    output.println("* Physical CPU packages: " + processor.getPhysicalPackageCount());
+    output.println("* Physical CPU cores: " + processor.getPhysicalProcessorCount());
+    output.println("* Logical CPU cores: " + processor.getLogicalProcessorCount());
+    output.println(
+        "* Average Max Frequency per core: "
+            + processor.getMaxFreq() / 100_000 / processor.getLogicalProcessorCount()
+            + " MHz");
+    output.println("* Memory Total: " + hal.getMemory().getTotal() / 1_000_000_000 + " GB");
   }
 }

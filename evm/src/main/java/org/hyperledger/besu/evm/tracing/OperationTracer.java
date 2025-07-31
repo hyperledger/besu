@@ -95,7 +95,6 @@ public interface OperationTracer {
    */
   default void traceBeforeRewardTransaction(
       final WorldView worldView, final Transaction tx, final Wei miningReward) {}
-  ;
 
   /**
    * Trace the end of a transaction.

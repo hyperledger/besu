@@ -86,11 +86,23 @@ public class CodeCache implements org.hyperledger.besu.evm.internal.CodeCache {
         });
   }
 
+  /**
+   * Gets the code if present in the cache.
+   *
+   * @param codeHash the code hash
+   * @return the code if present
+   */
   @Override
   public Code getIfPresent(final Hash codeHash) {
     return cache.getIfPresent(codeHash);
   }
 
+  /**
+   * Put the code into the cache.
+   *
+   * @param codeHash the code hash
+   * @param code the code
+   */
   @Override
   public void put(final Hash codeHash, final Code code) {
     cache.put(codeHash, code);
