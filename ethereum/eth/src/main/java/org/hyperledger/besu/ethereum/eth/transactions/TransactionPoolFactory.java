@@ -62,8 +62,6 @@ public class TransactionPoolFactory {
 
     final PeerTransactionTracker transactionTracker =
         new PeerTransactionTracker(transactionPoolConfiguration, ethContext.getEthPeers());
-    final TransactionsMessageSender transactionsMessageSender =
-        new TransactionsMessageSender(transactionTracker);
 
     final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender =
         new NewPooledTransactionHashesMessageSender(transactionTracker);
@@ -77,7 +75,6 @@ public class TransactionPoolFactory {
         syncState,
         transactionPoolConfiguration,
         transactionTracker,
-        transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
         blobCache,
         miningConfiguration,
@@ -93,7 +90,6 @@ public class TransactionPoolFactory {
       final SyncState syncState,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final PeerTransactionTracker transactionTracker,
-      final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
       final BlobCache blobCache,
       final MiningConfiguration miningConfiguration,
@@ -114,10 +110,7 @@ public class TransactionPoolFactory {
             protocolSchedule,
             protocolContext,
             new TransactionBroadcaster(
-                ethContext,
-                transactionTracker,
-                transactionsMessageSender,
-                newPooledTransactionHashesMessageSender),
+                ethContext, transactionTracker, newPooledTransactionHashesMessageSender),
             ethContext,
             metrics,
             transactionPoolConfiguration,

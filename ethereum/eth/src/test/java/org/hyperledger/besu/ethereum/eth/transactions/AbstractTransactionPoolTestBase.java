@@ -116,7 +116,6 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
 
   @Mock protected PendingTransactionAddedListener listener;
 
-  @Mock protected TransactionsMessageSender transactionsMessageSender;
   @Mock protected NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
   @Mock protected ProtocolSpec protocolSpec;
 
@@ -240,10 +239,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
     transactionBroadcaster =
         spy(
             new TransactionBroadcaster(
-                ethContext,
-                peerTransactionTracker,
-                transactionsMessageSender,
-                newPooledTransactionHashesMessageSender));
+                ethContext, peerTransactionTracker, newPooledTransactionHashesMessageSender));
 
     transactionPool = createTransactionPool();
     blockchain.observeBlockAdded(transactionPool);
