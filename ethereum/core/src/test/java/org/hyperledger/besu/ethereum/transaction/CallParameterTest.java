@@ -152,13 +152,11 @@ public class CallParameterTest {
               assertThat(auth.r())
                   .isEqualTo(
                       new BigInteger(
-                          "462a70678128d9dd8f5b8010aaecddda1ba9ad767f0807c341f38d4dcb7eb893",
-                          16));
+                          "462a70678128d9dd8f5b8010aaecddda1ba9ad767f0807c341f38d4dcb7eb893", 16));
               assertThat(auth.s())
                   .isEqualTo(
                       new BigInteger(
-                          "645f7afd51a86bafe8939c8498fc89769918a38213859843ad7b19ffd4273a48",
-                          16));
+                          "645f7afd51a86bafe8939c8498fc89769918a38213859843ad7b19ffd4273a48", 16));
             });
   }
 }
