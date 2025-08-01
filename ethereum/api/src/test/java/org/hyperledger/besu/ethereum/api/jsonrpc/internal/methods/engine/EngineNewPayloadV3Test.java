@@ -16,9 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLError.INVALID_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_ENGINE_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.UNSUPPORTED_FORK;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -175,9 +176,12 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
                       List.of(shortHash.toHexString()),
                       "0x0000000000000000000000000000000000000000000000000000000000000000"
                     })));
-    final EnginePayloadStatusResult res = fromSuccessResp(badParam);
-    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
-    assertThat(res.getError()).isEqualTo("Invalid versionedHash");
+
+    // Should return an error response with INVALID_EXECUTION_REQUESTS_PARAMS
+    final JsonRpcError jsonRpcError = fromErrorResp(badParam);
+    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    assertThat(jsonRpcError.getMessage()).isEqualTo(INVALID_ENGINE_PARAMS.getMessage());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -226,19 +230,16 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     when(blockchain.getBlockHeader(parentBlockHeader.getBlockHash()))
         .thenReturn(Optional.of(parentBlockHeader));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    BlockHeader mockHeader =
-        new BlockHeaderTestFixture()
-            .baseFeePerGas(Wei.ONE)
-            .parentHash(parentBlockHeader.getParentHash())
-            .number(parentBlockHeader.getNumber() + 1)
-            .timestamp(parentBlockHeader.getTimestamp() + 12)
-            .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
-            .excessBlobGas(BlobGas.ZERO)
-            .blobGasUsed(0L)
-            .parentBeaconBlockRoot(
-                maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
-            .buildHeader();
-    return mockHeader;
+    return new BlockHeaderTestFixture()
+        .baseFeePerGas(Wei.ONE)
+        .parentHash(parentBlockHeader.getParentHash())
+        .number(parentBlockHeader.getNumber() + 1)
+        .timestamp(parentBlockHeader.getTimestamp() + 12)
+        .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
+        .excessBlobGas(BlobGas.ZERO)
+        .blobGasUsed(0L)
+        .parentBeaconBlockRoot(maybeParentBeaconBlockRoot)
+        .buildHeader();
   }
 
   @Override
