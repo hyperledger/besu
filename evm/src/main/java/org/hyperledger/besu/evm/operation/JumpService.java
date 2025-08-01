@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -48,8 +49,17 @@ public class JumpService {
     }
 
     final Code code = frame.getCode();
-
     if (code.isJumpDestInvalid(jumpDestination)) {
+      final Address contractAddress = frame.getContractAddress();
+      frame
+          .getAccessWitness()
+          .touchCodeChunks(
+              contractAddress,
+              frame.wasCreatedInTransaction(contractAddress),
+              frame.getPC(),
+              jumpDestination - frame.getPC(),
+              code.getSize(),
+              frame.getRemainingGas());
       return invalidJumpResponse;
     }
 

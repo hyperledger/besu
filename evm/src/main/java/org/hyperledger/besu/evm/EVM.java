@@ -214,27 +214,25 @@ public class EVM {
 
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
+
+      final Address contractAddress = frame.getContractAddress();
+      long statelessGas =
+          frame
+              .getAccessWitness()
+              .touchCodeChunks(
+                  contractAddress,
+                  frame.wasCreatedInTransaction(contractAddress),
+                  frame.getPC(),
+                  1,
+                  code.length,
+                  frame.getRemainingGas());
+      frame.decrementRemainingGas(statelessGas);
+
       Operation currentOperation;
       int opcode;
-      int pc = frame.getPC();
-
       try {
-        opcode = code[pc] & 0xff;
+        opcode = code[frame.getPC()] & 0xff;
         currentOperation = operationArray[opcode];
-
-        final Address contractAddress = frame.getContractAddress();
-        long statelessGas =
-            frame
-                .getAccessWitness()
-                .touchCodeChunks(
-                    contractAddress,
-                    frame.wasCreatedInTransaction(contractAddress),
-                    frame.getPC(),
-                    1,
-                    code.length,
-                    frame.getRemainingGas());
-        frame.decrementRemainingGas(statelessGas);
-
       } catch (ArrayIndexOutOfBoundsException aiiobe) {
         opcode = 0;
         currentOperation = endOfScriptStop;
