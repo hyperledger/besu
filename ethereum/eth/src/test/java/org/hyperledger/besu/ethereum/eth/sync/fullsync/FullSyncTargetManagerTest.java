@@ -75,7 +75,7 @@ public class FullSyncTargetManagerTest {
     final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
 
-    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
+    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.TESTING_NETWORK;
     final ProtocolContext protocolContext =
         new ProtocolContext.Builder()
             .withBlockchain(localBlockchain)
@@ -137,8 +137,7 @@ public class FullSyncTargetManagerTest {
     when(localWorldState.isWorldStateAvailable(
             chainHeadHeader.getStateRoot(), chainHeadHeader.getHash()))
         .thenReturn(true);
-    final RespondingEthPeer bestPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.MAX_VALUE, 0);
+    final RespondingEthPeer bestPeer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
 
     final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
     bestPeer.respond(responder);

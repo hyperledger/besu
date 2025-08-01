@@ -38,7 +38,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
   @Override
   AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
     return new RequiredBlocksPeerValidator(
-        ProtocolScheduleFixture.MAINNET,
+        ProtocolScheduleFixture.TESTING_NETWORK,
         null,
         SynchronizerConfiguration.builder().build(),
         new NoOpMetricsSystem(),
@@ -51,7 +51,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
   public void validatePeer_responsivePeerWithRequiredBlock() {
     final EthProtocolManager ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
-            .setProtocolSchedule(ProtocolScheduleFixture.MAINNET)
+            .setProtocolSchedule(ProtocolScheduleFixture.TESTING_NETWORK)
             .build();
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long requiredBlockNumber = 500;
@@ -60,7 +60,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
-            ProtocolScheduleFixture.MAINNET,
+            ProtocolScheduleFixture.TESTING_NETWORK,
             null,
             SynchronizerConfiguration.builder().build(),
             new NoOpMetricsSystem(),
@@ -94,7 +94,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
-            ProtocolScheduleFixture.MAINNET,
+            ProtocolScheduleFixture.TESTING_NETWORK,
             null,
             SynchronizerConfiguration.builder().build(),
             new NoOpMetricsSystem(),
@@ -124,7 +124,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
-            ProtocolScheduleFixture.MAINNET,
+            ProtocolScheduleFixture.TESTING_NETWORK,
             null,
             SynchronizerConfiguration.builder().build(),
             new NoOpMetricsSystem(),

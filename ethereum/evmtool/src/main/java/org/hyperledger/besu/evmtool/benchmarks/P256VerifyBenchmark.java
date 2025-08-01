@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.precompile.P256VerifyPrecompiledContract;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.SequencedMap;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -38,7 +39,7 @@ public class P256VerifyBenchmark extends BenchmarkExecutor {
 
   @Override
   public void runBenchmark(final Boolean attemptNative, final String fork) {
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "wycheproof/ecdsa_secp256r1_sha256_p1363_test.json",
         Bytes.fromHexString(

@@ -25,20 +25,18 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.core.kzg.Blob;
+import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
-import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
-import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
-import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
+import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
@@ -52,11 +50,8 @@ import java.util.stream.IntStream;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.Bytes48;
-import org.web3j.crypto.BlobUtils;
 
-public class BaseTransactionPoolTest {
+public class BaseTransactionPoolTest extends TrustedSetupClassLoaderExtension {
 
   protected static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -256,44 +251,16 @@ public class BaseTransactionPoolTest {
           .maxPriorityFeePerGas(Optional.of(maxPriorityFeePerGas));
       if (type.supportsBlob() && blobCount > 0) {
         tx.maxFeePerBlobGas(Optional.of(maxGasPrice));
-        final var blobs =
+        final var blobTestFixture = new BlobTestFixture();
+        final var blobProofBundles =
             IntStream.range(0, blobCount)
-                .mapToObj(i -> new org.web3j.crypto.Blob(Bytes.repeat((byte) i, 32 * 4096)))
-                .toList();
-
-        final var commitments =
-            IntStream.range(0, blobCount)
-                .mapToObj(i -> BlobUtils.getCommitment(blobs.get(i)))
-                .map(Bytes48::wrap)
-                .map(KZGCommitment::new)
+                .mapToObj(i -> blobTestFixture.createBlobProofBundle(blobType))
                 .toList();
 
         final var versionedHashes =
-            IntStream.range(0, blobCount)
-                .mapToObj(i -> BlobUtils.kzgToVersionedHash(commitments.get(i).getData()))
-                .map(Bytes32::wrap)
-                .map(VersionedHash::new)
-                .toList();
+            blobProofBundles.stream().map(BlobProofBundle::getVersionedHash).toList();
 
-        final var proofs =
-            IntStream.range(0, blobCount)
-                .mapToObj(i -> BlobUtils.getProof(blobs.get(i), commitments.get(i).getData()))
-                .map(Bytes48::wrap)
-                .map(KZGProof::new)
-                .toList();
-
-        final var blobsWithCommitmentsV0 =
-            new BlobsWithCommitments(
-                BlobType.KZG_PROOF,
-                commitments,
-                blobs.stream().map(org.web3j.crypto.Blob::getData).map(Blob::new).toList(),
-                proofs,
-                versionedHashes);
-
-        final var blobsWithCommitments =
-            blobType == BlobType.KZG_PROOF
-                ? blobsWithCommitmentsV0
-                : CKZG4844Helper.convertToVersion1(blobsWithCommitmentsV0);
+        final var blobsWithCommitments = new BlobsWithCommitments(blobProofBundles);
 
         tx.versionedHashes(Optional.of(versionedHashes));
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
