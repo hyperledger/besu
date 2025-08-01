@@ -2827,10 +2827,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong()).isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
+        .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
     final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
-    final String targetGasLimitOutput = ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
+    final String targetGasLimitOutput =
+        ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
         .contains(String.format("%s: %s", "Network", NETWORK_MAINNET_CONFIG_LOG));
     assertThat(startupConfigLog)
@@ -2862,7 +2864,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   void shouldShowCorrectFormatForTestnetCustomTargetGasLimit() {
-    parseCommand("--network", "hoodi", "--target-gas-limit", String.valueOf(CUSTOM_TARGET_GAS_LIMIT));
+    parseCommand(
+        "--network", "hoodi", "--target-gas-limit", String.valueOf(CUSTOM_TARGET_GAS_LIMIT));
 
     final ArgumentCaptor<MiningConfiguration> miningArg =
         ArgumentCaptor.forClass(MiningConfiguration.class);
@@ -2873,10 +2876,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong()).isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
+        .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
     final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
-    final String targetGasLimitOutput = ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
+    final String targetGasLimitOutput =
+        ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
         .contains(String.format("%s: %s", "Network", NETWORK_HOODI_CONFIG_LOG));
     assertThat(startupConfigLog)
@@ -2919,16 +2924,18 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong()).isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
+        .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
     final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
-    final String targetGasLimitOutput = ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
+    final String targetGasLimitOutput =
+        ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
         .contains(String.format("%s: %s", "Network", NETWORK_DEV_CONFIG_LOG));
     assertThat(startupConfigLog)
         .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
   }
-  
+
   @Test
   public void shouldLogErrorIfDuplicateBooleanOptionUsed() {
     parseCommand("--p2p-enabled=true", "--p2p-enabled=false");
