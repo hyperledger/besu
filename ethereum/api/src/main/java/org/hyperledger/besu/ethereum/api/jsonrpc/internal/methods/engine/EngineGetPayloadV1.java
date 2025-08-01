@@ -46,7 +46,6 @@ public class EngineGetPayloadV1 extends AbstractEngineGetPayload {
       final JsonRpcRequestContext request, final PayloadWrapper payload) {
     final var result =
         blockResultFactory.payloadTransactionCompleteV1(payload.blockWithReceipts().getBlock());
-    logProposal(payload);
     return new JsonRpcSuccessResponse(request.getRequest().getId(), result);
   }
 }

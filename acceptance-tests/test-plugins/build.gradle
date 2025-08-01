@@ -8,6 +8,7 @@ dependencies {
   implementation project(':ethereum:core')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:api')
+  implementation project(':evm')
   implementation project(':plugin-api')
   implementation 'com.google.auto.service:auto-service'
   implementation 'info.picocli:picocli'
