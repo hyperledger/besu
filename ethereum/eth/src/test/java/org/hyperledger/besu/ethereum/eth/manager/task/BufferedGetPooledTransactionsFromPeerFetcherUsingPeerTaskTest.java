@@ -100,7 +100,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherUsingPeerTaskTest {
     final List<Transaction> taskResult = List.of(transaction);
     final PeerTaskExecutorResult<List<Transaction>> peerTaskResult =
         new PeerTaskExecutorResult<List<Transaction>>(
-            Optional.of(taskResult), PeerTaskExecutorResponseCode.SUCCESS, Optional.of(ethPeer));
+            Optional.of(taskResult), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer));
 
     when(peerTaskExecutor.executeAgainstPeer(
             any(
@@ -151,7 +151,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherUsingPeerTaskTest {
               return new PeerTaskExecutorResult<List<Transaction>>(
                   Optional.of(resultTransactions),
                   PeerTaskExecutorResponseCode.SUCCESS,
-                  Optional.of(ethPeer));
+                  List.of(ethPeer));
             });
 
     fetcher.requestTransactions();

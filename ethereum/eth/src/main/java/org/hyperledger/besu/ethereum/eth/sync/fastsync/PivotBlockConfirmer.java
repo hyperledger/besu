@@ -29,12 +29,9 @@ import org.hyperledger.besu.util.FutureUtils;
 
 import java.time.Duration;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,7 +69,6 @@ class PivotBlockConfirmer {
   private final Collection<CompletableFuture<?>> runningQueries = new ConcurrentLinkedQueue<>();
   private final Map<Bytes, RetryingGetHeaderFromPeerByNumberTask> pivotBlockQueriesByPeerId =
       new ConcurrentHashMap<>();
-  private final Set<Bytes> peerIdsUsed = Collections.synchronizedSet(new HashSet<>());
   private final Map<BlockHeader, AtomicInteger> pivotBlockVotes = new ConcurrentHashMap<>();
 
   private final AtomicBoolean isStarted = new AtomicBoolean(false);
@@ -206,27 +202,15 @@ class PivotBlockConfirmer {
       final long blockNumber) {
     GetHeadersFromPeerTask task =
         new GetHeadersFromPeerTask(
-            blockNumber, 1, 0, GetHeadersFromPeerTask.Direction.FORWARD, protocolSchedule);
-    Optional<EthPeer> maybeEthPeer;
-    final EthPeer ethPeer;
-    try {
-      do {
-        if (isCancelled.get()) {
-          return CompletableFuture.failedFuture(
-              new CancellationException("Pivot block confirmation has been cancelled"));
-        }
-        maybeEthPeer =
-            ethContext
-                .getEthPeers()
-                .getPeer(
-                    (p) ->
-                        task.getPeerRequirementFilter().test(p)
-                            && !peerIdsUsed.contains(p.nodeId()));
-      } while (maybeEthPeer.isEmpty() && waitForPeer());
-      ethPeer = maybeEthPeer.get();
-      peerIdsUsed.add(ethPeer.nodeId());
-    } catch (InterruptedException e) {
-      return CompletableFuture.failedFuture(e);
+            blockNumber,
+            1,
+            0,
+            GetHeadersFromPeerTask.Direction.FORWARD,
+            ethContext.getEthPeers().getMaxPeers(),
+            protocolSchedule);
+    if (isCancelled.get()) {
+      return CompletableFuture.failedFuture(
+          new CancellationException("Pivot block confirmation has been cancelled"));
     }
 
     return ethContext
@@ -234,7 +218,7 @@ class PivotBlockConfirmer {
         .scheduleServiceTask(
             () -> {
               PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                  ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer);
+                  ethContext.getPeerTaskExecutor().execute(task);
               if (taskResult.responseCode() == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
                 // something is probably wrong with the request, so we won't retry as below
                 return CompletableFuture.failedFuture(
@@ -243,15 +227,13 @@ class PivotBlockConfirmer {
                   || taskResult.result().isEmpty()) {
                 // recursively call executePivotQueryWithPeerTaskSystem to retry with a different
                 // peer.
+                ethContext
+                    .getEthPeers()
+                    .waitForPeer((ethPeer) -> !taskResult.ethPeers().contains(ethPeer));
                 return executePivotQueryWithPeerTaskSystem(blockNumber);
               }
               return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
             });
-  }
-
-  private boolean waitForPeer() throws InterruptedException {
-    Thread.sleep(Duration.ofSeconds(5));
-    return true;
   }
 
   private Optional<RetryingGetHeaderFromPeerByNumberTask> createPivotQuery(final long blockNumber) {

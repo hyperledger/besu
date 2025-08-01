@@ -205,7 +205,9 @@ public class DownloadHeadersStepTest {
                 }
               }
               return new PeerTaskExecutorResult<List<BlockHeader>>(
-                  Optional.of(result), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
+                  Optional.of(result),
+                  PeerTaskExecutorResponseCode.SUCCESS,
+                  Collections.emptyList());
             });
 
     final CompletableFuture<RangeHeaders> result = this.downloader.apply(checkpointRange);

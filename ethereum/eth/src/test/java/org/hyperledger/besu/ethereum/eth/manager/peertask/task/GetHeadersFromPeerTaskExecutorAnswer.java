@@ -83,6 +83,6 @@ public class GetHeadersFromPeerTaskExecutorAnswer
     return new PeerTaskExecutorResult<>(
         Optional.of(getHeadersFromPeerTaskResult),
         PeerTaskExecutorResponseCode.SUCCESS,
-        ethPeers.bestPeer());
+        List.of(ethPeers.bestPeer().get()));
   }
 }
