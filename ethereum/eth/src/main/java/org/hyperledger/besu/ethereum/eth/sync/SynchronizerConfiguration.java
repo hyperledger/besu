@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.services.tasks.CachingTaskCollection;
 
+import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Range;
@@ -51,6 +52,10 @@ public class SynchronizerConfiguration {
       TimeUnit.SECONDS.toMillis(60);
 
   public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
+
+  public static final Boolean DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED = Boolean.FALSE;
+  public static final URI DEFAULT_ERA1_DATA_URI = URI.create("https://mainnet.era1.nimbus.team/");
+  public static final Integer DEFAULT_ERA1_IMPORT_PREPIPELINE_CONCURRENCY = 1;
 
   // Fast sync config
   private final int syncPivotDistance;
@@ -88,6 +93,11 @@ public class SynchronizerConfiguration {
   private final boolean isPeerTaskSystemEnabled;
   private final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled;
 
+  // ERA1 import prepipeline config
+  private final boolean era1ImportPrepipelineEnabled;
+  private final URI era1DataUri;
+  private final int era1ImportPrepipelineConcurrency;
+
   private SynchronizerConfiguration(
       final int syncPivotDistance,
       final float fastSyncFullValidationRate,
@@ -112,7 +122,10 @@ public class SynchronizerConfiguration {
       final long propagationManagerGetBlockTimeoutMillis,
       final boolean checkpointPostMergeEnabled,
       final boolean isPeerTaskSystemEnabled,
-      final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled) {
+      final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled,
+      final boolean era1ImportPrepipelineEnabled,
+      final URI era1DataUri,
+      final int era1ImportPrepipelineConcurrency) {
     this.syncPivotDistance = syncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.syncMinimumPeerCount = syncMinimumPeerCount;
@@ -137,6 +150,9 @@ public class SynchronizerConfiguration {
     this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
     this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
     this.snapSyncSavePreCheckpointHeadersOnlyEnabled = snapSyncSavePreCheckpointHeadersOnlyEnabled;
+    this.era1ImportPrepipelineEnabled = era1ImportPrepipelineEnabled;
+    this.era1DataUri = era1DataUri;
+    this.era1ImportPrepipelineConcurrency = era1ImportPrepipelineConcurrency;
   }
 
   public static Builder builder() {
@@ -270,6 +286,18 @@ public class SynchronizerConfiguration {
     return snapSyncSavePreCheckpointHeadersOnlyEnabled;
   }
 
+  public boolean era1ImportPrepipelineEnabled() {
+    return era1ImportPrepipelineEnabled;
+  }
+
+  public URI era1DataUri() {
+    return era1DataUri;
+  }
+
+  public int era1ImportPrepipelineConcurrency() {
+    return era1ImportPrepipelineConcurrency;
+  }
+
   public static class Builder {
     private SyncMode syncMode = SyncMode.FULL;
     private int syncMinimumPeerCount = DEFAULT_SYNC_MINIMUM_PEERS;
@@ -296,6 +324,9 @@ public class SynchronizerConfiguration {
     private int worldStateTaskCacheSize = DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
     private boolean isPeerTaskSystemEnabled = false;
     private boolean snapSyncSavePreCheckpointHeadersOnlyEnabled = true;
+    private boolean era1ImportPrepipelineEnabled = DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED;
+    private URI era1DataUri = DEFAULT_ERA1_DATA_URI;
+    private int era1ImportPrepipelineConcurrency = DEFAULT_ERA1_IMPORT_PREPIPELINE_CONCURRENCY;
 
     private long propagationManagerGetBlockTimeoutMillis =
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
@@ -434,6 +465,21 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder era1ImportPrepipelineEnabled(final boolean era1ImportPrepipelineEnabled) {
+      this.era1ImportPrepipelineEnabled = era1ImportPrepipelineEnabled;
+      return this;
+    }
+
+    public Builder era1DataUri(final URI era1DataUri) {
+      this.era1DataUri = era1DataUri;
+      return this;
+    }
+
+    public Builder era1ImportPrepipelineConcurrency(final int era1ImportPrepipelineConcurrency) {
+      this.era1ImportPrepipelineConcurrency = era1ImportPrepipelineConcurrency;
+      return this;
+    }
+
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
           syncPivotDistance,
@@ -459,7 +505,10 @@ public class SynchronizerConfiguration {
           propagationManagerGetBlockTimeoutMillis,
           checkpointPostMergeEnabled,
           isPeerTaskSystemEnabled,
-          snapSyncSavePreCheckpointHeadersOnlyEnabled);
+          snapSyncSavePreCheckpointHeadersOnlyEnabled,
+          era1ImportPrepipelineEnabled,
+          era1DataUri,
+          era1ImportPrepipelineConcurrency);
     }
   }
 }
