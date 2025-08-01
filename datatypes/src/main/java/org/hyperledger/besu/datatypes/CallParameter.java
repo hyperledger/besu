@@ -158,4 +158,15 @@ public interface CallParameter {
    * @return an {@link Optional} containing the payload bytes, or empty if not specified
    */
   Optional<Bytes> getPayload();
+
+  /**
+   * Returns the list of code delegation authorizations.
+   *
+   * <p>These authorizations specify which contracts are allowed to execute code on behalf of the
+   * sender, enabling advanced execution scenarios such as meta-transactions or contract delegation
+   * patterns.
+   *
+   * @return a {@link List} of {@link CodeDelegation} entries
+   */
+  List<CodeDelegation> getCodeDelegationAuthorizations();
 }

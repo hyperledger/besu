@@ -118,6 +118,7 @@ public class CliqueBlockCreatorTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);

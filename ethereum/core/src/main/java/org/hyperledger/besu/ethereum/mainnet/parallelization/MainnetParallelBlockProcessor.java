@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -92,7 +93,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final Address miningBeneficiary,
       final Transaction transaction,
       final int location,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final Optional<TransactionAccessList> transactionAccessList) {
 
     TransactionProcessingResult transactionProcessingResult = null;
 
@@ -121,7 +123,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           miningBeneficiary,
           transaction,
           location,
-          blockHashLookup);
+          blockHashLookup,
+          transactionAccessList);
     } else {
       return transactionProcessingResult;
     }

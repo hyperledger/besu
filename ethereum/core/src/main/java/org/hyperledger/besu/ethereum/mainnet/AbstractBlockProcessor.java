@@ -31,6 +31,10 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
@@ -40,6 +44,7 @@ import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
@@ -196,23 +201,48 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     boolean parallelizedTxFound = false;
     int nbParallelTx = 0;
+
+    Optional<BlockAccessListBuilder> blockAccessListBuilder;
+    if (protocolSpec
+        .getBlockAccessListFactory()
+        .map(BlockAccessListFactory::isEnabled)
+        .orElse(false)) {
+      blockAccessListBuilder = Optional.of(BlockAccessList.builder());
+    } else {
+      blockAccessListBuilder = Optional.empty();
+    }
+
     for (int i = 0; i < transactions.size(); i++) {
+      final WorldUpdater blockUpdater = worldState.updater();
       final Transaction transaction = transactions.get(i);
+      final WorldUpdater transactionUpdater = blockUpdater.updater();
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
-      final WorldUpdater blockUpdater = worldState.updater();
 
+      final Optional<TransactionAccessList> transactionAccessList =
+          createAccessList(blockAccessListBuilder, i);
       TransactionProcessingResult transactionProcessingResult =
           getTransactionProcessingResult(
               preProcessingContext,
               blockProcessingContext,
-              blockUpdater,
+              transactionUpdater,
               blobGasPrice,
               miningBeneficiary,
               transaction,
               i,
-              blockHashLookup);
+              blockHashLookup,
+              transactionAccessList);
+
+      if (transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+        transactionProcessingResult
+            .getTransactionAccessList()
+            .ifPresent(
+                t ->
+                    blockAccessListBuilder.ifPresent(
+                        b -> b.addTransactionLevelAccessList(t, stackedUpdater)));
+      }
+
       if (transactionProcessingResult.isInvalid()) {
         String errorMessage =
             MessageFormat.format(
@@ -222,13 +252,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 transaction.getHash().toHexString());
         LOG.info(errorMessage);
         if (worldState instanceof BonsaiWorldState) {
-          ((BonsaiWorldStateUpdateAccumulator) blockUpdater).reset();
+          ((BonsaiWorldStateUpdateAccumulator) transactionUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
 
+      transactionUpdater.commit();
+      transactionUpdater.markTransactionBoundary();
       blockUpdater.commit();
-      blockUpdater.markTransactionBoundary();
 
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
       final var optionalVersionedHashes = transaction.getVersionedHashes();
@@ -338,8 +369,33 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
+    Optional<BlockAccessList> blockAccessList =
+        blockAccessListBuilder.map(BlockAccessList.BlockAccessListBuilder::build);
+
+    try {
+      blockAccessList.ifPresent(
+          t -> {
+            block
+                .getHeader()
+                .getBalHash()
+                .ifPresent(
+                    headerHash -> {
+                      final Hash expectedHash = BodyValidation.balHash(t);
+                      if (!headerHash.equals(expectedHash)) {
+                        LOG.warn(
+                            "{} (header BAL hash)\n!=\n{} (expected BAL hash)",
+                            headerHash,
+                            expectedHash);
+                      }
+                    });
+          });
+    } catch (Exception e) {
+      LOG.error("Error validating BAL hash", e);
+    }
+
     return new BlockProcessingResult(
-        Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)),
+        Optional.of(
+            new BlockProcessingOutputs(worldState, receipts, maybeRequests, blockAccessList)),
         parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
   }
 
@@ -352,7 +408,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Address miningBeneficiary,
       final Transaction transaction,
       final int location,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final Optional<TransactionAccessList> transactionAccessList) {
     return transactionProcessor.processTransaction(
         blockUpdater,
         blockProcessingContext.getBlockHeader(),
@@ -361,7 +418,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         blockProcessingContext.getOperationTracer(),
         blockHashLookup,
         TransactionValidationParams.processingBlock(),
-        blobGasPrice);
+        blobGasPrice,
+        transactionAccessList);
   }
 
   @SuppressWarnings(
@@ -381,6 +439,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     return true;
+  }
+
+  private Optional<TransactionAccessList> createAccessList(
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder, final int i) {
+    return blockAccessListBuilder.map(b -> new TransactionAccessList(i));
   }
 
   protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {
