@@ -159,5 +159,15 @@ public interface CallParameter {
    */
   Optional<Bytes> getPayload();
 
+  /**
+   * Returns the list of code delegation authorizations.
+   *
+   * <p>Each authorization represents a signed statement from an externally owned account (EOA)
+   * permitting a specific contract's code to be used as the EOA's code during transaction
+   * execution. The EOA remains the transaction sender, but its code is temporarily substituted with
+   * that of the authorized contract, enabling dynamic behavior similar to smart contract wallets.
+   *
+   * @return a {@link List} of {@link CodeDelegation} entries
+   */
   List<CodeDelegation> getCodeDelegationAuthorizations();
 }
