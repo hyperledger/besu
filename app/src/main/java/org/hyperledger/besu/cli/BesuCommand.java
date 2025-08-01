@@ -87,6 +87,7 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
@@ -2602,6 +2603,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad())
             .setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
       }
+    }
+
+    if (miningParametersSupplier.get().getTargetGasLimit().isPresent()) {
+      builder.setTargetGasLimit(miningParametersSupplier.get().getTargetGasLimit().getAsLong());
+    } else {
+      builder.setTargetGasLimit(
+          MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(ethNetworkConfig.networkId())));
     }
 
     builder

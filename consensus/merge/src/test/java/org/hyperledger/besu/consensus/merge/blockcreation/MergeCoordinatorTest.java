@@ -134,6 +134,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
       new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
 
   private static final long REPETITION_MIN_DURATION = 100;
+
+  private static final BigInteger CHAIN_ID_MAINNET = BigInteger.ONE;
+  private static final BigInteger CHAIN_ID_HOODI = BigInteger.valueOf(560048);
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
+  private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
+
   @Mock MergeContext mergeContext;
   @Mock BackwardSyncContext backwardSyncContext;
 
@@ -1008,6 +1014,20 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     assertThat(testTargetGasLimitCoordinator).isNotNull();
     verify(mockMiningConfiguration).setTargetGasLimit(expectedTargetGasLimit);
+  }
+
+  @Test
+  public void shouldReturnExpectedTargetGasLimitForMainnet() {
+    final long targetGasLimitMainnet =
+        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_MAINNET));
+    assertThat(targetGasLimitMainnet).isEqualTo(DEFAULT_TARGET_GAS_LIMIT);
+  }
+
+  @Test
+  public void shouldReturnExpectedTargetGasLimitForTestnet() {
+    final long targetGasLimitMainnet =
+        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_HOODI));
+    assertThat(targetGasLimitMainnet).isEqualTo(DEFAULT_TARGET_GAS_LIMIT_TESTNET);
   }
 
   public static Stream<Arguments> getGasLimits() {
