@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fullsync.era1prepipeline;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -32,7 +33,8 @@ public class Era1FileReaderTest {
 
   @BeforeEach
   public void beforeTest() {
-    era1FileReader = new Era1FileReader(new MainnetBlockHeaderFunctions());
+    era1FileReader =
+        new Era1FileReader(new MainnetBlockHeaderFunctions(), new DeterministicEthScheduler());
   }
 
   @Test

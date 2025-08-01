@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.util.era1.Era1BlockIndex;
 import org.hyperledger.besu.util.era1.Era1ExecutionBlockBody;
@@ -44,62 +45,70 @@ public class Era1FileReader implements Function<URI, CompletableFuture<List<Bloc
   private static final int ERA1_BLOCK_COUNT_MAX = 8192;
 
   private final BlockHeaderFunctions blockHeaderFunctions;
+  private final EthScheduler ethScheduler;
 
-  public Era1FileReader(final BlockHeaderFunctions blockHeaderFunctions) {
+  public Era1FileReader(
+      final BlockHeaderFunctions blockHeaderFunctions, final EthScheduler ethScheduler) {
     this.blockHeaderFunctions = blockHeaderFunctions;
+    this.ethScheduler = ethScheduler;
   }
 
   @Override
   public CompletableFuture<List<Block>> apply(final URI pathUri) {
-    LOG.info("Reading {} and producing blocks for import", pathUri.toString());
-    Era1Reader reader = new Era1Reader(new SnappyFactory(), new InputStreamFactory());
+    return ethScheduler.scheduleServiceTask(
+        () -> {
+          LOG.info("Reading {} and producing blocks for import", pathUri.toString());
+          Era1Reader reader = new Era1Reader(new SnappyFactory(), new InputStreamFactory());
 
-    final List<BlockHeader> headersFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
-    final List<BlockBody> bodiesFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
-    try {
-      reader.read(
-          pathUri.toURL().openStream(),
-          new Era1ReaderListener() {
+          final List<BlockHeader> headersFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
+          final List<BlockBody> bodiesFutures = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
+          try {
+            reader.read(
+                pathUri.toURL().openStream(),
+                new Era1ReaderListener() {
 
-            @Override
-            public void handleExecutionBlockHeader(
-                final Era1ExecutionBlockHeader executionBlockHeader) {
-              headersFutures.add(
-                  BlockHeader.readFrom(
-                      new BytesValueRLPInput(Bytes.wrap(executionBlockHeader.header()), false),
-                      blockHeaderFunctions));
-            }
+                  @Override
+                  public void handleExecutionBlockHeader(
+                      final Era1ExecutionBlockHeader executionBlockHeader) {
+                    headersFutures.add(
+                        BlockHeader.readFrom(
+                            new BytesValueRLPInput(
+                                Bytes.wrap(executionBlockHeader.header()), false),
+                            blockHeaderFunctions));
+                  }
 
-            @Override
-            public void handleExecutionBlockBody(final Era1ExecutionBlockBody executionBlockBody) {
-              bodiesFutures.add(
-                  BlockBody.readWrappedBodyFrom(
-                      new BytesValueRLPInput(Bytes.wrap(executionBlockBody.block()), false),
-                      blockHeaderFunctions,
-                      true));
-            }
+                  @Override
+                  public void handleExecutionBlockBody(
+                      final Era1ExecutionBlockBody executionBlockBody) {
+                    bodiesFutures.add(
+                        BlockBody.readWrappedBodyFrom(
+                            new BytesValueRLPInput(Bytes.wrap(executionBlockBody.block()), false),
+                            blockHeaderFunctions,
+                            true));
+                  }
 
-            @Override
-            public void handleExecutionBlockReceipts(
-                final Era1ExecutionBlockReceipts executionBlockReceipts) {
-              // Not needed for FULL sync
-            }
+                  @Override
+                  public void handleExecutionBlockReceipts(
+                      final Era1ExecutionBlockReceipts executionBlockReceipts) {
+                    // Not needed for FULL sync
+                  }
 
-            @Override
-            public void handleBlockIndex(final Era1BlockIndex blockIndex) {
-              // not necessary, do nothing
-            }
-          });
-    } catch (IOException e) {
-      LOG.error("Failed reading {} and creating blocks", pathUri, e);
-      throw new RuntimeException(e);
-    }
+                  @Override
+                  public void handleBlockIndex(final Era1BlockIndex blockIndex) {
+                    // not necessary, do nothing
+                  }
+                });
+          } catch (IOException e) {
+            LOG.error("Failed reading {} and creating blocks", pathUri, e);
+            throw new RuntimeException(e);
+          }
 
-    List<Block> blocks = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
-    for (int i = 0; i < headersFutures.size(); i++) {
-      blocks.add(new Block(headersFutures.get(i), bodiesFutures.get(i)));
-    }
+          List<Block> blocks = new ArrayList<>(ERA1_BLOCK_COUNT_MAX);
+          for (int i = 0; i < headersFutures.size(); i++) {
+            blocks.add(new Block(headersFutures.get(i), bodiesFutures.get(i)));
+          }
 
-    return CompletableFuture.completedFuture(blocks);
+          return CompletableFuture.completedFuture(blocks);
+        });
   }
 }
