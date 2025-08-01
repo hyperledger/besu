@@ -72,6 +72,22 @@ public class CodeV0 implements Code {
   }
 
   /**
+   * Public constructor.
+   *
+   * @param byteCode The byte representation of the code.
+   * @param codeHash the hash of the bytecode
+   * @param size The size of the code in bytes.
+   * @param jumpDestBitMask The bit mask for jump destinations.
+   */
+  public CodeV0(
+      final Bytes byteCode, final Hash codeHash, final int size, final long[] jumpDestBitMask) {
+    this(byteCode, codeHash);
+
+    this.size = size;
+    this.jumpDestBitMask = jumpDestBitMask;
+  }
+
+  /**
    * Returns true if the object is equal to this; otherwise false.
    *
    * @param other The object to compare this with.
@@ -223,6 +239,11 @@ public class CodeV0 implements Code {
       i += printInstruction(i, ps);
     }
     return out.toString(StandardCharsets.UTF_8);
+  }
+
+  @Override
+  public long[] getJumpDestBitMask() {
+    return jumpDestBitMask;
   }
 
   /**
