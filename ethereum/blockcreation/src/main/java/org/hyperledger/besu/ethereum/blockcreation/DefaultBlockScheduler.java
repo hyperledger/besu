@@ -22,8 +22,9 @@ import java.util.function.ToLongFunction;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class DefaultBlockScheduler extends AbstractBlockScheduler {
+public class DefaultBlockScheduler {
 
+  private final Clock clock;
   private final long acceptableClockDriftSeconds;
   private final ToLongFunction<BlockHeader> calcMinimumSecondsSinceParent;
 
@@ -38,12 +39,20 @@ public class DefaultBlockScheduler extends AbstractBlockScheduler {
       final ToLongFunction<BlockHeader> calcMinimumSecondsSinceParent,
       final long acceptableClockDriftSeconds,
       final Clock clock) {
-    super(clock);
+    this.clock = clock;
     this.acceptableClockDriftSeconds = acceptableClockDriftSeconds;
     this.calcMinimumSecondsSinceParent = calcMinimumSecondsSinceParent;
   }
 
-  @Override
+  public long waitUntilNextBlockCanBeMined(final BlockHeader parentHeader)
+      throws InterruptedException {
+    final BlockCreationTimeResult result = getNextTimestamp(parentHeader);
+
+    Thread.sleep(result.millisecondsUntilValid);
+
+    return result.timestampForHeader;
+  }
+
   @VisibleForTesting
   public BlockCreationTimeResult getNextTimestamp(final BlockHeader parentHeader) {
     final long msSinceEpoch = clock.millis();
@@ -58,4 +67,6 @@ public class DefaultBlockScheduler extends AbstractBlockScheduler {
 
     return new BlockCreationTimeResult(nextHeaderTimestamp, Math.max(0, msUntilBlockTransmission));
   }
+
+  public record BlockCreationTimeResult(long timestampForHeader, long millisecondsUntilValid) {}
 }

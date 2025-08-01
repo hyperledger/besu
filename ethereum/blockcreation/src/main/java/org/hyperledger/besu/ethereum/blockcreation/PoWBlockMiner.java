@@ -39,7 +39,7 @@ public class PoWBlockMiner extends BlockMiner<PoWBlockCreator> {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Subscribers<MinedBlockObserver> observers,
-      final AbstractBlockScheduler scheduler,
+      final DefaultBlockScheduler scheduler,
       final BlockHeader parentHeader) {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
   }

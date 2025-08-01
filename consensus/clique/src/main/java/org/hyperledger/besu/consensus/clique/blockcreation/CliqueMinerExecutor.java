@@ -23,8 +23,8 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractMinerExecutor;
+import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -71,7 +71,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
       final TransactionPool transactionPool,
       final NodeKey nodeKey,
       final MiningConfiguration miningParams,
-      final AbstractBlockScheduler blockScheduler,
+      final DefaultBlockScheduler blockScheduler,
       final EpochManager epochManager,
       final ForksSchedule<CliqueConfigOptions> forksSchedule,
       final EthScheduler ethScheduler) {

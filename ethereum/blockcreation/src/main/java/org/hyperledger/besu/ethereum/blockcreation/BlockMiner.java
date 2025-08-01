@@ -56,14 +56,14 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
 
   private final ProtocolSchedule protocolSchedule;
   private final Subscribers<MinedBlockObserver> observers;
-  private final AbstractBlockScheduler scheduler;
+  private final DefaultBlockScheduler scheduler;
 
   public BlockMiner(
       final Function<BlockHeader, M> blockCreatorFactory,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Subscribers<MinedBlockObserver> observers,
-      final AbstractBlockScheduler scheduler,
+      final DefaultBlockScheduler scheduler,
       final BlockHeader parentHeader) {
     this.blockCreatorFactory = blockCreatorFactory;
     this.minerBlockCreator = blockCreatorFactory.apply(parentHeader);

@@ -40,7 +40,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
       final MiningConfiguration miningParams,
-      final AbstractBlockScheduler blockScheduler,
+      final DefaultBlockScheduler blockScheduler,
       final EpochCalculator epochCalculator,
       final EthScheduler ethScheduler) {
     super(

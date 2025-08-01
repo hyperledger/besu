@@ -46,7 +46,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   protected final TransactionPool transactionPool;
-  protected final AbstractBlockScheduler blockScheduler;
+  protected final DefaultBlockScheduler blockScheduler;
   protected final MiningConfiguration miningConfiguration;
   protected final EthScheduler ethScheduler;
   private final AtomicBoolean stopped = new AtomicBoolean(false);
@@ -56,7 +56,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
       final MiningConfiguration miningParams,
-      final AbstractBlockScheduler blockScheduler,
+      final DefaultBlockScheduler blockScheduler,
       final EthScheduler ethScheduler) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
