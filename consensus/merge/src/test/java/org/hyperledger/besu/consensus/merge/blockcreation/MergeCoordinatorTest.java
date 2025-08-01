@@ -136,7 +136,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private static final long REPETITION_MIN_DURATION = 100;
 
   private static final BigInteger CHAIN_ID_MAINNET = BigInteger.ONE;
-  private static final BigInteger CHAIN_ID_SEPOLIA = BigInteger.valueOf(11155111);
+  private static final BigInteger CHAIN_ID_HOODI = BigInteger.valueOf(560048);
   private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
   private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
 
@@ -1026,7 +1026,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Test
   public void shouldReturnExpectedTargetGasLimitForTestnet() {
     final long targetGasLimitMainnet =
-        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_SEPOLIA));
+        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_HOODI));
     assertThat(targetGasLimitMainnet).isEqualTo(DEFAULT_TARGET_GAS_LIMIT_TESTNET);
   }
 
