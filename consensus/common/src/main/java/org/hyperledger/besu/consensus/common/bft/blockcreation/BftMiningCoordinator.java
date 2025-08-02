@@ -258,7 +258,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
   public void onBlockAdded(final BlockAddedEvent event) {
     if (event.isNewCanonicalHead()) {
       LOG.trace("New canonical head detected");
-      eventQueue.add(new NewChainHead(event.getBlock().getHeader()));
+      eventQueue.add(new NewChainHead(event.getHeader()));
     }
   }
 

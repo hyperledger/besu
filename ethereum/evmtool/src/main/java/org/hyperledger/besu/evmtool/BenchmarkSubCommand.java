@@ -141,6 +141,14 @@ public class BenchmarkSubCommand implements Runnable {
       scope = LOCAL)
   Optional<Integer> warmTime = Optional.empty();
 
+  @Option(
+      names = {"--attempt-cache-bust"},
+      description =
+          "Run each test case within each warmup and exec iteration. This attempts to warm the code without warming the data, i.e. avoid warming CPU caches. Benchmark must have sufficient number and variety of test cases to be effective. --warm-time, --exec-time and --async-profiler are ignored.",
+      scope = LOCAL,
+      negatable = true)
+  Boolean attemptCacheBust = false;
+
   @Parameters(description = "One or more of ${COMPLETION-CANDIDATES}.")
   EnumSet<Benchmark> benchmarks = EnumSet.noneOf(Benchmark.class);
 
@@ -177,7 +185,8 @@ public class BenchmarkSubCommand implements Runnable {
             execIterations,
             execTime,
             warmIterations,
-            warmTime);
+            warmTime,
+            attemptCacheBust);
     for (var benchmark : benchmarksToRun) {
       output.println("\nBenchmarks for " + benchmark + " on fork " + parentCommand.getFork());
       BenchmarkExecutor executor = benchmark.executorBuilder.create(output, benchmarkConfig);
