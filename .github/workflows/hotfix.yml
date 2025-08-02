@@ -1,0 +1,33 @@
+name: Hotfix Release
+
+on:
+  push:
+    branches:
+      - 'hotfix/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build JARs
+        run: ./gradlew build -x test
+
+      - name: Build Docker Image
+        run: |
+          docker build -t besu-hotfix:${{ github.sha }} .
+
+      - name: Push Docker Image
+        if: github.repository_owner == 'hyperledger'
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker tag besu-hotfix:${{ github.sha }} hyperledger/besu-hotfix:${{ github.sha }}
+          docker push hyperledger/besu-hotfix:${{ github.sha }}
