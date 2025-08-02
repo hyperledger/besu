@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -130,11 +131,15 @@ public abstract class AbstractBftBesuControllerBuilderTest {
     lenient().when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
     lenient().when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
     lenient().when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);
+    lenient().when(synchronizerConfiguration.getSyncMode()).thenReturn(SyncMode.FULL);
 
     lenient()
         .when(synchronizerConfiguration.getBlockPropagationRange())
         .thenReturn(Range.closed(1L, 2L));
 
+    lenient()
+        .when(ethProtocolConfiguration.getMaxEthCapability())
+        .thenReturn(EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY);
     setupBftGenesisConfig();
 
     bftBesuControllerBuilder =
