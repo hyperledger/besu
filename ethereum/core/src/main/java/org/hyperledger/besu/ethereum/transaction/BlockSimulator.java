@@ -217,7 +217,7 @@ public class BlockSimulator {
             protocolSpec,
             blockHashLookup,
             OperationTracer.NO_TRACING);
-    protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
+    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
 
     BlockStateCallSimulationResult blockStateCallSimulationResult =
         processTransactions(
@@ -517,7 +517,7 @@ public class BlockSimulator {
             .orElseGet(
                 () ->
                     newProtocolSpec
-                        .getBlockHashProcessor()
+                        .getPreExecutionProcessor()
                         .createBlockHashLookup(blockchain, blockHeader));
     return (frame, blockNumber) -> {
       if (blockHashCache.containsKey(blockNumber)) {

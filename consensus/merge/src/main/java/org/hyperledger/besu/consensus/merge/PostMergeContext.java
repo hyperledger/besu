@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -210,13 +211,12 @@ public class PostMergeContext implements MergeContext {
       maybeCurrBestPayload.ifPresent(
           currBestPayload -> {
             if (newBlockValue.greaterThan(currBestPayload.blockValue())) {
-              LOG.atDebug()
+              LOG.atInfo()
                   .setMessage(
-                      "New proposal for payloadId {} {} is better than the previous one {} by {}")
+                      "New proposal for payloadId {} {} is better than the previous one by {}")
                   .addArgument(newPayload.payloadIdentifier())
-                  .addArgument(() -> logBlockProposal(newBlockWithReceipts.getBlock()))
                   .addArgument(
-                      () -> logBlockProposal(currBestPayload.blockWithReceipts().getBlock()))
+                      () -> logBlockProposal(newBlockWithReceipts.getBlock(), newBlockValue))
                   .addArgument(
                       () ->
                           newBlockValue
@@ -261,13 +261,15 @@ public class PostMergeContext implements MergeContext {
     return blocksInProgress.stream().filter(z -> z.payloadIdentifier().equals(payloadId));
   }
 
-  private String logBlockProposal(final Block block) {
+  private String logBlockProposal(final Block block, final Wei value) {
     return "block "
         + block.toLogString()
         + " gas used "
         + block.getHeader().getGasUsed()
         + " transactions "
-        + block.getBody().getTransactions().size();
+        + block.getBody().getTransactions().size()
+        + " reward "
+        + value.toHumanReadableString();
   }
 
   @Override

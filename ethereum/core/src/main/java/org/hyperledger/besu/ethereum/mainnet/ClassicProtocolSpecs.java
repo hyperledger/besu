@@ -14,14 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.AGHARTA;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.ATLANTIS;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.CLASSIC_RECOVERY_INIT;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.CLASSIC_TANGERINE_WHISTLE;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.DEFUSE_DIFFICULTY_BOMB;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.DIE_HARD;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.GOTHAM;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.MAGNETO;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.MYSTIQUE;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.PHOENIX;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.SPIRAL;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.THANOS;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHasher;
 
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.ClassicEVMs;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
@@ -37,7 +47,6 @@ import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
@@ -63,7 +72,7 @@ public class ClassicProtocolSpecs {
         .blockHeaderValidatorBuilder(
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createClassicValidator())
-        .name("ClassicRecoveryInit");
+        .hardforkId(CLASSIC_RECOVERY_INIT);
   }
 
   public static ProtocolSpecBuilder tangerineWhistleDefinition(
@@ -79,7 +88,7 @@ public class ClassicProtocolSpecs {
             (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
                     evm.getGasCalculator(), gasLimitCalculator, true, chainId))
-        .name("ClassicTangerineWhistle");
+        .hardforkId(CLASSIC_TANGERINE_WHISTLE);
   }
 
   public static ProtocolSpecBuilder dieHardDefinition(
@@ -91,7 +100,7 @@ public class ClassicProtocolSpecs {
             chainId, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
         .gasCalculator(DieHardGasCalculator::new)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_PAUSED)
-        .name("DieHard");
+        .hardforkId(DIE_HARD);
   }
 
   public static ProtocolSpecBuilder gothamDefinition(
@@ -119,7 +128,7 @@ public class ClassicProtocolSpecs {
                     skipZeroBlockRewards,
                     ecip1017EraRounds,
                     protocolSchedule))
-        .name("Gotham");
+        .hardforkId(GOTHAM);
   }
 
   public static ProtocolSpecBuilder defuseDifficultyBombDefinition(
@@ -139,7 +148,7 @@ public class ClassicProtocolSpecs {
             (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
                     evm.getGasCalculator(), gasLimitCalculator, true, chainId))
-        .name("DefuseDifficultyBomb");
+        .hardforkId(DEFUSE_DIFFICULTY_BOMB);
   }
 
   public static ProtocolSpecBuilder atlantisDefinition(
@@ -163,9 +172,7 @@ public class ClassicProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(ClassicDifficultyCalculators.EIP100)
         .transactionReceiptFactory(
-            enableRevertReason
-                ? ClassicProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
-                : ClassicProtocolSpecs::byzantiumTransactionReceiptFactory)
+            new MainnetProtocolSpecs.ByzantiumTransactionReceiptFactory(enableRevertReason))
         .contractCreationProcessorBuilder(
             evm ->
                 new ContractCreationProcessor(
@@ -187,7 +194,7 @@ public class ClassicProtocolSpecs {
                     .feeMarket(feeMarket)
                     .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
                     .build())
-        .name("Atlantis");
+        .hardforkId(ATLANTIS);
   }
 
   public static ProtocolSpecBuilder aghartaDefinition(
@@ -208,7 +215,7 @@ public class ClassicProtocolSpecs {
         .gasCalculator(PetersburgGasCalculator::new)
         .evmBuilder(MainnetEVMs::constantinople)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
-        .name("Agharta");
+        .hardforkId(AGHARTA);
   }
 
   public static ProtocolSpecBuilder phoenixDefinition(
@@ -231,7 +238,7 @@ public class ClassicProtocolSpecs {
                 MainnetEVMs.istanbul(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
-        .name("Phoenix");
+        .hardforkId(PHOENIX);
   }
 
   public static ProtocolSpecBuilder thanosDefinition(
@@ -256,27 +263,7 @@ public class ClassicProtocolSpecs {
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
                     new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
-        .name("Thanos");
-  }
-
-  private static TransactionReceipt byzantiumTransactionReceiptFactory(
-      // ignored because it's always FRONTIER for byzantium
-      final TransactionType __,
-      final TransactionProcessingResult result,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), Optional.empty());
-  }
-
-  private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
-      // ignored because it's always FRONTIER for byzantium
-      final TransactionType __,
-      final TransactionProcessingResult result,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
+        .hardforkId(THANOS);
   }
 
   public static ProtocolSpecBuilder magnetoDefinition(
@@ -303,10 +290,8 @@ public class ClassicProtocolSpecs {
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST)))
         .transactionReceiptFactory(
-            enableRevertReason
-                ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled
-                : MainnetProtocolSpecs::berlinTransactionReceiptFactory)
-        .name("Magneto");
+            new MainnetProtocolSpecs.BerlinTransactionReceiptFactory(enableRevertReason))
+        .hardforkId(MAGNETO);
   }
 
   public static ProtocolSpecBuilder mystiqueDefinition(
@@ -328,7 +313,7 @@ public class ClassicProtocolSpecs {
             evm ->
                 new ContractCreationProcessor(
                     evm, true, List.of(MaxCodeSizeRule.from(evm), PrefixCodeRule.of()), 1))
-        .name("Mystique");
+        .hardforkId(MYSTIQUE);
   }
 
   public static ProtocolSpecBuilder spiralDefinition(
@@ -370,6 +355,6 @@ public class ClassicProtocolSpecs {
                     .feeMarket(feeMarket)
                     .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
                     .build())
-        .name("Spiral");
+        .hardforkId(SPIRAL);
   }
 }

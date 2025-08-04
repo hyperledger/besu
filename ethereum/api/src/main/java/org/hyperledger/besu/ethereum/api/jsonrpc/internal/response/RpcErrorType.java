@@ -56,7 +56,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_ENGINE_NEW_PAYLOAD_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid engine payload parameter"),
   INVALID_ENGINE_PREPARE_PAYLOAD_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine prepare payload parameter"),
-  INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST(-38004, "Too large request"),
+  INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST(-38004, "Too large request"),
   INVALID_ENODE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid enode params"),
   INVALID_EXCESS_BLOB_GAS_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid excess blob gas params (missing or invalid)"),

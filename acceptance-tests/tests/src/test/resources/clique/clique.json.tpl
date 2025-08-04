@@ -1,10 +1,7 @@
 {
   "config": {
     "chainId": 4,
-    "homesteadBlock": 1,
-    "eip150Block": 2,
-    "eip158Block": 4,
-    "byzantiumBlock": 5,
+    "byzantiumBlock": 0,
     "constantinopleBlock": 6,
     "petersburgBlock": 7,
     "clique": {
