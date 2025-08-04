@@ -166,7 +166,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("FULL");
     }
 
-    params.add("--Xsnapsync-server-enabled");
+    params.add("--snapsync-server-enabled");
 
     params.add("--discovery-enabled");
     params.add(Boolean.toString(node.isDiscoveryEnabled()));
