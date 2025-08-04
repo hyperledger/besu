@@ -22,10 +22,10 @@ import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVA
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobPriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobSizeTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockRlpSizeTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSizeTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPriorityFeePerGasTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
@@ -42,12 +42,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
@@ -126,10 +124,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final Wei blobGasPrice,
-      final FeeMarket feeMarket,
-      final GasCalculator gasCalculator,
-      final GasLimitCalculator gasLimitCalculator,
-      final BlockHashProcessor blockHashProcessor,
+      final ProtocolSpec protocolSpec,
       final PluginTransactionSelector pluginTransactionSelector,
       final EthScheduler ethScheduler,
       final SelectorsStateManager selectorsStateManager) {
@@ -142,11 +137,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     this.blockSelectionContext =
         new BlockSelectionContext(
             miningConfiguration,
-            gasCalculator,
-            gasLimitCalculator,
-            blockHashProcessor,
             processableBlockHeader,
-            feeMarket,
+            protocolSpec,
             blobGasPrice,
             miningBeneficiary,
             transactionPool);
@@ -171,6 +163,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         new PriceTransactionSelector(context),
         new BlobPriceTransactionSelector(context),
         new MinPriorityFeePerGasTransactionSelector(context),
+        new BlockRlpSizeTransactionSelector(context, selectorsStateManager),
         new ProcessingResultTransactionSelector(context));
   }
 
@@ -447,7 +440,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private TransactionProcessingResult processTransaction(final Transaction transaction) {
     final BlockHashLookup blockHashLookup =
         blockSelectionContext
-            .blockHashProcessor()
+            .preExecutionProcessor()
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
     return transactionProcessor.processTransaction(
         txWorldStateUpdater,
@@ -486,7 +479,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
           final TransactionReceipt receipt =
               transactionReceiptFactory.create(
-                  transaction.getType(), processingResult, worldState, cumulativeGasUsed);
+                  transaction.getType(), processingResult, cumulativeGasUsed);
 
           transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
 

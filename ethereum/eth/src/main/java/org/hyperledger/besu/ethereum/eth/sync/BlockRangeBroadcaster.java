@@ -83,7 +83,8 @@ public class BlockRangeBroadcaster {
             "Invalid block range update message received: earliest={}, latest={}",
             earliestBlockNumber,
             latestBlockNumber);
-        handleInvalidMessage(message, DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED);
+        handleInvalidMessage(
+            message, DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED_INVALID_BLOCK_RANGE);
       }
     } catch (final RLPException e) {
       LOG.atTrace()
@@ -140,7 +141,7 @@ public class BlockRangeBroadcaster {
   void broadcastBlockRange(
       final long earliestBlockNumber, final long latestBlockNumber, final Hash blockHash) {
     List<EthPeer> peers = getPeersSupportingBlockRangeUpdate();
-    LOG.info(
+    LOG.debug(
         "Broadcasting blockRange=[{}, {}, {}] to {} peers",
         earliestBlockNumber,
         latestBlockNumber,

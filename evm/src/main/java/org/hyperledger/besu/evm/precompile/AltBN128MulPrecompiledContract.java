@@ -38,7 +38,7 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   private static final Logger LOG = LoggerFactory.getLogger(AltBN128MulPrecompiledContract.class);
 
   private static final int PARAMETER_LENGTH = 96;
-  private static final String PRECOMPILE_NAME = "AltBN128Mul";
+  private static final String PRECOMPILE_NAME = "BN254_MUL";
 
   private static final BigInteger MAX_N =
       new BigInteger(
@@ -49,33 +49,13 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   private static final Cache<Integer, PrecompileInputResultTuple> bnMulCache =
       Caffeine.newBuilder().maximumSize(1000).build();
 
-  private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
+  AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
         PRECOMPILE_NAME,
         gasCalculator,
         LibGnarkEIP196.EIP196_MUL_OPERATION_RAW_VALUE,
         PARAMETER_LENGTH);
     this.gasCost = gasCost;
-  }
-
-  /**
-   * Create Byzantium AltBN128Mul precompiled contract.
-   *
-   * @param gasCalculator the gas calculator
-   * @return the alt bn 128 mul precompiled contract
-   */
-  public static AltBN128MulPrecompiledContract byzantium(final GasCalculator gasCalculator) {
-    return new AltBN128MulPrecompiledContract(gasCalculator, 40_000L);
-  }
-
-  /**
-   * Create Istanbul AltBN128Mul precompiled contract.
-   *
-   * @param gasCalculator the gas calculator
-   * @return the alt bn 128 mul precompiled contract
-   */
-  public static AltBN128MulPrecompiledContract istanbul(final GasCalculator gasCalculator) {
-    return new AltBN128MulPrecompiledContract(gasCalculator, 6_000L);
   }
 
   @Override

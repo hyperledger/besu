@@ -29,7 +29,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.DelegatingBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.SoftAssertions;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -120,6 +119,9 @@ public class GeneralStateReferenceTestTools {
     // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
     params.ignore("/stEIP2537/");
 
+    // TODO remove this ignore once Osaka EIPs are merged to main
+    params.ignore("Osaka*");
+
   }
 
   private GeneralStateReferenceTestTools() {
@@ -171,7 +173,7 @@ public class GeneralStateReferenceTestTools {
             blockHeader,
             transaction,
             blockHeader.getCoinbase(),
-            protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader),
+            protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, blockHeader),
             TransactionValidationParams.processingBlock(),
             blobGasPrice);
     if (result.isInvalid()) {

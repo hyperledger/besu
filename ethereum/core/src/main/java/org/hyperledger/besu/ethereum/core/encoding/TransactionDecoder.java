@@ -30,19 +30,15 @@ public class TransactionDecoder {
 
   @FunctionalInterface
   interface Decoder {
-    Transaction decode(RLPInput input);
+    Transaction decode(Bytes input);
   }
 
   private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
       ImmutableMap.of(
-          TransactionType.ACCESS_LIST,
-          AccessListTransactionDecoder::decode,
-          TransactionType.EIP1559,
-          EIP1559TransactionDecoder::decode,
-          TransactionType.BLOB,
-          BlobTransactionDecoder::decode,
-          TransactionType.DELEGATE_CODE,
-          CodeDelegationTransactionDecoder::decode);
+          TransactionType.ACCESS_LIST, AccessListTransactionDecoder::decode,
+          TransactionType.EIP1559, EIP1559TransactionDecoder::decode,
+          TransactionType.BLOB, BlobTransactionDecoder::decode,
+          TransactionType.DELEGATE_CODE, CodeDelegationTransactionDecoder::decode);
 
   private static final ImmutableMap<TransactionType, Decoder> POOLED_TRANSACTION_DECODERS =
       ImmutableMap.of(TransactionType.BLOB, BlobPooledTransactionDecoder::decode);
@@ -97,9 +93,8 @@ public class TransactionDecoder {
       final TransactionType transactionType,
       final EncodingContext context) {
     // Slice the transaction bytes to exclude the transaction type and prepare for decoding
-    final RLPInput transactionInput = RLP.input(transactionBytes.slice(1));
     // Use the appropriate decoder for the transaction type to decode the remaining bytes
-    return getDecoder(transactionType, context).decode(transactionInput);
+    return getDecoder(transactionType, context).decode(transactionBytes);
   }
 
   /**
@@ -113,6 +108,9 @@ public class TransactionDecoder {
    */
   public static Transaction decodeOpaqueBytes(
       final Bytes opaqueBytes, final EncodingContext context) {
+    if (opaqueBytes.isEmpty()) {
+      throw new IllegalArgumentException("Empty opaque bytes");
+    }
     var transactionType = getTransactionType(opaqueBytes);
     if (transactionType.isPresent()) {
       return decodeTypedTransaction(opaqueBytes, transactionType.get(), context);
@@ -133,6 +131,9 @@ public class TransactionDecoder {
    */
   private static Optional<TransactionType> getTransactionType(final Bytes opaqueBytes) {
     try {
+      if (opaqueBytes.isEmpty()) {
+        return Optional.empty();
+      }
       byte transactionTypeByte = opaqueBytes.get(0);
       return Optional.of(TransactionType.of(transactionTypeByte));
     } catch (IllegalArgumentException ex) {

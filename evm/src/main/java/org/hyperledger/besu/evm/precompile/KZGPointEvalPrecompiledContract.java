@@ -110,11 +110,11 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   }
 
   /** Default constructor. */
-  public KZGPointEvalPrecompiledContract() {}
+  KZGPointEvalPrecompiledContract() {}
 
   @Override
   public String getName() {
-    return "KZGPointEval";
+    return "KZG_POINT_EVALUATION";
   }
 
   @Override

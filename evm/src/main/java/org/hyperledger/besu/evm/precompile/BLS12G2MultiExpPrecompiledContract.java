@@ -34,9 +34,9 @@ public class BLS12G2MultiExpPrecompiledContract extends AbstractBLS12Precompiled
           .build();
 
   /** Instantiates a new BLS12_G2 MultiExp precompiled contract. */
-  public BLS12G2MultiExpPrecompiledContract() {
+  BLS12G2MultiExpPrecompiledContract() {
     super(
-        "BLS12_G2MULTIEXP",
+        "BLS12_G2MSM",
         LibGnarkEIP2537.BLS12_G2MULTIEXP_OPERATION_SHIM_VALUE,
         Integer.MAX_VALUE / PARAMETER_LENGTH * PARAMETER_LENGTH);
   }

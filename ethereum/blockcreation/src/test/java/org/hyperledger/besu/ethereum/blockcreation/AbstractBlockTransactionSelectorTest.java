@@ -45,7 +45,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
@@ -73,15 +72,15 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
@@ -163,7 +162,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             MIN_OCCUPANCY_80_PERCENT,
             DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME);
 
-    final Block genesisBlock = GenesisState.fromConfig(genesisConfig, protocolSchedule).getBlock();
+    final Block genesisBlock =
+        GenesisState.fromConfig(genesisConfig, protocolSchedule, new CodeCache()).getBlock();
 
     blockchain =
         DefaultBlockchain.createMutable(
@@ -1334,7 +1334,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final Address miningBeneficiary,
       final Wei blobGasPrice,
       final TransactionSelectionService transactionSelectionService) {
-
+    ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
     final var selectorsStateManager = new SelectorsStateManager();
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
@@ -1348,10 +1348,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             this::isCancelled,
             miningBeneficiary,
             blobGasPrice,
-            getFeeMarket(),
-            new LondonGasCalculator(),
-            GasLimitCalculator.constant(),
-            protocolSchedule.getByBlockHeader(blockHeader).getBlockHashProcessor(),
+            protocolSpec,
             transactionSelectionService.createPluginTransactionSelector(selectorsStateManager),
             ethScheduler,
             selectorsStateManager);
@@ -1361,10 +1358,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   protected GasCalculator getGasCalculator() {
     return protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()).getGasCalculator();
-  }
-
-  protected FeeMarket getFeeMarket() {
-    return protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()).getFeeMarket();
   }
 
   protected Transaction createTransaction(

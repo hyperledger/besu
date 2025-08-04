@@ -116,6 +116,13 @@ class TransactionRLPDecoderTest {
   }
 
   @Test
+  void shouldThrowIllegalArgWithEmptyBytes() {
+    assertThatThrownBy(
+            () -> TransactionDecoder.decodeOpaqueBytes(Bytes.EMPTY, EncodingContext.BLOCK_BODY))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void testForAccessListTransaction() {
     BlockDataGenerator gen = new BlockDataGenerator();
     Transaction accessListTransaction = gen.transaction(TransactionType.ACCESS_LIST);
@@ -165,7 +172,7 @@ class TransactionRLPDecoderTest {
     Bytes transactionBytes =
         TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.POOLED_TRANSACTION);
     // Bytes size should be equal to transaction size
-    assertThat(transaction.getSize()).isEqualTo(transactionBytes.size());
+    assertThat(transaction.getSizeForAnnouncement()).isEqualTo(transactionBytes.size());
   }
 
   @ParameterizedTest(name = "[{index}] {1}")

@@ -80,7 +80,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    */
   private static final double TRY_FILL_BLOCK = 1.0;
 
-  private static final long DEFAULT_TARGET_GAS_LIMIT = 36_000_000L;
+  // if you change these gas limits, also update the tests in MergeCoordinatorTest
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
   // testnets might have higher gas limits than mainnet and are incrementally updated
   private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
   // next target gas limit TBD
@@ -872,7 +873,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public Optional<Hash> getLatestValidHashOfBadBlock(Hash blockHash) {
+  public Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash) {
     return protocolContext.getBadBlockManager().getLatestValidHash(blockHash);
   }
 
@@ -902,6 +903,16 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         .getChainId()
         .map(TESTNET_CHAIN_IDS::get)
         .orElse(DEFAULT_TARGET_GAS_LIMIT);
+  }
+
+  /**
+   * Gets the default gas limit by chain id.
+   *
+   * @param chainId the chain id
+   * @return default gas limit by chain id
+   */
+  public static long getDefaultGasLimitByChainId(final Optional<BigInteger> chainId) {
+    return chainId.map(TESTNET_CHAIN_IDS::get).orElse(DEFAULT_TARGET_GAS_LIMIT);
   }
 
   private static class BlockCreationTask {

@@ -2,12 +2,13 @@
 dependencies {
   api 'org.slf4j:slf4j-api'
 
-  implementation project(':besu')
+  implementation project(':app')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:api')
+  implementation project(':evm')
   implementation project(':plugin-api')
   implementation 'com.google.auto.service:auto-service'
   implementation 'info.picocli:picocli'

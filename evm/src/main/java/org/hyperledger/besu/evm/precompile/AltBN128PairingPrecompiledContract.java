@@ -45,7 +45,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       LoggerFactory.getLogger(AltBN128PairingPrecompiledContract.class);
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
-  private static final String PRECOMPILE_NAME = "AltBN128Pairing";
+  private static final String PRECOMPILE_NAME = "BN254_PAIRING";
 
   private static final Cache<Integer, PrecompileInputResultTuple> bnPairingCache =
       Caffeine.newBuilder()
@@ -65,7 +65,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
   private final long pairingGasCost;
   private final long baseGasCost;
 
-  private AltBN128PairingPrecompiledContract(
+  AltBN128PairingPrecompiledContract(
       final GasCalculator gasCalculator, final long pairingGasCost, final long baseGasCost) {
     super(
         PRECOMPILE_NAME,
@@ -74,16 +74,6 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
         Integer.MAX_VALUE / PARAMETER_LENGTH * PARAMETER_LENGTH);
     this.pairingGasCost = pairingGasCost;
     this.baseGasCost = baseGasCost;
-  }
-
-  /**
-   * Create Byzantium AltBN128Pairing precompiled contract.
-   *
-   * @param gasCalculator the gas calculator
-   * @return the AltBN128Pairing precompiled contract
-   */
-  public static AltBN128PairingPrecompiledContract byzantium(final GasCalculator gasCalculator) {
-    return new AltBN128PairingPrecompiledContract(gasCalculator, 80_000L, 100_000L);
   }
 
   /**

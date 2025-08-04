@@ -28,9 +28,9 @@ public class BLS12MapFpToG1PrecompiledContract extends AbstractBLS12PrecompiledC
       Caffeine.newBuilder().maximumSize(1000).build();
 
   /** Instantiates a new BLS12MapFpToG1 precompiled contract. */
-  public BLS12MapFpToG1PrecompiledContract() {
+  BLS12MapFpToG1PrecompiledContract() {
     super(
-        "BLS12_MAP_FIELD_TO_CURVE",
+        "BLS12_MAP_FP_TO_G1",
         LibGnarkEIP2537.BLS12_MAP_FP_TO_G1_OPERATION_SHIM_VALUE,
         PARAMETER_LENGTH);
   }
