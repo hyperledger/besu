@@ -566,6 +566,7 @@ public class BesuNodeFactory {
             .devMode(false)
             .jsonRpcTxPool()
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftLondonGenesisConfig)
+            .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
             .build());
   }
 
