@@ -252,14 +252,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 transaction.getHash().toHexString());
         LOG.info(errorMessage);
         if (worldState instanceof BonsaiWorldState) {
-          ((BonsaiWorldStateUpdateAccumulator) transactionUpdater).reset();
+          ((BonsaiWorldStateUpdateAccumulator) blockUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
 
       transactionUpdater.commit();
-      transactionUpdater.markTransactionBoundary();
       blockUpdater.commit();
+      blockUpdater.markTransactionBoundary();
 
       currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
       final var optionalVersionedHashes = transaction.getVersionedHashes();
