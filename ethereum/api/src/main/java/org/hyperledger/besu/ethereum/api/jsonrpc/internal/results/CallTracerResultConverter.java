@@ -63,9 +63,9 @@ public class CallTracerResultConverter {
     int currentDepth = 0;
     final CallInfo rootInfo = new CallInfo(rootBuilder, null);
     depthToCallInfo.put(0, rootInfo);
-
     // Process all frames
     for (int i = 0; i < frames.size(); i++) {
+      final TraceFrame nextTrace = i < frames.size() - 1 ? frames.get(i + 1) : null;
       final TraceFrame frame = frames.get(i);
       final String opcode = frame.getOpcode();
       final int frameDepth = frame.getDepth();
@@ -82,7 +82,7 @@ public class CallTracerResultConverter {
 
         // Create new call for the next depth level
         final CallTracerResult.Builder childBuilder =
-            createCallBuilder(frame, opcode, parentCallInfo);
+            createCallBuilder(frame, nextTrace, opcode, parentCallInfo);
         final CallInfo childCallInfo = new CallInfo(childBuilder, frame);
 
         // Store call info for this depth
@@ -106,7 +106,7 @@ public class CallTracerResultConverter {
           setOutputAndErrorStatus(childCallInfo.builder, frame, opcode);
 
           // Calculate gas used
-          final long gasUsed = calculateGasUsed(entryFrame, frame);
+          final long gasUsed = calculateGasUsed(childCallInfo, entryFrame, frame);
           childCallInfo.builder.gasUsed(gasUsed);
 
           // Add code deposit cost for CREATE operations
@@ -195,7 +195,10 @@ public class CallTracerResultConverter {
   }
 
   private static CallTracerResult.Builder createCallBuilder(
-      final TraceFrame frame, final String opcode, final CallInfo parentCallInfo) {
+      final TraceFrame frame,
+      final TraceFrame nextTrace,
+      final String opcode,
+      final CallInfo parentCallInfo) {
 
     String fromAddress = null;
     if (parentCallInfo != null && parentCallInfo.builder != null) {
@@ -205,8 +208,7 @@ public class CallTracerResultConverter {
     final String toAddress = resolveToAddress(frame, opcode);
     final Bytes inputData = resolveInputData(frame, opcode);
 
-    // Calculate gas provided to the call using EIP-150
-    final long gasProvided = calculateGasProvided(frame, opcode);
+    final long gasProvided = nextTrace != null ? nextTrace.getGasRemaining() : 0;
 
     LOG.warn(
         "Creating call: opcode={}, from={}, to={}, gas={}",
@@ -245,7 +247,8 @@ public class CallTracerResultConverter {
     return frame.getValue().toShortHexString();
   }
 
-  private static long calculateGasUsed(final TraceFrame entryFrame, final TraceFrame exitFrame) {
+  private static long calculateGasUsed(
+      final CallInfo callInfo, final TraceFrame entryFrame, final TraceFrame exitFrame) {
     // For root transaction
     if (exitFrame.getDepth() == 0) {
       // Root transaction: simply calculate difference and account for refunds
@@ -255,9 +258,9 @@ public class CallTracerResultConverter {
     }
 
     // For nested calls
-    if (exitFrame.getGasRemainingPostExecution() >= 0) {
+    if (exitFrame.getGasRemaining() >= 0) {
       // Normal case: gas before call - gas after call = gas used
-      return entryFrame.getGasRemaining() - exitFrame.getGasRemainingPostExecution();
+      return callInfo.builder.getGas().longValue() - exitFrame.getGasRemaining();
     }
     // For precompiled contracts
     else if (entryFrame.getPrecompiledGasCost().isPresent()) {
@@ -270,32 +273,6 @@ public class CallTracerResultConverter {
 
     LOG.warn("Unable to determine gas used, defaulting to 0");
     return 0;
-  }
-
-  private static long calculateGasProvided(final TraceFrame frame, final String opcode) {
-    // For CALL operations, calculate gas provided to the call
-    if (isCallOp(opcode) && frame.getGasCost().isPresent()) {
-      long gasNeeded = frame.getGasCost().getAsLong();
-      long currentGas = frame.getGasRemaining();
-
-      if (currentGas >= gasNeeded) {
-        // Apply the "all but 1/64th" rule from EIP-150
-        final long gasRemaining = currentGas - gasNeeded;
-        final long gasToProvide = gasRemaining - Math.floorDiv(gasRemaining, 64);
-
-        LOG.warn(
-            "calculateGasProvided: gasNeeded={}, currentGas={}, gasRemaining={}, gasToProvide={}",
-            gasNeeded,
-            currentGas,
-            gasRemaining,
-            gasToProvide);
-
-        return gasToProvide;
-      }
-    }
-
-    // Default to just the gas remaining
-    return frame.getGasRemaining();
   }
 
   private static String resolveToAddress(final TraceFrame frame, final String opcode) {
