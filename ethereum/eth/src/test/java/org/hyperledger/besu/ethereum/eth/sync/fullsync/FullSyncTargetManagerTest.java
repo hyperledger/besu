@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -27,11 +28,15 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -81,6 +86,7 @@ public class FullSyncTargetManagerTest {
             .withBlockchain(localBlockchain)
             .withWorldStateArchive(localWorldState)
             .build();
+    final PeerTaskExecutor peerTaskExecutor = mock(PeerTaskExecutor.class);
     ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
@@ -89,6 +95,7 @@ public class FullSyncTargetManagerTest {
             .setWorldStateArchive(localBlockchainSetup.getWorldArchive())
             .setTransactionPool(localBlockchainSetup.getTransactionPool())
             .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+                .setPeerTaskExecutor(peerTaskExecutor)
             .build();
     final EthContext ethContext = ethProtocolManager.ethContext();
     localBlockchainSetup.importFirstBlocks(5);
@@ -101,6 +108,8 @@ public class FullSyncTargetManagerTest {
             ethContext,
             new NoOpMetricsSystem(),
             SyncTerminationCondition.never());
+    when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
+            .thenAnswer(new GetHeadersFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers()));
   }
 
   @AfterEach
@@ -112,7 +121,7 @@ public class FullSyncTargetManagerTest {
 
   @ParameterizedTest
   @ArgumentsSource(FullSyncTargetManagerTest.FullSyncTargetManagerTestArguments.class)
-  public void findSyncTarget_withHeightEstimates(final DataStorageFormat storageFormat) {
+  public void findSyncTarget_withHeightEstimates(final DataStorageFormat storageFormat) throws InterruptedException {
     setup(storageFormat);
     final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
     when(localWorldState.isWorldStateAvailable(
@@ -122,7 +131,8 @@ public class FullSyncTargetManagerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.MAX_VALUE, 4);
 
     final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
-    bestPeer.respond(responder);
+
+    result.join();
 
     assertThat(result)
         .isCompletedWithValue(
@@ -148,7 +158,7 @@ public class FullSyncTargetManagerTest {
   @ParameterizedTest
   @ArgumentsSource(FullSyncTargetManagerTest.FullSyncTargetManagerTestArguments.class)
   public void shouldDisconnectPeerIfWorldStateIsUnavailableForCommonAncestor(
-      final DataStorageFormat storageFormat) {
+      final DataStorageFormat storageFormat) throws InterruptedException {
     setup(storageFormat);
     final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
     when(localWorldState.isWorldStateAvailable(
@@ -159,7 +169,8 @@ public class FullSyncTargetManagerTest {
 
     final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
 
-    bestPeer.respond(responder);
+    // unfortunately, this is the only way I could find to give the peer disconnection a chance to happen before we do the below checks
+    Thread.sleep(1000);
 
     assertThat(result).isNotCompleted();
     assertThat(bestPeer.getPeerConnection().isDisconnected()).isTrue();
@@ -179,7 +190,7 @@ public class FullSyncTargetManagerTest {
 
     final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
 
-    bestPeer.respond(responder);
+    result.join();
 
     assertThat(result)
         .isCompletedWithValue(

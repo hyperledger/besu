@@ -68,8 +68,8 @@ public class GetHeadersFromPeerTaskExecutorAnswer
       } else {
         int skip = task.getSkip() + 1;
         long nextHeaderNumber = initialHeader.getNumber() - skip;
-        long getLimit = nextHeaderNumber - ((task.getMaxHeaders() - 1) * skip);
-        for (long i = initialHeader.getNumber() - 1; i > getLimit; i -= skip) {
+        long getLimit = Math.max(0, nextHeaderNumber - ((task.getMaxHeaders() - 1) * skip));
+        for (long i = initialHeader.getNumber() - 1; i >= getLimit; i -= skip) {
           Optional<BlockHeader> header = otherBlockchain.getBlockHeader(i);
           if (header.isPresent()) {
             getHeadersFromPeerTaskResult.add(header.get());
