@@ -388,6 +388,10 @@ public class BlockSimulator {
     long timestamp = blockOverrides.getTimestamp().orElseThrow();
     long blockNumber = blockOverrides.getBlockNumber().orElseThrow();
 
+    // For PoS, coinbase is always configured, but for PoA it is not configured,
+    // rather generated for each block via MiningBeneficiaryCalculator.
+    // For simulation, if not configured, we use a dummy address 0x00.
+    // We don't throw an exception if coinbase is not configured.
     BlockHeaderBuilder builder =
         BlockHeaderBuilder.createDefault()
             .parentHash(header.getHash())
@@ -396,7 +400,7 @@ public class BlockSimulator {
             .coinbase(
                 blockOverrides
                     .getFeeRecipient()
-                    .orElseGet(() -> miningConfiguration.getCoinbase().orElseThrow()))
+                    .orElseGet(() -> miningConfiguration.getCoinbase().orElse(Address.ZERO)))
             .difficulty(
                 blockOverrides.getDifficulty().map(Difficulty::of).orElseGet(header::getDifficulty))
             .gasLimit(

@@ -176,20 +176,24 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final SynchronizerConfiguration synchronizerConfiguration,
       final EthProtocolConfiguration ethProtocolConfiguration) {
     final List<Capability> capabilities = new ArrayList<>();
-    capabilities.add(EthProtocol.ETH66);
 
-    // Version 67 removes the GetNodeData and NodeData
-    // Fast sync depends on GetNodeData and NodeData
-    // see https://eips.ethereum.org/EIPS/eip-4938
-    if (!Objects.equals(SyncMode.FAST, synchronizerConfiguration.getSyncMode())) {
-      capabilities.add(EthProtocol.ETH67);
+    if (Objects.equals(SyncMode.FAST, synchronizerConfiguration.getSyncMode())) {
+      // Version 67 removes the GetNodeData and NodeData
+      // Fast sync depends on GetNodeData and NodeData
+      // see https://eips.ethereum.org/EIPS/eip-4938
+      capabilities.add(EthProtocol.ETH66);
+    } else {
       capabilities.add(EthProtocol.ETH68);
       capabilities.add(EthProtocol.ETH69);
     }
-
     capabilities.removeIf(cap -> cap.getVersion() > ethProtocolConfiguration.getMaxEthCapability());
     capabilities.removeIf(cap -> cap.getVersion() < ethProtocolConfiguration.getMinEthCapability());
 
+    if (capabilities.isEmpty()) {
+      throw new IllegalStateException(
+          "No supported Eth protocol capabilities found. "
+              + "Check the configuration for min and max Eth protocol versions.");
+    }
     return Collections.unmodifiableList(capabilities);
   }
 
