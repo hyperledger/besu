@@ -202,15 +202,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     boolean parallelizedTxFound = false;
     int nbParallelTx = 0;
 
-    Optional<BlockAccessListBuilder> blockAccessListBuilder;
-    if (protocolSpec
-        .getBlockAccessListFactory()
-        .map(BlockAccessListFactory::isEnabled)
-        .orElse(false)) {
-      blockAccessListBuilder = Optional.of(BlockAccessList.builder());
-    } else {
-      blockAccessListBuilder = Optional.empty();
-    }
+    Optional<BlockAccessListBuilder> blockAccessListBuilder =
+        protocolSpec
+            .getBlockAccessListFactory()
+            .filter(BlockAccessListFactory::isEnabled)
+            .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
     for (int i = 0; i < transactions.size(); i++) {
       final WorldUpdater blockUpdater = worldState.updater();
