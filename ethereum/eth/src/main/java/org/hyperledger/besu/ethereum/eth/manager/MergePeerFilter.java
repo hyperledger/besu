@@ -89,7 +89,7 @@ public class MergePeerFilter implements MergeStateHandler, UnverifiedForkchoiceL
       final Optional<Boolean> oldState,
       final Optional<Difficulty> difficultyStoppedAt) {
     if (isPoS && difficultyStoppedAt.isPresent()) {
-      LOG.debug("terminal difficulty set to {}", difficultyStoppedAt.get().getValue());
+      LOG.debug("terminal difficulty set to {}", difficultyStoppedAt.get().getAsBigInteger());
       long lockStamp = this.powTerminalDifficultyLock.writeLock();
       try {
         this.powTerminalDifficulty = difficultyStoppedAt;

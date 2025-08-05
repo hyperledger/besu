@@ -29,14 +29,12 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.Hardfork;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Supplier;
-import java.util.zip.CRC32;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Suppliers;
@@ -79,29 +77,17 @@ public class EthConfig implements JsonRpcMethod {
     ObjectNode result = mapperSupplier.get().createObjectNode();
     ObjectNode currentNode = result.putObject("current");
     generateConfig(currentNode, current);
-    String currentHash = configHash(currentNode);
-    result.put("currentHash", currentHash);
-    result.put("currentForkId", getForkIdAsHexString(currentTime));
     if (next.isPresent()) {
+      // if next is present, last will be present as next may be last.
       ObjectNode nextNode = result.putObject("next");
-      generateConfig(nextNode, next.get());
-      String nextHash = configHash(nextNode);
-      result.put("nextHash", nextHash);
-      result.put("nextForkId", getForkIdAsHexString(next.get().fork().milestone()));
-
-      if (last.isPresent()) {
-        ObjectNode lastNode = result.putObject("last");
-        generateConfig(lastNode, last.get());
-        String lastHash = configHash(lastNode);
-        result.put("lastHash", lastHash);
-        result.put("lastForkId", getForkIdAsHexString(last.get().fork().milestone()));
-      } else {
-        appendEmptyLast(result);
-      }
+      ScheduledProtocolSpec nextSpec = next.get();
+      generateConfig(nextNode, nextSpec);
+      ObjectNode lastNode = result.putObject("last");
+      generateConfig(lastNode, last.orElse(nextSpec));
     } else {
       // if next is empty, last is empty (no future forks)
-      appendEmptyNext(result);
-      appendEmptyLast(result);
+      result.putNull("next");
+      result.putNull("last");
     }
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
@@ -131,48 +117,29 @@ public class EthConfig implements JsonRpcMethod {
     result.put(
         "chainId", protocolSchedule.getChainId().map(c -> "0x" + c.toString(16)).orElse(null));
 
+    result.put("forkId", getForkIdAsHexString(forkId.milestone()));
+
     PrecompileContractRegistry registry = spec.getPrecompileContractRegistry();
     ObjectNode precompiles = result.putObject("precompiles");
     registry.getPrecompileAddresses().stream()
-        .sorted()
-        .forEach(a -> precompiles.put(a.toHexString(), registry.get(a).getName()));
+        .map(a -> Map.entry(registry.get(a).getName(), a.toHexString()))
+        .sorted(Entry.comparingByKey())
+        .forEach(e -> precompiles.put(e.getKey(), e.getValue()));
 
     TreeMap<String, String> systemContracts =
         new TreeMap<>(
             spec.getRequestProcessorCoordinator()
                 .map(RequestProcessorCoordinator::getContractConfigs)
                 .orElse(Map.of()));
-    spec.getBlockHashProcessor()
+    spec.getPreExecutionProcessor()
         .getHistoryContract()
         .ifPresent(a -> systemContracts.put("HISTORY_STORAGE_ADDRESS", a.toHexString()));
-    spec.getBlockHashProcessor()
+    spec.getPreExecutionProcessor()
         .getBeaconRootsContract()
         .ifPresent(a -> systemContracts.put("BEACON_ROOTS_ADDRESS", a.toHexString()));
     if (!systemContracts.isEmpty()) {
       ObjectNode jsonContracts = result.putObject("systemContracts");
       systemContracts.forEach(jsonContracts::put);
     }
-  }
-
-  String configHash(final JsonNode node) {
-    if (node == null) {
-      return null;
-    } else {
-      final CRC32 crc = new CRC32();
-      crc.update(node.toString().getBytes(StandardCharsets.UTF_8));
-      return "0x" + Long.toHexString(crc.getValue());
-    }
-  }
-
-  private static void appendEmptyNext(final ObjectNode result) {
-    result.putNull("next");
-    result.putNull("nextHash");
-    result.putNull("nextForkId");
-  }
-
-  private static void appendEmptyLast(final ObjectNode result) {
-    result.putNull("last");
-    result.putNull("lastHash");
-    result.putNull("lastForkId");
   }
 }
