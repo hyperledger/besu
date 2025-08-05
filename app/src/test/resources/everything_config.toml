@@ -227,7 +227,6 @@ Xaltbn128-native-enabled=false
 Xsnapsync-server-enabled=true
 snapsync-server-enabled=true
 Xbonsai-full-flat-db-enabled=true
-Xpeertask-system-enabled=false
 era1-import-prepipeline-enabled=true
 era1-data-uri="mainnet.era1.nimbus.team/"
 era1-import-prepipeline-concurrency=4
